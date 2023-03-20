@@ -1,0 +1,127 @@
+{
+  "name": "reserve-token-zapper",
+  "version": "1.0.0",
+  "description": "Library to find the best way to convert tokens into RTokens",
+  "keywords": [],
+  "source": "src/index.ts",
+  "main": "./lib.commonjs/index.js",
+  "module": "./lib.esm/index.js",
+  "types": "build/types.d.ts",
+  "files": [
+    "build"
+  ],
+  "author": "jan.demidov@reserve.org",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "ts-jest"
+    },
+    "testEnvironment": "node",
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/test/"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 95,
+        "lines": 95,
+        "statements": 95
+      }
+    },
+    "collectCoverageFrom": [
+      "src/*.{js,ts}"
+    ]
+  },
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
+  },
+  "scripts": {
+    "clean": "rm -rf lib.browser/ lib.commonjs/ lib.esm/",
+    "build": "clean && build:typechain && build:browser && build:cjs && build:esm",
+    "build:typechain": "cd contracts/ && npx hardhat compile",
+    "build:browser": "npx esbuild src/index.ts --bundle --target=chrome67,firefox68,safari14,edge79 --sourcemap=external --platform=browser --minify --outdir=lib.browser/  --allow-overwrite",
+    "build:cjs": "npx esbuild src/index.ts --bundle --sourcemap=external --platform=node --packages=external --outdir=lib.commonjs/ --allow-overwrite",
+    "build:esm": "npx esbuild src/index.ts --sourcemap=both --bundle --platform=neutral --packages=external --outdir=lib.esm/ --allow-overwrite",
+    "test": "jest --passWithNoTests",
+    "format": "npm run prettier:fix",
+    "prettier": "prettier '**/*.{ts,json,md}'",
+    "prettier:check": "npm run prettier -- --check",
+    "prettier:fix": "npm run prettier -- --write"
+  },
+  "devDependencies": {
+    "@ethersproject/abi": "^5.7.0",
+    "@ethersproject/providers": "^5.7.2",
+    "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.2.2",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@typechain/ethers-v5": "^10.2.0",
+    "@typechain/hardhat": "^6.1.5",
+    "@types/chai": "^4.3.4",
+    "@types/isomorphic-fetch": "0.0.36",
+    "@types/jest": "23.3.2",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^18.15.3",
+    "@typescript-eslint/eslint-plugin": "^5.55.0",
+    "buffer": "^5.7.1",
+    "chai": "^4.3.7",
+    "colors": "1.3.2",
+    "coveralls": "3.0.2",
+    "cross-env": "5.2.0",
+    "cz-conventional-changelog": "2.1.0",
+    "eslint": "^8.36.0",
+    "eslint-config-standard-with-typescript": "^34.0.1",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-n": "^15.6.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "ethereumjs-utils": "5.2.5",
+    "hardhat": "^2.13.0",
+    "hardhat-gas-reporter": "^1.0.9",
+    "husky": "1.0.1",
+    "isomorphic-fetch": "3.0.0",
+    "jest": "23.6.0",
+    "jest-config": "23.6.0",
+    "lodash.camelcase": "4.3.0",
+    "prettier": "1.14.3",
+    "prompt": "1.0.0",
+    "replace-in-file": "3.4.2",
+    "rimraf": "2.6.2",
+    "semantic-release": "15.9.16",
+    "shelljs": "0.8.3",
+    "solidity-coverage": "^0.8.2",
+    "travis-deploy-once": "5.0.9",
+    "ts-jest": "23.10.2",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "4.1.1",
+    "typechain": "^8.1.1",
+    "typedoc": "0.12.0",
+    "typescript": "^5.0.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.2",
+    "@typescript-eslint/parser": "^5.55.0",
+    "@uniswap/v2-core": "^1.0.1",
+    "@uniswap/v3-core": "^1.0.1",
+    "bignumber.js": "9.1.0",
+    "esbuild": "0.17.12",
+    "eslint-config-prettier": "^8.7.0",
+    "ethers": "^5.7.2"
+  }
+}

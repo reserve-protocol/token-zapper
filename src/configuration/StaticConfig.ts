@@ -19,15 +19,14 @@ export class StaticConfig {
       decimals: 18
     },
     readonly addresses: {
-
       readonly executorAddress: Address
       readonly zapperAddress: Address
-      readonly rtokens: Readonly<RTokens>,
+      readonly rtokens: Readonly<RTokens>
       readonly aavev2: Address | null
       readonly aavev3: Address | null
       readonly curve: boolean
       readonly balancer: Address | null
       readonly commonTokens: Readonly<CommonTokens>
     }
-  ) { }
+  ) {}
 }

@@ -3,8 +3,14 @@ import { type Swaps } from '../searcher/Swap'
 import { type Token, type TokenQuantity } from '../entities/Token'
 
 export class DexAggregator {
-  constructor (
+  constructor(
     public readonly name: string,
-    public readonly swap: (fromAddress: Address, destination: Address, input: TokenQuantity, output: Token, slippage: number) => Promise<Swaps>
-  ) { }
+    public readonly swap: (
+      payerAddress: Address,
+      recipientDestination: Address,
+      input: TokenQuantity,
+      output: Token,
+      slippage: number
+    ) => Promise<Swaps>
+  ) {}
 }

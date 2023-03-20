@@ -1,20 +1,16 @@
 module.exports = {
-  env: {
-    browser: true,
-    es2021: true
-  },
-  extends: 'standard-with-typescript',
-  overrides: [
-  ],
+  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  root: true,
+  parser: "@typescript-eslint/parser",
   parserOptions: {
-    ecmaVersion: 'latest',
-    project: ["tsconfig.json"],
-    sourceType: 'module'
+    project: "./tsconfig.json",
+    tsconfigRootDir: __dirname
   },
+  plugins: ["@typescript-eslint"],
   rules: {
-    "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/restrict-template-expressions": "off",
-    "no-useless-catch": "off"
-    // "@typescript-eslint/no-non-null-assertion": "off"
+    'prettier/prettier': 'error',
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/restrict-template-expressions': 'off',
+    'no-useless-catch': 'off'
   }
-}
+};

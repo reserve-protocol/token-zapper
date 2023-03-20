@@ -7,16 +7,16 @@ export enum InteractionConvention {
   PayBeforeCall,
   CallbackBased,
   ApprovalRequired,
-  None
+  None,
 }
 
 export enum DestinationOptions {
   Recipient,
-  Callee
+  Callee,
 }
 
 export abstract class Action {
-  constructor (
+  constructor(
     public readonly address: Address,
     public readonly input: readonly Token[],
     public readonly output: readonly Token[],
@@ -25,10 +25,14 @@ export abstract class Action {
     public readonly approvals: readonly Approval[]
   ) {}
 
-  abstract quote (amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
-  abstract encode (amountsIn: TokenQuantity[], destination: Address, bytes?: Buffer): Promise<ContractCall>
+  abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
+  abstract encode(
+    amountsIn: TokenQuantity[],
+    destination: Address,
+    bytes?: Buffer
+  ): Promise<ContractCall>
 
-  toString () {
+  toString() {
     return 'Action'
   }
 }

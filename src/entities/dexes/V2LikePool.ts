@@ -5,17 +5,16 @@ import { UniswapV2Pair__factory } from '../../contracts'
 import { type SwapDirection } from './TwoTokenPoolTypes'
 import { getCreate2Address, keccak256 } from 'ethers/lib/utils'
 import { parseHexStringIntoBuffer } from '../../base/utils'
-const INIT_CODE_HASH = parseHexStringIntoBuffer('0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f');
-const sortTokens = (
-  tokenA: Token,
-  tokenB: Token
-) => {
-  return tokenA.address.gt(tokenB.address) ? [tokenB, tokenA] : [tokenA, tokenB];
-};
+const INIT_CODE_HASH = parseHexStringIntoBuffer(
+  '0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f'
+)
+const sortTokens = (tokenA: Token, tokenB: Token) => {
+  return tokenA.address.gt(tokenB.address) ? [tokenB, tokenA] : [tokenA, tokenB]
+}
 type Env = {
   pool: V2Pool
-  inputToken: Token,
-  outputToken: Token,
+  inputToken: Token
+  outputToken: Token
   direction: SwapDirection
 }
 const computeV2PoolAddress = (
@@ -23,22 +22,12 @@ const computeV2PoolAddress = (
   token0: Token,
   token1: Token
 ) => {
-  const salt = Buffer.concat(
-    [
-      token0.address.bytes,
-      token1.address.bytes,
-    ]
-  );
-  return Address.from(getCreate2Address(
-    factory.address,
-    keccak256(salt),
-    INIT_CODE_HASH
-  ));
-};
-type QuoteFn = (
-  quantity: TokenQuantity,
-  env: Env
-) => Promise<TokenQuantity>
+  const salt = Buffer.concat([token0.address.bytes, token1.address.bytes])
+  return Address.from(
+    getCreate2Address(factory.address, keccak256(salt), INIT_CODE_HASH)
+  )
+}
+type QuoteFn = (quantity: TokenQuantity, env: Env) => Promise<TokenQuantity>
 
 type EncodeFn = (
   quantity: TokenQuantity,
@@ -68,65 +57,101 @@ function getAmountIn(
   return numerator / denominator + 1n
 }
 
-export const standardSwap: QuoteFn = async (
-  inputQty,
-  action
-) => {
+export const standardSwap: QuoteFn = async (inputQty, action) => {
   if (action.direction === '0->1') {
     if (inputQty.token === action.pool.token0) {
       return action.pool.token1.quantityFromBigInt(
-        getAmountOut(inputQty.amount, action.pool.feeInv, action.pool.reserve0, action.pool.reserve1)
+        getAmountOut(
+          inputQty.amount,
+          action.pool.feeInv,
+          action.pool.reserve0,
+          action.pool.reserve1
+        )
       )
     } else {
       return action.pool.token0.quantityFromBigInt(
-        getAmountIn(inputQty.amount, action.pool.feeInv, action.pool.reserve0, action.pool.reserve1)
+        getAmountIn(
+          inputQty.amount,
+          action.pool.feeInv,
+          action.pool.reserve0,
+          action.pool.reserve1
+        )
       )
     }
-  }
-  else if (action.direction === '1->0') {
+  } else if (action.direction === '1->0') {
     if (inputQty.token === action.pool.token1) {
       return action.pool.token0.quantityFromBigInt(
-        getAmountOut(inputQty.amount, action.pool.feeInv, action.pool.reserve1, action.pool.reserve0)
+        getAmountOut(
+          inputQty.amount,
+          action.pool.feeInv,
+          action.pool.reserve1,
+          action.pool.reserve0
+        )
       )
     } else {
       return action.pool.token1.quantityFromBigInt(
-        getAmountIn(inputQty.amount, action.pool.feeInv, action.pool.reserve1, action.pool.reserve0)
+        getAmountIn(
+          inputQty.amount,
+          action.pool.feeInv,
+          action.pool.reserve1,
+          action.pool.reserve0
+        )
       )
     }
   } else {
-    throw new Error("Invalid direction " + action.direction)
+    throw new Error('Invalid direction ' + action.direction)
   }
 }
 
 const standardPoolIface = UniswapV2Pair__factory.createInterface()
-export const standardEncoding: EncodeFn = async (
-  inputQty,
-  to,
-  action
-) => {
+export const standardEncoding: EncodeFn = async (inputQty, to, action) => {
   let amount0 = 0n
   let amount1 = 0n
   if (action.direction === '0->1') {
     if (inputQty.token === action.pool.token0) {
-      amount1 = getAmountOut(inputQty.amount, action.pool.feeInv, action.pool.reserve0, action.pool.reserve1)
+      amount1 = getAmountOut(
+        inputQty.amount,
+        action.pool.feeInv,
+        action.pool.reserve0,
+        action.pool.reserve1
+      )
     } else {
-      amount0 = getAmountIn(inputQty.amount, action.pool.feeInv, action.pool.reserve0, action.pool.reserve1)
+      amount0 = getAmountIn(
+        inputQty.amount,
+        action.pool.feeInv,
+        action.pool.reserve0,
+        action.pool.reserve1
+      )
     }
   } else if (action.direction === '1->0') {
     if (inputQty.token === action.pool.token1) {
-      amount0 = getAmountOut(inputQty.amount, action.pool.feeInv, action.pool.reserve1, action.pool.reserve0)
+      amount0 = getAmountOut(
+        inputQty.amount,
+        action.pool.feeInv,
+        action.pool.reserve1,
+        action.pool.reserve0
+      )
     } else {
-      amount1 = getAmountIn(inputQty.amount, action.pool.feeInv, action.pool.reserve1, action.pool.reserve0)
+      amount1 = getAmountIn(
+        inputQty.amount,
+        action.pool.feeInv,
+        action.pool.reserve1,
+        action.pool.reserve0
+      )
     }
   } else {
-    throw new Error("Invalid direction " + action.direction)
+    throw new Error('Invalid direction ' + action.direction)
   }
 
   return Buffer.from(
-    standardPoolIface.encodeFunctionData(
-      'swap',
-      [amount0, amount1, to.address, Buffer.alloc(0)]
-    ).slice(2),
+    standardPoolIface
+      .encodeFunctionData('swap', [
+        amount0,
+        amount1,
+        to.address,
+        Buffer.alloc(0),
+      ])
+      .slice(2),
     'hex'
   )
 }
@@ -143,11 +168,16 @@ export class V2Pool {
   }
 
   get name() {
-    return `V2.${this.address.address.slice(0, 6)}..${this.address.address.slice(38)}.${this.token0}.${this.token1}`
+    return `V2.${this.address.address.slice(
+      0,
+      6
+    )}..${this.address.address.slice(38)}.${this.token0}.${this.token1}`
   }
 
   toString() {
-    return `V2Pool(${this.name},reserve0=${this.token0.quantityFromBigInt(this.reserve0_)},reserve1=${this.token1.quantityFromBigInt(this.reserve1_)})`
+    return `V2Pool(${this.name},reserve0=${this.token0.quantityFromBigInt(
+      this.reserve0_
+    )},reserve1=${this.token1.quantityFromBigInt(this.reserve1_)})`
   }
 
   constructor(
@@ -171,10 +201,7 @@ export class V2Pool {
     return this.reserve1_
   }
 
-  updateReserves(
-    reserve0: bigint,
-    reserve1: bigint
-  ) {
+  updateReserves(reserve0: bigint, reserve1: bigint) {
     this.reserve0_ = reserve0
     this.reserve1_ = reserve1
   }
@@ -186,12 +213,11 @@ export class V2Pool {
     fee: bigint,
     poolAddress?: Address
   ) {
-    const [token0, token1] = sortTokens(tokenA, tokenB);
-    poolAddress = poolAddress == null ? computeV2PoolAddress(
-      factory,
-      token0,
-      token1
-    ) : poolAddress;
+    const [token0, token1] = sortTokens(tokenA, tokenB)
+    poolAddress =
+      poolAddress == null
+        ? computeV2PoolAddress(factory, token0, token1)
+        : poolAddress
 
     return new V2Pool(
       poolAddress,
@@ -202,6 +228,6 @@ export class V2Pool {
       fee,
       standardSwap,
       standardEncoding
-    );
+    )
   }
 }

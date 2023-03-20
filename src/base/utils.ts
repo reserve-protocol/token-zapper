@@ -1,6 +1,5 @@
-
 export const parseHexStringIntoBuffer = (maybeHex: string) => {
-  if ((maybeHex.length % 2) !== 0) {
+  if (maybeHex.length % 2 !== 0) {
     throw new Error('Invalid encoding: ' + maybeHex)
   }
   if (maybeHex === '' || maybeHex === '0x') {

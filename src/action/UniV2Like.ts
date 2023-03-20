@@ -11,10 +11,15 @@ import { parseHexStringIntoBuffer } from '../base/utils'
 const iface = UniswapV2Pair__factory.createInterface()
 
 export class UniV2Like extends UniBase {
-  
-  async encode (amountsIn: TokenQuantity[], destination: Address): Promise<ContractCall> {
-    const amountOut = (await this.quote(amountsIn))[0]
-    const [amount0, amount1] = this.zeroForOne ? [amountsIn[0], amountOut] : [amountOut, amountsIn[0]]
+  async encode(
+    amountsIn: TokenQuantity[],
+    destination: Address
+  ): Promise<ContractCall> {
+    const amountOut = await this.pool.swapFn(amountsIn[0], this)
+    const [amount0, amount1] =
+      amountsIn[0].token === this.pool.token0
+        ? [amountsIn[0], amountOut]
+        : [amountOut, amountsIn[0]]
 
     return new ContractCall(
       parseHexStringIntoBuffer(
@@ -22,7 +27,7 @@ export class UniV2Like extends UniBase {
           amount0.amount,
           amount1.amount,
           destination.address,
-          Buffer.alloc(0)
+          Buffer.alloc(0),
         ])
       ),
       this.pool.address,
@@ -31,18 +36,30 @@ export class UniV2Like extends UniBase {
     )
   }
 
-  async quote ([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [await this.pool.swapFn(
-      amountsIn,
-      this
-    )]
+  /**
+   * @node V2Actions can quote in both directions!
+   * @returns
+   */
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return [await this.pool.swapFn(amountsIn, this)]
   }
 
-  constructor (
+  constructor(
     readonly universe: Universe,
     readonly pool: V2Pool,
-    readonly direction: SwapDirection,
+    readonly direction: SwapDirection
   ) {
-    super(pool, direction, DestinationOptions.Recipient, InteractionConvention.PayBeforeCall)
+    super(
+      pool,
+      direction,
+      DestinationOptions.Recipient,
+      InteractionConvention.PayBeforeCall
+    )
+  }
+
+  toString(): string {
+    return `UniV2Like(${this.inputToken.toString()}.${
+      this.address.address
+    }.${this.outputToken.toString()})`
   }
 }

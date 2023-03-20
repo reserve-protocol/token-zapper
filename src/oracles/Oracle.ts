@@ -5,16 +5,28 @@ const NULL_VAL = { result: null, block: 0 }
 export class Oracle {
   constructor(
     public readonly name: string,
-    public readonly fairTokenPriceImplementation: (token: Token) => Promise<TokenQuantity | null>
-  ) { }
+    public readonly fairTokenPriceImplementation: (
+      token: Token
+    ) => Promise<TokenQuantity | null>
+  ) {}
 
-  public currentPrices = new DefaultMap<Token, Promise<{ result: TokenQuantity | null, block: number }>>(async () => await Promise.resolve(NULL_VAL))
-  async fairTokenPrice(block: number, token: Token): Promise<TokenQuantity | null> {
-    const current = await (this.currentPrices.get(token) ?? Promise.resolve(NULL_VAL))
+  public currentPrices = new DefaultMap<
+    Token,
+    Promise<{ result: TokenQuantity | null; block: number }>
+  >(async () => await Promise.resolve(NULL_VAL))
+  async fairTokenPrice(
+    block: number,
+    token: Token
+  ): Promise<TokenQuantity | null> {
+    const current = await (this.currentPrices.get(token) ??
+      Promise.resolve(NULL_VAL))
     if (current.block < block) {
       this.currentPrices.set(
         token,
-        this.fairTokenPriceImplementation(token).then(result => ({ result, block }))
+        this.fairTokenPriceImplementation(token).then((result) => ({
+          result,
+          block,
+        }))
       )
     }
     return await this.currentPrices.get(token).then(({ result }) => result)

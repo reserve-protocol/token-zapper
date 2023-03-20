@@ -24,18 +24,15 @@ import { parseHexStringIntoBuffer } from './utils'
 
 export class Address {
   public static interningCache = new InterningCache<Address>(
-    addr => addr.address
+    (addr) => addr.address
   )
-
 
   public static ZERO = Address.fromHexString(ethers.constants.AddressZero)
 
   // The HEX representation of the address
   public readonly address: string
 
-  private constructor (
-    readonly bytes: Buffer
-  ) {
+  private constructor(readonly bytes: Buffer) {
     if (bytes.length !== 20) {
       throw new Error('Invalid address bytes')
     }
@@ -43,7 +40,7 @@ export class Address {
     this.address = ethers.utils.getAddress(`0x${bytes.toString('hex')}`)
   }
 
-  static from (value: string | Buffer | Address) {
+  static from(value: string | Buffer | Address) {
     if (value instanceof Address) {
       return value
     } else if (typeof value === 'string') {
@@ -55,9 +52,11 @@ export class Address {
     }
   }
 
-  static fromBuffer (slice: Buffer): Address {
+  static fromBuffer(slice: Buffer): Address {
     if (slice.length !== 20) {
-      throw new Error('Address must be 20 bytes long got ' + slice.length.toString())
+      throw new Error(
+        'Address must be 20 bytes long got ' + slice.length.toString()
+      )
     }
     try {
       return Address.interningCache.get(new Address(slice))
@@ -66,7 +65,7 @@ export class Address {
     }
   }
 
-  static fromHexString (addr: string): Address {
+  static fromHexString(addr: string): Address {
     if (!isAddress(addr)) {
       throw new Error('Invalid input type ' + addr)
     }
@@ -74,21 +73,23 @@ export class Address {
       throw new Error('Invalid hex string length ' + addr)
     }
     try {
-      return Address.interningCache.get(new Address(parseHexStringIntoBuffer(addr)))
+      return Address.interningCache.get(
+        new Address(parseHexStringIntoBuffer(addr))
+      )
     } catch (e) {
       throw e
     }
   }
 
-  toString () {
+  toString() {
     return this.address
   }
 
-  valueOf () {
+  valueOf() {
     return this.address
   }
 
-  [Symbol.toPrimitive] () {
+  [Symbol.toPrimitive]() {
     return this.address
   }
 

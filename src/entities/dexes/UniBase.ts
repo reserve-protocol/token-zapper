@@ -1,6 +1,10 @@
 import { type Address } from '../../base/Address'
 import { type Token } from '../Token'
-import { type DestinationOptions, Action, type InteractionConvention } from '../../action/Action'
+import {
+  type DestinationOptions,
+  Action,
+  type InteractionConvention,
+} from '../../action/Action'
 import { type SwapDirection } from './TwoTokenPoolTypes'
 
 export abstract class UniBase extends Action {
@@ -20,8 +24,8 @@ export abstract class UniBase extends Action {
   ) {
     super(
       basePool.address,
-      [(direction === '0->1') ? basePool.token0 : basePool.token1],
-      [(direction === '0->1') ? basePool.token1 : basePool.token0],
+      [direction === '0->1' ? basePool.token0 : basePool.token1],
+      [direction === '0->1' ? basePool.token1 : basePool.token0],
       interactionConvention,
       destination,
       []

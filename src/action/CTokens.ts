@@ -10,7 +10,7 @@ const iCTokenInterface = ICToken__factory.createInterface()
 const iCEtherInterface = CEther__factory.createInterface()
 
 export class MintCTokenAction extends Action {
-  async encode ([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
+  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     if (this.underlying === this.universe.nativeToken) {
       return new ContractCall(
         parseHexStringIntoBuffer(iCEtherInterface.encodeFunctionData('mint')),
@@ -21,24 +21,28 @@ export class MintCTokenAction extends Action {
     }
 
     return new ContractCall(
-      parseHexStringIntoBuffer(iCTokenInterface.encodeFunctionData('mint', [amountsIn.amount])),
+      parseHexStringIntoBuffer(
+        iCTokenInterface.encodeFunctionData('mint', [amountsIn.amount])
+      ),
       this.cToken.address,
       0n,
       'Mint ' + this.cToken.symbol
     )
   }
 
-  async quote ([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [this.cToken.quantityFromBigInt(
-      (amountsIn.amount * (10n ** 18n) / this.rate)
-    )]
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return [
+      this.cToken.quantityFromBigInt(
+        (amountsIn.amount * 10n ** 18n) / this.rate.value
+      ),
+    ]
   }
 
-  constructor (
+  constructor(
     readonly universe: Universe,
     readonly underlying: Token,
     readonly cToken: Token,
-    private readonly rate: bigint
+    private readonly rate: {value: bigint}
   ) {
     super(
       cToken.address,
@@ -49,29 +53,37 @@ export class MintCTokenAction extends Action {
       [new Approval(underlying, cToken.address)]
     )
   }
+
+  toString(): string {
+    return `CTokenMint(${this.cToken.toString()})`
+  }
 }
 
 export class BurnCTokenAction extends Action {
-  async encode ([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
+  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     return new ContractCall(
-      parseHexStringIntoBuffer(iCTokenInterface.encodeFunctionData('redeem', [amountsIn.amount])),
+      parseHexStringIntoBuffer(
+        iCTokenInterface.encodeFunctionData('redeem', [amountsIn.amount])
+      ),
       this.cToken.address,
       0n,
       'Burn ' + this.cToken.symbol
     )
   }
 
-  async quote ([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [this.underlying.quantityFromBigInt(
-      (amountsIn.amount * this.rate) / (10n ** 18n)
-    )]
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return [
+      this.underlying.quantityFromBigInt(
+        (amountsIn.amount * this.rate.value) / 10n ** 18n
+      ),
+    ]
   }
 
-  constructor (
+  constructor(
     readonly universe: Universe,
     readonly underlying: Token,
     readonly cToken: Token,
-    private readonly rate: bigint
+    private readonly rate: {value: bigint}
   ) {
     super(
       cToken.address,
@@ -81,5 +93,8 @@ export class BurnCTokenAction extends Action {
       DestinationOptions.Recipient,
       []
     )
+  }
+  toString(): string {
+    return `CTokenBurn(${this.cToken.toString()})`
   }
 }

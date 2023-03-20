@@ -5,9 +5,12 @@ import { SwapPlan } from '../searcher/Swap'
 import { type Graph } from './Graph'
 
 class ChoicesPrStep {
-  constructor (readonly universe: Universe, public readonly optionsPrStep: Action[][]) { }
+  constructor(
+    readonly universe: Universe,
+    public readonly optionsPrStep: Action[][]
+  ) {}
 
-  convertToSingularPaths (): SwapPlan[] {
+  convertToSingularPaths(): SwapPlan[] {
     const paths: SwapPlan[] = []
 
     const processLevel = (currentPath: Action[], level: number) => {
@@ -17,6 +20,9 @@ class ChoicesPrStep {
       }
       const prefix = currentPath
       for (const head of this.optionsPrStep[level]) {
+        if (head == null) {
+          break
+        }
         const nextPath = prefix.concat(head)
         processLevel(nextPath, level + 1)
       }
@@ -27,15 +33,20 @@ class ChoicesPrStep {
   }
 }
 class BFSSearchResult {
-  constructor (
+  constructor(
     public readonly input: Token,
     public readonly steps: ChoicesPrStep[],
-    public readonly output: Token) { }
+    public readonly output: Token
+  ) {}
 }
 class OpenSetNode {
-  private constructor (readonly token: Token, readonly length: number, readonly transition: { actions: Action[], node: OpenSetNode } | null) { }
+  private constructor(
+    readonly token: Token,
+    readonly length: number,
+    readonly transition: { actions: Action[]; node: OpenSetNode } | null
+  ) {}
 
-  hasVisited (token: Token) {
+  hasVisited(token: Token) {
     let current = this as OpenSetNode
     while (current.transition != null) {
       if (current.token === token) {
@@ -46,15 +57,21 @@ class OpenSetNode {
     return current.token === token
   }
 
-  createEdge (token: Token, actions: Action[]) {
+  createEdge(token: Token, actions: Action[]) {
     return new OpenSetNode(token, this.length + 1, { actions, node: this })
   }
 
-  static createStart (token: Token) {
+  static createStart(token: Token) {
     return new OpenSetNode(token, 0, null)
   }
 }
-export const bfs = (universe: Universe, graph: Graph, start: Token, end: Token, maxLength: number): BFSSearchResult => {
+export const bfs = (
+  universe: Universe,
+  graph: Graph,
+  start: Token,
+  end: Token,
+  maxLength: number
+): BFSSearchResult => {
   const paths: ChoicesPrStep[] = []
   const openSet: OpenSetNode[] = []
   const recourse = (node: OpenSetNode) => {
@@ -83,11 +100,11 @@ export const bfs = (universe: Universe, graph: Graph, start: Token, end: Token, 
       if (actions.length === 0) {
         continue
       }
-      recourse(node.createEdge(nextToken, actions))
+      openSet.push(node.createEdge(nextToken, actions))
     }
   }
   openSet.push(OpenSetNode.createStart(start))
-  while (true) {
+  for (let i = 0; i < 10000; i++) {
     const node = openSet.pop()
     if (node == null) {
       break

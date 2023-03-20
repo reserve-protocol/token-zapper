@@ -1,0 +1,41 @@
+{
+  "fromToken": {
+    "symbol": "WETH",
+    "name": "Wrapped Ether",
+    "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    "decimals": 18,
+    "logoURI": "https://tokens.1inch.io/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.png",
+    "wrappedNative": "true",
+    "tags": ["tokens", "PEG:ETH"]
+  },
+  "toToken": {
+    "symbol": "USDT",
+    "name": "Tether USD",
+    "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+    "decimals": 6,
+    "logoURI": "https://tokens.1inch.io/0xdac17f958d2ee523a2206206994597c13d831ec7.png",
+    "tags": ["tokens", "PEG:USD"]
+  },
+  "toTokenAmount": "175741568",
+  "fromTokenAmount": "100000000000000000",
+  "protocols": [
+    [
+      [
+        {
+          "name": "SUSHI",
+          "part": 100,
+          "fromTokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+          "toTokenAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      ]
+    ]
+  ],
+  "tx": {
+    "from": "0x0000000000007F150Bd6f54c40A34d7C3d5e9f56",
+    "to": "0x1111111254eeb25477b68fb85ed929f73a960582",
+    "data": "0x0502b1c5000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000000000000000000000000000016345785d8a0000000000000000000000000000000000000000000000000000000000000a718f070000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000003b6d034006da0fd433c1a5d7a4faa01111c044910a184553cfee7c08",
+    "value": "0",
+    "gas": 0,
+    "gasPrice": "36958331683"
+  }
+}

@@ -1,10 +1,9 @@
-
 export class InterningCache<T extends object> {
   private readonly entities = new Map<string, WeakRef<T>>()
-  constructor (private readonly idFn: (t: T) => string) { }
+  constructor(private readonly idFn: (t: T) => string) {}
   private lastCollect = 0
 
-  collect () {
+  collect() {
     if (Date.now() - this.lastCollect < 10000) {
       return
     }
@@ -17,7 +16,7 @@ export class InterningCache<T extends object> {
     }
   }
 
-  get (inst: T): T {
+  get(inst: T): T {
     const addr = this.idFn(inst)
     if (this.entities.has(addr)) {
       const previous = this.entities.get(addr)?.deref()
@@ -32,11 +31,13 @@ export class InterningCache<T extends object> {
     return inst
   }
 
-  toString () {
-    return `InterningCache({${[...this.entities.entries()].map(([addr, address]) => {
-            const addrInst = address.deref()
-            return `[${addr} => ${addrInst}]`
-        }).join(', ')}})`
+  toString() {
+    return `InterningCache({${[...this.entities.entries()]
+      .map(([addr, address]) => {
+        const addrInst = address.deref()
+        return `[${addr} => ${addrInst}]`
+      })
+      .join(', ')}})`
   }
 
   readonly [Symbol.toStringTag] = 'InterningCache'

@@ -4,7 +4,7 @@ import {
   IBasketHandler__factory,
   IRToken__factory,
 } from '../contracts'
-import { type Token, type TokenQuantity } from '../entities/Token'
+import { numberOfUnits, TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
@@ -50,25 +50,22 @@ export class BasketHandler {
   }
 }
 
+
 export class MintRTokenAction extends Action {
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     if (amountsIn.length !== this.input.length) {
       throw new Error('Invalid inputs for RToken mint')
     }
-    const quantityPrToken = this.basketHandler.mintQuantities
+    const units = numberOfUnits(amountsIn, this.basketHandler.mintQuantities)
+    return [this.basketHandler.rToken.quantityFromBigInt(units)]
+  }
 
-    let outRToken: TokenQuantity = amountsIn[0]
-      .div(quantityPrToken[0])
-      .convertTo(this.basketHandler.rToken)
-    for (let i = 1; i < amountsIn.length; i++) {
-      const qty = amountsIn[i]
-        .div(quantityPrToken[i])
-        .convertTo(this.basketHandler.rToken)
-      if (outRToken.gt(qty)) {
-        outRToken = qty
-      }
-    }
-    return [outRToken]
+  async exchange(input: TokenQuantity[], balances: TokenAmounts) {
+    const outputs = await this.quote(input)
+    const inputsConsumed = this.basketHandler.mintQuantities.map((qty) =>
+      outputs[0].convertTo(qty.token).mul(qty)
+    )
+    balances.exchange(inputsConsumed, outputs)
   }
 
   async encode(

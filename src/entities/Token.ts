@@ -107,6 +107,9 @@ export class TokenQuantity {
   public scalarMul(other: bigint) {
     return new TokenQuantity(this.token, this.amount * other)
   }
+  public fpMul(other: bigint, scale: bigint) {
+    return new TokenQuantity(this.token, this.amount * other / scale)
+  }
 
   public scalarDiv(other: bigint) {
     return new TokenQuantity(this.token, this.amount / other)
@@ -124,6 +127,10 @@ export class TokenQuantity {
     )
   }
 
+  public toScaled(scale: bigint) {
+    return this.amount * scale / this.token.scale
+  }
+
   public convertTo(other: Token) {
     return new TokenQuantity(
       other,
@@ -132,16 +139,34 @@ export class TokenQuantity {
   }
 
   toString() {
-    return `TokenQuantity(${this.formatWithSymbol()})`
+    return this.formatWithSymbol()
   }
+}
+
+const ONE = 10n ** 18n
+export const numberOfUnits = (amountsIn: TokenQuantity[], unit: TokenQuantity[]) => {
+  let smallest = amountsIn[0].div(unit[0]).toScaled(ONE)
+  for (let i = 1; i < amountsIn.length; i++) {
+    const qty = amountsIn[i].div(unit[i]).toScaled(ONE)
+    if (qty < smallest) {
+      smallest = qty
+    }
+  }
+  return smallest
 }
 
 export class TokenAmounts {
   public tokenBalances = new DefaultMap<Token, TokenQuantity>((tok) =>
     tok.quantityFromBigInt(0n)
   )
+
+  static fromQuantities(qtys: TokenQuantity[]) {
+    const out = new TokenAmounts()
+    qtys.forEach((qty) => out.add(qty))
+    return out
+  }
   toTokenQuantities() {
-    return [...this.tokenBalances.values()].filter(i => i.amount !== 0n)
+    return [...this.tokenBalances.values()].filter((i) => i.amount !== 0n)
   }
   get(tok: Token) {
     return tok.quantityFromBigInt(this.tokenBalances.get(tok).amount)
@@ -172,6 +197,14 @@ export class TokenAmounts {
       this.add(outputs)
     })
   }
+  addAll(input: TokenAmounts) {
+    for (const value of input.tokenBalances.values()) {
+      if (value.amount === 0n) {
+        continue
+      }
+      this.add(value)
+    }
+  }
 
   toString() {
     return `TokenAmounts(${[...this.tokenBalances.values()]
@@ -187,3 +220,4 @@ export class TokenAmounts {
     return out
   }
 }
+

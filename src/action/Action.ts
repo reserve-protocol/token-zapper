@@ -1,5 +1,5 @@
 import { type Address } from '../base/Address'
-import { type Token, type TokenQuantity } from '../entities/Token'
+import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
 import { type Approval } from '../base/Approval'
 import { type ContractCall } from '../base/ContractCall'
 
@@ -26,6 +26,10 @@ export abstract class Action {
   ) {}
 
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
+  async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {
+    const outputs = await this.quote(amountsIn)
+    balances.exchange(amountsIn, outputs)
+  }
   abstract encode(
     amountsIn: TokenQuantity[],
     destination: Address,

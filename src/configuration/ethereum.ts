@@ -45,19 +45,11 @@ const initialize = async (universe: Universe) => {
       universe.commonTokens[key] = await universe.getToken(addr)
     })
   )
-  const mainInst = IMain__factory.connect(
-    '0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a',
-    universe.provider
-  )
+  // const mainInst = IMain__factory.connect(
+  //   '0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a',
+  //   universe.provider
+  // )
 
-  console.log(
-    'basketHandler:',
-    await mainInst.basketHandler(),
-    'rToken:',
-    await mainInst.rToken(),
-    'rsr:',
-    await mainInst.rsr()
-  )
   const oneInchRouter = createEthereumRouter()
   universe.dexAggregators.push(
     new DexAggregator(

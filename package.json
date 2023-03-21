@@ -1,7 +1,7 @@
 {
-  "name": "reserve-token-zapper",
+  "name": "@reserve/token-zapper",
   "version": "1.0.0",
-  "description": "Library to find the best way to convert tokens into RTokens",
+  "description": "A library to help convert tokens into RTokens",
   "keywords": [],
   "source": "src/index.ts",
   "main": "./lib.commonjs/index.js",

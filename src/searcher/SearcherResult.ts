@@ -7,10 +7,7 @@ import { type ContractCall } from '../base/ContractCall'
 import { type Approval } from '../base/Approval'
 import { type Address } from '../base/Address'
 import { type ZapERC20ParamsStruct } from '../contracts/contracts/IZapper.sol/IZapper'
-import {
-  MultiTokenExchange,
-  type MultiStepTokenExchange,
-} from '../searcher/Swap'
+import { SwapPaths } from '../searcher/Swap'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
@@ -30,26 +27,23 @@ class Step {
   ) {}
 }
 
-const linearize = (
-  executor: Address,
-  swapBlocks: MultiStepTokenExchange[]
-): Step[] => {
+const linearize = (executor: Address, tokenExchange: SwapPaths): Step[] => {
   const out: Step[] = []
-  for (const swapBlock of swapBlocks) {
-    const endDest = swapBlock.destination
-    for (let i = 0; i < swapBlock.steps.length; i++) {
-      const step = swapBlock.steps[i]
-      const hasNext = swapBlock.steps[i + 1] != null
+  for (const groupOfSwaps of tokenExchange.swapPaths) {
+    const endDest = groupOfSwaps.destination
+    for (let i = 0; i < groupOfSwaps.steps.length; i++) {
+      const step = groupOfSwaps.steps[i]
+      const hasNext = groupOfSwaps.steps[i + 1] != null
       let nextAddr = !hasNext ? endDest : executor
 
       // If this step supports sending funds to a destination, and the next step requires pay before call
       // we will point the output of this to next
       if (
         step.action.proceedsOptions === DestinationOptions.Recipient &&
-        swapBlock.steps[i + 1]?.action.interactionConvention ===
+        groupOfSwaps.steps[i + 1]?.action.interactionConvention ===
           InteractionConvention.PayBeforeCall
       ) {
-        nextAddr = swapBlock.steps[i + 1].action.address
+        nextAddr = groupOfSwaps.steps[i + 1].action.address
       }
 
       out.push(new Step(step.input, step.action, nextAddr))
@@ -66,7 +60,7 @@ class ZapTransaction {
     public readonly gas: bigint,
     public readonly input: TokenQuantity,
     public readonly output: TokenQuantity[],
-    public readonly result: SearcherResult
+    public readonly result: SearcherResult,
   ) {}
 
   get fee() {
@@ -85,14 +79,12 @@ export class SearcherResult {
   constructor(
     readonly universe: Universe,
     readonly approvals: ApprovalsStore,
-    public readonly input: TokenQuantity[],
-    public readonly swapBlocks: MultiTokenExchange,
-    public readonly output: TokenQuantity[],
+    public readonly swaps: SwapPaths,
     public readonly signer: Address
   ) {}
 
   describe() {
-    return this.swapBlocks.describe()
+    return this.swaps.describe()
   }
 
   private async encodeActions(steps: Step[]): Promise<ContractCall[]> {
@@ -128,13 +120,14 @@ export class SearcherResult {
 
   async toTransaction() {
     const executorAddress = this.universe.config.addresses.executorAddress
-    const inputIsNativeToken = this.input[0].token === this.universe.nativeToken
+    const inputIsNativeToken =
+      this.swaps.inputs[0].token === this.universe.nativeToken
     const builder = new TransactionBuilder(this.universe)
 
     const allApprovals: Approval[] = []
     const potentialResidualTokens = new Set<Token>()
 
-    for (const block of this.swapBlocks.tokenExchanges) {
+    for (const block of this.swaps.swapPaths) {
       for (const swap of block.steps) {
         if (
           swap.action.interactionConvention ===
@@ -166,14 +159,14 @@ export class SearcherResult {
       builder.setupApprovals(approvalNeeded)
     }
 
-    const steps = linearize(executorAddress, this.swapBlocks.tokenExchanges)
+    const steps = linearize(executorAddress, this.swaps)
     for (const encodedSubCall of await this.encodeActions(steps)) {
       builder.addCall(encodedSubCall)
     }
 
     builder.drainERC20([...potentialResidualTokens], this.signer)
 
-    let inputToken = this.input[0].token
+    let inputToken = this.swaps.inputs[0].token
     if (this.universe.commonTokens.ERC20GAS == null) {
       throw new Error('..')
     }
@@ -183,10 +176,10 @@ export class SearcherResult {
         : inputToken
     const payload = {
       tokenIn: inputToken.address.address,
-      amountIn: this.input[0].amount,
+      amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
-      amountOut: this.output[0].amount,
-      tokenOut: this.output[0].token.address.address,
+      amountOut: this.swaps.outputs[0].amount,
+      tokenOut: this.swaps.outputs[0].token.address.address,
     }
     const data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
@@ -195,6 +188,7 @@ export class SearcherResult {
       await this.universe.provider.estimateGas({
         to: this.universe.config.addresses.zapperAddress.address,
         data,
+        value: ethers.BigNumber.from(this.swaps.inputs[0].amount),
         from: this.signer.address,
       })
     ).toBigInt()
@@ -211,7 +205,7 @@ export class SearcherResult {
       ),
 
       gasLimit: ethers.BigNumber.from(gas + gas / 100n),
-      value: ethers.BigNumber.from(this.input[0].amount),
+      value: ethers.BigNumber.from(this.swaps.inputs[0].amount),
       from: this.signer.address,
     }
     return new ZapTransaction(
@@ -219,8 +213,8 @@ export class SearcherResult {
       payload,
       tx,
       gas,
-      this.input[0],
-      this.output,
+      this.swaps.inputs[0],
+      this.swaps.outputs,
       this
     )
   }

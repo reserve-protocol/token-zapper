@@ -23,7 +23,7 @@ describe('searcher', () => {
     )
     expect(result.length).toBe(1)
     const expectedPath = result[0]
-    expect(expectedPath.output[0].formatWithSymbol()).toBe('44973.63762 cUSDT')
+    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('44973.63762 cUSDT')
   })
 
   it('it can handle burns', async () => {
@@ -46,6 +46,6 @@ describe('searcher', () => {
 
     expect(result.length).toBe(1)
     const expectedPath = result[0]
-    expect(expectedPath.output[0].formatWithSymbol()).toBe('9.999999 USDT')
+    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('9.999999 USDT')
   })
 })

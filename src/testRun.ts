@@ -3,8 +3,6 @@ import { Address } from './base/Address'
 import ethereumConfig from './configuration/ethereum'
 import { StaticConfig } from './configuration/StaticConfig'
 import { Universe } from './Universe'
-import { V2Pool } from './entities/dexes/V2LikePool'
-import { UniV2Like } from './action/UniV2Like'
 import { Searcher } from './searcher/Searcher'
 import * as dotenv from "dotenv"
 dotenv.config()
@@ -22,23 +20,25 @@ const run = async () => {
     config: new StaticConfig(ethereumConfig.config.nativeToken, {
       ...ethereumConfig.config.addresses,
       executorAddress: Address.fromHexString(
-        '0xd977422c9eE9B646f64A4C4389a6C98ad356d8C4'
+        '0xA9d0Fb5837f9c42c874e16da96094b14Af0e2784'
       ),
       zapperAddress: Address.fromHexString(
-        '0x1eB5C49630E08e95Ba7f139BcF4B9BA171C9a8C7'
+        '0x6B21b3ae41f818Fc91e322b53f8D0773d31eCB75'
       ),
     }),
   })
 
   const searcher = new Searcher(universe)
   const result = await searcher.findSingleInputToRTokenZap(
-      universe.commonTokens.ERC20ETH!.fromDecimal("1"),
+      universe.nativeToken!.fromDecimal("0.1"),
       universe.rTokens.eUSD!,
       testUserAddr
   );
 
   console.log(result.describe().join("\n"))
 
+  // const tx = await result.toTransaction()
+  // console.log(tx)
   // // console.log(result)
   // console.log("Done")
 

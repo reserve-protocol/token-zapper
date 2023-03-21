@@ -39,26 +39,26 @@ const initialize = async (universe: Universe) => {
     Address.from('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9'),
     'saUSDT',
     'saUSDT',
-    6
+    18
   )
   const cUSDT = universe.createToken(
     Address.from('0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'),
     'cUSDT',
     'cUSDT',
-    6
+    8
   )
 
   const saUSDC = universe.createToken(
     Address.from('0x8f471832C6d35F2a51606a60f482BCfae055D986'),
     'saUSDC',
     'saUSDC',
-    6
+    18
   )
   const cUSDC = universe.createToken(
     Address.from('0x39aa39c021dfbae8fac545936693ac917d5e7563'),
     'cUSDC',
     'cUSDC',
-    6
+    8
   )
   const prices = new Map<Token, TokenQuantity>([
     [USDT, universe.usd.one],

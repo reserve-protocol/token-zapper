@@ -10,6 +10,7 @@ const iCTokenInterface = ICToken__factory.createInterface()
 const iCEtherInterface = CEther__factory.createInterface()
 
 export class MintCTokenAction extends Action {
+  private readonly rateScale: bigint
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     if (this.underlying === this.universe.nativeToken) {
       return new ContractCall(
@@ -31,18 +32,14 @@ export class MintCTokenAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.cToken.quantityFromBigInt(
-        (amountsIn.amount * 10n ** 18n) / this.rate.value
-      ),
-    ]
+    return [amountsIn.fpDiv(this.rate.value, this.rateScale).convertTo(this.cToken)]
   }
 
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
     readonly cToken: Token,
-    private readonly rate: {value: bigint}
+    private readonly rate: { value: bigint }
   ) {
     super(
       cToken.address,
@@ -52,6 +49,7 @@ export class MintCTokenAction extends Action {
       DestinationOptions.Callee,
       [new Approval(underlying, cToken.address)]
     )
+    this.rateScale = cToken.scale * 10n ** 10n
   }
 
   toString(): string {
@@ -60,6 +58,7 @@ export class MintCTokenAction extends Action {
 }
 
 export class BurnCTokenAction extends Action {
+  private readonly rateScale: bigint
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
@@ -72,18 +71,14 @@ export class BurnCTokenAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.underlying.quantityFromBigInt(
-        (amountsIn.amount * this.rate.value) / 10n ** 18n
-      ),
-    ]
+    return [amountsIn.fpMul(this.rate.value, this.rateScale).convertTo(this.underlying)]
   }
 
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
     readonly cToken: Token,
-    private readonly rate: {value: bigint}
+    private readonly rate: { value: bigint }
   ) {
     super(
       cToken.address,
@@ -93,6 +88,7 @@ export class BurnCTokenAction extends Action {
       DestinationOptions.Recipient,
       []
     )
+    this.rateScale = cToken.scale * 10n ** 10n
   }
   toString(): string {
     return `CTokenBurn(${this.cToken.toString()})`

@@ -70,7 +70,7 @@ describe('searcher', () => {
 
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
-    ).toBe('174.12152 eUSD')
+    ).toBe('174.12152007 eUSD')
   })
 
   it('It can can burn then RToken', async () => {
@@ -124,7 +124,7 @@ describe('searcher', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === oldEUSD)?.formatWithSymbol()
-    ).toBe('171.810516 oldEUSD')
+    ).toBe('171.81120402 oldEUSD')
   })
 
   it('recursive RTokens', async () => {

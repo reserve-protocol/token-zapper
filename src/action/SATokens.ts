@@ -39,7 +39,9 @@ export class MintSATokensAction extends Action {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [
-      this.output[0].quantityFromBigInt(rayDiv(amountsIn.amount, this.rate.value)),
+      this.saToken.quantityFromBigInt(
+        rayDiv(amountsIn.convertTo(this.saToken).amount, this.rate.value)
+      ),
     ]
   }
 
@@ -47,7 +49,7 @@ export class MintSATokensAction extends Action {
     readonly universe: Universe,
     readonly underlying: Token,
     readonly saToken: Token,
-    private readonly rate: {value: bigint}
+    private readonly rate: { value: bigint }
   ) {
     super(
       saToken.address,
@@ -84,7 +86,9 @@ export class BurnSATokensAction extends Action {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [
-      this.output[0].quantityFromBigInt(rayMul(amountsIn.amount, this.rate.value)),
+      this.saToken
+        .quantityFromBigInt(rayMul(amountsIn.amount, this.rate.value))
+        .convertTo(this.underlying),
     ]
   }
 
@@ -92,7 +96,7 @@ export class BurnSATokensAction extends Action {
     readonly universe: Universe,
     readonly underlying: Token,
     readonly saToken: Token,
-    private readonly rate: {value: bigint}
+    private readonly rate: { value: bigint }
   ) {
     super(
       saToken.address,

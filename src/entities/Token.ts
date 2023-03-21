@@ -111,6 +111,10 @@ export class TokenQuantity {
     return new TokenQuantity(this.token, this.amount * other / scale)
   }
 
+  public fpDiv(other: bigint, scale: bigint) {
+    return new TokenQuantity(this.token, this.amount * scale / other)
+  }
+
   public scalarDiv(other: bigint) {
     return new TokenQuantity(this.token, this.amount / other)
   }

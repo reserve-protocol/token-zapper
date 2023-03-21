@@ -26,7 +26,7 @@ describe('actions/RToken', () => {
     const quantitiesIn = [
       saUSDT.fromDecimal('0.225063').scalarMul(100n),
       USDT.fromDecimal('0.500004').scalarMul(100n),
-      cUSDT.fromDecimal('11.246051').scalarMul(100n),
+      cUSDT.fromDecimal('1124.340940').scalarMul(100n),
     ]
     const eUSDQtyFromAbout100USDOfBasket = (await mint.quote(quantitiesIn))[0]
 

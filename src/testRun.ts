@@ -6,6 +6,8 @@ import { Universe } from './Universe'
 import { V2Pool } from './entities/dexes/V2LikePool'
 import { UniV2Like } from './action/UniV2Like'
 import { Searcher } from './searcher/Searcher'
+import * as dotenv from "dotenv"
+dotenv.config()
 
 const UniV2Factory = Address.from('0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f')
 const run = async () => {
@@ -13,7 +15,7 @@ const run = async () => {
     '0x0000000000007F150Bd6f54c40A34d7C3d5e9f56'
   )
   const provider = new ethers.providers.JsonRpcProvider(
-    'http://57.128.92.239:8545'
+    process.env.PROVIDER
   )
   const universe = await Universe.createWithConfig(provider, {
     ...ethereumConfig,
@@ -28,25 +30,15 @@ const run = async () => {
     }),
   })
 
-  const USDT = universe.commonTokens.USDT!
-  const WETH = universe.commonTokens.ERC20ETH!
-  const pool = V2Pool.createStandardV2Pool(UniV2Factory, USDT, WETH, 3000n)
-  const wethPrice = USDT.fromDecimal('1780')
-  const wethInPool = WETH.fromDecimal('50')
-
-  const usdtInPool = wethInPool.convertTo(USDT).mul(wethPrice)
-  pool.updateReserves(wethInPool.amount, usdtInPool.amount)
-
-  universe.addAction(new UniV2Like(universe, pool, '0->1'))
-  universe.addAction(new UniV2Like(universe, pool, '1->0'))
   const searcher = new Searcher(universe)
-
-  const result = await searcher.findSingleInputTokenSwap(
-    universe.commonTokens.ERC20ETH!.fromDecimal("1"),
-      USDT!,
-      Address.ZERO
+  const result = await searcher.findSingleInputToRTokenZap(
+      universe.commonTokens.ERC20ETH!.fromDecimal("1"),
+      universe.rTokens.eUSD!,
+      testUserAddr
   );
-  console.log(result.join("\n"))
+
+  console.log(result.describe().join("\n"))
+
   // // console.log(result)
   // console.log("Done")
 

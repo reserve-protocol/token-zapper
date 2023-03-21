@@ -4,26 +4,35 @@ import { V2Pool } from '../../src/entities/dexes/V2LikePool'
 import { Searcher } from '../../src/searcher'
 import { UniV2Like } from '../../src/action/UniV2Like'
 import testConfig from '../../src/configuration/testEnvironment'
+import { Token, TokenQuantity } from '../../src/entities/Token'
 const UniV2Factory = Address.from('0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f')
 
-const fixture = async () => {
+export const createV2Pool = (
+  universe: Universe,
+  quantity: TokenQuantity,
+  price: TokenQuantity,
+) => {
+  const pool = V2Pool.createStandardV2Pool(UniV2Factory, quantity.token, price.token, 3000n)
+  const quoteQty = quantity.convertTo(price.token).mul(price)
+  const [r0, r1] = quantity.token === pool.token0 ? [quantity, quoteQty] : [quoteQty, quantity]
+  pool.updateReserves(r0.amount, r1.amount)
+  universe.addAction(new UniV2Like(universe, pool, '1->0'))
+  universe.addAction(new UniV2Like(universe, pool, '0->1'))
+  return pool
+}
+
+export const fixture = async () => {
   const universe = await Universe.createForTest(testConfig)
   await testConfig.initialize(universe)
 
-  const USDT = (await universe.getToken(
-    Address.fromHexString('0xdac17f958d2ee523a2206206994597c13d831ec7')
-  ))!
+  const WETH = universe.commonTokens.ERC20ETH!
+  const USDT = universe.commonTokens.USDT!
 
-  const WETH = universe.commonTokens.ERC20GAS!
-
-  const pool = V2Pool.createStandardV2Pool(UniV2Factory, USDT, WETH, 3000n)
-  const wethPrice = USDT.fromDecimal('1780')
-  const wethInPool = WETH.fromDecimal('50')
-
-  const usdtInPool = wethInPool.convertTo(USDT).mul(wethPrice)
-  pool.updateReserves(wethInPool.amount, usdtInPool.amount)
-  universe.addAction(new UniV2Like(universe, pool, '1->0'))
-  universe.addAction(new UniV2Like(universe, pool, '0->1'))
+  createV2Pool(
+    universe,
+    WETH.fromDecimal('50'),
+    USDT.fromDecimal('1750'),
+  )
   return universe
 }
 describe('v2 uniswap actions', () => {
@@ -36,7 +45,7 @@ describe('v2 uniswap actions', () => {
       Address.ZERO
     )
     expect(result[0].output[0].formatWithSymbol()).toBe(
-      '0.005600496214075793 WETH'
+      '0.005696493782365597 WETH'
     )
     expect(result[0].steps.length).toBe(1)
   })
@@ -53,7 +62,7 @@ describe('v2 uniswap actions', () => {
       cUSDT!,
       Address.ZERO
     )
-    expect(result[0].output[0].formatWithSymbol()).toBe('79797.004066 cUSDT')
+    expect(result[0].output[0].formatWithSymbol()).toBe('78452.107909 cUSDT')
     expect(result[0].steps.length).toBe(2)
   })
 
@@ -69,7 +78,7 @@ describe('v2 uniswap actions', () => {
       Address.ZERO
     )
     expect(result[0].output[0].formatWithSymbol()).toBe(
-      '0.006226343167687566 WETH'
+      '0.006333066959642829 WETH'
     )
     expect(result[0].steps.length).toBe(2)
   })

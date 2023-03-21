@@ -27,19 +27,23 @@ const searcher = new Searcher(universe);
 
 Use the searcher to find a swap:
 ```typescript
-const searcherResult = await searcher.findSingleInputToRTokenZap({
-    input: universe.nativeToken.fromDecimal("0.1"),
+const result = await searcher.findSingleInputToRTokenZap({
+    input: universe.commonTokens.ERC20ETH.fromDecimal("1.0"),
     rToken: universe.rTokens.eUSD!,
     signerAddress: Address.fromHexString(YOUR ADDRESS)
 });
 
-console.log(searcherResult.describe().join("\n"))
-// input: 0.1 ETH
-// exchange 0.1 WETH for 178.19591 USDT via OneInch(path=[UNISWAP_V3])
-// exchange 44.549868 USDT for 40.101809 saUSDT via MintSATokensAction
-// exchange 44.555392 USDT for 2003.81805384 cUSDT via MintCTokenAction
-// exchange 40.101809 saUSDT, 2003.81805384 cUSDT, 89.09065 USDT for 178.17969238 eUSD via MintRTokenAction
-// expected output: 178.17969238 eUSD
+console.log(result.describe().join("\n"))
+// MultiTokenExchange(inputs: [TokenQuantity(1.0 WETH)], outputs: [TokenQuantity(1802.29490528 eUSD)]) {
+//   MultiStepTokenExchange(inputs: [TokenQuantity(1.0 WETH)], outputs: [TokenQuantity(901.153117 USDT),TokenQuantity(405.630801 saUSDT),TokenQuantity(20268.70189974 cUSDT)]) {
+//     Step 1: Exchange [TokenQuantity(1.0 WETH)] for [TokenQuantity(1802.544167 USDT)] via OneInch(path=[UNISWAP_V3])
+//     Step 2: Exchange [TokenQuantity(450.672092 USDT)] for [TokenQuantity(405.630801 saUSDT)] via SATokenMint(Token(saUSDT))
+//     Step 3: Exchange [TokenQuantity(450.718958 USDT)] for [TokenQuantity(20268.70189974 cUSDT)] via CTokenMint(Token(cUSDT))
+//   }
+//   MultiStepTokenExchange(inputs: [TokenQuantity(405.630801 saUSDT),TokenQuantity(20268.70189974 cUSDT),TokenQuantity(901.153117 USDT)], outputs: [TokenQuantity(1802.29490528 eUSD)]) {
+//     Step 1: Exchange [TokenQuantity(405.630801 saUSDT),TokenQuantity(20268.70189974 cUSDT),TokenQuantity(901.153117 USDT)] for [TokenQuantity(1802.29490528 eUSD)] via RTokenMint(Token(eUSD))
+//   }
+// }
 ```
 
 The `SearcherResult` will show you the path the path the searcher will use and an on the individual swaps it will execute. The `SearcherResult` can be converted into a transaction via the `.toTransaction()` method on the `SearcherResult`. This will encode all the individual `Action's` into something the `ZapperExecutor` can run. It will also simulate the transaction and estimate gas.

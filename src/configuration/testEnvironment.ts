@@ -6,6 +6,8 @@ import { Address } from '../base/Address'
 import { type Universe } from '../Universe'
 import { type ChainConfiguration } from './ChainConfiguration'
 import { StaticConfig } from './StaticConfig'
+import { Oracle } from '../oracles'
+import { Token, TokenQuantity } from 'entities'
 
 const initialize = async (universe: Universe) => {
   const eUSD = universe.createToken(
@@ -26,30 +28,61 @@ const initialize = async (universe: Universe) => {
     'USDT',
     6
   )
+
+  const USDC = universe.createToken(
+    Address.from('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'),
+    'USDC',
+    'USDC',
+    6
+  )
   const saUSDT = universe.createToken(
-    Address.fromHexString('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9'),
+    Address.from('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9'),
     'saUSDT',
     'saUSDT',
     6
   )
   const cUSDT = universe.createToken(
-    Address.fromHexString('0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'),
+    Address.from('0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'),
     'cUSDT',
     'cUSDT',
     6
   )
 
+  const saUSDC = universe.createToken(
+    Address.from('0x8f471832C6d35F2a51606a60f482BCfae055D986'),
+    'saUSDC',
+    'saUSDC',
+    6
+  )
+  const cUSDC = universe.createToken(
+    Address.from('0x39aa39c021dfbae8fac545936693ac917d5e7563'),
+    'cUSDC',
+    'cUSDC',
+    6
+  )
+  const prices = new Map<Token, TokenQuantity>([
+    [USDT, universe.usd.one],
+    [weth, universe.usd.fromDecimal('1750')],
+  ])
+  universe.oracles.push(
+    new Oracle('Test', async (token) => {
+      return prices.get(token) ?? null
+    })
+  )
+
   universe.commonTokens.USDT = USDT
+  universe.commonTokens.USDC = USDC
   universe.commonTokens.ERC20ETH = weth
   universe.commonTokens.ERC20GAS = weth
   universe.defineMintable(
     new DepositAction(universe, weth),
     new WithdrawAction(universe, weth)
   )
+
   const quantities = [
     saUSDT.fromDecimal('0.225063'),
     USDT.fromDecimal('0.500004'),
-    cUSDT.fromDecimal('11.246051'),
+    cUSDT.fromDecimal('1124.340940'),
   ]
   const basketHandler = {
     inputTokens: quantities.map((i) => i.token),
@@ -57,13 +90,18 @@ const initialize = async (universe: Universe) => {
     rToken: eUSD,
   } as any
 
-  const saTokens = [{ underlying: USDT, saToken: saUSDT }]
-
-  const cTokens = [{ underlying: USDT, cToken: cUSDT }]
+  const saTokens = [
+    { underlying: USDT, saToken: saUSDT, rate: 1110924415157506442300940896n },
+    { underlying: USDC, saToken: saUSDC, rate: 1084799248366747993839600567n },
+  ]
+  const cTokens = [
+    { underlying: USDT, cToken: cUSDT, rate: 222352483123917n },
+    { underlying: USDC, cToken: cUSDC, rate: 227824756984310n },
+  ]
 
   for (const saToken of saTokens) {
     const rate = {
-      value: 1110924415157506442300940896n,
+      value: saToken.rate,
     }
     universe.defineMintable(
       new MintSATokensAction(
@@ -83,7 +121,7 @@ const initialize = async (universe: Universe) => {
 
   for (const cToken of cTokens) {
     const rate = {
-      value: 222352483123917n,
+      value: cToken.rate,
     }
     universe.defineMintable(
       new MintCTokenAction(universe, cToken.underlying, cToken.cToken, rate),

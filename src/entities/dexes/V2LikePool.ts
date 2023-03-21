@@ -213,6 +213,9 @@ export class V2Pool {
     fee: bigint,
     poolAddress?: Address
   ) {
+    if (tokenA === tokenB) {
+      throw new Error("Invalid pool input")
+    }
     const [token0, token1] = sortTokens(tokenA, tokenB)
     poolAddress =
       poolAddress == null

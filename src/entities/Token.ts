@@ -4,6 +4,7 @@ import { ethers } from 'ethers'
 
 export class Token {
   public readonly zero: TokenQuantity
+  public readonly one: TokenQuantity
 
   private constructor(
     public readonly address: Address,
@@ -13,6 +14,7 @@ export class Token {
     public readonly scale: bigint
   ) {
     this.zero = this.quantityFromBigInt(0n)
+    this.one = this.quantityFromBigInt(scale)
   }
 
   static createToken(
@@ -138,6 +140,9 @@ export class TokenAmounts {
   public tokenBalances = new DefaultMap<Token, TokenQuantity>((tok) =>
     tok.quantityFromBigInt(0n)
   )
+  toTokenQuantities() {
+    return [...this.tokenBalances.values()].filter(i => i.amount !== 0n)
+  }
   get(tok: Token) {
     return tok.quantityFromBigInt(this.tokenBalances.get(tok).amount)
   }
@@ -152,8 +157,12 @@ export class TokenAmounts {
     this.tokenBalances.set(qty.token, b.sub(qty))
   }
 
+  hasBalance(inputs: TokenQuantity[]) {
+    return inputs.every((i) => this.get(i.token).gte(i))
+  }
+
   exchange(inputs: TokenQuantity[], outputs: TokenQuantity[]) {
-    if (!inputs.every((i) => this.get(i.token).gte(i))) {
+    if (!this.hasBalance(inputs)) {
       throw new Error('Insufficient balance')
     }
     inputs.forEach((input) => {

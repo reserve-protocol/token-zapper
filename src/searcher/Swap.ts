@@ -3,7 +3,7 @@ import { type Address } from '../base/Address'
 import { type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 
-class Swap {
+export class TokenExchange {
   constructor(
     public readonly input: TokenQuantity[],
     public readonly action: Action,
@@ -11,7 +11,7 @@ class Swap {
   ) {}
 
   toString() {
-    return `Swap(input: ${this.input
+    return `TokenExchange(input: ${this.input
       .map((i) => i.formatWithSymbol())
       .join(', ')}, action: ${this.action}, output: ${this.output
       .map((i) => i.formatWithSymbol())
@@ -19,18 +19,18 @@ class Swap {
   }
 }
 
-export class Swaps {
+export class MultiStepTokenExchange {
   constructor(
     readonly universe: Universe,
     public readonly inputs: TokenQuantity[],
-    public readonly steps: Swap[],
+    public readonly steps: TokenExchange[],
     public readonly output: TokenQuantity[],
     public readonly outputValue: TokenQuantity,
     public readonly destination: Address
   ) {}
 
   // This is a bad way to compare, ideally the USD value gets compared
-  compare(other: Swaps) {
+  compare(other: MultiStepTokenExchange) {
     const comp = this.outputValue.compare(other.outputValue)
     if (comp !== 0) {
       return comp
@@ -43,11 +43,57 @@ export class Swaps {
   }
 
   toString() {
-    return `Swaps(input: ${this.inputs
+    return `MultiStepTokenExchange(input: ${this.inputs
       .map((i) => i.formatWithSymbol())
       .join(', ')}, steps: ${this.steps.join(', ')}, output: ${this.output
       .map((i) => i.formatWithSymbol())
       .join(', ')} (${this.outputValue.formatWithSymbol()}))`
+  }
+  
+  describe() {
+    const out: string[] = []
+    out.push(`MultiStepTokenExchange(inputs: [${this.inputs.join(',')}], outputs: [${this.output.join(',')}]) {`)
+    for (let i = 0; i < this.steps.length; i++) {
+      const step = this.steps[i];
+      out.push(`  Step ${i+1}: Exchange [${step.input.join(",")}] for [${step.output.join(",")}] via ${step.action.toString()}`)
+    }
+    out.push("}")
+    return out
+  }
+}
+
+export class MultiTokenExchange {
+  constructor(
+    readonly universe: Universe,
+    public readonly inputs: TokenQuantity[],
+    public readonly tokenExchanges: MultiStepTokenExchange[],
+    public readonly output: TokenQuantity[],
+    public readonly outputValue: TokenQuantity,
+    public readonly destination: Address
+  ) {}
+
+  toString() {
+    return `MultiTokenExchange(input: ${this.inputs
+      .map((i) => i.formatWithSymbol())
+      .join(', ')}, steps: ${this.tokenExchanges.join(', ')}, output: ${this.output
+      .map((i) => i.formatWithSymbol())
+      .join(', ')} (${this.outputValue.formatWithSymbol()}))`
+  }
+
+
+  describe() {
+    const out: string[] = []
+    out.push(`MultiTokenExchange(inputs: [${this.inputs.join(',')}], outputs: [${this.output.join(',')}]) {`)
+    for (let i = 0; i < this.tokenExchanges.length; i++) {
+      const subExchangeDescription = this.tokenExchanges[i].describe()
+      out.push(
+        ...subExchangeDescription.map(line => {
+          return "  " + line
+        })
+      )
+    }
+    out.push("}")
+    return out
   }
 }
 
@@ -62,16 +108,16 @@ export class SwapPlan {
   public async quote(
     input: TokenQuantity[],
     destination: Address
-  ): Promise<Swaps> {
+  ): Promise<MultiStepTokenExchange> {
     let legAmount = input
-    const swaps: Swap[] = []
+    const swaps: TokenExchange[] = []
 
     for (const step of this.steps) {
       if (step.input.length !== legAmount.length) {
         throw new Error('')
       }
       const output = await step.quote(legAmount)
-      swaps.push(new Swap(legAmount, step, output))
+      swaps.push(new TokenExchange(legAmount, step, output))
       legAmount = output
     }
 
@@ -86,7 +132,7 @@ export class SwapPlan {
       )
     ).reduce((l, r) => l.add(r))
 
-    return new Swaps(this.universe, input, swaps, legAmount, value, destination)
+    return new MultiStepTokenExchange(this.universe, input, swaps, legAmount, value, destination)
   }
 
   toString() {

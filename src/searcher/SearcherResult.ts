@@ -7,7 +7,10 @@ import { type ContractCall } from '../base/ContractCall'
 import { type Approval } from '../base/Approval'
 import { type Address } from '../base/Address'
 import { type ZapERC20ParamsStruct } from '../contracts/contracts/IZapper.sol/IZapper'
-import { type Swaps } from '../searcher/Swap'
+import {
+  MultiTokenExchange,
+  type MultiStepTokenExchange,
+} from '../searcher/Swap'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
@@ -27,7 +30,10 @@ class Step {
   ) {}
 }
 
-const linearize = (executor: Address, swapBlocks: Swaps[]): Step[] => {
+const linearize = (
+  executor: Address,
+  swapBlocks: MultiStepTokenExchange[]
+): Step[] => {
   const out: Step[] = []
   for (const swapBlock of swapBlocks) {
     const endDest = swapBlock.destination
@@ -80,32 +86,13 @@ export class SearcherResult {
     readonly universe: Universe,
     readonly approvals: ApprovalsStore,
     public readonly input: TokenQuantity[],
-    public readonly swapBlocks: Swaps[],
+    public readonly swapBlocks: MultiTokenExchange,
     public readonly output: TokenQuantity[],
     public readonly signer: Address
   ) {}
 
   describe() {
-    const out: string[] = []
-    out.push('input: ' + this.input.map((i) => i.formatWithSymbol()).join(', '))
-    for (const block of this.swapBlocks) {
-      for (const swap of block.steps) {
-        out.push(
-          'exchange ' +
-            swap.input.map((i) => i.formatWithSymbol()).join(', ') +
-            ' for ' +
-            swap.output.map((i) => i.formatWithSymbol()).join(', ') +
-            ' via ' +
-            swap.action.toString()
-        )
-      }
-    }
-    out.push(
-      'expected output: ' +
-        this.output.map((i) => i.formatWithSymbol()).join(', ')
-    )
-
-    return out
+    return this.swapBlocks.describe()
   }
 
   private async encodeActions(steps: Step[]): Promise<ContractCall[]> {
@@ -147,7 +134,7 @@ export class SearcherResult {
     const allApprovals: Approval[] = []
     const potentialResidualTokens = new Set<Token>()
 
-    for (const block of this.swapBlocks) {
+    for (const block of this.swapBlocks.tokenExchanges) {
       for (const swap of block.steps) {
         if (
           swap.action.interactionConvention ===
@@ -179,7 +166,7 @@ export class SearcherResult {
       builder.setupApprovals(approvalNeeded)
     }
 
-    const steps = linearize(executorAddress, this.swapBlocks)
+    const steps = linearize(executorAddress, this.swapBlocks.tokenExchanges)
     for (const encodedSubCall of await this.encodeActions(steps)) {
       builder.addCall(encodedSubCall)
     }

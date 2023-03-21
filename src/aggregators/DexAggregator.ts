@@ -1,5 +1,5 @@
 import { type Address } from '../base/Address'
-import { type Swaps } from '../searcher/Swap'
+import { type MultiStepTokenExchange } from '../searcher/Swap'
 import { type Token, type TokenQuantity } from '../entities/Token'
 
 export class DexAggregator {
@@ -11,6 +11,6 @@ export class DexAggregator {
       input: TokenQuantity,
       output: Token,
       slippage: number
-    ) => Promise<Swaps>
+    ) => Promise<MultiStepTokenExchange>
   ) {}
 }

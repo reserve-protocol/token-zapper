@@ -53,7 +53,7 @@
   },
   "scripts": {
     "clean": "rm -rf lib.browser/ lib.commonjs/ lib.esm/",
-    "build": "clean && build:typechain && build:browser && build:cjs && build:esm",
+    "build": "npm run clean && npm run build:typechain && npm run build:browser && npm run build:cjs && npm run build:esm",
     "build:typechain": "cd contracts/ && npx hardhat compile",
     "build:browser": "npx esbuild src/index.ts --bundle --target=chrome67,firefox68,safari14,edge79 --sourcemap=external --platform=browser --minify --outdir=lib.browser/  --allow-overwrite",
     "build:cjs": "npx esbuild src/index.ts --bundle --sourcemap=external --platform=node --packages=external --outdir=lib.commonjs/ --allow-overwrite",

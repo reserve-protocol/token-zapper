@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SearcherResult = void 0;
+const ethers_1 = require("ethers");
 const Action_1 = require("../action/Action");
 const utils_1 = require("../base/utils");
 const TransactionBuilder_1 = require("./TransactionBuilder");
-const ethers_1 = require("ethers");
+const ZapTransaction_1 = require("./ZapTransaction");
 class Step {
     inputs;
     action;
@@ -35,32 +36,6 @@ const linearize = (executor, tokenExchange) => {
     }
     return out;
 };
-class ZapTransaction {
-    universe;
-    params;
-    tx;
-    gas;
-    input;
-    output;
-    result;
-    constructor(universe, params, tx, gas, input, output, result) {
-        this.universe = universe;
-        this.params = params;
-        this.tx = tx;
-        this.gas = gas;
-        this.input = input;
-        this.output = output;
-        this.result = result;
-    }
-    get fee() {
-        return this.universe.nativeToken.quantityFromBigInt(this.universe.gasPrice * this.gas);
-    }
-    toString() {
-        return `ZapTransaction(input:${this.input.formatWithSymbol()},outputs:[${this.output
-            .map((i) => i.formatWithSymbol())
-            .join(', ')}],txFee:${this.fee.formatWithSymbol()})`;
-    }
-}
 class SearcherResult {
     universe;
     approvals;
@@ -163,7 +138,7 @@ class SearcherResult {
             value: inputIsNativeToken ? ethers_1.ethers.BigNumber.from(this.swaps.inputs[0].amount) : 0,
             from: this.signer.address,
         };
-        return new ZapTransaction(this.universe, payload, tx, gas, this.swaps.inputs[0], this.swaps.outputs, this);
+        return new ZapTransaction_1.ZapTransaction(this.universe, payload, tx, gas, this.swaps.inputs[0], this.swaps.outputs, this);
     }
 }
 exports.SearcherResult = SearcherResult;

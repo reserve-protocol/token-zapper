@@ -1,3 +1,5 @@
+import { ethers } from 'ethers'
+
 import {
   DestinationOptions,
   type Action,
@@ -15,9 +17,8 @@ import {
   zapperExecutorInterface,
   zapperInterface,
 } from './TransactionBuilder'
-import { ethers } from 'ethers'
 import { ApprovalsStore } from './ApprovalsStore'
-import { ZapERC20ParamsStruct } from '../contracts/contracts/IZapper.sol/IZapper'
+import { ZapTransaction } from './ZapTransaction'
 
 class Step {
   constructor(
@@ -52,29 +53,6 @@ const linearize = (executor: Address, tokenExchange: SwapPaths): Step[] => {
   return out
 }
 
-class ZapTransaction {
-  constructor(
-    private readonly universe: Universe,
-    public readonly params: ZapERC20ParamsStruct,
-    public readonly tx: ethers.providers.TransactionRequest,
-    public readonly gas: bigint,
-    public readonly input: TokenQuantity,
-    public readonly output: TokenQuantity[],
-    public readonly result: SearcherResult,
-  ) {}
-
-  get fee() {
-    return this.universe.nativeToken.quantityFromBigInt(
-      this.universe.gasPrice * this.gas
-    )
-  }
-
-  toString() {
-    return `ZapTransaction(input:${this.input.formatWithSymbol()},outputs:[${this.output
-      .map((i) => i.formatWithSymbol())
-      .join(', ')}],txFee:${this.fee.formatWithSymbol()})`
-  }
-}
 export class SearcherResult {
   constructor(
     readonly universe: Universe,

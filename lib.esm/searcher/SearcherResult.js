@@ -1,7 +1,8 @@
+import { ethers } from 'ethers';
 import { DestinationOptions, InteractionConvention, } from '../action/Action';
 import { parseHexStringIntoBuffer } from '../base/utils';
 import { TransactionBuilder, zapperExecutorInterface, zapperInterface, } from './TransactionBuilder';
-import { ethers } from 'ethers';
+import { ZapTransaction } from './ZapTransaction';
 class Step {
     inputs;
     action;
@@ -32,32 +33,6 @@ const linearize = (executor, tokenExchange) => {
     }
     return out;
 };
-class ZapTransaction {
-    universe;
-    params;
-    tx;
-    gas;
-    input;
-    output;
-    result;
-    constructor(universe, params, tx, gas, input, output, result) {
-        this.universe = universe;
-        this.params = params;
-        this.tx = tx;
-        this.gas = gas;
-        this.input = input;
-        this.output = output;
-        this.result = result;
-    }
-    get fee() {
-        return this.universe.nativeToken.quantityFromBigInt(this.universe.gasPrice * this.gas);
-    }
-    toString() {
-        return `ZapTransaction(input:${this.input.formatWithSymbol()},outputs:[${this.output
-            .map((i) => i.formatWithSymbol())
-            .join(', ')}],txFee:${this.fee.formatWithSymbol()})`;
-    }
-}
 export class SearcherResult {
     universe;
     approvals;

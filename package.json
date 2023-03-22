@@ -28,7 +28,17 @@
     "./lib.esm/**/.*",
     "./src.ts/**/.*"
   ],
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
+  },
   "jest": {
+    "globals": {
+      "ts-jest": {
+        "tsConfig": "tsconfig.test.json"
+      }
+    },
     "transform": {
       ".(ts|tsx)": "ts-jest"
     },
@@ -52,13 +62,8 @@
       }
     },
     "collectCoverageFrom": [
-      "src/*.{js,ts}"
+      "src.ts/*.{js,ts}"
     ]
-  },
-  "browserslist": "> 0.5%, last 2 versions, not dead",
-  "prettier": {
-    "semi": false,
-    "singleQuote": true
   },
   "scripts": {
     "_build:dist": "rollup -c && uglifyjs ./dist/token-zapper.js -o ./dist/token-zapper.min.js && uglifyjs ./dist/token-zapper.umd.js -o ./dist/token-zapper.umd.min.js",

@@ -62,7 +62,7 @@ describe('v2 uniswap actions', () => {
       cUSDT!,
       Address.ZERO
     )
-    expect(result[0].outputs[0].formatWithSymbol()).toBe('78452.10790957 cUSDT')
+    expect(result[0].outputs[0].formatWithSymbol()).toBe('784.52107909 cUSDT')
     expect(result[0].steps.length).toBe(2)
   })
 
@@ -73,7 +73,7 @@ describe('v2 uniswap actions', () => {
     ))!
 
     const result = await new Searcher(universe).findSingleInputTokenSwap(
-      cUSDT!.fromDecimal('50000'),
+      cUSDT!.fromDecimal('500'),
       universe.commonTokens.ERC20ETH!,
       Address.ZERO
     )

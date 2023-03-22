@@ -5,6 +5,7 @@ import { ContractCall } from '../base/ContractCall';
 import { Approval } from '../base/Approval';
 const iCTokenInterface = ICToken__factory.createInterface();
 const iCEtherInterface = CEther__factory.createInterface();
+const ONEFP18 = 10n ** 18n;
 export class MintCTokenAction extends Action {
     universe;
     underlying;
@@ -18,7 +19,11 @@ export class MintCTokenAction extends Action {
         return new ContractCall(parseHexStringIntoBuffer(iCTokenInterface.encodeFunctionData('mint', [amountsIn.amount])), this.cToken.address, 0n, 'Mint ' + this.cToken.symbol);
     }
     async quote([amountsIn]) {
-        return [amountsIn.convertTo(this.cToken).fpDiv(this.rate.value, this.rateScale)];
+        return [
+            this.cToken.quantityFromBigInt((amountsIn.amount * this.rateScale) /
+                this.rate.value /
+                this.underlying.scale),
+        ];
     }
     constructor(universe, underlying, cToken, rate) {
         super(cToken.address, [underlying], [cToken], InteractionConvention.ApprovalRequired, DestinationOptions.Callee, [new Approval(underlying, cToken.address)]);
@@ -26,7 +31,7 @@ export class MintCTokenAction extends Action {
         this.underlying = underlying;
         this.cToken = cToken;
         this.rate = rate;
-        this.rateScale = 10n ** 18n;
+        this.rateScale = ONEFP18 * underlying.scale;
     }
     toString() {
         return `CTokenMint(${this.cToken.toString()})`;
@@ -42,7 +47,10 @@ export class BurnCTokenAction extends Action {
         return new ContractCall(parseHexStringIntoBuffer(iCTokenInterface.encodeFunctionData('redeem', [amountsIn.amount])), this.cToken.address, 0n, 'Burn ' + this.cToken.symbol);
     }
     async quote([amountsIn]) {
-        return [amountsIn.fpMul(this.rate.value, this.rateScale).convertTo(this.underlying)];
+        return [
+            this.underlying.quantityFromBigInt((amountsIn.amount * this.rate.value * this.underlying.scale) /
+                this.rateScale),
+        ];
     }
     constructor(universe, underlying, cToken, rate) {
         super(cToken.address, [cToken], [underlying], InteractionConvention.None, DestinationOptions.Recipient, []);
@@ -50,7 +58,7 @@ export class BurnCTokenAction extends Action {
         this.underlying = underlying;
         this.cToken = cToken;
         this.rate = rate;
-        this.rateScale = 10n ** 18n;
+        this.rateScale = ONEFP18 * underlying.scale;
     }
     toString() {
         return `CTokenBurn(${this.cToken.toString()})`;

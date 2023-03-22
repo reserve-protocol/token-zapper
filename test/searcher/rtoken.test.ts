@@ -85,13 +85,13 @@ describe('searcher', () => {
       Address.fromHexString('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F')
     ))!
     const result = await searcher.findSingleInputToRTokenZap(
-      CToken.fromDecimal('100000.0'),
+      CToken.fromDecimal('1000.0'),
       eUSD,
       Address.ZERO
     )
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
-    ).toBe('22.23444401 eUSD')
+    ).toBe('22.234444 eUSD')
   })
 
   it('Old eUSD', async () => {
@@ -102,13 +102,13 @@ describe('searcher', () => {
         .fromDecimal('0.225037'),
       universe.tokens
         .get(Address.from('0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'))!
-        .fromDecimal('1124.340940'),
+        .fromDecimal('11.24340940'),
       universe.tokens
         .get(Address.from('0x8f471832C6d35F2a51606a60f482BCfae055D986'))!
         .fromDecimal('0.230457'),
       universe.tokens
         .get(Address.from('0x39aa39c021dfbae8fac545936693ac917d5e7563'))!
-        .fromDecimal('1097.33465'),
+        .fromDecimal('10.9733465'),
     ])
 
     createV2Pool(

@@ -43,7 +43,6 @@ export const findPrecursorTokenSet = async (
     if (acts != null) {
       
       const baseTokens = await acts.burn.quote([qty])
-      console.log(qty + "=>" + baseTokens.join(", "))
       const resolvedDeps = await Promise.all(
         baseTokens.map(async (qty) => ({
           quantity: qty,

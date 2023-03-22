@@ -23,7 +23,7 @@ describe('searcher', () => {
     )
     expect(result.length).toBe(1)
     const expectedPath = result[0]
-    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('44973.63762034 cUSDT')
+    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('449.7363762 cUSDT')
   })
 
   it('it can handle burns', async () => {
@@ -39,7 +39,7 @@ describe('searcher', () => {
     ))!
 
     const result = await searcher.findSingleInputTokenSwap(
-      cUSDT.fromDecimal('44973.63762'),
+      cUSDT.fromDecimal('449.7363762'),
       USDT,
       Address.ZERO
     )

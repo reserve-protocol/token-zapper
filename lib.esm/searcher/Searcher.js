@@ -27,7 +27,6 @@ export const findPrecursorTokenSet = async (universe, unitBasket) => {
         const acts = universe.wrappedTokens.get(qty.token);
         if (acts != null) {
             const baseTokens = await acts.burn.quote([qty]);
-            console.log(qty + "=>" + baseTokens.join(", "));
             const resolvedDeps = await Promise.all(baseTokens.map(async (qty) => ({
                 quantity: qty,
                 dependencies: await recourseOn(qty),

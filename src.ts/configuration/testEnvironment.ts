@@ -83,13 +83,13 @@ const initialize = async (universe: Universe) => {
   const quantities = [
     saUSDT.fromDecimal('0.225063'),
     USDT.fromDecimal('0.500004'),
-    cUSDT.fromDecimal('1124.340940'),
+    cUSDT.fromDecimal('11.24340940'),
   ]
   const basketHandler: IBasket = {
     basketTokens: quantities.map((i) => i.token),
     unitBasket: quantities,
     rToken: eUSD,
-    basketNonce: 0
+    basketNonce: 0,
   }
 
   const saTokens = [

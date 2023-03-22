@@ -9,6 +9,8 @@ import { Approval } from '../base/Approval'
 const iCTokenInterface = ICToken__factory.createInterface()
 const iCEtherInterface = CEther__factory.createInterface()
 
+const ONEFP18 = 10n ** 18n
+
 export class MintCTokenAction extends Action {
   private readonly rateScale: bigint
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
@@ -32,7 +34,13 @@ export class MintCTokenAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountsIn.convertTo(this.cToken).fpDiv(this.rate.value, this.rateScale)]
+    return [
+      this.cToken.quantityFromBigInt(
+        (amountsIn.amount * this.rateScale) /
+          this.rate.value /
+          this.underlying.scale
+      ),
+    ]
   }
 
   constructor(
@@ -49,7 +57,7 @@ export class MintCTokenAction extends Action {
       DestinationOptions.Callee,
       [new Approval(underlying, cToken.address)]
     )
-    this.rateScale = 10n**18n
+    this.rateScale = ONEFP18 * underlying.scale
   }
 
   toString(): string {
@@ -71,7 +79,12 @@ export class BurnCTokenAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountsIn.fpMul(this.rate.value, this.rateScale).convertTo(this.underlying)]
+    return [
+      this.underlying.quantityFromBigInt(
+        (amountsIn.amount * this.rate.value * this.underlying.scale) /
+          this.rateScale
+      ),
+    ]
   }
 
   constructor(
@@ -88,7 +101,7 @@ export class BurnCTokenAction extends Action {
       DestinationOptions.Recipient,
       []
     )
-    this.rateScale = 10n**18n
+    this.rateScale = ONEFP18 * underlying.scale
   }
   toString(): string {
     return `CTokenBurn(${this.cToken.toString()})`

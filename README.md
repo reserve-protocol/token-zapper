@@ -52,18 +52,18 @@ SwapPaths {
     SwapPath {
       inputs: 0.1 WETH
       steps:
-        Step 1: Exchange 0.1 WETH for 178.307034 USDT via OneInch(path=[UNISWAP_V2])
-        Step 2: Exchange 44.576936 USDT for 40.120534 saUSDT via SATokenMint(Token(saUSDT))
-        Step 3: Exchange 44.576758 USDT for 2004.53440532 cUSDT via CTokenMint(Token(cUSDT))
-      outputs: 178.307034 USDT, 40.120534 saUSDT, 2004.53440532 cUSDT
+        Step 1: Exchange 0.1 WETH for 178.048635 USDT via OneInch(path=[SUSHI])
+        Step 2: Exchange 44.512158 USDT for 40.059929 saUSDT via SATokenMint(Token(saUSDT))
+        Step 3: Exchange 44.512158 USDT for 2001.47314954 cUSDT via CTokenMint(Token(cUSDT))
+      outputs: 89.024319 USDT, 40.059929 saUSDT, 2001.47314954 cUSDT
     }
     SwapPath {
-      inputs: 40.120534 saUSDT, 2004.53440532 cUSDT, 89.15334 USDT
+      inputs: 40.059929 saUSDT, 2001.47314954 cUSDT, 89.024319 USDT
       steps:
-        Step 1: Exchange 40.120534 saUSDT,2004.53440532 cUSDT,89.15334 USDT for 178.30503666 eUSD via RTokenMint(Token(eUSD))
-      outputs: 178.30503666 eUSD
+        Step 1: Exchange 40.059929 saUSDT,2001.47314954 cUSDT,89.024319 USDT for 178.04845398 eUSD via RTokenMint(Token(eUSD))
+      outputs: 178.04845398 eUSD
     }
-  outputs: 0.000822 USDT, 0.000118 saUSDT, 0.00000001 cUSDT, 178.30503666 eUSD
+  outputs: 0.000093 USDT, 0.000096 saUSDT, 0.00000002 cUSDT, 178.04845398 eUSD
 }
 ```
 

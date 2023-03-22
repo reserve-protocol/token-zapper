@@ -1,4 +1,5 @@
 .DS_Store
 node_modules/
 dist/*.gz
+src.ts/testRun.ts
 .env

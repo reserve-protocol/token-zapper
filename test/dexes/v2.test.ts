@@ -1,7 +1,7 @@
-import { Address } from '../../src/base/Address'
-import { V2Pool } from '../../src/entities/dexes/V2LikePool'
-import { Universe } from '../../src/Universe'
-import testConfig from '../../src/configuration/testEnvironment'
+import { Address } from '../../src.ts/base/Address'
+import { V2Pool } from '../../src.ts/entities/dexes/V2LikePool'
+import { Universe } from '../../src.ts/Universe'
+import testConfig from '../../src.ts/configuration/testEnvironment'
 
 describe('dexes/v2', () => {
   it('standard impl', async () => {

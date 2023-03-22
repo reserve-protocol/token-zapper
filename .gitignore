@@ -1,7 +1,4 @@
 .DS_Store
-build/
 node_modules/
-lib.browser/
-lib.commonjs/
-lib.esm/
+dist/*.gz
 .env

@@ -1,10 +1,10 @@
-import { Address } from '../../src/base/Address'
-import { Universe } from '../../src/Universe'
-import { V2Pool } from '../../src/entities/dexes/V2LikePool'
-import { Searcher } from '../../src/searcher'
-import { UniV2Like } from '../../src/action/UniV2Like'
-import testConfig from '../../src/configuration/testEnvironment'
-import { Token, TokenQuantity } from '../../src/entities/Token'
+import { Address } from '../../src.ts/base/Address'
+import { Universe } from '../../src.ts/Universe'
+import { V2Pool } from '../../src.ts/entities/dexes/V2LikePool'
+import { Searcher } from '../../src.ts/searcher'
+import { UniV2Like } from '../../src.ts/action/UniV2Like'
+import testConfig from '../../src.ts/configuration/testEnvironment'
+import { Token, TokenQuantity } from '../../src.ts/entities/Token'
 const UniV2Factory = Address.from('0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f')
 
 export const createV2Pool = (

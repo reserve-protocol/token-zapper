@@ -1,5 +1,5 @@
-import { Token } from '../../src/entities/Token'
-import { Address } from '../../src/base/Address'
+import { Token } from '../../src.ts/entities/Token'
+import { Address } from '../../src.ts/base/Address'
 
 describe('entities/Token', () => {
   describe('formatting', () => {

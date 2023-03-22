@@ -1,4 +1,4 @@
-import { parseHexStringIntoBuffer } from '../../src/base/utils'
+import { parseHexStringIntoBuffer } from '../../src.ts/base/utils'
 
 describe('base', () => {
   describe('parseHexStringIntoBuffer', () => {

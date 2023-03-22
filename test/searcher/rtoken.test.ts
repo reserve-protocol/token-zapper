@@ -1,11 +1,11 @@
-import { Address } from '../../src/base/Address'
-import { IBasket } from '../../src/entities/TokenBasket'
-import { Universe } from '../../src/Universe'
-import { Searcher } from '../../src/searcher'
-import testConfig from '../../src/configuration/testEnvironment'
+import { Address } from '../../src.ts/base/Address'
+import { IBasket } from '../../src.ts/entities/TokenBasket'
+import { Universe } from '../../src.ts/Universe'
+import { Searcher } from '../../src.ts/searcher'
+import testConfig from '../../src.ts/configuration/testEnvironment'
 import { fixture, createV2Pool } from './univ2.test'
-import { BurnRTokenAction, MintRTokenAction } from '../../src/action/RTokens'
-import { TokenQuantity } from '../../src/entities/Token'
+import { BurnRTokenAction, MintRTokenAction } from '../../src.ts/action/RTokens'
+import { TokenQuantity } from '../../src.ts/entities/Token'
 
 const createRToken = (
   universe: Universe,

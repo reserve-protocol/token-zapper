@@ -1,9 +1,8 @@
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
 
 const config: HardhatUserConfig = {
   typechain: {
-    outDir: '../src/contracts',
+    outDir: '../src.ts/contracts',
     target: 'ethers-v5',
   },
   solidity: {

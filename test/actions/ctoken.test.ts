@@ -1,6 +1,6 @@
-import { Address } from '../../src/base/Address'
-import { Universe } from '../../src/Universe'
-import testConfig from '../../src/configuration/testEnvironment'
+import { Address } from '../../src.ts/base/Address'
+import { Universe } from '../../src.ts/Universe'
+import testConfig from '../../src.ts/configuration/testEnvironment'
 
 describe('actions/CToken', () => {
   it('Correctly mints and burns', async () => {

@@ -1,43 +1,30 @@
 {
   "compilerOptions": {
-    "target": "es2021",
-    "module": "commonjs",
-    "lib": [
-      "es2021",
-      "ES2021.Weakref",
-      "DOM"
-    ],
-    "isolatedModules": true,
+    "declaration": false,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
+    "importHelpers": true,
+    "lib": ["es2021", "DOM", "ES2021.Weakref"],
+    "moduleResolution": "node16",
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "preserveSymlinks": true,
+    "preserveWatchOutput": true,
+    "pretty": false,
+    "rootDir": "./src.ts",
     "skipLibCheck": true,
-    "resolveJsonModule": true,
     "strict": true,
-    "declaration": true,
-    "removeComments": true,
-    "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "incremental": true,
-    "strictPropertyInitialization": false,
-    "composite": true,
-    "baseUrl": "./src",
-    "outDir": "./build",
-    "rootDir": "./"
+    "target": "es2022"
   },
-  "include": [
-    "src",
-    "src/configuration/ethereum/tokens.json"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
+  "include": ["./src.ts/**/*.ts"],
+  "exclude": ["./node_modules", "./build", "./contracts", "./test"],
   "ts-node": {
     "files": true,
-    "require": [
-      "tsconfig-paths/register"
-    ]
+    "require": ["tsconfig-paths/register"]
   }
 }

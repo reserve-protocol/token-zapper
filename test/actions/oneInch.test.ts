@@ -1,6 +1,6 @@
-import { Universe } from '../../src/Universe'
-import testConfig from '../../src/configuration/testEnvironment'
-import { OneInchAction } from '../../src/action/OneInch'
+import { Universe } from '../../src.ts/Universe'
+import testConfig from '../../src.ts/configuration/testEnvironment'
+import { OneInchAction } from '../../src.ts/action/OneInch'
 import swap0_1ForUSDT from './data/oneInchSwap0.1ETHForUSDT.json'
 
 describe('actions/OneInch', () => {

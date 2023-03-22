@@ -4,40 +4,52 @@ import ethereumConfig from './configuration/ethereum'
 import { StaticConfig } from './configuration/StaticConfig'
 import { Universe } from './Universe'
 import { Searcher } from './searcher/Searcher'
-import * as dotenv from "dotenv"
+import * as dotenv from 'dotenv'
 dotenv.config()
 
-const UniV2Factory = Address.from('0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f')
 const run = async () => {
-  const testUserAddr = Address.fromHexString(
-    '0x0000000000007F150Bd6f54c40A34d7C3d5e9f56'
-  )
-  const provider = new ethers.providers.JsonRpcProvider(
-    process.env.PROVIDER
-  )
+  const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER)
+  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!).connect(provider)
+
+  const testUserAddr = Address.fromHexString(wallet.address)
   const universe = await Universe.createWithConfig(provider, {
     ...ethereumConfig,
     config: new StaticConfig(ethereumConfig.config.nativeToken, {
       ...ethereumConfig.config.addresses,
       executorAddress: Address.fromHexString(
-        '0xA9d0Fb5837f9c42c874e16da96094b14Af0e2784'
+        '0x1f53E116c31F171e59f45f0752AEc5d1F5aA3714'
       ),
       zapperAddress: Address.fromHexString(
-        '0x6B21b3ae41f818Fc91e322b53f8D0773d31eCB75'
+        '0xa31F4c0eF2935Af25370D9AE275169CCd9793DA3'
       ),
     }),
   })
 
   const searcher = new Searcher(universe)
-  const result = await searcher.findSingleInputToRTokenZap(
-      universe.nativeToken!.fromDecimal("0.1"),
-      universe.rTokens.eUSD!,
-      testUserAddr
-  );
+  const eUSD = universe.rTokens.eUSD!
 
-  console.log(result.describe().join("\n"))
+  const result = await searcher.findSingleInputToRTokenZap(
+    universe.commonTokens.USDT!.fromDecimal('50'),
+    eUSD,
+    testUserAddr
+  )
+  console.log(result.describe().join('\n'))
 
   // const tx = await result.toTransaction()
+  // const q = await wallet.sendTransaction(tx.tx)
+  // await q.wait()
+
+  // const eUSDInst = IERC20__factory.connect(
+  //   eUSD.address.address,
+  //   universe.provider
+  // )
+
+  // console.log(
+  //   eUSD
+  //     .quantityFromBigInt((await eUSDInst.balanceOf(wallet.address)).toBigInt())
+  //     .toString()
+  // )
+
   // console.log(tx)
   // // console.log(result)
   // console.log("Done")

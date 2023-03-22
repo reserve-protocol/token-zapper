@@ -41,7 +41,9 @@ export const findPrecursorTokenSet = async (
     totalOfEach.add(qty)
     const acts = universe.wrappedTokens.get(qty.token)!
     if (acts != null) {
+      
       const baseTokens = await acts.burn.quote([qty])
+      console.log(qty + "=>" + baseTokens.join(", "))
       const resolvedDeps = await Promise.all(
         baseTokens.map(async (qty) => ({
           quantity: qty,
@@ -246,7 +248,7 @@ export class Searcher {
     const inputQuantityToBasketTokens =
       await this.findSingleInputToBasketGivenBasketUnit(
         inputTokenQuantity,
-        mintAction.basketHandler.mintQuantities
+        mintAction.basket.unitBasket
       )
     await inputQuantityToBasketTokens.exchange(tradingBalances)
 

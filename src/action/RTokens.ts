@@ -1,68 +1,24 @@
 import { Address } from '../base/Address'
-import {
-  type IBasketHandler,
-  IBasketHandler__factory,
-  IRToken__factory,
-} from '../contracts'
-import { numberOfUnits, TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
+import { numberOfUnits, TokenAmounts, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
-
-const rTokenIFace = IRToken__factory.createInterface()
-
-export class BasketHandler {
-  private readonly basketHandler: IBasketHandler
-
-  public basketNonce = 0
-  public mintQuantities: TokenQuantity[] = []
-  get inputTokens() {
-    return this.mintQuantities.map((i) => i.token)
-  }
-
-  constructor(
-    readonly universe: Universe,
-    public readonly address: Address,
-    public readonly rToken: Token
-  ) {
-    this.basketHandler = IBasketHandler__factory.connect(
-      address.address,
-      universe.provider
-    )
-  }
-
-  async update() {
-    const [nonce, { quantities, erc20s }] = await Promise.all([
-      this.basketHandler.nonce(),
-      this.basketHandler.quote(this.rToken.scale, 0),
-    ])
-    this.basketNonce = nonce
-    this.mintQuantities = await Promise.all(
-      quantities.map(async (q, i) => {
-        const token = await this.universe.getToken(
-          Address.fromHexString(erc20s[i])
-        )
-        return token.quantityFromBigInt(q.toBigInt())
-      })
-    )
-  }
-}
-
+import { rTokenIFace, IBasket } from '../entities/TokenBasket'
 
 export class MintRTokenAction extends Action {
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     if (amountsIn.length !== this.input.length) {
       throw new Error('Invalid inputs for RToken mint')
     }
-    const units = numberOfUnits(amountsIn, this.basketHandler.mintQuantities)
-    return [this.basketHandler.rToken.quantityFromBigInt(units)]
+    const units = numberOfUnits(amountsIn, this.basket.unitBasket)
+    return [this.basket.rToken.quantityFromBigInt(units)]
   }
 
   async exchange(input: TokenQuantity[], balances: TokenAmounts) {
     const outputs = await this.quote(input)
-    const inputsConsumed = this.basketHandler.mintQuantities.map((qty) =>
+    const inputsConsumed = this.basket.unitBasket.map((qty) =>
       outputs[0].convertTo(qty.token).mul(qty)
     )
     balances.exchange(inputsConsumed, outputs)
@@ -77,10 +33,10 @@ export class MintRTokenAction extends Action {
       parseHexStringIntoBuffer(
         rTokenIFace.encodeFunctionData('issueTo', [
           destination.address,
-          amount[0].amount,
+          amount[0].amount
         ])
       ),
-      this.basketHandler.rToken.address,
+      this.basket.rToken.address,
       0n,
       'RToken Issue'
     )
@@ -88,16 +44,16 @@ export class MintRTokenAction extends Action {
 
   constructor(
     readonly universe: Universe,
-    public readonly basketHandler: BasketHandler
+    public readonly basket: IBasket
   ) {
     super(
-      basketHandler.rToken.address,
-      basketHandler.inputTokens,
-      [basketHandler.rToken],
+      basket.rToken.address,
+      basket.basketTokens,
+      [basket.rToken],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Recipient,
-      basketHandler.inputTokens.map(
-        (input) => new Approval(input, basketHandler.rToken.address)
+      basket.basketTokens.map(
+        (input) => new Approval(input, basket.rToken.address)
       )
     )
   }
@@ -106,7 +62,7 @@ export class MintRTokenAction extends Action {
   public readonly proceedsOptions = DestinationOptions.Recipient
 
   toString(): string {
-    return `RTokenMint(${this.basketHandler.rToken.toString()})`
+    return `RTokenMint(${this.basket.rToken.toString()})`
   }
 }
 
@@ -124,18 +80,18 @@ export class BurnRTokenAction extends Action {
   }
 
   async quote([quantity]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const quantityPrToken = await this.basketHandler.mintQuantities
+    const quantityPrToken = await this.basketHandler.unitBasket
     return quantityPrToken.map((qty) => quantity.convertTo(qty.token).mul(qty))
   }
 
   constructor(
     readonly universe: Universe,
-    readonly basketHandler: BasketHandler
+    readonly basketHandler: IBasket
   ) {
     super(
       basketHandler.rToken.address,
       [basketHandler.rToken],
-      basketHandler.inputTokens,
+      basketHandler.basketTokens,
       InteractionConvention.None,
       DestinationOptions.Recipient,
       []

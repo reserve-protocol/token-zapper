@@ -27,7 +27,8 @@
     "rootDir": "./"
   },
   "include": [
-    "src"
+    "src",
+    "src/configuration/ethereum/tokens.json"
   ],
   "exclude": [
     "node_modules",

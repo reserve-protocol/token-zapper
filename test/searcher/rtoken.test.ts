@@ -1,6 +1,7 @@
 import { Address } from '../../src/base/Address'
+import { IBasket } from '../../src/entities/TokenBasket'
 import { Universe } from '../../src/Universe'
-import { Searcher, findPrecursorTokenSet } from '../../src/searcher'
+import { Searcher } from '../../src/searcher'
 import testConfig from '../../src/configuration/testEnvironment'
 import { fixture, createV2Pool } from './univ2.test'
 import { BurnRTokenAction, MintRTokenAction } from '../../src/action/RTokens'
@@ -20,11 +21,12 @@ const createRToken = (
 
   const quantities = qty
 
-  const basketHandler = {
-    inputTokens: quantities.map((i) => i.token),
-    mintQuantities: quantities,
-    rToken: rToken,
-  } as any
+  const basketHandler: IBasket = {
+    basketTokens: quantities.map((i) => i.token),
+    unitBasket: quantities,
+    rToken,
+    basketNonce: 0,
+  }
 
   universe.defineMintable(
     new MintRTokenAction(universe, basketHandler),
@@ -89,7 +91,7 @@ describe('searcher', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
-    ).toBe('22.234444 eUSD')
+    ).toBe('22.23444401 eUSD')
   })
 
   it('Old eUSD', async () => {

@@ -32,7 +32,7 @@ export class MintCTokenAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountsIn.fpDiv(this.rate.value, this.rateScale).convertTo(this.cToken)]
+    return [amountsIn.convertTo(this.cToken).fpDiv(this.rate.value, this.rateScale)]
   }
 
   constructor(
@@ -49,7 +49,7 @@ export class MintCTokenAction extends Action {
       DestinationOptions.Callee,
       [new Approval(underlying, cToken.address)]
     )
-    this.rateScale = cToken.scale * 10n ** 10n
+    this.rateScale = 10n**18n
   }
 
   toString(): string {
@@ -88,7 +88,7 @@ export class BurnCTokenAction extends Action {
       DestinationOptions.Recipient,
       []
     )
-    this.rateScale = cToken.scale * 10n ** 10n
+    this.rateScale = 10n**18n
   }
   toString(): string {
     return `CTokenBurn(${this.cToken.toString()})`

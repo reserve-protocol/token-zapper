@@ -62,7 +62,7 @@ describe('v2 uniswap actions', () => {
       cUSDT!,
       Address.ZERO
     )
-    expect(result[0].outputs[0].formatWithSymbol()).toBe('78452.107909 cUSDT')
+    expect(result[0].outputs[0].formatWithSymbol()).toBe('78452.10790957 cUSDT')
     expect(result[0].steps.length).toBe(2)
   })
 

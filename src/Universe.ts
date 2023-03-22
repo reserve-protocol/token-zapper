@@ -149,7 +149,6 @@ export class Universe {
       name,
       decimals
     )
-    this.graph.addVertex(token)
     return token
   }
 

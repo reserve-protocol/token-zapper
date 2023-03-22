@@ -1,6 +1,5 @@
 import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens'
 import {
-  BasketHandler,
   BurnRTokenAction,
   MintRTokenAction,
 } from '../action/RTokens'
@@ -9,7 +8,6 @@ import { Address } from '../base/Address'
 import {
   IComptroller__factory,
   ICToken__factory,
-  IMain__factory,
   IStaticATokenLM__factory,
 } from '../contracts'
 import { createEthereumRouter } from '../aggregators/oneInch/oneInchRegistry'
@@ -21,8 +19,28 @@ import { DexAggregator } from '../aggregators/DexAggregator'
 import { OneInchAction } from '../action/OneInch'
 import { SwapPlan } from '../searcher/Swap'
 import { DepositAction, WithdrawAction } from '../action/WrappedNative'
+import { TokenBasket } from '../entities/TokenBasket'
+
+interface JsonTokenEntry {
+  address: string
+  symbol: string
+  name: string
+  decimals: number
+}
+const loadTokens = async (universe: Universe) => {
+  const tokens = require('./ethereum/tokens.json') as JsonTokenEntry[]
+  for (const token of tokens) {
+    universe.createToken(
+      Address.from(token.address),
+      token.symbol,
+      token.name,
+      token.decimals
+    )
+  }
+}
 
 const initialize = async (universe: Universe) => {
+  await loadTokens(universe)
   const rTokenSymbols = Object.keys(universe.rTokens) as (keyof RTokens)[]
   await Promise.all(
     rTokenSymbols.map(async (key) => {
@@ -89,23 +107,14 @@ const initialize = async (universe: Universe) => {
 
   chainLinkOracle.mapTokenTo(universe.nativeToken, chainLinkETH)
 
-  const USDT = universe.createToken(
-    Address.fromHexString('0xdac17f958d2ee523a2206206994597c13d831ec7'),
-    'USDT',
-    'USDT',
-    6
+  const USDT = await universe.getToken(
+    Address.fromHexString('0xdac17f958d2ee523a2206206994597c13d831ec7')
   )
-  const saUSDT = universe.createToken(
-    Address.fromHexString('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9'),
-    'saUSDT',
-    'saUSDT',
-    6
+  const saUSDT = await universe.getToken(
+    Address.fromHexString('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9')
   )
-  const cEth = universe.createToken(
-    Address.from('0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5'),
-    'cETH',
-    'Compound Ether',
-    18
+  const cEth = await universe.getToken(
+    Address.from('0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5')
   )
   const weth = universe.commonTokens.ERC20GAS
   const eth = universe.nativeToken
@@ -196,7 +205,7 @@ const initialize = async (universe: Universe) => {
       'eUSD',
       18
     )
-    const basketHandler = new BasketHandler(
+    const basketHandler = new TokenBasket(
       universe,
       Address.fromHexString('0x6d309297ddDFeA104A6E89a132e2f05ce3828e07'),
       eUSD

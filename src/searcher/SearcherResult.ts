@@ -188,7 +188,7 @@ export class SearcherResult {
       await this.universe.provider.estimateGas({
         to: this.universe.config.addresses.zapperAddress.address,
         data,
-        value: ethers.BigNumber.from(this.swaps.inputs[0].amount),
+        value: inputIsNativeToken ? ethers.BigNumber.from(this.swaps.inputs[0].amount) : 0,
         from: this.signer.address,
       })
     ).toBigInt()
@@ -205,7 +205,7 @@ export class SearcherResult {
       ),
 
       gasLimit: ethers.BigNumber.from(gas + gas / 100n),
-      value: ethers.BigNumber.from(this.swaps.inputs[0].amount),
+      value: inputIsNativeToken ? ethers.BigNumber.from(this.swaps.inputs[0].amount) : 0,
       from: this.signer.address,
     }
     return new ZapTransaction(

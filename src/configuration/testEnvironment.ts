@@ -8,6 +8,7 @@ import { type ChainConfiguration } from './ChainConfiguration'
 import { StaticConfig } from './StaticConfig'
 import { Oracle } from '../oracles'
 import { Token, TokenQuantity } from 'entities'
+import { IBasket } from 'entities/TokenBasket'
 
 const initialize = async (universe: Universe) => {
   const eUSD = universe.createToken(
@@ -39,7 +40,7 @@ const initialize = async (universe: Universe) => {
     Address.from('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9'),
     'saUSDT',
     'saUSDT',
-    18
+    8
   )
   const cUSDT = universe.createToken(
     Address.from('0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'),
@@ -52,7 +53,7 @@ const initialize = async (universe: Universe) => {
     Address.from('0x8f471832C6d35F2a51606a60f482BCfae055D986'),
     'saUSDC',
     'saUSDC',
-    18
+    8
   )
   const cUSDC = universe.createToken(
     Address.from('0x39aa39c021dfbae8fac545936693ac917d5e7563'),
@@ -84,11 +85,12 @@ const initialize = async (universe: Universe) => {
     USDT.fromDecimal('0.500004'),
     cUSDT.fromDecimal('1124.340940'),
   ]
-  const basketHandler = {
-    inputTokens: quantities.map((i) => i.token),
-    mintQuantities: quantities,
+  const basketHandler: IBasket = {
+    basketTokens: quantities.map((i) => i.token),
+    unitBasket: quantities,
     rToken: eUSD,
-  } as any
+    basketNonce: 0
+  }
 
   const saTokens = [
     { underlying: USDT, saToken: saUSDT, rate: 1110924415157506442300940896n },

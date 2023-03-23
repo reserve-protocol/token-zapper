@@ -58,7 +58,8 @@ export class SearcherResult {
     readonly universe: Universe,
     readonly approvals: ApprovalsStore,
     public readonly swaps: SwapPaths,
-    public readonly signer: Address
+    public readonly signer: Address,
+    public readonly rToken: Token
   ) {}
 
   describe() {
@@ -146,12 +147,18 @@ export class SearcherResult {
 
     let inputToken = this.swaps.inputs[0].token
     if (this.universe.commonTokens.ERC20GAS == null) {
-      throw new Error('..')
+      throw new Error('Unexpected: Missing wrapped gas token')
     }
     inputToken =
       inputToken === this.universe.nativeToken
         ? this.universe.commonTokens.ERC20GAS
         : inputToken
+    const amountOut = this.swaps.outputs.find(
+      (output) => output.token === this.rToken
+    )
+    if (amountOut == null) {
+      throw new Error('Unexpected: output does not contain RToken')
+    }
     const payload = {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,
@@ -166,7 +173,9 @@ export class SearcherResult {
       await this.universe.provider.estimateGas({
         to: this.universe.config.addresses.zapperAddress.address,
         data,
-        value: inputIsNativeToken ? ethers.BigNumber.from(this.swaps.inputs[0].amount) : 0,
+        value: inputIsNativeToken
+          ? ethers.BigNumber.from(this.swaps.inputs[0].amount)
+          : 0,
         from: this.signer.address,
       })
     ).toBigInt()
@@ -183,7 +192,9 @@ export class SearcherResult {
       ),
 
       gasLimit: ethers.BigNumber.from(gas + gas / 100n),
-      value: inputIsNativeToken ? ethers.BigNumber.from(this.swaps.inputs[0].amount) : 0,
+      value: inputIsNativeToken
+        ? ethers.BigNumber.from(this.swaps.inputs[0].amount)
+        : 0,
       from: this.signer.address,
     }
     return new ZapTransaction(

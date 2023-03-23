@@ -41,7 +41,6 @@ export const findPrecursorTokenSet = async (
     totalOfEach.add(qty)
     const acts = universe.wrappedTokens.get(qty.token)!
     if (acts != null) {
-      
       const baseTokens = await acts.burn.quote([qty])
       const resolvedDeps = await Promise.all(
         baseTokens.map(async (qty) => ({
@@ -282,7 +281,8 @@ export class Searcher {
         rTokenMint.outputValue,
         signerAddress
       ),
-      signerAddress
+      signerAddress,
+      rToken
     )
     return searcherResult
   }

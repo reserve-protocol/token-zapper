@@ -13,8 +13,11 @@ export declare class TokenBasket implements IBasket {
     readonly address: Address;
     readonly rToken: Token;
     private readonly basketHandler;
+    issueRate: bigint;
     basketNonce: number;
     unitBasket: TokenQuantity[];
+    basketsNeeded: bigint;
+    totalSupply: bigint;
     get basketTokens(): Token[];
     constructor(universe: Universe, address: Address, rToken: Token);
     update(): Promise<void>;

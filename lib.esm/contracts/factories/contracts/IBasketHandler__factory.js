@@ -36,6 +36,19 @@ const _abi = [
     },
     {
         inputs: [],
+        name: "basketsNeeded",
+        outputs: [
+            {
+                internalType: "uint192",
+                name: "",
+                type: "uint192",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [],
         name: "disableBasket",
         outputs: [],
         stateMutability: "nonpayable",

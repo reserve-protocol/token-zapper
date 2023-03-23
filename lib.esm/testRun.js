@@ -5,35 +5,35 @@ import { StaticConfig } from './configuration/StaticConfig';
 import { Universe } from './Universe';
 import { Searcher } from './searcher/Searcher';
 import * as dotenv from 'dotenv';
+import { IERC20__factory } from './contracts';
 dotenv.config();
 const run = async () => {
-    const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
+    const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8546/"
+    // process.env.PROVIDER
+    );
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY).connect(provider);
     const testUserAddr = Address.fromHexString(wallet.address);
     const universe = await Universe.createWithConfig(provider, {
         ...ethereumConfig,
         config: new StaticConfig(ethereumConfig.config.nativeToken, {
             ...ethereumConfig.config.addresses,
-            executorAddress: Address.fromHexString('0x1f53E116c31F171e59f45f0752AEc5d1F5aA3714'),
-            zapperAddress: Address.fromHexString('0xa31F4c0eF2935Af25370D9AE275169CCd9793DA3'),
+            executorAddress: Address.fromHexString('0xA3f7BF5b0fa93176c260BBa57ceE85525De2BaF4'),
+            zapperAddress: Address.fromHexString('0x25A1DF485cFBb93117f12fc673D87D1cddEb845a'),
         }),
     });
     const searcher = new Searcher(universe);
     const eUSD = universe.rTokens.eUSD;
     const result = await searcher.findSingleInputToRTokenZap(universe.commonTokens.USDT.fromDecimal('50'), eUSD, testUserAddr);
     console.log(result.describe().join('\n'));
-    // const tx = await result.toTransaction()
-    // const q = await wallet.sendTransaction(tx.tx)
-    // await q.wait()
-    // const eUSDInst = IERC20__factory.connect(
-    //   eUSD.address.address,
-    //   universe.provider
-    // )
-    // console.log(
-    //   eUSD
-    //     .quantityFromBigInt((await eUSDInst.balanceOf(wallet.address)).toBigInt())
-    //     .toString()
-    // )
+    const tx = await result.toTransaction();
+    const q = await wallet.sendTransaction(tx.tx);
+    await q.wait();
+    console.log(tx.toString());
+    const eUSDInst = IERC20__factory.connect(eUSD.address.address, universe.provider);
+    console.log("Post issue balance: " +
+        eUSD
+            .quantityFromBigInt((await eUSDInst.balanceOf(wallet.address)).toBigInt())
+            .toString());
     // console.log(tx)
     // // console.log(result)
     // console.log("Done")

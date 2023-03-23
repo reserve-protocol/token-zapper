@@ -36,6 +36,7 @@ export type BasketRangeStructOutput = [BigNumber, BigNumber] & {
 export interface IBasketHandlerInterface extends utils.Interface {
   functions: {
     "basketsHeldBy(address)": FunctionFragment;
+    "basketsNeeded()": FunctionFragment;
     "disableBasket()": FunctionFragment;
     "fullyCollateralized()": FunctionFragment;
     "lotPrice()": FunctionFragment;
@@ -53,6 +54,7 @@ export interface IBasketHandlerInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "basketsHeldBy"
+      | "basketsNeeded"
       | "disableBasket"
       | "fullyCollateralized"
       | "lotPrice"
@@ -70,6 +72,10 @@ export interface IBasketHandlerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "basketsHeldBy",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "basketsNeeded",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "disableBasket",
@@ -111,6 +117,10 @@ export interface IBasketHandlerInterface extends utils.Interface {
 
   decodeFunctionResult(
     functionFragment: "basketsHeldBy",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "basketsNeeded",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -176,6 +186,8 @@ export interface IBasketHandler extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BasketRangeStructOutput]>;
 
+    basketsNeeded(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     disableBasket(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -233,6 +245,8 @@ export interface IBasketHandler extends BaseContract {
     account: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<BasketRangeStructOutput>;
+
+  basketsNeeded(overrides?: CallOverrides): Promise<BigNumber>;
 
   disableBasket(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -292,6 +306,8 @@ export interface IBasketHandler extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BasketRangeStructOutput>;
 
+    basketsNeeded(overrides?: CallOverrides): Promise<BigNumber>;
+
     disableBasket(overrides?: CallOverrides): Promise<void>;
 
     fullyCollateralized(overrides?: CallOverrides): Promise<boolean>;
@@ -349,6 +365,8 @@ export interface IBasketHandler extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    basketsNeeded(overrides?: CallOverrides): Promise<BigNumber>;
+
     disableBasket(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -399,6 +417,8 @@ export interface IBasketHandler extends BaseContract {
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    basketsNeeded(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     disableBasket(
       overrides?: Overrides & { from?: PromiseOrValue<string> }

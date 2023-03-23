@@ -183,7 +183,7 @@ class Searcher {
         const searcherResult = new SearcherResult_1.SearcherResult(this.universe, this.approvals, new Swap_1.SwapPaths(this.universe, [userInput], [
             new Swap_1.SwapPath(this.universe, inputQuantityToBasketTokens.inputs, inputQuantityToBasketTokens.swapPaths.map((i) => i.steps).flat(), inputQuantityToBasketTokens.outputs, inputQuantityToBasketTokens.outputValue, inputQuantityToBasketTokens.destination),
             rTokenMint,
-        ], output, rTokenMint.outputValue, signerAddress), signerAddress);
+        ], output, rTokenMint.outputValue, signerAddress), signerAddress, rToken);
         return searcherResult;
     }
     async externalQuoters(input, output, destination) {

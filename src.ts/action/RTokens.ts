@@ -12,8 +12,9 @@ export class MintRTokenAction extends Action {
     if (amountsIn.length !== this.input.length) {
       throw new Error('Invalid inputs for RToken mint')
     }
-    const units = numberOfUnits(amountsIn, this.basket.unitBasket)
-    return [this.basket.rToken.quantityFromBigInt(units)]
+    const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket)
+
+    return [this.basket.rToken.quantityFromBigInt((unitsRequested / 1000n) * 1000n)]
   }
 
   async exchange(input: TokenQuantity[], balances: TokenAmounts) {
@@ -28,17 +29,17 @@ export class MintRTokenAction extends Action {
     amountsIn: TokenQuantity[],
     destination: Address
   ): Promise<ContractCall> {
-    const amount = await this.quote(amountsIn)
+    const units = (await this.quote(amountsIn))[0]
     return new ContractCall(
       parseHexStringIntoBuffer(
         rTokenIFace.encodeFunctionData('issueTo', [
           destination.address,
-          amount[0].amount
+          units.amount
         ])
       ),
       this.basket.rToken.address,
       0n,
-      'RToken Issue'
+      `RToken(${this.basket.rToken},input:${amountsIn},issueAmount:${units},destination: ${destination})`
     )
   }
 

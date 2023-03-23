@@ -153,6 +153,7 @@ export class SearcherResult {
       inputToken === this.universe.nativeToken
         ? this.universe.commonTokens.ERC20GAS
         : inputToken
+    
     const amountOut = this.swaps.outputs.find(
       (output) => output.token === this.rToken
     )
@@ -163,8 +164,8 @@ export class SearcherResult {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
-      amountOut: this.swaps.outputs[0].amount,
-      tokenOut: this.swaps.outputs[0].token.address.address,
+      amountOut: amountOut.amount,
+      tokenOut: amountOut.token.address.address
     }
     const data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])

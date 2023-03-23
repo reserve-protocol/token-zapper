@@ -27,6 +27,16 @@ export declare class IBasketHandler__factory {
         readonly type: "function";
     }, {
         readonly inputs: readonly [];
+        readonly name: "basketsNeeded";
+        readonly outputs: readonly [{
+            readonly internalType: "uint192";
+            readonly name: "";
+            readonly type: "uint192";
+        }];
+        readonly stateMutability: "view";
+        readonly type: "function";
+    }, {
+        readonly inputs: readonly [];
         readonly name: "disableBasket";
         readonly outputs: readonly [];
         readonly stateMutability: "nonpayable";

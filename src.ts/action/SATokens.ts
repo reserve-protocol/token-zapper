@@ -33,7 +33,7 @@ export class MintSATokensAction extends Action {
       ),
       this.saToken.address,
       0n,
-      'Mint ' + this.saToken.name
+      `Mint(${this.saToken}, input: ${amountsIn}, destination: ${destination})`
     )
   }
 

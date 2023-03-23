@@ -27,7 +27,7 @@ class MintSATokensAction extends Action_1.Action {
             amountsIn.amount,
             0,
             true,
-        ])), this.saToken.address, 0n, 'Mint ' + this.saToken.name);
+        ])), this.saToken.address, 0n, `Mint(${this.saToken}, input: ${amountsIn}, destination: ${destination})`);
     }
     async quote([amountsIn]) {
         return [

@@ -109,4 +109,6 @@ interface IBasketHandler {
 
     /// @return The current basket nonce, regardless of status
     function nonce() external view returns (uint48);
+
+    function basketsNeeded() external view returns (uint192);
 }

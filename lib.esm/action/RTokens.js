@@ -11,8 +11,8 @@ export class MintRTokenAction extends Action {
         if (amountsIn.length !== this.input.length) {
             throw new Error('Invalid inputs for RToken mint');
         }
-        const units = numberOfUnits(amountsIn, this.basket.unitBasket);
-        return [this.basket.rToken.quantityFromBigInt(units)];
+        const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket);
+        return [this.basket.rToken.quantityFromBigInt((unitsRequested / 1000n) * 1000n)];
     }
     async exchange(input, balances) {
         const outputs = await this.quote(input);
@@ -20,11 +20,11 @@ export class MintRTokenAction extends Action {
         balances.exchange(inputsConsumed, outputs);
     }
     async encode(amountsIn, destination) {
-        const amount = await this.quote(amountsIn);
+        const units = (await this.quote(amountsIn))[0];
         return new ContractCall(parseHexStringIntoBuffer(rTokenIFace.encodeFunctionData('issueTo', [
             destination.address,
-            amount[0].amount
-        ])), this.basket.rToken.address, 0n, 'RToken Issue');
+            units.amount
+        ])), this.basket.rToken.address, 0n, `RToken(${this.basket.rToken},input:${amountsIn},issueAmount:${units},destination: ${destination})`);
     }
     constructor(universe, basket) {
         super(basket.rToken.address, basket.basketTokens, [basket.rToken], InteractionConvention.ApprovalRequired, DestinationOptions.Recipient, basket.basketTokens.map((input) => new Approval(input, basket.rToken.address)));

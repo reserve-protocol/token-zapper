@@ -38,11 +38,13 @@ export class SearcherResult {
     approvals;
     swaps;
     signer;
-    constructor(universe, approvals, swaps, signer) {
+    rToken;
+    constructor(universe, approvals, swaps, signer, rToken) {
         this.universe = universe;
         this.approvals = approvals;
         this.swaps = swaps;
         this.signer = signer;
+        this.rToken = rToken;
     }
     describe() {
         return this.swaps.describe();
@@ -102,18 +104,22 @@ export class SearcherResult {
         builder.drainERC20([...potentialResidualTokens], this.signer);
         let inputToken = this.swaps.inputs[0].token;
         if (this.universe.commonTokens.ERC20GAS == null) {
-            throw new Error('..');
+            throw new Error('Unexpected: Missing wrapped gas token');
         }
         inputToken =
             inputToken === this.universe.nativeToken
                 ? this.universe.commonTokens.ERC20GAS
                 : inputToken;
+        const amountOut = this.swaps.outputs.find((output) => output.token === this.rToken);
+        if (amountOut == null) {
+            throw new Error('Unexpected: output does not contain RToken');
+        }
         const payload = {
             tokenIn: inputToken.address.address,
             amountIn: this.swaps.inputs[0].amount,
             commands: builder.contractCalls.map((i) => i.encode()),
-            amountOut: this.swaps.outputs[0].amount,
-            tokenOut: this.swaps.outputs[0].token.address.address,
+            amountOut: amountOut.amount,
+            tokenOut: amountOut.token.address.address
         };
         const data = inputIsNativeToken
             ? zapperInterface.encodeFunctionData('zapETH', [payload])
@@ -121,7 +127,9 @@ export class SearcherResult {
         const gas = (await this.universe.provider.estimateGas({
             to: this.universe.config.addresses.zapperAddress.address,
             data,
-            value: inputIsNativeToken ? ethers.BigNumber.from(this.swaps.inputs[0].amount) : 0,
+            value: inputIsNativeToken
+                ? ethers.BigNumber.from(this.swaps.inputs[0].amount)
+                : 0,
             from: this.signer.address,
         })).toBigInt();
         const tx = {
@@ -132,7 +140,9 @@ export class SearcherResult {
             type: 2,
             maxFeePerGas: ethers.BigNumber.from(this.universe.gasPrice + this.universe.gasPrice / 12n),
             gasLimit: ethers.BigNumber.from(gas + gas / 100n),
-            value: inputIsNativeToken ? ethers.BigNumber.from(this.swaps.inputs[0].amount) : 0,
+            value: inputIsNativeToken
+                ? ethers.BigNumber.from(this.swaps.inputs[0].amount)
+                : 0,
             from: this.signer.address,
         };
         return new ZapTransaction(this.universe, payload, tx, gas, this.swaps.inputs[0], this.swaps.outputs, this);

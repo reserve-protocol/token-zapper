@@ -13,6 +13,7 @@ export type BasketRangeStructOutput = [BigNumber, BigNumber] & {
 export interface IBasketHandlerInterface extends utils.Interface {
     functions: {
         "basketsHeldBy(address)": FunctionFragment;
+        "basketsNeeded()": FunctionFragment;
         "disableBasket()": FunctionFragment;
         "fullyCollateralized()": FunctionFragment;
         "lotPrice()": FunctionFragment;
@@ -26,8 +27,9 @@ export interface IBasketHandlerInterface extends utils.Interface {
         "status()": FunctionFragment;
         "timestamp()": FunctionFragment;
     };
-    getFunction(nameOrSignatureOrTopic: "basketsHeldBy" | "disableBasket" | "fullyCollateralized" | "lotPrice" | "nonce" | "price" | "quantity" | "quote" | "refreshBasket" | "setBackupConfig" | "setPrimeBasket" | "status" | "timestamp"): FunctionFragment;
+    getFunction(nameOrSignatureOrTopic: "basketsHeldBy" | "basketsNeeded" | "disableBasket" | "fullyCollateralized" | "lotPrice" | "nonce" | "price" | "quantity" | "quote" | "refreshBasket" | "setBackupConfig" | "setPrimeBasket" | "status" | "timestamp"): FunctionFragment;
     encodeFunctionData(functionFragment: "basketsHeldBy", values: [PromiseOrValue<string>]): string;
+    encodeFunctionData(functionFragment: "basketsNeeded", values?: undefined): string;
     encodeFunctionData(functionFragment: "disableBasket", values?: undefined): string;
     encodeFunctionData(functionFragment: "fullyCollateralized", values?: undefined): string;
     encodeFunctionData(functionFragment: "lotPrice", values?: undefined): string;
@@ -45,6 +47,7 @@ export interface IBasketHandlerInterface extends utils.Interface {
     encodeFunctionData(functionFragment: "status", values?: undefined): string;
     encodeFunctionData(functionFragment: "timestamp", values?: undefined): string;
     decodeFunctionResult(functionFragment: "basketsHeldBy", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "basketsNeeded", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "disableBasket", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "fullyCollateralized", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "lotPrice", data: BytesLike): Result;
@@ -75,6 +78,7 @@ export interface IBasketHandler extends BaseContract {
     removeListener: OnEvent<this>;
     functions: {
         basketsHeldBy(account: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[BasketRangeStructOutput]>;
+        basketsNeeded(overrides?: CallOverrides): Promise<[BigNumber]>;
         disableBasket(overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
@@ -114,6 +118,7 @@ export interface IBasketHandler extends BaseContract {
         timestamp(overrides?: CallOverrides): Promise<[number]>;
     };
     basketsHeldBy(account: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BasketRangeStructOutput>;
+    basketsNeeded(overrides?: CallOverrides): Promise<BigNumber>;
     disableBasket(overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
@@ -151,6 +156,7 @@ export interface IBasketHandler extends BaseContract {
     timestamp(overrides?: CallOverrides): Promise<number>;
     callStatic: {
         basketsHeldBy(account: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BasketRangeStructOutput>;
+        basketsNeeded(overrides?: CallOverrides): Promise<BigNumber>;
         disableBasket(overrides?: CallOverrides): Promise<void>;
         fullyCollateralized(overrides?: CallOverrides): Promise<boolean>;
         lotPrice(overrides?: CallOverrides): Promise<[
@@ -182,6 +188,7 @@ export interface IBasketHandler extends BaseContract {
     filters: {};
     estimateGas: {
         basketsHeldBy(account: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
+        basketsNeeded(overrides?: CallOverrides): Promise<BigNumber>;
         disableBasket(overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
@@ -205,6 +212,7 @@ export interface IBasketHandler extends BaseContract {
     };
     populateTransaction: {
         basketsHeldBy(account: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        basketsNeeded(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         disableBasket(overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;

@@ -9,8 +9,11 @@ class TokenBasket {
     address;
     rToken;
     basketHandler;
+    issueRate = 10n ** 18n;
     basketNonce = 0;
     unitBasket = [];
+    basketsNeeded = 0n;
+    totalSupply = 0n;
     get basketTokens() {
         return this.unitBasket.map((i) => i.token);
     }
@@ -21,14 +24,17 @@ class TokenBasket {
         this.basketHandler = contracts_1.IBasketHandler__factory.connect(address.address, universe.provider);
     }
     async update() {
-        // const supply = await IERC20__factory.connect(
-        //   this.rToken.address.address,
-        //   this.universe.provider
-        // ).totalSupply()
         const [nonce, { quantities, erc20s }] = await Promise.all([
             this.basketHandler.nonce(),
-            this.basketHandler.quote(this.rToken.scale, 0),
+            this.basketHandler.quote(this.rToken.scale, 2),
+            // this.basketHandler.basketsNeeded(),
+            // await IERC20__factory.connect(
+            //   this.rToken.address.address,
+            //   this.universe.provider
+            // ).totalSupply(),
         ]);
+        // this.basketsNeeded = basketsNeeded.toBigInt()
+        // this.totalSupply = totalSupply.toBigInt()
         this.basketNonce = nonce;
         this.unitBasket = await Promise.all(quantities.map(async (q, i) => {
             const token = await this.universe.getToken(Address_1.Address.fromHexString(erc20s[i]));

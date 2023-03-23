@@ -6,7 +6,6 @@ import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { SearcherResult } from './SearcherResult'
 import { SwapPath, SwapPaths, SwapPlan } from './Swap'
-import { ApprovalsStore } from './ApprovalsStore'
 
 interface PostTradeMint {
   basketTokenQuantity: TokenAmounts
@@ -97,9 +96,8 @@ export const findPrecursorTokenSet = async (
 }
 
 export class Searcher {
-  private readonly approvals: ApprovalsStore
   constructor(private readonly universe: Universe) {
-    this.approvals = new ApprovalsStore(universe.provider)
+    
   }
 
   /**
@@ -262,7 +260,6 @@ export class Searcher {
 
     const searcherResult = new SearcherResult(
       this.universe,
-      this.approvals,
       new SwapPaths(
         this.universe,
         [userInput],

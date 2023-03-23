@@ -38,13 +38,11 @@ const linearize = (executor, tokenExchange) => {
 };
 class SearcherResult {
     universe;
-    approvals;
     swaps;
     signer;
     rToken;
-    constructor(universe, approvals, swaps, signer, rToken) {
+    constructor(universe, swaps, signer, rToken) {
         this.universe = universe;
-        this.approvals = approvals;
         this.swaps = swaps;
         this.signer = signer;
         this.rToken = rToken;
@@ -93,7 +91,7 @@ class SearcherResult {
         }
         const approvalNeeded = [];
         await Promise.all(allApprovals.map(async (i) => {
-            if (await this.approvals.needsApproval(i.token, executorAddress, i.spender)) {
+            if (await this.universe.approvalStore.needsApproval(i.token, executorAddress, i.spender)) {
                 approvalNeeded.push(i);
             }
         }));
@@ -122,7 +120,7 @@ class SearcherResult {
             amountIn: this.swaps.inputs[0].amount,
             commands: builder.contractCalls.map((i) => i.encode()),
             amountOut: amountOut.amount,
-            tokenOut: amountOut.token.address.address
+            tokenOut: amountOut.token.address.address,
         };
         const data = inputIsNativeToken
             ? TransactionBuilder_1.zapperInterface.encodeFunctionData('zapETH', [payload])

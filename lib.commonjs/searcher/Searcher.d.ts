@@ -30,7 +30,6 @@ export declare const findPrecursorTokenSet: (universe: Universe, unitBasket: Tok
 }>;
 export declare class Searcher {
     private readonly universe;
-    private readonly approvals;
     constructor(universe: Universe);
     /**
      * @note This helper will find some set of operations converting a 'inputQuantity' into

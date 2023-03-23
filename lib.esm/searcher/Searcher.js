@@ -2,7 +2,6 @@ import { bfs } from '../exchange-graph/BFS';
 import { TokenAmounts } from '../entities/Token';
 import { SearcherResult } from './SearcherResult';
 import { SwapPath, SwapPaths, SwapPlan } from './Swap';
-import { ApprovalsStore } from './ApprovalsStore';
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
  * precursor set, in which the while basket can be derived via mints.
@@ -76,10 +75,8 @@ export const findPrecursorTokenSet = async (universe, unitBasket) => {
 };
 export class Searcher {
     universe;
-    approvals;
     constructor(universe) {
         this.universe = universe;
-        this.approvals = new ApprovalsStore(universe.provider);
     }
     /**
      * @note This helper will find some set of operations converting a 'inputQuantity' into
@@ -176,7 +173,7 @@ export class Searcher {
         ]).quote(mintAction.input.map((token) => tradingBalances.get(token)), signerAddress);
         await rTokenMint.exchange(tradingBalances);
         const output = tradingBalances.toTokenQuantities();
-        const searcherResult = new SearcherResult(this.universe, this.approvals, new SwapPaths(this.universe, [userInput], [
+        const searcherResult = new SearcherResult(this.universe, new SwapPaths(this.universe, [userInput], [
             new SwapPath(this.universe, inputQuantityToBasketTokens.inputs, inputQuantityToBasketTokens.swapPaths.map((i) => i.steps).flat(), inputQuantityToBasketTokens.outputs, inputQuantityToBasketTokens.outputValue, inputQuantityToBasketTokens.destination),
             rTokenMint,
         ], output, rTokenMint.outputValue, signerAddress), signerAddress, rToken);

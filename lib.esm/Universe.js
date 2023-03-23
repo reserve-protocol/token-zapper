@@ -8,9 +8,11 @@ import { DefaultMap } from './base/DefaultMap';
 import { ERC20__factory } from './contracts';
 import { parseHexStringIntoBuffer } from './base';
 import { Refreshable } from './entities/Refreshable';
+import { ApprovalsStore } from './searcher/ApprovalsStore';
 export class Universe {
     provider;
     chainConfig;
+    approvalStore;
     refreshableEntities = new Map();
     async refresh(entities) {
         const tasks = [];
@@ -108,9 +110,10 @@ export class Universe {
             burn,
         });
     }
-    constructor(provider, chainConfig) {
+    constructor(provider, chainConfig, approvalStore) {
         this.provider = provider;
         this.chainConfig = chainConfig;
+        this.approvalStore = approvalStore;
         const nativeToken = chainConfig.config.nativeToken;
         this.nativeToken = Token.createToken(this.tokens, Address.fromHexString('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'), nativeToken.symbol, nativeToken.name, nativeToken.decimals);
     }
@@ -136,13 +139,17 @@ But can set up your own config with 'createWithConfig'`);
         return await Universe.createWithConfig(provider, config);
     }
     static async createWithConfig(provider, config) {
-        const universe = new Universe(provider, config);
+        const universe = new Universe(provider, config, new ApprovalsStore(provider));
         await universe.init();
         await config.initialize(universe);
         return universe;
     }
     static async createForTest(config) {
-        const universe = new Universe(null, config);
+        const universe = new Universe(null, config, {
+            async needsApproval(_, __, ___) {
+                return true;
+            }
+        });
         return universe;
     }
 }

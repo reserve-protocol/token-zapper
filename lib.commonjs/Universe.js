@@ -11,9 +11,11 @@ const DefaultMap_1 = require("./base/DefaultMap");
 const contracts_1 = require("./contracts");
 const base_1 = require("./base");
 const Refreshable_1 = require("./entities/Refreshable");
+const ApprovalsStore_1 = require("./searcher/ApprovalsStore");
 class Universe {
     provider;
     chainConfig;
+    approvalStore;
     refreshableEntities = new Map();
     async refresh(entities) {
         const tasks = [];
@@ -111,9 +113,10 @@ class Universe {
             burn,
         });
     }
-    constructor(provider, chainConfig) {
+    constructor(provider, chainConfig, approvalStore) {
         this.provider = provider;
         this.chainConfig = chainConfig;
+        this.approvalStore = approvalStore;
         const nativeToken = chainConfig.config.nativeToken;
         this.nativeToken = Token_1.Token.createToken(this.tokens, Address_1.Address.fromHexString('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'), nativeToken.symbol, nativeToken.name, nativeToken.decimals);
     }
@@ -139,13 +142,17 @@ But can set up your own config with 'createWithConfig'`);
         return await Universe.createWithConfig(provider, config);
     }
     static async createWithConfig(provider, config) {
-        const universe = new Universe(provider, config);
+        const universe = new Universe(provider, config, new ApprovalsStore_1.ApprovalsStore(provider));
         await universe.init();
         await config.initialize(universe);
         return universe;
     }
     static async createForTest(config) {
-        const universe = new Universe(null, config);
+        const universe = new Universe(null, config, {
+            async needsApproval(_, __, ___) {
+                return true;
+            }
+        });
         return universe;
     }
 }

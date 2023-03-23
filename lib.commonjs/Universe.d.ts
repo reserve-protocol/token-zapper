@@ -9,9 +9,11 @@ import { DefaultMap } from './base/DefaultMap';
 import { type Oracle } from './oracles/Oracle';
 import { type DexAggregator } from './aggregators/DexAggregator';
 import { Refreshable } from './entities/Refreshable';
+import { ApprovalsStore } from './searcher/ApprovalsStore';
 export declare class Universe {
     readonly provider: ethers.providers.Provider;
     readonly chainConfig: ChainConfiguration;
+    readonly approvalStore: ApprovalsStore;
     readonly refreshableEntities: Map<Address, Refreshable>;
     refresh(entities: Set<Address>): Promise<void>;
     createRefreshableEntitity(address: Address, refresh: Refreshable['refreshAddress']): void;

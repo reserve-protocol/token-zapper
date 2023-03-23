@@ -17,7 +17,6 @@ import {
   zapperExecutorInterface,
   zapperInterface,
 } from './TransactionBuilder'
-import { ApprovalsStore } from './ApprovalsStore'
 import { ZapTransaction } from './ZapTransaction'
 
 class Step {
@@ -56,7 +55,6 @@ const linearize = (executor: Address, tokenExchange: SwapPaths): Step[] => {
 export class SearcherResult {
   constructor(
     readonly universe: Universe,
-    readonly approvals: ApprovalsStore,
     public readonly swaps: SwapPaths,
     public readonly signer: Address,
     public readonly rToken: Token
@@ -124,7 +122,7 @@ export class SearcherResult {
     await Promise.all(
       allApprovals.map(async (i) => {
         if (
-          await this.approvals.needsApproval(
+          await this.universe.approvalStore.needsApproval(
             i.token,
             executorAddress,
             i.spender
@@ -153,7 +151,7 @@ export class SearcherResult {
       inputToken === this.universe.nativeToken
         ? this.universe.commonTokens.ERC20GAS
         : inputToken
-    
+
     const amountOut = this.swaps.outputs.find(
       (output) => output.token === this.rToken
     )
@@ -165,7 +163,7 @@ export class SearcherResult {
       amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
       amountOut: amountOut.amount,
-      tokenOut: amountOut.token.address.address
+      tokenOut: amountOut.token.address.address,
     }
     const data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])

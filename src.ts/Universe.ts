@@ -15,6 +15,7 @@ import { type Oracle } from './oracles/Oracle'
 import { type DexAggregator } from './aggregators/DexAggregator'
 import { parseHexStringIntoBuffer } from './base'
 import { Refreshable } from './entities/Refreshable'
+import { ApprovalsStore } from './searcher/ApprovalsStore'
 
 export class Universe {
   public readonly refreshableEntities = new Map<Address, Refreshable>()
@@ -172,7 +173,8 @@ export class Universe {
 
   private constructor(
     public readonly provider: ethers.providers.Provider,
-    public readonly chainConfig: ChainConfiguration
+    public readonly chainConfig: ChainConfiguration,
+    public readonly approvalStore: ApprovalsStore
   ) {
     const nativeToken = chainConfig.config.nativeToken
     this.nativeToken = Token.createToken(
@@ -213,7 +215,7 @@ But can set up your own config with 'createWithConfig'`)
     provider: ethers.providers.Provider,
     config: ChainConfiguration
   ): Promise<Universe> {
-    const universe = new Universe(provider, config)
+    const universe = new Universe(provider, config, new ApprovalsStore(provider))
     await universe.init()
     await config.initialize(universe)
 
@@ -221,7 +223,15 @@ But can set up your own config with 'createWithConfig'`)
   }
 
   static async createForTest(config: ChainConfiguration) {
-    const universe = new Universe(null as any, config)
+    const universe = new Universe(null as any, config, {
+      async needsApproval(
+        _: Token,
+        __: Address,
+        ___: Address
+      ) {
+        return true
+      }
+    } as ApprovalsStore)
     return universe
   }
 }

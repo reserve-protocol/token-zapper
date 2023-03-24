@@ -5,12 +5,8 @@ const RTokens_1 = require("../action/RTokens");
 const SATokens_1 = require("../action/SATokens");
 const Address_1 = require("../base/Address");
 const contracts_1 = require("../contracts");
-const oneInchRegistry_1 = require("../aggregators/oneInch/oneInchRegistry");
 const ChainLinkOracle_1 = require("../oracles/ChainLinkOracle");
 const StaticConfig_1 = require("./StaticConfig");
-const DexAggregator_1 = require("../aggregators/DexAggregator");
-const OneInch_1 = require("../action/OneInch");
-const Swap_1 = require("../searcher/Swap");
 const WrappedNative_1 = require("../action/WrappedNative");
 const TokenBasket_1 = require("../entities/TokenBasket");
 const loadTokens = async (universe) => {
@@ -36,17 +32,6 @@ const initialize = async (universe) => {
             return;
         }
         universe.commonTokens[key] = await universe.getToken(addr);
-    }));
-    // const mainInst = IMain__factory.connect(
-    //   '0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a',
-    //   universe.provider
-    // )
-    const oneInchRouter = (0, oneInchRegistry_1.createEthereumRouter)();
-    universe.dexAggregators.push(new DexAggregator_1.DexAggregator('1inch', async (user, destination, input, output, slippage) => {
-        const swap = await oneInchRouter.swap(user, destination, input, output, slippage);
-        return await new Swap_1.SwapPlan(universe, [
-            OneInch_1.OneInchAction.createAction(universe, input.token, output, swap),
-        ]).quote([input], destination);
     }));
     const chainLinkETH = Address_1.Address.fromHexString('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE');
     const chainLinkBTC = Address_1.Address.fromHexString('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB');
@@ -125,8 +110,8 @@ const ethereumConfig = {
         decimals: 18,
         name: 'Ether',
     }, {
-        zapperAddress: Address_1.Address.fromHexString('0x0000000000000000000000000000000000000042'),
-        executorAddress: Address_1.Address.fromHexString('0x0000000000000000000000000000000000000043'),
+        zapperAddress: Address_1.Address.fromHexString('0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b'),
+        executorAddress: Address_1.Address.fromHexString('0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11'),
         rtokens: {
             eUSD: Address_1.Address.fromHexString('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F'),
         },

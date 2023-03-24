@@ -1,26 +1,17 @@
 import { ethers } from 'ethers';
 import { Address } from './base/Address';
-import ethereumConfig from './configuration/ethereum';
-import { StaticConfig } from './configuration/StaticConfig';
 import { Universe } from './Universe';
 import { Searcher } from './searcher/Searcher';
 import * as dotenv from 'dotenv';
 import { IERC20__factory } from './contracts';
+import { initOneInch } from './aggregators/oneInch/oneInchRegistry';
 dotenv.config();
 const run = async () => {
-    const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8546/"
-    // process.env.PROVIDER
-    );
+    const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY).connect(provider);
     const testUserAddr = Address.fromHexString(wallet.address);
-    const universe = await Universe.createWithConfig(provider, {
-        ...ethereumConfig,
-        config: new StaticConfig(ethereumConfig.config.nativeToken, {
-            ...ethereumConfig.config.addresses,
-            executorAddress: Address.fromHexString('0xA3f7BF5b0fa93176c260BBa57ceE85525De2BaF4'),
-            zapperAddress: Address.fromHexString('0x25A1DF485cFBb93117f12fc673D87D1cddEb845a'),
-        }),
-    });
+    const universe = await Universe.create(provider);
+    initOneInch(universe, "https://api.1inch.io");
     const searcher = new Searcher(universe);
     const eUSD = universe.rTokens.eUSD;
     const result = await searcher.findSingleInputToRTokenZap(universe.commonTokens.USDT.fromDecimal('50'), eUSD, testUserAddr);

@@ -1,9 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createEthereumRouter = void 0;
+exports.initOneInch = exports.createEthereumRouter = void 0;
+const OneInch_1 = require("../../action/OneInch");
+const Swap_1 = require("../../searcher/Swap");
+const DexAggregator_1 = require("../DexAggregator");
 const oneInchEthApi_1 = require("./eth/oneInchEthApi");
-const createEthereumRouter = () => {
-    const api = new oneInchEthApi_1.Api({ baseUrl: 'https://api.1inch.io' });
+const createEthereumRouter = (baseUrl) => {
+    const api = new oneInchEthApi_1.Api({ baseUrl });
     return {
         quote: async (inputQrt, output) => {
             const out = await api.v50.exchangeControllerGetQuote({
@@ -29,4 +32,14 @@ const createEthereumRouter = () => {
     };
 };
 exports.createEthereumRouter = createEthereumRouter;
+const initOneInch = (universe, baseUrl) => {
+    const oneInchRouter = (0, exports.createEthereumRouter)(baseUrl);
+    return new DexAggregator_1.DexAggregator('1inch', async (user, destination, input, output, slippage) => {
+        const swap = await oneInchRouter.swap(user, destination, input, output, slippage);
+        return await new Swap_1.SwapPlan(universe, [
+            OneInch_1.OneInchAction.createAction(universe, input.token, output, swap),
+        ]).quote([input], destination);
+    });
+};
+exports.initOneInch = initOneInch;
 //# sourceMappingURL=oneInchRegistry.js.map

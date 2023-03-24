@@ -3,27 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const ethers_1 = require("ethers");
 const Address_1 = require("./base/Address");
-const ethereum_1 = tslib_1.__importDefault(require("./configuration/ethereum"));
-const StaticConfig_1 = require("./configuration/StaticConfig");
 const Universe_1 = require("./Universe");
 const Searcher_1 = require("./searcher/Searcher");
 const dotenv = tslib_1.__importStar(require("dotenv"));
 const contracts_1 = require("./contracts");
+const oneInchRegistry_1 = require("./aggregators/oneInch/oneInchRegistry");
 dotenv.config();
 const run = async () => {
-    const provider = new ethers_1.ethers.providers.JsonRpcProvider("http://127.0.0.1:8546/"
-    // process.env.PROVIDER
-    );
+    const provider = new ethers_1.ethers.providers.JsonRpcProvider(process.env.PROVIDER);
     const wallet = new ethers_1.ethers.Wallet(process.env.PRIVATE_KEY).connect(provider);
     const testUserAddr = Address_1.Address.fromHexString(wallet.address);
-    const universe = await Universe_1.Universe.createWithConfig(provider, {
-        ...ethereum_1.default,
-        config: new StaticConfig_1.StaticConfig(ethereum_1.default.config.nativeToken, {
-            ...ethereum_1.default.config.addresses,
-            executorAddress: Address_1.Address.fromHexString('0xA3f7BF5b0fa93176c260BBa57ceE85525De2BaF4'),
-            zapperAddress: Address_1.Address.fromHexString('0x25A1DF485cFBb93117f12fc673D87D1cddEb845a'),
-        }),
-    });
+    const universe = await Universe_1.Universe.create(provider);
+    (0, oneInchRegistry_1.initOneInch)(universe, "https://api.1inch.io");
     const searcher = new Searcher_1.Searcher(universe);
     const eUSD = universe.rTokens.eUSD;
     const result = await searcher.findSingleInputToRTokenZap(universe.commonTokens.USDT.fromDecimal('50'), eUSD, testUserAddr);

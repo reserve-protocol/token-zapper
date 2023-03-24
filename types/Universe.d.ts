@@ -13,10 +13,8 @@ import { ApprovalsStore } from './searcher/ApprovalsStore';
 export declare class Universe {
     readonly provider: ethers.providers.Provider;
     readonly chainConfig: ChainConfiguration;
-    readonly approvalStore: ApprovalsStore;
     readonly refreshableEntities: Map<Address, Refreshable>;
-    refresh(entities: Set<Address>): Promise<void>;
-    createRefreshableEntitity(address: Address, refresh: Refreshable['refreshAddress']): void;
+    approvalStore: ApprovalsStore;
     readonly tokens: Map<Address, Token>;
     readonly actions: DefaultMap<Address, Action[]>;
     readonly nativeToken: Token;
@@ -34,6 +32,8 @@ export declare class Universe {
     readonly commonTokens: {
         [P in keyof CommonTokens]: Token | null;
     };
+    refresh(entities: Set<Address>): Promise<void>;
+    createRefreshableEntitity(address: Address, refresh: Refreshable['refreshAddress']): void;
     get config(): import("./configuration").StaticConfig;
     private readonly blockState;
     fairPrice(qty: TokenQuantity): Promise<TokenQuantity | null>;

@@ -1,14 +1,10 @@
 import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens';
-import { BurnRTokenAction, MintRTokenAction, } from '../action/RTokens';
+import { BurnRTokenAction, MintRTokenAction } from '../action/RTokens';
 import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens';
 import { Address } from '../base/Address';
 import { IComptroller__factory, ICToken__factory, IStaticATokenLM__factory, } from '../contracts';
-import { createEthereumRouter } from '../aggregators/oneInch/oneInchRegistry';
 import { ChainLinkOracle } from '../oracles/ChainLinkOracle';
 import { StaticConfig } from './StaticConfig';
-import { DexAggregator } from '../aggregators/DexAggregator';
-import { OneInchAction } from '../action/OneInch';
-import { SwapPlan } from '../searcher/Swap';
 import { DepositAction, WithdrawAction } from '../action/WrappedNative';
 import { TokenBasket } from '../entities/TokenBasket';
 const loadTokens = async (universe) => {
@@ -34,17 +30,6 @@ const initialize = async (universe) => {
             return;
         }
         universe.commonTokens[key] = await universe.getToken(addr);
-    }));
-    // const mainInst = IMain__factory.connect(
-    //   '0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a',
-    //   universe.provider
-    // )
-    const oneInchRouter = createEthereumRouter();
-    universe.dexAggregators.push(new DexAggregator('1inch', async (user, destination, input, output, slippage) => {
-        const swap = await oneInchRouter.swap(user, destination, input, output, slippage);
-        return await new SwapPlan(universe, [
-            OneInchAction.createAction(universe, input.token, output, swap),
-        ]).quote([input], destination);
     }));
     const chainLinkETH = Address.fromHexString('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE');
     const chainLinkBTC = Address.fromHexString('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB');
@@ -123,8 +108,8 @@ const ethereumConfig = {
         decimals: 18,
         name: 'Ether',
     }, {
-        zapperAddress: Address.fromHexString('0x0000000000000000000000000000000000000042'),
-        executorAddress: Address.fromHexString('0x0000000000000000000000000000000000000043'),
+        zapperAddress: Address.fromHexString('0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b'),
+        executorAddress: Address.fromHexString('0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11'),
         rtokens: {
             eUSD: Address.fromHexString('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F'),
         },

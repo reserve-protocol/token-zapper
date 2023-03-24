@@ -15,22 +15,8 @@ const ApprovalsStore_1 = require("./searcher/ApprovalsStore");
 class Universe {
     provider;
     chainConfig;
-    approvalStore;
     refreshableEntities = new Map();
-    async refresh(entities) {
-        const tasks = [];
-        for (const entity of entities) {
-            const refreshable = this.refreshableEntities.get(entity);
-            if (refreshable == null) {
-                continue;
-            }
-            tasks.push(refreshable.refresh(this.currentBlock));
-        }
-        await Promise.all(tasks);
-    }
-    createRefreshableEntitity(address, refresh) {
-        this.refreshableEntities.set(address, new Refreshable_1.Refreshable(address, this.currentBlock, refresh));
-    }
+    approvalStore;
     tokens = new Map();
     actions = new DefaultMap_1.DefaultMap(() => []);
     // The GAS token for the EVM chain, set by the StaticConfig
@@ -53,6 +39,20 @@ class Universe {
         ERC20ETH: null,
         ERC20GAS: null,
     };
+    async refresh(entities) {
+        const tasks = [];
+        for (const entity of entities) {
+            const refreshable = this.refreshableEntities.get(entity);
+            if (refreshable == null) {
+                continue;
+            }
+            tasks.push(refreshable.refresh(this.currentBlock));
+        }
+        await Promise.all(tasks);
+    }
+    createRefreshableEntitity(address, refresh) {
+        this.refreshableEntities.set(address, new Refreshable_1.Refreshable(address, this.currentBlock, refresh));
+    }
     get config() {
         return this.chainConfig.config;
     }
@@ -113,11 +113,11 @@ class Universe {
             burn,
         });
     }
-    constructor(provider, chainConfig, approvalStore) {
+    constructor(provider, chainConfig, approvalsStore) {
         this.provider = provider;
         this.chainConfig = chainConfig;
-        this.approvalStore = approvalStore;
         const nativeToken = chainConfig.config.nativeToken;
+        this.approvalStore = approvalsStore;
         this.nativeToken = Token_1.Token.createToken(this.tokens, Address_1.Address.fromHexString('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'), nativeToken.symbol, nativeToken.name, nativeToken.decimals);
     }
     async updateGasPrice() {
@@ -151,7 +151,7 @@ But can set up your own config with 'createWithConfig'`);
         const universe = new Universe(null, config, {
             async needsApproval(_, __, ___) {
                 return true;
-            }
+            },
         });
         return universe;
     }

@@ -1,5 +1,9 @@
+import { OneInchAction } from '../../action/OneInch'
 import { type Address } from '../../base/Address'
 import { type Token, type TokenQuantity } from '../../entities/Token'
+import { SwapPlan } from '../../searcher/Swap'
+import { Universe } from '../../Universe'
+import { DexAggregator } from '../DexAggregator'
 import {
   Api,
   type QuoteResponseDto,
@@ -22,8 +26,8 @@ export interface IOneInchRouter {
   ) => Promise<OneInchSwapResponse>
 }
 
-export const createEthereumRouter = (): IOneInchRouter => {
-  const api = new Api({ baseUrl: 'https://api.1inch.io' })
+export const createEthereumRouter = (baseUrl: string): IOneInchRouter => {
+  const api = new Api({ baseUrl })
 
   return {
     quote: async (inputQrt, output) => {
@@ -50,4 +54,24 @@ export const createEthereumRouter = (): IOneInchRouter => {
       return out.data
     },
   }
+}
+
+export const initOneInch = (universe: Universe, baseUrl: string) => {
+  const oneInchRouter = createEthereumRouter(baseUrl)
+  return new DexAggregator(
+    '1inch',
+    async (user, destination, input, output, slippage) => {
+      const swap = await oneInchRouter.swap(
+        user,
+        destination,
+        input,
+        output,
+        slippage
+      )
+
+      return await new SwapPlan(universe, [
+        OneInchAction.createAction(universe, input.token, output, swap),
+      ]).quote([input], destination)
+    }
+  )
 }

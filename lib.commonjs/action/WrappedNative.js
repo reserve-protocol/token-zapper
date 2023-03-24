@@ -9,8 +9,11 @@ const iWrappedNativeIFace = contracts_1.IWrappedNative__factory.createInterface(
 class DepositAction extends Action_1.Action {
     universe;
     wrappedToken;
+    gasEstimate() {
+        return 25000n;
+    }
     async encode([amountsIn]) {
-        return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iWrappedNativeIFace.encodeFunctionData('deposit')), this.wrappedToken.address, amountsIn.amount, 'Wrap Native Token');
+        return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iWrappedNativeIFace.encodeFunctionData('deposit')), this.wrappedToken.address, amountsIn.amount, this.gasEstimate(), 'Wrap Native Token');
     }
     async quote(qty) {
         return qty;
@@ -28,8 +31,11 @@ exports.DepositAction = DepositAction;
 class WithdrawAction extends Action_1.Action {
     universe;
     wrappedToken;
+    gasEstimate() {
+        return 25000n;
+    }
     async encode([amountsIn]) {
-        return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iWrappedNativeIFace.encodeFunctionData('withdraw', [amountsIn.amount])), this.wrappedToken.address, 0n, 'Unwrap Native Token');
+        return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iWrappedNativeIFace.encodeFunctionData('withdraw', [amountsIn.amount])), this.wrappedToken.address, 0n, this.gasEstimate(), 'Unwrap Native Token');
     }
     async quote(qty) {
         return [qty[0].convertTo(this.universe.nativeToken)];

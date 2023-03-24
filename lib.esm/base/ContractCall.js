@@ -2,11 +2,13 @@ export class ContractCall {
     payload;
     to;
     value;
+    gas;
     comment;
-    constructor(payload, to, value, comment) {
+    constructor(payload, to, value, gas, comment) {
         this.payload = payload;
         this.to = to;
         this.value = value;
+        this.gas = gas;
         this.comment = comment;
     }
     encode() {

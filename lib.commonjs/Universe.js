@@ -15,6 +15,7 @@ const ApprovalsStore_1 = require("./searcher/ApprovalsStore");
 class Universe {
     provider;
     chainConfig;
+    chainId = 0;
     refreshableEntities = new Map();
     approvalStore;
     tokens = new Map();
@@ -120,16 +121,12 @@ class Universe {
         this.approvalStore = approvalsStore;
         this.nativeToken = Token_1.Token.createToken(this.tokens, Address_1.Address.fromHexString('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'), nativeToken.symbol, nativeToken.name, nativeToken.decimals);
     }
-    async updateGasPrice() {
+    async updateGasPrice(block) {
+        if (this.blockState.currentBlock === block) {
+            return;
+        }
+        this.blockState.currentBlock = block;
         this.blockState.gasPrice = (await this.provider.getGasPrice()).toBigInt();
-    }
-    async init() {
-        const onBlock = (block) => {
-            this.blockState.currentBlock = block;
-            void this.updateGasPrice();
-        };
-        onBlock(await this.provider.getBlockNumber());
-        this.provider.on('block', onBlock);
     }
     static async create(provider) {
         const network = await provider.getNetwork();
@@ -143,7 +140,7 @@ But can set up your own config with 'createWithConfig'`);
     }
     static async createWithConfig(provider, config) {
         const universe = new Universe(provider, config, new ApprovalsStore_1.ApprovalsStore(provider));
-        await universe.init();
+        await universe.updateGasPrice(await provider.getBlockNumber());
         await config.initialize(universe);
         return universe;
     }

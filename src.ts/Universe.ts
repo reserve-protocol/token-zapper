@@ -18,6 +18,7 @@ import { Refreshable } from './entities/Refreshable'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
 
 export class Universe {
+  public chainId = 0
   public readonly refreshableEntities = new Map<Address, Refreshable>()
   public approvalStore: ApprovalsStore
 
@@ -189,17 +190,12 @@ export class Universe {
     )
   }
 
-  private async updateGasPrice() {
-    this.blockState.gasPrice = (await this.provider.getGasPrice()).toBigInt()
-  }
-
-  async init() {
-    const onBlock = (block: number) => {
-      this.blockState.currentBlock = block
-      void this.updateGasPrice()
+  public async updateGasPrice(block: number) {
+    if (this.blockState.currentBlock === block) {
+      return
     }
-    onBlock(await this.provider.getBlockNumber())
-    this.provider.on('block', onBlock)
+    this.blockState.currentBlock = block
+    this.blockState.gasPrice = (await this.provider.getGasPrice()).toBigInt()
   }
 
   static async create(provider: ethers.providers.Provider): Promise<Universe> {
@@ -223,7 +219,8 @@ But can set up your own config with 'createWithConfig'`)
       config,
       new ApprovalsStore(provider)
     )
-    await universe.init()
+
+    await universe.updateGasPrice(await provider.getBlockNumber())
     await config.initialize(universe)
 
     return universe

@@ -18,6 +18,7 @@ import {
   zapperInterface,
 } from './TransactionBuilder'
 import { ZapTransaction } from './ZapTransaction'
+import { PermitTransferFrom } from '@uniswap/permit2-sdk'
 
 class Step {
   constructor(
@@ -95,7 +96,17 @@ export class SearcherResult {
     return blockBuilder.contractCalls
   }
 
-  async toTransaction() {
+  async toTransaction(
+    options: Partial<{
+      returnDust: boolean
+      permit2: {
+        permit: PermitTransferFrom
+        signature: string
+      }
+    }> = {
+      returnDust: false,
+    }
+  ) {
     const executorAddress = this.universe.config.addresses.executorAddress
     const inputIsNativeToken =
       this.swaps.inputs[0].token === this.universe.nativeToken
@@ -141,7 +152,9 @@ export class SearcherResult {
       builder.addCall(encodedSubCall)
     }
 
-    builder.drainERC20([...potentialResidualTokens], this.signer)
+    if (options.returnDust) {
+      builder.drainERC20([...potentialResidualTokens], this.signer)
+    }
 
     let inputToken = this.swaps.inputs[0].token
     if (this.universe.commonTokens.ERC20GAS == null) {
@@ -165,24 +178,25 @@ export class SearcherResult {
       amountOut: amountOut.amount,
       tokenOut: amountOut.token.address.address,
     }
+
+    const value = inputIsNativeToken
+      ? ethers.BigNumber.from(this.swaps.inputs[0].amount)
+      : ethers.constants.Zero
+
     const data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
-      : zapperInterface.encodeFunctionData('zapERC20', [payload])
-    const gas = (
-      await this.universe.provider.estimateGas({
-        to: this.universe.config.addresses.zapperAddress.address,
-        data,
-        value: inputIsNativeToken
-          ? ethers.BigNumber.from(this.swaps.inputs[0].amount)
-          : 0,
-        from: this.signer.address,
-      })
-    ).toBigInt()
+      : options.permit2 == null
+      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+          payload,
+          options.permit2.permit,
+          parseHexStringIntoBuffer(options.permit2.signature),
+        ])
 
     const tx = {
       to: this.universe.config.addresses.zapperAddress.address,
       data,
-      chainId: (await this.universe.provider.getNetwork()).chainId,
+      chainId: this.universe.chainId,
 
       // TODO: For optimism / arbitrum this needs updating to use type: 0 transactions
       type: 2,
@@ -190,17 +204,14 @@ export class SearcherResult {
         this.universe.gasPrice + this.universe.gasPrice / 12n
       ),
 
-      gasLimit: ethers.BigNumber.from(gas + gas / 100n),
-      value: inputIsNativeToken
-        ? ethers.BigNumber.from(this.swaps.inputs[0].amount)
-        : 0,
+      value,
       from: this.signer.address,
     }
     return new ZapTransaction(
       this.universe,
       payload,
       tx,
-      gas,
+      builder.gasEstimate(),
       this.swaps.inputs[0],
       this.swaps.outputs,
       this

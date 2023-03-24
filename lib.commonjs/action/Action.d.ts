@@ -22,6 +22,7 @@ export declare abstract class Action {
     readonly approvals: readonly Approval[];
     constructor(address: Address, input: readonly Token[], output: readonly Token[], interactionConvention: InteractionConvention, proceedsOptions: DestinationOptions, approvals: readonly Approval[]);
     abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>;
+    abstract gasEstimate(): bigint;
     exchange(amountsIn: TokenQuantity[], balances: TokenAmounts): Promise<void>;
     abstract encode(amountsIn: TokenQuantity[], destination: Address, bytes?: Buffer): Promise<ContractCall>;
     toString(): string;

@@ -7,6 +7,7 @@ export declare class MintCTokenAction extends Action {
     readonly underlying: Token;
     readonly cToken: Token;
     private readonly rate;
+    gasEstimate(): bigint;
     private readonly rateScale;
     encode([amountsIn]: TokenQuantity[]): Promise<ContractCall>;
     quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]>;
@@ -20,6 +21,7 @@ export declare class BurnCTokenAction extends Action {
     readonly underlying: Token;
     readonly cToken: Token;
     private readonly rate;
+    gasEstimate(): bigint;
     private readonly rateScale;
     encode([amountsIn]: TokenQuantity[]): Promise<ContractCall>;
     quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]>;

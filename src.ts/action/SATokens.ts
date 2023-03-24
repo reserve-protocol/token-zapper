@@ -18,6 +18,9 @@ function rayDiv(a: bigint, b: bigint): bigint {
 }
 const saTokenInterface = IStaticATokenLM__factory.createInterface()
 export class MintSATokensAction extends Action {
+  gasEstimate() {
+    return BigInt(300000n)
+  }
   async encode(
     [amountsIn]: TokenQuantity[],
     destination: Address
@@ -33,6 +36,7 @@ export class MintSATokensAction extends Action {
       ),
       this.saToken.address,
       0n,
+      this.gasEstimate(),
       `Mint(${this.saToken}, input: ${amountsIn}, destination: ${destination})`
     )
   }
@@ -66,6 +70,9 @@ export class MintSATokensAction extends Action {
   }
 }
 export class BurnSATokensAction extends Action {
+  gasEstimate() {
+    return BigInt(300000n)
+  }
   async encode(
     [amountsIn]: TokenQuantity[],
     destination: Address
@@ -80,6 +87,7 @@ export class BurnSATokensAction extends Action {
       ),
       this.saToken.address,
       0n,
+      this.gasEstimate(),
       'Burn ' + this.saToken.name
     )
   }

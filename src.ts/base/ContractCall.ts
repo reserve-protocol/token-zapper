@@ -5,6 +5,7 @@ export class ContractCall {
     readonly payload: Buffer,
     readonly to: Address,
     readonly value: bigint,
+    readonly gas: bigint,
     readonly comment?: string
   ) {}
 

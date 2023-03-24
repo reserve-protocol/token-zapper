@@ -9,8 +9,8 @@ export class ZapTransaction {
   constructor(
     private readonly universe: Universe,
     public readonly params: ZapERC20ParamsStruct,
-    public readonly tx: ethers.providers.TransactionRequest,
-    public readonly gas: bigint,
+    public readonly tx: Omit<ethers.providers.TransactionRequest, "gas">,
+    public readonly gasEstimate: bigint,
     public readonly input: TokenQuantity,
     public readonly output: TokenQuantity[],
     public readonly result: SearcherResult
@@ -18,7 +18,7 @@ export class ZapTransaction {
 
   get fee() {
     return this.universe.nativeToken.quantityFromBigInt(
-      this.universe.gasPrice * this.gas
+      this.universe.gasPrice * this.gasEstimate
     );
   }
 

@@ -7,14 +7,18 @@ import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
 import { rTokenIFace, IBasket } from '../entities/TokenBasket'
 
+const MINT_DIGITS = 10n**9n
 export class MintRTokenAction extends Action {
+  gasEstimate() {
+    return BigInt(600000n)
+  }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     if (amountsIn.length !== this.input.length) {
       throw new Error('Invalid inputs for RToken mint')
     }
     const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket)
 
-    return [this.basket.rToken.quantityFromBigInt((unitsRequested / 1000n) * 1000n)]
+    return [this.basket.rToken.quantityFromBigInt((unitsRequested / MINT_DIGITS) * MINT_DIGITS)]
   }
 
   async exchange(input: TokenQuantity[], balances: TokenAmounts) {
@@ -39,6 +43,7 @@ export class MintRTokenAction extends Action {
       ),
       this.basket.rToken.address,
       0n,
+      this.gasEstimate(),
       `RToken(${this.basket.rToken},input:${amountsIn},issueAmount:${units},destination: ${destination})`
     )
   }
@@ -68,6 +73,9 @@ export class MintRTokenAction extends Action {
 }
 
 export class BurnRTokenAction extends Action {
+  gasEstimate() {
+    return BigInt(600000n)
+  }
   async encode([quantity]: TokenQuantity[]): Promise<ContractCall> {
     const nonce = await this.basketHandler.basketNonce
     return new ContractCall(
@@ -76,12 +84,13 @@ export class BurnRTokenAction extends Action {
       ),
       this.basketHandler.rToken.address,
       0n,
+      this.gasEstimate(),
       'RToken Burn'
     )
   }
 
   async quote([quantity]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const quantityPrToken = await this.basketHandler.unitBasket
+    const quantityPrToken = this.basketHandler.unitBasket
     return quantityPrToken.map((qty) => quantity.convertTo(qty.token).mul(qty))
   }
 

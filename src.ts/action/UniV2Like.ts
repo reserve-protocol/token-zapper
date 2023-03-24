@@ -13,6 +13,9 @@ import { Buffer } from 'buffer'
 const iface = UniswapV2Pair__factory.createInterface()
 
 export class UniV2Like extends UniBase {
+  gasEstimate() {
+    return BigInt(110000n)
+  }
   async encode(
     amountsIn: TokenQuantity[],
     destination: Address
@@ -34,6 +37,7 @@ export class UniV2Like extends UniBase {
       ),
       this.pool.address,
       0n,
+      this.gasEstimate(),
       'V2Swap ' + this.pool.name
     )
   }

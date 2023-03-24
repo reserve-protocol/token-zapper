@@ -72,7 +72,9 @@ class SearcherResult {
         }
         return blockBuilder.contractCalls;
     }
-    async toTransaction() {
+    async toTransaction(options = {
+        returnDust: false,
+    }) {
         const executorAddress = this.universe.config.addresses.executorAddress;
         const inputIsNativeToken = this.swaps.inputs[0].token === this.universe.nativeToken;
         const builder = new TransactionBuilder_1.TransactionBuilder(this.universe);
@@ -102,7 +104,9 @@ class SearcherResult {
         for (const encodedSubCall of await this.encodeActions(steps)) {
             builder.addCall(encodedSubCall);
         }
-        builder.drainERC20([...potentialResidualTokens], this.signer);
+        if (options.returnDust) {
+            builder.drainERC20([...potentialResidualTokens], this.signer);
+        }
         let inputToken = this.swaps.inputs[0].token;
         if (this.universe.commonTokens.ERC20GAS == null) {
             throw new Error('Unexpected: Missing wrapped gas token');
@@ -122,31 +126,29 @@ class SearcherResult {
             amountOut: amountOut.amount,
             tokenOut: amountOut.token.address.address,
         };
+        const value = inputIsNativeToken
+            ? ethers_1.ethers.BigNumber.from(this.swaps.inputs[0].amount)
+            : ethers_1.ethers.constants.Zero;
         const data = inputIsNativeToken
             ? TransactionBuilder_1.zapperInterface.encodeFunctionData('zapETH', [payload])
-            : TransactionBuilder_1.zapperInterface.encodeFunctionData('zapERC20', [payload]);
-        const gas = (await this.universe.provider.estimateGas({
-            to: this.universe.config.addresses.zapperAddress.address,
-            data,
-            value: inputIsNativeToken
-                ? ethers_1.ethers.BigNumber.from(this.swaps.inputs[0].amount)
-                : 0,
-            from: this.signer.address,
-        })).toBigInt();
+            : options.permit2 == null
+                ? TransactionBuilder_1.zapperInterface.encodeFunctionData('zapERC20', [payload])
+                : TransactionBuilder_1.zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+                    payload,
+                    options.permit2.permit,
+                    (0, utils_1.parseHexStringIntoBuffer)(options.permit2.signature),
+                ]);
         const tx = {
             to: this.universe.config.addresses.zapperAddress.address,
             data,
-            chainId: (await this.universe.provider.getNetwork()).chainId,
+            chainId: this.universe.chainId,
             // TODO: For optimism / arbitrum this needs updating to use type: 0 transactions
             type: 2,
             maxFeePerGas: ethers_1.ethers.BigNumber.from(this.universe.gasPrice + this.universe.gasPrice / 12n),
-            gasLimit: ethers_1.ethers.BigNumber.from(gas + gas / 100n),
-            value: inputIsNativeToken
-                ? ethers_1.ethers.BigNumber.from(this.swaps.inputs[0].amount)
-                : 0,
+            value,
             from: this.signer.address,
         };
-        return new ZapTransaction_1.ZapTransaction(this.universe, payload, tx, gas, this.swaps.inputs[0], this.swaps.outputs, this);
+        return new ZapTransaction_1.ZapTransaction(this.universe, payload, tx, builder.gasEstimate(), this.swaps.inputs[0], this.swaps.outputs, this);
     }
 }
 exports.SearcherResult = SearcherResult;

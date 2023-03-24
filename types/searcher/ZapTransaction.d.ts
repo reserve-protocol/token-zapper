@@ -6,12 +6,12 @@ import { SearcherResult } from './SearcherResult';
 export declare class ZapTransaction {
     private readonly universe;
     readonly params: ZapERC20ParamsStruct;
-    readonly tx: ethers.providers.TransactionRequest;
-    readonly gas: bigint;
+    readonly tx: Omit<ethers.providers.TransactionRequest, "gas">;
+    readonly gasEstimate: bigint;
     readonly input: TokenQuantity;
     readonly output: TokenQuantity[];
     readonly result: SearcherResult;
-    constructor(universe: Universe, params: ZapERC20ParamsStruct, tx: ethers.providers.TransactionRequest, gas: bigint, input: TokenQuantity, output: TokenQuantity[], result: SearcherResult);
+    constructor(universe: Universe, params: ZapERC20ParamsStruct, tx: Omit<ethers.providers.TransactionRequest, "gas">, gasEstimate: bigint, input: TokenQuantity, output: TokenQuantity[], result: SearcherResult);
     get fee(): TokenQuantity;
     toString(): string;
 }

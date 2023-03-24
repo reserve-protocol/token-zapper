@@ -21,13 +21,16 @@ class MintSATokensAction extends Action_1.Action {
     underlying;
     saToken;
     rate;
+    gasEstimate() {
+        return BigInt(300000n);
+    }
     async encode([amountsIn], destination) {
         return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(saTokenInterface.encodeFunctionData('deposit', [
             destination.address,
             amountsIn.amount,
             0,
             true,
-        ])), this.saToken.address, 0n, `Mint(${this.saToken}, input: ${amountsIn}, destination: ${destination})`);
+        ])), this.saToken.address, 0n, this.gasEstimate(), `Mint(${this.saToken}, input: ${amountsIn}, destination: ${destination})`);
     }
     async quote([amountsIn]) {
         return [
@@ -51,12 +54,15 @@ class BurnSATokensAction extends Action_1.Action {
     underlying;
     saToken;
     rate;
+    gasEstimate() {
+        return BigInt(300000n);
+    }
     async encode([amountsIn], destination) {
         return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(saTokenInterface.encodeFunctionData('withdraw', [
             destination.address,
             amountsIn.amount,
             true,
-        ])), this.saToken.address, 0n, 'Burn ' + this.saToken.name);
+        ])), this.saToken.address, 0n, this.gasEstimate(), 'Burn ' + this.saToken.name);
     }
     async quote([amountsIn]) {
         return [

@@ -14,12 +14,15 @@ class MintCTokenAction extends Action_1.Action {
     underlying;
     cToken;
     rate;
+    gasEstimate() {
+        return BigInt(175000n);
+    }
     rateScale;
     async encode([amountsIn]) {
         if (this.underlying === this.universe.nativeToken) {
-            return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iCEtherInterface.encodeFunctionData('mint')), this.cToken.address, amountsIn.amount, 'Mint CEther');
+            return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iCEtherInterface.encodeFunctionData('mint')), this.cToken.address, amountsIn.amount, this.gasEstimate(), 'Mint CEther');
         }
-        return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iCTokenInterface.encodeFunctionData('mint', [amountsIn.amount])), this.cToken.address, 0n, 'Mint ' + this.cToken.symbol);
+        return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iCTokenInterface.encodeFunctionData('mint', [amountsIn.amount])), this.cToken.address, 0n, this.gasEstimate(), 'Mint ' + this.cToken.symbol);
     }
     async quote([amountsIn]) {
         return [
@@ -46,9 +49,12 @@ class BurnCTokenAction extends Action_1.Action {
     underlying;
     cToken;
     rate;
+    gasEstimate() {
+        return BigInt(175000n);
+    }
     rateScale;
     async encode([amountsIn]) {
-        return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iCTokenInterface.encodeFunctionData('redeem', [amountsIn.amount])), this.cToken.address, 0n, 'Burn ' + this.cToken.symbol);
+        return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iCTokenInterface.encodeFunctionData('redeem', [amountsIn.amount])), this.cToken.address, 0n, this.gasEstimate(), 'Burn ' + this.cToken.symbol);
     }
     async quote([amountsIn]) {
         return [

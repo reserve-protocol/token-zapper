@@ -13,6 +13,7 @@ import { ApprovalsStore } from './searcher/ApprovalsStore';
 export declare class Universe {
     readonly provider: ethers.providers.Provider;
     readonly chainConfig: ChainConfiguration;
+    chainId: number;
     readonly refreshableEntities: Map<Address, Refreshable>;
     approvalStore: ApprovalsStore;
     readonly tokens: Map<Address, Token>;
@@ -44,8 +45,7 @@ export declare class Universe {
     addAction(action: Action, actionAddress?: Address): this;
     defineMintable(mint: Action, burn: Action): void;
     private constructor();
-    private updateGasPrice;
-    init(): Promise<void>;
+    updateGasPrice(block: number): Promise<void>;
     static create(provider: ethers.providers.Provider): Promise<Universe>;
     static createWithConfig(provider: ethers.providers.Provider, config: ChainConfiguration): Promise<Universe>;
     static createForTest(config: ChainConfiguration): Promise<Universe>;

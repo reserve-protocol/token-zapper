@@ -4,8 +4,9 @@ export declare class ContractCall {
     readonly payload: Buffer;
     readonly to: Address;
     readonly value: bigint;
+    readonly gas: bigint;
     readonly comment?: string | undefined;
-    constructor(payload: Buffer, to: Address, value: bigint, comment?: string | undefined);
+    constructor(payload: Buffer, to: Address, value: bigint, gas: bigint, comment?: string | undefined);
     encode(): {
         to: string;
         value: bigint;

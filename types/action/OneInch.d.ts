@@ -6,6 +6,7 @@ import { type OneInchSwapResponse } from '../aggregators/oneInch/oneInchRegistry
 export declare class OneInchAction extends Action {
     readonly universe: Universe;
     private readonly actionQuote;
+    gasEstimate(): bigint;
     encode(): Promise<ContractCall>;
     toString(): string;
     quote(_: TokenQuantity[]): Promise<TokenQuantity[]>;

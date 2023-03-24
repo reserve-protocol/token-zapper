@@ -6,8 +6,11 @@ const iWrappedNativeIFace = IWrappedNative__factory.createInterface();
 export class DepositAction extends Action {
     universe;
     wrappedToken;
+    gasEstimate() {
+        return 25000n;
+    }
     async encode([amountsIn]) {
-        return new ContractCall(parseHexStringIntoBuffer(iWrappedNativeIFace.encodeFunctionData('deposit')), this.wrappedToken.address, amountsIn.amount, 'Wrap Native Token');
+        return new ContractCall(parseHexStringIntoBuffer(iWrappedNativeIFace.encodeFunctionData('deposit')), this.wrappedToken.address, amountsIn.amount, this.gasEstimate(), 'Wrap Native Token');
     }
     async quote(qty) {
         return qty;
@@ -24,8 +27,11 @@ export class DepositAction extends Action {
 export class WithdrawAction extends Action {
     universe;
     wrappedToken;
+    gasEstimate() {
+        return 25000n;
+    }
     async encode([amountsIn]) {
-        return new ContractCall(parseHexStringIntoBuffer(iWrappedNativeIFace.encodeFunctionData('withdraw', [amountsIn.amount])), this.wrappedToken.address, 0n, 'Unwrap Native Token');
+        return new ContractCall(parseHexStringIntoBuffer(iWrappedNativeIFace.encodeFunctionData('withdraw', [amountsIn.amount])), this.wrappedToken.address, 0n, this.gasEstimate(), 'Unwrap Native Token');
     }
     async quote(qty) {
         return [qty[0].convertTo(this.universe.nativeToken)];

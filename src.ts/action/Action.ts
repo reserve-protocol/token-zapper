@@ -26,6 +26,7 @@ export abstract class Action {
   ) {}
 
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
+  abstract gasEstimate(): bigint;
   async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {
     const outputs = await this.quote(amountsIn)
     balances.exchange(amountsIn, outputs)

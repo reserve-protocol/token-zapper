@@ -12,4 +12,5 @@ export declare class TransactionBuilder {
     setupApprovals(approvals: Approval[]): void;
     drainERC20(tokens: Token[], destination: Address): void;
     addCall(call: ContractCall): void;
+    gasEstimate(): bigint;
 }

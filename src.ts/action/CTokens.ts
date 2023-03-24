@@ -12,6 +12,9 @@ const iCEtherInterface = CEther__factory.createInterface()
 const ONEFP18 = 10n ** 18n
 
 export class MintCTokenAction extends Action {
+  gasEstimate() {
+    return BigInt(175000n)
+  }
   private readonly rateScale: bigint
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     if (this.underlying === this.universe.nativeToken) {
@@ -19,6 +22,7 @@ export class MintCTokenAction extends Action {
         parseHexStringIntoBuffer(iCEtherInterface.encodeFunctionData('mint')),
         this.cToken.address,
         amountsIn.amount,
+        this.gasEstimate(),
         'Mint CEther'
       )
     }
@@ -29,6 +33,7 @@ export class MintCTokenAction extends Action {
       ),
       this.cToken.address,
       0n,
+      this.gasEstimate(),
       'Mint ' + this.cToken.symbol
     )
   }
@@ -66,6 +71,9 @@ export class MintCTokenAction extends Action {
 }
 
 export class BurnCTokenAction extends Action {
+  gasEstimate() {
+    return BigInt(175000n)
+  }
   private readonly rateScale: bigint
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     return new ContractCall(
@@ -74,7 +82,8 @@ export class BurnCTokenAction extends Action {
       ),
       this.cToken.address,
       0n,
-      'Burn ' + this.cToken.symbol
+      this.gasEstimate(),
+      'Burn ' + this.cToken.symbol,
     )
   }
 

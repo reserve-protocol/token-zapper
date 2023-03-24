@@ -7,6 +7,7 @@ import { IBasket } from '../entities/TokenBasket';
 export declare class MintRTokenAction extends Action {
     readonly universe: Universe;
     readonly basket: IBasket;
+    gasEstimate(): bigint;
     quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>;
     exchange(input: TokenQuantity[], balances: TokenAmounts): Promise<void>;
     encode(amountsIn: TokenQuantity[], destination: Address): Promise<ContractCall>;
@@ -18,6 +19,7 @@ export declare class MintRTokenAction extends Action {
 export declare class BurnRTokenAction extends Action {
     readonly universe: Universe;
     readonly basketHandler: IBasket;
+    gasEstimate(): bigint;
     encode([quantity]: TokenQuantity[]): Promise<ContractCall>;
     quote([quantity]: TokenQuantity[]): Promise<TokenQuantity[]>;
     constructor(universe: Universe, basketHandler: IBasket);

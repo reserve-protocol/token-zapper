@@ -7,12 +7,15 @@ import { parseHexStringIntoBuffer } from '../base/utils';
 export class OneInchAction extends Action {
     universe;
     actionQuote;
+    gasEstimate() {
+        return BigInt(this.actionQuote.tx.gas);
+    }
     async encode() {
         const swap = this.actionQuote;
         if (swap == null) {
             throw new Error('Failed to generate swap');
         }
-        return new ContractCall(parseHexStringIntoBuffer(swap.tx.data), Address.fromHexString(swap.tx.to), BigInt(swap.tx.value), `1Inch Swap (${swap.protocols
+        return new ContractCall(parseHexStringIntoBuffer(swap.tx.data), Address.fromHexString(swap.tx.to), BigInt(swap.tx.value), this.gasEstimate(), `1Inch Swap (${swap.protocols
             .flat(5)
             .map((i) => i.name)
             .join(',')})`);

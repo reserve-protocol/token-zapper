@@ -8,6 +8,9 @@ import { ContractCall } from '../base/ContractCall'
 const iWrappedNativeIFace = IWrappedNative__factory.createInterface()
 
 export class DepositAction extends Action {
+  gasEstimate(): bigint {
+    return 25000n
+  }
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
@@ -15,6 +18,7 @@ export class DepositAction extends Action {
       ),
       this.wrappedToken.address,
       amountsIn.amount,
+      this.gasEstimate(),
       'Wrap Native Token'
     )
   }
@@ -40,6 +44,9 @@ export class DepositAction extends Action {
 }
 
 export class WithdrawAction extends Action {
+  gasEstimate(): bigint {
+    return 25000n
+  }
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
@@ -47,6 +54,7 @@ export class WithdrawAction extends Action {
       ),
       this.wrappedToken.address,
       0n,
+      this.gasEstimate(),
       'Unwrap Native Token'
     )
   }

@@ -9,6 +9,7 @@ export declare class UniV2Like extends UniBase {
     readonly universe: Universe;
     readonly pool: V2Pool;
     readonly direction: SwapDirection;
+    gasEstimate(): bigint;
     encode(amountsIn: TokenQuantity[], destination: Address): Promise<ContractCall>;
     /**
      * @node V2Actions can quote in both directions!

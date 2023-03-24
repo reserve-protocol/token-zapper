@@ -24,12 +24,14 @@ export class TransactionBuilder {
         ),
         this.universe.config.addresses.executorAddress,
         0n,
+        BigInt(approvals.length) * 25000n,
         `Setup approvals: ${approvals.map((i) => i.toString()).join(', ')}`
       )
     )
   }
 
   drainERC20(tokens: Token[], destination: Address) {
+    
     this.addCall(
       new ContractCall(
         parseHexStringIntoBuffer(
@@ -40,6 +42,7 @@ export class TransactionBuilder {
         ),
         this.universe.config.addresses.executorAddress,
         0n,
+        BigInt(tokens.length) * 50000n,
         'Cleanup'
       )
     )
@@ -47,5 +50,9 @@ export class TransactionBuilder {
 
   addCall(call: ContractCall) {
     this.contractCalls.push(call)
+  }
+
+  gasEstimate() {
+    return this.contractCalls.reduce((l,r) => l + r.gas, 0n)
   }
 }

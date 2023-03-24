@@ -7,15 +7,19 @@ const Action_1 = require("./Action");
 const ContractCall_1 = require("../base/ContractCall");
 const Approval_1 = require("../base/Approval");
 const TokenBasket_1 = require("../entities/TokenBasket");
+const MINT_DIGITS = 10n ** 9n;
 class MintRTokenAction extends Action_1.Action {
     universe;
     basket;
+    gasEstimate() {
+        return BigInt(600000n);
+    }
     async quote(amountsIn) {
         if (amountsIn.length !== this.input.length) {
             throw new Error('Invalid inputs for RToken mint');
         }
         const unitsRequested = (0, Token_1.numberOfUnits)(amountsIn, this.basket.unitBasket);
-        return [this.basket.rToken.quantityFromBigInt((unitsRequested / 1000n) * 1000n)];
+        return [this.basket.rToken.quantityFromBigInt((unitsRequested / MINT_DIGITS) * MINT_DIGITS)];
     }
     async exchange(input, balances) {
         const outputs = await this.quote(input);
@@ -27,7 +31,7 @@ class MintRTokenAction extends Action_1.Action {
         return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(TokenBasket_1.rTokenIFace.encodeFunctionData('issueTo', [
             destination.address,
             units.amount
-        ])), this.basket.rToken.address, 0n, `RToken(${this.basket.rToken},input:${amountsIn},issueAmount:${units},destination: ${destination})`);
+        ])), this.basket.rToken.address, 0n, this.gasEstimate(), `RToken(${this.basket.rToken},input:${amountsIn},issueAmount:${units},destination: ${destination})`);
     }
     constructor(universe, basket) {
         super(basket.rToken.address, basket.basketTokens, [basket.rToken], Action_1.InteractionConvention.ApprovalRequired, Action_1.DestinationOptions.Recipient, basket.basketTokens.map((input) => new Approval_1.Approval(input, basket.rToken.address)));
@@ -44,12 +48,15 @@ exports.MintRTokenAction = MintRTokenAction;
 class BurnRTokenAction extends Action_1.Action {
     universe;
     basketHandler;
+    gasEstimate() {
+        return BigInt(600000n);
+    }
     async encode([quantity]) {
         const nonce = await this.basketHandler.basketNonce;
-        return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(TokenBasket_1.rTokenIFace.encodeFunctionData('redeem', [quantity.amount, nonce])), this.basketHandler.rToken.address, 0n, 'RToken Burn');
+        return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(TokenBasket_1.rTokenIFace.encodeFunctionData('redeem', [quantity.amount, nonce])), this.basketHandler.rToken.address, 0n, this.gasEstimate(), 'RToken Burn');
     }
     async quote([quantity]) {
-        const quantityPrToken = await this.basketHandler.unitBasket;
+        const quantityPrToken = this.basketHandler.unitBasket;
         return quantityPrToken.map((qty) => quantity.convertTo(qty.token).mul(qty));
     }
     constructor(universe, basketHandler) {

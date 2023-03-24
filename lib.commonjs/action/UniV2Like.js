@@ -12,6 +12,9 @@ class UniV2Like extends UniBase_1.UniBase {
     universe;
     pool;
     direction;
+    gasEstimate() {
+        return BigInt(110000n);
+    }
     async encode(amountsIn, destination) {
         const amountOut = await this.pool.swapFn(amountsIn[0], this);
         const [amount0, amount1] = amountsIn[0].token === this.pool.token0
@@ -22,7 +25,7 @@ class UniV2Like extends UniBase_1.UniBase {
             amount1.amount,
             destination.address,
             buffer_1.Buffer.alloc(0),
-        ])), this.pool.address, 0n, 'V2Swap ' + this.pool.name);
+        ])), this.pool.address, 0n, this.gasEstimate(), 'V2Swap ' + this.pool.name);
     }
     /**
      * @node V2Actions can quote in both directions!

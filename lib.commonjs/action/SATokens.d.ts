@@ -8,6 +8,7 @@ export declare class MintSATokensAction extends Action {
     readonly underlying: Token;
     readonly saToken: Token;
     private readonly rate;
+    gasEstimate(): bigint;
     encode([amountsIn]: TokenQuantity[], destination: Address): Promise<ContractCall>;
     quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]>;
     constructor(universe: Universe, underlying: Token, saToken: Token, rate: {
@@ -20,6 +21,7 @@ export declare class BurnSATokensAction extends Action {
     readonly underlying: Token;
     readonly saToken: Token;
     private readonly rate;
+    gasEstimate(): bigint;
     encode([amountsIn]: TokenQuantity[], destination: Address): Promise<ContractCall>;
     quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]>;
     constructor(universe: Universe, underlying: Token, saToken: Token, rate: {

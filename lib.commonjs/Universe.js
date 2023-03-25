@@ -132,10 +132,9 @@ class Universe {
 Library does not come pre-shipped with config for chainId: ${network.chainId}.
 But can set up your own config with 'createWithConfig'`);
         }
-        return await Universe.createWithConfig(provider, config);
+        return await Universe.createWithConfig(provider, config, network);
     }
-    static async createWithConfig(provider, config) {
-        const network = await provider.getNetwork();
+    static async createWithConfig(provider, config, network) {
         const universe = new Universe(provider, config, new ApprovalsStore_1.ApprovalsStore(provider));
         universe.chainId = network.chainId;
         const [currentBlock, gasPrice] = [

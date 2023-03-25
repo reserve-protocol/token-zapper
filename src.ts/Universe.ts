@@ -74,10 +74,7 @@ export class Universe {
     address: Address,
     refresh: Refreshable['refreshAddress']
   ) {
-    this.refreshableEntities.set(
-      address,
-      new Refreshable(address, -1, refresh)
-    )
+    this.refreshableEntities.set(address, new Refreshable(address, -1, refresh))
   }
 
   get config() {
@@ -203,14 +200,14 @@ Library does not come pre-shipped with config for chainId: ${network.chainId}.
 But can set up your own config with 'createWithConfig'`)
     }
 
-    return await Universe.createWithConfig(provider, config)
+    return await Universe.createWithConfig(provider, config, network)
   }
 
   static async createWithConfig(
     provider: ethers.providers.Provider,
-    config: ChainConfiguration
+    config: ChainConfiguration,
+    network: ethers.providers.Network
   ): Promise<Universe> {
-    const network = await provider.getNetwork()
     const universe = new Universe(
       provider,
       config,

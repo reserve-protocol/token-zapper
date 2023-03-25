@@ -47,6 +47,6 @@ export declare class Universe {
     private constructor();
     updateBlockState(block: number, gasPrice: bigint): Promise<void>;
     static create(provider: ethers.providers.Provider): Promise<Universe>;
-    static createWithConfig(provider: ethers.providers.Provider, config: ChainConfiguration): Promise<Universe>;
+    static createWithConfig(provider: ethers.providers.Provider, config: ChainConfiguration, network: ethers.providers.Network): Promise<Universe>;
     static createForTest(config: ChainConfiguration): Promise<Universe>;
 }

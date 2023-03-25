@@ -34,15 +34,22 @@ export type SignatureTransferDetailsStructOutput = [string, BigNumber] & {
 };
 export interface IPermit2Interface extends utils.Interface {
     functions: {
+        "allowance(address,address,address)": FunctionFragment;
         "permitTransferFrom(((address,uint256),uint256,uint256),(address,uint256),address,bytes)": FunctionFragment;
     };
-    getFunction(nameOrSignatureOrTopic: "permitTransferFrom"): FunctionFragment;
+    getFunction(nameOrSignatureOrTopic: "allowance" | "permitTransferFrom"): FunctionFragment;
+    encodeFunctionData(functionFragment: "allowance", values: [
+        PromiseOrValue<string>,
+        PromiseOrValue<string>,
+        PromiseOrValue<string>
+    ]): string;
     encodeFunctionData(functionFragment: "permitTransferFrom", values: [
         PermitTransferFromStruct,
         SignatureTransferDetailsStruct,
         PromiseOrValue<string>,
         PromiseOrValue<BytesLike>
     ]): string;
+    decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "permitTransferFrom", data: BytesLike): Result;
     events: {};
 }
@@ -61,23 +68,28 @@ export interface IPermit2 extends BaseContract {
     once: OnEvent<this>;
     removeListener: OnEvent<this>;
     functions: {
+        allowance(arg0: PromiseOrValue<string>, arg1: PromiseOrValue<string>, arg2: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[BigNumber, number, number]>;
         permitTransferFrom(permit: PermitTransferFromStruct, transferDetails: SignatureTransferDetailsStruct, owner: PromiseOrValue<string>, signature: PromiseOrValue<BytesLike>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
     };
+    allowance(arg0: PromiseOrValue<string>, arg1: PromiseOrValue<string>, arg2: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[BigNumber, number, number]>;
     permitTransferFrom(permit: PermitTransferFromStruct, transferDetails: SignatureTransferDetailsStruct, owner: PromiseOrValue<string>, signature: PromiseOrValue<BytesLike>, overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
     callStatic: {
+        allowance(arg0: PromiseOrValue<string>, arg1: PromiseOrValue<string>, arg2: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[BigNumber, number, number]>;
         permitTransferFrom(permit: PermitTransferFromStruct, transferDetails: SignatureTransferDetailsStruct, owner: PromiseOrValue<string>, signature: PromiseOrValue<BytesLike>, overrides?: CallOverrides): Promise<void>;
     };
     filters: {};
     estimateGas: {
+        allowance(arg0: PromiseOrValue<string>, arg1: PromiseOrValue<string>, arg2: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
         permitTransferFrom(permit: PermitTransferFromStruct, transferDetails: SignatureTransferDetailsStruct, owner: PromiseOrValue<string>, signature: PromiseOrValue<BytesLike>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
     };
     populateTransaction: {
+        allowance(arg0: PromiseOrValue<string>, arg1: PromiseOrValue<string>, arg2: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         permitTransferFrom(permit: PermitTransferFromStruct, transferDetails: SignatureTransferDetailsStruct, owner: PromiseOrValue<string>, signature: PromiseOrValue<BytesLike>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;

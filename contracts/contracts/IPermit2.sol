@@ -40,4 +40,13 @@ interface IPermit2 {
         address owner,
         bytes calldata signature
     ) external;
+
+    /// @notice A mapping from owner address to token address to spender address to PackedAllowance struct, which contains details and conditions of the approval.
+    /// @notice The mapping is indexed in the above order see: allowance[ownerAddress][tokenAddress][spenderAddress]
+    /// @dev The packed slot holds the allowed amount, expiration at which the allowed amount is no longer valid, and current nonce thats updated on any signature based approvals.
+    function allowance(
+        address,
+        address,
+        address
+    ) external view returns (uint160, uint48, uint48);
 }

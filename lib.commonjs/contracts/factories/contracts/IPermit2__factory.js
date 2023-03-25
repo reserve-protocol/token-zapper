@@ -9,6 +9,45 @@ const _abi = [
     {
         inputs: [
             {
+                internalType: "address",
+                name: "",
+                type: "address",
+            },
+            {
+                internalType: "address",
+                name: "",
+                type: "address",
+            },
+            {
+                internalType: "address",
+                name: "",
+                type: "address",
+            },
+        ],
+        name: "allowance",
+        outputs: [
+            {
+                internalType: "uint160",
+                name: "",
+                type: "uint160",
+            },
+            {
+                internalType: "uint48",
+                name: "",
+                type: "uint48",
+            },
+            {
+                internalType: "uint48",
+                name: "",
+                type: "uint48",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
                 components: [
                     {
                         components: [

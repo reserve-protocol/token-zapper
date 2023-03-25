@@ -4,6 +4,36 @@ import type { IPermit2, IPermit2Interface } from "../../contracts/IPermit2";
 export declare class IPermit2__factory {
     static readonly abi: readonly [{
         readonly inputs: readonly [{
+            readonly internalType: "address";
+            readonly name: "";
+            readonly type: "address";
+        }, {
+            readonly internalType: "address";
+            readonly name: "";
+            readonly type: "address";
+        }, {
+            readonly internalType: "address";
+            readonly name: "";
+            readonly type: "address";
+        }];
+        readonly name: "allowance";
+        readonly outputs: readonly [{
+            readonly internalType: "uint160";
+            readonly name: "";
+            readonly type: "uint160";
+        }, {
+            readonly internalType: "uint48";
+            readonly name: "";
+            readonly type: "uint48";
+        }, {
+            readonly internalType: "uint48";
+            readonly name: "";
+            readonly type: "uint48";
+        }];
+        readonly stateMutability: "view";
+        readonly type: "function";
+    }, {
+        readonly inputs: readonly [{
             readonly components: readonly [{
                 readonly components: readonly [{
                     readonly internalType: "address";

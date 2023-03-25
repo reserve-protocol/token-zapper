@@ -1,5 +1,5 @@
 import { DefaultMap } from '../base/DefaultMap';
-const NULL_VAL = { result: null, block: 0 };
+const NULL_VAL = { result: null, block: -1 };
 export class Oracle {
     name;
     fairTokenPriceImplementation;

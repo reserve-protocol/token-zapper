@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Oracle = void 0;
 const DefaultMap_1 = require("../base/DefaultMap");
-const NULL_VAL = { result: null, block: 0 };
+const NULL_VAL = { result: null, block: -1 };
 class Oracle {
     name;
     fairTokenPriceImplementation;

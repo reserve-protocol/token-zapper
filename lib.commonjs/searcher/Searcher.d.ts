@@ -1,7 +1,7 @@
 import { type Action } from '../action/Action';
-import { type Address } from '../base/Address';
+import { Address } from '../base/Address';
 import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token';
-import { type Universe } from '../Universe';
+import { Universe } from '../Universe';
 import { SearcherResult } from './SearcherResult';
 import { SwapPath } from './Swap';
 interface PostTradeMint {

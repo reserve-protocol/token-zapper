@@ -63,16 +63,12 @@ export class Universe {
     ERC20GAS: null,
   }
 
-  async refresh(entities: Set<Address>) {
-    const tasks: Promise<void>[] = []
-    for (const entity of entities) {
-      const refreshable = this.refreshableEntities.get(entity)
-      if (refreshable == null) {
-        continue
-      }
-      tasks.push(refreshable.refresh(this.currentBlock))
+  async refresh(entity: Address) {
+    const refreshable = this.refreshableEntities.get(entity)
+    if (refreshable == null) {
+      return
     }
-    await Promise.all(tasks)
+    await refreshable.refresh(this.currentBlock)
   }
   createRefreshableEntitity(
     address: Address,
@@ -80,7 +76,7 @@ export class Universe {
   ) {
     this.refreshableEntities.set(
       address,
-      new Refreshable(address, this.currentBlock, refresh)
+      new Refreshable(address, -1, refresh)
     )
   }
 
@@ -190,12 +186,12 @@ export class Universe {
     )
   }
 
-  public async updateGasPrice(block: number) {
-    if (this.blockState.currentBlock === block) {
+  public async updateBlockState(block: number, gasPrice: bigint) {
+    if (block <= this.blockState.currentBlock) {
       return
     }
     this.blockState.currentBlock = block
-    this.blockState.gasPrice = (await this.provider.getGasPrice()).toBigInt()
+    this.blockState.gasPrice = gasPrice
   }
 
   static async create(provider: ethers.providers.Provider): Promise<Universe> {
@@ -214,13 +210,19 @@ But can set up your own config with 'createWithConfig'`)
     provider: ethers.providers.Provider,
     config: ChainConfiguration
   ): Promise<Universe> {
+    const network = await provider.getNetwork()
     const universe = new Universe(
       provider,
       config,
       new ApprovalsStore(provider)
     )
+    universe.chainId = network.chainId
 
-    await universe.updateGasPrice(await provider.getBlockNumber())
+    const [currentBlock, gasPrice] = [
+      await provider.getBlockNumber(),
+      await provider.getGasPrice(),
+    ]
+    universe.updateBlockState(currentBlock, gasPrice.toBigInt())
     await config.initialize(universe)
 
     return universe

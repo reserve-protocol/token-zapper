@@ -22,6 +22,7 @@ export class MintCTokenAction extends Action {
         return new ContractCall(parseHexStringIntoBuffer(iCTokenInterface.encodeFunctionData('mint', [amountsIn.amount])), this.cToken.address, 0n, this.gasEstimate(), 'Mint ' + this.cToken.symbol);
     }
     async quote([amountsIn]) {
+        await this.universe.refresh(this.address);
         return [
             this.cToken.quantityFromBigInt((amountsIn.amount * this.rateScale) /
                 this.rate.value /
@@ -53,6 +54,7 @@ export class BurnCTokenAction extends Action {
         return new ContractCall(parseHexStringIntoBuffer(iCTokenInterface.encodeFunctionData('redeem', [amountsIn.amount])), this.cToken.address, 0n, this.gasEstimate(), 'Burn ' + this.cToken.symbol);
     }
     async quote([amountsIn]) {
+        await this.universe.refresh(this.address);
         return [
             this.underlying.quantityFromBigInt((amountsIn.amount * this.rate.value * this.underlying.scale) /
                 this.rateScale),

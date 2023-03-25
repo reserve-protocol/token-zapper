@@ -1,7 +1,7 @@
 export class Refreshable {
     address;
     refreshAddress;
-    lastUpdate = 0;
+    lastUpdate = -1;
     constructor(address, currentBlock, refreshAddress) {
         this.address = address;
         this.refreshAddress = refreshAddress;

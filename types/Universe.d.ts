@@ -33,7 +33,7 @@ export declare class Universe {
     readonly commonTokens: {
         [P in keyof CommonTokens]: Token | null;
     };
-    refresh(entities: Set<Address>): Promise<void>;
+    refresh(entity: Address): Promise<void>;
     createRefreshableEntitity(address: Address, refresh: Refreshable['refreshAddress']): void;
     get config(): import("./configuration").StaticConfig;
     private readonly blockState;
@@ -45,7 +45,7 @@ export declare class Universe {
     addAction(action: Action, actionAddress?: Address): this;
     defineMintable(mint: Action, burn: Action): void;
     private constructor();
-    updateGasPrice(block: number): Promise<void>;
+    updateBlockState(block: number, gasPrice: bigint): Promise<void>;
     static create(provider: ethers.providers.Provider): Promise<Universe>;
     static createWithConfig(provider: ethers.providers.Provider, config: ChainConfiguration): Promise<Universe>;
     static createForTest(config: ChainConfiguration): Promise<Universe>;

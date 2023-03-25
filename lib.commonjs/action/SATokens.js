@@ -33,6 +33,7 @@ class MintSATokensAction extends Action_1.Action {
         ])), this.saToken.address, 0n, this.gasEstimate(), `Mint(${this.saToken}, input: ${amountsIn}, destination: ${destination})`);
     }
     async quote([amountsIn]) {
+        await this.universe.refresh(this.address);
         return [
             this.saToken.quantityFromBigInt(rayDiv(amountsIn.convertTo(this.saToken).amount, this.rate.value)),
         ];
@@ -65,6 +66,7 @@ class BurnSATokensAction extends Action_1.Action {
         ])), this.saToken.address, 0n, this.gasEstimate(), 'Burn ' + this.saToken.name);
     }
     async quote([amountsIn]) {
+        await this.universe.refresh(this.address);
         return [
             this.saToken
                 .quantityFromBigInt(rayMul(amountsIn.amount, this.rate.value))

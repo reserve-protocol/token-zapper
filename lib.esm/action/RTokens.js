@@ -12,6 +12,7 @@ export class MintRTokenAction extends Action {
         return BigInt(600000n);
     }
     async quote(amountsIn) {
+        await this.universe.refresh(this.address);
         if (amountsIn.length !== this.input.length) {
             throw new Error('Invalid inputs for RToken mint');
         }
@@ -52,6 +53,7 @@ export class BurnRTokenAction extends Action {
         return new ContractCall(parseHexStringIntoBuffer(rTokenIFace.encodeFunctionData('redeem', [quantity.amount, nonce])), this.basketHandler.rToken.address, 0n, this.gasEstimate(), 'RToken Burn');
     }
     async quote([quantity]) {
+        await this.universe.refresh(this.address);
         const quantityPrToken = this.basketHandler.unitBasket;
         return quantityPrToken.map((qty) => quantity.convertTo(qty.token).mul(qty));
     }

@@ -13,6 +13,7 @@ export class MintRTokenAction extends Action {
     return BigInt(600000n)
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+    await this.universe.refresh(this.address)
     if (amountsIn.length !== this.input.length) {
       throw new Error('Invalid inputs for RToken mint')
     }
@@ -90,6 +91,7 @@ export class BurnRTokenAction extends Action {
   }
 
   async quote([quantity]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    await this.universe.refresh(this.address)
     const quantityPrToken = this.basketHandler.unitBasket
     return quantityPrToken.map((qty) => quantity.convertTo(qty.token).mul(qty))
   }

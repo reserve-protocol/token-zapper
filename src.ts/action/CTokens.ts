@@ -39,6 +39,7 @@ export class MintCTokenAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    await this.universe.refresh(this.address)
     return [
       this.cToken.quantityFromBigInt(
         (amountsIn.amount * this.rateScale) /
@@ -88,6 +89,7 @@ export class BurnCTokenAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    await this.universe.refresh(this.address)
     return [
       this.underlying.quantityFromBigInt(
         (amountsIn.amount * this.rate.value * this.underlying.scale) /

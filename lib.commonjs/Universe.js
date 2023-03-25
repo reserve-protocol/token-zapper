@@ -40,19 +40,15 @@ class Universe {
         ERC20ETH: null,
         ERC20GAS: null,
     };
-    async refresh(entities) {
-        const tasks = [];
-        for (const entity of entities) {
-            const refreshable = this.refreshableEntities.get(entity);
-            if (refreshable == null) {
-                continue;
-            }
-            tasks.push(refreshable.refresh(this.currentBlock));
+    async refresh(entity) {
+        const refreshable = this.refreshableEntities.get(entity);
+        if (refreshable == null) {
+            return;
         }
-        await Promise.all(tasks);
+        await refreshable.refresh(this.currentBlock);
     }
     createRefreshableEntitity(address, refresh) {
-        this.refreshableEntities.set(address, new Refreshable_1.Refreshable(address, this.currentBlock, refresh));
+        this.refreshableEntities.set(address, new Refreshable_1.Refreshable(address, -1, refresh));
     }
     get config() {
         return this.chainConfig.config;
@@ -121,12 +117,12 @@ class Universe {
         this.approvalStore = approvalsStore;
         this.nativeToken = Token_1.Token.createToken(this.tokens, Address_1.Address.fromHexString('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'), nativeToken.symbol, nativeToken.name, nativeToken.decimals);
     }
-    async updateGasPrice(block) {
-        if (this.blockState.currentBlock === block) {
+    async updateBlockState(block, gasPrice) {
+        if (block <= this.blockState.currentBlock) {
             return;
         }
         this.blockState.currentBlock = block;
-        this.blockState.gasPrice = (await this.provider.getGasPrice()).toBigInt();
+        this.blockState.gasPrice = gasPrice;
     }
     static async create(provider) {
         const network = await provider.getNetwork();
@@ -139,8 +135,14 @@ But can set up your own config with 'createWithConfig'`);
         return await Universe.createWithConfig(provider, config);
     }
     static async createWithConfig(provider, config) {
+        const network = await provider.getNetwork();
         const universe = new Universe(provider, config, new ApprovalsStore_1.ApprovalsStore(provider));
-        await universe.updateGasPrice(await provider.getBlockNumber());
+        universe.chainId = network.chainId;
+        const [currentBlock, gasPrice] = [
+            await provider.getBlockNumber(),
+            await provider.getGasPrice(),
+        ];
+        universe.updateBlockState(currentBlock, gasPrice.toBigInt());
         await config.initialize(universe);
         return universe;
     }

@@ -16,6 +16,7 @@ const loadTokens = async (universe) => {
     }
 };
 const initialize = async (universe) => {
+    const underlyingTokens = require('./data/ethereum/underlying.json');
     await loadTokens(universe);
     const rTokenSymbols = Object.keys(universe.rTokens);
     await Promise.all(rTokenSymbols.map(async (key) => {
@@ -25,6 +26,7 @@ const initialize = async (universe) => {
         }
         universe.rTokens[key] = await universe.getToken(addr);
     }));
+    const allCTokens = await contracts_1.IComptroller__factory.connect('0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B', universe.provider).getAllMarkets();
     const commonTokenSymbols = Object.keys(universe.commonTokens);
     await Promise.all(commonTokenSymbols.map(async (key) => {
         const addr = universe.chainConfig.config.addresses.commonTokens[key];
@@ -50,7 +52,7 @@ const initialize = async (universe) => {
     const eth = universe.nativeToken;
     const cInst = contracts_1.ICToken__factory.connect(cEth.address.address, universe.provider);
     const cEthRate = {
-        value: (await cInst.exchangeRateStored()).toBigInt(),
+        value: 0n,
     };
     universe.createRefreshableEntitity(cEth.address, async () => {
         cEthRate.value = (await cInst.exchangeRateStored()).toBigInt();
@@ -60,35 +62,30 @@ const initialize = async (universe) => {
     if (weth) {
         universe.defineMintable(new WrappedNative_1.DepositAction(universe, weth), new WrappedNative_1.WithdrawAction(universe, weth));
     }
-    const allCTokens = await contracts_1.IComptroller__factory.connect('0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B', universe.provider).getAllMarkets();
     const cTokens = await Promise.all(allCTokens
         .map(Address_1.Address.from)
         .filter((address) => address !== cEth.address)
         .map(async (address) => {
-        const [cToken, underlyingAddress] = await Promise.all([
+        const [cToken, underlying] = await Promise.all([
             universe.getToken(address),
-            contracts_1.ICToken__factory.connect(address.address, universe.provider)
-                .underlying()
-                .then(Address_1.Address.from),
+            universe.getToken(Address_1.Address.from(underlyingTokens[address.address])),
         ]);
-        const underlying = await universe.getToken(underlyingAddress);
         return { underlying, cToken };
     }));
     for (const { saToken, underlying } of saTokens) {
         const saInst = contracts_1.IStaticATokenLM__factory.connect(saToken.address.address, universe.provider);
         const rate = {
-            value: (await saInst.rate()).toBigInt(),
+            value: 0n,
         };
         universe.createRefreshableEntitity(saToken.address, async () => {
-            rate.value = (await cInst.exchangeRateStored()).toBigInt();
+            rate.value = (await saInst.rate()).toBigInt();
         });
         universe.defineMintable(new SATokens_1.MintSATokensAction(universe, underlying, saToken, rate), new SATokens_1.BurnSATokensAction(universe, underlying, saToken, rate));
     }
     for (const { cToken, underlying } of cTokens) {
         const cInst = contracts_1.ICToken__factory.connect(cToken.address.address, universe.provider);
-        const value = (await cInst.exchangeRateStored()).toBigInt();
         const rate = {
-            value,
+            value: 0n,
         };
         universe.createRefreshableEntitity(cToken.address, async () => {
             rate.value = (await cInst.exchangeRateStored()).toBigInt();

@@ -1,9 +1,9 @@
 import { type Action } from '../action/Action'
 import { type MintRTokenAction } from '../action/RTokens'
-import { type Address } from '../base/Address'
+import { Address } from '../base/Address'
 import { bfs } from '../exchange-graph/BFS'
 import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
-import { type Universe } from '../Universe'
+import { Universe } from '../Universe'
 import { SearcherResult } from './SearcherResult'
 import { SwapPath, SwapPaths, SwapPlan } from './Swap'
 
@@ -96,9 +96,7 @@ export const findPrecursorTokenSet = async (
 }
 
 export class Searcher {
-  constructor(private readonly universe: Universe) {
-    
-  }
+  constructor(private readonly universe: Universe) {}
 
   /**
    * @note This helper will find some set of operations converting a 'inputQuantity' into
@@ -128,32 +126,61 @@ export class Searcher {
     /**
      * PHASE 2: Trade inputQuantity into precursor set
      */
-    const precursorTokenbasket =
+    const precursorTokenBasket =
       precursorTokens.totalPrecursorQuantities.toTokenQuantities()
 
-    const inputPrTrade = precursorTokenbasket.map((qty) => {
-      return {
-        token: qty.token,
-        inputQuantity: inputQuantity.scalarDiv(
-          BigInt(precursorTokenbasket.length)
-        ),
-      }
-    })
+    // Split input by how large each token in precursor set is worth.
+    // Example: We're trading 0.1 ETH, and precursorTokenSet(rToken) = (0.5 usdc, 0.5 usdt)
+    // say usdc is trading at 0.99 usd and usdt 1.01, then the trade will be split as follows
+    // sum = 0.99 * 0.5 + 1.01 * 0.5 = 1
+    // 0.1 * (0.99 * 0.5) / sum = 0.0495 ETH will be going into the USDC trade
+    // 0.1 * (1.01 * 0.5) / sum = 0.0505 ETH will be going into the USDT trade
+    // If we can't quote every precursor token, split input evenly between trades.
+    const precursorTokensPrices = await Promise.all(
+      precursorTokenBasket.map(
+        async (qty) =>
+          (await this.universe.fairPrice(qty)) ?? this.universe.usd.zero
+      )
+    )
+
+    const everyTokenPriced = precursorTokensPrices.every((i) => i.amount > 0n)
+
+    const quoteSum = everyTokenPriced
+      ? precursorTokensPrices.reduce((l, r) => l.add(r))
+      : precursorTokenBasket
+          .map((p) => p.convertTo(inputQuantity.token))
+          .reduce((l, r) => l.add(r))
+
+    const inputPrTrade = everyTokenPriced
+      ? precursorTokenBasket.map(({ token }, i) => ({
+          input: inputQuantity.mul(
+            precursorTokensPrices[i]
+              .div(quoteSum)
+              .convertTo(inputQuantity.token)
+          ),
+          output: token,
+        }))
+      : precursorTokenBasket.map((qty) => ({
+          output: qty.token,
+          input: inputQuantity.mul(
+            qty.convertTo(inputQuantity.token).div(quoteSum)
+          ),
+        }))
 
     const inputQuantityToTokenSet: SwapPath[] = []
     const tradingBalances = new TokenAmounts()
     tradingBalances.add(inputQuantity)
-    for (const { token, inputQuantity } of inputPrTrade) {
+    for (const { input, output } of inputPrTrade) {
       if (
         // Skip trade if user input is part of precursor set
-        inputQuantity.token === token
+        input.token === output
       ) {
         continue
       }
 
       const swaps = await this.findSingleInputTokenSwap(
-        inputQuantity,
-        token,
+        input,
+        output,
         this.universe.config.addresses.executorAddress
       )
 
@@ -322,7 +349,6 @@ export class Searcher {
         entitiesToUpdate.add(action.address)
       }
     }
-    this.universe.refresh(entitiesToUpdate)
     const allPlans = await Promise.all(
       swapPlans.map(async (plan) => {
         return await plan.quote([input], destination)

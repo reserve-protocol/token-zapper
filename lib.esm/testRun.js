@@ -3,28 +3,31 @@ import { Address } from './base/Address';
 import { Universe } from './Universe';
 import { Searcher } from './searcher/Searcher';
 import * as dotenv from 'dotenv';
-import { IERC20__factory } from './contracts';
 import { initOneInch } from './aggregators/oneInch/oneInchRegistry';
 dotenv.config();
 const run = async () => {
-    const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER);
+    const provider = new ethers.providers.StaticJsonRpcProvider(process.env.PROVIDER);
+    provider.on('debug', (event) => {
+        if (event.action === 'request') {
+            console.log(event.request);
+        }
+    });
     const wallet = new ethers.Wallet(process.env.PRIVATE_KEY).connect(provider);
     const testUserAddr = Address.fromHexString(wallet.address);
     const universe = await Universe.create(provider);
-    initOneInch(universe, "https://api.1inch.io");
+    initOneInch(universe, 'https://api.1inch.io');
+    // const wrappedTokens: Record<string, string> = {}
+    // for (const { mint } of universe.wrappedTokens.values()) {
+    //   if (mint.input.length !== 1||mint.output.length !== 1) {
+    //     continue
+    //   }
+    //   wrappedTokens[mint.output[0].address.address] = mint.input[0].address.address;
+    // }
+    // console.log(JSON.stringify(wrappedTokens, null, 2))
     const searcher = new Searcher(universe);
     const eUSD = universe.rTokens.eUSD;
     const result = await searcher.findSingleInputToRTokenZap(universe.commonTokens.USDT.fromDecimal('50'), eUSD, testUserAddr);
     console.log(result.describe().join('\n'));
-    const tx = await result.toTransaction();
-    const q = await wallet.sendTransaction(tx.tx);
-    await q.wait();
-    console.log(tx.toString());
-    const eUSDInst = IERC20__factory.connect(eUSD.address.address, universe.provider);
-    console.log("Post issue balance: " +
-        eUSD
-            .quantityFromBigInt((await eUSDInst.balanceOf(wallet.address)).toBigInt())
-            .toString());
     // console.log(tx)
     // // console.log(result)
     // console.log("Done")

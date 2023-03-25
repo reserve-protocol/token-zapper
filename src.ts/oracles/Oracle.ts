@@ -1,7 +1,7 @@
 import { DefaultMap } from '../base/DefaultMap'
 import { type Token, type TokenQuantity } from '../entities/Token'
 
-const NULL_VAL = { result: null, block: 0 }
+const NULL_VAL = { result: null, block: -1 }
 export class Oracle {
   constructor(
     public readonly name: string,

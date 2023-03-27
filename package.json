@@ -1,5 +1,9 @@
 {
-  "name": "@reserve/token-zapper",
+  "name": "@reserve-protocol/token-zapper",
+  "publishConfig": {
+    "access": "public",
+    "tag": "latest"
+  },
   "version": "1.0.0",
   "description": "A library to help convert tokens into RTokens",
   "keywords": [],
@@ -17,17 +21,12 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git@github.com:reserve-protocol/reserve-zap.git"
   },
   "license": "MIT",
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=19.4.0"
   },
-  "files": [
-    "./lib.commonjs/**/.*",
-    "./lib.esm/**/.*",
-    "./src.ts/**/.*"
-  ],
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "prettier": {
     "semi": false,

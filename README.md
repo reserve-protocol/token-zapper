@@ -7,7 +7,7 @@ This is a TypeScript library that enables finding the best way to swap between a
 You can install the package using npm:
 
 ```bash
-npm install @reserve/reserve-token-zapper
+npm install @reserve-protocol/token-zapper
 ```
 
 The test suite can be run using the command:
@@ -21,7 +21,7 @@ npm run test
 To use the library, import it in your TypeScript file:
 
 ```typescript
-import { Universe, Searcher, configuration } from '@reserve/token-zapper'
+import { Universe, Searcher, configuration } from '@reserve-protocol/token-zapper'
 ```
 
 Then, create the searcher universe `Universe`, and instantiate a `Searcher` ,

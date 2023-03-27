@@ -7,7 +7,7 @@ This is a TypeScript library that enables finding the best way to swap between a
 You can install the package using npm:
 
 ```bash
-npm install @reserve/reserve-token-zapper
+npm install @reserve-protocol/token-zapper
 ```
 
 The test suite can be run using the command:

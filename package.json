@@ -76,7 +76,7 @@
     "build:typechain": "rm -rf contracts/artifacts/ && rm -rf contracts/cache/ && rm -rf src/contracts && cd contracts/ && npx hardhat compile",
     "build:commonjs": "tsc --project tsconfig.commonjs.json && cp -r src.ts/configuration/data/ lib.commonjs/configuration/data",
     "build:esm": "tsc --project tsconfig.esm.json && cp -r src.ts/configuration/data/ lib.esm/configuration/data",
-    "test": "jest --passWithNoTests",
+    "test": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests",
     "format": "npm run prettier:fix",
     "prettier": "prettier '**/*.{ts,json,md}'",
     "prettier:check": "npm run prettier -- --check",

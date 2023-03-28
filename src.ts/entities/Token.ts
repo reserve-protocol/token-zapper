@@ -2,6 +2,10 @@ import { type Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
 import { ethers } from 'ethers'
 
+// This class describes a token, which is identified by its address.
+// Each token has a symbol, a name, and a number of decimals.
+// A token's scale is calculated as 10^decimals.
+// The zero and one TokenQuantities are also calculated and stored.
 export class Token {
   public readonly zero: TokenQuantity
   public readonly one: TokenQuantity
@@ -108,11 +112,11 @@ export class TokenQuantity {
     return new TokenQuantity(this.token, this.amount * other)
   }
   public fpMul(other: bigint, scale: bigint) {
-    return new TokenQuantity(this.token, this.amount * other / scale)
+    return new TokenQuantity(this.token, (this.amount * other) / scale)
   }
 
   public fpDiv(other: bigint, scale: bigint) {
-    return new TokenQuantity(this.token, this.amount * scale / other)
+    return new TokenQuantity(this.token, (this.amount * scale) / other)
   }
 
   public scalarDiv(other: bigint) {
@@ -132,7 +136,7 @@ export class TokenQuantity {
   }
 
   public toScaled(scale: bigint) {
-    return this.amount * scale / this.token.scale
+    return (this.amount * scale) / this.token.scale
   }
 
   public convertTo(other: Token) {
@@ -148,7 +152,10 @@ export class TokenQuantity {
 }
 
 const ONE = 10n ** 18n
-export const numberOfUnits = (amountsIn: TokenQuantity[], unit: TokenQuantity[]) => {
+export const numberOfUnits = (
+  amountsIn: TokenQuantity[],
+  unit: TokenQuantity[]
+) => {
   let smallest = amountsIn[0].div(unit[0]).toScaled(ONE)
   for (let i = 1; i < amountsIn.length; i++) {
     const qty = amountsIn[i].div(unit[i]).toScaled(ONE)
@@ -224,4 +231,3 @@ export class TokenAmounts {
     return out
   }
 }
-

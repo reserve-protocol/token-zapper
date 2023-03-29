@@ -113,7 +113,8 @@ export class Searcher {
    **/
   private async findSingleInputToBasketGivenBasketUnit(
     inputQuantity: TokenQuantity,
-    basketUnit: TokenQuantity[]
+    basketUnit: TokenQuantity[],
+    slippage: number
   ) {
     /**
      * PHASE 1: Compute precursor set
@@ -181,7 +182,8 @@ export class Searcher {
       const swaps = await this.findSingleInputTokenSwap(
         input,
         output,
-        this.universe.config.addresses.executorAddress
+        this.universe.config.addresses.executorAddress,
+        slippage
       )
 
       // TODO: evaluate different trades
@@ -244,7 +246,8 @@ export class Searcher {
   async findSingleInputToRTokenZap(
     userInput: TokenQuantity,
     rToken: Token,
-    signerAddress: Address
+    signerAddress: Address,
+    slippage = 0.1
   ) {
     const inputIsNative = userInput.token === this.universe.nativeToken
     let inputTokenQuantity = userInput
@@ -271,7 +274,8 @@ export class Searcher {
     const inputQuantityToBasketTokens =
       await this.findSingleInputToBasketGivenBasketUnit(
         inputTokenQuantity,
-        mintAction.basket.unitBasket
+        mintAction.basket.unitBasket,
+        slippage ?? 0
       )
     await inputQuantityToBasketTokens.exchange(tradingBalances)
 
@@ -314,14 +318,21 @@ export class Searcher {
   async externalQuoters(
     input: TokenQuantity,
     output: Token,
-    destination: Address
+    destination: Address,
+    slippage: number
   ): Promise<SwapPath[]> {
     const executorAddress =
       this.universe.chainConfig.config.addresses.executorAddress
     return await Promise.all(
       this.universe.dexAggregators.map(
         async (router) =>
-          await router.swap(executorAddress, destination, input, output, 0)
+          await router.swap(
+            executorAddress,
+            destination,
+            input,
+            output,
+            slippage
+          )
       )
     )
   }
@@ -329,7 +340,8 @@ export class Searcher {
   async internalQuoter(
     input: TokenQuantity,
     output: Token,
-    destination: Address
+    destination: Address,
+    slippage: number
   ): Promise<SwapPath[]> {
     const bfsResult = bfs(
       this.universe,
@@ -362,14 +374,15 @@ export class Searcher {
   async findSingleInputTokenSwap(
     input: TokenQuantity,
     output: Token,
-    destination: Address
+    destination: Address,
+    slippage: number
   ): Promise<SwapPath[]> {
     const quotes = (
       await Promise.all([
-        this.internalQuoter(input, output, destination).then((results) =>
-          results.filter((result) => result.inputs.length === 1)
+        this.internalQuoter(input, output, destination, slippage).then(
+          (results) => results.filter((result) => result.inputs.length === 1)
         ),
-        this.externalQuoters(input, output, destination),
+        this.externalQuoters(input, output, destination, slippage),
       ])
     ).flat()
     quotes.sort((l, r) => -l.compare(r))

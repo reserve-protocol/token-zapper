@@ -91,7 +91,7 @@ export class Searcher {
      * @param inputQuantity the token quantity to convert into the token basket
      * @param basketUnit a token quantity set representing one unit of output
      **/
-    async findSingleInputToBasketGivenBasketUnit(inputQuantity, basketUnit) {
+    async findSingleInputToBasketGivenBasketUnit(inputQuantity, basketUnit, slippage) {
         /**
          * PHASE 1: Compute precursor set
          */
@@ -134,7 +134,7 @@ export class Searcher {
             input.token === output) {
                 continue;
             }
-            const swaps = await this.findSingleInputTokenSwap(input, output, this.universe.config.addresses.executorAddress);
+            const swaps = await this.findSingleInputTokenSwap(input, output, this.universe.config.addresses.executorAddress, slippage);
             // TODO: evaluate different trades
             const trade = swaps[0];
             if (trade == null) {
@@ -169,7 +169,7 @@ export class Searcher {
         mintsToSubtract.forEach((c) => c.inputs.forEach((qty) => tradingBalances.sub(qty)));
         return new SwapPaths(this.universe, [inputQuantity], inputQuantityToTokenSet, tradingBalances.toTokenQuantities(), inputQuantityToTokenSet.reduce((l, r) => l.add(r.outputValue), this.universe.usd.zero), this.universe.config.addresses.executorAddress);
     }
-    async findSingleInputToRTokenZap(userInput, rToken, signerAddress) {
+    async findSingleInputToRTokenZap(userInput, rToken, signerAddress, slippage = 0.1) {
         const inputIsNative = userInput.token === this.universe.nativeToken;
         let inputTokenQuantity = userInput;
         if (inputIsNative) {
@@ -185,7 +185,7 @@ export class Searcher {
         const mintAction = rTokenActions.mint;
         const tradingBalances = new TokenAmounts();
         tradingBalances.add(inputTokenQuantity);
-        const inputQuantityToBasketTokens = await this.findSingleInputToBasketGivenBasketUnit(inputTokenQuantity, mintAction.basket.unitBasket);
+        const inputQuantityToBasketTokens = await this.findSingleInputToBasketGivenBasketUnit(inputTokenQuantity, mintAction.basket.unitBasket, slippage ?? 0);
         await inputQuantityToBasketTokens.exchange(tradingBalances);
         const rTokenMint = await new SwapPlan(this.universe, [
             rTokenActions.mint,
@@ -198,11 +198,11 @@ export class Searcher {
         ], output, rTokenMint.outputValue, signerAddress), signerAddress, rToken);
         return searcherResult;
     }
-    async externalQuoters(input, output, destination) {
+    async externalQuoters(input, output, destination, slippage) {
         const executorAddress = this.universe.chainConfig.config.addresses.executorAddress;
-        return await Promise.all(this.universe.dexAggregators.map(async (router) => await router.swap(executorAddress, destination, input, output, 0)));
+        return await Promise.all(this.universe.dexAggregators.map(async (router) => await router.swap(executorAddress, destination, input, output, slippage)));
     }
-    async internalQuoter(input, output, destination) {
+    async internalQuoter(input, output, destination, slippage) {
         const bfsResult = bfs(this.universe, this.universe.graph, input.token, output, 2);
         const swapPlans = bfsResult.steps
             .map((i) => i.convertToSingularPaths())
@@ -220,10 +220,10 @@ export class Searcher {
         allPlans.sort((l, r) => l.compare(r));
         return allPlans;
     }
-    async findSingleInputTokenSwap(input, output, destination) {
+    async findSingleInputTokenSwap(input, output, destination, slippage) {
         const quotes = (await Promise.all([
-            this.internalQuoter(input, output, destination).then((results) => results.filter((result) => result.inputs.length === 1)),
-            this.externalQuoters(input, output, destination),
+            this.internalQuoter(input, output, destination, slippage).then((results) => results.filter((result) => result.inputs.length === 1)),
+            this.externalQuoters(input, output, destination, slippage),
         ])).flat();
         quotes.sort((l, r) => -l.compare(r));
         return quotes;

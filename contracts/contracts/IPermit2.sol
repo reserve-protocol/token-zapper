@@ -50,3 +50,9 @@ interface IPermit2 {
         address
     ) external view returns (uint160, uint48, uint48);
 }
+/// @notice Thrown when validating an inputted signature that is stale
+/// @param signatureDeadline The timestamp at which a signature is no longer valid
+error SignatureExpired(uint256 signatureDeadline);
+
+/// @notice Thrown when validating that the inputted nonce has not been used
+error InvalidNonce();

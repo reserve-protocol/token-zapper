@@ -6,7 +6,8 @@ export class ApprovalsStore {
     }
     cache = new Map();
     async needsApproval(token, owner, spender) {
-        let check = this.cache.get(token);
+        const key = `${token}.${owner}.${spender}`;
+        let check = this.cache.get(key);
         if (check == null) {
             check = new Promise((resolve, reject) => {
                 void (async () => {
@@ -14,7 +15,7 @@ export class ApprovalsStore {
                         const allowance = await IERC20__factory.connect(token.address.address, this.provider).allowance(owner.address, spender.address);
                         if (allowance.isZero()) {
                             resolve(true);
-                            this.cache.delete(token);
+                            this.cache.delete(key);
                         }
                         else {
                             resolve(false);
@@ -25,7 +26,7 @@ export class ApprovalsStore {
                     }
                 })();
             });
-            this.cache.set(token, check);
+            this.cache.set(key, check);
         }
         return await check;
     }

@@ -7,29 +7,28 @@ const utils_1 = require("ethers/lib/utils");
 const InterningCache_1 = require("./InterningCache");
 const utils_2 = require("./utils");
 /**
- * Why Address over a hex encoded string?
- *
- * Hex encoded strings has multiple representation for same address, "0xabcd" "0xaBCD", same value by are not equal in ECMAscript
- * Hex encoded string require normalization when passed around, ingesting addresses you can get them in all sorts of formats:
- *   - checksummed: 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
- *   - lowercase:   0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
- *   - without 0x:    a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
- *   - uppercased?: 0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48
- *
- * This is annoying to deal with, especially if you use them as keys in a Map
- *
- * So I propose the following:
- *   - All of the above should point to a unique instance of 'Address'
- *   - This is done via a static factory rather that a public constructor.
- *   - Interning is done by normalizing the address via check summing, in a map with WeakRef'ed values
- *
+ * Address class for managing Ethereum addresses.
+ * Helps to avoid issues with multiple string representations of the same Ethereum address.
+ * Normalizes addresses and interns them using a cache with weakly referenced values.
  */
 class Address {
     bytes;
+    /**
+     * A static cache for storing unique instances of the Address class.
+     */
     static interningCache = new InterningCache_1.InterningCache((addr) => addr.address);
+    /**
+     * A static constant representing the Ethereum zero address.
+     */
     static ZERO = Address.fromHexString(ethers.constants.AddressZero);
-    // The HEX representation of the address
+    /**
+     * The normalized HEX representation of the Ethereum address.
+     */
     address;
+    /**
+     * Private constructor for Address class.
+     * @param {Buffer} bytes - Buffer object representing the Ethereum address bytes.
+     */
     constructor(bytes) {
         this.bytes = bytes;
         if (bytes.length !== 20) {
@@ -37,6 +36,11 @@ class Address {
         }
         this.address = ethers.utils.getAddress(`0x${bytes.toString('hex')}`);
     }
+    /**
+     * Static factory method for creating Address instances.
+     * @param {string | Buffer | Address} value - Input value to create an Address instance.
+     * @returns {Address} Address instance.
+     */
     static from(value) {
         if (value instanceof Address) {
             return value;
@@ -51,6 +55,11 @@ class Address {
             throw new Error(value);
         }
     }
+    /**
+     * Static factory method for creating Address instances from a Buffer.
+     * @param {Buffer} slice - Buffer object to create an Address instance.
+     * @returns {Address} Address instance.
+     */
     static fromBuffer(slice) {
         if (slice.length !== 20) {
             throw new Error('Address must be 20 bytes long got ' + slice.length.toString());
@@ -62,6 +71,11 @@ class Address {
             throw e;
         }
     }
+    /**
+     * Static factory method for creating Address instances from a hex string.
+     * @param {string} addr - Hex string to create an Address instance.
+     * @returns {Address} Address instance.
+     */
     static fromHexString(addr) {
         if (!(0, utils_1.isAddress)(addr)) {
             throw new Error('Invalid input type ' + addr);
@@ -76,12 +90,24 @@ class Address {
             throw e;
         }
     }
+    /**
+     * Returns the normalized address string.
+     * @returns {string} Normalized address string.
+     */
     toString() {
         return this.address;
     }
+    /**
+     * Returns the normalized address string.
+     * @returns {string} Normalized address string.
+     */
     valueOf() {
         return this.address;
     }
+    /**
+     * Returns the normalized address string.
+     * @returns {string} Normalized address string.
+     */
     [Symbol.toPrimitive]() {
         return this.address;
     }

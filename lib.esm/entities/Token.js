@@ -1,5 +1,9 @@
 import { DefaultMap } from '../base/DefaultMap';
 import { ethers } from 'ethers';
+// This class describes a token, which is identified by its address.
+// Each token has a symbol, a name, and a number of decimals.
+// A token's scale is calculated as 10^decimals.
+// The zero and one TokenQuantities are also calculated and stored.
 export class Token {
     address;
     symbol;
@@ -80,10 +84,10 @@ export class TokenQuantity {
         return new TokenQuantity(this.token, this.amount * other);
     }
     fpMul(other, scale) {
-        return new TokenQuantity(this.token, this.amount * other / scale);
+        return new TokenQuantity(this.token, (this.amount * other) / scale);
     }
     fpDiv(other, scale) {
-        return new TokenQuantity(this.token, this.amount * scale / other);
+        return new TokenQuantity(this.token, (this.amount * scale) / other);
     }
     scalarDiv(other) {
         return new TokenQuantity(this.token, this.amount / other);
@@ -97,7 +101,7 @@ export class TokenQuantity {
             this.token.symbol);
     }
     toScaled(scale) {
-        return this.amount * scale / this.token.scale;
+        return (this.amount * scale) / this.token.scale;
     }
     convertTo(other) {
         return new TokenQuantity(other, (this.amount * other.scale) / this.token.scale);

@@ -1,6 +1,4 @@
 {
-  "include": ["./src.ts/**/*.ts", "./src.ts/configuration/ethereum/tokens.json"],
-  "exclude": ["./node_modules", "./build", "./contracts", "./test"],
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "declaration": true,

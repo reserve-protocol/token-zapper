@@ -22,7 +22,7 @@
     "target": "es2022"
   },
   "include": ["./src.ts/**/*.ts", "./src.ts/**/*.json"],
-  "exclude": ["./node_modules", "./build", "./contracts"],
+  "exclude": ["./node_modules", "./build", "./contracts", "./src.ts/testRun.ts"],
   "ts-node": {
     "files": true,
     "require": ["tsconfig-paths/register"]

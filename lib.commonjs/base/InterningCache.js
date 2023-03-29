@@ -8,10 +8,10 @@ class InterningCache {
         this.idFn = idFn;
     }
     lastCollect = 0;
+    get size() {
+        return this.entities.size;
+    }
     collect() {
-        if (Date.now() - this.lastCollect < 10000) {
-            return;
-        }
         this.lastCollect = Date.now();
         for (const key of [...this.entities.keys()]) {
             const entity = this.entities.get(key);
@@ -29,7 +29,9 @@ class InterningCache {
             }
         }
         if (this.entities.size > 2000) {
-            this.collect();
+            if (Date.now() - this.lastCollect > 10000) {
+                this.collect();
+            }
         }
         this.entities.set(addr, new WeakRef(inst));
         return inst;

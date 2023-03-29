@@ -1,6 +1,4 @@
 {
-    "extends": "./tsconfig.json",
-    "include": ["**/*.ts", "src/**/*.json"],
-    "exclude": ["node_modules", "build", "lib.commonjs", "lib.esm", "contracts"]
+    "extends": "./tsconfig.json"
   }
   

@@ -3,6 +3,7 @@ export declare class InterningCache<T extends object> {
     private readonly entities;
     constructor(idFn: (t: T) => string);
     private lastCollect;
+    get size(): number;
     collect(): void;
     get(inst: T): T;
     toString(): string;

@@ -3,6 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TokenAmounts = exports.numberOfUnits = exports.TokenQuantity = exports.Token = void 0;
 const DefaultMap_1 = require("../base/DefaultMap");
 const ethers_1 = require("ethers");
+// This class describes a token, which is identified by its address.
+// Each token has a symbol, a name, and a number of decimals.
+// A token's scale is calculated as 10^decimals.
+// The zero and one TokenQuantities are also calculated and stored.
 class Token {
     address;
     symbol;
@@ -84,10 +88,10 @@ class TokenQuantity {
         return new TokenQuantity(this.token, this.amount * other);
     }
     fpMul(other, scale) {
-        return new TokenQuantity(this.token, this.amount * other / scale);
+        return new TokenQuantity(this.token, (this.amount * other) / scale);
     }
     fpDiv(other, scale) {
-        return new TokenQuantity(this.token, this.amount * scale / other);
+        return new TokenQuantity(this.token, (this.amount * scale) / other);
     }
     scalarDiv(other) {
         return new TokenQuantity(this.token, this.amount / other);
@@ -101,7 +105,7 @@ class TokenQuantity {
             this.token.symbol);
     }
     toScaled(scale) {
-        return this.amount * scale / this.token.scale;
+        return (this.amount * scale) / this.token.scale;
     }
     convertTo(other) {
         return new TokenQuantity(other, (this.amount * other.scale) / this.token.scale);

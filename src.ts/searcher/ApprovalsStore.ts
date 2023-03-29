@@ -6,13 +6,14 @@ import { IERC20__factory } from '../contracts'
 export class ApprovalsStore {
   constructor(readonly provider: ethers.providers.Provider) {}
 
-  private readonly cache = new Map<Token, Promise<boolean>>()
+  private readonly cache = new Map<string, Promise<boolean>>()
   async needsApproval(
     token: Token,
     owner: Address,
     spender: Address
   ): Promise<boolean> {
-    let check = this.cache.get(token)
+    const key = `${token}.${owner}.${spender}`
+    let check = this.cache.get(key)
     if (check == null) {
       check = new Promise((resolve, reject) => {
         void (async () => {
@@ -23,7 +24,7 @@ export class ApprovalsStore {
             ).allowance(owner.address, spender.address)
             if (allowance.isZero()) {
               resolve(true)
-              this.cache.delete(token)
+              this.cache.delete(key)
             } else {
               resolve(false)
             }
@@ -32,7 +33,7 @@ export class ApprovalsStore {
           }
         })()
       })
-      this.cache.set(token, check)
+      this.cache.set(key, check)
     }
     return await check
   }

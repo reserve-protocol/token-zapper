@@ -173,7 +173,7 @@ class Searcher {
         mintsToSubtract.forEach((c) => c.inputs.forEach((qty) => tradingBalances.sub(qty)));
         return new Swap_1.SwapPaths(this.universe, [inputQuantity], inputQuantityToTokenSet, tradingBalances.toTokenQuantities(), inputQuantityToTokenSet.reduce((l, r) => l.add(r.outputValue), this.universe.usd.zero), this.universe.config.addresses.executorAddress);
     }
-    async findSingleInputToRTokenZap(userInput, rToken, signerAddress, slippage = 0.1) {
+    async findSingleInputToRTokenZap(userInput, rToken, signerAddress, slippage = 0.0, outputTokenSlipage = slippage / 2) {
         const inputIsNative = userInput.token === this.universe.nativeToken;
         let inputTokenQuantity = userInput;
         if (inputIsNative) {
@@ -195,7 +195,9 @@ class Searcher {
             rTokenActions.mint,
         ]).quote(mintAction.input.map((token) => tradingBalances.get(token)), signerAddress);
         await rTokenMint.exchange(tradingBalances);
-        const output = tradingBalances.toTokenQuantities();
+        const output = tradingBalances.toTokenQuantities().map((qty) => {
+            return qty.sub(qty.token.fromDecimal(outputTokenSlipage.toString()));
+        });
         const searcherResult = new SearcherResult_1.SearcherResult(this.universe, new Swap_1.SwapPaths(this.universe, [userInput], [
             new Swap_1.SwapPath(this.universe, inputQuantityToBasketTokens.inputs, inputQuantityToBasketTokens.swapPaths.map((i) => i.steps).flat(), inputQuantityToBasketTokens.outputs, inputQuantityToBasketTokens.outputValue, inputQuantityToBasketTokens.destination),
             rTokenMint,
@@ -224,7 +226,7 @@ class Searcher {
         allPlans.sort((l, r) => l.compare(r));
         return allPlans;
     }
-    async findSingleInputTokenSwap(input, output, destination, slippage) {
+    async findSingleInputTokenSwap(input, output, destination, slippage = 0.0) {
         const quotes = (await Promise.all([
             this.internalQuoter(input, output, destination, slippage).then((results) => results.filter((result) => result.inputs.length === 1)),
             this.externalQuoters(input, output, destination, slippage),

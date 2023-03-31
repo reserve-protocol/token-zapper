@@ -173,7 +173,7 @@ class Searcher {
         mintsToSubtract.forEach((c) => c.inputs.forEach((qty) => tradingBalances.sub(qty)));
         return new Swap_1.SwapPaths(this.universe, [inputQuantity], inputQuantityToTokenSet, tradingBalances.toTokenQuantities(), inputQuantityToTokenSet.reduce((l, r) => l.add(r.outputValue), this.universe.usd.zero), this.universe.config.addresses.executorAddress);
     }
-    async findSingleInputToRTokenZap(userInput, rToken, signerAddress, slippage = 0.0, outputTokenSlipage = slippage / 2) {
+    async findSingleInputToRTokenZap(userInput, rToken, signerAddress, slippage = 0.0) {
         const inputIsNative = userInput.token === this.universe.nativeToken;
         let inputTokenQuantity = userInput;
         if (inputIsNative) {
@@ -189,15 +189,13 @@ class Searcher {
         const mintAction = rTokenActions.mint;
         const tradingBalances = new Token_1.TokenAmounts();
         tradingBalances.add(inputTokenQuantity);
-        const inputQuantityToBasketTokens = await this.findSingleInputToBasketGivenBasketUnit(inputTokenQuantity, mintAction.basket.unitBasket, slippage ?? 0);
+        const inputQuantityToBasketTokens = await this.findSingleInputToBasketGivenBasketUnit(inputTokenQuantity, mintAction.basket.unitBasket, slippage);
         await inputQuantityToBasketTokens.exchange(tradingBalances);
         const rTokenMint = await new Swap_1.SwapPlan(this.universe, [
             rTokenActions.mint,
         ]).quote(mintAction.input.map((token) => tradingBalances.get(token)), signerAddress);
         await rTokenMint.exchange(tradingBalances);
-        const output = tradingBalances.toTokenQuantities().map((qty) => {
-            return qty.sub(qty.token.fromDecimal(outputTokenSlipage.toString()));
-        });
+        const output = tradingBalances.toTokenQuantities();
         const searcherResult = new SearcherResult_1.SearcherResult(this.universe, new Swap_1.SwapPaths(this.universe, [userInput], [
             new Swap_1.SwapPath(this.universe, inputQuantityToBasketTokens.inputs, inputQuantityToBasketTokens.swapPaths.map((i) => i.steps).flat(), inputQuantityToBasketTokens.outputs, inputQuantityToBasketTokens.outputValue, inputQuantityToBasketTokens.destination),
             rTokenMint,

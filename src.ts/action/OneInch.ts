@@ -25,7 +25,7 @@ export class OneInchAction extends Action {
       `1Inch Swap (${swap.protocols
         .flat(5)
         .map((i: any) => i.name)
-        .join(',')})`,
+        .join(',')})`
     )
   }
 
@@ -36,34 +36,39 @@ export class OneInchAction extends Action {
       .join(',')}])`
   }
 
+  private readonly outputQty: TokenQuantity
   async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.output[0].quantityFromBigInt(BigInt(this.actionQuote.toTokenAmount)),
-    ]
+    return [this.outputQty]
   }
 
   private constructor(
     readonly universe: Universe,
-    input: Token,
-    output: Token,
-    private readonly actionQuote: OneInchSwapResponse
+    inputToken: Token,
+    private readonly outputToken: Token,
+    private readonly actionQuote: OneInchSwapResponse,
+    slippagePercent: number
   ) {
     super(
       Address.fromHexString(actionQuote.tx.to),
-      [input],
-      [output],
+      [inputToken],
+      [outputToken],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Recipient,
-      [new Approval(input, Address.fromHexString(actionQuote.tx.to))]
+      [new Approval(inputToken, Address.fromHexString(actionQuote.tx.to))]
     )
+
+    this.outputQty = this.outputToken
+      .quantityFromBigInt(BigInt(this.actionQuote.toTokenAmount))
+      .mul(outputToken.fromDecimal(100 - slippagePercent))
   }
 
   static createAction(
     universe: Universe,
     input: Token,
     output: Token,
-    quote: OneInchSwapResponse
+    quote: OneInchSwapResponse,
+    slippagePercent: number
   ) {
-    return new OneInchAction(universe, input, output, quote)
+    return new OneInchAction(universe, input, output, quote, slippagePercent)
   }
 }

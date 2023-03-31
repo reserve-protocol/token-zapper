@@ -33,7 +33,7 @@ export const initOneInch = (universe, baseUrl) => {
     return new DexAggregator('1inch', async (user, destination, input, output, slippage) => {
         const swap = await oneInchRouter.swap(user, destination, input, output, slippage);
         return await new SwapPlan(universe, [
-            OneInchAction.createAction(universe, input.token, output, swap),
+            OneInchAction.createAction(universe, input.token, output, swap, slippage),
         ]).quote([input], destination);
     });
 };

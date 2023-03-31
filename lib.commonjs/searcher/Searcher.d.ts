@@ -45,7 +45,7 @@ export declare class Searcher {
      * @param basketUnit a token quantity set representing one unit of output
      **/
     private findSingleInputToBasketGivenBasketUnit;
-    findSingleInputToRTokenZap(userInput: TokenQuantity, rToken: Token, signerAddress: Address, slippage?: number, outputTokenSlipage?: number): Promise<SearcherResult>;
+    findSingleInputToRTokenZap(userInput: TokenQuantity, rToken: Token, signerAddress: Address, slippage?: number): Promise<SearcherResult>;
     externalQuoters(input: TokenQuantity, output: Token, destination: Address, slippage: number): Promise<SwapPath[]>;
     internalQuoter(input: TokenQuantity, output: Token, destination: Address, slippage: number): Promise<SwapPath[]>;
     findSingleInputTokenSwap(input: TokenQuantity, output: Token, destination: Address, slippage?: number): Promise<SwapPath[]>;

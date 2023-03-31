@@ -70,7 +70,13 @@ export const initOneInch = (universe: Universe, baseUrl: string) => {
       )
 
       return await new SwapPlan(universe, [
-        OneInchAction.createAction(universe, input.token, output, swap),
+        OneInchAction.createAction(
+          universe,
+          input.token,
+          output,
+          swap,
+          slippage
+        ),
       ]).quote([input], destination)
     }
   )

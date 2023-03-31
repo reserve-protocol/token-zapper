@@ -247,8 +247,7 @@ export class Searcher {
     userInput: TokenQuantity,
     rToken: Token,
     signerAddress: Address,
-    slippage = 0.0,
-    outputTokenSlipage: number = slippage / 2
+    slippage = 0.0
   ) {
     const inputIsNative = userInput.token === this.universe.nativeToken
     let inputTokenQuantity = userInput
@@ -276,7 +275,7 @@ export class Searcher {
       await this.findSingleInputToBasketGivenBasketUnit(
         inputTokenQuantity,
         mintAction.basket.unitBasket,
-        slippage ?? 0
+        slippage
       )
     await inputQuantityToBasketTokens.exchange(tradingBalances)
 
@@ -288,9 +287,7 @@ export class Searcher {
     )
     await rTokenMint.exchange(tradingBalances)
 
-    const output = tradingBalances.toTokenQuantities().map((qty) => {
-      return qty.sub(qty.token.fromDecimal(outputTokenSlipage.toString()))
-    })
+    const output = tradingBalances.toTokenQuantities()
 
     const searcherResult = new SearcherResult(
       this.universe,

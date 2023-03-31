@@ -247,7 +247,8 @@ export class Searcher {
     userInput: TokenQuantity,
     rToken: Token,
     signerAddress: Address,
-    slippage = 0.1
+    slippage = 0.0,
+    outputTokenSlipage: number = slippage / 2
   ) {
     const inputIsNative = userInput.token === this.universe.nativeToken
     let inputTokenQuantity = userInput
@@ -287,7 +288,9 @@ export class Searcher {
     )
     await rTokenMint.exchange(tradingBalances)
 
-    const output = tradingBalances.toTokenQuantities()
+    const output = tradingBalances.toTokenQuantities().map((qty) => {
+      return qty.sub(qty.token.fromDecimal(outputTokenSlipage.toString()))
+    })
 
     const searcherResult = new SearcherResult(
       this.universe,
@@ -375,7 +378,7 @@ export class Searcher {
     input: TokenQuantity,
     output: Token,
     destination: Address,
-    slippage: number
+    slippage: number = 0.0
   ): Promise<SwapPath[]> {
     const quotes = (
       await Promise.all([

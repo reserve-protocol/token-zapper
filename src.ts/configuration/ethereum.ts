@@ -88,10 +88,16 @@ const initialize = async (universe: Universe) => {
   chainLinkOracle.mapTokenTo(universe.nativeToken, chainLinkETH)
 
   const USDT = await universe.getToken(
-    Address.fromHexString('0xdac17f958d2ee523a2206206994597c13d831ec7')
+    universe.config.addresses.commonTokens.USDT!
   )
   const saUSDT = await universe.getToken(
     Address.fromHexString('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9')
+  )
+  const USDC = await universe.getToken(
+    universe.config.addresses.commonTokens.USDC!
+  )
+  const saUSDC = await universe.getToken(
+    Address.fromHexString('0x60C384e226b120d93f3e0F4C502957b2B9C32B15')
   )
   const cEth = await universe.getToken(
     Address.from('0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5')
@@ -113,7 +119,10 @@ const initialize = async (universe: Universe) => {
     new MintCTokenAction(universe, eth, cEth, cEthRate),
     new MintCTokenAction(universe, cEth, eth, cEthRate)
   )
-  const saTokens = [{ underlying: USDT, saToken: saUSDT }]
+  const saTokens = [
+    { underlying: USDT, saToken: saUSDT },
+    { underlying: USDC, saToken: saUSDC },
+  ]
 
   if (weth) {
     universe.defineMintable(

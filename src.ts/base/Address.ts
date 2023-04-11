@@ -43,7 +43,7 @@ export class Address {
    * @param {string | Buffer | Address} value - Input value to create an Address instance.
    * @returns {Address} Address instance.
    */
-  static from(value: string | Buffer | Address) {
+  static from(value: string | Buffer | Address): Address {
     if (value instanceof Address) {
       return value
     } else if (typeof value === 'string') {
@@ -103,6 +103,15 @@ export class Address {
     return this.address
   }
 
+
+  /**
+   * Returns the normalized address string.
+   * @returns {string} Normalized address string.
+   */
+  toShortString(): string {
+    return this.address.slice(0, 6) + '...' + this.address.slice(-4)
+  }
+
   /**
    * Returns the normalized address string.
    * @returns {string} Normalized address string.
@@ -124,7 +133,10 @@ export class Address {
   gt(other: Address) {
     return this !== other && this.address.localeCompare(other.address)
   }
- 
+  
+  /**
+   * Returns true if this address is greater than or equal to the other address.
+  */
   gte(other: Address) {
     return this === other || this.address.localeCompare(other.address)
   }

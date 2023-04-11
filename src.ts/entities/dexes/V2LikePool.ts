@@ -62,7 +62,7 @@ function getAmountIn(
 export const standardSwap: QuoteFn = async (inputQty, action) => {
   if (action.direction === '0->1') {
     if (inputQty.token === action.pool.token0) {
-      return action.pool.token1.quantityFromBigInt(
+      return action.pool.token1.fromBigInt(
         getAmountOut(
           inputQty.amount,
           action.pool.feeInv,
@@ -71,7 +71,7 @@ export const standardSwap: QuoteFn = async (inputQty, action) => {
         )
       )
     } else {
-      return action.pool.token0.quantityFromBigInt(
+      return action.pool.token0.fromBigInt(
         getAmountIn(
           inputQty.amount,
           action.pool.feeInv,
@@ -82,7 +82,7 @@ export const standardSwap: QuoteFn = async (inputQty, action) => {
     }
   } else if (action.direction === '1->0') {
     if (inputQty.token === action.pool.token1) {
-      return action.pool.token0.quantityFromBigInt(
+      return action.pool.token0.fromBigInt(
         getAmountOut(
           inputQty.amount,
           action.pool.feeInv,
@@ -91,7 +91,7 @@ export const standardSwap: QuoteFn = async (inputQty, action) => {
         )
       )
     } else {
-      return action.pool.token1.quantityFromBigInt(
+      return action.pool.token1.fromBigInt(
         getAmountIn(
           inputQty.amount,
           action.pool.feeInv,
@@ -177,9 +177,9 @@ export class V2Pool {
   }
 
   toString() {
-    return `V2Pool(${this.name},reserve0=${this.token0.quantityFromBigInt(
+    return `V2Pool(${this.name},reserve0=${this.token0.fromBigInt(
       this.reserve0_
-    )},reserve1=${this.token1.quantityFromBigInt(this.reserve1_)})`
+    )},reserve1=${this.token1.fromBigInt(this.reserve1_)})`
   }
 
   constructor(

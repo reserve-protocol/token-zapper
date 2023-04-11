@@ -37,7 +37,7 @@ export class TokenBasket {
         this.basketNonce = nonce;
         this.unitBasket = await Promise.all(quantities.map(async (q, i) => {
             const token = await this.universe.getToken(Address.fromHexString(erc20s[i]));
-            return token.quantityFromBigInt(q.toBigInt());
+            return token.fromBigInt(q.toBigInt());
         }));
     }
 }

@@ -44,7 +44,7 @@ export class MintSATokensAction extends Action {
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
     return [
-      this.saToken.quantityFromBigInt(
+      this.saToken.fromBigInt(
         rayDiv(amountsIn.convertTo(this.saToken).amount, this.rate.value)
       ),
     ]
@@ -97,7 +97,7 @@ export class BurnSATokensAction extends Action {
     await this.universe.refresh(this.address)
     return [
       this.saToken
-        .quantityFromBigInt(rayMul(amountsIn.amount, this.rate.value))
+        .fromBigInt(rayMul(amountsIn.amount, this.rate.value))
         .convertTo(this.underlying),
     ]
   }

@@ -60,7 +60,7 @@ export class TokenBasket implements IBasket {
         const token = await this.universe.getToken(
           Address.fromHexString(erc20s[i])
         )
-        return token.quantityFromBigInt(q.toBigInt())
+        return token.fromBigInt(q.toBigInt())
       })
     )
   }

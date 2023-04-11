@@ -37,7 +37,7 @@ export class OneInchAction extends Action {
         this.outputToken = outputToken;
         this.actionQuote = actionQuote;
         this.outputQty = this.outputToken
-            .quantityFromBigInt(BigInt(this.actionQuote.toTokenAmount))
+            .fromBigInt(BigInt(this.actionQuote.toTokenAmount))
             .mul(outputToken.fromDecimal((100 - slippagePercent) / 100));
     }
     static createAction(universe, input, output, quote, slippagePercent) {

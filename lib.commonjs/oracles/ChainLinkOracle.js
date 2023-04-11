@@ -17,7 +17,7 @@ class ChainLinkOracle extends Oracle_1.Oracle {
                 token.address.address;
             try {
                 const round = await contracts_1.IChainLinkFeedRegistry__factory.connect(this.chainlinkRegistry.address, this.universe.provider).callStatic.latestAnswer(addrToLookup, ISO4217USDCodeInHex);
-                return this.universe.usd.quantityFromBigInt(round.toBigInt());
+                return this.universe.usd.fromBigInt(round.toBigInt());
             }
             catch (e) {
                 return null;

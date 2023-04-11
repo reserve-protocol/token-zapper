@@ -17,7 +17,7 @@ export class MintRTokenAction extends Action {
             throw new Error('Invalid inputs for RToken mint');
         }
         const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket);
-        return [this.basket.rToken.quantityFromBigInt((unitsRequested / MINT_DIGITS) * MINT_DIGITS)];
+        return [this.basket.rToken.fromBigInt((unitsRequested / MINT_DIGITS) * MINT_DIGITS)];
     }
     async exchange(input, balances) {
         const outputs = await this.quote(input);

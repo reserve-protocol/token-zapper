@@ -35,7 +35,7 @@ class MintSATokensAction extends Action_1.Action {
     async quote([amountsIn]) {
         await this.universe.refresh(this.address);
         return [
-            this.saToken.quantityFromBigInt(rayDiv(amountsIn.convertTo(this.saToken).amount, this.rate.value)),
+            this.saToken.fromBigInt(rayDiv(amountsIn.convertTo(this.saToken).amount, this.rate.value)),
         ];
     }
     constructor(universe, underlying, saToken, rate) {
@@ -69,7 +69,7 @@ class BurnSATokensAction extends Action_1.Action {
         await this.universe.refresh(this.address);
         return [
             this.saToken
-                .quantityFromBigInt(rayMul(amountsIn.amount, this.rate.value))
+                .fromBigInt(rayMul(amountsIn.amount, this.rate.value))
                 .convertTo(this.underlying),
         ];
     }

@@ -97,6 +97,13 @@ export class Address {
      * Returns the normalized address string.
      * @returns {string} Normalized address string.
      */
+    toShortString() {
+        return this.address.slice(0, 6) + '...' + this.address.slice(-4);
+    }
+    /**
+     * Returns the normalized address string.
+     * @returns {string} Normalized address string.
+     */
     valueOf() {
         return this.address;
     }
@@ -111,6 +118,9 @@ export class Address {
     gt(other) {
         return this !== other && this.address.localeCompare(other.address);
     }
+    /**
+     * Returns true if this address is greater than or equal to the other address.
+    */
     gte(other) {
         return this === other || this.address.localeCompare(other.address);
     }

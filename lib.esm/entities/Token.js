@@ -1,9 +1,26 @@
 import { DefaultMap } from '../base/DefaultMap';
 import { ethers } from 'ethers';
-// This class describes a token, which is identified by its address.
-// Each token has a symbol, a name, and a number of decimals.
-// A token's scale is calculated as 10^decimals.
-// The zero and one TokenQuantities are also calculated and stored.
+/**
+ * A class representing a token.
+ * @property {Address} address - The address of the token.
+ * @property {string} symbol - The symbol of the token.
+ * @property {string} name - The name of the token.
+ * @property {number} decimals - The number of decimals of the token.
+ * @property {bigint} scale - The scale of the token.
+ *
+ * @property {TokenQuantity} zero - The zero quantity of the token.
+ * @property {TokenQuantity} one - The one quantity of the token.
+ *
+ * An instance of a token can be instantiated into a TokenQuantity.
+ * @example
+ * const token = universe.commonTokens.USDC!
+ *
+ * const fromString = token.from("12.34")
+ * const fromBigInt = token.from(12340000n)
+ * const fromBigIntAlt = token.fromBigInt(12340000n)
+ *
+ * fromString.amount === fromBigInt.amount // true
+ */
 export class Token {
     address;
     symbol;
@@ -18,8 +35,8 @@ export class Token {
         this.name = name;
         this.decimals = decimals;
         this.scale = scale;
-        this.zero = this.quantityFromBigInt(0n);
-        this.one = this.quantityFromBigInt(scale);
+        this.zero = this.fromBigInt(0n);
+        this.one = this.fromBigInt(scale);
     }
     static createToken(tokensRegister, address, symbol, name, decimals) {
         let current = tokensRegister.get(address);
@@ -32,13 +49,31 @@ export class Token {
     toString() {
         return `Token(${this.symbol})`;
     }
+    get [Symbol.toStringTag]() {
+        return `Token(${this.address.toShortString()},${this.symbol})`;
+    }
     fromDecimal(decimalStringOrNumber) {
         return new TokenQuantity(this, ethers.utils
             .parseUnits(decimalStringOrNumber.toString(), this.decimals)
             .toBigInt());
     }
-    quantityFromBigInt(decimalStringOrNumber) {
+    fromBigInt(decimalStringOrNumber) {
         return new TokenQuantity(this, decimalStringOrNumber);
+    }
+    fromEthersBn(decimalStringOrNumber) {
+        return new TokenQuantity(this, decimalStringOrNumber.toBigInt());
+    }
+    from(decimalStringOrNumber) {
+        if (typeof decimalStringOrNumber === 'string' ||
+            typeof decimalStringOrNumber === 'number') {
+            return this.fromDecimal(decimalStringOrNumber);
+        }
+        else if (typeof decimalStringOrNumber === 'bigint') {
+            return this.fromBigInt(decimalStringOrNumber);
+        }
+        else {
+            return this.fromEthersBn(decimalStringOrNumber);
+        }
     }
 }
 export class TokenQuantity {
@@ -49,15 +84,12 @@ export class TokenQuantity {
         this.amount = amount;
     }
     gte(other) {
-        console.assert(other.token === this.token);
         return this.amount >= other.amount;
     }
     gt(other) {
-        console.assert(other.token === this.token);
         return this.amount > other.amount;
     }
     compare(other) {
-        console.assert(other.token === this.token);
         return this.amount < other.amount
             ? -1
             : this.amount === other.amount
@@ -65,19 +97,15 @@ export class TokenQuantity {
                 : 1;
     }
     sub(other) {
-        console.assert(other.token === this.token);
         return new TokenQuantity(this.token, this.amount - other.amount);
     }
     add(other) {
-        console.assert(other.token === this.token);
         return new TokenQuantity(this.token, this.amount + other.amount);
     }
     div(other) {
-        console.assert(other.token === this.token);
         return new TokenQuantity(this.token, (this.amount * this.token.scale) / other.amount);
     }
     mul(other) {
-        console.assert(other.token === this.token);
         return new TokenQuantity(this.token, (this.amount * other.amount) / this.token.scale);
     }
     scalarMul(other) {
@@ -122,7 +150,7 @@ export const numberOfUnits = (amountsIn, unit) => {
     return smallest;
 };
 export class TokenAmounts {
-    tokenBalances = new DefaultMap((tok) => tok.quantityFromBigInt(0n));
+    tokenBalances = new DefaultMap((tok) => tok.fromBigInt(0n));
     static fromQuantities(qtys) {
         const out = new TokenAmounts();
         qtys.forEach((qty) => out.add(qty));
@@ -132,7 +160,7 @@ export class TokenAmounts {
         return [...this.tokenBalances.values()].filter((i) => i.amount !== 0n);
     }
     get(tok) {
-        return tok.quantityFromBigInt(this.tokenBalances.get(tok).amount);
+        return tok.fromBigInt(this.tokenBalances.get(tok).amount);
     }
     add(qty) {
         const b = this.tokenBalances.get(qty.token);

@@ -27,7 +27,7 @@ class MintCTokenAction extends Action_1.Action {
     async quote([amountsIn]) {
         await this.universe.refresh(this.address);
         return [
-            this.cToken.quantityFromBigInt((amountsIn.amount * this.rateScale) /
+            this.cToken.fromBigInt((amountsIn.amount * this.rateScale) /
                 this.rate.value /
                 this.underlying.scale),
         ];
@@ -60,7 +60,7 @@ class BurnCTokenAction extends Action_1.Action {
     async quote([amountsIn]) {
         await this.universe.refresh(this.address);
         return [
-            this.underlying.quantityFromBigInt((amountsIn.amount * this.rate.value * this.underlying.scale) /
+            this.underlying.fromBigInt((amountsIn.amount * this.rate.value * this.underlying.scale) /
                 this.rateScale),
         ];
     }

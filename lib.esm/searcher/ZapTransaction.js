@@ -16,7 +16,7 @@ export class ZapTransaction {
         this.result = result;
     }
     get fee() {
-        return this.universe.nativeToken.quantityFromBigInt(this.universe.gasPrice * this.gasEstimate);
+        return this.universe.nativeToken.fromBigInt(this.universe.gasPrice * this.gasEstimate);
     }
     toString() {
         return `ZapTransaction(input:${this.input.formatWithSymbol()},outputs:[${this.output

@@ -19,7 +19,7 @@ export class MintRTokenAction extends Action {
     }
     const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket)
 
-    return [this.basket.rToken.quantityFromBigInt((unitsRequested / MINT_DIGITS) * MINT_DIGITS)]
+    return [this.basket.rToken.fromBigInt((unitsRequested / MINT_DIGITS) * MINT_DIGITS)]
   }
 
   async exchange(input: TokenQuantity[], balances: TokenAmounts) {

@@ -51,6 +51,11 @@ export declare class Address {
      * Returns the normalized address string.
      * @returns {string} Normalized address string.
      */
+    toShortString(): string;
+    /**
+     * Returns the normalized address string.
+     * @returns {string} Normalized address string.
+     */
     valueOf(): string;
     /**
      * Returns the normalized address string.
@@ -59,6 +64,9 @@ export declare class Address {
     [Symbol.toPrimitive](): string;
     readonly [Symbol.toStringTag] = "Address";
     gt(other: Address): number | false;
+    /**
+     * Returns true if this address is greater than or equal to the other address.
+    */
     gte(other: Address): number | true;
 }
 //# sourceMappingURL=Address.d.ts.map

@@ -25,7 +25,7 @@ export class ChainLinkOracle extends Oracle {
           this.chainlinkRegistry.address,
           this.universe.provider
         ).callStatic.latestAnswer(addrToLookup, ISO4217USDCodeInHex)
-        return this.universe.usd.quantityFromBigInt(round.toBigInt())
+        return this.universe.usd.fromBigInt(round.toBigInt())
       } catch (e) {
         return null
       }

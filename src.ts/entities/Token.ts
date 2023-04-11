@@ -2,10 +2,27 @@ import { type Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
 import { ethers } from 'ethers'
 
-// This class describes a token, which is identified by its address.
-// Each token has a symbol, a name, and a number of decimals.
-// A token's scale is calculated as 10^decimals.
-// The zero and one TokenQuantities are also calculated and stored.
+/**
+ * A class representing a token.
+ * @property {Address} address - The address of the token.
+ * @property {string} symbol - The symbol of the token.
+ * @property {string} name - The name of the token.
+ * @property {number} decimals - The number of decimals of the token.
+ * @property {bigint} scale - The scale of the token.
+ *
+ * @property {TokenQuantity} zero - The zero quantity of the token.
+ * @property {TokenQuantity} one - The one quantity of the token.
+ * 
+ * An instance of a token can be instantiated into a TokenQuantity.
+ * @example
+ * const token = universe.commonTokens.USDC!
+ * 
+ * const fromString = token.from("12.34")
+ * const fromBigInt = token.from(12340000n)
+ * const fromBigIntAlt = token.fromBigInt(12340000n)
+ * 
+ * fromString.amount === fromBigInt.amount // true
+ */
 export class Token {
   public readonly zero: TokenQuantity
   public readonly one: TokenQuantity
@@ -17,8 +34,8 @@ export class Token {
     public readonly decimals: number,
     public readonly scale: bigint
   ) {
-    this.zero = this.quantityFromBigInt(0n)
-    this.one = this.quantityFromBigInt(scale)
+    this.zero = this.fromBigInt(0n)
+    this.one = this.fromBigInt(scale)
   }
 
   static createToken(
@@ -46,6 +63,10 @@ export class Token {
     return `Token(${this.symbol})`
   }
 
+  get [Symbol.toStringTag]() {
+    return `Token(${this.address.toShortString()},${this.symbol})`
+  }
+
   fromDecimal(decimalStringOrNumber: string | number): TokenQuantity {
     return new TokenQuantity(
       this,
@@ -55,8 +76,27 @@ export class Token {
     )
   }
 
-  quantityFromBigInt(decimalStringOrNumber: bigint): TokenQuantity {
+  fromBigInt(decimalStringOrNumber: bigint): TokenQuantity {
     return new TokenQuantity(this, decimalStringOrNumber)
+  }
+
+  fromEthersBn(decimalStringOrNumber: ethers.BigNumber): TokenQuantity {
+    return new TokenQuantity(this, decimalStringOrNumber.toBigInt())
+  }
+
+  from(
+    decimalStringOrNumber: string | number | bigint | ethers.BigNumber
+  ): TokenQuantity {
+    if (
+      typeof decimalStringOrNumber === 'string' ||
+      typeof decimalStringOrNumber === 'number'
+    ) {
+      return this.fromDecimal(decimalStringOrNumber)
+    } else if (typeof decimalStringOrNumber === 'bigint') {
+      return this.fromBigInt(decimalStringOrNumber)
+    } else {
+      return this.fromEthersBn(decimalStringOrNumber)
+    }
   }
 }
 
@@ -64,17 +104,14 @@ export class TokenQuantity {
   constructor(public readonly token: Token, public readonly amount: bigint) {}
 
   public gte(other: TokenQuantity) {
-    console.assert(other.token === this.token)
     return this.amount >= other.amount
   }
 
   public gt(other: TokenQuantity) {
-    console.assert(other.token === this.token)
     return this.amount > other.amount
   }
 
   public compare(other: TokenQuantity) {
-    console.assert(other.token === this.token)
     return this.amount < other.amount
       ? -1
       : this.amount === other.amount
@@ -83,17 +120,14 @@ export class TokenQuantity {
   }
 
   public sub(other: TokenQuantity) {
-    console.assert(other.token === this.token)
     return new TokenQuantity(this.token, this.amount - other.amount)
   }
 
   public add(other: TokenQuantity) {
-    console.assert(other.token === this.token)
     return new TokenQuantity(this.token, this.amount + other.amount)
   }
 
   public div(other: TokenQuantity) {
-    console.assert(other.token === this.token)
     return new TokenQuantity(
       this.token,
       (this.amount * this.token.scale) / other.amount
@@ -101,7 +135,6 @@ export class TokenQuantity {
   }
 
   public mul(other: TokenQuantity) {
-    console.assert(other.token === this.token)
     return new TokenQuantity(
       this.token,
       (this.amount * other.amount) / this.token.scale
@@ -168,7 +201,7 @@ export const numberOfUnits = (
 
 export class TokenAmounts {
   public tokenBalances = new DefaultMap<Token, TokenQuantity>((tok) =>
-    tok.quantityFromBigInt(0n)
+    tok.fromBigInt(0n)
   )
 
   static fromQuantities(qtys: TokenQuantity[]) {
@@ -180,7 +213,7 @@ export class TokenAmounts {
     return [...this.tokenBalances.values()].filter((i) => i.amount !== 0n)
   }
   get(tok: Token) {
-    return tok.quantityFromBigInt(this.tokenBalances.get(tok).amount)
+    return tok.fromBigInt(this.tokenBalances.get(tok).amount)
   }
 
   add(qty: TokenQuantity) {

@@ -29,18 +29,18 @@ function getAmountIn(amountOut, feeInverse, reserveIn, reserveOut) {
 const standardSwap = async (inputQty, action) => {
     if (action.direction === '0->1') {
         if (inputQty.token === action.pool.token0) {
-            return action.pool.token1.quantityFromBigInt(getAmountOut(inputQty.amount, action.pool.feeInv, action.pool.reserve0, action.pool.reserve1));
+            return action.pool.token1.fromBigInt(getAmountOut(inputQty.amount, action.pool.feeInv, action.pool.reserve0, action.pool.reserve1));
         }
         else {
-            return action.pool.token0.quantityFromBigInt(getAmountIn(inputQty.amount, action.pool.feeInv, action.pool.reserve0, action.pool.reserve1));
+            return action.pool.token0.fromBigInt(getAmountIn(inputQty.amount, action.pool.feeInv, action.pool.reserve0, action.pool.reserve1));
         }
     }
     else if (action.direction === '1->0') {
         if (inputQty.token === action.pool.token1) {
-            return action.pool.token0.quantityFromBigInt(getAmountOut(inputQty.amount, action.pool.feeInv, action.pool.reserve1, action.pool.reserve0));
+            return action.pool.token0.fromBigInt(getAmountOut(inputQty.amount, action.pool.feeInv, action.pool.reserve1, action.pool.reserve0));
         }
         else {
-            return action.pool.token1.quantityFromBigInt(getAmountIn(inputQty.amount, action.pool.feeInv, action.pool.reserve1, action.pool.reserve0));
+            return action.pool.token1.fromBigInt(getAmountIn(inputQty.amount, action.pool.feeInv, action.pool.reserve1, action.pool.reserve0));
         }
     }
     else {
@@ -101,7 +101,7 @@ class V2Pool {
         return `V2.${this.address.address.slice(0, 6)}..${this.address.address.slice(38)}.${this.token0}.${this.token1}`;
     }
     toString() {
-        return `V2Pool(${this.name},reserve0=${this.token0.quantityFromBigInt(this.reserve0_)},reserve1=${this.token1.quantityFromBigInt(this.reserve1_)})`;
+        return `V2Pool(${this.name},reserve0=${this.token0.fromBigInt(this.reserve0_)},reserve1=${this.token1.fromBigInt(this.reserve1_)})`;
     }
     constructor(address, token0, token1, reserve0_, reserve1_, _fee, swapFn, encodeSwap) {
         this.address = address;

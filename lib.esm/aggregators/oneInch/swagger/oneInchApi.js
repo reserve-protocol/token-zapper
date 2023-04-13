@@ -48,7 +48,9 @@ export class HttpClient {
         const query = rawQuery || {};
         const keys = Object.keys(query).filter((key) => 'undefined' !== typeof query[key]);
         return keys
-            .map((key) => (Array.isArray(query[key]) ? this.addArrayQueryParam(query, key) : this.addQueryParam(query, key)))
+            .map((key) => Array.isArray(query[key])
+            ? this.addArrayQueryParam(query, key)
+            : this.addQueryParam(query, key))
             .join('&');
     }
     addQueryParams(rawQuery) {
@@ -56,8 +58,12 @@ export class HttpClient {
         return queryString ? `?${queryString}` : '';
     }
     contentFormatters = {
-        [ContentType.Json]: (input) => input !== null && (typeof input === 'object' || typeof input === 'string') ? JSON.stringify(input) : input,
-        [ContentType.Text]: (input) => (input !== null && typeof input !== 'string' ? JSON.stringify(input) : input),
+        [ContentType.Json]: (input) => input !== null && (typeof input === 'object' || typeof input === 'string')
+            ? JSON.stringify(input)
+            : input,
+        [ContentType.Text]: (input) => input !== null && typeof input !== 'string'
+            ? JSON.stringify(input)
+            : input,
         [ContentType.FormData]: (input) => Object.keys(input || {}).reduce((formData, key) => {
             const property = input[key];
             formData.append(key, property instanceof Blob
@@ -113,10 +119,16 @@ export class HttpClient {
             ...requestParams,
             headers: {
                 ...(requestParams.headers || {}),
-                ...(type && type !== ContentType.FormData ? { 'Content-Type': type } : {}),
+                ...(type && type !== ContentType.FormData
+                    ? { 'Content-Type': type }
+                    : {}),
             },
-            signal: cancelToken ? this.createAbortSignal(cancelToken) : requestParams.signal,
-            body: typeof body === 'undefined' || body == null ? null : payloadFormatter(body),
+            signal: cancelToken
+                ? this.createAbortSignal(cancelToken)
+                : requestParams.signal,
+            body: typeof body === 'undefined' || body == null
+                ? null
+                : payloadFormatter(body),
         }).then(async (response) => {
             const r = response;
             r.data = null;
@@ -171,10 +183,10 @@ export class Api extends HttpClient {
          * @tags Healthcheck
          * @name FactoryHealthCheckControllerHealthcheck
          * @summary API health check
-         * @request GET:/v5.0/1/healthcheck
+         * @request GET:/healthcheck
          */
         factoryHealthCheckControllerHealthcheck: (params = {}) => this.request({
-            path: `/v5.0/1/healthcheck`,
+            path: `/healthcheck`,
             method: 'GET',
             ...params,
         }),
@@ -184,10 +196,10 @@ export class Api extends HttpClient {
          * @tags Approve
          * @name ChainApproveControllerGetSpender
          * @summary Address of the 1inch router that must be trusted to spend funds for the exchange
-         * @request GET:/v5.0/1/approve/spender
+         * @request GET:/approve/spender
          */
         chainApproveControllerGetSpender: (params = {}) => this.request({
-            path: `/v5.0/1/approve/spender`,
+            path: `/approve/spender`,
             method: 'GET',
             format: 'json',
             ...params,
@@ -198,10 +210,10 @@ export class Api extends HttpClient {
          * @tags Approve
          * @name ChainApproveControllerGetCallData
          * @summary Generate data for calling the contract in order to allow the 1inch router to spend funds
-         * @request GET:/v5.0/1/approve/transaction
+         * @request GET:/approve/transaction
          */
         chainApproveControllerGetCallData: (query, params = {}) => this.request({
-            path: `/v5.0/1/approve/transaction`,
+            path: `/approve/transaction`,
             method: 'GET',
             query: query,
             format: 'json',
@@ -213,10 +225,10 @@ export class Api extends HttpClient {
          * @tags Approve
          * @name ChainApproveControllerGetAllowance
          * @summary Get the number of tokens that the 1inch router is allowed to spend
-         * @request GET:/v5.0/1/approve/allowance
+         * @request GET:/approve/allowance
          */
         chainApproveControllerGetAllowance: (query, params = {}) => this.request({
-            path: `/v5.0/1/approve/allowance`,
+            path: `/approve/allowance`,
             method: 'GET',
             query: query,
             ...params,
@@ -227,10 +239,10 @@ export class Api extends HttpClient {
          * @tags Info
          * @name ChainTokensControllerGetTokens
          * @summary List of tokens that are available for swap in the 1inch Aggregation protocol
-         * @request GET:/v5.0/1/tokens
+         * @request GET:/tokens
          */
         chainTokensControllerGetTokens: (params = {}) => this.request({
-            path: `/v5.0/1/tokens`,
+            path: `/tokens`,
             method: 'GET',
             format: 'json',
             ...params,
@@ -241,10 +253,10 @@ export class Api extends HttpClient {
          * @tags Info
          * @name ChainPresetsControllerGetPresets
          * @summary List of preset configurations for the 1inch router
-         * @request GET:/v5.0/1/presets
+         * @request GET:/presets
          */
         chainPresetsControllerGetPresets: (params = {}) => this.request({
-            path: `/v5.0/1/presets`,
+            path: `/presets`,
             method: 'GET',
             ...params,
         }),
@@ -254,10 +266,10 @@ export class Api extends HttpClient {
          * @tags Info
          * @name ChainProtocolsControllerGetProtocolsImages
          * @summary List of liquidity sources that are available for routing in the 1inch Aggregation protocol
-         * @request GET:/v5.0/1/liquidity-sources
+         * @request GET:/liquidity-sources
          */
         chainProtocolsControllerGetProtocolsImages: (params = {}) => this.request({
-            path: `/v5.0/1/liquidity-sources`,
+            path: `/liquidity-sources`,
             method: 'GET',
             format: 'json',
             ...params,
@@ -268,10 +280,10 @@ export class Api extends HttpClient {
          * @tags Swap
          * @name ExchangeControllerGetQuote
          * @summary Find the best quote to exchange via 1inch router
-         * @request GET:/v5.0/1/quote
+         * @request GET:/quote
          */
         exchangeControllerGetQuote: (query, params = {}) => this.request({
-            path: `/v5.0/1/quote`,
+            path: `/quote`,
             method: 'GET',
             query: query,
             format: 'json',
@@ -283,10 +295,10 @@ export class Api extends HttpClient {
          * @tags Swap
          * @name ExchangeControllerGetSwap
          * @summary Generate data for calling the 1inch router for exchange
-         * @request GET:/v5.0/1/swap
+         * @request GET:/swap
          */
         exchangeControllerGetSwap: (query, params = {}) => this.request({
-            path: `/v5.0/1/swap`,
+            path: `/swap`,
             method: 'GET',
             query: query,
             format: 'json',
@@ -294,4 +306,4 @@ export class Api extends HttpClient {
         }),
     };
 }
-//# sourceMappingURL=oneInchEthApi.js.map
+//# sourceMappingURL=oneInchApi.js.map

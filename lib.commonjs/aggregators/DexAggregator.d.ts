@@ -5,4 +5,6 @@ export declare class DexAggregator {
     readonly name: string;
     readonly swap: (payerAddress: Address, recipientDestination: Address, input: TokenQuantity, output: Token, slippage: number) => Promise<SwapPath>;
     constructor(name: string, swap: (payerAddress: Address, recipientDestination: Address, input: TokenQuantity, output: Token, slippage: number) => Promise<SwapPath>);
+    [Symbol.toStringTag]: string;
+    toString(): string;
 }

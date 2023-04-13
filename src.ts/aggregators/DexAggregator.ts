@@ -13,4 +13,10 @@ export class DexAggregator {
       slippage: number
     ) => Promise<SwapPath>
   ) {}
+
+  [Symbol.toStringTag] = 'DexAggregator'
+
+  toString() {
+    return `DexAggregator(name=${this.name})`
+  }
 }

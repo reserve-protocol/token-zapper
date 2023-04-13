@@ -56,9 +56,10 @@ class Token {
         return `Token(${this.address.toShortString()},${this.symbol})`;
     }
     fromDecimal(decimalStringOrNumber) {
-        return new TokenQuantity(this, ethers_1.ethers.utils
-            .parseUnits(decimalStringOrNumber.toString(), this.decimals)
-            .toBigInt());
+        if (typeof decimalStringOrNumber === 'number') {
+            decimalStringOrNumber = decimalStringOrNumber.toFixed(this.decimals);
+        }
+        return new TokenQuantity(this, ethers_1.ethers.utils.parseUnits(decimalStringOrNumber, this.decimals).toBigInt());
     }
     fromBigInt(decimalStringOrNumber) {
         return new TokenQuantity(this, decimalStringOrNumber);

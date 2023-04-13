@@ -12,15 +12,15 @@ import { ethers } from 'ethers'
  *
  * @property {TokenQuantity} zero - The zero quantity of the token.
  * @property {TokenQuantity} one - The one quantity of the token.
- * 
+ *
  * An instance of a token can be instantiated into a TokenQuantity.
  * @example
  * const token = universe.commonTokens.USDC!
- * 
+ *
  * const fromString = token.from("12.34")
  * const fromBigInt = token.from(12340000n)
  * const fromBigIntAlt = token.fromBigInt(12340000n)
- * 
+ *
  * fromString.amount === fromBigInt.amount // true
  */
 export class Token {
@@ -68,11 +68,12 @@ export class Token {
   }
 
   fromDecimal(decimalStringOrNumber: string | number): TokenQuantity {
+    if (typeof decimalStringOrNumber === 'number') {
+      decimalStringOrNumber = decimalStringOrNumber.toFixed(this.decimals)
+    }
     return new TokenQuantity(
       this,
-      ethers.utils
-        .parseUnits(decimalStringOrNumber.toString(), this.decimals)
-        .toBigInt()
+      ethers.utils.parseUnits(decimalStringOrNumber, this.decimals).toBigInt()
     )
   }
 

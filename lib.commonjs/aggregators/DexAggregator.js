@@ -8,6 +8,10 @@ class DexAggregator {
         this.name = name;
         this.swap = swap;
     }
+    [Symbol.toStringTag] = 'DexAggregator';
+    toString() {
+        return `DexAggregator(name=${this.name})`;
+    }
 }
 exports.DexAggregator = DexAggregator;
 //# sourceMappingURL=DexAggregator.js.map

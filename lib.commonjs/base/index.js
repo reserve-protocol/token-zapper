@@ -6,4 +6,6 @@ tslib_1.__exportStar(require("./utils"), exports);
 tslib_1.__exportStar(require("./ContractCall"), exports);
 tslib_1.__exportStar(require("./Approval"), exports);
 tslib_1.__exportStar(require("./InterningCache"), exports);
+tslib_1.__exportStar(require("./controlflow"), exports);
+tslib_1.__exportStar(require("./DefaultMap"), exports);
 //# sourceMappingURL=index.js.map

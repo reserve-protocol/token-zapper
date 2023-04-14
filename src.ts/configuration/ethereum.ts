@@ -16,6 +16,7 @@ import { TokenBasket } from '../entities/TokenBasket'
 import { loadTokens, JsonTokenEntry } from './loadTokens'
 import { setupMintableWithRate } from './setupMintableWithRate'
 import { Token } from '../entities'
+import { ETHToRETH, RETHToETH, REthRouter } from '../action/REth'
 
 const chainLinkETH = Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 const chainLinkBTC = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
@@ -101,7 +102,6 @@ const initialize = async (universe: Universe) => {
     { underlying: USDC, wrapped: saUSDC },
   ]
 
-
   const cTokens = await loadCompoundTokens(
     cEther,
     '0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B',
@@ -138,29 +138,41 @@ const initialize = async (universe: Universe) => {
   }
 
   universe.oracles.push(chainLinkOracle)
-  if (universe.config.addresses.rtokens.eUSD != null) {
-    const eUSD = universe.createToken(
-      universe.config.addresses.rtokens.eUSD,
-      'eUSD',
-      'eUSD',
-      18
-    )
-    const basketHandler = new TokenBasket(
-      universe,
-      Address.fromHexString('0x6d309297ddDFeA104A6E89a132e2f05ce3828e07'),
-      eUSD
-    )
-    await basketHandler.update()
+  const eUSD = universe.rTokens.eUSD!
+  const basketHandler = new TokenBasket(
+    universe,
+    Address.fromHexString('0x6d309297ddDFeA104A6E89a132e2f05ce3828e07'),
+    eUSD
+  )
+  await basketHandler.update()
 
-    universe.createRefreshableEntitity(basketHandler.address, () =>
-      basketHandler.update()
-    )
+  universe.createRefreshableEntitity(basketHandler.address, () =>
+    basketHandler.update()
+  )
 
-    universe.defineMintable(
-      new MintRTokenAction(universe, basketHandler),
-      new BurnRTokenAction(universe, basketHandler)
-    )
-  }
+  universe.defineMintable(
+    new MintRTokenAction(universe, basketHandler),
+    new BurnRTokenAction(universe, basketHandler)
+  )
+
+
+  const reth = await universe.getToken(Address.from("0xae78736Cd615f374D3085123A210448E74Fc6393"))
+  const rethRouter = new REthRouter(universe, reth, Address.from("0x16D5A408e807db8eF7c578279BEeEe6b228f1c1C"))
+
+  const ethToREth = new ETHToRETH(universe, rethRouter)
+  const rEthtoEth = new RETHToETH(universe, rethRouter)
+
+  universe.defineMintable(
+    ethToREth,
+    rEthtoEth
+  )
+
+  const stETH = await universe.getToken(Address.from("0xae7ab96520de3a18e5e111b5eaab095312d7fe84"))
+  const wstETH = await universe.getToken(Address.from("0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"))
+
+
+  
+
 }
 
 const ethereumConfig: ChainConfiguration = {

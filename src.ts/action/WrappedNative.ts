@@ -23,8 +23,8 @@ export class DepositAction extends Action {
     )
   }
 
-  async quote(qty: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return qty
+  async quote([qty]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return [qty.convertTo(this.wrappedToken)]
   }
 
   constructor(readonly universe: Universe, readonly wrappedToken: Token) {
@@ -59,8 +59,8 @@ export class WithdrawAction extends Action {
     )
   }
 
-  async quote(qty: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [qty[0].convertTo(this.universe.nativeToken)]
+  async quote([qty]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return [qty.convertTo(this.universe.nativeToken)]
   }
 
   constructor(readonly universe: Universe, readonly wrappedToken: Token) {

@@ -77,6 +77,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IPermit2__factory>;
     getContractFactory(
+      name: "IRETHRouter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IRETHRouter__factory>;
+    getContractFactory(
       name: "IRToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IRToken__factory>;
@@ -85,9 +89,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IStaticATokenLM__factory>;
     getContractFactory(
+      name: "IStETH",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IStETH__factory>;
+    getContractFactory(
       name: "IWrappedNative",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IWrappedNative__factory>;
+    getContractFactory(
+      name: "IWStETH",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IWStETH__factory>;
     getContractFactory(
       name: "IZapper",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -178,6 +190,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IPermit2>;
     getContractAt(
+      name: "IRETHRouter",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IRETHRouter>;
+    getContractAt(
       name: "IRToken",
       address: string,
       signer?: ethers.Signer
@@ -188,10 +205,20 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IStaticATokenLM>;
     getContractAt(
+      name: "IStETH",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IStETH>;
+    getContractAt(
       name: "IWrappedNative",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IWrappedNative>;
+    getContractAt(
+      name: "IWStETH",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IWStETH>;
     getContractAt(
       name: "IZapper",
       address: string,

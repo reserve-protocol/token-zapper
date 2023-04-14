@@ -10,6 +10,9 @@ import { Oracle } from '../oracles'
 import { Token, TokenQuantity } from '../entities'
 import { IBasket } from '../entities/TokenBasket'
 import { JsonTokenEntry, loadTokens } from './loadTokens'
+import { ETHToRETH, RETHToETH } from '../action/REth'
+import { constants, ethers } from 'ethers'
+import { ContractCall } from '../base'
 
 const initialize = async (universe: Universe) => {
   await loadTokens(
@@ -29,14 +32,14 @@ const initialize = async (universe: Universe) => {
   const cUSDC = await universe.getToken(
     Address.from('0x39aa39c021dfbae8fac545936693ac917d5e7563')
   )
-  
+
   const eUSD = universe.rTokens.eUSD!
   const USDT = universe.commonTokens.USDT!
   const USDC = universe.commonTokens.USDC!
-  const weth = universe.commonTokens.ERC20ETH!
+  const WETH = universe.commonTokens.ERC20ETH!
   const prices = new Map<Token, TokenQuantity>([
     [USDT, universe.usd.one],
-    [weth, universe.usd.fromDecimal('1750')],
+    [WETH, universe.usd.fromDecimal('1750')],
   ])
   universe.oracles.push(
     new Oracle('Test', async (token) => {
@@ -45,8 +48,8 @@ const initialize = async (universe: Universe) => {
   )
 
   universe.defineMintable(
-    new DepositAction(universe, weth),
-    new WithdrawAction(universe, weth)
+    new DepositAction(universe, WETH),
+    new WithdrawAction(universe, WETH)
   )
 
   const quantities = [
@@ -104,6 +107,48 @@ const initialize = async (universe: Universe) => {
     new MintRTokenAction(universe, basketHandler),
     new BurnRTokenAction(universe, basketHandler)
   )
+
+  const reth = await universe.getToken(
+    Address.from('0xae78736Cd615f374D3085123A210448E74Fc6393')
+  )
+  const routerAddress = Address.from(
+    '0x16D5A408e807db8eF7c578279BEeEe6b228f1c1C'
+  )
+
+  const mockPortions = [constants.Zero, constants.Zero] as [
+    ethers.BigNumber,
+    ethers.BigNumber
+  ]
+  const rethRouter = {
+    reth,
+    gasEstimate(): bigint {
+      return 250000n
+    },
+    async optimiseToREth(qtyETH: TokenQuantity) {
+      return {
+        portions: mockPortions,
+        amountOut: qtyETH.convertTo(reth),
+        contractCall: new ContractCall(
+          Buffer.alloc(0),
+          routerAddress,
+          qtyETH.amount,
+          0n
+        ),
+      }
+    },
+    async optimiseFromREth(qtyRETH: TokenQuantity) {
+      return {
+        portions: mockPortions,
+        amountOut: qtyRETH.convertTo(universe.nativeToken),
+        contractCall: new ContractCall(Buffer.alloc(0), routerAddress, 0n, 0n),
+      }
+    },
+  }
+
+  const ethToREth = new ETHToRETH(universe, rethRouter)
+  const rEthtoEth = new RETHToETH(universe, rethRouter)
+
+  universe.defineMintable(ethToREth, rEthtoEth)
 }
 
 const ethereumConfig: ChainConfiguration = {

@@ -15,8 +15,8 @@ class DepositAction extends Action_1.Action {
     async encode([amountsIn]) {
         return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iWrappedNativeIFace.encodeFunctionData('deposit')), this.wrappedToken.address, amountsIn.amount, this.gasEstimate(), 'Wrap Native Token');
     }
-    async quote(qty) {
-        return qty;
+    async quote([qty]) {
+        return [qty.convertTo(this.wrappedToken)];
     }
     constructor(universe, wrappedToken) {
         super(wrappedToken.address, [universe.nativeToken], [wrappedToken], Action_1.InteractionConvention.None, Action_1.DestinationOptions.Callee, []);
@@ -37,8 +37,8 @@ class WithdrawAction extends Action_1.Action {
     async encode([amountsIn]) {
         return new ContractCall_1.ContractCall((0, utils_1.parseHexStringIntoBuffer)(iWrappedNativeIFace.encodeFunctionData('withdraw', [amountsIn.amount])), this.wrappedToken.address, 0n, this.gasEstimate(), 'Unwrap Native Token');
     }
-    async quote(qty) {
-        return [qty[0].convertTo(this.universe.nativeToken)];
+    async quote([qty]) {
+        return [qty.convertTo(this.universe.nativeToken)];
     }
     constructor(universe, wrappedToken) {
         super(wrappedToken.address, [wrappedToken], [universe.nativeToken], Action_1.InteractionConvention.None, Action_1.DestinationOptions.Callee, []);

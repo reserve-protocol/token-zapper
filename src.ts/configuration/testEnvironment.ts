@@ -13,6 +13,25 @@ import { JsonTokenEntry, loadTokens } from './loadTokens'
 import { ETHToRETH, RETHToETH } from '../action/REth'
 import { constants, ethers } from 'ethers'
 import { ContractCall } from '../base'
+import { BurnWStETH, MintWStETH } from '../action/WStEth'
+import { BurnStETH, MintStETH } from '../action/StEth'
+
+const defineRToken = (
+  universe: Universe,
+  rToken: Token,
+  basket: TokenQuantity[]
+) => {
+  const basketHandler: IBasket = {
+    basketTokens: basket.map((i) => i.token),
+    unitBasket: basket,
+    rToken: rToken,
+    basketNonce: 0,
+  }
+  universe.defineMintable(
+    new MintRTokenAction(universe, basketHandler),
+    new BurnRTokenAction(universe, basketHandler)
+  )
+}
 
 const initialize = async (universe: Universe) => {
   await loadTokens(
@@ -33,6 +52,7 @@ const initialize = async (universe: Universe) => {
     Address.from('0x39aa39c021dfbae8fac545936693ac917d5e7563')
   )
 
+  const ETHPlus = universe.rTokens.ETHPlus!
   const eUSD = universe.rTokens.eUSD!
   const USDT = universe.commonTokens.USDT!
   const USDC = universe.commonTokens.USDC!
@@ -51,18 +71,6 @@ const initialize = async (universe: Universe) => {
     new DepositAction(universe, WETH),
     new WithdrawAction(universe, WETH)
   )
-
-  const quantities = [
-    saUSDT.fromDecimal('0.225063'),
-    USDT.fromDecimal('0.500004'),
-    cUSDT.fromDecimal('11.24340940'),
-  ]
-  const basketHandler: IBasket = {
-    basketTokens: quantities.map((i) => i.token),
-    unitBasket: quantities,
-    rToken: eUSD,
-    basketNonce: 0,
-  }
 
   const saTokens = [
     { underlying: USDT, saToken: saUSDT, rate: 1110924415157506442300940896n },
@@ -103,15 +111,10 @@ const initialize = async (universe: Universe) => {
     )
   }
 
-  universe.defineMintable(
-    new MintRTokenAction(universe, basketHandler),
-    new BurnRTokenAction(universe, basketHandler)
-  )
-
   const reth = await universe.getToken(
     Address.from('0xae78736Cd615f374D3085123A210448E74Fc6393')
   )
-  const routerAddress = Address.from(
+  const rethRouterAddress = Address.from(
     '0x16D5A408e807db8eF7c578279BEeEe6b228f1c1C'
   )
 
@@ -119,6 +122,10 @@ const initialize = async (universe: Universe) => {
     ethers.BigNumber,
     ethers.BigNumber
   ]
+  const rETHToETHRate = reth.from('1.06887')
+  const ETHToRETHRate = universe.nativeToken.one.div(
+    rETHToETHRate.convertTo(universe.nativeToken)
+  )
   const rethRouter = {
     reth,
     gasEstimate(): bigint {
@@ -127,10 +134,10 @@ const initialize = async (universe: Universe) => {
     async optimiseToREth(qtyETH: TokenQuantity) {
       return {
         portions: mockPortions,
-        amountOut: qtyETH.convertTo(reth),
+        amountOut: qtyETH.mul(ETHToRETHRate).convertTo(reth),
         contractCall: new ContractCall(
           Buffer.alloc(0),
-          routerAddress,
+          rethRouterAddress,
           qtyETH.amount,
           0n
         ),
@@ -139,8 +146,13 @@ const initialize = async (universe: Universe) => {
     async optimiseFromREth(qtyRETH: TokenQuantity) {
       return {
         portions: mockPortions,
-        amountOut: qtyRETH.convertTo(universe.nativeToken),
-        contractCall: new ContractCall(Buffer.alloc(0), routerAddress, 0n, 0n),
+        amountOut: qtyRETH.mul(rETHToETHRate).convertTo(universe.nativeToken),
+        contractCall: new ContractCall(
+          Buffer.alloc(0),
+          rethRouterAddress,
+          0n,
+          0n
+        ),
       }
     },
   }
@@ -149,6 +161,56 @@ const initialize = async (universe: Universe) => {
   const rEthtoEth = new RETHToETH(universe, rethRouter)
 
   universe.defineMintable(ethToREth, rEthtoEth)
+
+  const stETH = await universe.getToken(
+    Address.from('0xae7ab96520de3a18e5e111b5eaab095312d7fe84')
+  )
+
+  const wstETH = await universe.getToken(
+    Address.from('0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0')
+  )
+
+  universe.defineMintable(
+    new MintStETH(universe, stETH, {
+      async quoteMint(qtyEth) {
+        return qtyEth.convertTo(stETH)
+      },
+    }),
+    new BurnStETH(universe, stETH, {
+      async quoteBurn(qtyStETH) {
+        return qtyStETH.convertTo(universe.nativeToken)
+      },
+    })
+  )
+
+  // Test env exchange rate is harded to:
+  const stEthPrWStEth = stETH.from('1.1189437171')
+  const wstEthPrStEth = stETH.one.div(stEthPrWStEth).convertTo(wstETH)
+
+  universe.defineMintable(
+    new MintWStETH(universe, stETH, wstETH, {
+      async quoteMint(qtyStEth) {
+        return qtyStEth.convertTo(wstETH).mul(wstEthPrStEth)
+      },
+    }),
+    new BurnWStETH(universe, stETH, wstETH, {
+      async quoteBurn(qtyWstEth) {
+        return qtyWstEth.convertTo(stETH).mul(stEthPrWStEth)
+      },
+    })
+  )
+  // Defines the by now 'old' eUSD.
+  defineRToken(universe, eUSD, [
+    saUSDT.fromDecimal('0.225063'),
+    USDT.fromDecimal('0.500004'),
+    cUSDT.fromDecimal('11.24340940'),
+  ])
+
+  // ETH+
+  defineRToken(universe, ETHPlus, [
+    reth.from('0.5').div(rETHToETHRate),
+    wstETH.from('0.5').mul(wstEthPrStEth),
+  ])
 }
 
 const ethereumConfig: ChainConfiguration = {
@@ -159,53 +221,32 @@ const ethereumConfig: ChainConfiguration = {
       name: 'Ether',
     },
     {
-      zapperAddress: Address.fromHexString(
-        '0x0000000000000000000000000000000000000042'
-      ),
-      executorAddress: Address.fromHexString(
+      zapperAddress: Address.from('0x0000000000000000000000000000000000000042'),
+      executorAddress: Address.from(
         '0x0000000000000000000000000000000000000043'
       ),
       rtokens: {
-        eUSD: Address.fromHexString(
-          '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F'
-        ),
+        eUSD: Address.from('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F'),
+        ETHPlus: Address.from('0x2ADb7A8216fB13cDb7a60cBed2322a68b59f4F05'),
       },
       // Points to aave address providers
-      aavev2: Address.fromHexString(
-        '0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'
-      ),
-      aavev3: Address.fromHexString(
-        '0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e'
-      ),
+      aavev2: Address.from('0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'),
+      aavev3: Address.from('0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e'),
 
       // Just points to their vault
-      balancer: Address.fromHexString(
-        '0xBA12222222228d8Ba445958a75a0704d566BF2C8'
-      ),
+      balancer: Address.from('0xBA12222222228d8Ba445958a75a0704d566BF2C8'),
 
       // Curve does it's own thing..
       curve: false,
       commonTokens: {
-        USDC: Address.fromHexString(
-          '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
-        ),
-        USDT: Address.fromHexString(
-          '0xdac17f958d2ee523a2206206994597c13d831ec7'
-        ),
-        DAI: Address.fromHexString(
-          '0x6b175474e89094c44da98b954eedeac495271d0f'
-        ),
-        WBTC: Address.fromHexString(
-          '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'
-        ),
+        USDC: Address.from('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'),
+        USDT: Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7'),
+        DAI: Address.from('0x6b175474e89094c44da98b954eedeac495271d0f'),
+        WBTC: Address.from('0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'),
 
         // These two are the same on eth, arbi, opti, but will differ on polygon
-        ERC20ETH: Address.fromHexString(
-          '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-        ),
-        ERC20GAS: Address.fromHexString(
-          '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-        ),
+        ERC20ETH: Address.from('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
+        ERC20GAS: Address.from('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
       },
     }
   ),

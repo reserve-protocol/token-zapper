@@ -1,1 +1,1 @@
-{"version":3,"file":"ethereum.d.ts","sourceRoot":"","sources":["../../src.ts/configuration/ethereum.ts"],"names":[],"mappings":"AAWA,OAAO,EAAE,KAAK,kBAAkB,EAAE,MAAM,sBAAsB,CAAA;AA0J9D,QAAA,MAAM,cAAc,EAAE,kBA2DrB,CAAA;AACD,eAAe,cAAc,CAAA"}
+{"version":3,"file":"ethereum.d.ts","sourceRoot":"","sources":["../../src.ts/configuration/ethereum.ts"],"names":[],"mappings":"AAWA,OAAO,EAAE,KAAK,kBAAkB,EAAE,MAAM,sBAAsB,CAAA;AAiM9D,QAAA,MAAM,cAAc,EAAE,kBAsCrB,CAAA;AACD,eAAe,cAAc,CAAA"}

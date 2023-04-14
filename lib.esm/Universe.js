@@ -28,6 +28,7 @@ export class Universe {
     // Sentinel token used for pricing things
     rTokens = {
         eUSD: null,
+        ETHPlus: null,
     };
     commonTokens = {
         USDC: null,
@@ -95,7 +96,9 @@ export class Universe {
         if (actionAddress != null) {
             this.actions.get(actionAddress).push(action);
         }
-        this.graph.addEdge(action);
+        if (action.addToGraph) {
+            this.graph.addEdge(action);
+        }
         return this;
     }
     defineMintable(mint, burn) {

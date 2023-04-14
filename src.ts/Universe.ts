@@ -51,6 +51,7 @@ export class Universe {
     [P in keyof RTokens]: Token | null
   } = {
     eUSD: null,
+    ETHPlus: null,
   }
   public readonly commonTokens: {
     [P in keyof CommonTokens]: Token | null
@@ -150,10 +151,14 @@ export class Universe {
   }
 
   public addAction(action: Action, actionAddress?: Address) {
+    
     if (actionAddress != null) {
       this.actions.get(actionAddress).push(action)
     }
-    this.graph.addEdge(action)
+
+    if (action.addToGraph) {
+      this.graph.addEdge(action)
+    }
     return this
   }
 

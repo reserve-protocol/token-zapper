@@ -35,7 +35,7 @@ export const fixture = async () => {
   )
   return universe
 }
-describe('v2 uniswap actions', () => {
+describe('searcher/v2-actions', () => {
   it('it can handle a basic swap', async () => {
     const universe = await fixture()
 

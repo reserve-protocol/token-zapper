@@ -36,8 +36,26 @@ const createRToken = (
   return rToken
 }
 
-describe('searcher', () => {
-  it('It can do an rToken zap', async () => {
+describe('searcher/rtokenzaps', () => {
+  it('It can do an ETH+ zap', async () => {
+    const universe = await Universe.createForTest(testConfig)
+    await testConfig.initialize(universe)
+
+    const searcher = new Searcher(universe)
+
+    const result = await searcher.findSingleInputToRTokenZap(
+      universe.nativeToken.fromDecimal('1.0'),
+      universe.rTokens.ETHPlus!,
+      Address.ZERO
+    )
+    expect(
+      result.swaps.outputs
+        .find((i) => i.token === universe.rTokens.ETHPlus!)
+        ?.formatWithSymbol()
+    ).toBe('1.0 ETH+')
+  })
+
+  it('It can do an eUSD zap', async () => {
     const universe = await Universe.createForTest(testConfig)
     await testConfig.initialize(universe)
 

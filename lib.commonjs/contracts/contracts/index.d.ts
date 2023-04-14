@@ -7,5 +7,8 @@ export type { iZapperSol };
 export type { IBasketHandler } from "./IBasketHandler";
 export type { IChainLinkFeedRegistry } from "./IChainLinkFeedRegistry";
 export type { IPermit2 } from "./IPermit2";
+export type { IRETHRouter } from "./IRETHRouter";
 export type { IRToken } from "./IRToken";
+export type { IStETH } from "./IStETH";
+export type { IWStETH } from "./IWStETH";
 export type { IWrappedNative } from "./IWrappedNative";

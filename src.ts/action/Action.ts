@@ -26,7 +26,7 @@ export abstract class Action {
   ) {}
 
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
-  abstract gasEstimate(): bigint;
+  abstract gasEstimate(): bigint
   async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {
     const outputs = await this.quote(amountsIn)
     balances.exchange(amountsIn, outputs)
@@ -39,5 +39,12 @@ export abstract class Action {
 
   toString() {
     return 'Action'
+  }
+
+  // TODO: This is sort of a hack for stETH as it's a mintable but not burnable token.
+  // But we need the burn Action to calculate the baskets correctly, but we don't want
+  // to have the token actually appear in paths.
+  get addToGraph() {
+    return true
   }
 }

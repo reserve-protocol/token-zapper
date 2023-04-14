@@ -10,6 +10,7 @@ export interface CommonTokens {
 
 export interface RTokens {
   eUSD: Address | null
+  ETHPlus: Address | null
 }
 export class StaticConfig {
   constructor(

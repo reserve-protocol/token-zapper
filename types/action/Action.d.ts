@@ -26,5 +26,6 @@ export declare abstract class Action {
     exchange(amountsIn: TokenQuantity[], balances: TokenAmounts): Promise<void>;
     abstract encode(amountsIn: TokenQuantity[], destination: Address, bytes?: Buffer): Promise<ContractCall>;
     toString(): string;
+    get addToGraph(): boolean;
 }
 //# sourceMappingURL=Action.d.ts.map

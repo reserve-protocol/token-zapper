@@ -14,9 +14,12 @@ export { CEther__factory } from "./factories/contracts/ICToken.sol/CEther__facto
 export { IComptroller__factory } from "./factories/contracts/ICToken.sol/IComptroller__factory";
 export { ICToken__factory } from "./factories/contracts/ICToken.sol/ICToken__factory";
 export { IPermit2__factory } from "./factories/contracts/IPermit2__factory";
+export { IRETHRouter__factory } from "./factories/contracts/IRETHRouter__factory";
 export { IRToken__factory } from "./factories/contracts/IRToken__factory";
 export { IStaticATokenLM__factory } from "./factories/contracts/ISAtoken.sol/IStaticATokenLM__factory";
+export { IStETH__factory } from "./factories/contracts/IStETH__factory";
 export { IWrappedNative__factory } from "./factories/contracts/IWrappedNative__factory";
+export { IWStETH__factory } from "./factories/contracts/IWStETH__factory";
 export { IZapper__factory } from "./factories/contracts/IZapper.sol/IZapper__factory";
 export { IZapperExecutor__factory } from "./factories/contracts/IZapper.sol/IZapperExecutor__factory";
 //# sourceMappingURL=index.js.map

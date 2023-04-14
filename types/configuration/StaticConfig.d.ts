@@ -9,6 +9,7 @@ export interface CommonTokens {
 }
 export interface RTokens {
     eUSD: Address | null;
+    ETHPlus: Address | null;
 }
 export declare class StaticConfig {
     readonly nativeToken: {

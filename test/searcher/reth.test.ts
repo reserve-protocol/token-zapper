@@ -3,7 +3,7 @@ import { Universe } from '../../src.ts/Universe'
 import { Searcher } from '../../src.ts/searcher'
 import testConfig from '../../src.ts/configuration/testEnvironment'
 
-describe('searcher', () => {
+describe('searcher/reth', () => {
   it('It can correct handle reth', async () => {
     const universe = await Universe.createForTest(testConfig)
     await testConfig.initialize(universe)
@@ -21,7 +21,7 @@ describe('searcher', () => {
       Address.ZERO
     )
     expect(resultEthToRETH.at(-1)!.outputs[0].formatWithSymbol()).toBe(
-      '10.0 rETH'
+      '9.35567468447987126 rETH'
     )
 
     const resultWETHToRETH = await searcher.findSingleInputTokenSwap(
@@ -30,16 +30,16 @@ describe('searcher', () => {
       Address.ZERO
     )
     expect(resultWETHToRETH.at(-1)!.outputs[0].formatWithSymbol()).toBe(
-      '10.0 rETH'
+      '9.35567468447987126 rETH'
     )
 
     const resultRETHToWETH = await searcher.findSingleInputTokenSwap(
-      RETH.from('10.0'),
+      RETH.from('9.35567468447987126'),
       WETH,
       Address.ZERO
     )
     expect(resultRETHToWETH.at(-1)!.outputs[0].formatWithSymbol()).toBe(
-      '10.0 WETH'
+      '9.999999999999999993 WETH'
     )
   })
 })

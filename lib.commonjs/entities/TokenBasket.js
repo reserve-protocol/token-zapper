@@ -25,16 +25,9 @@ class TokenBasket {
     }
     async update() {
         const [nonce, { quantities, erc20s }] = await Promise.all([
-            this.basketHandler.nonce(),
-            this.basketHandler.quote(this.rToken.scale, 2),
-            // this.basketHandler.basketsNeeded(),
-            // await IERC20__factory.connect(
-            //   this.rToken.address.address,
-            //   this.universe.provider
-            // ).totalSupply(),
+            this.basketHandler.callStatic.nonce(),
+            this.basketHandler.callStatic.quote(this.rToken.scale.toString(), 2),
         ]);
-        // this.basketsNeeded = basketsNeeded.toBigInt()
-        // this.totalSupply = totalSupply.toBigInt()
         this.basketNonce = nonce;
         this.unitBasket = await Promise.all(quantities.map(async (q, i) => {
             const token = await this.universe.getToken(Address_1.Address.fromHexString(erc20s[i]));

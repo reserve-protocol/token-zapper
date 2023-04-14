@@ -3,7 +3,7 @@ import { Universe } from '../../src.ts/Universe'
 import { Searcher } from '../../src.ts/searcher'
 import testConfig from '../../src.ts/configuration/testEnvironment'
 
-describe('searcher', () => {
+describe('searcher/mints', () => {
   it('it can handle mints', async () => {
     const universe = await Universe.createForTest(testConfig)
     await testConfig.initialize(universe)

@@ -12,8 +12,8 @@ export class DepositAction extends Action {
     async encode([amountsIn]) {
         return new ContractCall(parseHexStringIntoBuffer(iWrappedNativeIFace.encodeFunctionData('deposit')), this.wrappedToken.address, amountsIn.amount, this.gasEstimate(), 'Wrap Native Token');
     }
-    async quote(qty) {
-        return qty;
+    async quote([qty]) {
+        return [qty.convertTo(this.wrappedToken)];
     }
     constructor(universe, wrappedToken) {
         super(wrappedToken.address, [universe.nativeToken], [wrappedToken], InteractionConvention.None, DestinationOptions.Callee, []);
@@ -33,8 +33,8 @@ export class WithdrawAction extends Action {
     async encode([amountsIn]) {
         return new ContractCall(parseHexStringIntoBuffer(iWrappedNativeIFace.encodeFunctionData('withdraw', [amountsIn.amount])), this.wrappedToken.address, 0n, this.gasEstimate(), 'Unwrap Native Token');
     }
-    async quote(qty) {
-        return [qty[0].convertTo(this.universe.nativeToken)];
+    async quote([qty]) {
+        return [qty.convertTo(this.universe.nativeToken)];
     }
     constructor(universe, wrappedToken) {
         super(wrappedToken.address, [wrappedToken], [universe.nativeToken], InteractionConvention.None, DestinationOptions.Callee, []);

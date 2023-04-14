@@ -5,15 +5,17 @@ import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens';
 import { Address } from '../base/Address';
 import { StaticConfig } from './StaticConfig';
 import { Oracle } from '../oracles';
+import { loadTokens } from './loadTokens';
 const initialize = async (universe) => {
-    const eUSD = universe.createToken(Address.fromHexString('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F'), 'eUSD', 'eUSD', 18);
-    const weth = universe.createToken(Address.fromHexString('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'), 'WETH', 'Wrapped ETH', 18);
-    const USDT = universe.createToken(Address.fromHexString('0xdac17f958d2ee523a2206206994597c13d831ec7'), 'USDT', 'USDT', 6);
-    const USDC = universe.createToken(Address.from('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'), 'USDC', 'USDC', 6);
-    const saUSDT = universe.createToken(Address.from('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9'), 'saUSDT', 'saUSDT', 8);
-    const cUSDT = universe.createToken(Address.from('0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'), 'cUSDT', 'cUSDT', 8);
-    const saUSDC = universe.createToken(Address.from('0x8f471832C6d35F2a51606a60f482BCfae055D986'), 'saUSDC', 'saUSDC', 8);
-    const cUSDC = universe.createToken(Address.from('0x39aa39c021dfbae8fac545936693ac917d5e7563'), 'cUSDC', 'cUSDC', 8);
+    await loadTokens(universe, require('./data/ethereum/tokens.json'));
+    const saUSDT = await universe.getToken(Address.from('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9'));
+    const cUSDT = await universe.getToken(Address.from('0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'));
+    const saUSDC = await universe.getToken(Address.from('0x8f471832C6d35F2a51606a60f482BCfae055D986'));
+    const cUSDC = await universe.getToken(Address.from('0x39aa39c021dfbae8fac545936693ac917d5e7563'));
+    const eUSD = universe.rTokens.eUSD;
+    const USDT = universe.commonTokens.USDT;
+    const USDC = universe.commonTokens.USDC;
+    const weth = universe.commonTokens.ERC20ETH;
     const prices = new Map([
         [USDT, universe.usd.one],
         [weth, universe.usd.fromDecimal('1750')],
@@ -21,10 +23,6 @@ const initialize = async (universe) => {
     universe.oracles.push(new Oracle('Test', async (token) => {
         return prices.get(token) ?? null;
     }));
-    universe.commonTokens.USDT = USDT;
-    universe.commonTokens.USDC = USDC;
-    universe.commonTokens.ERC20ETH = weth;
-    universe.commonTokens.ERC20GAS = weth;
     universe.defineMintable(new DepositAction(universe, weth), new WithdrawAction(universe, weth));
     const quantities = [
         saUSDT.fromDecimal('0.225063'),

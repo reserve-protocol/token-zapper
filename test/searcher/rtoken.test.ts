@@ -127,7 +127,7 @@ describe('searcher', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === oldEUSD)?.formatWithSymbol()
-    ).toBe('171.81120402 oldEUSD')
+    ).toBe('171.81068402 oldEUSD')
   })
 
   it('recursive RTokens', async () => {
@@ -223,7 +223,7 @@ describe('searcher', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === oldEUSD)?.formatWithSymbol()
-    ).toBe('183.46538808 oldEUSD')
+    ).toBe('183.46519608 oldEUSD')
   })
 
   it('rToken = (0.25 USDC, 0.75 USDT) && 1 USDC = $0.95', async () => {

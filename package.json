@@ -4,7 +4,7 @@
     "access": "public",
     "tag": "latest"
   },
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A library to help convert tokens into RTokens",
   "keywords": [],
   "main": "./lib.commonjs/index.js",
@@ -121,7 +121,7 @@
   },
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.2",
-    "@uniswap/permit2-sdk": "^1.2.0",
+    "@uniswap/permit2-sdk": "^1.2.1",
     "ethers": "^5.7.2"
   }
 }

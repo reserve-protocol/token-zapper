@@ -101,6 +101,28 @@ export class Token {
   }
 }
 
+/**
+ * A class representing a quantity of a token.
+ * It can be constructed from a Token and a bigint, but the preferred way is to use the token.from method.
+ *
+ * @property {Token} token - The token.
+ * @property {bigint} amount - The amount of the token.
+ *
+ * @note
+ * When doing arithmetic operations, we always assume the other quantity is in the same token.
+ * We will be automatically converting the other quantity to the same token.
+ *
+ * @example
+ * const token = universe.commonTokens.USDC!
+ * const quantity = token.from("12.34")
+ *
+ * const quantity2 = quantity.add(token.from("56.78")) // "68.12"
+ *
+ * // to add two different tokens, you need to convert them to the same token first
+ * const token2 = universe.commonTokens.DAI!
+ * const quantity3 = quantity.add(token2.from("56.78").to(token)) // "68.12"
+ *
+ */
 export class TokenQuantity {
   constructor(public readonly token: Token, public readonly amount: bigint) {}
 
@@ -173,7 +195,19 @@ export class TokenQuantity {
     return (this.amount * scale) / this.token.scale
   }
 
+  /**
+   * @deprecated use into instead
+   */
   public convertTo(other: Token) {
+    return this.into(other)
+  }
+
+  /**
+   * Converts this quantity to another token.
+   * @param other
+   * @returns The quantity in the other token.
+   */
+  public into(other: Token) {
     return new TokenQuantity(
       other,
       (this.amount * other.scale) / this.token.scale
@@ -200,6 +234,17 @@ export const numberOfUnits = (
   return smallest
 }
 
+/**
+ * A class representing a set of token quantities.
+ *
+ * @example
+ * const tokenAmounts = new TokenAmounts()
+ * tokenAmounts.add(usdc.from("12.34"))
+ * tokenAmounts.sub(usdc.from("1.0"))
+ * tokenAmounts.add(usdt.from("56.78"))
+ * tokenAmounts.sub(usdt.from("1.0"))
+ * console.log(tokenAmounts) // TokenAmounts([USDC: 11.34, USDT: 55.78])
+ */
 export class TokenAmounts {
   public tokenBalances = new DefaultMap<Token, TokenQuantity>((tok) =>
     tok.fromBigInt(0n)

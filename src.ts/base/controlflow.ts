@@ -41,6 +41,7 @@ export interface RetryLoopState {
   currentDelay: number
   errors: any[]
 }
+
 export class RetryLoopException extends Error {
   constructor(
     public readonly config: RetryLoopConfig,
@@ -60,6 +61,14 @@ export class RetryLoopException extends Error {
   }
 }
 
+/**
+ * calculate the next delay based on the backoff strategy
+ * 
+ * @param currentDelay 
+ * @param config 
+ * @returns 
+ * @throws Error if the backoff strategy is unknown
+ */
 const calcBackoff = (currentDelay: number, config: RetryLoopConfig) => {
   switch (config.backoff) {
     case 'LINEAR':

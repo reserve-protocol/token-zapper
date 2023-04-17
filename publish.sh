@@ -38,3 +38,6 @@ npm publish
 
 # Go back to previous branch
 git checkout -
+
+# Delete leftover artifact directories 
+npm run clean

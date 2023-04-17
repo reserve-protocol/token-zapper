@@ -21,13 +21,22 @@ npm run test
 To use the library, import it in your TypeScript file:
 
 ```typescript
-import { Universe, Searcher, configuration } from '@reserve-protocol/token-zapper'
+import {
+  Universe,
+  Searcher,
+  configuration,
+} from '@reserve-protocol/token-zapper'
 ```
 
-Then, create the searcher universe `Universe`, and instantiate a `Searcher` ,
+Then, create the searcher universe `Universe`, and instantiate a `Searcher`. The `create` factory will
+create a searcher universe using the current providers network.
+
+We currently support mainnet. So make sure you are connected to mainnet when instantiating the searcher.
+
+Otherwise you need to use the `createWithConfig` factory and pass in the network you want to use.
 
 ```typescript
-const universe = await Universe.createWithConfig(provider, configuration.eth)
+const universe = await Universe.create(provider)
 const searcher = new Searcher(universe)
 ```
 
@@ -35,9 +44,9 @@ Use the searcher to find a swap:
 
 ```typescript
 const result = await searcher.findSingleInputToRTokenZap({
-    input: universe.commonTokens.ERC20ETH.fromDecimal("0.1"),
+    input: universe.commonTokens.ERC20ETH.from("0.1"),
     rToken: universe.rTokens.eUSD!,
-    signerAddress: Address.fromHexString(YOUR ADDRESS)
+    signerAddress: Address.from(your ADDRESS)
 });
 
 console.log(result.describe().join("\n"))
@@ -83,11 +92,13 @@ const pendingTx = await provider.sendTransaction(
 
 ## Current features and limitations
 
-Library can currently only resolve one `RToken` at a time, so `RToken`'s requiring RTokens will probably cause the code to bail out.
+While the library does support Searching on uniswap v2 like venues, and the contracts are set up to swap directly using v3 pools. We do not currently support using the build in searcher for Swaps, and are relying on 1inch.
 
-Library does currently not support Zapper from an `RToken` into another `RToken`, but it is definitely on the agenda.
+We may expand support for the zapper to be able to search pools directly, as it can potentially be more efficient.
 
-Library is fully set up to do searching itself, but due to time constraints the current version only supports dex aggregators (1inch), to result any trading.
+**RToken to RToken zaps, or RToken to Token zaps are not currently supported. The library will route the RToken into 1inch for the initial Swap resulting in value loss.**
+
+RToken to RToken zaps are planned for the future.
 
 ## Contributing
 

@@ -4,19 +4,20 @@
 git diff-index --quiet HEAD -- || { echo "Uncommitted changes detected. Aborting."; exit 1; }
 
 # Read current version
-
 current_version=$(awk -F \" '/"version": ".+"/ { print $4; exit; }' package.json)
 
 # Ask user for new version and message
 read -p "New version (current: $current_version): " new_version
 read -p "Tag message: " tag_message
 
+# Update package.json with new version
+sed -i '' "s/\($current_version\).*/$new_version\",/" package.json
+git add package.json
+git commit -m "Bump package.json version to '$new_version'"
+
 # Create and checkout release branch
 release_branch="release/v$new_version"
 git checkout -b $release_branch
-
-# Update package.json with new version
-sed -i '' "s/\($current_version\).*/$new_version\",/" package.json
 
 # Run build and test
 npm run build

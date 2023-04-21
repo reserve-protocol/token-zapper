@@ -288,7 +288,11 @@ export class TokenAmounts {
     })
   }
   addAll(input: TokenAmounts) {
-    for (const value of input.tokenBalances.values()) {
+    this.addQtys(input.toTokenQuantities())
+  }
+
+  addQtys(inputs: TokenQuantity[]) {
+    for (const value of inputs) {
       if (value.amount === 0n) {
         continue
       }

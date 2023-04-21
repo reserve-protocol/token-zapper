@@ -1,9 +1,9 @@
+import { Universe } from '../Universe'
 import { type Action } from '../action/Action'
 import { type MintRTokenAction } from '../action/RTokens'
 import { Address } from '../base/Address'
-import { bfs } from '../exchange-graph/BFS'
 import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
-import { Universe } from '../Universe'
+import { bfs } from '../exchange-graph/BFS'
 import { SearcherResult } from './SearcherResult'
 import { SwapPath, SwapPaths, SwapPlan } from './Swap'
 
@@ -179,6 +179,7 @@ export class Searcher {
         continue
       }
 
+      // Swaps are sorted by output amount in descending order
       const swaps = await this.findSingleInputTokenSwap(
         input,
         output,
@@ -186,7 +187,6 @@ export class Searcher {
         slippage
       )
 
-      // TODO: evaluate different trades
       const trade = swaps[0]
       if (trade == null) {
         throw new Error('Could not find way to swap into precursor token')
@@ -243,6 +243,118 @@ export class Searcher {
     )
   }
 
+  async recursivelyUnwrapQty(qty: TokenQuantity): Promise<SwapPaths> {
+    const potentiallyUnwrappable = [qty]
+    const tokenAmounts = new TokenAmounts()
+    const swapPlans: SwapPath[] = []
+
+    while (potentiallyUnwrappable.length !== 0) {
+      const qty = potentiallyUnwrappable.pop()!
+      const mintBurnActions = this.universe.wrappedTokens.get(qty.token)
+      if (mintBurnActions == null) {
+        tokenAmounts.add(qty)
+        continue
+      }
+      const output = await mintBurnActions.burn.quote([qty])
+      const plan = new SwapPlan(this.universe, [mintBurnActions.burn])
+      swapPlans.push(
+        await plan.quote([qty], this.universe.config.addresses.executorAddress)
+      )
+      for (const underylingQty of output) {
+        potentiallyUnwrappable.push(underylingQty)
+      }
+    }
+    const output = tokenAmounts.toTokenQuantities()
+    const outputQuotes = await Promise.all(
+      output.map(
+        async (qty) =>
+          (await this.universe.fairPrice(qty)) ?? this.universe.usd.zero
+      )
+    )
+
+    return new SwapPaths(
+      this.universe,
+      [qty],
+      swapPlans,
+      output,
+      outputQuotes.reduce((l, r) => l.add(r), this.universe.usd.zero),
+      this.universe.config.addresses.executorAddress
+    )
+  }
+
+  async findRTokenIntoSingleTokenZap(
+    rTokenQuantity: TokenQuantity,
+    output: Token,
+    signerAddress: Address,
+    slippage = 0.0
+  ) {
+    const outputIsNative = output === this.universe.nativeToken
+    let outputToken = output
+    if (outputIsNative) {
+      if (this.universe.commonTokens.ERC20GAS == null) {
+        throw new Error(
+          'No wrapped native token. (Like WETH) has been defined. Cannot execute search'
+        )
+      }
+      outputToken = this.universe.commonTokens.ERC20GAS
+    }
+    const rToken = rTokenQuantity.token
+
+    const rTokenActions = this.universe.wrappedTokens.get(rToken)
+    if (rTokenActions == null) {
+      throw new Error('RToken has no mint/burn actions')
+    }
+
+    const redeemRTokenForUnderlying = await this.recursivelyUnwrapQty(
+      rTokenQuantity
+    )
+
+    // Trade each underlying for output
+    const tokenAmounts = new TokenAmounts()
+    tokenAmounts.addQtys(redeemRTokenForUnderlying.outputs)
+
+    const underylingToOutputTrade = await Promise.all(
+      redeemRTokenForUnderlying.outputs
+        .filter((qty) => qty.token !== outputToken)
+        .map(async (qty) => {
+          const potentialSwaps = await this.findSingleInputTokenSwap(
+            qty,
+            outputToken,
+            signerAddress,
+            slippage
+          )
+          const trade = potentialSwaps[0]
+          await trade.exchange(tokenAmounts)
+          return trade
+        })
+    )
+
+    const totalOutput = tokenAmounts.get(outputToken)
+    const outputValue =
+      (await this.universe.fairPrice(totalOutput)) ?? this.universe.usd.zero
+
+    const outputSwap = new SwapPaths(
+      this.universe,
+      [rTokenQuantity],
+      [
+        new SwapPath(
+          this.universe,
+          redeemRTokenForUnderlying.inputs,
+          redeemRTokenForUnderlying.swapPaths.map((i) => i.steps).flat(),
+          redeemRTokenForUnderlying.outputs,
+          redeemRTokenForUnderlying.outputValue,
+          redeemRTokenForUnderlying.destination
+        ),
+        ...underylingToOutputTrade,
+      ],
+      tokenAmounts.toTokenQuantities(),
+      outputValue,
+      signerAddress
+    )
+
+    return outputSwap
+  }
+
   async findSingleInputToRTokenZap(
     userInput: TokenQuantity,
     rToken: Token,
@@ -261,10 +373,9 @@ export class Searcher {
         this.universe.commonTokens.ERC20GAS
       )
     }
-
     const rTokenActions = this.universe.wrappedTokens.get(rToken)
     if (rTokenActions == null) {
-      throw new Error('Param rToken is not a known RToken')
+      throw new Error('RToken has no mint/burn actions')
     }
 
     const mintAction = rTokenActions.mint as MintRTokenAction

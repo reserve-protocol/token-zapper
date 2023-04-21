@@ -1,4 +1,4 @@
-import { type Address } from '../base/Address'
+import { Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
 import { ethers } from 'ethers'
 
@@ -58,6 +58,7 @@ export class Token {
     }
     return current
   }
+  static NullToken = {} as Token
 
   toString() {
     return `Token(${this.symbol})`
@@ -97,6 +98,15 @@ export class Token {
       return this.fromBigInt(decimalStringOrNumber)
     } else {
       return this.fromEthersBn(decimalStringOrNumber)
+    }
+  }
+
+  toJson() {
+    return {
+      address: this.address.toString(),
+      symbol: this.symbol,
+      name: this.name,
+      decimals: this.decimals,
     }
   }
 }

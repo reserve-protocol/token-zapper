@@ -19,6 +19,7 @@ import { Token } from '../entities'
 import { ETHToRETH, RETHToETH, REthRouter } from '../action/REth'
 import { BurnWStETH, WStETHRateProvider, MintWStETH } from '../action/WStEth'
 import { BurnStETH, MintStETH, StETHRateProvider } from '../action/StEth'
+import { addCurvePoolEdges, loadCurvePools } from '../action/Curve'
 
 const chainLinkETH = Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 const chainLinkBTC = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
@@ -71,6 +72,14 @@ const initialize = async (universe: Universe) => {
     universe,
     require('./data/ethereum/tokens.json') as JsonTokenEntry[]
   )
+
+  if (universe.chainConfig.config.curveConfig.enable) {
+    const curvePools = await loadCurvePools(universe)
+    await addCurvePoolEdges(
+      universe,
+      curvePools,
+    )
+  }
 
   const chainLinkOracle = new ChainLinkOracle(
     universe,
@@ -226,7 +235,6 @@ const ethereumConfig: ChainConfiguration = {
       balancer: Address.from('0xBA12222222228d8Ba445958a75a0704d566BF2C8'),
 
       // Curve does it's own thing..
-      curve: true,
       commonTokens: {
         USDC: Address.from('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'),
         USDT: Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7'),
@@ -237,7 +245,10 @@ const ethereumConfig: ChainConfiguration = {
         ERC20ETH: Address.from('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
         ERC20GAS: Address.from('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
       },
-    }
+    },
+    {
+      enable: false
+    }    
   ),
   initialize,
 }

@@ -124,7 +124,7 @@ const initialize = async (universe: Universe) => {
   ]
   const rETHToETHRate = reth.from('1.06887')
   const ETHToRETHRate = universe.nativeToken.one.div(
-    rETHToETHRate.convertTo(universe.nativeToken)
+    rETHToETHRate.into(universe.nativeToken)
   )
   const rethRouter = {
     reth,
@@ -134,7 +134,7 @@ const initialize = async (universe: Universe) => {
     async optimiseToREth(qtyETH: TokenQuantity) {
       return {
         portions: mockPortions,
-        amountOut: qtyETH.mul(ETHToRETHRate).convertTo(reth),
+        amountOut: qtyETH.mul(ETHToRETHRate).into(reth),
         contractCall: new ContractCall(
           Buffer.alloc(0),
           rethRouterAddress,
@@ -146,7 +146,7 @@ const initialize = async (universe: Universe) => {
     async optimiseFromREth(qtyRETH: TokenQuantity) {
       return {
         portions: mockPortions,
-        amountOut: qtyRETH.mul(rETHToETHRate).convertTo(universe.nativeToken),
+        amountOut: qtyRETH.mul(rETHToETHRate).into(universe.nativeToken),
         contractCall: new ContractCall(
           Buffer.alloc(0),
           rethRouterAddress,
@@ -173,29 +173,29 @@ const initialize = async (universe: Universe) => {
   universe.defineMintable(
     new MintStETH(universe, stETH, {
       async quoteMint(qtyEth) {
-        return qtyEth.convertTo(stETH)
+        return qtyEth.into(stETH)
       },
     }),
     new BurnStETH(universe, stETH, {
       async quoteBurn(qtyStETH) {
-        return qtyStETH.convertTo(universe.nativeToken)
+        return qtyStETH.into(universe.nativeToken)
       },
     })
   )
 
   // Test env exchange rate is harded to:
   const stEthPrWStEth = stETH.from('1.1189437171')
-  const wstEthPrStEth = stETH.one.div(stEthPrWStEth).convertTo(wstETH)
+  const wstEthPrStEth = stETH.one.div(stEthPrWStEth).into(wstETH)
 
   universe.defineMintable(
     new MintWStETH(universe, stETH, wstETH, {
       async quoteMint(qtyStEth) {
-        return qtyStEth.convertTo(wstETH).mul(wstEthPrStEth)
+        return qtyStEth.into(wstETH).mul(wstEthPrStEth)
       },
     }),
     new BurnWStETH(universe, stETH, wstETH, {
       async quoteBurn(qtyWstEth) {
-        return qtyWstEth.convertTo(stETH).mul(stEthPrWStEth)
+        return qtyWstEth.into(stETH).mul(stEthPrWStEth)
       },
     })
   )
@@ -237,7 +237,6 @@ const ethereumConfig: ChainConfiguration = {
       balancer: Address.from('0xBA12222222228d8Ba445958a75a0704d566BF2C8'),
 
       // Curve does it's own thing..
-      curve: false,
       commonTokens: {
         USDC: Address.from('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'),
         USDT: Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7'),
@@ -248,6 +247,9 @@ const ethereumConfig: ChainConfiguration = {
         ERC20ETH: Address.from('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
         ERC20GAS: Address.from('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
       },
+    },
+    {
+      enable: false,
     }
   ),
   initialize,

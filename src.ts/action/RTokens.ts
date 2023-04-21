@@ -25,7 +25,7 @@ export class MintRTokenAction extends Action {
   async exchange(input: TokenQuantity[], balances: TokenAmounts) {
     const outputs = await this.quote(input)
     const inputsConsumed = this.basket.unitBasket.map((qty) =>
-      outputs[0].convertTo(qty.token).mul(qty)
+      outputs[0].into(qty.token).mul(qty)
     )
     balances.exchange(inputsConsumed, outputs)
   }
@@ -93,7 +93,7 @@ export class BurnRTokenAction extends Action {
   async quote([quantity]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
     const quantityPrToken = this.basketHandler.unitBasket
-    return quantityPrToken.map((qty) => quantity.convertTo(qty.token).mul(qty))
+    return quantityPrToken.map((qty) => quantity.into(qty.token).mul(qty))
   }
 
   constructor(

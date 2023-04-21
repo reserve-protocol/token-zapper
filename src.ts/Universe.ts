@@ -102,7 +102,7 @@ export class Universe {
       for (const oracle of this.oracles) {
         const price = await oracle.fairTokenPrice(this.currentBlock, qty.token)
         if (price != null) {
-          const out = price.convertTo(qty.token).mul(qty).convertTo(this.usd)
+          const out = price.into(qty.token).mul(qty).into(this.usd)
           return out
         }
       }
@@ -151,7 +151,6 @@ export class Universe {
   }
 
   public addAction(action: Action, actionAddress?: Address) {
-    
     if (actionAddress != null) {
       this.actions.get(actionAddress).push(action)
     }
@@ -250,7 +249,7 @@ async function loadERC20FromChain(
       to: address.address,
       data: id('symbol()').slice(0, 10),
     }),
-    erc20.decimals(),
+    erc20.decimals().catch(() => 0),
   ])
 
   if (symbol.length === 66) {

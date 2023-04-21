@@ -25,9 +25,11 @@ export class StaticConfig {
       readonly rtokens: Readonly<RTokens>
       readonly aavev2: Address | null
       readonly aavev3: Address | null
-      readonly curve: boolean
       readonly balancer: Address | null
       readonly commonTokens: Readonly<CommonTokens>
+    },
+    readonly curveConfig: {
+      enable: boolean,
     }
   ) {}
 }

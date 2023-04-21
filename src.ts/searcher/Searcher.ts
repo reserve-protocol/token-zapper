@@ -149,23 +149,19 @@ export class Searcher {
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r))
       : precursorTokenBasket
-          .map((p) => p.convertTo(inputQuantity.token))
+          .map((p) => p.into(inputQuantity.token))
           .reduce((l, r) => l.add(r))
 
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
           input: inputQuantity.mul(
-            precursorTokensPrices[i]
-              .div(quoteSum)
-              .convertTo(inputQuantity.token)
+            precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
           ),
           output: token,
         }))
       : precursorTokenBasket.map((qty) => ({
           output: qty.token,
-          input: inputQuantity.mul(
-            qty.convertTo(inputQuantity.token).div(quoteSum)
-          ),
+          input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
         }))
 
     const inputQuantityToTokenSet: SwapPath[] = []
@@ -369,9 +365,7 @@ export class Searcher {
           'No wrapped native token. (Like WETH) has been defined. Cannot execute search'
         )
       }
-      inputTokenQuantity = userInput.convertTo(
-        this.universe.commonTokens.ERC20GAS
-      )
+      inputTokenQuantity = userInput.into(this.universe.commonTokens.ERC20GAS)
     }
     const rTokenActions = this.universe.wrappedTokens.get(rToken)
     if (rTokenActions == null) {
@@ -452,14 +446,15 @@ export class Searcher {
     input: TokenQuantity,
     output: Token,
     destination: Address,
-    slippage: number
+    slippage: number = 0.0,
+    maxHops: number = 2
   ): Promise<SwapPath[]> {
     const bfsResult = bfs(
       this.universe,
       this.universe.graph,
       input.token,
       output,
-      2
+      maxHops
     )
     const swapPlans = bfsResult.steps
       .map((i) => i.convertToSingularPaths())
@@ -486,11 +481,12 @@ export class Searcher {
     input: TokenQuantity,
     output: Token,
     destination: Address,
-    slippage: number = 0.0
+    slippage: number = 0.0,
+    maxHops: number = 2
   ): Promise<SwapPath[]> {
     const quotes = (
       await Promise.all([
-        this.internalQuoter(input, output, destination, slippage).then(
+        this.internalQuoter(input, output, destination, slippage, maxHops).then(
           (results) => results.filter((result) => result.inputs.length === 1)
         ),
         this.externalQuoters(input, output, destination, slippage),

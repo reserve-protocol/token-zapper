@@ -45,7 +45,7 @@ export class MintSATokensAction extends Action {
     await this.universe.refresh(this.address)
     return [
       this.saToken.fromBigInt(
-        rayDiv(amountsIn.convertTo(this.saToken).amount, this.rate.value)
+        rayDiv(amountsIn.into(this.saToken).amount, this.rate.value)
       ),
     ]
   }
@@ -98,7 +98,7 @@ export class BurnSATokensAction extends Action {
     return [
       this.saToken
         .fromBigInt(rayMul(amountsIn.amount, this.rate.value))
-        .convertTo(this.underlying),
+        .into(this.underlying),
     ]
   }
 

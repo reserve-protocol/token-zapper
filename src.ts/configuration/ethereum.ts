@@ -207,7 +207,7 @@ const initialize = async (universe: Universe) => {
   await defineRToken(
     universe,
     universe.rTokens.ETHPlus!,
-    Address.from('0xDC690b50824D24F3421a27F4FA8EfCbCF1cAf986')
+    Address.from('0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8')
   )
 }
 

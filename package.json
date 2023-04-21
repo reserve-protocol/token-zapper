@@ -122,7 +122,7 @@
   "dependencies": {
     "@curvefi/api": "^2.31.0",
     "@nomiclabs/hardhat-ethers": "^2.2.2",
-    "@uniswap/permit2-sdk": "^1.2.1",
+    "@uniswap/permit2-sdk": "github:uniswap/permit2-sdk",
     "ethers": "^5.7.2"
   }
 }

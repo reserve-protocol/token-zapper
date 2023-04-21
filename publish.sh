@@ -21,11 +21,11 @@ git checkout -b $release_branch
 
 # Run build and test
 npm run build
+git add -A
 npm run test
 
 # Commit changes
-git add package.json
-git commit -m "Release v$new_version"
+git commit -m "Release v$new_version binaries"
 
 # Create tag
 git tag -a "v$new_version" -m "$tag_message"

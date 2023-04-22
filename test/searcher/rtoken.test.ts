@@ -45,12 +45,12 @@ describe('searcher/rtokenzaps', () => {
 
     const result = await searcher.findSingleInputToRTokenZap(
       universe.nativeToken.fromDecimal('1.0'),
-      universe.rTokens.ETHPlus!,
+      universe.rTokens['ETH+']!,
       Address.ZERO
     )
     expect(
       result.swaps.outputs
-        .find((i) => i.token === universe.rTokens.ETHPlus!)
+        .find((i) => i.token === universe.rTokens['ETH+']!)
         ?.formatWithSymbol()
     ).toBe('1.0 ETH+')
   })

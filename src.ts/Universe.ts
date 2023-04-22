@@ -10,12 +10,14 @@ import { type ChainConfiguration } from './configuration/ChainConfiguration'
 import { CommonTokens, RTokens } from './configuration'
 
 import { DefaultMap } from './base/DefaultMap'
-import { ERC20__factory } from './contracts'
+import { ERC20__factory, IMain__factory } from './contracts'
 import { type Oracle } from './oracles/Oracle'
 import { type DexAggregator } from './aggregators/DexAggregator'
 import { parseHexStringIntoBuffer } from './base'
 import { Refreshable } from './entities/Refreshable'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
+import { TokenBasket } from './entities/TokenBasket'
+import { MintRTokenAction, BurnRTokenAction } from './action'
 
 export class Universe {
   public chainId = 0
@@ -51,7 +53,7 @@ export class Universe {
     [P in keyof RTokens]: Token | null
   } = {
     eUSD: null,
-    ETHPlus: null,
+    'ETH+': null,
   }
   public readonly commonTokens: {
     [P in keyof CommonTokens]: Token | null
@@ -236,6 +238,30 @@ But can set up your own config with 'createWithConfig'`)
       },
     } as ApprovalsStore)
     return universe
+  }
+
+  async defineRToken(mainAddress: Address) {
+    const mainInst = IMain__factory.connect(mainAddress.address, this.provider)
+    const [rTokenAddr, basketHandlerAddress] = await Promise.all([
+      mainInst.rToken(),
+      mainInst.basketHandler(),
+    ])
+    const token = await this.getToken(Address.from(rTokenAddr))
+    const basketHandler = new TokenBasket(
+      this,
+      Address.from(basketHandlerAddress),
+      token
+    )
+    this.rTokens[token.symbol as keyof RTokens] = token
+    await basketHandler.update()
+    this.createRefreshableEntitity(basketHandler.address, () =>
+      basketHandler.update()
+    )
+
+    this.defineMintable(
+      new MintRTokenAction(this, basketHandler),
+      new BurnRTokenAction(this, basketHandler)
+    )
   }
 }
 

@@ -10,7 +10,7 @@ export interface CommonTokens {
 
 export interface RTokens {
   eUSD: Address | null
-  ETHPlus: Address | null
+  "ETH+": Address | null
 }
 export class StaticConfig {
   constructor(
@@ -22,7 +22,7 @@ export class StaticConfig {
     readonly addresses: {
       readonly executorAddress: Address
       readonly zapperAddress: Address
-      readonly rtokens: Readonly<RTokens>
+      readonly rTokenDeployments: Readonly<RTokens>
       readonly aavev2: Address | null
       readonly aavev3: Address | null
       readonly balancer: Address | null

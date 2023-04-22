@@ -6,6 +6,7 @@ export * as isAtokenSol from "./ISAtoken.sol";
 export * as iZapperSol from "./IZapper.sol";
 export { IBasketHandler__factory } from "./IBasketHandler__factory";
 export { IChainLinkFeedRegistry__factory } from "./IChainLinkFeedRegistry__factory";
+export { IMain__factory } from "./IMain__factory";
 export { IPermit2__factory } from "./IPermit2__factory";
 export { IRETHRouter__factory } from "./IRETHRouter__factory";
 export { IRToken__factory } from "./IRToken__factory";

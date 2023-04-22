@@ -1,6 +1,6 @@
 import { Address } from '../base/Address';
 import { Universe } from '../Universe';
-import { CommonTokens, RTokens } from './StaticConfig';
+import { CommonTokens } from './StaticConfig';
 
 export interface JsonTokenEntry {
   address: string;
@@ -29,16 +29,6 @@ export const loadTokens = async (
       token.decimals
     );
   }
-  const rTokenSymbols = Object.keys(universe.rTokens) as (keyof RTokens)[];
-  await Promise.all(
-    rTokenSymbols.map(async (key) => {
-      const addr = universe.chainConfig.config.addresses.rtokens[key];
-      if (addr == null) {
-        return;
-      }
-      universe.rTokens[key] = await universe.getToken(addr);
-    })
-  );
 
   const commonTokenSymbols = Object.keys(
     universe.commonTokens

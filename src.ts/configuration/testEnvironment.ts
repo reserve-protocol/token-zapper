@@ -52,8 +52,22 @@ const initialize = async (universe: Universe) => {
     Address.from('0x39aa39c021dfbae8fac545936693ac917d5e7563')
   )
 
-  const ETHPlus = universe.rTokens.ETHPlus!
-  const eUSD = universe.rTokens.eUSD!
+  const eUSD = universe.createToken(
+    Address.from('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F'),
+    'eUSD',
+    'Electric Dollar',
+    18
+  )
+  const ETHPlus = universe.createToken(
+    Address.from('0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8'),
+    'ETH+',
+    'ETH Plus',
+    18
+  )
+
+  universe.rTokens.eUSD = eUSD
+  universe.rTokens["ETH+"] = ETHPlus
+
   const USDT = universe.commonTokens.USDT!
   const USDC = universe.commonTokens.USDC!
   const WETH = universe.commonTokens.ERC20ETH!
@@ -225,9 +239,9 @@ const ethereumConfig: ChainConfiguration = {
       executorAddress: Address.from(
         '0x0000000000000000000000000000000000000043'
       ),
-      rtokens: {
-        eUSD: Address.from('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F'),
-        ETHPlus: Address.from('0x2ADb7A8216fB13cDb7a60cBed2322a68b59f4F05'),
+      rTokenDeployments: {
+        eUSD: null,
+        "ETH+": null,
       },
       // Points to aave address providers
       aavev2: Address.from('0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'),

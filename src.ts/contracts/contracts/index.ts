@@ -9,6 +9,7 @@ import type * as iZapperSol from "./IZapper.sol";
 export type { iZapperSol };
 export type { IBasketHandler } from "./IBasketHandler";
 export type { IChainLinkFeedRegistry } from "./IChainLinkFeedRegistry";
+export type { IMain } from "./IMain";
 export type { IPermit2 } from "./IPermit2";
 export type { IRETHRouter } from "./IRETHRouter";
 export type { IRToken } from "./IRToken";

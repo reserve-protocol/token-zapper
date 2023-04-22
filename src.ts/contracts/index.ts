@@ -36,6 +36,8 @@ export type { IComptroller } from "./contracts/ICToken.sol/IComptroller";
 export { IComptroller__factory } from "./factories/contracts/ICToken.sol/IComptroller__factory";
 export type { ICToken } from "./contracts/ICToken.sol/ICToken";
 export { ICToken__factory } from "./factories/contracts/ICToken.sol/ICToken__factory";
+export type { IMain } from "./contracts/IMain";
+export { IMain__factory } from "./factories/contracts/IMain__factory";
 export type { IPermit2 } from "./contracts/IPermit2";
 export { IPermit2__factory } from "./factories/contracts/IPermit2__factory";
 export type { IRETHRouter } from "./contracts/IRETHRouter";

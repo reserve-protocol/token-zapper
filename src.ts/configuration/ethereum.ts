@@ -6,11 +6,12 @@ import {
   IComptroller__factory,
   ICToken__factory,
   IStaticATokenLM__factory,
+  IMain__factory,
 } from '../contracts'
 import { ChainLinkOracle } from '../oracles/ChainLinkOracle'
 import { Universe } from '../Universe'
 import { type ChainConfiguration } from './ChainConfiguration'
-import { StaticConfig } from './StaticConfig'
+import { RTokens, StaticConfig } from './StaticConfig'
 import { DepositAction, WithdrawAction } from '../action/WrappedNative'
 import { TokenBasket } from '../entities/TokenBasket'
 import { loadTokens, JsonTokenEntry } from './loadTokens'
@@ -47,23 +48,6 @@ const loadCompoundTokens = async (
         ])
         return { underlying, cToken }
       })
-  )
-}
-
-const defineRToken = async (
-  universe: Universe,
-  rToken: Token,
-  basketHandlerAddress: Address
-) => {
-  const basketHandler = new TokenBasket(universe, basketHandlerAddress, rToken)
-  await basketHandler.update()
-  universe.createRefreshableEntitity(basketHandler.address, () =>
-    basketHandler.update()
-  )
-
-  universe.defineMintable(
-    new MintRTokenAction(universe, basketHandler),
-    new BurnRTokenAction(universe, basketHandler)
   )
 }
 
@@ -198,16 +182,9 @@ const initialize = async (universe: Universe) => {
     new BurnWStETH(universe, stETH, wstETH, wstethRates)
   )
 
-  await defineRToken(
-    universe,
-    universe.rTokens.eUSD!,
-    Address.from('0x6d309297ddDFeA104A6E89a132e2f05ce3828e07')
-  )
-
-  await defineRToken(
-    universe,
-    universe.rTokens.ETHPlus!,
-    Address.from('0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8')
+  await universe.defineRToken(universe.config.addresses.rTokenDeployments.eUSD!)
+  await universe.defineRToken(
+    universe.config.addresses.rTokenDeployments['ETH+']!
   )
 }
 
@@ -223,9 +200,10 @@ const ethereumConfig: ChainConfiguration = {
       executorAddress: Address.from(
         '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11'
       ),
-      rtokens: {
-        eUSD: Address.from('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F'),
-        ETHPlus: Address.from('0x2ADb7A8216fB13cDb7a60cBed2322a68b59f4F05'),
+      // Must be pointing at the 'main' contracts
+      rTokenDeployments: {
+        eUSD: Address.from('0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a'),
+        'ETH+': Address.from('0xb6A7d481719E97e142114e905E86a39a2Fa0dfD2'),
       },
       // Points to aave address providers
       aavev2: Address.from('0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'),

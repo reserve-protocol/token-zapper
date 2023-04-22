@@ -6,6 +6,7 @@ git diff-index --quiet HEAD -- || { echo "Uncommitted changes detected. Aborting
 # Read current version
 current_version=$(awk -F \" '/"version": ".+"/ { print $4; exit; }' package.json)
 
+
 # Ask user for new version and message
 read -p "New version (current: $current_version): " new_version
 read -p "Tag message: " tag_message
@@ -20,22 +21,35 @@ release_branch="release/v$new_version"
 git checkout -b $release_branch
 
 # Run build and test
-npm run build
-git add -A
-npm run test
+if npm run build && npm run test; then
+  git add -A
+  # Commit changes
+  git commit -m "Release v$new_version binaries"
 
-# Commit changes
-git commit -m "Release v$new_version binaries"
+  # Create tag
+  git tag -a "v$new_version" -m "$tag_message"
 
-# Create tag
-git tag -a "v$new_version" -m "$tag_message"
+  # Push branch and tag
+  git push origin $release_branch
+  git push origin "v$new_version"
 
-# Push branch and tag
-git push origin $release_branch
-git push origin "v$new_version"
-
-# Publish to npm
-npm publish
+  # Publish to npm
+  npm publish
+else
+  echo "Error: Build or test failed. Aborting."
+  
+  # Go back to previous branch and delete the release branch
+  git checkout -
+  git branch -D $release_branch
+  
+  # Delete the tag
+  git tag -d "v$new_version"
+  
+  # Revert the package.json version bump
+  git reset HEAD^
+  git checkout package.json
+  exit 1
+fi
 
 # Go back to previous branch
 git checkout -

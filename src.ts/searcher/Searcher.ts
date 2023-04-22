@@ -197,11 +197,10 @@ export class Searcher {
     /**
      * PHASE 3: Mint basket token set from precursor set
      */
+    const mintsToSubtract: SwapPath[] = []
     const mints: SwapPath[] = []
     const recourseOn = async (mint: PostTradeMint) => {
-      const children = await Promise.all(
-        (mint.mints ?? []).map((mint) => recourseOn(mint))
-      )
+      await Promise.all((mint.mints ?? []).map((mint) => recourseOn(mint)))
 
       const mintInput = mint.basketTokenQuantity
         .toTokenQuantities()
@@ -210,21 +209,18 @@ export class Searcher {
         mintInput,
         this.universe.config.addresses.executorAddress
       )
-      children.forEach((c) =>
-        c.inputs.forEach((qty) => tradingBalances.sub(qty))
-      )
+      mintsToSubtract.push(mintOutput)
       mintOutput.outputs.forEach((qty) => tradingBalances.add(qty))
       inputQuantityToTokenSet.push(mintOutput)
       mints.push(mintOutput)
-      return mintOutput
     }
-    const mintsToSubtract: SwapPath[] = []
     for (const mint of precursorTokens.postTradeTokenSplits) {
-      mintsToSubtract.push(await recourseOn(mint))
+      await recourseOn(mint)
     }
-    mintsToSubtract.forEach((c) =>
-      c.inputs.forEach((qty) => tradingBalances.sub(qty))
-    )
+
+    for (const action of mintsToSubtract) {
+      action.exchange(tradingBalances)
+    }
 
     return new SwapPaths(
       this.universe,

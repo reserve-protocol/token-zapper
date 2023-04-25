@@ -1,11 +1,6 @@
-import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens'
 import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens'
 import { Address } from '../base/Address'
-import {
-  IComptroller__factory,
-  ICToken__factory,
-  IStaticATokenLM__factory,
-} from '../contracts'
+import { IStaticATokenLM__factory } from '../contracts'
 import { ChainLinkOracle } from '../oracles/ChainLinkOracle'
 import { Universe } from '../Universe'
 import { type ChainConfiguration } from './ChainConfiguration'
@@ -13,41 +8,14 @@ import { StaticConfig } from './StaticConfig'
 import { DepositAction, WithdrawAction } from '../action/WrappedNative'
 import { loadTokens, JsonTokenEntry } from './loadTokens'
 import { setupMintableWithRate } from './setupMintableWithRate'
-import { Token } from '../entities'
 import { ETHToRETH, RETHToETH, REthRouter } from '../action/REth'
 import { BurnWStETH, WStETHRateProvider, MintWStETH } from '../action/WStEth'
 import { BurnStETH, MintStETH, StETHRateProvider } from '../action/StEth'
+import { setupCompoundLike } from './loadCompound'
 // import { addCurvePoolEdges, loadCurvePools } from '../action/Curve'
 
 const chainLinkETH = Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 const chainLinkBTC = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
-const underlyingTokens = require('./data/ethereum/underlying.json') as Record<
-  string,
-  string
->
-const loadCompoundTokens = async (
-  cEther: Token,
-  comptrollerAddress: string,
-  universe: Universe
-) => {
-  const allCTokens = await IComptroller__factory.connect(
-    comptrollerAddress,
-    universe.provider
-  ).getAllMarkets()
-  return await Promise.all(
-    allCTokens
-      .map(Address.from)
-      .filter((address) => address !== cEther.address)
-      .map(async (address) => {
-        const [cToken, underlying] = await Promise.all([
-          universe.getToken(address),
-          universe.getToken(Address.from(underlyingTokens[address.address])),
-        ])
-        return { underlying, cToken }
-      })
-  )
-}
-
 const initialize = async (universe: Universe) => {
   await loadTokens(
     universe,
@@ -71,7 +39,6 @@ const initialize = async (universe: Universe) => {
   chainLinkOracle.mapTokenTo(universe.commonTokens.WBTC!, chainLinkBTC)
   chainLinkOracle.mapTokenTo(universe.nativeToken, chainLinkETH)
 
-  const ETH = universe.nativeToken
   const USDT = universe.commonTokens.USDT!
   const USDC = universe.commonTokens.USDC!
   const WETH = universe.commonTokens.ERC20GAS!
@@ -80,6 +47,18 @@ const initialize = async (universe: Universe) => {
     new DepositAction(universe, WETH),
     new WithdrawAction(universe, WETH)
   )
+  const wrappedToUnderlyingMapping =
+    require('./data/ethereum/underlying.json') as Record<string, string>
+  // Compound
+  await setupCompoundLike(universe, wrappedToUnderlyingMapping, {
+    cEth: Address.from('0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5'),
+    comptroller: Address.from('0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B'),
+  })
+
+  // // Flux finance
+  await setupCompoundLike(universe, wrappedToUnderlyingMapping, {
+    comptroller: Address.from('0x95Af143a021DF745bc78e845b54591C53a8B3A51'),
+  })
 
   const saUSDT = await universe.getToken(
     Address.from('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9')
@@ -88,34 +67,10 @@ const initialize = async (universe: Universe) => {
     Address.from('0x60C384e226b120d93f3e0F4C502957b2B9C32B15')
   )
 
-  // Set up cETH independently
-  const cEther = await universe.getToken(
-    Address.from('0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5')
-  )
-
-  await setupMintableWithRate(
-    universe,
-    ICToken__factory,
-    cEther,
-    async (cEthRate, cInst) => {
-      return {
-        fetchRate: async () => (await cInst.exchangeRateStored()).toBigInt(),
-        mint: new MintCTokenAction(universe, ETH, cEther, cEthRate),
-        burn: new MintCTokenAction(universe, cEther, ETH, cEthRate),
-      }
-    }
-  )
-
   const saTokens = [
     { underlying: USDT, wrapped: saUSDT },
     { underlying: USDC, wrapped: saUSDC },
   ]
-
-  const cTokens = await loadCompoundTokens(
-    cEther,
-    '0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B',
-    universe
-  )
 
   for (const { wrapped, underlying } of saTokens) {
     await setupMintableWithRate(
@@ -131,21 +86,6 @@ const initialize = async (universe: Universe) => {
       }
     )
   }
-  for (const { cToken, underlying } of cTokens) {
-    await setupMintableWithRate(
-      universe,
-      ICToken__factory,
-      cToken,
-      async (rate, inst) => {
-        return {
-          fetchRate: async () => (await inst.exchangeRateStored()).toBigInt(),
-          mint: new MintCTokenAction(universe, underlying, cToken, rate),
-          burn: new BurnCTokenAction(universe, underlying, cToken, rate),
-        }
-      }
-    )
-  }
-
   universe.oracles.push(chainLinkOracle)
 
   const reth = await universe.getToken(

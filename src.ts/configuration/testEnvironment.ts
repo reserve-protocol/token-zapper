@@ -39,6 +39,13 @@ const initialize = async (universe: Universe) => {
     require('./data/ethereum/tokens.json') as JsonTokenEntry[]
   )
 
+  const fUSDC = await universe.getToken(
+    Address.from('0x465a5a630482f3abD6d3b84B39B29b07214d19e5')
+  )
+  const fDAI = await universe.getToken(
+    Address.from('0xe2bA8693cE7474900A045757fe0efCa900F6530b')
+  )
+
   const saUSDT = await universe.getToken(
     Address.from('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9')
   )
@@ -70,6 +77,7 @@ const initialize = async (universe: Universe) => {
 
   const USDT = universe.commonTokens.USDT!
   const USDC = universe.commonTokens.USDC!
+  const DAI = universe.commonTokens.DAI!
   const WETH = universe.commonTokens.ERC20ETH!
   const prices = new Map<Token, TokenQuantity>([
     [USDT, universe.usd.one],
@@ -93,6 +101,9 @@ const initialize = async (universe: Universe) => {
   const cTokens = [
     { underlying: USDT, cToken: cUSDT, rate: 222352483123917n },
     { underlying: USDC, cToken: cUSDC, rate: 227824756984310n },
+
+    { underlying: USDC, cToken: fUSDC, rate: 20173073936250n },
+    { underlying: DAI, cToken: fDAI, rate: 201658648975913110959308192n },
   ]
 
   for (const saToken of saTokens) {

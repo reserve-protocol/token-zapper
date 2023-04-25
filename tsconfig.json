@@ -5,12 +5,13 @@
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
     "lib": ["es2021", "DOM", "ES2021.Weakref"],
-    "moduleResolution": "node16",
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
+    "module": "node16",
     "noImplicitThis": true,
+    "moduleResolution": "node16",
     "noUnusedLocals": true,
     "preserveSymlinks": true,
     "preserveWatchOutput": true,
@@ -21,8 +22,13 @@
     "sourceMap": true,
     "target": "es2022"
   },
-  "include": ["./src.ts/**/*.ts", "./src.ts/**/*.json"],
-  "exclude": ["./node_modules", "./build", "./contracts", "./src.ts/testRun.ts"],
+  "include": ["./src.ts/**/*.ts", "./src.ts/**/*.mts", "./src.ts/**/*.json"],
+  "exclude": [
+    "./node_modules",
+    "./build",
+    "./contracts",
+    "./src.ts/testRun.ts"
+  ],
   "ts-node": {
     "files": true,
     "require": ["tsconfig-paths/register"]

@@ -12,7 +12,7 @@ import { ETHToRETH, RETHToETH, REthRouter } from '../action/REth'
 import { BurnWStETH, WStETHRateProvider, MintWStETH } from '../action/WStEth'
 import { BurnStETH, MintStETH, StETHRateProvider } from '../action/StEth'
 import { setupCompoundLike } from './loadCompound'
-// import { addCurvePoolEdges, loadCurvePools } from '../action/Curve'
+import { loadCurve } from '../action/Curve'
 
 const chainLinkETH = Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 const chainLinkBTC = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
@@ -22,13 +22,9 @@ const initialize = async (universe: Universe) => {
     require('./data/ethereum/tokens.json') as JsonTokenEntry[]
   )
 
-  // if (universe.chainConfig.config.curveConfig.enable) {
-  //   const curvePools = await loadCurvePools(universe)
-  //   await addCurvePoolEdges(
-  //     universe,
-  //     curvePools,
-  //   )
-  // }
+  if (universe.chainConfig.config.curveConfig.enable) {
+    await loadCurve(universe)
+  }
 
   const chainLinkOracle = new ChainLinkOracle(
     universe,

@@ -20,6 +20,7 @@ export class StaticConfig {
       decimals: 18
     },
     readonly addresses: {
+      readonly convex: Address,
       readonly executorAddress: Address
       readonly zapperAddress: Address
       readonly rTokenDeployments: Readonly<RTokens>

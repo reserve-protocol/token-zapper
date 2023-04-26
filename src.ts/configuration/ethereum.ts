@@ -13,6 +13,7 @@ import { BurnWStETH, WStETHRateProvider, MintWStETH } from '../action/WStEth'
 import { BurnStETH, MintStETH, StETHRateProvider } from '../action/StEth'
 import { setupCompoundLike } from './loadCompound'
 import { loadCurve } from '../action/Curve'
+import { setupConvexEdges as setupConvexEdge } from '../action/Convex'
 
 const chainLinkETH = Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 const chainLinkBTC = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
@@ -41,19 +42,19 @@ const initialize = async (universe: Universe) => {
   const DAI = universe.commonTokens.DAI!
   const USDC = universe.commonTokens.USDC!
   const WETH = universe.commonTokens.ERC20GAS!
+  const eUSD__FRAX_USDC = await universe.getToken(
+    Address.from('0xAEda92e6A3B1028edc139A4ae56Ec881f3064D4F')
+  )
+  const mim_3CRV = await universe.getToken(
+    Address.from('0x5a6A4D54456819380173272A5E8E9B9904BdF41B')
+  )
 
   if (universe.chainConfig.config.curveConfig.enable) {
     const curveApi = await loadCurve(universe)
 
-    const eUSD__FRAX_USDC = await universe.getToken(
-      Address.from('0xAEda92e6A3B1028edc139A4ae56Ec881f3064D4F')
-    )
-    const mim_3CRV = await universe.getToken(
-      Address.from('0x5a6A4D54456819380173272A5E8E9B9904BdF41B')
-    )
-    
-
-    // All curve swaps are going via router
+    // We will not implement the full curve router,
+    // But rather some predefined paths that are likely to be used
+    // by users
     curveApi.createRouterEdge(FRAX, eUSD__FRAX_USDC)
     curveApi.createRouterEdge(MIM, eUSD__FRAX_USDC)
     curveApi.createRouterEdge(USDC, eUSD__FRAX_USDC)
@@ -66,6 +67,17 @@ const initialize = async (universe: Universe) => {
     curveApi.createRouterEdge(USDT, mim_3CRV)
     curveApi.createRouterEdge(DAI, mim_3CRV)
   }
+
+  // Add convex edges
+  const stkcvxeUSD3CRV = await universe.getToken(
+    Address.from('0xBF2FBeECc974a171e319b6f92D8f1d042C6F1AC3')
+  )
+  await setupConvexEdge(universe, stkcvxeUSD3CRV)
+
+  const stkcvxMIM3LP3CRV = await universe.getToken(
+    Address.from('0x8443364625e09a33d793acd03aCC1F3b5DbFA6F6')
+  )
+  await setupConvexEdge(universe, stkcvxMIM3LP3CRV)
 
   universe.defineMintable(
     new DepositAction(universe, WETH),
@@ -157,6 +169,7 @@ const ethereumConfig: ChainConfiguration = {
       name: 'Ether',
     },
     {
+      convex: Address.from('0xF403C135812408BFbE8713b5A23a04b3D48AAE31'),
       zapperAddress: Address.from('0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b'),
       executorAddress: Address.from(
         '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11'

@@ -183,9 +183,6 @@ export const loadCurve = async (universe: Universe) => {
 
   const addCurvePoolEdges = async (universe: Universe, pools: CurvePool[]) => {
     for (const pool of pools) {
-      if (pool.templateName.startsWith('factory-')) {
-        continue
-      }
 
       let missingTok = false
       for (const token of pool.tokens) {
@@ -206,6 +203,9 @@ export const loadCurve = async (universe: Universe) => {
 
       await addLpToken(universe, pool)
 
+      if (pool.templateName.startsWith('factory-')) {
+        continue
+      }
       for (let aTokenIdx = 0; aTokenIdx < pool.tokens.length; aTokenIdx++) {
         for (
           let bTokenIdx = aTokenIdx + 1;
@@ -269,7 +269,11 @@ export const loadCurve = async (universe: Universe) => {
   )
 
   return {
-    createLpToken: async (pool: CurvePool) => {
+    createLpToken: async (token: Token) => {
+      const pool = pools.find((pool) => pool.address === token.address)
+      if (!pool) {
+        throw new Error('No curve pool found for token ' + token)
+      }
       await addLpToken(universe, pool)
     },
     createRouterEdge: (tokenA: Token, tokenB: Token) => {

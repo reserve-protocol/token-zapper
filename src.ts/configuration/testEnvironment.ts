@@ -246,6 +246,7 @@ const ethereumConfig: ChainConfiguration = {
       name: 'Ether',
     },
     {
+      convex: Address.from('0xF403C135812408BFbE8713b5A23a04b3D48AAE31'),
       zapperAddress: Address.from('0x0000000000000000000000000000000000000042'),
       executorAddress: Address.from(
         '0x0000000000000000000000000000000000000043'

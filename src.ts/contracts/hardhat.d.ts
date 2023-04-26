@@ -57,9 +57,25 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IBasketHandler__factory>;
     getContractFactory(
+      name: "IBooster",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IBooster__factory>;
+    getContractFactory(
       name: "IChainLinkFeedRegistry",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IChainLinkFeedRegistry__factory>;
+    getContractFactory(
+      name: "IConvexBaseRewardsPool",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IConvexBaseRewardsPool__factory>;
+    getContractFactory(
+      name: "IBooster",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IBooster__factory>;
+    getContractFactory(
+      name: "IConvexWrapper",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IConvexWrapper__factory>;
     getContractFactory(
       name: "CEther",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -169,10 +185,30 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IBasketHandler>;
     getContractAt(
+      name: "IBooster",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IBooster>;
+    getContractAt(
       name: "IChainLinkFeedRegistry",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IChainLinkFeedRegistry>;
+    getContractAt(
+      name: "IConvexBaseRewardsPool",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IConvexBaseRewardsPool>;
+    getContractAt(
+      name: "IBooster",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IBooster>;
+    getContractAt(
+      name: "IConvexWrapper",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IConvexWrapper>;
     getContractAt(
       name: "CEther",
       address: string,

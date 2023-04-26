@@ -3,12 +3,17 @@
 /* eslint-disable */
 import type * as icTokenSol from "./ICToken.sol";
 export type { icTokenSol };
+import type * as iConvexStakedWrapperSol from "./IConvexStakedWrapper.sol";
+export type { iConvexStakedWrapperSol };
 import type * as isAtokenSol from "./ISAtoken.sol";
 export type { isAtokenSol };
 import type * as iZapperSol from "./IZapper.sol";
 export type { iZapperSol };
 export type { IBasketHandler } from "./IBasketHandler";
+export type { IBooster } from "./IBooster";
 export type { IChainLinkFeedRegistry } from "./IChainLinkFeedRegistry";
+export type { IConvexBaseRewardsPool } from "./IConvexBaseRewardsPool";
+export type { IConvexWrapper } from "./IConvexWrapper";
 export type { IMain } from "./IMain";
 export type { IPermit2 } from "./IPermit2";
 export type { IRETHRouter } from "./IRETHRouter";

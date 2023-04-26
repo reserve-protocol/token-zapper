@@ -18,6 +18,7 @@ import { Refreshable } from './entities/Refreshable'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
 import { TokenBasket } from './entities/TokenBasket'
 import { MintRTokenAction, BurnRTokenAction } from './action'
+import { LPToken } from './action/LPToken'
 
 export class Universe {
   public chainId = 0
@@ -25,6 +26,7 @@ export class Universe {
   public approvalStore: ApprovalsStore
 
   public readonly tokens = new Map<Address, Token>()
+  public readonly lpTokens = new Map<Token, LPToken>()
   public readonly actions = new DefaultMap<Address, Action[]>(() => [])
 
   // The GAS token for the EVM chain, set by the StaticConfig
@@ -161,6 +163,11 @@ export class Universe {
       this.graph.addEdge(action)
     }
     return this
+  }
+
+  defineLPToken(lpTokenInstance: LPToken) {
+    this.lpTokens.set(lpTokenInstance.token, lpTokenInstance)
+    this.defineMintable(lpTokenInstance.mintAction, lpTokenInstance.burnAction)
   }
 
   public defineMintable(mint: Action, burn: Action) {

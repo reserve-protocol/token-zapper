@@ -22,10 +22,6 @@ const initialize = async (universe: Universe) => {
     require('./data/ethereum/tokens.json') as JsonTokenEntry[]
   )
 
-  if (universe.chainConfig.config.curveConfig.enable) {
-    await loadCurve(universe)
-  }
-
   const chainLinkOracle = new ChainLinkOracle(
     universe,
     Address.from('0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf')
@@ -35,9 +31,41 @@ const initialize = async (universe: Universe) => {
   chainLinkOracle.mapTokenTo(universe.commonTokens.WBTC!, chainLinkBTC)
   chainLinkOracle.mapTokenTo(universe.nativeToken, chainLinkETH)
 
+  const MIM = await universe.getToken(
+    Address.from('0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3')
+  )!
+  const FRAX = await universe.getToken(
+    Address.from('0x853d955acef822db058eb8505911ed77f175b99e')
+  )
   const USDT = universe.commonTokens.USDT!
+  const DAI = universe.commonTokens.DAI!
   const USDC = universe.commonTokens.USDC!
   const WETH = universe.commonTokens.ERC20GAS!
+
+  if (universe.chainConfig.config.curveConfig.enable) {
+    const curveApi = await loadCurve(universe)
+
+    const eUSD__FRAX_USDC = await universe.getToken(
+      Address.from('0xAEda92e6A3B1028edc139A4ae56Ec881f3064D4F')
+    )
+    const mim_3CRV = await universe.getToken(
+      Address.from('0x5a6A4D54456819380173272A5E8E9B9904BdF41B')
+    )
+    
+
+    // All curve swaps are going via router
+    curveApi.createRouterEdge(FRAX, eUSD__FRAX_USDC)
+    curveApi.createRouterEdge(MIM, eUSD__FRAX_USDC)
+    curveApi.createRouterEdge(USDC, eUSD__FRAX_USDC)
+    curveApi.createRouterEdge(USDT, eUSD__FRAX_USDC)
+    curveApi.createRouterEdge(DAI, eUSD__FRAX_USDC)
+
+    curveApi.createRouterEdge(FRAX, mim_3CRV)
+    curveApi.createRouterEdge(MIM, mim_3CRV)
+    curveApi.createRouterEdge(USDC, mim_3CRV)
+    curveApi.createRouterEdge(USDT, mim_3CRV)
+    curveApi.createRouterEdge(DAI, mim_3CRV)
+  }
 
   universe.defineMintable(
     new DepositAction(universe, WETH),

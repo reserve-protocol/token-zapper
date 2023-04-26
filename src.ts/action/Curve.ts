@@ -6,10 +6,12 @@ import { type Universe } from '../Universe'
 import { Approval } from '../base/Approval'
 import { ethers } from 'ethers'
 import curve from '@curvefi/api'
+import { formatUnits, parseUnits } from 'ethers/lib/utils'
+import { LPToken } from './LPToken'
 type CurveType = typeof curve
 
 type PoolTemplate = InstanceType<CurveType['PoolTemplate']>
-
+const curveRouterAddress = '0xfA9a30350048B2BF66865ee20363067c66f67e58'
 class CurvePool {
   [Symbol.toStringTag] = 'CurvePool'
   constructor(
@@ -30,6 +32,7 @@ class CurvePool {
     return out + ')'
   }
 }
+
 class CurveSwap extends Action {
   gasEstimate() {
     return BigInt(250000n)
@@ -39,76 +42,29 @@ class CurveSwap extends Action {
     destination: Address
   ): Promise<ContractCall> {
     throw new Error('not implemented')
-    // if (this.exchangeUnderlying) {
-    //   curve.router.getBestRouteAndOutput
-    //   await this.pool.meta.wallet.underlyingCoinBalances()
-    //   const out = await this.pool.meta.swapExpected(
-    //     this.tokenInIdx,
-    //     this.tokenOutIdx,
-    //     amountsIn.amount.toString()
-    //   )
-    //   throw new Error('not implemented')
-    // } else {
-    //   await this.pool.meta.wallet.wrappedCoinBalances()
-    //   const out = await this.pool.meta.swapWrappedExpected(
-    //     this.tokenInIdx,
-    //     this.tokenOutIdx,
-    //     amountsIn.amount.toString()
-    //   )
-    //   throw new Error('not implemented')
-    // }
   }
 
-  /**
-   * @node V2Actions can quote in both directions!
-   * @returns
-   */
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     try {
-      if (this.exchangeUnderlying) {
-        await this.pool.meta.wallet.underlyingCoinBalances()
-        const out = await this.pool.meta.swapExpected(
-          this.tokenInIdx,
-          this.tokenOutIdx,
-          amountsIn.format()
-        )
-        return [this.output[0].from(out)]
-      } else {
-        await this.pool.meta.wallet.wrappedCoinBalances()
-        const out = await this.pool.meta.swapWrappedExpected(
-          this.tokenInIdx,
-          this.tokenOutIdx,
-          amountsIn.format()
-        )
-        return [this.output[0].from(out)]
-      }
+      const out = await curve.router.getBestRouteAndOutput(
+        amountsIn.token.address.address,
+        this.output[0].address.address,
+        parseUnits('1000.0', 6).toString()
+      )
+      return [this.output[0].from(out.output)]
     } catch (e) {
       return [this.output[0].zero]
     }
   }
 
-  constructor(
-    readonly pool: CurvePool,
-    readonly tokenInIdx: number,
-    tokenIn: Token,
-    readonly tokenOutIdx: number,
-    tokenOut: Token,
-    readonly exchangeUnderlying: boolean
-  ) {
+  constructor(readonly pool: CurvePool, tokenIn: Token, tokenOut: Token) {
     super(
       pool.address,
       [tokenIn],
       [tokenOut],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      [
-        new Approval(
-          !exchangeUnderlying
-            ? pool.tokens[tokenInIdx]
-            : pool.underlyingTokens[tokenInIdx],
-          pool.address
-        ),
-      ]
+      [new Approval(tokenIn, Address.from(curveRouterAddress))]
     )
   }
 
@@ -116,6 +72,7 @@ class CurveSwap extends Action {
     return `Crv(${this.input[0]}.${this.pool.meta.name}.${this.output[0]})`
   }
 }
+
 export const loadCurve = async (universe: Universe) => {
   const loadCurvePools = async (universe: Universe) => {
     const p = universe.provider as ethers.providers.JsonRpcProvider
@@ -131,7 +88,8 @@ export const loadCurve = async (universe: Universe) => {
       .concat(curve.cryptoFactory.getPoolList())
 
     const poolsUnfiltered = poolNames.map((name) => {
-      return { name, pool: curve.getPool(name) }
+      const pool = curve.getPool(name)
+      return { name, pool }
     })
 
     const pools = poolsUnfiltered.filter(
@@ -196,6 +154,33 @@ export const loadCurve = async (universe: Universe) => {
     return curvePools
   }
 
+  const addLpToken = async (universe: Universe, pool: CurvePool) => {
+    const tokensInPosition = pool.meta.wrappedCoinAddresses.map(
+      (a) => universe.tokens.get(Address.from(a))!
+    )
+    const lpToken = await universe.getToken(Address.from(pool.meta.lpToken))
+    if (universe.lpTokens.has(lpToken)) {
+      return
+    }
+
+    const redeem = async (qty: TokenQuantity) => {
+      const out = await pool.meta.withdrawWrappedExpected(
+        formatUnits(qty.amount, 18)
+      )
+      return out.map((amount, i) => tokensInPosition[i].from(amount))
+    }
+
+    const mint = async (poolTokens: TokenQuantity[]) => {
+      const out = await pool.meta.depositWrappedExpected(
+        poolTokens.map((q) => formatUnits(q.amount, 18))
+      )
+      return lpToken.from(out)
+    }
+
+    const lpTokenInstance = new LPToken(lpToken, tokensInPosition, redeem, mint)
+    universe.defineLPToken(lpTokenInstance)
+  }
+
   const addCurvePoolEdges = async (universe: Universe, pools: CurvePool[]) => {
     for (const pool of pools) {
       if (pool.templateName.startsWith('factory-')) {
@@ -218,6 +203,9 @@ export const loadCurve = async (universe: Universe) => {
       if (missingTok) {
         continue
       }
+
+      await addLpToken(universe, pool)
+
       for (let aTokenIdx = 0; aTokenIdx < pool.tokens.length; aTokenIdx++) {
         for (
           let bTokenIdx = aTokenIdx + 1;
@@ -232,22 +220,8 @@ export const loadCurve = async (universe: Universe) => {
           ) {
             continue
           }
-          const edgeI_J = new CurveSwap(
-            pool,
-            aTokenIdx,
-            aToken,
-            bTokenIdx,
-            bToken,
-            false
-          )
-          const edgeJ_I = new CurveSwap(
-            pool,
-            bTokenIdx,
-            bToken,
-            aTokenIdx,
-            aToken,
-            false
-          )
+          const edgeI_J = new CurveSwap(pool, aToken, bToken)
+          const edgeJ_I = new CurveSwap(pool, bToken, aToken)
           universe.addAction(edgeI_J)
           universe.addAction(edgeJ_I)
         }
@@ -270,22 +244,8 @@ export const loadCurve = async (universe: Universe) => {
           ) {
             continue
           }
-          const edgeI_J = new CurveSwap(
-            pool,
-            aTokenIdx,
-            aToken,
-            bTokenIdx,
-            bToken,
-            true
-          )
-          const edgeJ_I = new CurveSwap(
-            pool,
-            bTokenIdx,
-            bToken,
-            aTokenIdx,
-            aToken,
-            true
-          )
+          const edgeI_J = new CurveSwap(pool, aToken, bToken)
+          const edgeJ_I = new CurveSwap(pool, bToken, aToken)
           universe.addAction(edgeI_J)
           universe.addAction(edgeJ_I)
         }
@@ -295,4 +255,28 @@ export const loadCurve = async (universe: Universe) => {
 
   const pools = await loadCurvePools(universe)
   await addCurvePoolEdges(universe, pools)
+
+  const fakeRouterTemplate: PoolTemplate = {
+    address: curveRouterAddress,
+    name: 'curve-router',
+  } as any
+  const router = new CurvePool(
+    Address.from(fakeRouterTemplate.address),
+    [],
+    [],
+    fakeRouterTemplate,
+    'router'
+  )
+
+  return {
+    createLpToken: async (pool: CurvePool) => {
+      await addLpToken(universe, pool)
+    },
+    createRouterEdge: (tokenA: Token, tokenB: Token) => {
+      const edgeI_J = new CurveSwap(router, tokenA, tokenB)
+      const edgeJ_I = new CurveSwap(router, tokenB, tokenA)
+      universe.addAction(edgeI_J)
+      universe.addAction(edgeJ_I)
+    },
+  }
 }

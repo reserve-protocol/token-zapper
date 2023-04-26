@@ -12,7 +12,7 @@
     "module": "node16",
     "noImplicitThis": true,
     "moduleResolution": "node16",
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "preserveSymlinks": true,
     "preserveWatchOutput": true,
     "pretty": false,

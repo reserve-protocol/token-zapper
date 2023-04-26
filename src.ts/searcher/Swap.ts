@@ -29,7 +29,8 @@ export class SingleSwap {
 }
 
 /**
- * A SwapPath groups a set of actions together
+ * A SwapPath groups a set of SingleSwap's together. The output of one SingleSwap is the input of the next.
+ * A SwapPath may be optimized, as long as the input's and output's remain the same. 
  */
 export class SwapPath {
   constructor(

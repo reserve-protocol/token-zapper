@@ -8,6 +8,7 @@ import { ethers } from 'ethers'
 import curve from '@curvefi/api'
 import { formatUnits, parseUnits } from 'ethers/lib/utils'
 import { LPToken } from './LPToken'
+import { DefaultMap } from '../base'
 type CurveType = typeof curve
 
 type PoolTemplate = InstanceType<CurveType['PoolTemplate']>
@@ -33,7 +34,7 @@ class CurvePool {
   }
 }
 
-class CurveSwap extends Action {
+export class CurveSwap extends Action {
   gasEstimate() {
     return BigInt(250000n)
   }
@@ -49,7 +50,7 @@ class CurveSwap extends Action {
       const out = await curve.router.getBestRouteAndOutput(
         amountsIn.token.address.address,
         this.output[0].address.address,
-        parseUnits('1000.0', 6).toString()
+        amountsIn.format()
       )
       return [this.output[0].from(out.output)]
     } catch (e) {
@@ -69,11 +70,23 @@ class CurveSwap extends Action {
   }
 
   toString(): string {
-    return `Crv(${this.input[0]}.${this.pool.meta.name}.${this.output[0]})`
+    return `Curve(${this.input[0].symbol}.${this.pool.meta.name}.${this.output[0].symbol})`
   }
 }
 
 export const loadCurve = async (universe: Universe) => {
+  const fakeRouterTemplate: PoolTemplate = {
+    address: curveRouterAddress,
+    name: 'curve-router',
+  } as any
+  const router = new CurvePool(
+    Address.from(fakeRouterTemplate.address),
+    [],
+    [],
+    fakeRouterTemplate,
+    'router'
+  )
+
   const loadCurvePools = async (universe: Universe) => {
     const p = universe.provider as ethers.providers.JsonRpcProvider
     await curve.init('JsonRpc', {
@@ -154,6 +167,14 @@ export const loadCurve = async (universe: Universe) => {
     return curvePools
   }
 
+  const preferredSourcingRoutes = new DefaultMap<
+    Token,
+    Map<
+      Token,
+      (input: TokenQuantity, basketQty: TokenQuantity) => TokenQuantity
+    >
+  >(() => new Map())
+
   const addLpToken = async (universe: Universe, pool: CurvePool) => {
     const tokensInPosition = pool.meta.wrappedCoinAddresses.map(
       (a) => universe.tokens.get(Address.from(a))!
@@ -163,11 +184,16 @@ export const loadCurve = async (universe: Universe) => {
       return
     }
 
-    const redeem = async (qty: TokenQuantity) => {
-      const out = await pool.meta.withdrawWrappedExpected(
-        formatUnits(qty.amount, 18)
-      )
-      return out.map((amount, i) => tokensInPosition[i].from(amount))
+    const burn = async (qty: TokenQuantity) => {
+      try {
+        const out = await (pool.meta.isPlain
+          ? pool.meta.withdrawExpected(formatUnits(qty.amount, 18))
+          : pool.meta.withdrawWrappedExpected(formatUnits(qty.amount, 18)))
+        return out.map((amount, i) => tokensInPosition[i].from(amount))
+      } catch (e) {
+        console.log(pool.meta)
+        throw e
+      }
     }
 
     const mint = async (poolTokens: TokenQuantity[]) => {
@@ -177,13 +203,30 @@ export const loadCurve = async (universe: Universe) => {
       return lpToken.from(out)
     }
 
-    const lpTokenInstance = new LPToken(lpToken, tokensInPosition, redeem, mint)
+    const lpTokenInstance = new LPToken(
+      lpToken,
+      tokensInPosition,
+      burn,
+      mint,
+      async (input, basketQty, endToken) => {
+        const preferredPrecursorToken = preferredSourcingRoutes
+          .get(endToken)
+          .get(basketQty.token)
+        if (preferredPrecursorToken) {
+          const precursor = preferredPrecursorToken(input, basketQty)
+          return {
+            precursorQty: precursor,
+            action: new CurveSwap(router, precursor.token, basketQty.token),
+          }
+        }
+        return null
+      }
+    )
     universe.defineLPToken(lpTokenInstance)
   }
 
   const addCurvePoolEdges = async (universe: Universe, pools: CurvePool[]) => {
     for (const pool of pools) {
-
       let missingTok = false
       for (const token of pool.tokens) {
         if (!universe.tokens.has(token.address)) {
@@ -256,18 +299,6 @@ export const loadCurve = async (universe: Universe) => {
   const pools = await loadCurvePools(universe)
   await addCurvePoolEdges(universe, pools)
 
-  const fakeRouterTemplate: PoolTemplate = {
-    address: curveRouterAddress,
-    name: 'curve-router',
-  } as any
-  const router = new CurvePool(
-    Address.from(fakeRouterTemplate.address),
-    [],
-    [],
-    fakeRouterTemplate,
-    'router'
-  )
-
   return {
     createLpToken: async (token: Token) => {
       const pool = pools.find((pool) => pool.address === token.address)
@@ -281,6 +312,16 @@ export const loadCurve = async (universe: Universe) => {
       const edgeJ_I = new CurveSwap(router, tokenB, tokenA)
       universe.addAction(edgeI_J)
       universe.addAction(edgeJ_I)
+    },
+    addPreferredSourcingRoute: (
+      destToken: Token,
+      lpToken: Token,
+      bestSourceTokens: (
+        inputQty: TokenQuantity,
+        basketQty: TokenQuantity
+      ) => TokenQuantity
+    ) => {
+      preferredSourcingRoutes.get(destToken).set(lpToken, bestSourceTokens)
     },
   }
 }

@@ -114,7 +114,7 @@ export class ETHToRETH extends Action {
   }
 
   toString(): string {
-    return `RETHRouter(direction=ToETH)`
+    return `RETHRouter(direction=ToRETH)`
   }
 }
 
@@ -146,6 +146,6 @@ export class RETHToETH extends Action {
   }
 
   toString(): string {
-    return `RETHRouter(direction=FromRETH)`
+    return `RETHRouter(direction=ToETH)`
   }
 }

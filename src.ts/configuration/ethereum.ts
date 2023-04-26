@@ -14,6 +14,7 @@ import { BurnStETH, MintStETH, StETHRateProvider } from '../action/StEth'
 import { setupCompoundLike } from './loadCompound'
 import { loadCurve } from '../action/Curve'
 import { setupConvexEdges as setupConvexEdge } from '../action/Convex'
+import { Token } from '../entities'
 
 const chainLinkETH = Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 const chainLinkBTC = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
@@ -21,6 +22,13 @@ const initialize = async (universe: Universe) => {
   await loadTokens(
     universe,
     require('./data/ethereum/tokens.json') as JsonTokenEntry[]
+  )
+  await universe.defineRToken(universe.config.addresses.rTokenDeployments.eUSD!)
+  await universe.defineRToken(
+    universe.config.addresses.rTokenDeployments['ETH+']!
+  )
+  await universe.defineRToken(
+    universe.config.addresses.rTokenDeployments.hyUSD!
   )
 
   const chainLinkOracle = new ChainLinkOracle(
@@ -66,6 +74,33 @@ const initialize = async (universe: Universe) => {
     curveApi.createRouterEdge(USDC, mim_3CRV)
     curveApi.createRouterEdge(USDT, mim_3CRV)
     curveApi.createRouterEdge(DAI, mim_3CRV)
+
+    
+    const preferredPrecursors = new Set<Token>([USDT, USDC, FRAX, MIM])
+
+    // Essentially, if user is already zapping USDC, FRAX or MIM into hyUSD.
+    // We will prefer not to do initial trading.
+    curveApi.addPreferredSourcingRoute(
+      universe.rTokens.hyUSD!,
+      eUSD__FRAX_USDC,
+      (inputQty, basketQty) => {
+        if (preferredPrecursors.has(inputQty.token)) {
+          return basketQty
+        }
+        return basketQty.into(USDC)
+      }
+    )
+
+    curveApi.addPreferredSourcingRoute(
+      universe.rTokens.hyUSD!,
+      mim_3CRV,
+      (inputQty, basketQty) => {
+        if (preferredPrecursors.has(inputQty.token)) {
+          return basketQty
+        }
+        return basketQty.into(USDC)
+      }
+    )
   }
 
   // Add convex edges
@@ -154,11 +189,6 @@ const initialize = async (universe: Universe) => {
     new MintWStETH(universe, stETH, wstETH, wstethRates),
     new BurnWStETH(universe, stETH, wstETH, wstethRates)
   )
-
-  await universe.defineRToken(universe.config.addresses.rTokenDeployments.eUSD!)
-  await universe.defineRToken(
-    universe.config.addresses.rTokenDeployments['ETH+']!
-  )
 }
 
 const ethereumConfig: ChainConfiguration = {
@@ -178,6 +208,7 @@ const ethereumConfig: ChainConfiguration = {
       rTokenDeployments: {
         eUSD: Address.from('0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a'),
         'ETH+': Address.from('0xb6A7d481719E97e142114e905E86a39a2Fa0dfD2'),
+        hyUSD: Address.from('0x2cabaa8010b3fbbDEeBe4a2D0fEffC2ed155bf37'),
       },
       // Points to aave address providers
       aavev2: Address.from('0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'),

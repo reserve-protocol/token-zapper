@@ -1,5 +1,6 @@
 import { Universe } from '../Universe'
 import { type Action } from '../action/Action'
+import { CurveSwap } from '../action/Curve'
 import { type MintRTokenAction } from '../action/RTokens'
 import { Address } from '../base/Address'
 import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
@@ -30,6 +31,8 @@ interface PostTradeMint {
  */
 export const findPrecursorTokenSet = async (
   universe: Universe,
+  userInputQuantity: TokenQuantity,
+  rToken: Token,
   unitBasket: TokenQuantity[]
 ) => {
   const totalPrecursorQuantities = new TokenAmounts()
@@ -38,8 +41,29 @@ export const findPrecursorTokenSet = async (
   const totalOfEach = new TokenAmounts()
   const recourseOn = async (qty: TokenQuantity) => {
     totalOfEach.add(qty)
-    const acts = universe.wrappedTokens.get(qty.token)!
+    const acts = universe.wrappedTokens.get(qty.token)
+    const lpToken = universe.lpTokens.get(qty.token)
     if (acts != null) {
+      if (lpToken != null) {
+        const preferred = await (lpToken.preferredSourcingMethod != null
+          ? lpToken?.preferredSourcingMethod(userInputQuantity, qty, rToken)
+          : null)
+
+        if (preferred != null) {
+          const { precursorQty, action } = preferred
+          const precursorTokensNeeded = new TokenAmounts()
+          precursorTokensNeeded.add(precursorQty)
+          return {
+            precursorTokensNeeded: precursorTokensNeeded,
+            mint: null,
+          }
+        } else {
+          return {
+            precursorTokensNeeded: TokenAmounts.fromQuantities([qty]),
+            mint: null,
+          }
+        }
+      }
       const baseTokens = await acts.burn.quote([qty])
       const resolvedDeps = await Promise.all(
         baseTokens.map(async (qty) => ({
@@ -113,6 +137,7 @@ export class Searcher {
    **/
   private async findSingleInputToBasketGivenBasketUnit(
     inputQuantity: TokenQuantity,
+    rToken: Token,
     basketUnit: TokenQuantity[],
     slippage: number
   ) {
@@ -121,6 +146,8 @@ export class Searcher {
      */
     const precursorTokens = await findPrecursorTokenSet(
       this.universe,
+      inputQuantity,
+      rToken,
       basketUnit
     )
 
@@ -129,7 +156,6 @@ export class Searcher {
      */
     const precursorTokenBasket =
       precursorTokens.totalPrecursorQuantities.toTokenQuantities()
-
     // Split input by how large each token in precursor set is worth.
     // Example: We're trading 0.1 ETH, and precursorTokenSet(rToken) = (0.5 usdc, 0.5 usdt)
     // say usdc is trading at 0.99 usd and usdt 1.01, then the trade will be split as follows
@@ -167,6 +193,7 @@ export class Searcher {
     const inputQuantityToTokenSet: SwapPath[] = []
     const tradingBalances = new TokenAmounts()
     tradingBalances.add(inputQuantity)
+
     for (const { input, output } of inputPrTrade) {
       if (
         // Skip trade if user input is part of precursor set
@@ -219,7 +246,9 @@ export class Searcher {
     }
 
     for (const action of mintsToSubtract) {
-      action.exchange(tradingBalances)
+      for (const input of action.inputs) {
+        tradingBalances.sub(input)
+      }
     }
 
     return new SwapPaths(
@@ -305,7 +334,7 @@ export class Searcher {
     const tokenAmounts = new TokenAmounts()
     tokenAmounts.addQtys(redeemRTokenForUnderlying.outputs)
 
-    const underylingToOutputTrade = await Promise.all(
+    const underlyingToOutputTrade = await Promise.all(
       redeemRTokenForUnderlying.outputs
         .filter((qty) => qty.token !== outputToken)
         .map(async (qty) => {
@@ -337,7 +366,7 @@ export class Searcher {
           redeemRTokenForUnderlying.outputValue,
           redeemRTokenForUnderlying.destination
         ),
-        ...underylingToOutputTrade,
+        ...underlyingToOutputTrade,
       ],
       tokenAmounts.toTokenQuantities(),
       outputValue,
@@ -375,6 +404,7 @@ export class Searcher {
     const inputQuantityToBasketTokens =
       await this.findSingleInputToBasketGivenBasketUnit(
         inputTokenQuantity,
+        rToken,
         mintAction.basket.unitBasket,
         slippage
       )
@@ -455,7 +485,21 @@ export class Searcher {
     const swapPlans = bfsResult.steps
       .map((i) => i.convertToSingularPaths())
       .flat()
-      .filter((plan) => plan.inputs.length === 1)
+      .filter((plan) => {
+        if (plan.inputs.length !== 1) {
+          return false
+        }
+        if (plan.steps.filter((step) => step instanceof CurveSwap).length > 1) {
+          return false
+        }
+        if (
+          plan.steps.some((i) => i.input.length !== 1 || i.output.length !== 1)
+        ) {
+          return false
+        }
+
+        return true
+      })
 
     const entitiesToUpdate = new Set<Address>()
     for (const plan of swapPlans) {

@@ -53,10 +53,7 @@ export class Universe {
   // Sentinel token used for pricing things
   public readonly rTokens: {
     [P in keyof RTokens]: Token | null
-  } = {
-    eUSD: null,
-    'ETH+': null,
-  }
+  } = {} as any
   public readonly commonTokens: {
     [P in keyof CommonTokens]: Token | null
   } = {
@@ -91,6 +88,17 @@ export class Universe {
     gasPrice: 0n,
   }
 
+  /**
+   * This method try to price a given token in USD.
+   * It will first try and see if there is an canonical way to mint/burn the token,
+   * if there is, it will recursively unwrap the token until it finds a what the token consists of.
+   *
+   * Once the token is fully unwrapped, it will query the oracles to find the price of each underlying
+   * quantity, and sum them up.
+   *
+   * @param qty quantity to price
+   * @returns The price of the qty in USD, or null if the price cannot be determined
+   */
   async fairPrice(qty: TokenQuantity): Promise<TokenQuantity | null> {
     const wrappedToken = this.wrappedTokens.get(qty.token)
     if (wrappedToken != null) {
@@ -165,7 +173,7 @@ export class Universe {
     return this
   }
 
-  defineLPToken(lpTokenInstance: LPToken) {
+  public defineLPToken(lpTokenInstance: LPToken) {
     this.lpTokens.set(lpTokenInstance.token, lpTokenInstance)
     this.defineMintable(lpTokenInstance.mintAction, lpTokenInstance.burnAction)
   }

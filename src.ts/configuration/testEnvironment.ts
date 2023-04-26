@@ -73,7 +73,7 @@ const initialize = async (universe: Universe) => {
   )
 
   universe.rTokens.eUSD = eUSD
-  universe.rTokens["ETH+"] = ETHPlus
+  universe.rTokens['ETH+'] = ETHPlus
 
   const USDT = universe.commonTokens.USDT!
   const USDC = universe.commonTokens.USDC!
@@ -253,7 +253,8 @@ const ethereumConfig: ChainConfiguration = {
       ),
       rTokenDeployments: {
         eUSD: null,
-        "ETH+": null,
+        'ETH+': null,
+        hyUSD: null,
       },
       // Points to aave address providers
       aavev2: Address.from('0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'),

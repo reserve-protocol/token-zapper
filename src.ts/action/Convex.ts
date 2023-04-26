@@ -303,7 +303,7 @@ export const setupConvexEdges = async (
 
   // Define canonical way to mint staked token
   const stakeAction = new ConvexStake(convexPool)
-  const unstakeAction = new ConvexStake(convexPool)
+  const unstakeAction = new ConvexUnstake(convexPool)
   universe.defineMintable(stakeAction, unstakeAction)
 
   // Add one step actions that are actually used for the most part

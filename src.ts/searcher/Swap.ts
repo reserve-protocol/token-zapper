@@ -1,5 +1,6 @@
 import { type Action } from '../action/Action'
 import { type Address } from '../base/Address'
+import { token } from '../contracts/@openzeppelin/contracts'
 import { TokenAmounts, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 
@@ -13,10 +14,8 @@ export class SingleSwap {
     public readonly output: TokenQuantity[]
   ) {}
 
-  async exchange(
-    tokenAmounts: TokenAmounts
-  ) {
-    await this.action.exchange(this.input, tokenAmounts)
+  async exchange(tokenAmounts: TokenAmounts) {
+    tokenAmounts.exchange(this.input, this.output)
   }
 
   toString() {
@@ -30,7 +29,7 @@ export class SingleSwap {
 
 /**
  * A SwapPath groups a set of SingleSwap's together. The output of one SingleSwap is the input of the next.
- * A SwapPath may be optimized, as long as the input's and output's remain the same. 
+ * A SwapPath may be optimized, as long as the input's and output's remain the same.
  */
 export class SwapPath {
   constructor(
@@ -42,12 +41,8 @@ export class SwapPath {
     public readonly destination: Address
   ) {}
 
-  async exchange(
-    tokenAmounts: TokenAmounts
-  ) {
-    for(const step of this.steps) {
-      await step.exchange(tokenAmounts)
-    }
+  async exchange(tokenAmounts: TokenAmounts) {
+    tokenAmounts.exchange(this.inputs, this.outputs)
   }
 
   // This is a bad way to compare, ideally the USD value gets compared
@@ -102,16 +97,10 @@ export class SwapPaths {
     public readonly outputValue: TokenQuantity,
     public readonly destination: Address
   ) {}
-  
 
-  async exchange(
-    tokenAmounts: TokenAmounts
-  ) {
-    for(const step of this.swapPaths) {
-      await step.exchange(tokenAmounts)
-    }
+  async exchange(tokenAmounts: TokenAmounts) {
+    tokenAmounts.exchange(this.inputs, this.outputs)
   }
-
 
   toString() {
     return `SwapPaths(input: ${this.inputs
@@ -160,7 +149,9 @@ export class SwapPlan {
 
     for (const step of this.steps) {
       if (step.input.length !== legAmount.length) {
-        throw new Error('Invalid input, input count does not match Action input length')
+        throw new Error(
+          'Invalid input, input count does not match Action input length'
+        )
       }
       const output = await step.quote(legAmount)
       swaps.push(new SingleSwap(legAmount, step, output))

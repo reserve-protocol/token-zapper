@@ -64,8 +64,8 @@ export class UniV2Like extends UniBase {
   }
 
   toString(): string {
-    return `UniV2Like(${this.inputToken.toString()}.${
+    return `UniV2Like(${this.inputToken.symbol.toString()}.${
       this.address.address
-    }.${this.outputToken.toString()})`
+    }.${this.outputToken.symbol.toString()})`
   }
 }

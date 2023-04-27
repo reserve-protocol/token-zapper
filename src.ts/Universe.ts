@@ -19,7 +19,8 @@ import { ApprovalsStore } from './searcher/ApprovalsStore'
 import { TokenBasket } from './entities/TokenBasket'
 import { MintRTokenAction, BurnRTokenAction } from './action'
 import { LPToken } from './action/LPToken'
-import { SourcingRule } from './searcher/SourcingRules'
+import { SourcingRule } from './searcher/BasketTokenSourcingRules'
+import { SwapPath } from './searcher'
 
 export class Universe {
   public chainId = 0
@@ -29,11 +30,16 @@ export class Universe {
   public readonly tokens = new Map<Address, Token>()
   public readonly lpTokens = new Map<Token, LPToken>()
 
-  public readonly tokenSourcingSpecialCases = new DefaultMap<
+  public readonly precursorTokenSourcingSpecialCases = new DefaultMap<
     Token,
     Map<Token, SourcingRule>
   >(() => new Map())
   public readonly actions = new DefaultMap<Address, Action[]>(() => [])
+
+  public readonly tokenTradeSpecialCases = new Map<
+    Token,
+    (amount: TokenQuantity, destination: Address) => Promise<SwapPath | null>
+  >()
 
   // The GAS token for the EVM chain, set by the StaticConfig
   public readonly nativeToken: Token
@@ -99,7 +105,7 @@ export class Universe {
     precursor: Token,
     rule: SourcingRule
   ) {
-    this.tokenSourcingSpecialCases.get(rToken).set(precursor, rule)
+    this.precursorTokenSourcingSpecialCases.get(rToken).set(precursor, rule)
   }
 
   private priceCache = new Map<string, TokenQuantity>()
@@ -215,10 +221,12 @@ export class Universe {
     const output = mint.output[0]
     this.addAction(mint, output.address)
     this.addAction(burn, output.address)
-    this.wrappedTokens.set(output, {
+    const out = {
       mint,
       burn,
-    })
+    }
+    this.wrappedTokens.set(output, out)
+    return out
   }
 
   private constructor(

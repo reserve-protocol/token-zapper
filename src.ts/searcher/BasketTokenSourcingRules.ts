@@ -75,7 +75,7 @@ export class PostTradeAction {
   }
 }
 
-export class SourcingRuleApplication {
+export class BasketTokenSourcingRuleApplication {
   constructor(
     public readonly precursorToTradeFor: TokenQuantity[],
     public readonly postTradeActions: PostTradeAction[]
@@ -98,13 +98,13 @@ export class SourcingRuleApplication {
     precursorToTradeFor: TokenQuantity[],
     postTradeActions?: PostTradeAction
   ) {
-    return new SourcingRuleApplication(
+    return new BasketTokenSourcingRuleApplication(
       precursorToTradeFor,
       postTradeActions ? [postTradeActions] : []
     )
   }
 
-  static fromBranches(branches: SourcingRuleApplication[], action?: Action) {
+  static fromBranches(branches: BasketTokenSourcingRuleApplication[], action?: Action) {
     const precursors = TokenAmounts.fromQuantities(
       branches.map((i) => i.precursorToTradeFor).flat()
     )
@@ -122,18 +122,18 @@ export class SourcingRuleApplication {
 
     if (action) {
       const combinedAction = PostTradeAction.from(action, subActions)
-      return new SourcingRuleApplication(precursors.toTokenQuantities(), [
+      return new BasketTokenSourcingRuleApplication(precursors.toTokenQuantities(), [
         combinedAction,
       ])
     }
 
     const inputs = precursors.toTokenQuantities()
-    return new SourcingRuleApplication(inputs, subActions)
+    return new BasketTokenSourcingRuleApplication(inputs, subActions)
   }
 
   static fromActionWithDependencies(
     action: Action,
-    branches: SourcingRuleApplication[]
+    branches: BasketTokenSourcingRuleApplication[]
   ) {
     const precursors = TokenAmounts.fromQuantities(
       branches.map((i) => i.precursorToTradeFor).flat()
@@ -154,21 +154,21 @@ export class SourcingRuleApplication {
     const lastAction = PostTradeAction.from(action)
     const inputs = precursors.toTokenQuantities()
 
-    return new SourcingRuleApplication(inputs, [...execFirst, lastAction])
+    return new BasketTokenSourcingRuleApplication(inputs, [...execFirst, lastAction])
   }
 
   static singleBranch(
     precursorToTradeFor: TokenQuantity[],
     postTradeActions: PostTradeAction[]
   ) {
-    return new SourcingRuleApplication(
+    return new BasketTokenSourcingRuleApplication(
       precursorToTradeFor,
       postTradeActions
     )
   }
 
   static noAction(precursorToTradeFor: TokenQuantity[]) {
-    return new SourcingRuleApplication(precursorToTradeFor, [])
+    return new BasketTokenSourcingRuleApplication(precursorToTradeFor, [])
   }
 }
 
@@ -176,4 +176,4 @@ export class SourcingRuleApplication {
 export type SourcingRule = (
   userInputToken: Token,
   heldQuantity: TokenQuantity
-) => Promise<SourcingRuleApplication>
+) => Promise<BasketTokenSourcingRuleApplication>

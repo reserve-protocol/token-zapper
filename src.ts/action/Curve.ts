@@ -6,9 +6,11 @@ import { type Universe } from '../Universe'
 import { Approval } from '../base/Approval'
 import { ethers } from 'ethers'
 import curve from '@curvefi/api'
-import { formatUnits, parseUnits } from 'ethers/lib/utils'
+import { curve as curveInner } from '@curvefi/api/lib/curve'
+import { formatUnits } from 'ethers/lib/utils'
 import { LPToken } from './LPToken'
 import { DefaultMap } from '../base'
+import { IRoute } from '@curvefi/api/lib/interfaces'
 type CurveType = typeof curve
 
 type PoolTemplate = InstanceType<CurveType['PoolTemplate']>
@@ -34,6 +36,84 @@ class CurvePool {
   }
 }
 
+const predefiendRoutes: Record<string, IRoute> = {
+  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f':
+    [
+      {
+        poolId: 'fraxusdc',
+        poolAddress: '0xdcef968d416a41cdac0ed8702fac8128a64241a2',
+        inputCoinAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+        outputCoinAddress: '0x3175df0976dfa876431c2e9ee6bc45b65d3473cc',
+        i: 1,
+        j: 0,
+        swapType: 7,
+        swapAddress: '0x0000000000000000000000000000000000000000',
+      },
+      {
+        poolId: 'factory-v2-277',
+        poolAddress: '0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f',
+        inputCoinAddress: '0x3175df0976dfa876431c2e9ee6bc45b65d3473cc',
+        outputCoinAddress: '0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f',
+        i: 1,
+        j: 0,
+        swapType: 7,
+        swapAddress: '0x0000000000000000000000000000000000000000',
+      },
+    ],
+  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.0x5a6a4d54456819380173272a5e8e9b9904bdf41b':
+    [
+      {
+        poolId: '3pool',
+        poolAddress: '0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7',
+        inputCoinAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+        outputCoinAddress: '0x6c3f90f043a72fa612cbac8115ee7e52bde6e490',
+        i: 1,
+        j: 0,
+        swapType: 8,
+        swapAddress: '0x0000000000000000000000000000000000000000',
+      },
+      {
+        poolId: 'mim',
+        poolAddress: '0x5a6a4d54456819380173272a5e8e9b9904bdf41b',
+        inputCoinAddress: '0x6c3f90f043a72fa612cbac8115ee7e52bde6e490',
+        outputCoinAddress: '0x5a6a4d54456819380173272a5e8e9b9904bdf41b',
+        i: 1,
+        j: 0,
+        swapType: 7,
+        swapAddress: '0x0000000000000000000000000000000000000000',
+      },
+    ],
+}
+
+const _getExchangeMultipleArgs = (
+  route: IRoute
+): {
+  _route: string[]
+  _swapParams: number[][]
+  _factorySwapAddresses: string[]
+} => {
+  let _route = []
+  if (route.length > 0) _route.push(route[0].inputCoinAddress)
+  let _swapParams = []
+  let _factorySwapAddresses = []
+  for (const routeStep of route) {
+    _route.push(routeStep.poolAddress, routeStep.outputCoinAddress)
+    _swapParams.push([routeStep.i, routeStep.j, routeStep.swapType])
+    _factorySwapAddresses.push(routeStep.swapAddress)
+  }
+  _route = _route.concat(
+    Array(9 - _route.length).fill(ethers.constants.AddressZero)
+  )
+  _swapParams = _swapParams.concat(
+    Array(4 - _swapParams.length).fill([0, 0, 0])
+  )
+  _factorySwapAddresses = _factorySwapAddresses.concat(
+    Array(4 - _factorySwapAddresses.length).fill(ethers.constants.AddressZero)
+  )
+
+  return { _route, _swapParams, _factorySwapAddresses }
+}
+
 export class CurveSwap extends Action {
   gasEstimate() {
     return BigInt(250000n)
@@ -46,6 +126,28 @@ export class CurveSwap extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const key = (
+      this.input[0].address +
+      '.' +
+      this.output[0].address
+    ).toLowerCase()
+    if (key in predefiendRoutes) {
+      const route = predefiendRoutes[key]
+      const contract =
+        curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
+          .contract
+      const { _route, _swapParams, _factorySwapAddresses } =
+        _getExchangeMultipleArgs(route)
+      const out: ethers.BigNumber = await contract.get_exchange_multiple_amount(
+        _route,
+        _swapParams,
+        amountsIn.amount,
+        _factorySwapAddresses,
+        curveInner.constantOptions
+      )
+      return [this.output[0].from(out)]
+    }
+
     try {
       const out = await curve.router.getBestRouteAndOutput(
         amountsIn.token.address.address,
@@ -108,9 +210,7 @@ export const loadCurve = async (universe: Universe) => {
 
   const loadCurvePools = async (universe: Universe) => {
     const p = universe.provider as ethers.providers.JsonRpcProvider
-    const batcher = new ethers.providers.JsonRpcBatchProvider(
-      p.connection.url
-    )
+    // const batcher = new ethers.providers.JsonRpcBatchProvider(p.connection.url)
     await curve.init('Web3', {
       externalProvider: {
         request: async (req: any) => {
@@ -120,7 +220,7 @@ export const loadCurve = async (universe: Universe) => {
           if (req.method === 'eth_gasPrice') {
             return '0x' + universe.gasPrice.toString(16)
           }
-          const resp = await batcher.send(req.method, req.params)
+          const resp = await p.send(req.method, req.params)
           return resp
         },
       },
@@ -204,6 +304,7 @@ export const loadCurve = async (universe: Universe) => {
       (a) => universe.tokens.get(Address.from(a))!
     )
     const lpToken = await universe.getToken(Address.from(pool.meta.lpToken))
+
     if (universe.lpTokens.has(lpToken)) {
       return
     }
@@ -229,6 +330,9 @@ export const loadCurve = async (universe: Universe) => {
 
     const lpTokenInstance = new LPToken(lpToken, tokensInPosition, burn, mint)
     universe.defineLPToken(lpTokenInstance)
+
+    // const gaugeToken = await universe.getToken(Address.from(pool.meta.token))
+    // universe.lpTokens.set(gaugeToken, lpTokenInstance)
   }
 
   const addCurvePoolEdges = async (universe: Universe, pools: CurvePool[]) => {
@@ -246,11 +350,10 @@ export const loadCurve = async (universe: Universe) => {
           break
         }
       }
+      await addLpToken(universe, pool)
       if (missingTok) {
         continue
       }
-
-      await addLpToken(universe, pool)
 
       if (pool.templateName.startsWith('factory-')) {
         continue

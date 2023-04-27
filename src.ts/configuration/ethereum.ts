@@ -6,8 +6,8 @@ import { Universe } from '../Universe'
 import {
   PostTradeAction,
   SourcingRule,
-  SourcingRuleApplication,
-} from '../searcher/SourcingRules'
+  BasketTokenSourcingRuleApplication,
+} from '../searcher/BasketTokenSourcingRules'
 import { type ChainConfiguration } from './ChainConfiguration'
 import { StaticConfig } from './StaticConfig'
 import { DepositAction, WithdrawAction } from '../action/WrappedNative'
@@ -20,6 +20,8 @@ import { setupCompoundLike } from './loadCompound'
 import { loadCurve } from '../action/Curve'
 import { setupConvexEdges as setupConvexEdge } from '../action/Convex'
 import { Action } from '../action'
+import { TokenQuantity } from '../entities'
+import { SwapPlan } from '../searcher'
 
 const chainLinkETH = Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 const chainLinkBTC = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
@@ -91,13 +93,7 @@ const initialize = async (universe: Universe) => {
     )
     const mimConvex = await setupConvexEdge(universe, stkcvxMIM3LP3CRV)
 
-    const userInputTokensTradeDirectlyForLPToken = new Set([
-      DAI,
-      MIM,
-      FRAX,
-      USDC,
-      USDT,
-    ])
+    const stables = new Set([DAI, MIM, FRAX, USDC, USDT])
 
     // This is a sourcing rule, it can be used to define 'shortcuts' or better ways to perform a Zap.
     // The rule defined below instructs the zapper to not mint stkcvxeUSD3CRv/stkcvxMIM3LP3CRV tokens
@@ -110,13 +106,13 @@ const initialize = async (universe: Universe) => {
       (depositAndStake: Action): SourcingRule =>
       async (input, unitAmount) => {
         const lpTokenQty = unitAmount.into(depositAndStake.input[0])
-        if (userInputTokensTradeDirectlyForLPToken.has(input)) {
-          return SourcingRuleApplication.singleBranch(
+        if (stables.has(input)) {
+          return BasketTokenSourcingRuleApplication.singleBranch(
             [lpTokenQty],
             [PostTradeAction.fromAction(depositAndStake)]
           )
         }
-        return SourcingRuleApplication.singleBranch(
+        return BasketTokenSourcingRuleApplication.singleBranch(
           [unitAmount.into(USDC)],
           [
             PostTradeAction.fromAction(
@@ -137,11 +133,50 @@ const initialize = async (universe: Universe) => {
       stkcvxMIM3LP3CRV,
       makeStkConvexSourcingRule(mimConvex.depositAndStakeAction)
     )
+
+    for (const stable of stables) {
+      universe.tokenTradeSpecialCases.set(
+        stable,
+        async (input: TokenQuantity, dest: Address) => {
+          if (!stables.has(input.token)) {
+            return null
+          }
+          return await new SwapPlan(universe, [
+            curveApi.createRouterEdge(input.token, stable),
+          ]).quote([input], dest)
+        }
+      )
+    }
   }
 
-  universe.defineMintable(
+  const wethActions = universe.defineMintable(
     new DepositAction(universe, WETH),
     new WithdrawAction(universe, WETH)
+  )
+  universe.tokenTradeSpecialCases.set(
+    universe.nativeToken,
+    async (input: TokenQuantity, dest: Address) => {
+      if (input.token === WETH) {
+        return await new SwapPlan(universe, [wethActions.burn]).quote(
+          [input],
+          dest
+        )
+      }
+      return null
+    }
+  )
+
+  universe.tokenTradeSpecialCases.set(
+    WETH,
+    async (input: TokenQuantity, dest: Address) => {
+      if (input.token === universe.nativeToken) {
+        return await new SwapPlan(universe, [wethActions.mint]).quote(
+          [input],
+          dest
+        )
+      }
+      return null
+    }
   )
   const wrappedToUnderlyingMapping =
     require('./data/ethereum/underlying.json') as Record<string, string>
@@ -242,7 +277,6 @@ const ethereumConfig: ChainConfiguration = {
       // Just points to their vault
       balancer: Address.from('0xBA12222222228d8Ba445958a75a0704d566BF2C8'),
 
-      // Curve does it's own thing..
       commonTokens: {
         USDC: Address.from('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'),
         USDT: Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7'),
@@ -254,6 +288,7 @@ const ethereumConfig: ChainConfiguration = {
         ERC20GAS: Address.from('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
       },
     },
+    // Curve does it's own thing..
     {
       enable: false,
     }

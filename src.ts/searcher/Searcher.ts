@@ -1,4 +1,7 @@
-import { PostTradeAction, SourcingRuleApplication } from './SourcingRules'
+import {
+  PostTradeAction,
+  BasketTokenSourcingRuleApplication,
+} from './BasketTokenSourcingRules'
 import { Universe } from '../Universe'
 import { CurveSwap } from '../action/Curve'
 import { type MintRTokenAction } from '../action/RTokens'
@@ -29,12 +32,12 @@ export const findPrecursorTokenSet = async (
   rToken: Token,
   unitBasket: TokenQuantity[]
 ) => {
-  const specialRules = universe.tokenSourcingSpecialCases.get(rToken)
-  const basketTokenApplications: SourcingRuleApplication[] = []
+  const specialRules = universe.precursorTokenSourcingSpecialCases.get(rToken)
+  const basketTokenApplications: BasketTokenSourcingRuleApplication[] = []
 
   const recourseOn = async (
     qty: TokenQuantity
-  ): Promise<SourcingRuleApplication> => {
+  ): Promise<BasketTokenSourcingRuleApplication> => {
     const tokenSourcingRule = specialRules.get(qty.token)
     if (tokenSourcingRule != null) {
       return await tokenSourcingRule(userInputQuantity.token, qty)
@@ -48,19 +51,21 @@ export const findPrecursorTokenSet = async (
         baseTokens.map(async (qty) => await recourseOn(qty))
       )
 
-      return SourcingRuleApplication.fromActionWithDependencies(
+      return BasketTokenSourcingRuleApplication.fromActionWithDependencies(
         acts.mint,
         branches
       )
     }
-    return SourcingRuleApplication.noAction([qty])
+    return BasketTokenSourcingRuleApplication.noAction([qty])
   }
 
   for (const qty of unitBasket) {
     const application = await recourseOn(qty)
     basketTokenApplications.push(application)
   }
-  return SourcingRuleApplication.fromBranches(basketTokenApplications)
+  return BasketTokenSourcingRuleApplication.fromBranches(
+    basketTokenApplications
+  )
 }
 
 export class Searcher {
@@ -406,9 +411,15 @@ export class Searcher {
     destination: Address,
     slippage: number
   ): Promise<SwapPath[]> {
+    if (
+      this.universe.wrappedTokens.has(output) ||
+      this.universe.lpTokens.has(output)
+    ) {
+      return []
+    }
     const executorAddress =
       this.universe.chainConfig.config.addresses.executorAddress
-    return await Promise.all(
+    const out = await Promise.all(
       this.universe.dexAggregators.map(
         async (router) =>
           await router.swap(
@@ -420,6 +431,8 @@ export class Searcher {
           )
       )
     )
+
+    return out
   }
 
   async internalQuoter(
@@ -429,6 +442,7 @@ export class Searcher {
     slippage: number = 0.0,
     maxHops: number = 2
   ): Promise<SwapPath[]> {
+    const start = Date.now()
     const bfsResult = bfs(
       this.universe,
       this.universe.graph,
@@ -436,6 +450,7 @@ export class Searcher {
       output,
       maxHops
     )
+
     const swapPlans = bfsResult.steps
       .map((i) => i.convertToSingularPaths())
       .flat()
@@ -455,12 +470,6 @@ export class Searcher {
         return true
       })
 
-    const entitiesToUpdate = new Set<Address>()
-    for (const plan of swapPlans) {
-      for (const action of plan.steps) {
-        entitiesToUpdate.add(action.address)
-      }
-    }
     const allPlans = await Promise.all(
       swapPlans.map(async (plan) => {
         return await plan.quote([input], destination)
@@ -478,11 +487,17 @@ export class Searcher {
     slippage: number = 0.0,
     maxHops: number = 2
   ): Promise<SwapPath[]> {
+    const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
+    if (tradeSpecialCase != null) {
+      const out = await tradeSpecialCase(input, destination)
+      if (out != null) {
+        return [out]
+      }
+    }
+
     const quotes = (
       await Promise.all([
-        this.internalQuoter(input, output, destination, slippage, maxHops).then(
-          (results) => results.filter((result) => result.inputs.length === 1)
-        ),
+        this.internalQuoter(input, output, destination, slippage, maxHops),
         this.externalQuoters(input, output, destination, slippage),
       ])
     ).flat()

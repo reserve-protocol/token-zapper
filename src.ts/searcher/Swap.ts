@@ -1,7 +1,8 @@
 import { type Action } from '../action/Action'
+import { DefaultMap } from '../base'
 import { type Address } from '../base/Address'
 import { token } from '../contracts/@openzeppelin/contracts'
-import { TokenAmounts, type TokenQuantity } from '../entities/Token'
+import { Token, TokenAmounts, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 
 /**
@@ -89,14 +90,43 @@ export class SwapPath {
  * SwapPaths groups SwapPath's together into sections
  */
 export class SwapPaths {
+  public readonly swapPaths: SwapPath[] = []
   constructor(
     readonly universe: Universe,
     public readonly inputs: TokenQuantity[],
-    public readonly swapPaths: SwapPath[],
+    swapPaths: SwapPath[],
     public readonly outputs: TokenQuantity[],
     public readonly outputValue: TokenQuantity,
     public readonly destination: Address
-  ) {}
+  ) {
+    const byInputs = new DefaultMap<string, SwapPath[]>(() => [])
+    swapPaths.forEach((swapPath) => {
+      const key =
+        swapPath.inputs.map((i) => i.token.address.address).join(',') +
+        swapPath.destination.address
+      byInputs.get(key).push(swapPath)
+    })
+
+    this.swapPaths = [...byInputs.values()].map((group) => {
+      const inputs = TokenAmounts.fromQuantities(
+        group.map((i) => i.inputs).flat()
+      ).toTokenQuantities()
+      const outputs = TokenAmounts.fromQuantities(
+        group.map((i) => i.outputs).flat()
+      ).toTokenQuantities()
+      const outputValue = TokenAmounts.fromQuantities(
+        group.map((i) => i.outputValue).flat()
+      ).toTokenQuantities()
+      return new SwapPath(
+        universe,
+        inputs,
+        group.map((i) => i.steps).flat(),
+        outputs,
+        outputValue[0],
+        group[0].destination
+      )
+    })
+  }
 
   async exchange(tokenAmounts: TokenAmounts) {
     tokenAmounts.exchange(this.inputs, this.outputs)

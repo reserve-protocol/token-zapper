@@ -10,19 +10,7 @@ export class LPToken {
     public readonly token: Token,
     public readonly poolTokens: Token[],
     public readonly burn: (amount: TokenQuantity) => Promise<TokenQuantity[]>,
-    public readonly mint: (
-      amountsIn: TokenQuantity[]
-    ) => Promise<TokenQuantity>,
-    public readonly preferredSourcingMethod?: (
-      // What user is swapping with
-      inputQuantity: TokenQuantity,
-
-      // Basket amount we're trying to source
-      basketAmount: TokenQuantity,
-
-      // What we're swapping to
-      endToken: Token
-    ) => Promise<null|{ precursorQty: TokenQuantity, action: Action }>
+    public readonly mint: (amountsIn: TokenQuantity[]) => Promise<TokenQuantity>
   ) {
     this.mintAction = new LPTokenMint(this)
     this.burnAction = new LPTokenBurn(this)

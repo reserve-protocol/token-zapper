@@ -24,7 +24,7 @@ class ConvexPool {
   ) {}
 
   toString() {
-    return `ConvexPool(id=${this.convexPoolId},lp=${this.curveLPToken},cvx=${this.convexDepositToken},stkCvx=${this.stakedConvexDepositToken})`
+    return `ConvexPool(id=${this.convexPoolId})`
   }
 }
 
@@ -311,4 +311,14 @@ export const setupConvexEdges = async (
   const unstakeAndWithdrawAction = new ConvexUnstakeAndWithdraw(convexPool)
   universe.addAction(unstakeAndWithdrawAction)
   universe.addAction(depositAndStakeAction)
+
+  return {
+    pool: convexPool,
+    depositAction,
+    withdrawAction,
+    stakeAction,
+    unstakeAction,
+    depositAndStakeAction,
+    unstakeAndWithdrawAction,
+  }
 }

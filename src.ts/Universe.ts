@@ -19,6 +19,7 @@ import { ApprovalsStore } from './searcher/ApprovalsStore'
 import { TokenBasket } from './entities/TokenBasket'
 import { MintRTokenAction, BurnRTokenAction } from './action'
 import { LPToken } from './action/LPToken'
+import { SourcingRule } from './searcher/SourcingRules'
 
 export class Universe {
   public chainId = 0
@@ -27,6 +28,11 @@ export class Universe {
 
   public readonly tokens = new Map<Address, Token>()
   public readonly lpTokens = new Map<Token, LPToken>()
+
+  public readonly tokenSourcingSpecialCases = new DefaultMap<
+    Token,
+    Map<Token, SourcingRule>
+  >(() => new Map())
   public readonly actions = new DefaultMap<Address, Action[]>(() => [])
 
   // The GAS token for the EVM chain, set by the StaticConfig
@@ -88,6 +94,15 @@ export class Universe {
     gasPrice: 0n,
   }
 
+  public defineTokenSourcingRule(
+    rToken: Token,
+    precursor: Token,
+    rule: SourcingRule
+  ) {
+    this.tokenSourcingSpecialCases.get(rToken).set(precursor, rule)
+  }
+
+  private priceCache = new Map<string, TokenQuantity>()
   /**
    * This method try to price a given token in USD.
    * It will first try and see if there is an canonical way to mint/burn the token,
@@ -100,6 +115,10 @@ export class Universe {
    * @returns The price of the qty in USD, or null if the price cannot be determined
    */
   async fairPrice(qty: TokenQuantity): Promise<TokenQuantity | null> {
+    const s = qty.formatWithSymbol()
+    if (this.priceCache.has(s)) {
+      return this.priceCache.get(s)!
+    }
     const wrappedToken = this.wrappedTokens.get(qty.token)
     if (wrappedToken != null) {
       const outTokens = await wrappedToken.burn.quote([qty])
@@ -115,11 +134,25 @@ export class Universe {
         const price = await oracle.fairTokenPrice(this.currentBlock, qty.token)
         if (price != null) {
           const out = price.into(qty.token).mul(qty).into(this.usd)
+          this.priceCache.set(qty.formatWithSymbol(), out)
           return out
         }
       }
     }
     return null
+  }
+
+  async quoteIn(qty: TokenQuantity, tokenToQuoteWith: Token) {
+    const priceOfOneUnitOfInput = await this.fairPrice(qty.token.one)
+    const priceOfOneUnitOfOutput = await this.fairPrice(tokenToQuoteWith.one)
+    if (priceOfOneUnitOfInput == null || priceOfOneUnitOfOutput == null) {
+      return null
+    }
+
+    const inputUnitInOutput = priceOfOneUnitOfInput.div(priceOfOneUnitOfOutput)
+    return inputUnitInOutput
+      .into(tokenToQuoteWith)
+      .mul(qty.into(tokenToQuoteWith))
   }
 
   get currentBlock() {
@@ -209,6 +242,7 @@ export class Universe {
       return
     }
     this.blockState.currentBlock = block
+    this.priceCache.clear()
     this.blockState.gasPrice = gasPrice
   }
 

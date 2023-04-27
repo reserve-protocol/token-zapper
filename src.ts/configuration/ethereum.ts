@@ -3,6 +3,11 @@ import { Address } from '../base/Address'
 import { IStaticATokenLM__factory } from '../contracts'
 import { ChainLinkOracle } from '../oracles/ChainLinkOracle'
 import { Universe } from '../Universe'
+import {
+  PostTradeAction,
+  SourcingRule,
+  SourcingRuleApplication,
+} from '../searcher/SourcingRules'
 import { type ChainConfiguration } from './ChainConfiguration'
 import { StaticConfig } from './StaticConfig'
 import { DepositAction, WithdrawAction } from '../action/WrappedNative'
@@ -14,7 +19,7 @@ import { BurnStETH, MintStETH, StETHRateProvider } from '../action/StEth'
 import { setupCompoundLike } from './loadCompound'
 import { loadCurve } from '../action/Curve'
 import { setupConvexEdges as setupConvexEdge } from '../action/Convex'
-import { Token } from '../entities'
+import { Action } from '../action'
 
 const chainLinkETH = Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 const chainLinkBTC = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
@@ -75,44 +80,64 @@ const initialize = async (universe: Universe) => {
     curveApi.createRouterEdge(USDT, mim_3CRV)
     curveApi.createRouterEdge(DAI, mim_3CRV)
 
-    
-    const preferredPrecursors = new Set<Token>([USDT, USDC, FRAX, MIM])
-
-    // Essentially, if user is already zapping USDC, FRAX or MIM into hyUSD.
-    // We will prefer not to do initial trading.
-    curveApi.addPreferredSourcingRoute(
-      universe.rTokens.hyUSD!,
-      eUSD__FRAX_USDC,
-      (inputQty, basketQty) => {
-        if (preferredPrecursors.has(inputQty.token)) {
-          return basketQty
-        }
-        return basketQty.into(USDC)
-      }
+    // Add convex edges
+    const stkcvxeUSD3CRV = await universe.getToken(
+      Address.from('0xBF2FBeECc974a171e319b6f92D8f1d042C6F1AC3')
     )
+    const eUSDConvex = await setupConvexEdge(universe, stkcvxeUSD3CRV)
 
-    curveApi.addPreferredSourcingRoute(
-      universe.rTokens.hyUSD!,
-      mim_3CRV,
-      (inputQty, basketQty) => {
-        if (preferredPrecursors.has(inputQty.token)) {
-          return basketQty
+    const stkcvxMIM3LP3CRV = await universe.getToken(
+      Address.from('0x8443364625e09a33d793acd03aCC1F3b5DbFA6F6')
+    )
+    const mimConvex = await setupConvexEdge(universe, stkcvxMIM3LP3CRV)
+
+    const userInputTokensTradeDirectlyForLPToken = new Set([
+      DAI,
+      MIM,
+      FRAX,
+      USDC,
+      USDT,
+    ])
+
+    // This is a sourcing rule, it can be used to define 'shortcuts' or better ways to perform a Zap.
+    // The rule defined below instructs the zapper to not mint stkcvxeUSD3CRv/stkcvxMIM3LP3CRV tokens
+    // from scratch and instead use the curve router via some stable coin.
+    // If the user is zapping one of the above stable-coins into hyUSD then we will
+    // even skip the initial trade and zap directly into the LP token / staked LP token.
+    // Otherwise we try to trade the user input token into USDC first. It should ideally
+    // reduce the number of trades needed to perform the zap.
+    const makeStkConvexSourcingRule =
+      (depositAndStake: Action): SourcingRule =>
+      async (input, unitAmount) => {
+        const lpTokenQty = unitAmount.into(depositAndStake.input[0])
+        if (userInputTokensTradeDirectlyForLPToken.has(input)) {
+          return SourcingRuleApplication.singleBranch(
+            [lpTokenQty],
+            [PostTradeAction.fromAction(depositAndStake)]
+          )
         }
-        return basketQty.into(USDC)
+        return SourcingRuleApplication.singleBranch(
+          [unitAmount.into(USDC)],
+          [
+            PostTradeAction.fromAction(
+              curveApi.createRouterEdge(USDC, lpTokenQty.token),
+              true // Cause the Zapper to recalculate the inputs of the mints for the next step
+            ),
+            PostTradeAction.fromAction(depositAndStake),
+          ]
+        )
       }
+    universe.defineTokenSourcingRule(
+      universe.rTokens.hyUSD!,
+      stkcvxeUSD3CRV,
+      makeStkConvexSourcingRule(eUSDConvex.depositAndStakeAction)
+    )
+    universe.defineTokenSourcingRule(
+      universe.rTokens.hyUSD!,
+      stkcvxMIM3LP3CRV,
+      makeStkConvexSourcingRule(mimConvex.depositAndStakeAction)
     )
   }
-
-  // Add convex edges
-  const stkcvxeUSD3CRV = await universe.getToken(
-    Address.from('0xBF2FBeECc974a171e319b6f92D8f1d042C6F1AC3')
-  )
-  await setupConvexEdge(universe, stkcvxeUSD3CRV)
-
-  const stkcvxMIM3LP3CRV = await universe.getToken(
-    Address.from('0x8443364625e09a33d793acd03aCC1F3b5DbFA6F6')
-  )
-  await setupConvexEdge(universe, stkcvxMIM3LP3CRV)
 
   universe.defineMintable(
     new DepositAction(universe, WETH),

@@ -75,6 +75,10 @@ export class CurveSwap extends Action {
 }
 
 export const loadCurve = async (universe: Universe) => {
+  const curvesEdges = new DefaultMap<Token, Map<Token, CurveSwap>>(
+    () => new Map()
+  )
+
   const fakeRouterTemplate: PoolTemplate = {
     address: curveRouterAddress,
     name: 'curve-router',
@@ -86,6 +90,21 @@ export const loadCurve = async (universe: Universe) => {
     fakeRouterTemplate,
     'router'
   )
+  const defineCurveEdge = (
+    pool: CurvePool,
+    tokenIn: Token,
+    tokenOut: Token
+  ) => {
+    const edges = curvesEdges.get(tokenIn)
+    if (edges.has(tokenOut)) {
+      return edges.get(tokenOut)!
+    }
+    const swap = new CurveSwap(pool, tokenIn, tokenOut)
+    edges.set(tokenOut, swap)
+    universe.addAction(swap)
+
+    return swap
+  }
 
   const loadCurvePools = async (universe: Universe) => {
     const p = universe.provider as ethers.providers.JsonRpcProvider
@@ -163,17 +182,8 @@ export const loadCurve = async (universe: Universe) => {
           )
         })
     )
-
     return curvePools
   }
-
-  const preferredSourcingRoutes = new DefaultMap<
-    Token,
-    Map<
-      Token,
-      (input: TokenQuantity, basketQty: TokenQuantity) => TokenQuantity
-    >
-  >(() => new Map())
 
   const addLpToken = async (universe: Universe, pool: CurvePool) => {
     const tokensInPosition = pool.meta.wrappedCoinAddresses.map(
@@ -203,25 +213,7 @@ export const loadCurve = async (universe: Universe) => {
       return lpToken.from(out)
     }
 
-    const lpTokenInstance = new LPToken(
-      lpToken,
-      tokensInPosition,
-      burn,
-      mint,
-      async (input, basketQty, endToken) => {
-        const preferredPrecursorToken = preferredSourcingRoutes
-          .get(endToken)
-          .get(basketQty.token)
-        if (preferredPrecursorToken) {
-          const precursor = preferredPrecursorToken(input, basketQty)
-          return {
-            precursorQty: precursor,
-            action: new CurveSwap(router, precursor.token, basketQty.token),
-          }
-        }
-        return null
-      }
-    )
+    const lpTokenInstance = new LPToken(lpToken, tokensInPosition, burn, mint)
     universe.defineLPToken(lpTokenInstance)
   }
 
@@ -263,10 +255,8 @@ export const loadCurve = async (universe: Universe) => {
           ) {
             continue
           }
-          const edgeI_J = new CurveSwap(pool, aToken, bToken)
-          const edgeJ_I = new CurveSwap(pool, bToken, aToken)
-          universe.addAction(edgeI_J)
-          universe.addAction(edgeJ_I)
+          defineCurveEdge(pool, aToken, bToken)
+          defineCurveEdge(pool, bToken, aToken)
         }
       }
       for (
@@ -287,10 +277,8 @@ export const loadCurve = async (universe: Universe) => {
           ) {
             continue
           }
-          const edgeI_J = new CurveSwap(pool, aToken, bToken)
-          const edgeJ_I = new CurveSwap(pool, bToken, aToken)
-          universe.addAction(edgeI_J)
-          universe.addAction(edgeJ_I)
+          defineCurveEdge(pool, aToken, bToken)
+          defineCurveEdge(pool, bToken, aToken)
         }
       }
     }
@@ -308,20 +296,7 @@ export const loadCurve = async (universe: Universe) => {
       await addLpToken(universe, pool)
     },
     createRouterEdge: (tokenA: Token, tokenB: Token) => {
-      const edgeI_J = new CurveSwap(router, tokenA, tokenB)
-      const edgeJ_I = new CurveSwap(router, tokenB, tokenA)
-      universe.addAction(edgeI_J)
-      universe.addAction(edgeJ_I)
-    },
-    addPreferredSourcingRoute: (
-      destToken: Token,
-      lpToken: Token,
-      bestSourceTokens: (
-        inputQty: TokenQuantity,
-        basketQty: TokenQuantity
-      ) => TokenQuantity
-    ) => {
-      preferredSourcingRoutes.get(destToken).set(lpToken, bestSourceTokens)
+      return defineCurveEdge(router, tokenA, tokenB)
     },
   }
 }

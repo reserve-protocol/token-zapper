@@ -297,6 +297,27 @@ export class TokenAmounts {
       this.add(outputs)
     })
   }
+
+  multiplyFractions(inputs: TokenQuantity[], convertZeroToOne = false) {
+    return TokenAmounts.fromQuantities(
+      inputs.map((input) => {
+        let current = this.get(input.token)
+        if (current.amount === 0n && convertZeroToOne) {
+          current = input.token.one
+        }
+        return current.mul(input)
+      })
+    )
+  }
+
+  recalculateAsFractionOf(parent: TokenAmounts) {
+    return TokenAmounts.fromQuantities(
+      [...this.tokenBalances.values()].map((qty) =>
+        qty.div(parent.get(qty.token))
+      )
+    )
+  }
+
   addAll(input: TokenAmounts) {
     this.addQtys(input.toTokenQuantities())
   }

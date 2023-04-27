@@ -1,5 +1,5 @@
+import { PostTradeAction, SourcingRuleApplication } from './SourcingRules'
 import { Universe } from '../Universe'
-import { type Action } from '../action/Action'
 import { CurveSwap } from '../action/Curve'
 import { type MintRTokenAction } from '../action/RTokens'
 import { Address } from '../base/Address'
@@ -7,12 +7,6 @@ import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
 import { bfs } from '../exchange-graph/BFS'
 import { SearcherResult } from './SearcherResult'
 import { SwapPath, SwapPaths, SwapPlan } from './Swap'
-
-interface PostTradeMint {
-  basketTokenQuantity: TokenAmounts
-  action: Action
-  mints: PostTradeMint[]
-}
 
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
@@ -35,88 +29,38 @@ export const findPrecursorTokenSet = async (
   rToken: Token,
   unitBasket: TokenQuantity[]
 ) => {
-  const totalPrecursorQuantities = new TokenAmounts()
-  const postTradeTokenSplits: PostTradeMint[] = []
+  const specialRules = universe.tokenSourcingSpecialCases.get(rToken)
+  const basketTokenApplications: SourcingRuleApplication[] = []
 
-  const totalOfEach = new TokenAmounts()
-  const recourseOn = async (qty: TokenQuantity) => {
-    totalOfEach.add(qty)
+  const recourseOn = async (
+    qty: TokenQuantity
+  ): Promise<SourcingRuleApplication> => {
+    const tokenSourcingRule = specialRules.get(qty.token)
+    if (tokenSourcingRule != null) {
+      return await tokenSourcingRule(userInputQuantity.token, qty)
+    }
+
     const acts = universe.wrappedTokens.get(qty.token)
-    const lpToken = universe.lpTokens.get(qty.token)
+
     if (acts != null) {
-      if (lpToken != null) {
-        const preferred = await (lpToken.preferredSourcingMethod != null
-          ? lpToken?.preferredSourcingMethod(userInputQuantity, qty, rToken)
-          : null)
-
-        if (preferred != null) {
-          const { precursorQty, action } = preferred
-          const precursorTokensNeeded = new TokenAmounts()
-          precursorTokensNeeded.add(precursorQty)
-          return {
-            precursorTokensNeeded: precursorTokensNeeded,
-            mint: null,
-          }
-        } else {
-          return {
-            precursorTokensNeeded: TokenAmounts.fromQuantities([qty]),
-            mint: null,
-          }
-        }
-      }
       const baseTokens = await acts.burn.quote([qty])
-      const resolvedDeps = await Promise.all(
-        baseTokens.map(async (qty) => ({
-          quantity: qty,
-          dependencies: await recourseOn(qty),
-        }))
+      const branches = await Promise.all(
+        baseTokens.map(async (qty) => await recourseOn(qty))
       )
-      const precursorTokensNeeded = new TokenAmounts()
-      const mints: PostTradeMint[] = []
-      for (const dependency of resolvedDeps) {
-        for (const mintPrecursorAmount of dependency.dependencies.precursorTokensNeeded.toTokenQuantities()) {
-          precursorTokensNeeded.add(mintPrecursorAmount)
-        }
-        if (dependency.dependencies.mint != null) {
-          mints.push(dependency.dependencies.mint)
-        }
-      }
 
-      const mint = {
-        basketTokenQuantity: TokenAmounts.fromQuantities(baseTokens),
-        action: acts.mint,
-        mints,
-      }
-      return { precursorTokensNeeded: precursorTokensNeeded, mint }
+      return SourcingRuleApplication.fromActionWithDependencies(
+        acts.mint,
+        branches
+      )
     }
-    return {
-      precursorTokensNeeded: TokenAmounts.fromQuantities([qty]),
-      mint: null,
-    }
+    return SourcingRuleApplication.noAction([qty])
   }
 
   for (const qty of unitBasket) {
-    const tree = await recourseOn(qty)
-    totalPrecursorQuantities.addAll(tree.precursorTokensNeeded)
-    if (tree.mint) {
-      postTradeTokenSplits.push(tree.mint)
-    }
+    const application = await recourseOn(qty)
+    basketTokenApplications.push(application)
   }
-  const recourseOnMint = async (qty: PostTradeMint) => {
-    qty.mints.forEach(recourseOnMint)
-    qty.basketTokenQuantity = TokenAmounts.fromQuantities(
-      qty.basketTokenQuantity
-        .toTokenQuantities()
-        .map((i) => i.div(totalOfEach.get(i.token)))
-    )
-  }
-  for (const mint of postTradeTokenSplits) {
-    recourseOnMint(mint)
-  }
-  return {
-    totalPrecursorQuantities,
-    postTradeTokenSplits,
-  }
+  return SourcingRuleApplication.fromBranches(basketTokenApplications)
 }
 
 export class Searcher {
@@ -150,12 +94,10 @@ export class Searcher {
       rToken,
       basketUnit
     )
-
     /**
      * PHASE 2: Trade inputQuantity into precursor set
      */
-    const precursorTokenBasket =
-      precursorTokens.totalPrecursorQuantities.toTokenQuantities()
+    const precursorTokenBasket = precursorTokens.precursorToTradeFor
     // Split input by how large each token in precursor set is worth.
     // Example: We're trading 0.1 ETH, and precursorTokenSet(rToken) = (0.5 usdc, 0.5 usdt)
     // say usdc is trading at 0.99 usd and usdt 1.01, then the trade will be split as follows
@@ -224,30 +166,52 @@ export class Searcher {
     /**
      * PHASE 3: Mint basket token set from precursor set
      */
-    const mintsToSubtract: SwapPath[] = []
-    const mints: SwapPath[] = []
-    const recourseOn = async (mint: PostTradeMint) => {
-      await Promise.all((mint.mints ?? []).map((mint) => recourseOn(mint)))
 
-      const mintInput = mint.basketTokenQuantity
-        .toTokenQuantities()
-        .map((qty) => tradingBalances.get(qty.token).mul(qty))
-      const mintOutput = await new SwapPlan(this.universe, [mint.action]).quote(
-        mintInput,
-        this.universe.config.addresses.executorAddress
+    const recourseOn = async (
+      balances: TokenAmounts,
+      parent: TokenAmounts,
+      tradeAction: PostTradeAction
+    ) => {
+      let subBranchBalances = parent.multiplyFractions(
+        tradeAction.inputAsFractionOfCurrentBalance,
+        false
       )
-      mintsToSubtract.push(mintOutput)
-      mintOutput.outputs.forEach((qty) => tradingBalances.add(qty))
-      inputQuantityToTokenSet.push(mintOutput)
-      mints.push(mintOutput)
-    }
-    for (const mint of precursorTokens.postTradeTokenSplits) {
-      await recourseOn(mint)
+      const exchanges: SwapPath[] = []
+
+      if (tradeAction.action) {
+        const actionInput = subBranchBalances.toTokenQuantities()
+
+        const mintExec = await new SwapPlan(this.universe, [
+          tradeAction.action,
+        ]).quote(actionInput, this.universe.config.addresses.executorAddress)
+        exchanges.push(mintExec)
+        inputQuantityToTokenSet.push(mintExec)
+        subBranchBalances.exchange(actionInput, mintExec.outputs)
+
+        balances.exchange(actionInput, mintExec.outputs)
+      }
+      let subActionExchanges: SwapPath[] = []
+      for (const subAction of tradeAction.postTradeActions ?? []) {
+        subActionExchanges.push(
+          ...(await recourseOn(balances, subBranchBalances, subAction))
+        )
+        if (subAction.updateBalances) {
+          exchanges.push(...subActionExchanges)
+          for (const exchange of subActionExchanges) {
+            subBranchBalances.exchange(exchange.inputs, exchange.outputs)
+          }
+          subActionExchanges = []
+        }
+      }
+      return [...exchanges, ...subActionExchanges]
     }
 
-    for (const action of mintsToSubtract) {
-      for (const input of action.inputs) {
-        tradingBalances.sub(input)
+    let tradingBalancesUsedForMinting = tradingBalances.clone()
+    for (const action of precursorTokens.postTradeActions) {
+      const tokensForBranch = tradingBalancesUsedForMinting.clone()
+      await recourseOn(tradingBalances, tokensForBranch, action)
+      if (action.updateBalances) {
+        tradingBalancesUsedForMinting = tradingBalances.clone()
       }
     }
 
@@ -425,17 +389,7 @@ export class Searcher {
       new SwapPaths(
         this.universe,
         [userInput],
-        [
-          new SwapPath(
-            this.universe,
-            inputQuantityToBasketTokens.inputs,
-            inputQuantityToBasketTokens.swapPaths.map((i) => i.steps).flat(),
-            inputQuantityToBasketTokens.outputs,
-            inputQuantityToBasketTokens.outputValue,
-            inputQuantityToBasketTokens.destination
-          ),
-          rTokenMint,
-        ],
+        [...inputQuantityToBasketTokens.swapPaths, rTokenMint],
         output,
         rTokenMint.outputValue,
         signerAddress

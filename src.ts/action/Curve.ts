@@ -108,8 +108,22 @@ export const loadCurve = async (universe: Universe) => {
 
   const loadCurvePools = async (universe: Universe) => {
     const p = universe.provider as ethers.providers.JsonRpcProvider
-    await curve.init('JsonRpc', {
-      url: p.connection.url,
+    const batcher = new ethers.providers.JsonRpcBatchProvider(
+      p.connection.url
+    )
+    await curve.init('Web3', {
+      externalProvider: {
+        request: async (req: any) => {
+          if (req.method === 'eth_chainId') {
+            return '0x' + universe.chainId.toString(16)
+          }
+          if (req.method === 'eth_gasPrice') {
+            return '0x' + universe.gasPrice.toString(16)
+          }
+          const resp = await batcher.send(req.method, req.params)
+          return resp
+        },
+      },
     }) // In this case JsonRpc url, privateKey, fee data and chainId will be specified automatically
 
     await curve.cryptoFactory.fetchPools(true)

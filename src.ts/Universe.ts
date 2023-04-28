@@ -21,6 +21,7 @@ import { MintRTokenAction, BurnRTokenAction } from './action'
 import { LPToken } from './action/LPToken'
 import { SourcingRule } from './searcher/BasketTokenSourcingRules'
 import { SwapPath } from './searcher'
+import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
 
 export class Universe {
   public chainId = 0
@@ -44,10 +45,10 @@ export class Universe {
   // The GAS token for the EVM chain, set by the StaticConfig
   public readonly nativeToken: Token
 
-  // Sentinel token used for pricing things
+  // 'Virtual' token used for pricing things
   public readonly usd: Token = Token.createToken(
     this.tokens,
-    Address.fromHexString('0x0000000000000000000000000000000000000348'),
+    Address.fromHexString(USD_ADDRESS),
     'USD',
     'USD Dollar',
     8
@@ -238,7 +239,7 @@ export class Universe {
     this.approvalStore = approvalsStore
     this.nativeToken = Token.createToken(
       this.tokens,
-      Address.fromHexString('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
+      Address.fromHexString(GAS_TOKEN_ADDRESS),
       nativeToken.symbol,
       nativeToken.name,
       nativeToken.decimals

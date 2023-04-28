@@ -20,7 +20,7 @@ describe('entities/Token', () => {
       18
     )
 
-    expect(usdc.toString()).toBe('Token(USDC)')
+    expect(usdc.toString()).toBe('USDC')
     expect(usdc.symbol).toBe('USDC')
 
     expect(usdc.fromDecimal('50.5').format().toString()).toBe('50.5')

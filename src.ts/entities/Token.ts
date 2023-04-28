@@ -61,7 +61,7 @@ export class Token {
   static NullToken = {} as Token
 
   toString() {
-    return `Token(${this.symbol})`
+    return `${this.symbol}`
   }
 
   get [Symbol.toStringTag]() {
@@ -84,6 +84,20 @@ export class Token {
 
   fromEthersBn(decimalStringOrNumber: ethers.BigNumber): TokenQuantity {
     return new TokenQuantity(this, decimalStringOrNumber.toBigInt())
+  }
+
+  fromScale18BN(decimalStringOrNumber: ethers.BigNumber): TokenQuantity {
+    const diff = Math.abs(18 - this.decimals)
+
+    if (diff === 0) {
+      return new TokenQuantity(this, decimalStringOrNumber.toBigInt())
+    }
+    const scale = 10n ** BigInt(diff)
+    if (this.decimals < 18) {
+      return this.fromBigInt(decimalStringOrNumber.toBigInt() / scale)
+    } else {
+      return this.fromBigInt(decimalStringOrNumber.toBigInt() * scale)
+    }
   }
 
   from(

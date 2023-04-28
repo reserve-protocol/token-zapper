@@ -109,7 +109,9 @@ export class Searcher {
     // sum = 0.99 * 0.5 + 1.01 * 0.5 = 1
     // 0.1 * (0.99 * 0.5) / sum = 0.0495 ETH will be going into the USDC trade
     // 0.1 * (1.01 * 0.5) / sum = 0.0505 ETH will be going into the USDT trade
-    // If we can't quote every precursor token, split input evenly between trades.
+
+    // If we can't quote every precursor token, we assume the token set adds up to 1.0
+    // and we split the input by the fraction of the trade basket.
     const precursorTokensPrices = await Promise.all(
       precursorTokenBasket.map(
         async (qty) =>
@@ -141,6 +143,7 @@ export class Searcher {
     const tradingBalances = new TokenAmounts()
     tradingBalances.add(inputQuantity)
 
+    // Trade inputs for precursor set.
     for (const { input, output } of inputPrTrade) {
       if (
         // Skip trade if user input is part of precursor set
@@ -171,7 +174,6 @@ export class Searcher {
     /**
      * PHASE 3: Mint basket token set from precursor set
      */
-
     const recourseOn = async (
       balances: TokenAmounts,
       parent: TokenAmounts,

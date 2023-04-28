@@ -22,8 +22,10 @@ import { setupConvexEdges as setupConvexEdge } from '../action/Convex'
 import { Action } from '../action'
 import { TokenQuantity } from '../entities'
 import { SwapPlan } from '../searcher'
+import { IRoute } from '@curvefi/api/lib/interfaces'
+import { GAS_TOKEN_ADDRESS } from '../base/constants'
 
-const chainLinkETH = Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
+const chainLinkETH = Address.from(GAS_TOKEN_ADDRESS)
 const chainLinkBTC = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
 const initialize = async (universe: Universe) => {
   await loadTokens(
@@ -65,7 +67,17 @@ const initialize = async (universe: Universe) => {
   )
 
   if (universe.chainConfig.config.curveConfig.enable) {
-    const curveApi = await loadCurve(universe)
+    const curveApi = await loadCurve(
+      universe,
+      // Some tokens only really have one way to be soured, like:
+      // USDC/USDT -> MIN/eUSD LP
+      // This will make UI applications snappier as they will not have to
+      // to do any searching
+      require('./data/ethereum/precomputed-curve-routes.json') as Record<
+        string,
+        IRoute
+      >
+    )
 
     // We will not implement the full curve router,
     // But rather some predefined paths that are likely to be used

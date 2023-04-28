@@ -31,6 +31,7 @@ class ConvexPool {
 const boosterInterface = IBooster__factory.createInterface()
 const baseRewardsPoolInterface =
   IConvexBaseRewardsPool__factory.createInterface()
+const wrapperInterface = IConvexWrapper__factory.createInterface()
 
 export class ConvexDepositAndStake extends Action {
   toString(): string {
@@ -48,13 +49,12 @@ export class ConvexDepositAndStake extends Action {
   ): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
-        boosterInterface.encodeFunctionData('deposit', [
-          this.convexPool.convexPoolId,
+        wrapperInterface.encodeFunctionData('deposit', [
           amountsIn.amount,
-          true,
+          destination.address,
         ])
       ),
-      destination,
+      this.convexPool.stakedConvexDepositToken.address,
       0n,
       this.gasEstimate(),
       `Deposit ${amountsIn} on Convex and stake on ${this.convexPool.rewardsAddress}`
@@ -67,7 +67,12 @@ export class ConvexDepositAndStake extends Action {
       [convexPool.stakedConvexDepositToken],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      [new Approval(convexPool.curveLPToken, convexPool.convexBooster)]
+      [
+        new Approval(
+          convexPool.curveLPToken,
+          convexPool.stakedConvexDepositToken.address
+        ),
+      ]
     )
   }
 }
@@ -125,15 +130,15 @@ export class ConvexStake extends Action {
   ): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
-        baseRewardsPoolInterface.encodeFunctionData('stakeFor', [
-          destination.address,
+        wrapperInterface.encodeFunctionData('stake', [
           amountsIn.amount,
+          destination.address,
         ])
       ),
-      this.convexPool.rewardsAddress,
+      this.convexPool.stakedConvexDepositToken.address,
       0n,
       this.gasEstimate(),
-      `Stake ${amountsIn} on ${this.convexPool.rewardsAddress}, sending ${this.output[0]} to ${destination}`
+      `Stake ${amountsIn} on Convex and stake on ${this.convexPool.rewardsAddress}`
     )
   }
   constructor(readonly convexPool: ConvexPool) {
@@ -143,7 +148,12 @@ export class ConvexStake extends Action {
       [convexPool.stakedConvexDepositToken],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Recipient,
-      [new Approval(convexPool.convexDepositToken, convexPool.rewardsAddress)]
+      [
+        new Approval(
+          convexPool.convexDepositToken,
+          convexPool.stakedConvexDepositToken.address
+        ),
+      ]
     )
   }
 }
@@ -161,12 +171,9 @@ export class ConvexUnstake extends Action {
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
-        baseRewardsPoolInterface.encodeFunctionData('withdraw', [
-          amountsIn.amount,
-          false,
-        ])
+        wrapperInterface.encodeFunctionData('withdraw', [amountsIn.amount])
       ),
-      this.convexPool.rewardsAddress,
+      this.convexPool.stakedConvexDepositToken.address,
       0n,
       this.gasEstimate(),
       `Unstake ${amountsIn} on ${this.convexPool.rewardsAddress}, returning deposit token (${this.convexPool.convexDepositToken}) to caller`
@@ -233,12 +240,11 @@ export class ConvexUnstakeAndWithdraw extends Action {
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
-        baseRewardsPoolInterface.encodeFunctionData('withdrawAndUnwrap', [
+        wrapperInterface.encodeFunctionData('withdrawAndUnwrap', [
           amountsIn.amount,
-          false,
         ])
       ),
-      this.convexPool.rewardsAddress,
+      this.convexPool.stakedConvexDepositToken.address,
       0n,
       this.gasEstimate(),
       `Unstake ${amountsIn} from rewards pool (${this.convexPool.rewardsAddress}), and withdraw from Convex returning ${this.output[0]} to caller`

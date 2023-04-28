@@ -1,5 +1,4 @@
 import { Action, DestinationOptions, InteractionConvention } from '.'
-import { Universe } from '..'
 import { Address, Approval, ContractCall } from '../base'
 import { Token, TokenQuantity } from '../entities'
 

@@ -130,8 +130,14 @@ export class SearcherResult {
     }
 
     const approvalNeeded: Approval[] = []
+    const duplicate = new Set<string>()
     await Promise.all(
       allApprovals.map(async (i) => {
+        const key = i.spender.toString() + i.token.address.toString()
+        if (duplicate.has(key)) {
+          return
+        }
+        duplicate.add(key)
         if (
           await this.universe.approvalStore.needsApproval(
             i.token,
@@ -171,6 +177,11 @@ export class SearcherResult {
     if (amountOut == null) {
       throw new Error('Unexpected: output does not contain RToken')
     }
+    // for(const call of builder.contractCalls) {
+    //   console.log("comment: ", call.comment)
+    //   console.log("to: ", call.to)
+    //   console.log("payload: ", call.payload)
+    // }
     const payload = {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,

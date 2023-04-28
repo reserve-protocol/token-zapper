@@ -7,14 +7,15 @@ import { Approval } from '../base/Approval'
 import { ethers } from 'ethers'
 import curve from '@curvefi/api'
 import { curve as curveInner } from '@curvefi/api/lib/curve'
-import { formatUnits } from 'ethers/lib/utils'
+import { formatUnits, parseUnits } from 'ethers/lib/utils'
 import { LPToken } from './LPToken'
-import { DefaultMap } from '../base'
+import { DefaultMap, parseHexStringIntoBuffer } from '../base'
 import { IRoute } from '@curvefi/api/lib/interfaces'
+import { GAS_TOKEN_ADDRESS } from '../base/constants'
 type CurveType = typeof curve
 
 type PoolTemplate = InstanceType<CurveType['PoolTemplate']>
-const curveRouterAddress = '0xfA9a30350048B2BF66865ee20363067c66f67e58'
+
 class CurvePool {
   [Symbol.toStringTag] = 'CurvePool'
   constructor(
@@ -34,55 +35,6 @@ class CurvePool {
     }
     return out + ')'
   }
-}
-
-const predefiendRoutes: Record<string, IRoute> = {
-  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f':
-    [
-      {
-        poolId: 'fraxusdc',
-        poolAddress: '0xdcef968d416a41cdac0ed8702fac8128a64241a2',
-        inputCoinAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-        outputCoinAddress: '0x3175df0976dfa876431c2e9ee6bc45b65d3473cc',
-        i: 1,
-        j: 0,
-        swapType: 7,
-        swapAddress: '0x0000000000000000000000000000000000000000',
-      },
-      {
-        poolId: 'factory-v2-277',
-        poolAddress: '0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f',
-        inputCoinAddress: '0x3175df0976dfa876431c2e9ee6bc45b65d3473cc',
-        outputCoinAddress: '0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f',
-        i: 1,
-        j: 0,
-        swapType: 7,
-        swapAddress: '0x0000000000000000000000000000000000000000',
-      },
-    ],
-  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.0x5a6a4d54456819380173272a5e8e9b9904bdf41b':
-    [
-      {
-        poolId: '3pool',
-        poolAddress: '0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7',
-        inputCoinAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-        outputCoinAddress: '0x6c3f90f043a72fa612cbac8115ee7e52bde6e490',
-        i: 1,
-        j: 0,
-        swapType: 8,
-        swapAddress: '0x0000000000000000000000000000000000000000',
-      },
-      {
-        poolId: 'mim',
-        poolAddress: '0x5a6a4d54456819380173272a5e8e9b9904bdf41b',
-        inputCoinAddress: '0x6c3f90f043a72fa612cbac8115ee7e52bde6e490',
-        outputCoinAddress: '0x5a6a4d54456819380173272a5e8e9b9904bdf41b',
-        i: 1,
-        j: 0,
-        swapType: 7,
-        swapAddress: '0x0000000000000000000000000000000000000000',
-      },
-    ],
 }
 
 const _getExchangeMultipleArgs = (
@@ -115,37 +67,84 @@ const _getExchangeMultipleArgs = (
 }
 
 export class CurveSwap extends Action {
+  private estimate?: bigint
   gasEstimate() {
     return BigInt(250000n)
   }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    throw new Error('not implemented')
+  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
+    const output = await this._quote(amountsIn)
+    const minOut = this.output[0].fromScale18BN(parseUnits(output.output, 18))
+    const contract: ethers.Contract =
+      curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
+        .contract
+    let value = 0n
+    if (amountsIn.token.address.address === GAS_TOKEN_ADDRESS) {
+      value = amountsIn.amount
+    }
+    const { _route, _swapParams, _factorySwapAddresses } =
+      _getExchangeMultipleArgs(output.route)
+
+    const data = contract.interface.encodeFunctionData('exchange_multiple', [
+      _route,
+      _swapParams,
+      amountsIn.amount,
+      minOut.amount,
+      _factorySwapAddresses,
+    ])
+    const exchangeAddress = Address.from(
+      curveInner.constants.ALIASES.registry_exchange
+    )
+
+    return new ContractCall(
+      parseHexStringIntoBuffer(data),
+      exchangeAddress,
+      value,
+      this.gasEstimate(),
+      `Swap ${amountsIn} for at least ${minOut} on Curve}`
+    )
   }
 
-  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+  private async _quote(amountsIn: TokenQuantity): Promise<{
+    output: string
+    route: IRoute
+  }> {
     const key = (
       this.input[0].address +
       '.' +
       this.output[0].address
     ).toLowerCase()
-    if (key in predefiendRoutes) {
-      const route = predefiendRoutes[key]
-      const contract =
-        curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
-          .contract
+    const contract =
+      curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
+        .contract
+    if (key in this.predefiendRoutes) {
+      const route = this.predefiendRoutes[key]
+
       const { _route, _swapParams, _factorySwapAddresses } =
         _getExchangeMultipleArgs(route)
-      const out: ethers.BigNumber = await contract.get_exchange_multiple_amount(
-        _route,
-        _swapParams,
-        amountsIn.amount,
-        _factorySwapAddresses,
-        curveInner.constantOptions
-      )
-      return [this.output[0].from(out)]
+      const [out, gasEstimate]: [ethers.BigNumber, ethers.BigNumber] =
+        await Promise.all([
+          contract.get_exchange_multiple_amount(
+            _route,
+            _swapParams,
+            amountsIn.amount,
+            _factorySwapAddresses,
+            curveInner.constantOptions
+          ),
+          contract.estimateGas.get_exchange_multiple_amount(
+            _route,
+            _swapParams,
+            amountsIn.amount,
+            _factorySwapAddresses,
+            curveInner.constantOptions
+          ),
+        ])
+      this.estimate = gasEstimate.toBigInt()
+
+      const output = formatUnits(out.sub(out.div(10000n).mul(7n)), 18)
+      return {
+        output,
+        route,
+      }
     }
 
     try {
@@ -154,38 +153,71 @@ export class CurveSwap extends Action {
         this.output[0].address.address,
         amountsIn.format()
       )
-      return [this.output[0].from(out.output)]
+      const { _route, _swapParams, _factorySwapAddresses } =
+        _getExchangeMultipleArgs(out.route)
+      const gasEstimate: ethers.BigNumber =
+        await contract.estimateGas.get_exchange_multiple_amount(
+          _route,
+          _swapParams,
+          amountsIn.amount,
+          _factorySwapAddresses,
+          curveInner.constantOptions
+        )
+
+      this.estimate = gasEstimate.toBigInt()
+      const outParsed = parseUnits(out.output, 18)
+      out.output = formatUnits(outParsed.sub(outParsed.div(10000n).mul(7n)), 18)
+      return out
     } catch (e) {
-      return [this.output[0].zero]
+      throw e
     }
   }
 
-  constructor(readonly pool: CurvePool, tokenIn: Token, tokenOut: Token) {
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const out = (await this._quote(amountsIn)).output
+
+    return [this.output[0].fromScale18BN(parseUnits(out, 18))]
+  }
+
+  constructor(
+    public readonly pool: CurvePool,
+    public readonly tokenIn: Token,
+    public readonly tokenOut: Token,
+    private readonly predefiendRoutes: Record<string, IRoute>
+  ) {
     super(
       pool.address,
       [tokenIn],
       [tokenOut],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      [new Approval(tokenIn, Address.from(curveRouterAddress))]
+      [
+        new Approval(
+          tokenIn,
+          Address.from(curveInner.constants.ALIASES.registry_exchange)
+        ),
+      ]
     )
   }
 
   toString(): string {
-    return `Curve(${this.input[0].symbol}.${this.pool.meta.name}.${this.output[0].symbol})`
+    return `Curve(${this.tokenIn}.${this.pool.meta.name}.${this.tokenOut})`
   }
 }
 
-export const loadCurve = async (universe: Universe) => {
+export const loadCurve = async (
+  universe: Universe,
+  predefinedRoutes: Record<string, IRoute>
+) => {
   const curvesEdges = new DefaultMap<Token, Map<Token, CurveSwap>>(
     () => new Map()
   )
 
   const fakeRouterTemplate: PoolTemplate = {
-    address: curveRouterAddress,
+    address: Address.from('0x99a58482bd75cbab83b27ec03ca68ff489b5788f'),
     name: 'curve-router',
   } as any
-  const router = new CurvePool(
+  const router: CurvePool = new CurvePool(
     Address.from(fakeRouterTemplate.address),
     [],
     [],
@@ -201,13 +233,12 @@ export const loadCurve = async (universe: Universe) => {
     if (edges.has(tokenOut)) {
       return edges.get(tokenOut)!
     }
-    const swap = new CurveSwap(pool, tokenIn, tokenOut)
+    const swap = new CurveSwap(pool, tokenIn, tokenOut, predefinedRoutes)
     edges.set(tokenOut, swap)
     universe.addAction(swap)
 
     return swap
   }
-
   const loadCurvePools = async (universe: Universe) => {
     const p = universe.provider as ethers.providers.JsonRpcProvider
     // const batcher = new ethers.providers.JsonRpcBatchProvider(p.connection.url)

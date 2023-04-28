@@ -2,7 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as icTokenSol from "./ICToken.sol";
-export * as iConvexStakedWrapperSol from "./IConvexStakedWrapper.sol";
 export * as isAtokenSol from "./ISAtoken.sol";
 export * as iZapperSol from "./IZapper.sol";
 export { IBasketHandler__factory } from "./IBasketHandler__factory";

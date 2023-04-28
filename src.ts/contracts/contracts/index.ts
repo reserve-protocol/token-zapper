@@ -3,8 +3,6 @@
 /* eslint-disable */
 import type * as icTokenSol from "./ICToken.sol";
 export type { icTokenSol };
-import type * as iConvexStakedWrapperSol from "./IConvexStakedWrapper.sol";
-export type { iConvexStakedWrapperSol };
 import type * as isAtokenSol from "./ISAtoken.sol";
 export type { isAtokenSol };
 import type * as iZapperSol from "./IZapper.sol";

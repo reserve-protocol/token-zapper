@@ -261,8 +261,8 @@ export const loadCurve = async (
     await curve.factory.fetchPools(true)
     const poolNames = curve
       .getPoolList()
-      .concat(curve.factory.getPoolList())
-      .concat(curve.cryptoFactory.getPoolList())
+      .filter((i) => !i.startsWith('factory-'))
+      .concat(['factory-v2-147', 'factory-v2-277'])
 
     const poolsUnfiltered = poolNames.map((name) => {
       const pool = curve.getPool(name)

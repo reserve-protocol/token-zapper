@@ -73,13 +73,17 @@ export class Address {
     }
   }
 
-  
   /**
    * Static factory method for creating Address instances from a hex string.
    * @param {string} addr - Hex string to create an Address instance.
    * @returns {Address} Address instance.
    */
   static fromHexString(addr: string): Address {
+    let fastPath = this.interningCache.getByString(addr)?.deref()
+    if (fastPath != null) {
+      return fastPath
+    }
+
     if (!isAddress(addr)) {
       throw new Error('Invalid input type ' + addr)
     }
@@ -102,7 +106,6 @@ export class Address {
   toString(): string {
     return this.address
   }
-
 
   /**
    * Returns the normalized address string.
@@ -133,10 +136,10 @@ export class Address {
   gt(other: Address) {
     return this !== other && this.address.localeCompare(other.address)
   }
-  
+
   /**
    * Returns true if this address is greater than or equal to the other address.
-  */
+   */
   gte(other: Address) {
     return this === other || this.address.localeCompare(other.address)
   }

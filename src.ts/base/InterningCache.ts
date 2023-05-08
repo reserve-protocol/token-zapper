@@ -69,6 +69,11 @@ export class InterningCache<T extends object> {
     }
   }
 
+
+  getByString(key: string) {
+    return this.entities.get(key)
+  }
+
   get(inst: T): T {
     const addr = this.idFn(inst)
     if (this.entities.has(addr)) {

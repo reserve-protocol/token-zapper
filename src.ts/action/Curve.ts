@@ -266,7 +266,14 @@ export const loadCurve = async (
 
     const poolsUnfiltered = poolNames.map((name) => {
       const pool = curve.getPool(name)
-      return { name, pool }
+
+      return {
+        name,
+        pool,
+        poolAddress: Address.from(pool.address),
+        underlyingCoinAddresses: pool.underlyingCoinAddresses.map(Address.from),
+        wrappedCoinAddresses: pool.wrappedCoinAddresses.map(Address.from)
+      }
     })
 
     const pools = poolsUnfiltered.filter(

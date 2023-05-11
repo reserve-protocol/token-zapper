@@ -10,7 +10,7 @@ import { type Approval } from '../base/Approval'
 import { type Address } from '../base/Address'
 import { SwapPaths } from '../searcher/Swap'
 import { type Token, type TokenQuantity } from '../entities/Token'
-import { type Universe } from '../Universe'
+import { Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import {
   TransactionBuilder,
@@ -65,6 +65,19 @@ export class SearcherResult {
     return this.swaps.describe()
   }
 
+  public async valueOfDust() {
+    let sum = this.universe.usd.zero
+    for (const out of this.swaps.outputs) {
+      if (out.token === this.rToken) {
+        continue
+      }
+      const price =
+        (await this.universe.fairPrice(out)) ?? this.universe.usd.zero
+      sum = sum.add(price)
+    }
+    return sum
+  }
+
   private async encodeActions(steps: Step[]): Promise<ContractCall[]> {
     const blockBuilder = new TransactionBuilder(this.universe)
 
@@ -103,9 +116,7 @@ export class SearcherResult {
         permit: PermitTransferFrom
         signature: string
       }
-    }> = {
-      returnDust: false,
-    }
+    }>
   ) {
     const executorAddress = this.universe.config.addresses.executorAddress
     const inputIsNativeToken =
@@ -156,6 +167,33 @@ export class SearcherResult {
     const steps = linearize(executorAddress, this.swaps)
     for (const encodedSubCall of await this.encodeActions(steps)) {
       builder.addCall(encodedSubCall)
+    }
+
+    if (options.returnDust == null) {
+      // Return dust to user if the dust is greater than the tx fee
+      const dustValue = await this.valueOfDust()
+
+      if (dustValue.gt(this.universe.usd.one)) {
+        const approxGasCost = BigInt(this.swaps.outputs.length - 1) * 60000n
+        const gasPrice = this.universe.gasPrice
+        const txFeeToWithdraw = this.universe.nativeToken.from(
+          gasPrice * approxGasCost
+        )
+
+        const txFeeValue = await this.universe.fairPrice(txFeeToWithdraw)
+
+        console.log('Transaction fee: ' + txFeeValue)
+        console.log('Value of dust: ' + dustValue)
+
+        options.returnDust =
+          txFeeValue == null ||
+          txFeeValue.gt(dustValue) ||
+          dustValue.gt(this.universe.usd.one.scalarMul(10n))
+
+        if (options.returnDust) {
+          console.log('Adding call to transfer dust back to user')
+        }
+      }
     }
 
     if (options.returnDust) {

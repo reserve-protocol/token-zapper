@@ -1,5 +1,9 @@
 import { Address } from '../base/Address'
-import { numberOfUnits, TokenAmounts, type TokenQuantity } from '../entities/Token'
+import {
+  numberOfUnits,
+  TokenAmounts,
+  type TokenQuantity,
+} from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
@@ -7,7 +11,7 @@ import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
 import { rTokenIFace, IBasket } from '../entities/TokenBasket'
 
-const MINT_DIGITS = 10n**9n
+const MINT_DIGITS = 10n ** 9n
 export class MintRTokenAction extends Action {
   gasEstimate() {
     return BigInt(600000n)
@@ -19,7 +23,11 @@ export class MintRTokenAction extends Action {
     }
     const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket)
 
-    return [this.basket.rToken.fromBigInt((unitsRequested / MINT_DIGITS) * MINT_DIGITS)]
+    return [
+      this.basket.rToken.fromBigInt(
+        (unitsRequested / MINT_DIGITS) * MINT_DIGITS
+      ),
+    ]
   }
 
   async exchange(input: TokenQuantity[], balances: TokenAmounts) {
@@ -39,7 +47,7 @@ export class MintRTokenAction extends Action {
       parseHexStringIntoBuffer(
         rTokenIFace.encodeFunctionData('issueTo', [
           destination.address,
-          units.amount
+          units.amount,
         ])
       ),
       this.basket.rToken.address,
@@ -49,10 +57,7 @@ export class MintRTokenAction extends Action {
     )
   }
 
-  constructor(
-    readonly universe: Universe,
-    public readonly basket: IBasket
-  ) {
+  constructor(readonly universe: Universe, public readonly basket: IBasket) {
     super(
       basket.rToken.address,
       basket.basketTokens,
@@ -96,10 +101,7 @@ export class BurnRTokenAction extends Action {
     return quantityPrToken.map((qty) => quantity.into(qty.token).mul(qty))
   }
 
-  constructor(
-    readonly universe: Universe,
-    readonly basketHandler: IBasket
-  ) {
+  constructor(readonly universe: Universe, readonly basketHandler: IBasket) {
     super(
       basketHandler.rToken.address,
       [basketHandler.rToken],

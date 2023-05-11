@@ -56,8 +56,6 @@ export type { IStaticATokenLM } from "./contracts/ISAtoken.sol/IStaticATokenLM";
 export { IStaticATokenLM__factory } from "./factories/contracts/ISAtoken.sol/IStaticATokenLM__factory";
 export type { IStETH } from "./contracts/IStETH";
 export { IStETH__factory } from "./factories/contracts/IStETH__factory";
-export type { ITokenVault } from "./contracts/ITokenVault";
-export { ITokenVault__factory } from "./factories/contracts/ITokenVault__factory";
 export type { IWrappedNative } from "./contracts/IWrappedNative";
 export { IWrappedNative__factory } from "./factories/contracts/IWrappedNative__factory";
 export type { IWStETH } from "./contracts/IWStETH";

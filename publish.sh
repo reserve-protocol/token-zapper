@@ -2,6 +2,7 @@
 
 # Ensure no uncommitted changes
 git diff-index --quiet HEAD -- || {
+  echo "$(git diff-index HEAD --)"
   echo "Uncommitted changes detected. Aborting."
   exit 1
 }

@@ -23,8 +23,6 @@ const getCurvePool = (name: string) => {
   return instantiatedCurvePools[name]
 }
 
-let curveInstantiatedForChainId = -1
-
 class CurvePool {
   [Symbol.toStringTag] = 'CurvePool'
   constructor(
@@ -253,28 +251,25 @@ export const loadCurve = async (
     const p = universe.provider as ethers.providers.JsonRpcProvider
 
     // const batcher = new ethers.providers.JsonRpcBatchProvider(p.connection.url)
-    if (universe.chainId !== curveInstantiatedForChainId) {
-      curveInstantiatedForChainId = universe.chainId
-      await curve.init('Web3', {
-        externalProvider: {
-          request: async (req: any) => {
-            if (req.method === 'eth_chainId') {
-              return '0x' + universe.chainId.toString(16)
-            }
-            if (req.method === 'eth_gasPrice') {
-              return '0x' + universe.gasPrice.toString(16)
-            }
-            const resp = await p.send(req.method, req.params)
-            return resp
-          },
+    await curve.init('Web3', {
+      externalProvider: {
+        request: async (req: any) => {
+          if (req.method === 'eth_chainId') {
+            return '0x' + universe.chainId.toString(16)
+          }
+          if (req.method === 'eth_gasPrice') {
+            return '0x' + universe.gasPrice.toString(16)
+          }
+          const resp = await p.send(req.method, req.params)
+          return resp
         },
-      }) // In this case JsonRpc url, privateKey, fee data and chainId will be specified automatically
+      },
+    }) // In this case JsonRpc url, privateKey, fee data and chainId will be specified automatically
 
-      await Promise.all([
-        curve.cryptoFactory.fetchPools(true),
-        curve.factory.fetchPools(true),
-      ])
-    }
+    await Promise.all([
+      curve.cryptoFactory.fetchPools(true),
+      curve.factory.fetchPools(true),
+    ])
 
     const poolNames = curve
       .getPoolList()

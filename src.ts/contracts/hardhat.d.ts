@@ -113,10 +113,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IStETH__factory>;
     getContractFactory(
-      name: "ITokenVault",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ITokenVault__factory>;
-    getContractFactory(
       name: "IWrappedNative",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IWrappedNative__factory>;
@@ -258,11 +254,6 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IStETH>;
-    getContractAt(
-      name: "ITokenVault",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ITokenVault>;
     getContractAt(
       name: "IWrappedNative",
       address: string,

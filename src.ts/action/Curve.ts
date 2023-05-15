@@ -16,6 +16,15 @@ type CurveType = typeof curve
 
 type PoolTemplate = InstanceType<CurveType['PoolTemplate']>
 
+const instantiatedCurvePools: Record<string, PoolTemplate> = {}
+const getCurvePool = (name: string) => {
+  if (instantiatedCurvePools[name] == null)
+    instantiatedCurvePools[name] = curve.getPool(name)
+  return instantiatedCurvePools[name]
+}
+
+let curveInstantiatedForChainId = -1
+
 class CurvePool {
   [Symbol.toStringTag] = 'CurvePool'
   constructor(
@@ -242,33 +251,38 @@ export const loadCurve = async (
   }
   const loadCurvePools = async (universe: Universe) => {
     const p = universe.provider as ethers.providers.JsonRpcProvider
-    // const batcher = new ethers.providers.JsonRpcBatchProvider(p.connection.url)
-    await curve.init('Web3', {
-      externalProvider: {
-        request: async (req: any) => {
-          if (req.method === 'eth_chainId') {
-            return '0x' + universe.chainId.toString(16)
-          }
-          if (req.method === 'eth_gasPrice') {
-            return '0x' + universe.gasPrice.toString(16)
-          }
-          const resp = await p.send(req.method, req.params)
-          return resp
-        },
-      },
-    }) // In this case JsonRpc url, privateKey, fee data and chainId will be specified automatically
 
-    await Promise.all([
-      curve.cryptoFactory.fetchPools(true),
-      curve.factory.fetchPools(true),
-    ])
+    // const batcher = new ethers.providers.JsonRpcBatchProvider(p.connection.url)
+    if (universe.chainId !== curveInstantiatedForChainId) {
+      curveInstantiatedForChainId = universe.chainId
+      await curve.init('Web3', {
+        externalProvider: {
+          request: async (req: any) => {
+            if (req.method === 'eth_chainId') {
+              return '0x' + universe.chainId.toString(16)
+            }
+            if (req.method === 'eth_gasPrice') {
+              return '0x' + universe.gasPrice.toString(16)
+            }
+            const resp = await p.send(req.method, req.params)
+            return resp
+          },
+        },
+      }) // In this case JsonRpc url, privateKey, fee data and chainId will be specified automatically
+
+      await Promise.all([
+        curve.cryptoFactory.fetchPools(true),
+        curve.factory.fetchPools(true),
+      ])
+    }
+
     const poolNames = curve
       .getPoolList()
       .filter((i) => !i.startsWith('factory-'))
       .concat(['factory-v2-147', 'factory-v2-277'])
 
     const poolsUnfiltered = poolNames.map((name) => {
-      const pool = curve.getPool(name)
+      const pool = getCurvePool(name)
 
       return {
         name,

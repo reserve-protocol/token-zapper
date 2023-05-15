@@ -311,7 +311,6 @@ But can set up your own config with 'createWithConfig'`)
       token
     )
     this.rTokens[token.symbol as keyof RTokens] = token
-    await basketHandler.update()
     this.createRefreshableEntitity(basketHandler.address, () =>
       basketHandler.update()
     )

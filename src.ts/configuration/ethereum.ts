@@ -28,17 +28,15 @@ import { GAS_TOKEN_ADDRESS } from '../base/constants'
 const chainLinkETH = Address.from(GAS_TOKEN_ADDRESS)
 const chainLinkBTC = Address.from('0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB')
 const initialize = async (universe: Universe) => {
-  await loadTokens(
+  loadTokens(
     universe,
     require('./data/ethereum/tokens.json') as JsonTokenEntry[]
   )
-  await universe.defineRToken(universe.config.addresses.rTokenDeployments.eUSD!)
-  await universe.defineRToken(
-    universe.config.addresses.rTokenDeployments['ETH+']!
-  )
-  await universe.defineRToken(
-    universe.config.addresses.rTokenDeployments.hyUSD!
-  )
+  await Promise.all([
+    universe.defineRToken(universe.config.addresses.rTokenDeployments.eUSD!),
+    universe.defineRToken(universe.config.addresses.rTokenDeployments['ETH+']!),
+    universe.defineRToken(universe.config.addresses.rTokenDeployments.hyUSD!),
+  ])
 
   const chainLinkOracle = new ChainLinkOracle(
     universe,
@@ -98,12 +96,10 @@ const initialize = async (universe: Universe) => {
     const stkcvxeUSD3CRV = await universe.getToken(
       Address.from('0xBF2FBeECc974a171e319b6f92D8f1d042C6F1AC3')
     )
-    const eUSDConvex = await setupConvexEdge(universe, stkcvxeUSD3CRV)
 
     const stkcvxMIM3LP3CRV = await universe.getToken(
       Address.from('0x8443364625e09a33d793acd03aCC1F3b5DbFA6F6')
     )
-    const mimConvex = await setupConvexEdge(universe, stkcvxMIM3LP3CRV)
 
     const stables = new Set([DAI, MIM, FRAX, USDC, USDT])
 
@@ -135,6 +131,11 @@ const initialize = async (universe: Universe) => {
           ]
         )
       }
+    const [eUSDConvex, mimConvex] = await Promise.all([
+      setupConvexEdge(universe, stkcvxeUSD3CRV),
+      setupConvexEdge(universe, stkcvxMIM3LP3CRV),
+    ])
+
     universe.defineTokenSourcingRule(
       universe.rTokens.hyUSD!,
       stkcvxeUSD3CRV,
@@ -193,15 +194,17 @@ const initialize = async (universe: Universe) => {
   const wrappedToUnderlyingMapping =
     require('./data/ethereum/underlying.json') as Record<string, string>
   // Compound
-  await setupCompoundLike(universe, wrappedToUnderlyingMapping, {
-    cEth: Address.from('0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5'),
-    comptroller: Address.from('0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B'),
-  })
+  await Promise.all([
+    setupCompoundLike(universe, wrappedToUnderlyingMapping, {
+      cEth: Address.from('0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5'),
+      comptroller: Address.from('0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B'),
+    }),
 
-  // // Flux finance
-  await setupCompoundLike(universe, wrappedToUnderlyingMapping, {
-    comptroller: Address.from('0x95Af143a021DF745bc78e845b54591C53a8B3A51'),
-  })
+    // // Flux finance
+    setupCompoundLike(universe, wrappedToUnderlyingMapping, {
+      comptroller: Address.from('0x95Af143a021DF745bc78e845b54591C53a8B3A51'),
+    }),
+  ])
 
   const saUSDT = await universe.getToken(
     Address.from('0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9')

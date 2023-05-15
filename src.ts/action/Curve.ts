@@ -36,6 +36,7 @@ class CurvePool {
     return out + ')'
   }
 }
+let curveInitialized = false
 
 const _getExchangeMultipleArgs = (
   route: IRoute
@@ -257,8 +258,10 @@ export const loadCurve = async (
       },
     }) // In this case JsonRpc url, privateKey, fee data and chainId will be specified automatically
 
-    await curve.cryptoFactory.fetchPools(true)
-    await curve.factory.fetchPools(true)
+    await Promise.all([
+      curve.cryptoFactory.fetchPools(true),
+      curve.factory.fetchPools(true),
+    ])
     const poolNames = curve
       .getPoolList()
       .filter((i) => !i.startsWith('factory-'))
@@ -272,7 +275,7 @@ export const loadCurve = async (
         pool,
         poolAddress: Address.from(pool.address),
         underlyingCoinAddresses: pool.underlyingCoinAddresses.map(Address.from),
-        wrappedCoinAddresses: pool.wrappedCoinAddresses.map(Address.from)
+        wrappedCoinAddresses: pool.wrappedCoinAddresses.map(Address.from),
       }
     })
 

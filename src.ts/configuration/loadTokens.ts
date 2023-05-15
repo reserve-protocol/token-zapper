@@ -17,10 +17,7 @@ export interface JsonTokenEntry {
  * @param universe
  * @param tokens
  */
-export const loadTokens = async (
-  universe: Universe,
-  tokens: JsonTokenEntry[]
-) => {
+export const loadTokens = (universe: Universe, tokens: JsonTokenEntry[]) => {
   for (const token of tokens) {
     universe.createToken(
       Address.from(token.address),
@@ -33,13 +30,11 @@ export const loadTokens = async (
   const commonTokenSymbols = Object.keys(
     universe.commonTokens
   ) as (keyof CommonTokens)[]
-  await Promise.all(
-    commonTokenSymbols.map(async (key) => {
-      const addr = universe.chainConfig.config.addresses.commonTokens[key]
-      if (addr == null) {
-        return
-      }
-      universe.commonTokens[key] = await universe.getToken(addr)
-    })
-  )
+  commonTokenSymbols.forEach(async (key) => {
+    const addr = universe.chainConfig.config.addresses.commonTokens[key]
+    if (addr == null) {
+      return
+    }
+    universe.commonTokens[key] = universe.tokens.get(addr)!
+  })
 }

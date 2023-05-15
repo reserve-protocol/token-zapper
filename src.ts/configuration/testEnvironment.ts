@@ -34,7 +34,7 @@ const defineRToken = (
 }
 
 const initialize = async (universe: Universe) => {
-  await loadTokens(
+  loadTokens(
     universe,
     require('./data/ethereum/tokens.json') as JsonTokenEntry[]
   )

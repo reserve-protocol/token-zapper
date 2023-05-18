@@ -36,6 +36,7 @@ export class Universe {
     Map<Token, SourcingRule>
   >(() => new Map())
   public readonly actions = new DefaultMap<Address, Action[]>(() => [])
+  private readonly allActions = new Set<Action>()
 
   public readonly tokenTradeSpecialCases = new Map<
     Token,
@@ -85,7 +86,8 @@ export class Universe {
     }
     await refreshable.refresh(this.currentBlock)
   }
-  createRefreshableEntitity(
+
+  createRefreshableEntity(
     address: Address,
     refresh: Refreshable['refreshAddress']
   ) {
@@ -203,10 +205,13 @@ export class Universe {
   }
 
   public addAction(action: Action, actionAddress?: Address) {
+    if (this.allActions.has(action)) {
+      return this
+    }
+    this.allActions.add(action)
     if (actionAddress != null) {
       this.actions.get(actionAddress).push(action)
     }
-
     if (action.addToGraph) {
       this.graph.addEdge(action)
     }
@@ -250,8 +255,10 @@ export class Universe {
     if (block <= this.blockState.currentBlock) {
       return
     }
+    if (this.blockState.currentBlock !== block) {
+      this.priceCache.clear()
+    }
     this.blockState.currentBlock = block
-    this.priceCache.clear()
     this.blockState.gasPrice = gasPrice
   }
 
@@ -312,7 +319,7 @@ But can set up your own config with 'createWithConfig'`)
     )
     this.rTokens[token.symbol as keyof RTokens] = token
     await basketHandler.update()
-    this.createRefreshableEntitity(basketHandler.address, () =>
+    this.createRefreshableEntity(basketHandler.address, () =>
       basketHandler.update()
     )
 

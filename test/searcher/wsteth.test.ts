@@ -17,8 +17,8 @@ describe('searcher/steth', () => {
       wstETH,
       Address.ZERO
     )
-    expect(path[0].steps[0].output[0].formatWithSymbol()).toBe('10.0 stETH')
-    expect(path[0].steps[1].output[0].formatWithSymbol()).toBe(
+    expect(path[0].steps[0].outputs[0].formatWithSymbol()).toBe('10.0 stETH')
+    expect(path[0].steps[1].outputs[0].formatWithSymbol()).toBe(
       '8.93700000024782301 wstETH'
     )
   })

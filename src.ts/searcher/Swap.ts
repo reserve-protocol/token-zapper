@@ -1,30 +1,45 @@
-import { type Action } from '../action/Action'
-import { DefaultMap } from '../base'
+import {
+  DestinationOptions,
+  type Action,
+  InteractionConvention,
+} from '../action/Action'
 import { type Address } from '../base/Address'
-import { token } from '../contracts/@openzeppelin/contracts'
-import { Token, TokenAmounts, type TokenQuantity } from '../entities/Token'
+import { TokenAmounts, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 
 /**
  * A single Step token exchange
  */
 export class SingleSwap {
+  public readonly type = 'SingleSwap'
   constructor(
-    public readonly input: TokenQuantity[],
+    public readonly inputs: TokenQuantity[],
     public readonly action: Action,
-    public readonly output: TokenQuantity[]
+    public readonly outputs: TokenQuantity[]
   ) {}
 
-  async exchange(tokenAmounts: TokenAmounts) {
-    tokenAmounts.exchange(this.input, this.output)
+  get proceedsOptions() {
+    return this.action.proceedsOptions
+  }
+  get interactionConvention() {
+    return this.action.interactionConvention
+  }
+  get address(): Address {
+    return this.action.address
   }
 
-  toString() {
-    return `SingleSwap(input: ${this.input
-      .map((i) => i.formatWithSymbol())
-      .join(', ')}, action: ${this.action}, output: ${this.output
-      .map((i) => i.formatWithSymbol())
-      .join(', ')})`
+  async exchange(tokenAmounts: TokenAmounts) {
+    tokenAmounts.exchange(this.inputs, this.outputs)
+  }
+
+  describe() {
+    return [
+      `SingleSwap(input: ${this.inputs
+        .map((i) => i.formatWithSymbol())
+        .join(', ')}, action: ${this.action}, output: ${this.outputs
+        .map((i) => i.formatWithSymbol())
+        .join(', ')})`,
+    ]
   }
 }
 
@@ -33,14 +48,31 @@ export class SingleSwap {
  * A SwapPath may be optimized, as long as the input's and output's remain the same.
  */
 export class SwapPath {
+  public readonly type = 'MultipleSwaps'
+
+  get proceedsOptions(): DestinationOptions {
+    return this.steps.at(-1)!.proceedsOptions
+  }
+  get interactionConvention(): InteractionConvention {
+    return this.steps.at(0)!.interactionConvention
+  }
+
+  get address(): Address {
+    return this.steps.at(0)!.address
+  }
+
   constructor(
     readonly universe: Universe,
     public readonly inputs: TokenQuantity[],
-    public readonly steps: SingleSwap[],
+    public readonly steps: (SwapPath | SingleSwap)[],
     public readonly outputs: TokenQuantity[],
     public readonly outputValue: TokenQuantity,
     public readonly destination: Address
-  ) {}
+  ) {
+    if (steps.length === 0) {
+      throw new Error('Invalid SwapPath, no steps')
+    }
+  }
 
   async exchange(tokenAmounts: TokenAmounts) {
     tokenAmounts.exchange(this.inputs, this.outputs)
@@ -74,11 +106,15 @@ export class SwapPath {
     out.push(`  steps:`)
     for (let i = 0; i < this.steps.length; i++) {
       const step = this.steps[i]
-      out.push(
-        `    Step ${i + 1}: Exchange ${step.input.join(
-          ','
-        )} for ${step.output.join(', ')} via ${step.action.toString()}`
-      )
+      if (step.type === 'SingleSwap') {
+        out.push(`    Step ${i + 1}: via ${step.describe()}`)
+      } else {
+        const desc = step.describe()
+        out.push(`    Step ${i + 1}: via ${desc[0]}`)
+        for (let j = 1; j < desc.length; j++) {
+          out.push(`    ${desc[j]}`)
+        }
+      }
     }
     out.push(`  outputs: ${this.outputs.join(', ')}`)
     out.push('}')
@@ -88,6 +124,11 @@ export class SwapPath {
 
 /**
  * SwapPaths groups SwapPath's together into sections
+ * The swapPaths can be reordered, as long as the following holds for the ith SwapPath:
+ * (sum(swapPaths[0..i-1].outputs) - sum(swapPaths[0..i-1].inputs)) >= swapPaths[i].inputs
+ *
+ * Basically, if you sum up all the inputs and output for all previous steps
+ * You are holding enough tokens to do the current step.
  */
 export class SwapPaths {
   // public readonly swapPaths: SwapPath[] = []
@@ -134,7 +175,15 @@ export class SwapPaths {
   }
 }
 
-/** Abstract set of steps to go from A to B */
+/**
+ * A list steps to go from token set A to token set B.
+ * A SwapPlan contains a linear set of actions to go from some input basket
+ * to some output basket. But does not yet has any concrete values attached to it.
+ *
+ * Using the quote method with an input basket, a SwapPath can be generated.
+ * The SwapPath is the concrete SwapPlan that contains the sub-actions inputs and outputs,
+ * and can be used to generate an actual transaction.
+ * */
 export class SwapPlan {
   constructor(readonly universe: Universe, public readonly steps: Action[]) {}
 

@@ -8,8 +8,8 @@ import {
 import { type ContractCall } from '../base/ContractCall'
 import { type Approval } from '../base/Approval'
 import { type Address } from '../base/Address'
-import { SwapPaths } from '../searcher/Swap'
-import { type Token, type TokenQuantity } from '../entities/Token'
+import { SingleSwap, SwapPath, SwapPaths } from '../searcher/Swap'
+import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
 import { Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import {
@@ -24,42 +24,66 @@ class Step {
   constructor(
     readonly inputs: TokenQuantity[],
     readonly action: Action,
-    readonly destination: Address
+    readonly destination: Address,
+    readonly outputs: TokenQuantity[]
   ) {}
 }
 
-const linearize = (executor: Address, tokenExchange: SwapPaths): Step[] => {
+const linearize = (executor: Address, tokenExchange: SwapPaths) => {
   const out: Step[] = []
-  for (const groupOfSwaps of tokenExchange.swapPaths) {
-    const endDest = groupOfSwaps.destination
-    for (let i = 0; i < groupOfSwaps.steps.length; i++) {
-      const step = groupOfSwaps.steps[i]
-      const hasNext = groupOfSwaps.steps[i + 1] != null
-      let nextAddr = !hasNext ? endDest : executor
+  const allApprovals: Approval[] = []
+  const balances = new TokenAmounts()
+  balances.addQtys(tokenExchange.inputs)
 
-      // If this step supports sending funds to a destination, and the next step requires pay before call
-      // we will point the output of this to next
+  const recourseOn = (
+    node: SwapPath | SingleSwap,
+    nextDestination: Address
+  ) => {
+    if (node.type === 'SingleSwap') {
+      balances.exchange(node.inputs, node.outputs)
+      out.push(
+        new Step(node.inputs, node.action, nextDestination, node.outputs)
+      )
+
+      for (const approval of node.action.approvals) {
+        allApprovals.push(approval)
+      }
+      return
+    }
+    for (let i = 0; i < node.steps.length; i++) {
+      const step = node.steps[i]
+      const hasNext = node.steps[i + 1] != null
+      let nextAddr = !hasNext ? nextDestination : executor
       if (
-        step.action.proceedsOptions === DestinationOptions.Recipient &&
-        groupOfSwaps.steps[i + 1]?.action.interactionConvention ===
+        step.proceedsOptions === DestinationOptions.Recipient &&
+        node.steps[i + 1]?.interactionConvention ===
           InteractionConvention.PayBeforeCall
       ) {
-        nextAddr = groupOfSwaps.steps[i + 1].action.address
+        nextAddr = node.steps[i + 1].address
       }
-
-      out.push(new Step(step.input, step.action, nextAddr))
+      recourseOn(step, nextAddr)
     }
   }
-  return out
+
+  for (const groupOfSwaps of tokenExchange.swapPaths) {
+    const endDest = groupOfSwaps.destination
+    recourseOn(groupOfSwaps, endDest)
+  }
+
+  return [out, balances, allApprovals] as const
 }
 
 export class SearcherResult {
+  public readonly blockNumber: number
   constructor(
     readonly universe: Universe,
+    readonly userInput: TokenQuantity,
     public readonly swaps: SwapPaths,
     public readonly signer: Address,
     public readonly rToken: Token
-  ) {}
+  ) {
+    this.blockNumber = universe.currentBlock
+  }
 
   describe() {
     return this.swaps.describe()
@@ -120,26 +144,14 @@ export class SearcherResult {
   ) {
     const executorAddress = this.universe.config.addresses.executorAddress
     const inputIsNativeToken =
-      this.swaps.inputs[0].token === this.universe.nativeToken
+      this.userInput.token === this.universe.nativeToken
     const builder = new TransactionBuilder(this.universe)
 
-    const allApprovals: Approval[] = []
     const potentialResidualTokens = new Set<Token>()
-
-    for (const block of this.swaps.swapPaths) {
-      for (const swap of block.steps) {
-        if (
-          swap.action.interactionConvention ===
-          InteractionConvention.ApprovalRequired
-        ) {
-          allApprovals.push(...swap.action.approvals)
-        }
-        if (swap.input.length > 1) {
-          swap.input.forEach((t) => potentialResidualTokens.add(t.token))
-        }
-      }
-    }
-
+    const [steps, endBalances, allApprovals] = linearize(
+      executorAddress,
+      this.swaps
+    )
     const approvalNeeded: Approval[] = []
     const duplicate = new Set<string>()
     await Promise.all(
@@ -160,20 +172,36 @@ export class SearcherResult {
         }
       })
     )
+
     if (approvalNeeded.length !== 0) {
       builder.setupApprovals(approvalNeeded)
     }
 
-    const steps = linearize(executorAddress, this.swaps)
+    const rTokenResult = endBalances.get(this.rToken)
+    endBalances.tokenBalances.delete(this.rToken)
+
+    const dustAmounts = endBalances.toTokenQuantities()
+
     for (const encodedSubCall of await this.encodeActions(steps)) {
       builder.addCall(encodedSubCall)
     }
 
     if (options.returnDust == null) {
       // Return dust to user if the dust is greater than the tx fee
-      const dustValue = await this.valueOfDust()
-
-      if (dustValue.gt(this.universe.usd.one)) {
+      let totalDustValue = this.universe.usd.zero
+      for (const [qty, dustPrice] of await Promise.all(
+        dustAmounts.map(async (qty) => [
+          qty,
+          (await this.universe.fairPrice(qty)) ?? this.universe.usd.zero,
+        ])
+      )) {
+        totalDustValue = totalDustValue.add(dustPrice)
+        if (dustPrice.amount === 0n || dustPrice.gt(this.universe.usd.one)) {
+          potentialResidualTokens.add(qty.token)
+        }
+      }
+      if (totalDustValue.gt(this.universe.usd.one)) {
+        console.log('Dust ' + dustAmounts.join(', '))
         const approxGasCost = BigInt(this.swaps.outputs.length - 1) * 60000n
         const gasPrice = this.universe.gasPrice
         const txFeeToWithdraw = this.universe.nativeToken.from(
@@ -183,20 +211,22 @@ export class SearcherResult {
         const txFeeValue = await this.universe.fairPrice(txFeeToWithdraw)
 
         console.log('Transaction fee: ' + txFeeValue)
-        console.log('Value of dust: ' + dustValue)
+        console.log('Value of dust: ' + totalDustValue)
+        console.log('Dust qtys: ' + dustAmounts.join(', '))
 
+        // We return the dust in three cases:
+        // 1. The dust is greater than the tx fee
+        // 2. The dust is, in total greater than 10 USD
+        // 3. We failed to estimate the tx fee for whatever reason
         options.returnDust =
           txFeeValue == null ||
-          txFeeValue.gt(dustValue) ||
-          dustValue.gt(this.universe.usd.one.scalarMul(10n))
-
-        if (options.returnDust) {
-          console.log('Adding call to transfer dust back to user')
-        }
+          totalDustValue.gt(txFeeValue) ||
+          totalDustValue.gt(this.universe.usd.one.scalarMul(10n))
       }
     }
 
     if (options.returnDust) {
+      console.log('Will claim dust, and return to ' + this.signer.address)
       builder.drainERC20([...potentialResidualTokens], this.signer)
     }
 
@@ -247,7 +277,7 @@ export class SearcherResult {
       data,
       chainId: this.universe.chainId,
 
-      // TODO: For optimism / arbitrum this needs updating to use type: 0 transactions
+      // TODO: For opti & arbi this needs updating to use type: 0 transactions
       type: 2,
       maxFeePerGas: ethers.BigNumber.from(
         this.universe.gasPrice + this.universe.gasPrice / 12n

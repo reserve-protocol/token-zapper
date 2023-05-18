@@ -34,6 +34,6 @@ export const setupMintableWithRate = async <R>(
     rate.value = await fetchRate();
   };
   const wrapped = mint.output[0];
-  universe.createRefreshableEntitity(wrapped.address, updateRate);
+  universe.createRefreshableEntity(wrapped.address, updateRate);
   universe.defineMintable(mint, burn);
 };

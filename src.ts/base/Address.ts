@@ -25,6 +25,7 @@ export class Address {
    * The normalized HEX representation of the Ethereum address.
    */
   public readonly address: string
+  public readonly integer: bigint
 
   /**
    * Private constructor for Address class.
@@ -36,6 +37,7 @@ export class Address {
     }
 
     this.address = ethers.utils.getAddress(`0x${bytes.toString('hex')}`)
+    this.integer = BigInt(this.address)
   }
 
   /**
@@ -79,7 +81,7 @@ export class Address {
    * @returns {Address} Address instance.
    */
   static fromHexString(addr: string): Address {
-    let fastPath = this.interningCache.getByString(addr)?.deref()
+    let fastPath = this.interningCache.getById(addr)?.deref()
     if (fastPath != null) {
       return fastPath
     }
@@ -134,13 +136,13 @@ export class Address {
   readonly [Symbol.toStringTag] = 'Address'
 
   gt(other: Address) {
-    return this !== other && this.address.localeCompare(other.address)
+    return this !== other && this.integer > other.integer
   }
 
   /**
    * Returns true if this address is greater than or equal to the other address.
    */
   gte(other: Address) {
-    return this === other || this.address.localeCompare(other.address)
+    return this === other || this.integer >= other.integer
   }
 }

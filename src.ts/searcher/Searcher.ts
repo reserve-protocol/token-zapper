@@ -10,6 +10,7 @@ import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
 import { bfs } from '../exchange-graph/BFS'
 import { SearcherResult } from './SearcherResult'
 import { SwapPath, SwapPaths, SwapPlan } from './Swap'
+import { retryLoop } from '../base'
 
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
@@ -347,7 +348,28 @@ export class Searcher {
     return outputSwap
   }
 
-  async findSingleInputToRTokenZap(
+  public findSingleInputToRTokenZap(
+    userInput: TokenQuantity,
+    rToken: Token,
+    signerAddress: Address,
+    slippage = 0.0
+  ): Promise<SearcherResult> {
+    return retryLoop(
+      () =>
+        this.findSingleInputToRTokenZap_(
+          userInput,
+          rToken,
+          signerAddress,
+          slippage
+        ),
+      {
+        maxRetries: 3,
+        retryDelay: 500,
+      }
+    )
+  }
+
+  private async findSingleInputToRTokenZap_(
     userInput: TokenQuantity,
     rToken: Token,
     signerAddress: Address,
@@ -393,9 +415,10 @@ export class Searcher {
 
     const searcherResult = new SearcherResult(
       this.universe,
+      userInput,
       new SwapPaths(
         this.universe,
-        [userInput],
+        [inputTokenQuantity],
         [...inputQuantityToBasketTokens.swapPaths, rTokenMint],
         output,
         rTokenMint.outputValue,

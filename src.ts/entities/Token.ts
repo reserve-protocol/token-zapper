@@ -300,15 +300,15 @@ export class TokenAmounts {
     return inputs.every((i) => this.get(i.token).gte(i))
   }
 
-  exchange(inputs: TokenQuantity[], outputs: TokenQuantity[]) {
-    if (!this.hasBalance(inputs)) {
+  exchange(tokensRemovedFromBasket: TokenQuantity[], tokensAddedToBasket: TokenQuantity[]) {
+    if (!this.hasBalance(tokensRemovedFromBasket)) {
       throw new Error('Insufficient balance')
     }
-    inputs.forEach((input) => {
-      this.sub(input)
-    })
-    outputs.forEach((outputs) => {
+    tokensAddedToBasket.forEach((outputs) => {
       this.add(outputs)
+    })
+    tokensRemovedFromBasket.forEach((input) => {
+      this.sub(input)
     })
   }
 

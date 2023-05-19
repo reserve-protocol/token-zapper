@@ -4,7 +4,7 @@
     "access": "public",
     "tag": "latest"
   },
-  "version": "1.7.0-test",
+  "version": "1.7.0-test-2",
   "description": "A library to help convert tokens into RTokens",
   "keywords": [],
   "main": "./lib.commonjs/index.js",
@@ -65,13 +65,8 @@
     ]
   },
   "scripts": {
-    "_build:dist": "rollup -c && uglifyjs ./dist/token-zapper.js -o ./dist/token-zapper.min.js && uglifyjs ./dist/token-zapper.umd.js -o ./dist/token-zapper.umd.min.js",
-    "_dist:stats": "gzip -k9f -S '.gz' ./dist/token-zapper.min.js && gzip -k9f -S '.gz' ./dist/token-zapper.umd.min.js && du -hs ./dist/*.gz && echo '' && du -hs ./dist/*.js",
     "clean": "rm -rf dist/ lib.commonjs/ lib.esm/ types/",
-    "build:dist": "npm run build && npm run _build:dist",
-    "build-dist": "npm run build && npm run _build-dist && npm run _dist-stats",
     "build:types": "tsc --project tsconfig.types.json",
-    "stats": "echo 'Dependencies' && npm ls --all --omit=dev",
     "build": "npm run clean && npm run build:typechain && npm run build:commonjs && npm run build:esm && npm run build:types",
     "build:typechain": "rm -rf contracts/artifacts/ && rm -rf contracts/cache/ && rm -rf src/contracts && cd contracts/ && npx hardhat compile",
     "build:commonjs": "tsc --project tsconfig.commonjs.json && cp -r src.ts/configuration/data/ lib.commonjs/configuration/data",

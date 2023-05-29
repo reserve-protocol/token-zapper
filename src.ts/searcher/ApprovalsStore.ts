@@ -23,7 +23,7 @@ export class ApprovalsStore {
               token.address.address,
               this.provider
             ).allowance(owner.address, spender.address)
-            if (allowance.gt(amount)) {
+            if (allowance.lt(amount)) {
               resolve(true)
               this.cache.delete(key)
             } else {

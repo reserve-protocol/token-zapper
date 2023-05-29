@@ -57,12 +57,6 @@ const initialize = async (universe: Universe) => {
   const DAI = universe.commonTokens.DAI!
   const USDC = universe.commonTokens.USDC!
   const WETH = universe.commonTokens.ERC20GAS!
-  const eUSD__FRAX_USDC = await universe.getToken(
-    Address.from('0xAEda92e6A3B1028edc139A4ae56Ec881f3064D4F')
-  )
-  const mim_3CRV = await universe.getToken(
-    Address.from('0x5a6A4D54456819380173272A5E8E9B9904BdF41B')
-  )
 
   if (universe.chainConfig.config.curveConfig.enable) {
     const curveApi = await loadCurve(
@@ -76,21 +70,27 @@ const initialize = async (universe: Universe) => {
         IRoute
       >
     )
+    // const eUSD__FRAX_USDC = await universe.getToken(
+    //   Address.from('0xAEda92e6A3B1028edc139A4ae56Ec881f3064D4F')
+    // )
+    // const mim_3CRV = await universe.getToken(
+    //   Address.from('0x5a6A4D54456819380173272A5E8E9B9904BdF41B')
+    // )
 
     // We will not implement the full curve router,
     // But rather some predefined paths that are likely to be used
     // by users
-    curveApi.createRouterEdge(FRAX, eUSD__FRAX_USDC)
-    curveApi.createRouterEdge(MIM, eUSD__FRAX_USDC)
-    curveApi.createRouterEdge(USDC, eUSD__FRAX_USDC)
-    curveApi.createRouterEdge(USDT, eUSD__FRAX_USDC)
-    curveApi.createRouterEdge(DAI, eUSD__FRAX_USDC)
+    // curveApi.createRouterEdge(FRAX, eUSD__FRAX_USDC)
+    // curveApi.createRouterEdge(MIM, eUSD__FRAX_USDC)
+    // curveApi.createRouterEdge(USDC, eUSD__FRAX_USDC)
+    // curveApi.createRouterEdge(USDT, eUSD__FRAX_USDC)
+    // curveApi.createRouterEdge(DAI, eUSD__FRAX_USDC)
 
-    curveApi.createRouterEdge(FRAX, mim_3CRV)
-    curveApi.createRouterEdge(MIM, mim_3CRV)
-    curveApi.createRouterEdge(USDC, mim_3CRV)
-    curveApi.createRouterEdge(USDT, mim_3CRV)
-    curveApi.createRouterEdge(DAI, mim_3CRV)
+    // curveApi.createRouterEdge(FRAX, mim_3CRV)
+    // curveApi.createRouterEdge(MIM, mim_3CRV)
+    // curveApi.createRouterEdge(USDC, mim_3CRV)
+    // curveApi.createRouterEdge(USDT, mim_3CRV)
+    // curveApi.createRouterEdge(DAI, mim_3CRV)
 
     // Add convex edges
     const stkcvxeUSD3CRV = await universe.getToken(

@@ -148,7 +148,7 @@ export class CurveSwap extends Action {
         ])
       this.estimate = gasEstimate.toBigInt()
 
-      const output = formatUnits(out.sub(out.div(10000n).mul(7n)), 18)
+      const output = formatUnits(out.sub(out.div(1000n)), 18)
       return {
         output,
         route,
@@ -174,7 +174,7 @@ export class CurveSwap extends Action {
 
       this.estimate = gasEstimate.toBigInt()
       const outParsed = parseUnits(out.output, 18)
-      out.output = formatUnits(outParsed.sub(outParsed.div(10000n).mul(7n)), 18)
+      out.output = formatUnits(outParsed.sub(outParsed.div(1000n)), 18)
       return out
     } catch (e) {
       throw e

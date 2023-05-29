@@ -165,7 +165,8 @@ export class SearcherResult {
           await this.universe.approvalStore.needsApproval(
             i.token,
             executorAddress,
-            i.spender
+            i.spender,
+            2n ** 200n
           )
         ) {
           approvalNeeded.push(i)

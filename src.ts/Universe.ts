@@ -298,7 +298,7 @@ But can set up your own config with 'createWithConfig'`)
 
   static async createForTest(config: ChainConfiguration) {
     const universe = new Universe(null as any, config, {
-      async needsApproval(_: Token, __: Address, ___: Address) {
+      async needsApproval(_: Token, __: Address, ___: Address, ____: bigint) {
         return true
       },
     } as ApprovalsStore)

@@ -10,7 +10,8 @@ export class ApprovalsStore {
   async needsApproval(
     token: Token,
     owner: Address,
-    spender: Address
+    spender: Address,
+    amount: bigint
   ): Promise<boolean> {
     const key = `${token}.${owner}.${spender}`
     let check = this.cache.get(key)
@@ -22,7 +23,7 @@ export class ApprovalsStore {
               token.address.address,
               this.provider
             ).allowance(owner.address, spender.address)
-            if (allowance.isZero()) {
+            if (allowance.gt(amount)) {
               resolve(true)
               this.cache.delete(key)
             } else {

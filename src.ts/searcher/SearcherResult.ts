@@ -177,7 +177,7 @@ export class SearcherResult {
       builder.setupApprovals(approvalNeeded)
     }
 
-    const rTokenResult = endBalances.get(this.rToken)
+    // const rTokenResult = endBalances.get(this.rToken)
     endBalances.tokenBalances.delete(this.rToken)
 
     const dustAmounts = endBalances.toTokenQuantities()
@@ -186,43 +186,43 @@ export class SearcherResult {
       builder.addCall(encodedSubCall)
     }
 
-    if (options.returnDust == null) {
-      // Return dust to user if the dust is greater than the tx fee
-      let totalDustValue = this.universe.usd.zero
-      for (const [qty, dustPrice] of await Promise.all(
-        dustAmounts.map(async (qty) => [
-          qty,
-          (await this.universe.fairPrice(qty)) ?? this.universe.usd.zero,
-        ])
-      )) {
-        totalDustValue = totalDustValue.add(dustPrice)
-        if (dustPrice.amount === 0n || dustPrice.gt(this.universe.usd.one)) {
-          potentialResidualTokens.add(qty.token)
-        }
+    // Return dust to user if the dust is greater than the tx fee
+    let totalDustValue = this.universe.usd.zero
+    for (const [qty, dustPrice] of await Promise.all(
+      dustAmounts.map(async (qty) => [
+        qty,
+        (await this.universe.fairPrice(qty)) ?? this.universe.usd.zero,
+      ])
+    )) {
+      totalDustValue = totalDustValue.add(dustPrice)
+      if (dustPrice.amount === 0n || dustPrice.gt(this.universe.usd.one)) {
+        potentialResidualTokens.add(qty.token)
       }
-      if (totalDustValue.gt(this.universe.usd.one)) {
-        console.log('Dust ' + dustAmounts.join(', '))
-        const approxGasCost = BigInt(this.swaps.outputs.length - 1) * 60000n
-        const gasPrice = this.universe.gasPrice
-        const txFeeToWithdraw = this.universe.nativeToken.from(
-          gasPrice * approxGasCost
-        )
+    }
+    console.log('Value of dust: ' + totalDustValue)
+    console.log('Dust qtys: ' + dustAmounts.join(', '))
+    if (totalDustValue.gt(this.universe.usd.one)) {
+      console.log('Dust ' + dustAmounts.join(', '))
+      const approxGasCost = BigInt(this.swaps.outputs.length - 1) * 60000n
+      const gasPrice = this.universe.gasPrice
+      const txFeeToWithdraw = this.universe.nativeToken.from(
+        gasPrice * approxGasCost
+      )
 
-        const txFeeValue = await this.universe.fairPrice(txFeeToWithdraw)
+      const txFeeValue = await this.universe.fairPrice(txFeeToWithdraw)
 
-        console.log('Transaction fee: ' + txFeeValue)
-        console.log('Value of dust: ' + totalDustValue)
-        console.log('Dust qtys: ' + dustAmounts.join(', '))
+      console.log('Transaction fee: ' + txFeeValue)
+      console.log('Value of dust: ' + totalDustValue)
+      console.log('Dust qtys: ' + dustAmounts.join(', '))
 
-        // We return the dust in three cases:
-        // 1. The dust is greater than the tx fee
-        // 2. The dust is, in total greater than 10 USD
-        // 3. We failed to estimate the tx fee for whatever reason
-        options.returnDust =
-          txFeeValue == null ||
-          totalDustValue.gt(txFeeValue) ||
-          totalDustValue.gt(this.universe.usd.one.scalarMul(10n))
-      }
+      // We return the dust in three cases:
+      // 1. The dust is greater than the tx fee
+      // 2. The dust is, in total greater than 10 USD
+      // 3. We failed to estimate the tx fee for whatever reason
+      options.returnDust =
+        txFeeValue == null ||
+        totalDustValue.gt(txFeeValue) ||
+        totalDustValue.gt(this.universe.usd.one.scalarMul(10n))
     }
 
     if (options.returnDust) {

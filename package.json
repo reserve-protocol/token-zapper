@@ -25,7 +25,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=19.4.0"
+    "node": ">=18.16.0"
   },
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "prettier": {
@@ -76,7 +76,7 @@
     "prettier": "prettier '**/*.{ts,json,md}'",
     "prettier:check": "npm run prettier -- --check",
     "prettier:fix": "npm run prettier -- --write",
-    "postinstall": "patch-package"
+    "postinstall": "npx patch-package"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.7.0",

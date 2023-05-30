@@ -4,7 +4,7 @@
     "access": "public",
     "tag": "latest"
   },
-  "version": "1.7.3",
+  "version": "1.7.4-test",
   "description": "A library to help convert tokens into RTokens",
   "keywords": [],
   "main": "./lib.commonjs/index.js",

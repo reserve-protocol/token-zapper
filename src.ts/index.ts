@@ -1,4 +1,3 @@
-import "./patch-curve"
 export * as base from './base'
 export * as configuration from './configuration'
 export * as entities from './entities'

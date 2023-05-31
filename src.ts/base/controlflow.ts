@@ -63,10 +63,10 @@ export class RetryLoopException extends Error {
 
 /**
  * calculate the next delay based on the backoff strategy
- * 
- * @param currentDelay 
- * @param config 
- * @returns 
+ *
+ * @param currentDelay
+ * @param config
+ * @returns
  * @throws Error if the backoff strategy is unknown
  */
 const calcBackoff = (currentDelay: number, config: RetryLoopConfig) => {

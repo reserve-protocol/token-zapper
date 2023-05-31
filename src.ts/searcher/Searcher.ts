@@ -354,6 +354,12 @@ export class Searcher {
     signerAddress: Address,
     slippage = 0.0
   ): Promise<SearcherResult> {
+    // return this.findSingleInputToRTokenZap_(
+    //   userInput,
+    //   rToken,
+    //   signerAddress,
+    //   slippage
+    // )
     return retryLoop(
       () =>
         this.findSingleInputToRTokenZap_(

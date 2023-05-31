@@ -43,7 +43,6 @@ class CurvePool {
     return out + ')'
   }
 }
-let curveInitialized = false
 
 const _getExchangeMultipleArgs = (
   route: IRoute
@@ -148,7 +147,10 @@ export class CurveSwap extends Action {
         ])
       this.estimate = gasEstimate.toBigInt()
 
-      const output = formatUnits(out.sub(out.div(1000n)), 18)
+      const output = formatUnits(
+        out.sub(out.div(1000n)),
+        this.output[0].decimals
+      )
       return {
         output,
         route,
@@ -174,7 +176,7 @@ export class CurveSwap extends Action {
 
       this.estimate = gasEstimate.toBigInt()
       const outParsed = parseUnits(out.output, 18)
-      out.output = formatUnits(outParsed.sub(outParsed.div(1000n)), 18)
+      out.output = formatUnits(outParsed.sub(outParsed.div(1000n)), this.output[0].decimals)
       this.predefinedRoutes[key] = out.route
       return out
     } catch (e) {

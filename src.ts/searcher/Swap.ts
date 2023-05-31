@@ -195,13 +195,19 @@ export class SwapPlan {
     input: TokenQuantity[],
     destination: Address
   ): Promise<SwapPath> {
+    if (input.length === 0) {
+      throw new Error('Invalid input, no input tokens ' + this.toString())
+    }
     let legAmount = input
     const swaps: SingleSwap[] = []
 
     for (const step of this.steps) {
       if (step.input.length !== legAmount.length) {
         throw new Error(
-          'Invalid input, input count does not match Action input length'
+          'Invalid input, input count does not match Action input length: ' +
+            step.input.join(', ') +
+            ' vs ' +
+            legAmount.join(', ')
         )
       }
       const output = await step.quote(legAmount)

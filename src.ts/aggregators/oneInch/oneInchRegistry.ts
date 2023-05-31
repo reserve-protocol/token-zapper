@@ -34,13 +34,16 @@ export interface IOneInchRouter {
 }
 
 const SUPPORTED_ONE_INCH_CHAINS = [
-  1, 56, 137, 10, 42161, 100, 43114, 250, 8217, 1313161554,
+  1, 56, 137, 10, 42161, 100, 43114, 250, 8217, 1313161554, 31337,
 ] as const
 type SupportedChainIDSTupleType = typeof SUPPORTED_ONE_INCH_CHAINS
 type SupportedOneInchChains = keyof {
   [K in SupportedChainIDSTupleType[number]]: K
 }
 const numberToSupportedChainId = (n: number): SupportedOneInchChains => {
+  if (n === 31337) {
+    return 1
+  }
   if (SUPPORTED_ONE_INCH_CHAINS.includes(n as SupportedOneInchChains)) {
     return n as SupportedOneInchChains
   }

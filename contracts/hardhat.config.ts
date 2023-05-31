@@ -7,6 +7,11 @@ const config: HardhatUserConfig = {
     outDir: '../src.ts/contracts',
     target: 'ethers-v5',
   },
+  networks: {
+    local: {
+      url: 'http://127.0.0.1:8545/',
+    }
+  },
   solidity: {
     compilers: [
       {

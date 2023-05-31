@@ -124,8 +124,8 @@ export class CurveSwap extends Action {
     const contract =
       curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
         .contract
-    if (key in this.predefiendRoutes) {
-      const route = this.predefiendRoutes[key]
+    if (key in this.predefinedRoutes) {
+      const route = this.predefinedRoutes[key]
 
       const { _route, _swapParams, _factorySwapAddresses } =
         _getExchangeMultipleArgs(route)
@@ -175,6 +175,7 @@ export class CurveSwap extends Action {
       this.estimate = gasEstimate.toBigInt()
       const outParsed = parseUnits(out.output, 18)
       out.output = formatUnits(outParsed.sub(outParsed.div(1000n)), 18)
+      this.predefinedRoutes[key] = out.route
       return out
     } catch (e) {
       throw e
@@ -191,7 +192,7 @@ export class CurveSwap extends Action {
     public readonly pool: CurvePool,
     public readonly tokenIn: Token,
     public readonly tokenOut: Token,
-    private readonly predefiendRoutes: Record<string, IRoute>
+    private readonly predefinedRoutes: Record<string, IRoute>
   ) {
     super(
       pool.address,

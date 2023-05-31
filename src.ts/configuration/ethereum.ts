@@ -80,6 +80,10 @@ const initialize = async (universe: Universe) => {
     // We will not implement the full curve router,
     // But rather some predefined paths that are likely to be used
     // by users
+
+    curveApi.createRouterEdge(USDC, USDT)
+    curveApi.createRouterEdge(USDT, USDC)
+
     curveApi.createRouterEdge(FRAX, eUSD__FRAX_USDC)
     curveApi.createRouterEdge(MIM, eUSD__FRAX_USDC)
     curveApi.createRouterEdge(USDC, eUSD__FRAX_USDC)

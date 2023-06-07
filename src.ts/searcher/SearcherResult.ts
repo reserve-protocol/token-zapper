@@ -26,7 +26,7 @@ class Step {
     readonly action: Action,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) {}
+  ) { }
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -57,7 +57,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-          InteractionConvention.PayBeforeCall
+        InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -152,6 +152,20 @@ export class SearcherResult {
       executorAddress,
       this.swaps
     )
+    for (const step of steps) {
+      for (const qty of step.inputs) {
+        if (qty.token === this.universe.nativeToken) {
+          continue
+        }
+        potentialResidualTokens.add(qty.token)
+      }
+      for (const qty of step.outputs) {
+        if (qty.token === this.universe.nativeToken) {
+          continue
+        }
+        potentialResidualTokens.add(qty.token)
+      }
+    }
     const approvalNeeded: Approval[] = []
     const duplicate = new Set<string>()
     await Promise.all(
@@ -189,17 +203,15 @@ export class SearcherResult {
 
     // Return dust to user if the dust is greater than the tx fee
     let totalDustValue = this.universe.usd.zero
-    for (const [qty, dustPrice] of await Promise.all(
+    for (const [, dustPrice] of await Promise.all(
       dustAmounts.map(async (qty) => [
         qty,
         (await this.universe.fairPrice(qty)) ?? this.universe.usd.zero,
       ])
     )) {
       totalDustValue = totalDustValue.add(dustPrice)
-      if (dustPrice.amount === 0n || dustPrice.gt(this.universe.usd.one)) {
-        potentialResidualTokens.add(qty.token)
-      }
     }
+
     console.log('Value of dust: ' + totalDustValue)
     console.log('Dust qtys: ' + dustAmounts.join(', '))
     if (totalDustValue.gt(this.universe.usd.one)) {
@@ -266,8 +278,8 @@ export class SearcherResult {
     const data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),

@@ -311,6 +311,7 @@ But can set up your own config with 'createWithConfig'`)
       mainInst.rToken(),
       mainInst.basketHandler(),
     ])
+    
     const token = await this.getToken(Address.from(rTokenAddr))
     const basketHandler = new TokenBasket(
       this,

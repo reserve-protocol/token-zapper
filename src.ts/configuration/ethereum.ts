@@ -36,6 +36,7 @@ const initialize = async (universe: Universe) => {
     universe.defineRToken(universe.config.addresses.rTokenDeployments.eUSD!),
     universe.defineRToken(universe.config.addresses.rTokenDeployments['ETH+']!),
     universe.defineRToken(universe.config.addresses.rTokenDeployments.hyUSD!),
+    universe.defineRToken(universe.config.addresses.rTokenDeployments.RSD!),
   ])
 
   const chainLinkOracle = new ChainLinkOracle(
@@ -116,25 +117,25 @@ const initialize = async (universe: Universe) => {
     // reduce the number of trades needed to perform the zap.
     const makeStkConvexSourcingRule =
       (depositAndStake: Action): SourcingRule =>
-      async (input, unitAmount) => {
-        const lpTokenQty = unitAmount.into(depositAndStake.input[0])
-        if (stables.has(input)) {
+        async (input, unitAmount) => {
+          const lpTokenQty = unitAmount.into(depositAndStake.input[0])
+          if (stables.has(input)) {
+            return BasketTokenSourcingRuleApplication.singleBranch(
+              [lpTokenQty],
+              [PostTradeAction.fromAction(depositAndStake)]
+            )
+          }
           return BasketTokenSourcingRuleApplication.singleBranch(
-            [lpTokenQty],
-            [PostTradeAction.fromAction(depositAndStake)]
+            [unitAmount.into(USDC)],
+            [
+              PostTradeAction.fromAction(
+                curveApi.createRouterEdge(USDC, lpTokenQty.token),
+                true // Cause the Zapper to recalculate the inputs of the mints for the next step
+              ),
+              PostTradeAction.fromAction(depositAndStake),
+            ]
           )
         }
-        return BasketTokenSourcingRuleApplication.singleBranch(
-          [unitAmount.into(USDC)],
-          [
-            PostTradeAction.fromAction(
-              curveApi.createRouterEdge(USDC, lpTokenQty.token),
-              true // Cause the Zapper to recalculate the inputs of the mints for the next step
-            ),
-            PostTradeAction.fromAction(depositAndStake),
-          ]
-        )
-      }
     const [eUSDConvex, mimConvex] = await Promise.all([
       setupConvexEdge(universe, stkcvxeUSD3CRV),
       setupConvexEdge(universe, stkcvxMIM3LP3CRV),
@@ -149,6 +150,12 @@ const initialize = async (universe: Universe) => {
       universe.rTokens.hyUSD!,
       stkcvxMIM3LP3CRV,
       makeStkConvexSourcingRule(mimConvex.depositAndStakeAction)
+    )
+
+    universe.defineTokenSourcingRule(
+      universe.rTokens.RSD!,
+      stkcvxeUSD3CRV,
+      makeStkConvexSourcingRule(eUSDConvex.depositAndStakeAction)
     )
 
     for (const stable of stables) {
@@ -288,6 +295,7 @@ const ethereumConfig: ChainConfiguration = {
         eUSD: Address.from('0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a'),
         'ETH+': Address.from('0xb6A7d481719E97e142114e905E86a39a2Fa0dfD2'),
         hyUSD: Address.from('0x2cabaa8010b3fbbDEeBe4a2D0fEffC2ed155bf37'),
+        RSD: Address.from('0xa410AA8304CcBD53F88B4a5d05bD8fa048F42478'),
       },
       // Points to aave address providers
       aavev2: Address.from('0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'),

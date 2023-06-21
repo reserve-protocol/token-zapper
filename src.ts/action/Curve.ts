@@ -31,7 +31,7 @@ class CurvePool {
     readonly underlyingTokens: Token[],
     readonly meta: PoolTemplate,
     readonly templateName: string
-  ) {}
+  ) { }
 
   toString() {
     let out = `CurvePool(name=${this.meta.name},tokens=${this.tokens.join(
@@ -124,7 +124,7 @@ export class CurveSwap extends Action {
       curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
         .contract
     if (key in this.predefinedRoutes) {
-      const route = this.predefinedRoutes[key]
+      const route = await this.predefinedRoutes[key]
 
       const { _route, _swapParams, _factorySwapAddresses } =
         _getExchangeMultipleArgs(route)
@@ -156,32 +156,35 @@ export class CurveSwap extends Action {
         route,
       }
     }
-
-    try {
-      const out = await curve.router.getBestRouteAndOutput(
-        amountsIn.token.address.address,
-        this.output[0].address.address,
-        amountsIn.format()
-      )
-      const { _route, _swapParams, _factorySwapAddresses } =
-        _getExchangeMultipleArgs(out.route)
-      const gasEstimate: ethers.BigNumber =
-        await contract.estimateGas.get_exchange_multiple_amount(
-          _route,
-          _swapParams,
-          amountsIn.amount,
-          _factorySwapAddresses,
-          curveInner.constantOptions
+    const task = (async () => {
+      try {
+        const out = await curve.router.getBestRouteAndOutput(
+          amountsIn.token.address.address,
+          this.output[0].address.address,
+          amountsIn.format()
         )
+        const { _route, _swapParams, _factorySwapAddresses } =
+          _getExchangeMultipleArgs(out.route)
+        const gasEstimate: ethers.BigNumber =
+          await contract.estimateGas.get_exchange_multiple_amount(
+            _route,
+            _swapParams,
+            amountsIn.amount,
+            _factorySwapAddresses,
+            curveInner.constantOptions
+          )
 
-      this.estimate = gasEstimate.toBigInt()
-      const outParsed = parseUnits(out.output, 18)
-      out.output = formatUnits(outParsed.sub(outParsed.div(1000n)), this.output[0].decimals)
-      this.predefinedRoutes[key] = out.route
-      return out
-    } catch (e) {
-      throw e
-    }
+        this.estimate = gasEstimate.toBigInt()
+        const outParsed = parseUnits(out.output, 18)
+        out.output = formatUnits(outParsed.sub(outParsed.div(1000n)), this.output[0].decimals)
+
+        return out
+      } catch (e) {
+        throw e
+      }
+    })()
+    this.predefinedRoutes[key] = task.then((out) => out.route)
+    return await task
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -194,7 +197,7 @@ export class CurveSwap extends Action {
     public readonly pool: CurvePool,
     public readonly tokenIn: Token,
     public readonly tokenOut: Token,
-    private readonly predefinedRoutes: Record<string, IRoute>
+    private readonly predefinedRoutes: Record<string, Promise<IRoute>>
   ) {
     super(
       pool.address,
@@ -218,8 +221,15 @@ export class CurveSwap extends Action {
 
 export const loadCurve = async (
   universe: Universe,
-  predefinedRoutes: Record<string, IRoute>
+  predefinedRoutes_: Record<string, IRoute>
 ) => {
+  const predefinedRoutes = Object.fromEntries(
+    Object.entries(predefinedRoutes_).map(([key, route]) => [
+      key,
+      Promise.resolve(route),
+    ])
+  )
+
   const curvesEdges = new DefaultMap<Token, Map<Token, CurveSwap>>(
     () => new Map()
   )

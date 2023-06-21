@@ -255,6 +255,7 @@ const ethereumConfig: ChainConfiguration = {
         eUSD: null,
         'ETH+': null,
         hyUSD: null,
+        RSD: null,
       },
       // Points to aave address providers
       aavev2: Address.from('0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'),

@@ -75,8 +75,7 @@
     "format": "npm run prettier:fix",
     "prettier": "prettier '**/*.{ts,json,md}'",
     "prettier:check": "npm run prettier -- --check",
-    "prettier:fix": "npm run prettier -- --write",
-    "postinstall": "npx patch-package"
+    "prettier:fix": "npm run prettier -- --write"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.7.0",
@@ -104,7 +103,6 @@
     "jest": "^29.5.0",
     "jest-config": "^29.5.0",
     "lodash.camelcase": "4.3.0",
-    "patch-package": "^7.0.0",
     "prettier": "^2.8.5",
     "prompt": "1.0.0",
     "rollup": "2.78.1",

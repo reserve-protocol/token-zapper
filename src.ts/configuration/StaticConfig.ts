@@ -13,6 +13,7 @@ export interface RTokens {
   "ETH+": Address | null
   hyUSD: Address | null
   RSD: Address | null
+  iUSD: Address | null
 }
 export class StaticConfig {
   constructor(

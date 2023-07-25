@@ -140,7 +140,7 @@ export class SearcherResult {
         permit: PermitTransferFrom
         signature: string
       }
-    }>
+    }> = {}
   ) {
     const executorAddress = this.universe.config.addresses.executorAddress
     const inputIsNativeToken =

@@ -253,6 +253,7 @@ const ethereumConfig: ChainConfiguration = {
       ),
       rTokenDeployments: {
         eUSD: null,
+        iUSD: null,
         'ETH+': null,
         hyUSD: null,
         RSD: null,

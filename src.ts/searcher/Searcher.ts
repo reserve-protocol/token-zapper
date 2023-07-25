@@ -163,7 +163,9 @@ export class Searcher {
 
       const trade = swaps[0]
       if (trade == null) {
-        throw new Error('Could not find way to swap into precursor token')
+        throw new Error(
+          `Could not find way to swap into precursor token ${input} -> ${output}`
+        )
       }
       if (!tradingBalances.hasBalance(trade.inputs)) {
         throw new Error('Failed to find token zap')

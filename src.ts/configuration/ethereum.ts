@@ -37,6 +37,7 @@ const initialize = async (universe: Universe) => {
     universe.defineRToken(universe.config.addresses.rTokenDeployments['ETH+']!),
     universe.defineRToken(universe.config.addresses.rTokenDeployments.hyUSD!),
     universe.defineRToken(universe.config.addresses.rTokenDeployments.RSD!),
+    universe.defineRToken(universe.config.addresses.rTokenDeployments.iUSD!),
   ])
 
   const chainLinkOracle = new ChainLinkOracle(
@@ -78,6 +79,10 @@ const initialize = async (universe: Universe) => {
       Address.from('0x5a6A4D54456819380173272A5E8E9B9904BdF41B')
     )
 
+    const _3CRV = await universe.getToken(
+      Address.from('0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490')
+    )
+
     // We will not implement the full curve router,
     // But rather some predefined paths that are likely to be used
     // by users
@@ -97,6 +102,12 @@ const initialize = async (universe: Universe) => {
     curveApi.createRouterEdge(USDT, mim_3CRV)
     curveApi.createRouterEdge(DAI, mim_3CRV)
 
+    curveApi.createRouterEdge(FRAX, _3CRV)
+    curveApi.createRouterEdge(MIM, _3CRV)
+    curveApi.createRouterEdge(USDC, _3CRV)
+    curveApi.createRouterEdge(USDT, _3CRV)
+    curveApi.createRouterEdge(DAI, _3CRV)
+
     // Add convex edges
     const stkcvxeUSD3CRV = await universe.getToken(
       Address.from('0xBF2FBeECc974a171e319b6f92D8f1d042C6F1AC3')
@@ -104,6 +115,10 @@ const initialize = async (universe: Universe) => {
 
     const stkcvxMIM3LP3CRV = await universe.getToken(
       Address.from('0x8443364625e09a33d793acd03aCC1F3b5DbFA6F6')
+    )
+
+    const stkcvx3Crv = await universe.getToken(
+      Address.from('0xee0ac49885719DBF5FC1CDAFD9c752127E009fFa')
     )
 
     const stables = new Set([DAI, MIM, FRAX, USDC, USDT])
@@ -136,9 +151,10 @@ const initialize = async (universe: Universe) => {
             ]
           )
         }
-    const [eUSDConvex, mimConvex] = await Promise.all([
+    const [eUSDConvex, mimConvex, threeCryptoConvex] = await Promise.all([
       setupConvexEdge(universe, stkcvxeUSD3CRV),
       setupConvexEdge(universe, stkcvxMIM3LP3CRV),
+      setupConvexEdge(universe, stkcvx3Crv)
     ])
 
     universe.defineTokenSourcingRule(
@@ -146,6 +162,7 @@ const initialize = async (universe: Universe) => {
       stkcvxeUSD3CRV,
       makeStkConvexSourcingRule(eUSDConvex.depositAndStakeAction)
     )
+
     universe.defineTokenSourcingRule(
       universe.rTokens.hyUSD!,
       stkcvxMIM3LP3CRV,
@@ -156,6 +173,12 @@ const initialize = async (universe: Universe) => {
       universe.rTokens.RSD!,
       stkcvxeUSD3CRV,
       makeStkConvexSourcingRule(eUSDConvex.depositAndStakeAction)
+    )
+
+    universe.defineTokenSourcingRule(
+      universe.rTokens.iUSD!,
+      stkcvx3Crv,
+      makeStkConvexSourcingRule(threeCryptoConvex.depositAndStakeAction)
     )
 
     for (const stable of stables) {
@@ -223,10 +246,14 @@ const initialize = async (universe: Universe) => {
   const saUSDC = await universe.getToken(
     Address.from('0x60C384e226b120d93f3e0F4C502957b2B9C32B15')
   )
+  const saDAI = await universe.getToken(
+    Address.from('0xF6147b4B44aE6240F7955803B2fD5E15c77bD7ea')
+  )
 
   const saTokens = [
     { underlying: USDT, wrapped: saUSDT },
     { underlying: USDC, wrapped: saUSDC },
+    { underlying: DAI, wrapped: saDAI },
   ]
 
   for (const { wrapped, underlying } of saTokens) {
@@ -296,6 +323,7 @@ const ethereumConfig: ChainConfiguration = {
         'ETH+': Address.from('0xb6A7d481719E97e142114e905E86a39a2Fa0dfD2'),
         hyUSD: Address.from('0x2cabaa8010b3fbbDEeBe4a2D0fEffC2ed155bf37'),
         RSD: Address.from('0xa410AA8304CcBD53F88B4a5d05bD8fa048F42478'),
+        iUSD: Address.from('0x555143D2E6653c80a399f77c612D33D5Bf67F331'),
       },
       // Points to aave address providers
       aavev2: Address.from('0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'),

@@ -9,7 +9,7 @@ import { Address } from '../base/Address'
 import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
 import { bfs } from '../exchange-graph/BFS'
 import { SearcherResult } from './SearcherResult'
-import { SwapPath, SwapPaths, SwapPlan } from './Swap'
+import { SingleSwap, SwapPath, SwapPaths, SwapPlan } from './Swap'
 import { retryLoop } from '../base'
 
 /**
@@ -332,14 +332,19 @@ export class Searcher {
       this.universe,
       [rTokenQuantity],
       [
-        new SwapPath(
-          this.universe,
-          redeemRTokenForUnderlying.inputs,
-          redeemRTokenForUnderlying.swapPaths.map((i) => i.steps).flat(),
-          redeemRTokenForUnderlying.outputs,
-          redeemRTokenForUnderlying.outputValue,
-          redeemRTokenForUnderlying.destination
-        ),
+        ...redeemRTokenForUnderlying.swapPaths.map(i => {
+          if (i.outputs.length === 1 && i.outputs[0].token === outputToken) {
+            return new SwapPath(
+              i.universe,
+              i.inputs,
+              i.steps,
+              i.outputs,
+              i.outputValue,
+              signerAddress
+            )
+          }
+          return i
+        }),
         ...underlyingToOutputTrade,
       ],
       tokenAmounts.toTokenQuantities(),
@@ -347,7 +352,13 @@ export class Searcher {
       signerAddress
     )
 
-    return outputSwap
+    return new SearcherResult(
+      this.universe,
+      rTokenQuantity,
+      outputSwap,
+      signerAddress,
+      outputToken
+    )
   }
 
   public findSingleInputToRTokenZap(

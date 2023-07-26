@@ -116,7 +116,7 @@ export class SwapPath {
         }
       }
     }
-    out.push(`  outputs: ${this.outputs.join(', ')}`)
+    out.push(`  outputs: ${this.outputs.join(', ')} ${this.destination}`)
     out.push('}')
     return out
   }

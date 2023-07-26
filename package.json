@@ -117,6 +117,7 @@
     "@curvefi/api": "2.31.0",
     "@nomiclabs/hardhat-ethers": "^2.2.2",
     "@uniswap/permit2-sdk": "^1.2.0",
-    "ethers": "^5.7.2"
+    "ethers": "^5.7.2",
+    "ganache": "^7.9.0"
   }
 }

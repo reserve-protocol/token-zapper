@@ -90,13 +90,45 @@ const pendingTx = await provider.sendTransaction(
 )
 ```
 
+Zapping out of rtoken:
+
+```typescript
+const res = await searcher.findRTokenIntoSingleTokenZap(
+  universe.rTokens.eUSD!.from("50.0"),
+  universe.commonTokens.USDC!,
+  testUserAddr,
+  0.0
+)
+```
+
+**note**: If zapping from rToken into ETH, the library will silently convert the output token to WETH.
+
+```typescript
+await searcher.findRTokenIntoSingleTokenZap(
+  universe.rTokens.eUSD!.from("50.0"),
+  universe.nativeToken!,
+  testUserAddr,
+  0.0
+)
+
+// Is the same as:
+await searcher.findRTokenIntoSingleTokenZap(
+  universe.rTokens.eUSD!.from("50.0"),
+  universe.commonTokens.ERC20GAS!,
+  testUserAddr,
+  0.0
+)
+
+// So end user receives WETH!
+```
+
 ## Current features and limitations
 
 While the library does support Searching on uniswap v2 like venues, and the contracts are set up to swap directly using v3 pools. We do not currently support using the build in searcher for Swaps, and are relying on 1inch.
 
 We may expand support for the zapper to be able to search pools directly, as it can potentially be more efficient.
 
-**RToken to RToken zaps, or RToken to Token zaps are not currently supported. The library will route the RToken into 1inch for the initial Swap resulting in value loss.**
+**RToken to RToken zaps are not currently supported**
 
 RToken to RToken zaps are planned for the future.
 

@@ -80,7 +80,7 @@ export class SearcherResult {
     readonly userInput: TokenQuantity,
     public readonly swaps: SwapPaths,
     public readonly signer: Address,
-    public readonly rToken: Token
+    public readonly outputToken: Token
   ) {
     this.blockNumber = universe.currentBlock
   }
@@ -92,7 +92,7 @@ export class SearcherResult {
   public async valueOfDust() {
     let sum = this.universe.usd.zero
     for (const out of this.swaps.outputs) {
-      if (out.token === this.rToken) {
+      if (out.token === this.outputToken) {
         continue
       }
       const price =
@@ -193,7 +193,7 @@ export class SearcherResult {
     }
 
     // const rTokenResult = endBalances.get(this.rToken)
-    endBalances.tokenBalances.delete(this.rToken)
+    endBalances.tokenBalances.delete(this.outputToken)
 
     const dustAmounts = endBalances.toTokenQuantities()
 
@@ -253,7 +253,7 @@ export class SearcherResult {
         : inputToken
 
     const amountOut = this.swaps.outputs.find(
-      (output) => output.token === this.rToken
+      (output) => output.token === this.outputToken
     )
     if (amountOut == null) {
       throw new Error('Unexpected: output does not contain RToken')

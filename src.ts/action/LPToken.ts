@@ -70,8 +70,8 @@ export class LPTokenBurn extends Action {
   constructor(public readonly lpToken: LPToken) {
     super(
       lpToken.token.address,
-      lpToken.poolTokens,
       [lpToken.token],
+      lpToken.poolTokens,
       InteractionConvention.None,
       DestinationOptions.Callee,
       []

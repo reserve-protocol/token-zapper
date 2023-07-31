@@ -207,7 +207,7 @@ export class SwapPlan {
           'Invalid input, input count does not match Action input length: ' +
             step.input.join(', ') +
             ' vs ' +
-            legAmount.join(', ')
+            legAmount.join(', ') + " " + this.toString()
         )
       }
       const output = await step.quote(legAmount)

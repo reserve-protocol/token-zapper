@@ -2,10 +2,13 @@ import { Address } from '../../base/Address'
 import { FEE_SCALE } from '../../base/constants'
 import { type Token, type TokenQuantity } from '../Token'
 import { type SwapDirection } from './TwoTokenPoolTypes'
-import { getCreate2Address, keccak256 } from 'ethers/lib/utils'
+
+import { keccak256 } from '@ethersproject/keccak256'
+import { getCreate2Address } from '@ethersproject/address'
+
 import { parseHexStringIntoBuffer } from '../../base/utils'
 import { Buffer } from 'buffer'
-import { UniswapV2Pair__factory } from '../../contracts/factories/@uniswap/v2-core/contracts/UniswapV2Pair__factory'
+import { UniswapV2Pair__factory } from '../../contracts/factories/UniswapV2Pair__factory'
 
 const INIT_CODE_HASH = parseHexStringIntoBuffer(
   '0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f'

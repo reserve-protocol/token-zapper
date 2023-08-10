@@ -1,7 +1,7 @@
 import { type Universe } from '../Universe';
 import { MintRTokenAction, BurnRTokenAction } from '../action/RTokens';
 import { Address } from '../base/Address';
-import { IMain__factory } from '../contracts/factories/contracts/IMain__factory';
+import { IMain__factory } from '../contracts/factories/IMain__factory';
 import { TokenBasket } from '../entities/TokenBasket';
 
 export const loadRToken = async (universe: Universe, rTokenAddress: Address, mainAddr: Address) => {

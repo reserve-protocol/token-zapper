@@ -6,10 +6,8 @@ import { Graph } from './exchange-graph/Graph'
 import { Token, type TokenQuantity } from './entities/Token'
 import { TokenLoader, makeTokenLoader } from './entities/makeTokenLoader'
 import { type Config } from './configuration/ChainConfiguration'
-
 import { DefaultMap } from './base/DefaultMap'
 import { type PriceOracle } from './oracles/PriceOracle'
-import { type DexAggregator } from './aggregators/DexAggregator'
 import { Refreshable } from './entities/Refreshable'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
 import { LPToken } from './action/LPToken'
@@ -17,6 +15,7 @@ import { SourcingRule } from './searcher/BasketTokenSourcingRules'
 
 import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
 import { SwapPath } from './searcher/Swap'
+import { type SwapSignature } from './aggregators/SwapSignature'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -63,7 +62,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   >()
   public readonly oracles: PriceOracle[] = []
 
-  public readonly dexAggregators: DexAggregator[] = []
+  public readonly dexAggregators: {swap: SwapSignature}[] = []
 
   // Sentinel token used for pricing things
   public readonly rTokens = {} as TokenList<UniverseConf["addresses"]["rTokens"]>

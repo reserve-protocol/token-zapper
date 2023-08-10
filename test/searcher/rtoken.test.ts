@@ -1,7 +1,7 @@
 import { Address } from '../../src.ts/base/Address'
 import { IBasket } from '../../src.ts/entities/TokenBasket'
 import { Universe } from '../../src.ts/Universe'
-import { Searcher } from '../../src.ts/searcher'
+import { Searcher } from '../../src.ts/searcher/Searcher'
 import {createForTest} from '../../src.ts/configuration/testEnvironment'
 import { fixture, createV2Pool } from './univ2.test'
 import { BurnRTokenAction, MintRTokenAction } from '../../src.ts/action/RTokens'

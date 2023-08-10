@@ -1,15 +1,14 @@
 import { type Address } from '../base/Address';
-import { ERC20__factory } from '../contracts/factories/@openzeppelin/contracts/token/ERC20/ERC20__factory';
 import { parseHexStringIntoBuffer } from '../base/utils';
 import { id } from "@ethersproject/hash";
 import { defaultAbiCoder } from "@ethersproject/abi";
 import { type Provider } from '@ethersproject/providers'
-
+import { IERC20__factory } from '../contracts/factories/IERC20__factory';
 
 export const makeTokenLoader = (provider: Provider) => async (
   address: Address
 ) => {
-  const erc20 = ERC20__factory.connect(address.address, provider);
+  const erc20 = IERC20__factory.connect(address.address, provider);
   let [symbol, decimals] = await Promise.all([
     provider.call({
       to: address.address,

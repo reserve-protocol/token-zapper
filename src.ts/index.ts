@@ -1,5 +1,5 @@
-export * from './base/Address'
-export * from './entities/Token'
+export { Address } from './base/Address'
+export { Token, TokenQuantity } from './entities/Token'
 
 import { loadTokens } from './configuration/loadTokens'
 import { makeConfig } from './configuration/ChainConfiguration'
@@ -13,5 +13,4 @@ export const configuration = {
 }
 
 export { Searcher } from './searcher/Searcher'
-export * as aggregators from "./aggregators"
 export { Universe } from './Universe'

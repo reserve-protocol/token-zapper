@@ -5,8 +5,8 @@ import { parseHexStringIntoBuffer } from '../base/utils'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
-import { ICToken__factory } from '../contracts/factories/contracts/ICToken.sol/ICToken__factory'
-import { CEther__factory } from '../contracts/factories/contracts/ICToken.sol/CEther__factory'
+import { ICToken__factory } from '../contracts/factories/ICToken.sol/ICToken__factory'
+import { CEther__factory } from '../contracts/factories/ICToken.sol/CEther__factory'
 
 const iCTokenInterface = ICToken__factory.createInterface()
 const iCEtherInterface = CEther__factory.createInterface()

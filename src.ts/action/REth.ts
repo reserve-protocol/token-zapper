@@ -3,9 +3,9 @@ import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
-import { type IRETHRouter } from '../contracts/contracts/IRETHRouter'
-import { IRETHRouter__factory } from '../contracts/factories/contracts/IRETHRouter__factory'
 import { type Address } from '../base/Address'
+import { type IRETHRouter } from '../contracts/IRETHRouter'
+import { IRETHRouter__factory } from '../contracts/factories/IRETHRouter__factory'
 
 export class REthRouter {
   private readonly routerInstance: IRETHRouter

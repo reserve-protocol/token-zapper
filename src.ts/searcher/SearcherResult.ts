@@ -10,7 +10,8 @@ import { type Address } from '../base/Address'
 import { type Approval } from '../base/Approval'
 import { type ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
+import { type Token, type TokenQuantity } from '../entities/Token'
+import { TokenAmounts } from '../entities/TokenAmounts'
 import { type SingleSwap, type SwapPath, type SwapPaths } from '../searcher/Swap'
 import {
   TransactionBuilder,

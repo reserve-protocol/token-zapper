@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: BlueOak-1.0.0
 pragma solidity 0.8.17;
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// Portion of external interface for CTokens
 // See: https://github.com/compound-finance/compound-protocol/blob/master/contracts/CToken.sol
-interface ICToken is IERC20 {
+interface ICToken  {
     function mint(uint256 mintAmount) external payable returns (uint256);
     function redeem(uint256 cTokenAmount) external payable returns (uint256);
 
@@ -21,7 +20,7 @@ interface ICToken is IERC20 {
     /// @return The address of the comptroller
     function comptroller() external view returns (address);
 }
-interface CEther is IERC20 {
+interface CEther  {
     function mint() external payable returns (uint256);
     function redeem(uint256 cTokenAmount) external payable returns (uint256);
 }

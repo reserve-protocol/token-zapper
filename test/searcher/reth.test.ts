@@ -1,5 +1,5 @@
 import { Address } from '../../src.ts/base/Address'
-import { Searcher } from '../../src.ts/searcher'
+import { Searcher } from '../../src.ts/searcher/Searcher'
 import {createForTest} from '../../src.ts/configuration/testEnvironment'
 
 describe('searcher/reth', () => {

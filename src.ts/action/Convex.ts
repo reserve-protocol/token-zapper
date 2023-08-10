@@ -2,13 +2,11 @@ import { Action, DestinationOptions, InteractionConvention } from './Action'
 import { Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Token, TokenQuantity } from '../entities/Token'
-import { IBooster__factory } from '../contracts/factories/contracts/IConvexStakedWrapper.sol/IBooster__factory'
-import { IConvexWrapper__factory } from '../contracts/factories/contracts/IConvexWrapper__factory'
 import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
-
-
+import { IBooster__factory } from '../contracts/factories/IBooster__factory'
+import { IConvexWrapper__factory } from '../contracts/factories/IConvexWrapper__factory'
 
 class ConvexPool {
   constructor(

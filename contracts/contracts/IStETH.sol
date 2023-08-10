@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: BlueOak-1.0.0
 pragma solidity 0.8.17;
 
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-
-interface IStETH is IERC20 {
+interface IStETH {
     function getPooledEthByShares(
         uint256 _sharesAmount
     ) external view returns (uint256);

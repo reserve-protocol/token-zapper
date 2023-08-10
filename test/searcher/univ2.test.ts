@@ -1,7 +1,7 @@
 import { Address } from '../../src.ts/base/Address'
 import { Universe } from '../../src.ts/Universe'
 import { V2Pool } from '../../src.ts/entities/dexes/V2LikePool'
-import { Searcher } from '../../src.ts/searcher'
+import { Searcher } from '../../src.ts/searcher/Searcher'
 import { UniV2Like } from '../../src.ts/action/UniV2Like'
 import {createForTest} from '../../src.ts/configuration/testEnvironment'
 import { TokenQuantity } from '../../src.ts/entities/Token'

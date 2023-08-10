@@ -8,7 +8,7 @@ import { UniBase } from '../entities/dexes/UniBase'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Buffer } from 'buffer'
-import { UniswapV2Pair__factory } from '../contracts/factories/@uniswap/v2-core/contracts/UniswapV2Pair__factory'
+import { UniswapV2Pair__factory } from '../contracts/factories/UniswapV2Pair__factory'
 
 const iface = UniswapV2Pair__factory.createInterface()
 

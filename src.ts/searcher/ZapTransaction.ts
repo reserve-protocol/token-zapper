@@ -1,6 +1,6 @@
 import { type TransactionRequest } from "@ethersproject/providers";
-import { type ZapERC20ParamsStruct } from '../contracts/contracts/IZapper.sol/IZapper';
 import { type TokenQuantity } from '../entities/Token';
+import { type ZapERC20ParamsStruct } from "../contracts/IZapper.sol/IZapper";
 
 export class ZapTransaction {
   constructor(

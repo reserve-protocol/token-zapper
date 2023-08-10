@@ -53,12 +53,12 @@
       "require": "./lib.commonjs/configuration/setupCurveOnEthereum.js",
       "types": "./types/configuration/setupCurveOnEthereum.d.ts"
     },
-    "./configuration/ethereum": {
+    "./configuration/ethereum.js": {
       "import": "./lib.esm/configuration/ethereum.js",
       "require": "./lib.commonjs/configuration/ethereum.js",
       "types": "./types/configuration/ethereum.d.ts"
     },
-    "./configs/mainnet/tokens": {
+    "./configuration/setupEthereumTokenList.js": {
       "import": "./lib.esm/configuration/setupEthereumTokenList.js",
       "require": "./lib.commonjs/configuration/setupEthereumTokenList.js",
       "types": "./types/configuration/setupEthereumTokenList.d.ts"
@@ -67,6 +67,11 @@
       "import": "./lib.esm/configuration/setupEthereumZapper.js",
       "require": "./lib.commonjs/configuration/setupEthereumZapper.js",
       "types": "./types/configuration/setupEthereumZapper.d.ts"
+    },
+    "./aggregators/one-inch": {
+      "import": "./lib.esm/aggregators/oneInch/oneInchRegistry.js",
+      "require": "./lib.commonjs/aggregators/oneInch/oneInchRegistry.js",
+      "types": "./types/aggregators/oneInch/oneInchRegistry.d.ts"
     },
     ".": {
       "import": "./lib.esm/index.js",
@@ -133,8 +138,6 @@
     "prettier:fix": "npm run prettier -- --write"
   },
   "devDependencies": {
-    "@ethersproject/abi": "^5.7.0",
-    "@ethersproject/providers": "^5.7.2",
     "@openzeppelin/contracts": "^4.8.2",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@typechain/ethers-v5": "^10.2.0",
@@ -143,25 +146,20 @@
     "@types/node": "^18.15.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
-    "@uniswap/v2-core": "^1.0.1",
-    "@uniswap/v3-core": "^1.0.1",
     "buffer": "^5.7.1",
     "dotenv": "^16.0.3",
     "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-config-standard-with-typescript": "^34.0.1",
     "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-n": "^15.6.1",
     "eslint-plugin-promise": "^6.1.1",
-    "ethereumjs-utils": "5.2.5",
     "hardhat": "^2.13.0",
     "jest": "^29.5.0",
     "jest-config": "^29.5.0",
+    "@nomiclabs/hardhat-ethers": "^2.2.2",
     "lodash.camelcase": "4.3.0",
     "prettier": "^2.8.5",
     "prompt": "1.0.0",
-    "rollup": "2.78.1",
-    "solidity-coverage": "^0.8.2",
     "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "4.1.1",
@@ -169,10 +167,11 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@curvefi/api": "2.31.0",
-    "@nomiclabs/hardhat-ethers": "^2.2.2",
-    "@uniswap/permit2-sdk": "^1.2.0",
+    "@ethersproject/abi": "^5.7.0",
+    "@ethersproject/providers": "^5.7.2",
     "ethers": "^5.7.2",
+    "@curvefi/api": "2.31.0",
+    "@uniswap/permit2-sdk": "^1.2.0",
     "ganache": "^7.9.0"
   }
 }

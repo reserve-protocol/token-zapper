@@ -1,16 +1,10 @@
 import { Address } from '../base/Address'
-import {
-  IBasketHandler__factory,
-} from '../contracts/factories/contracts/IBasketHandler__factory'
-import {
-  IRToken__factory,
-} from '../contracts/factories/contracts/IRToken__factory'
+import { IBasketHandler__factory } from '../contracts/factories/IBasketHandler__factory'
 
-'../contracts/factories/@openzeppelin/contracts/token/ERC20/ERC20__factory';
+
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 
-export const rTokenIFace = IRToken__factory.createInterface()
 
 export interface IBasket {
   basketNonce: number

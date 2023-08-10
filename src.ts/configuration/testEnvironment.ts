@@ -14,8 +14,8 @@ import { ContractCall } from '../base/ContractCall'
 import { BurnWStETH, MintWStETH } from '../action/WStEth'
 import { BurnStETH, MintStETH } from '../action/StEth'
 import { makeConfig } from './ChainConfiguration'
-import { MokcApprovalsStore } from '../searcher'
 import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
+import { ApprovalsStore } from '../searcher/ApprovalsStore'
 
 export const testConfig = makeConfig(
   1,
@@ -296,6 +296,21 @@ const initialize = async (universe: TestUniverse) => {
 
 
 
+export class MockApprovalsStore extends ApprovalsStore {
+  constructor(
+  ) {
+    super(null as any)
+  }
+  async needsApproval(
+    token: Token,
+    owner: Address,
+    spender: Address,
+    amount: bigint
+  ): Promise<boolean> {
+    return true
+  }
+}
+
 export const createForTest = async <const Conf extends BaseTestConfigType>(
   c = testConfig as Conf
 ) => {
@@ -304,7 +319,7 @@ export const createForTest = async <const Conf extends BaseTestConfigType>(
     c,
     initialize,
     {
-      approvalsStore: new MokcApprovalsStore(),
+      approvalsStore: new MockApprovalsStore(),
       tokenLoader: async (_: Address) => {
         throw new Error('Not implemented')
       },

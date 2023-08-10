@@ -1,6 +1,6 @@
 import { type Address } from '../base/Address'
+import { IChainLinkFeedRegistry__factory } from '../contracts/factories/IChainLinkFeedRegistry__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
-import { IChainLinkFeedRegistry__factory } from '../contracts/factories/contracts/IChainLinkFeedRegistry__factory'
 import { type Universe } from '../Universe'
 import { PriceOracle } from './PriceOracle'
 

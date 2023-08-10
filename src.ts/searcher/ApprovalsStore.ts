@@ -1,7 +1,7 @@
 import { type Provider } from '@ethersproject/providers'
 import { type Address } from '../base/Address'
 import { type Token } from '../entities/Token'
-import { ERC20__factory } from '../contracts/factories/@openzeppelin/contracts/token/ERC20/ERC20__factory'
+import { IERC20__factory } from '../contracts/factories/IERC20__factory'
 
 export class ApprovalsStore {
   constructor(private readonly provider: Provider) { }
@@ -12,7 +12,7 @@ export class ApprovalsStore {
     owner: Address,
     spender: Address
   ) {
-    return await ERC20__factory.connect(
+    return await IERC20__factory.connect(
       token.address.address,
       this.provider
     ).allowance(owner.address, spender.address)
@@ -48,20 +48,5 @@ export class ApprovalsStore {
       this.cache.set(key, check)
     }
     return await check
-  }
-}
-
-export class MokcApprovalsStore extends ApprovalsStore {
-  constructor(
-  ) {
-    super(null as any)
-  }
-  async needsApproval(
-    token: Token,
-    owner: Address,
-    spender: Address,
-    amount: bigint
-  ): Promise<boolean> {
-    return true
   }
 }

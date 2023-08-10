@@ -1,15 +1,18 @@
 import { Address } from '../base/Address'
 import {
   numberOfUnits,
-  TokenAmounts,
   type TokenQuantity,
 } from '../entities/Token'
+import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
-import { rTokenIFace, IBasket } from '../entities/TokenBasket'
+import { IBasket } from '../entities/TokenBasket'
+import { IRToken__factory } from '../contracts'
+
+const rTokenIFace = IRToken__factory.createInterface()
 
 const MINT_DIGITS = 10n ** 9n
 export class MintRTokenAction extends Action {

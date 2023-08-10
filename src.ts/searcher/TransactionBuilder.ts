@@ -3,7 +3,8 @@ import { type Address } from '../base/Address'
 import { type Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { IZapperExecutor__factory, IZapper__factory } from '../contracts/factories/contracts/IZapper.sol'
+import { IZapperExecutor__factory } from '../contracts/factories/IZapper.sol/IZapperExecutor__factory'
+import { IZapper__factory } from '../contracts/factories/IZapper.sol/IZapper__factory'
 import { type Token } from '../entities/Token'
 
 export const zapperExecutorInterface =

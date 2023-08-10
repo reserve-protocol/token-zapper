@@ -3,8 +3,8 @@ import { type Universe } from '../Universe'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { AddressZero } from '@ethersproject/constants'
-import { IStETH__factory } from '../contracts/factories/contracts/IStETH__factory'
 import { parseHexStringIntoBuffer } from '../base/utils'
+import { IStETH__factory } from '../contracts/factories/IStETH__factory'
 
 const stETHInterface = IStETH__factory.createInterface()
 export class StETHRateProvider {

@@ -4,7 +4,8 @@ import {
   type Action,
 } from '../action/Action'
 import { type Address } from '../base/Address'
-import { TokenAmounts, type TokenQuantity } from '../entities/Token'
+import { type TokenQuantity } from '../entities/Token'
+import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Universe } from '../Universe'
 
 /**

@@ -9,6 +9,7 @@ import { type Token, type TokenQuantity } from '../../entities/Token'
 import { SwapPlan } from '../../searcher/Swap'
 import { type Universe } from '../../Universe'
 import { DexAggregator } from '../DexAggregator'
+export { DexAggregator } from '../DexAggregator'
 import {
   Api,
   type HttpResponse,
@@ -16,6 +17,7 @@ import {
   type SwapErrorDto,
   type SwapResponseDto,
 } from './swagger/oneInchApi'
+
 
 export type OneInchQuoteResponse = QuoteResponseDto
 export type OneInchSwapResponse = SwapResponseDto

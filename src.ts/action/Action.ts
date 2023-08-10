@@ -1,5 +1,6 @@
 import { type Address } from '../base/Address'
-import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
+import { type Token, type TokenQuantity } from '../entities/Token'
+import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Approval } from '../base/Approval'
 import { type ContractCall } from '../base/ContractCall'
 

@@ -2,7 +2,7 @@ import { type Universe } from '../Universe';
 import { Address } from '../base/Address';
 import { type Token } from '../entities/Token';
 import { ChainLinkOracle } from '../oracles/ChainLinkOracle';
-import { ZapperOracleAggregator, ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle';
+import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle';
 
 export const setupChainLink = (
   universe: Universe,

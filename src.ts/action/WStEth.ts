@@ -2,8 +2,9 @@ import { type Universe } from '../Universe'
 import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { type IWStETH } from '../contracts/contracts/IWStETH'
-import { IWStETH__factory } from '../contracts/factories/contracts/IWStETH__factory'
+import { type IWStETH } from '../contracts/IWStETH'
+import { IWStETH__factory } from '../contracts/factories/IWStETH__factory'
+
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 

@@ -1,6 +1,6 @@
 import { type Universe } from '../Universe';
 import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens';
-import { IStaticATokenLM__factory } from '../contracts/factories/contracts/ISAtoken.sol/IStaticATokenLM__factory';
+import { IStaticATokenLM__factory } from '../contracts/factories/ISAtoken.sol/IStaticATokenLM__factory';
 
 import { type Token } from '../entities/Token';
 import { setupMintableWithRate } from './setupMintableWithRate';

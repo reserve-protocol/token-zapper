@@ -7,6 +7,16 @@ export class ApprovalsStore {
   constructor(private readonly provider: Provider) { }
 
   private readonly cache = new Map<string, Promise<boolean>>()
+  public async queryAllowance(
+    token: Token,
+    owner: Address,
+    spender: Address
+  ) {
+    return await ERC20__factory.connect(
+      token.address.address,
+      this.provider
+    ).allowance(owner.address, spender.address)
+  }
   public async needsApproval(
     token: Token,
     owner: Address,
@@ -19,10 +29,11 @@ export class ApprovalsStore {
       check = new Promise((resolve, reject) => {
         void (async () => {
           try {
-            const allowance = await ERC20__factory.connect(
-              token.address.address,
-              this.provider
-            ).allowance(owner.address, spender.address)
+            const allowance = await this.queryAllowance(
+              token,
+              owner,
+              spender
+            )
             if (allowance.lt(amount)) {
               resolve(true)
               this.cache.delete(key)

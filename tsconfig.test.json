@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es2021",
-    "module": "commonjs",
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["es2021", "ES2021.Weakref", "DOM"],
     "isolatedModules": true,
     "esModuleInterop": true,

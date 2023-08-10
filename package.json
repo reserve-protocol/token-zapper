@@ -7,7 +7,6 @@
   "version": "2.0.0-dev-7",
   "description": "A library to help convert tokens into RTokens",
   "keywords": [],
-  "main": "./lib.commonjs/index.js",
   "module": "./lib.esm/index.js",
   "sideEffects": false,
   "types": "./types/index.d.ts",
@@ -15,67 +14,54 @@
   "exports": {
     "./protocols/chainlink": {
       "import": "./lib.esm/configuration/setupChainLink.js",
-      "require": "./lib.commonjs/configuration/setupChainLink.js",
       "types": "./types/configuration/setupChainLink.d.ts"
     },
     "./protocols/compoundV2": {
       "import": "./lib.esm/configuration/setupCompound.js",
-      "require": "./lib.commonjs/configuration/setupCompound.js",
       "types": "./types/configuration/setupCompound.d.ts"
     },
     "./protocols/lido": {
       "import": "./lib.esm/configuration/setupLido.js",
-      "require": "./lib.commonjs/configuration/setupLido.js",
       "types": "./types/configuration/setupLido.d.ts"
     },
     "./protocols/rocketpool": {
       "import": "./lib.esm/configuration/setupRETH.js",
-      "require": "./lib.commonjs/configuration/setupRETH.js",
       "types": "./types/configuration/setupRETH.d.ts"
     },
     "./protocols/reserve": {
       "import": "./lib.esm/configuration/setupRTokens.js",
-      "require": "./lib.commonjs/configuration/setupRTokens.js",
       "types": "./types/configuration/setupRTokens.d.ts"
     },
     "./protocols/aaveV2": {
       "import": "./lib.esm/configuration/setupSAToken.js",
-      "require": "./lib.commonjs/configuration/setupSAToken.js",
       "types": "./types/configuration/setupSAToken.d.ts"
     },
     "./protocols/erc20gas": {
       "import": "./lib.esm/configuration/setupWrappedGasToken.js",
-      "require": "./lib.commonjs/configuration/setupWrappedGasToken.js",
       "types": "./types/configuration/setupWrappedGasToken.d.ts"
     },
     "./protocols/curve/mainnet": {
       "import": "./lib.esm/configuration/setupCurveOnEthereum.js",
-      "require": "./lib.commonjs/configuration/setupCurveOnEthereum.js",
       "types": "./types/configuration/setupCurveOnEthereum.d.ts"
     },
     "./configuration/ethereum": {
       "import": "./lib.esm/configuration/ethereum.js",
-      "require": "./lib.commonjs/configuration/ethereum.js",
       "types": "./types/configuration/ethereum.d.ts"
     },
     "./configuration/setupEthereumTokenList": {
       "import": "./lib.esm/configuration/setupEthereumTokenList.js",
-      "require": "./lib.commonjs/configuration/setupEthereumTokenList.js",
       "types": "./types/configuration/setupEthereumTokenList.d.ts"
     },
     "./configs/mainnet/zapper": {
       "import": "./lib.esm/configuration/setupEthereumZapper.js",
-      "require": "./lib.commonjs/configuration/setupEthereumZapper.js",
       "types": "./types/configuration/setupEthereumZapper.d.ts"
     },
     "./aggregators/one-inch": {
       "import": "./lib.esm/aggregators/oneInch/oneInchRegistry.js",
-      "require": "./lib.commonjs/aggregators/oneInch/oneInchRegistry.js",
       "types": "./types/aggregators/oneInch/oneInchRegistry.d.ts"
     },
     ".": {
       "import": "./lib.esm/index.js",
-      "require": "./lib.commonjs/index.js",
       "types": "./types/index.d.ts"
     }
   },
@@ -125,11 +111,10 @@
     ]
   },
   "scripts": {
-    "clean": "rm -rf dist/ lib.commonjs/ lib.esm/ types/",
+    "clean": "rm -rf dist/ lib.esm/ types/",
     "build:types": "tsc --project tsconfig.types.json",
-    "build": "npm run clean && npm run build:typechain && npm run build:commonjs && npm run build:esm && npm run build:types",
+    "build": "npm run clean && npm run build:typechain && npm run build:esm && npm run build:types",
     "build:typechain": "rm -rf contracts/artifacts/ && rm -rf contracts/cache/ && rm -rf src/contracts && cd contracts/ && npx hardhat compile",
-    "build:commonjs": "tsc --project tsconfig.commonjs.json && cp -r src.ts/configuration/data/ lib.commonjs/configuration/data",
     "build:esm": "tsc --project tsconfig.esm.json && cp -r src.ts/configuration/data/ lib.esm/configuration/data",
     "test": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests",
     "format": "npm run prettier:fix",

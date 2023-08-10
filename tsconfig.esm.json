@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "es2020",
+    "module": "ESNext",
     "outDir": "./lib.esm",
     "noUnusedLocals": false
   }

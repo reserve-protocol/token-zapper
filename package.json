@@ -53,12 +53,12 @@
       "require": "./lib.commonjs/configuration/setupCurveOnEthereum.js",
       "types": "./types/configuration/setupCurveOnEthereum.d.ts"
     },
-    "./configuration/ethereum.js": {
+    "./configuration/ethereum": {
       "import": "./lib.esm/configuration/ethereum.js",
       "require": "./lib.commonjs/configuration/ethereum.js",
       "types": "./types/configuration/ethereum.d.ts"
     },
-    "./configuration/setupEthereumTokenList.js": {
+    "./configuration/setupEthereumTokenList": {
       "import": "./lib.esm/configuration/setupEthereumTokenList.js",
       "require": "./lib.commonjs/configuration/setupEthereumTokenList.js",
       "types": "./types/configuration/setupEthereumTokenList.d.ts"

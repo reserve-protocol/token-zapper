@@ -53,7 +53,7 @@
       "require": "./lib.commonjs/configuration/setupCurveOnEthereum.js",
       "types": "./types/configuration/setupCurveOnEthereum.d.ts"
     },
-    "./configs/mainnet": {
+    "./configuration/ethereum": {
       "import": "./lib.esm/configuration/ethereum.js",
       "require": "./lib.commonjs/configuration/ethereum.js",
       "types": "./types/configuration/ethereum.d.ts"

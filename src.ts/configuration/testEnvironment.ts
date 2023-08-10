@@ -4,17 +4,18 @@ import { BurnRTokenAction, MintRTokenAction } from '../action/RTokens'
 import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens'
 import { Address } from '../base/Address'
 import { Universe } from '../Universe'
-import { PriceOracle } from '../oracles'
-import { Token, TokenQuantity } from '../entities'
+import { PriceOracle } from '../oracles/PriceOracle'
+import { Token, TokenQuantity } from '../entities/Token'
 import { IBasket } from '../entities/TokenBasket'
 import { JsonTokenEntry, loadTokens } from './loadTokens'
 import { ETHToRETH, RETHToETH } from '../action/REth'
 import { constants, ethers } from 'ethers'
-import { ContractCall } from '../base'
+import { ContractCall } from '../base/ContractCall'
 import { BurnWStETH, MintWStETH } from '../action/WStEth'
 import { BurnStETH, MintStETH } from '../action/StEth'
-import { makeConfig } from '.'
+import { makeConfig } from './ChainConfiguration'
 import { MokcApprovalsStore } from '../searcher'
+import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
 
 export const testConfig = makeConfig(
   1,
@@ -290,6 +291,7 @@ const initialize = async (universe: TestUniverse) => {
   universe.oracles.push(
     oracle
   )
+  universe.oracle = new ZapperTokenQuantityPrice(universe)
 }
 
 

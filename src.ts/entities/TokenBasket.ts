@@ -1,10 +1,12 @@
 import { Address } from '../base/Address'
 import {
-  type IBasketHandler,
   IBasketHandler__factory,
+} from '../contracts/factories/contracts/IBasketHandler__factory'
+import {
   IRToken__factory,
-  // IERC20__factory,
-} from '../contracts'
+} from '../contracts/factories/contracts/IRToken__factory'
+
+'../contracts/factories/@openzeppelin/contracts/token/ERC20/ERC20__factory';
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 
@@ -18,7 +20,7 @@ export interface IBasket {
 }
 
 export class TokenBasket implements IBasket {
-  private readonly basketHandler: IBasketHandler
+  private readonly basketHandler: ReturnType<typeof IBasketHandler__factory.connect>
 
   public issueRate = 10n ** 18n
   public basketNonce = 0

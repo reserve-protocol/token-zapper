@@ -6,7 +6,7 @@ import {createForTest} from '../../src.ts/configuration/testEnvironment'
 import { fixture, createV2Pool } from './univ2.test'
 import { BurnRTokenAction, MintRTokenAction } from '../../src.ts/action/RTokens'
 import { Token, TokenQuantity } from '../../src.ts/entities/Token'
-import { PriceOracle } from '../../src.ts/oracles'
+import { PriceOracle } from '../../src.ts/oracles/PriceOracle'
 
 const createRToken = (
   universe: Universe,

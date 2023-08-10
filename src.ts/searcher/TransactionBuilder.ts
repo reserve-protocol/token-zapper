@@ -1,10 +1,10 @@
-import { ContractCall } from '../base/ContractCall'
-import { type Approval } from '../base/Approval'
-import { type Address } from '../base/Address'
-import { IZapperExecutor__factory, IZapper__factory } from '../contracts'
-import { type Token } from '../entities/Token'
-import { parseHexStringIntoBuffer } from '../base/utils'
 import { type Universe } from '../Universe'
+import { type Address } from '../base/Address'
+import { type Approval } from '../base/Approval'
+import { ContractCall } from '../base/ContractCall'
+import { parseHexStringIntoBuffer } from '../base/utils'
+import { IZapperExecutor__factory, IZapper__factory } from '../contracts/factories/contracts/IZapper.sol'
+import { type Token } from '../entities/Token'
 
 export const zapperExecutorInterface =
   IZapperExecutor__factory.createInterface()

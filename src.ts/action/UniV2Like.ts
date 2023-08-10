@@ -5,10 +5,10 @@ import { ContractCall } from '../base/ContractCall'
 import { type SwapDirection } from '../entities/dexes/TwoTokenPoolTypes'
 import { type V2Pool } from '../entities/dexes/V2LikePool'
 import { UniBase } from '../entities/dexes/UniBase'
-import { UniswapV2Pair__factory } from '../contracts'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Buffer } from 'buffer'
+import { UniswapV2Pair__factory } from '../contracts/factories/@uniswap/v2-core/contracts/UniswapV2Pair__factory'
 
 const iface = UniswapV2Pair__factory.createInterface()
 

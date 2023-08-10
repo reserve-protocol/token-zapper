@@ -1,10 +1,11 @@
-import { IRETHRouter, IRETHRouter__factory } from '../contracts'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
-import { Address } from '../base'
+import { type IRETHRouter } from '../contracts/contracts/IRETHRouter'
+import { IRETHRouter__factory } from '../contracts/factories/contracts/IRETHRouter__factory'
+import { type Address } from '../base/Address'
 
 export class REthRouter {
   private readonly routerInstance: IRETHRouter

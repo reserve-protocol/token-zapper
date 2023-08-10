@@ -1,8 +1,8 @@
 import { type Address } from '../base/Address'
 import { type Token, type TokenQuantity } from '../entities/Token'
-import { IChainLinkFeedRegistry__factory } from '../contracts'
+import { IChainLinkFeedRegistry__factory } from '../contracts/factories/contracts/IChainLinkFeedRegistry__factory'
 import { type Universe } from '../Universe'
-import { PriceOracle } from './Oracle'
+import { PriceOracle } from './PriceOracle'
 
 const ISO4217USDCodeInHex = '0x0000000000000000000000000000000000000348'
 

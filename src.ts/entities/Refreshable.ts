@@ -1,7 +1,7 @@
-import { Address } from '../base'
+import { type Address } from '../base/Address'
 
 export class Refreshable {
-  private lastUpdate = -1
+  lastUpdate = -1
 
   constructor(
     public readonly address: Address,

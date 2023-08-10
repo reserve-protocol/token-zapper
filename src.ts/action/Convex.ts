@@ -1,17 +1,14 @@
-import { Action, DestinationOptions, InteractionConvention } from '.'
-import { Universe } from '..'
-import {
-  Address,
-  Approval,
-  ContractCall,
-  parseHexStringIntoBuffer,
-} from '../base'
-import {
-  IBooster__factory,
-  IConvexBaseRewardsPool__factory,
-  IConvexWrapper__factory,
-} from '../contracts'
-import { Token, TokenQuantity } from '../entities'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
+import { Universe } from '../Universe'
+import { Address } from '../base/Address'
+import { Token, TokenQuantity } from '../entities/Token'
+import { IBooster__factory } from '../contracts/factories/contracts/IConvexStakedWrapper.sol/IBooster__factory'
+import { IConvexWrapper__factory } from '../contracts/factories/contracts/IConvexWrapper__factory'
+import { Approval } from '../base/Approval'
+import { ContractCall } from '../base/ContractCall'
+import { parseHexStringIntoBuffer } from '../base/utils'
+
+
 
 class ConvexPool {
   constructor(
@@ -21,7 +18,7 @@ class ConvexPool {
     public readonly convexDepositToken: Token,
     public readonly stakedConvexDepositToken: Token,
     public readonly rewardsAddress: Address
-  ) {}
+  ) { }
 
   toString() {
     return `ConvexPool(id=${this.convexPoolId})`

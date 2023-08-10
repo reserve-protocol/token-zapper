@@ -1,8 +1,8 @@
-import { Universe } from '../Universe';
+import { type Universe } from '../Universe';
 import { Address } from '../base/Address';
-import { Token } from '../entities';
+import { type Token } from '../entities/Token';
 import { ChainLinkOracle } from '../oracles/ChainLinkOracle';
-
+import { ZapperOracleAggregator, ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle';
 
 export const setupChainLink = (
   universe: Universe,
@@ -18,4 +18,5 @@ export const setupChainLink = (
   for (const [token, addr] of remapped) {
     chainLinkOracle.mapTokenTo(token, addr);
   }
+  universe.oracle = new ZapperTokenQuantityPrice(universe)
 };

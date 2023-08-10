@@ -1,10 +1,11 @@
-import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
-import { InteractionConvention, DestinationOptions, Action } from './Action'
-import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
-import { IWStETH, IWStETH__factory } from '../contracts'
-import { parseHexStringIntoBuffer } from '../base'
+import { ContractCall } from '../base/ContractCall'
+import { parseHexStringIntoBuffer } from '../base/utils'
+import { type IWStETH } from '../contracts/contracts/IWStETH'
+import { IWStETH__factory } from '../contracts/factories/contracts/IWStETH__factory'
+import { type Token, type TokenQuantity } from '../entities/Token'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 const wstETHInterface = IWStETH__factory.createInterface()
 export class WStETHRateProvider {

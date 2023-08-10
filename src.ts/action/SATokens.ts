@@ -1,11 +1,11 @@
 import { type Address } from '../base/Address'
-import { IStaticATokenLM__factory } from '../contracts'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { DestinationOptions, Action, InteractionConvention } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
+import { IStaticATokenLM__factory } from '../contracts/factories/contracts/ISAtoken.sol/IStaticATokenLM__factory'
 
 const ray = 10n ** 27n
 const halfRay = ray / 2n

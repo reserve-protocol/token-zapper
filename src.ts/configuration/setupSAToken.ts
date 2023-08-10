@@ -1,9 +1,9 @@
-import { Universe } from '../Universe';
+import { type Universe } from '../Universe';
 import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens';
-import { IStaticATokenLM__factory } from '../contracts';
-import { Token } from '../entities';
-import { setupMintableWithRate } from './setupMintableWithRate';
+import { IStaticATokenLM__factory } from '../contracts/factories/contracts/ISAtoken.sol/IStaticATokenLM__factory';
 
+import { type Token } from '../entities/Token';
+import { setupMintableWithRate } from './setupMintableWithRate';
 
 export const setupSAToken = async (
   universe: Universe,

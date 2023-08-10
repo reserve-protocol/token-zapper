@@ -1,4 +1,4 @@
-import { Universe } from '../Universe';
+import { type Universe } from '../Universe';
 import { ETHToRETH, RETHToETH, REthRouter } from '../action/REth';
 import { Address } from '../base/Address';
 

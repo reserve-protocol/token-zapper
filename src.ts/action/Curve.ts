@@ -9,7 +9,8 @@ import curve from '@curvefi/api'
 import { curve as curveInner } from '@curvefi/api/lib/curve'
 import { formatUnits, parseUnits } from 'ethers/lib/utils'
 import { LPToken } from './LPToken'
-import { DefaultMap, parseHexStringIntoBuffer } from '../base'
+import { DefaultMap } from '../base/DefaultMap'
+import { parseHexStringIntoBuffer } from "../base/utils"
 import { IRoute } from '@curvefi/api/lib/interfaces'
 import { GAS_TOKEN_ADDRESS } from '../base/constants'
 type CurveType = typeof curve

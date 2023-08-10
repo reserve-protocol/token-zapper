@@ -1,18 +1,15 @@
 import {
-  PostTradeAction,
+  type PostTradeAction,
   BasketTokenSourcingRuleApplication,
 } from './BasketTokenSourcingRules'
-import { UniverseCommonTokens } from '../Universe'
-import { CurveSwap } from '../action/Curve'
 import { type MintRTokenAction } from '../action/RTokens'
-import { Address } from '../base/Address'
+import { type Address } from '../base/Address'
 import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
 import { bfs } from '../exchange-graph/BFS'
 import { SearcherResult } from './SearcherResult'
 import { SwapPath, SwapPaths, SwapPlan } from './Swap'
-import { RetryLoopException, retryLoop } from '../base'
-
-export type UniverseWithERC20GasTokenDefined = UniverseCommonTokens<"ERC20GAS">
+import { retryLoop } from '../base/controlflow'
+import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
@@ -61,8 +58,6 @@ export const findPrecursorTokenSet = async (
     }
     return BasketTokenSourcingRuleApplication.noAction([qty])
   }
-
-  console.log(`${unitBasket.join(",")}`)
 
   for (const qty of unitBasket) {
     const application = await recourseOn(qty)
@@ -339,7 +334,6 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
         ...redeemRTokenForUnderlying.swapPaths.map(i => {
           if (i.outputs.length === 1 && i.outputs[0].token === outputToken) {
             return new SwapPath(
-              i.universe,
               i.inputs,
               i.steps,
               i.outputs,
@@ -492,7 +486,7 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 2
+    maxHops: number = 1
   ): Promise<SwapPath[]> {
     const start = Date.now()
     const bfsResult = bfs(
@@ -508,9 +502,6 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
       .flat()
       .filter((plan) => {
         if (plan.inputs.length !== 1) {
-          return false
-        }
-        if (plan.steps.filter((step) => step instanceof CurveSwap).length > 1) {
           return false
         }
         if (

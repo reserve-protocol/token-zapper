@@ -1,6 +1,8 @@
-import { Action, DestinationOptions, InteractionConvention } from '.'
-import { Address, Approval, ContractCall } from '../base'
-import { Token, TokenQuantity } from '../entities'
+import { type Address } from '../base/Address'
+import { Approval } from '../base/Approval'
+import { type ContractCall } from '../base/ContractCall'
+import { type Token, type TokenQuantity } from '../entities/Token'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 export class LPToken {
   public readonly mintAction: Action

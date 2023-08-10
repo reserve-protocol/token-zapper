@@ -1,10 +1,10 @@
+import { type Provider } from '@ethersproject/providers'
 import { type Address } from '../base/Address'
-import { type ethers } from 'ethers'
 import { type Token } from '../entities/Token'
-import { IERC20__factory } from '../contracts'
+import { ERC20__factory } from '../contracts/factories/@openzeppelin/contracts/token/ERC20/ERC20__factory'
 
 export class ApprovalsStore {
-  constructor(private readonly provider: ethers.providers.Provider) { }
+  constructor(private readonly provider: Provider) { }
 
   private readonly cache = new Map<string, Promise<boolean>>()
   public async needsApproval(
@@ -19,7 +19,7 @@ export class ApprovalsStore {
       check = new Promise((resolve, reject) => {
         void (async () => {
           try {
-            const allowance = await IERC20__factory.connect(
+            const allowance = await ERC20__factory.connect(
               token.address.address,
               this.provider
             ).allowance(owner.address, spender.address)

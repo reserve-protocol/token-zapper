@@ -3,27 +3,28 @@ import { ethers } from 'ethers'
 import { type Action } from './action/Action'
 import { Address } from './base/Address'
 import { Graph } from './exchange-graph/Graph'
-import { Token, TokenLoader, makeTokenLoader, type TokenQuantity } from './entities/Token'
-import { ConfigWithToken, type Config } from './configuration/ChainConfiguration'
+import { Token, type TokenQuantity } from './entities/Token'
+import { TokenLoader, makeTokenLoader } from './entities/makeTokenLoader'
+import { type Config } from './configuration/ChainConfiguration'
 
 import { DefaultMap } from './base/DefaultMap'
-import { IMain__factory } from './contracts'
-import { type PriceOracle } from './oracles/Oracle'
+import { type PriceOracle } from './oracles/PriceOracle'
 import { type DexAggregator } from './aggregators/DexAggregator'
 import { Refreshable } from './entities/Refreshable'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
-import { TokenBasket } from './entities/TokenBasket'
-import { MintRTokenAction, BurnRTokenAction } from './action'
 import { LPToken } from './action/LPToken'
 import { SourcingRule } from './searcher/BasketTokenSourcingRules'
-import { SwapPath } from './searcher'
+
 import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
-import { ZapperOracleAggregator, ZapperTokenQuantityPrice } from './oracles/ZapperAggregatorOracle'
+import { SwapPath } from './searcher/Swap'
 
 type TokenList<T> = {
   [K in keyof T]: Token
 }
-
+interface OracleDef {
+  quote: (qty: TokenQuantity) => Promise<TokenQuantity>,
+  quoteIn: (qty: TokenQuantity, tokenToQuoteWith: Token) => Promise<TokenQuantity>,
+}
 export class Universe<const UniverseConf extends Config = Config> {
   get chainId(): UniverseConf["chainId"] { return this.config.chainId }
 
@@ -96,9 +97,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.precursorTokenSourcingSpecialCases.get(rToken).set(precursor, rule)
   }
 
-  public aggregatorOracle = new ZapperOracleAggregator(this)
-  public tokenQuantityQuoter = new ZapperTokenQuantityPrice(this)
-
   /**
    * This method try to price a given token in USD.
    * It will first try and see if there is an canonical way to mint/burn the token,
@@ -110,11 +108,12 @@ export class Universe<const UniverseConf extends Config = Config> {
    * @param qty quantity to price
    * @returns The price of the qty in USD, or null if the price cannot be determined
    */
-  async fairPrice(qty: TokenQuantity): Promise<TokenQuantity | null> {
-    return (this.tokenQuantityQuoter.quote(qty)).catch(() => null)
+  public oracle?: OracleDef = undefined
+  async fairPrice(qty: TokenQuantity) {
+    return this.oracle?.quote(qty).catch(() => null) ?? null
   }
   async quoteIn(qty: TokenQuantity, tokenToQuoteWith: Token) {
-    return this.tokenQuantityQuoter.quoteIn(qty, tokenToQuoteWith).catch(() => null)
+    return this.oracle?.quoteIn(qty, tokenToQuoteWith).catch(() => null) ?? null
   }
 
   get currentBlock() {
@@ -192,7 +191,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     public readonly provider: ethers.providers.Provider,
     public readonly config: UniverseConf,
     public readonly approvalsStore: ApprovalsStore,
-    public readonly loadToken: TokenLoader
+    public readonly loadToken: TokenLoader,
   ) {
     const nativeToken = config.nativeToken
     this.nativeToken = Token.createToken(
@@ -225,40 +224,11 @@ export class Universe<const UniverseConf extends Config = Config> {
       provider,
       config,
       opts.approvalsStore ?? new ApprovalsStore(provider),
-      opts.tokenLoader ?? makeTokenLoader(provider)
+      opts.tokenLoader ?? makeTokenLoader(provider),
     )
 
     await initialize(universe)
 
     return universe
   }
-
-  async defineRToken(mainAddress: Address, rTokenAddress: Address) {
-    const mainInst = IMain__factory.connect(mainAddress.address, this.provider)
-    const [basketHandlerAddress] = await Promise.all([
-      mainInst.basketHandler(),
-    ])
-
-    const token = await this.getToken(rTokenAddress)
-    const basketHandler = new TokenBasket(
-      this,
-      Address.from(basketHandlerAddress),
-      token
-    );
-    (this.rTokens as any)[token.symbol] = token
-    await basketHandler.update()
-    this.createRefreshableEntity(basketHandler.address, () =>
-      basketHandler.update()
-    )
-
-    this.defineMintable(
-      new MintRTokenAction(this, basketHandler),
-      new BurnRTokenAction(this, basketHandler)
-    )
-  }
 }
-
-
-export type UniverseCommonTokens<T extends string> = Universe<
-  ConfigWithToken<{[K in T]: string}>
->

@@ -1,9 +1,9 @@
-import { Universe } from '../Universe';
+import { type Universe } from '../Universe';
+import { type Address } from '../base/Address';
+import { type TokenQuantity } from '../entities/Token';
+import { SwapPlan } from '../searcher/Swap';
 import { DepositAction, WithdrawAction } from '../action/WrappedNative';
-import { Address } from '../base/Address';
-import { TokenQuantity } from '../entities';
-import { SwapPlan } from '../searcher';
-import { ConfigWithToken } from './ChainConfiguration';
+import { type ConfigWithToken } from './ChainConfiguration';
 
 
 export const setupWrappedGasToken = async <

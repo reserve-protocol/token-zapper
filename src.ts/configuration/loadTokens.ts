@@ -1,6 +1,6 @@
-import { Config } from '.'
+import { type  Config } from './ChainConfiguration'
 import { Address } from '../base/Address'
-import { Universe } from '../Universe'
+import { type Universe } from '../Universe'
 
 export interface JsonTokenEntry {
   address: string
@@ -8,6 +8,7 @@ export interface JsonTokenEntry {
   name: string
   decimals: number
 }
+
 /**
  * Helper method for loading in tokens from a JSON file into the universe
  * It also initializes the rTokens and commonTokens fields based on the
@@ -16,7 +17,10 @@ export interface JsonTokenEntry {
  * @param universe
  * @param tokens
  */
-export const loadTokens = async (universe: Universe<Config<number, any, { [K in string]: string }, { [K in string]: { erc20: string, main: string } }>>, tokens: JsonTokenEntry[]) => {
+export const loadTokens = async (
+  universe: Universe<Config<number, any, { [K in string]: string }, { [K in string]: { erc20: string, main: string } }>>,
+  tokens: JsonTokenEntry[]
+) => {
   for (const token of tokens) {
     universe.createToken(
       Address.from(token.address),
@@ -25,7 +29,6 @@ export const loadTokens = async (universe: Universe<Config<number, any, { [K in 
       token.decimals
     )
   }
-
 
   await Promise.all(
     Object.keys(
@@ -42,5 +45,4 @@ export const loadTokens = async (universe: Universe<Config<number, any, { [K in 
       })
     )
   )
-
 }

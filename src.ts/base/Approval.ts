@@ -1,4 +1,4 @@
-import { type Address } from '../base/Address'
+import { type Address } from './Address'
 import { type Token } from '../entities/Token'
 
 export class Approval {

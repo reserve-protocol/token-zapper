@@ -1,7 +1,7 @@
 import {
-  DestinationOptions,
+  type DestinationOptions,
+  type InteractionConvention,
   type Action,
-  InteractionConvention,
 } from '../action/Action'
 import { type Address } from '../base/Address'
 import { TokenAmounts, type TokenQuantity } from '../entities/Token'
@@ -62,7 +62,6 @@ export class SwapPath {
   }
 
   constructor(
-    readonly universe: Universe,
     public readonly inputs: TokenQuantity[],
     public readonly steps: (SwapPath | SingleSwap)[],
     public readonly outputs: TokenQuantity[],
@@ -227,7 +226,6 @@ export class SwapPlan {
     ).reduce((l, r) => l.add(r))
 
     return new SwapPath(
-      this.universe,
       input,
       swaps,
       legAmount,

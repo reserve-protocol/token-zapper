@@ -1,9 +1,9 @@
-import { IWrappedNative__factory } from '../contracts'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
+import { IWrappedNative__factory } from '../contracts/factories/contracts/IWrappedNative__factory'
 
 const iWrappedNativeIFace = IWrappedNative__factory.createInterface()
 

@@ -1,24 +1,24 @@
-import { ethers } from 'ethers'
-
+import { BigNumber } from "@ethersproject/bignumber"
+import { Zero } from "@ethersproject/constants"
+import { type PermitTransferFrom } from '@uniswap/permit2-sdk'
 import {
   DestinationOptions,
-  type Action,
   InteractionConvention,
+  type Action,
 } from '../action/Action'
-import { type ContractCall } from '../base/ContractCall'
-import { type Approval } from '../base/Approval'
 import { type Address } from '../base/Address'
-import { SingleSwap, SwapPath, SwapPaths } from '../searcher/Swap'
-import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
+import { type Approval } from '../base/Approval'
+import { type ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
+import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
+import { type SingleSwap, type SwapPath, type SwapPaths } from '../searcher/Swap'
 import {
   TransactionBuilder,
   zapperExecutorInterface,
   zapperInterface,
 } from './TransactionBuilder'
+import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction } from './ZapTransaction'
-import { PermitTransferFrom } from '@uniswap/permit2-sdk'
-import { UniverseWithERC20GasTokenDefined } from '.'
 
 class Step {
   constructor(
@@ -272,8 +272,8 @@ export class SearcherResult {
     }
 
     const value = inputIsNativeToken
-      ? ethers.BigNumber.from(this.swaps.inputs[0].amount)
-      : ethers.constants.Zero
+      ? BigNumber.from(this.swaps.inputs[0].amount)
+      : Zero
 
     const data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
@@ -292,7 +292,7 @@ export class SearcherResult {
 
       // TODO: For opti & arbi this needs updating to use type: 0 transactions
       type: 2,
-      maxFeePerGas: ethers.BigNumber.from(
+      maxFeePerGas: BigNumber.from(
         this.universe.gasPrice + this.universe.gasPrice / 12n
       ),
 
@@ -301,7 +301,6 @@ export class SearcherResult {
     }
 
     const out = new ZapTransaction(
-      this,
       payload,
       tx,
       builder.gasEstimate(),

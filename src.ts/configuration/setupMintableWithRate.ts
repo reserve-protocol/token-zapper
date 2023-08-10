@@ -1,7 +1,8 @@
-import { Universe } from '../Universe';
-import { Action } from '../action';
-import { ethers } from 'ethers';
-import { Token } from '../entities';
+import { type Provider } from '@ethersproject/abstract-provider';
+
+import { type Universe } from '../Universe';
+import { type Action } from '../action/Action';
+import { type Token } from '../entities/Token';
 
 /**
  * Small helper to setup a mintable token with a rate provider
@@ -13,7 +14,7 @@ import { Token } from '../entities';
 export const setupMintableWithRate = async <R>(
   universe: Universe<any>,
   factory: {
-    connect: (address: string, provider: ethers.providers.Provider) => R;
+    connect: (address: string, provider: Provider) => R;
   },
   wrappedToken: Token,
   initRateProvider: (

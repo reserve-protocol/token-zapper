@@ -3,3 +3,6 @@ node_modules/
 dist/*.gz
 src.ts/testRun.ts
 .env
+lib.commonjs/
+lib.esm/
+types/

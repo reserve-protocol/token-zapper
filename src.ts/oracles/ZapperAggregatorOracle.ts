@@ -1,7 +1,7 @@
-import { Token, type TokenQuantity } from '../entities/Token'
+import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { Cached } from '../base/Cached'
-import { PriceOracle } from '.'
+import { PriceOracle } from './PriceOracle'
 
 export class ZapperOracleAggregator extends PriceOracle {
   constructor(
@@ -33,6 +33,7 @@ export class ZapperTokenQuantityPrice extends Cached<
   TokenQuantity,
   TokenQuantity
 > {
+  private aggregatorOracle: ZapperOracleAggregator;
   constructor(
     readonly universe: Universe,
   ) {
@@ -41,6 +42,8 @@ export class ZapperTokenQuantityPrice extends Cached<
       1,
       () => universe.currentBlock
     )
+
+    this.aggregatorOracle = new ZapperOracleAggregator(this.universe)
   }
 
   private async quoteFn(
@@ -73,7 +76,7 @@ export class ZapperTokenQuantityPrice extends Cached<
 
   public async quoteToken(token: Token) {
     if (!this.universe.wrappedTokens.has(token)) {
-      return this.universe.aggregatorOracle.quote(token)
+      return this.aggregatorOracle.quote(token)
     }
     return this.get(token.one)
   }

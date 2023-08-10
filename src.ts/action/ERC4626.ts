@@ -5,7 +5,7 @@ import { parseHexStringIntoBuffer } from '../base/utils'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
-import { Address } from '../base'
+import { Address } from '../base/Address'
 
 const vaultInterface = IERC4626__factory.createInterface()
 

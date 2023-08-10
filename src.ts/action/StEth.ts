@@ -2,9 +2,9 @@ import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
-import { IStETH__factory } from '../contracts'
-import { parseHexStringIntoBuffer } from '../base'
-import { ethers } from 'ethers'
+import { AddressZero } from '@ethersproject/constants'
+import { IStETH__factory } from '../contracts/factories/contracts/IStETH__factory'
+import { parseHexStringIntoBuffer } from '../base/utils'
 
 const stETHInterface = IStETH__factory.createInterface()
 export class StETHRateProvider {
@@ -24,7 +24,7 @@ export class MintStETH extends Action {
   }
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     const hexEncodedWrapCall = stETHInterface.encodeFunctionData('submit', [
-      ethers.constants.AddressZero,
+      AddressZero,
     ])
     return new ContractCall(
       parseHexStringIntoBuffer(hexEncodedWrapCall),

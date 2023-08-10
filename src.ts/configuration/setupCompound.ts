@@ -1,12 +1,12 @@
 import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens';
-import { Address } from '../base/Address';
-import {
-  IComptroller__factory,
-  ICToken__factory
-} from '../contracts';
-import { Universe } from '../Universe';
+import { type Address } from '../base/Address';
+import { ICToken__factory } from '../contracts/factories/contracts/ICToken.sol';
+import { IComptroller__factory } from '../contracts/factories/contracts/ICToken.sol/IComptroller__factory';
+import { type Token } from '../entities/Token';
+
+import { type Universe } from '../Universe';
 import { setupMintableWithRate } from './setupMintableWithRate';
-import { Token } from '../entities';
+
 
 export const loadCompoundMarketsFromRPC = async (
   comptrollerAddress: Address,
@@ -19,7 +19,7 @@ export const loadCompoundMarketsFromRPC = async (
   return allCTokens
 };
 export async function setupCompoundLike(
-  universe: Universe<any>,
+  universe: Universe,
   deployment: { cEth?: Token; comptroller: Address; },
   cTokens: {underlying: Token, wrappedToken: Token }[]
 ) {

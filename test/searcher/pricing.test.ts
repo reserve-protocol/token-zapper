@@ -39,7 +39,7 @@ describe('searcher/pricing', () => {
         expect("" + await universe.fairPrice(cUSDC.one)).toBe("0.022804 USD")
 
         expect("" + await universe.fairPrice(eUSD.one)).toBe("1.000031 USD")
-        expect("" + await universe.tokenQuantityQuoter.quote(ETHPlus.one)).toBe("1749.99999998 USD")
+        expect("" + await universe.fairPrice(ETHPlus.one)).toBe("1749.99999998 USD")
         expect("" + await universe.fairPrice(universe.commonTokens.WETH.one)).toBe("1750.0 USD")
         expect("" + await universe.fairPrice(universe.commonTokens.USDC.one)).toBe("1.001 USD")
         expect("" + await universe.fairPrice(universe.commonTokens.USDT.one)).toBe("1.0 USD")

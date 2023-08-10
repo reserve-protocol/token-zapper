@@ -1,5 +1,5 @@
 import { type Action } from '../action/Action'
-import { Token, TokenAmounts, type TokenQuantity } from '../entities/Token'
+import { type Token, TokenAmounts, type TokenQuantity } from '../entities/Token'
 
 export class PostTradeAction {
   constructor(

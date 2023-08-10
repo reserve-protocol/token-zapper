@@ -1,5 +1,6 @@
-import * as ethers from 'ethers'
-import { isAddress } from 'ethers/lib/utils'
+import { isAddress, getAddress } from '@ethersproject/address'
+import { AddressZero } from "@ethersproject/constants"
+
 import { InterningCache } from './InterningCache'
 import { parseHexStringIntoBuffer } from './utils'
 
@@ -19,7 +20,7 @@ export class Address {
   /**
    * A static constant representing the Ethereum zero address.
    */
-  public static ZERO = Address.fromHexString(ethers.constants.AddressZero)
+  public static ZERO = Address.fromHexString(AddressZero)
 
   /**
    * The normalized HEX representation of the Ethereum address.
@@ -36,7 +37,7 @@ export class Address {
       throw new Error('Invalid address bytes')
     }
 
-    this.address = ethers.utils.getAddress(`0x${bytes.toString('hex')}`)
+    this.address = getAddress(`0x${bytes.toString('hex')}`)
     this.integer = BigInt(this.address)
   }
 

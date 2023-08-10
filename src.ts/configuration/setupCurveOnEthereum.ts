@@ -1,16 +1,16 @@
-import { IRoute } from '@curvefi/api/lib/interfaces';
-import { Action } from '../action';
+import { type IRoute } from '@curvefi/api/lib/interfaces';
+import { type Action } from '../action/Action';
 import { setupConvexEdges as setupConvexEdge } from '../action/Convex';
 import { loadCurve } from '../action/Curve';
 import { Address } from '../base/Address';
-import { TokenQuantity } from '../entities';
-import { SwapPlan } from '../searcher';
+import { type TokenQuantity } from '../entities/Token';
+import { SwapPlan } from '../searcher/Swap';
 import {
   BasketTokenSourcingRuleApplication,
   PostTradeAction,
-  SourcingRule
+  type SourcingRule
 } from '../searcher/BasketTokenSourcingRules';
-import { EthereumUniverse } from './ethereum';
+import { type EthereumUniverse } from './ethereum';
 
 export const initCurveOnEthereum = async (
   universe: EthereumUniverse,

@@ -13,6 +13,61 @@
   "types": "./types/index.d.ts",
   "author": "jan.demidov@reserve.org",
   "exports": {
+    "./protocols/chainlink": {
+      "import": "./lib.esm/configuration/setupChainLink.js",
+      "require": "./lib.commonjs/configuration/setupChainLink.js",
+      "types": "./types/configuration/setupChainLink.d.ts"
+    },
+    "./protocols/compoundV2": {
+      "import": "./lib.esm/configuration/setupCompound.js",
+      "require": "./lib.commonjs/configuration/setupCompound.js",
+      "types": "./types/configuration/setupCompound.d.ts"
+    },
+    "./protocols/lido": {
+      "import": "./lib.esm/configuration/setupLido.js",
+      "require": "./lib.commonjs/configuration/setupLido.js",
+      "types": "./types/configuration/setupLido.d.ts"
+    },
+    "./protocols/rocketpool": {
+      "import": "./lib.esm/configuration/setupRETH.js",
+      "require": "./lib.commonjs/configuration/setupRETH.js",
+      "types": "./types/configuration/setupRETH.d.ts"
+    },
+    "./protocols/reserve": {
+      "import": "./lib.esm/configuration/setupRTokens.js",
+      "require": "./lib.commonjs/configuration/setupRTokens.js",
+      "types": "./types/configuration/setupRTokens.d.ts"
+    },
+    "./protocols/aaveV2": {
+      "import": "./lib.esm/configuration/setupSAToken.js",
+      "require": "./lib.commonjs/configuration/setupSAToken.js",
+      "types": "./types/configuration/setupSAToken.d.ts"
+    },
+    "./protocols/erc20gas": {
+      "import": "./lib.esm/configuration/setupWrappedGasToken.js",
+      "require": "./lib.commonjs/configuration/setupWrappedGasToken.js",
+      "types": "./types/configuration/setupWrappedGasToken.d.ts"
+    },
+    "./protocols/curve/mainnet": {
+      "import": "./lib.esm/configuration/setupCurveOnEthereum.js",
+      "require": "./lib.commonjs/configuration/setupCurveOnEthereum.js",
+      "types": "./types/configuration/setupCurveOnEthereum.d.ts"
+    },
+    "./configs/mainnet": {
+      "import": "./lib.esm/configuration/ethereum.js",
+      "require": "./lib.commonjs/configuration/ethereum.js",
+      "types": "./types/configuration/ethereum.d.ts"
+    },
+    "./configs/mainnet/tokens": {
+      "import": "./lib.esm/configuration/setupEthereumTokenList.js",
+      "require": "./lib.commonjs/configuration/setupEthereumTokenList.js",
+      "types": "./types/configuration/setupEthereumTokenList.d.ts"
+    },
+    "./configs/mainnet/zapper": {
+      "import": "./lib.esm/configuration/setupEthereumZapper.js",
+      "require": "./lib.commonjs/configuration/setupEthereumZapper.js",
+      "types": "./types/configuration/setupEthereumZapper.d.ts"
+    },
     ".": {
       "import": "./lib.esm/index.js",
       "require": "./lib.commonjs/index.js",

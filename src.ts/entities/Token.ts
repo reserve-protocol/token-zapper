@@ -1,10 +1,8 @@
-import { Address } from '../base/Address'
+import { type Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
-import { ethers } from 'ethers'
-import { ERC20__factory } from '../contracts'
-import { parseHexStringIntoBuffer } from '../base'
-import { id } from 'ethers/lib/utils'
 
+import { parseUnits, formatUnits } from "@ethersproject/units";
+import { type BigNumber } from "@ethersproject/bignumber";
 /**
  * A class representing a token.
  * @property {Address} address - The address of the token.
@@ -77,7 +75,7 @@ export class Token {
     }
     return new TokenQuantity(
       this,
-      ethers.utils.parseUnits(decimalStringOrNumber, this.decimals).toBigInt()
+      parseUnits(decimalStringOrNumber, this.decimals).toBigInt()
     )
   }
 
@@ -85,11 +83,11 @@ export class Token {
     return new TokenQuantity(this, decimalStringOrNumber)
   }
 
-  fromEthersBn(decimalStringOrNumber: ethers.BigNumber): TokenQuantity {
+  fromEthersBn(decimalStringOrNumber: BigNumber): TokenQuantity {
     return new TokenQuantity(this, decimalStringOrNumber.toBigInt())
   }
 
-  fromScale18BN(decimalStringOrNumber: ethers.BigNumber): TokenQuantity {
+  fromScale18BN(decimalStringOrNumber: BigNumber): TokenQuantity {
     const diff = Math.abs(18 - this.decimals)
 
     if (diff === 0) {
@@ -104,7 +102,7 @@ export class Token {
   }
 
   from(
-    decimalStringOrNumber: string | number | bigint | ethers.BigNumber
+    decimalStringOrNumber: string | number | bigint | BigNumber
   ): TokenQuantity {
     if (
       typeof decimalStringOrNumber === 'string' ||
@@ -207,12 +205,12 @@ export class TokenQuantity {
   }
 
   public format(): string {
-    return ethers.utils.formatUnits(this.amount, this.token.decimals)
+    return formatUnits(this.amount, this.token.decimals)
   }
 
   public formatWithSymbol(): string {
     return (
-      ethers.utils.formatUnits(this.amount, this.token.decimals) +
+      formatUnits(this.amount, this.token.decimals) +
       ' ' +
       this.token.symbol
     )
@@ -363,33 +361,3 @@ export class TokenAmounts {
   }
 }
 
-export const makeTokenLoader = (provider: ethers.providers.Provider) => async (
-  address: Address
-) => {
-  const erc20 = ERC20__factory.connect(address.address, provider)
-  let [symbol, decimals] = await Promise.all([
-    provider.call({
-      to: address.address,
-      data: id('symbol()').slice(0, 10),
-    }),
-    erc20.decimals().catch(() => 0),
-  ])
-
-  if (symbol.length === 66) {
-    let buffer = parseHexStringIntoBuffer(symbol)
-    let last = buffer.indexOf(0)
-    if (last == -1) {
-      last = buffer.length
-    }
-    buffer = buffer.subarray(0, last)
-    symbol = buffer.toString('utf8')
-  } else {
-    symbol = ethers.utils.defaultAbiCoder.decode(['string'], symbol)[0]
-  }
-
-  return {
-    symbol,
-    decimals,
-  }
-}
-export type TokenLoader = ReturnType<typeof makeTokenLoader>

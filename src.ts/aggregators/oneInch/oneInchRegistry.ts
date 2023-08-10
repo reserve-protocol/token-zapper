@@ -1,19 +1,19 @@
 import { OneInchAction } from '../../action/OneInch'
 import { type Address } from '../../base/Address'
 import {
-  OnRetryFunctionReturn,
   retryLoop,
-  RetryLoopConfig,
+  type OnRetryFunctionReturn,
+  type RetryLoopConfig,
 } from '../../base/controlflow'
 import { type Token, type TokenQuantity } from '../../entities/Token'
 import { SwapPlan } from '../../searcher/Swap'
-import { Universe } from '../../Universe'
+import { type Universe } from '../../Universe'
 import { DexAggregator } from '../DexAggregator'
 import {
   Api,
-  HttpResponse,
-  SwapErrorDto,
+  type HttpResponse,
   type QuoteResponseDto,
+  type SwapErrorDto,
   type SwapResponseDto,
 } from './swagger/oneInchApi'
 

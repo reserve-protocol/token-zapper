@@ -2,11 +2,11 @@ import { Address } from '../../src.ts/base/Address'
 import { IBasket } from '../../src.ts/entities/TokenBasket'
 import { Universe } from '../../src.ts/Universe'
 import { Searcher } from '../../src.ts/searcher'
-import testConfig from '../../src.ts/configuration/testEnvironment'
+import {createForTest} from '../../src.ts/configuration/testEnvironment'
 import { fixture, createV2Pool } from './univ2.test'
 import { BurnRTokenAction, MintRTokenAction } from '../../src.ts/action/RTokens'
 import { Token, TokenQuantity } from '../../src.ts/entities/Token'
-import { Oracle } from '../../src.ts/oracles'
+import { PriceOracle } from '../../src.ts/oracles'
 
 const createRToken = (
   universe: Universe,
@@ -38,8 +38,7 @@ const createRToken = (
 
 describe('searcher/rtokenzaps', () => {
   it('It can do an ETH+ zap', async () => {
-    const universe = await Universe.createForTest(testConfig)
-    await testConfig.initialize(universe)
+    const universe = await createForTest()
 
     const searcher = new Searcher(universe)
 
@@ -56,8 +55,7 @@ describe('searcher/rtokenzaps', () => {
   })
 
   it('It can do an eUSD zap', async () => {
-    const universe = await Universe.createForTest(testConfig)
-    await testConfig.initialize(universe)
+    const universe = await createForTest()
 
     const searcher = new Searcher(universe)
     const USDT = (await universe.getToken(
@@ -79,7 +77,7 @@ describe('searcher/rtokenzaps', () => {
   it('It can can trade then RToken', async () => {
     const universe = await fixture()
     const searcher = new Searcher(universe)
-    const WETH = universe.commonTokens.ERC20ETH!
+    const WETH = universe.commonTokens.WETH
     const eUSD = (await universe.getToken(
       Address.fromHexString('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F')
     ))!
@@ -132,20 +130,20 @@ describe('searcher/rtokenzaps', () => {
 
     createV2Pool(
       universe,
-      universe.commonTokens.ERC20ETH!.fromDecimal('50'),
+      universe.commonTokens.WETH.fromDecimal('50'),
       universe.commonTokens.USDC!.fromDecimal('1725')
     )
 
     const searcher = new Searcher(universe)
 
     const result = await searcher.findSingleInputToRTokenZap(
-      universe.commonTokens.ERC20ETH!.fromDecimal('0.1'),
+      universe.commonTokens.WETH.fromDecimal('0.1'),
       oldEUSD,
       Address.ZERO
     )
     expect(
       result.swaps.outputs.find((i) => i.token === oldEUSD)?.formatWithSymbol()
-    ).toBe('171.81068402 oldEUSD')
+    ).toBe('171.89628802 oldEUSD')
   })
 
   it('recursive RTokens', async () => {
@@ -216,17 +214,17 @@ describe('searcher/rtokenzaps', () => {
     const prices = new Map<Token, TokenQuantity>([
       [universe.commonTokens.USDC!, usdcPrice],
       [universe.commonTokens.USDT!, universe.usd.fromDecimal('1.0')],
-      [universe.commonTokens.ERC20ETH!, universe.usd.fromDecimal('1750')],
+      [universe.commonTokens.WETH, universe.usd.fromDecimal('1750')],
     ])
     universe.oracles.push(
-      new Oracle('Test 2', async (token) => {
+      new PriceOracle('Test 2', async (token) => {
         return prices.get(token) ?? null
-      })
+      }, () => universe.currentBlock)
     )
 
     createV2Pool(
       universe,
-      universe.commonTokens.ERC20ETH!.fromDecimal('50'),
+      universe.commonTokens.WETH.fromDecimal('50'),
       universe.commonTokens
         .USDC!.fromDecimal('1750')
         .div(usdcPrice.convertTo(universe.commonTokens.USDC!))
@@ -235,7 +233,7 @@ describe('searcher/rtokenzaps', () => {
     const searcher = new Searcher(universe)
 
     const result = await searcher.findSingleInputToRTokenZap(
-      universe.commonTokens.ERC20ETH!.fromDecimal('0.1'),
+      universe.commonTokens.WETH.fromDecimal('0.1'),
       oldEUSD,
       Address.ZERO
     )
@@ -254,7 +252,7 @@ describe('searcher/rtokenzaps', () => {
 
     createV2Pool(
       universe,
-      universe.commonTokens.ERC20ETH!.fromDecimal('50'),
+      universe.commonTokens.WETH.fromDecimal('50'),
       universe.commonTokens
         .USDC!.fromDecimal('1750')
         .div(usdcPrice.convertTo(universe.commonTokens.USDC!))
@@ -263,18 +261,18 @@ describe('searcher/rtokenzaps', () => {
     const prices = new Map<Token, TokenQuantity>([
       [universe.commonTokens.USDC!, usdcPrice],
       [universe.commonTokens.USDT!, universe.usd.fromDecimal('1.0')],
-      [universe.commonTokens.ERC20ETH!, universe.usd.fromDecimal('1750')],
+      [universe.commonTokens.WETH, universe.usd.fromDecimal('1750')],
     ])
     universe.oracles.push(
-      new Oracle('Test 3', async (token) => {
+      new PriceOracle('Test 3', async (token) => {
         return prices.get(token) ?? null
-      })
+      }, () => universe.currentBlock)
     )
 
     const searcher = new Searcher(universe)
 
     const result = await searcher.findSingleInputToRTokenZap(
-      universe.commonTokens.ERC20ETH!.fromDecimal('0.1'),
+      universe.commonTokens.WETH.fromDecimal('0.1'),
       rToken,
       Address.ZERO
     )

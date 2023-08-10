@@ -1,12 +1,10 @@
 import { Address } from '../../src.ts/base/Address'
-import { Universe } from '../../src.ts/Universe'
 import { Searcher } from '../../src.ts/searcher'
-import testConfig from '../../src.ts/configuration/testEnvironment'
+import {createForTest} from '../../src.ts/configuration/testEnvironment'
 
 describe('searcher/steth', () => {
   it('It can correct handle wsteth', async () => {
-    const universe = await Universe.createForTest(testConfig)
-    await testConfig.initialize(universe)
+    const universe = await createForTest()
     const ETH = universe.nativeToken
     const wstETH = await universe.getToken(
       Address.from('0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0')

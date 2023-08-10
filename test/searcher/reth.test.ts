@@ -1,12 +1,10 @@
 import { Address } from '../../src.ts/base/Address'
-import { Universe } from '../../src.ts/Universe'
 import { Searcher } from '../../src.ts/searcher'
-import testConfig from '../../src.ts/configuration/testEnvironment'
+import {createForTest} from '../../src.ts/configuration/testEnvironment'
 
 describe('searcher/reth', () => {
   it('It can correct handle reth', async () => {
-    const universe = await Universe.createForTest(testConfig)
-    await testConfig.initialize(universe)
+    const universe = await createForTest()
     const ETH = universe.nativeToken
     const WETH = universe.commonTokens.ERC20GAS!
     const RETH = await universe.getToken(

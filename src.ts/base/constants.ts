@@ -5,6 +5,7 @@
 export const FEE_SCALE = 1000000n
 
 export const GAS_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+export const CHAINLINK_BTC_TOKEN_ADDRESS = "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
 
 // It is a stand-in for USD. Address matches chainlink's designation. Which is based 
 // on some ISO standard.

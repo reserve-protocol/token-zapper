@@ -1,12 +1,9 @@
 import { Address } from '../../src.ts/base/Address'
-import { Universe } from '../../src.ts/Universe'
-import testConfig from '../../src.ts/configuration/testEnvironment'
+import {createForTest} from '../../src.ts/configuration/testEnvironment'
 
 describe('actions/SAToken', () => {
   it('Correctly mints and burns', async () => {
-    const universe = await Universe.createForTest(testConfig)
-
-    await testConfig.initialize(universe)
+    const universe = await createForTest()
 
     const USDT = universe.tokens.get(
       Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7')

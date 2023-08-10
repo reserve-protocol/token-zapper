@@ -1,18 +1,16 @@
 import { Address } from '../../src.ts/base/Address'
 import { V2Pool } from '../../src.ts/entities/dexes/V2LikePool'
-import { Universe } from '../../src.ts/Universe'
-import testConfig from '../../src.ts/configuration/testEnvironment'
+import {createForTest} from '../../src.ts/configuration/testEnvironment'
 
 describe('dexes/v2', () => {
   it('standard impl', async () => {
-    const universe = await Universe.createForTest(testConfig)
-    await testConfig.initialize(universe)
+    const universe = await createForTest()
     const UniV2Factory = Address.from(
       '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
     )
 
-    const USDT = universe.commonTokens.USDT!
-    const WETH = universe.commonTokens.ERC20GAS!
+    const USDT = universe.commonTokens.USDT
+    const WETH = universe.commonTokens.WETH
 
     const pool = V2Pool.createStandardV2Pool(UniV2Factory, USDT, WETH, 3000n)
 

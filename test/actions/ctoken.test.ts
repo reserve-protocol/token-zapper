@@ -1,16 +1,10 @@
 import { Address } from '../../src.ts/base/Address'
-import { Universe } from '../../src.ts/Universe'
-import testConfig from '../../src.ts/configuration/testEnvironment'
+import {createForTest} from '../../src.ts/configuration/testEnvironment'
 
 describe('actions/CToken', () => {
   it('Correctly mints and burns', async () => {
-    const universe = await Universe.createForTest(testConfig)
-
-    await testConfig.initialize(universe)
-
-    const USDT = universe.tokens.get(
-      Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7')
-    )!
+    const universe = await createForTest()
+    const USDT = universe.commonTokens.USDT
     const cUSDT = universe.tokens.get(
       Address.from('0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9')
     )!

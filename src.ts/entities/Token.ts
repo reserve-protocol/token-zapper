@@ -1,6 +1,9 @@
 import { Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
 import { ethers } from 'ethers'
+import { ERC20__factory } from '../contracts'
+import { parseHexStringIntoBuffer } from '../base'
+import { id } from 'ethers/lib/utils'
 
 /**
  * A class representing a token.
@@ -359,3 +362,34 @@ export class TokenAmounts {
     return out
   }
 }
+
+export const makeTokenLoader = (provider: ethers.providers.Provider) => async (
+  address: Address
+) => {
+  const erc20 = ERC20__factory.connect(address.address, provider)
+  let [symbol, decimals] = await Promise.all([
+    provider.call({
+      to: address.address,
+      data: id('symbol()').slice(0, 10),
+    }),
+    erc20.decimals().catch(() => 0),
+  ])
+
+  if (symbol.length === 66) {
+    let buffer = parseHexStringIntoBuffer(symbol)
+    let last = buffer.indexOf(0)
+    if (last == -1) {
+      last = buffer.length
+    }
+    buffer = buffer.subarray(0, last)
+    symbol = buffer.toString('utf8')
+  } else {
+    symbol = ethers.utils.defaultAbiCoder.decode(['string'], symbol)[0]
+  }
+
+  return {
+    symbol,
+    decimals,
+  }
+}
+export type TokenLoader = ReturnType<typeof makeTokenLoader>

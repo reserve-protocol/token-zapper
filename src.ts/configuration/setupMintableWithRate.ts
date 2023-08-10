@@ -11,7 +11,7 @@ import { Token } from '../entities';
  * @param initRateProvider
  */
 export const setupMintableWithRate = async <R>(
-  universe: Universe,
+  universe: Universe<any>,
   factory: {
     connect: (address: string, provider: ethers.providers.Provider) => R;
   },

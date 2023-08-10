@@ -29,8 +29,6 @@ class ConvexPool {
 }
 
 const boosterInterface = IBooster__factory.createInterface()
-const baseRewardsPoolInterface =
-  IConvexBaseRewardsPool__factory.createInterface()
 const wrapperInterface = IConvexWrapper__factory.createInterface()
 
 export class ConvexDepositAndStake extends Action {
@@ -270,10 +268,11 @@ export class ConvexUnstakeAndWithdraw extends Action {
  */
 export const setupConvexEdges = async (
   universe: Universe,
-  stakedConvexToken: Token
+  stakedConvexToken: Token,
+  convex: Address
 ) => {
   const convexBooster = IBooster__factory.connect(
-    universe.config.addresses.convex.address,
+    convex.address,
     universe.provider
   )
   const stkCVXTokenInst = IConvexWrapper__factory.connect(
@@ -294,7 +293,7 @@ export const setupConvexEdges = async (
   const crvRewards = Address.from(info.crvRewards)
 
   const convexPool = new ConvexPool(
-    universe.config.addresses.convex,
+    convex,
     convexPoolId.toBigInt(),
     curveLPToken,
     convexDepositToken,

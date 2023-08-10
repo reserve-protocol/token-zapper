@@ -4,10 +4,10 @@ import { type Token } from '../entities/Token'
 import { IERC20__factory } from '../contracts'
 
 export class ApprovalsStore {
-  constructor(readonly provider: ethers.providers.Provider) {}
+  constructor(private readonly provider: ethers.providers.Provider) { }
 
   private readonly cache = new Map<string, Promise<boolean>>()
-  async needsApproval(
+  public async needsApproval(
     token: Token,
     owner: Address,
     spender: Address,
@@ -37,5 +37,20 @@ export class ApprovalsStore {
       this.cache.set(key, check)
     }
     return await check
+  }
+}
+
+export class MokcApprovalsStore extends ApprovalsStore {
+  constructor(
+  ) {
+    super(null as any)
+  }
+  async needsApproval(
+    token: Token,
+    owner: Address,
+    spender: Address,
+    amount: bigint
+  ): Promise<boolean> {
+    return true
   }
 }

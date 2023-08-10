@@ -8,68 +8,49 @@ import { Universe } from '../Universe';
 import { setupMintableWithRate } from './setupMintableWithRate';
 import { Token } from '../entities';
 
-
-const loadCompoundTokens = async (
-  cEther: Token | null,
+export const loadCompoundMarketsFromRPC = async (
   comptrollerAddress: Address,
-  universe: Universe,
-  underlyingTokens: { [address: string]: string }
+  universe: Universe<any>,
 ) => {
   const allCTokens = await IComptroller__factory.connect(
     comptrollerAddress.address,
     universe.provider
   ).getAllMarkets();
-  return await Promise.all(
-    allCTokens
-      .map(Address.from)
-      .filter((address) => (cEther != null ? address !== cEther.address : true))
-      .map(async (address) => {
-        const [cToken, underlying] = await Promise.all([
-          universe.getToken(address),
-          universe.getToken(Address.from(underlyingTokens[address.address])),
-        ]);
-        return { underlying, cToken };
-      })
-  );
+  return allCTokens
 };
 export async function setupCompoundLike(
-  universe: Universe,
-  underlying: { [address: string]: string },
-  deployment: { cEth?: Address; comptroller: Address; }) {
+  universe: Universe<any>,
+  deployment: { cEth?: Token; comptroller: Address; },
+  cTokens: {underlying: Token, wrappedToken: Token }[]
+) {
   const ETH = universe.nativeToken;
-  const cEther = deployment.cEth != null ? await universe.getToken(deployment.cEth) : null;
-  if (cEther) {
+  const cETH = deployment.cEth
+
+  if (cETH != null) {
     await setupMintableWithRate(
       universe,
       ICToken__factory,
-      cEther,
+      cETH,
       async (cEthRate, cInst) => {
         return {
           fetchRate: async () => (await cInst.exchangeRateStored()).toBigInt(),
-          mint: new MintCTokenAction(universe, ETH, cEther, cEthRate),
-          burn: new MintCTokenAction(universe, cEther, ETH, cEthRate),
+          mint: new MintCTokenAction(universe, ETH, cETH, cEthRate),
+          burn: new MintCTokenAction(universe, cETH, ETH, cEthRate),
         };
       }
     );
   }
 
-  const cTokens = await loadCompoundTokens(
-    cEther,
-    deployment.comptroller,
-    universe,
-    underlying
-  );
-
-  for (const { cToken, underlying } of cTokens) {
+  for (const { wrappedToken, underlying } of cTokens) {
     await setupMintableWithRate(
       universe,
       ICToken__factory,
-      cToken,
+      wrappedToken,
       async (rate, inst) => {
         return {
           fetchRate: async () => (await inst.exchangeRateStored()).toBigInt(),
-          mint: new MintCTokenAction(universe, underlying, cToken, rate),
-          burn: new BurnCTokenAction(universe, underlying, cToken, rate),
+          mint: new MintCTokenAction(universe, underlying, wrappedToken, rate),
+          burn: new BurnCTokenAction(universe, underlying, wrappedToken, rate),
         };
       }
     );

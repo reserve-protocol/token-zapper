@@ -1,18 +1,15 @@
-import { Universe } from '../../src.ts/Universe'
-import testConfig from '../../src.ts/configuration/testEnvironment'
+import {createForTest} from '../../src.ts/configuration/testEnvironment'
 import { OneInchAction } from '../../src.ts/action/OneInch'
 import swap0_1ForUSDT from './data/oneInchSwap0.1ETHForUSDT.json'
 
 describe('actions/OneInch', () => {
   it('Snapshot test of a 1inch swap of 0.1 WETH for USDT on block "16870476"', async () => {
-    const universe = await Universe.createForTest(testConfig)
-
-    await testConfig.initialize(universe)
+    const universe = await createForTest()
 
     const oneInchAction = OneInchAction.createAction(
       universe,
-      universe.commonTokens.ERC20ETH!,
-      universe.commonTokens.USDT!,
+      universe.commonTokens.WETH,
+      universe.commonTokens.USDT,
       swap0_1ForUSDT as any,
       0
     )

@@ -1,7 +1,6 @@
+import { Config } from '.'
 import { Address } from '../base/Address'
-import { TokenQuantity } from '../entities'
 import { Universe } from '../Universe'
-import { CommonTokens } from './StaticConfig'
 
 export interface JsonTokenEntry {
   address: string
@@ -17,7 +16,7 @@ export interface JsonTokenEntry {
  * @param universe
  * @param tokens
  */
-export const loadTokens = (universe: Universe, tokens: JsonTokenEntry[]) => {
+export const loadTokens = async (universe: Universe<Config<number, any, { [K in string]: string }, { [K in string]: { erc20: string, main: string } }>>, tokens: JsonTokenEntry[]) => {
   for (const token of tokens) {
     universe.createToken(
       Address.from(token.address),
@@ -27,14 +26,21 @@ export const loadTokens = (universe: Universe, tokens: JsonTokenEntry[]) => {
     )
   }
 
-  const commonTokenSymbols = Object.keys(
-    universe.commonTokens
-  ) as (keyof CommonTokens)[]
-  commonTokenSymbols.forEach(async (key) => {
-    const addr = universe.chainConfig.config.addresses.commonTokens[key]
-    if (addr == null) {
-      return
-    }
-    universe.commonTokens[key] = universe.tokens.get(addr)!
-  })
+
+  await Promise.all(
+    Object.keys(
+      universe.config.addresses.commonTokens
+    ).map(async (key) => {
+      const addr = universe.config.addresses.commonTokens[key]
+      universe.commonTokens[key] = await universe.getToken(addr)
+    }).concat(
+      Object.keys(
+        universe.config.addresses.rTokens
+      ).map(async (key) => {
+        const addr = universe.config.addresses.rTokens[key]
+        universe.rTokens[key] = await universe.getToken(addr)
+      })
+    )
+  )
+
 }

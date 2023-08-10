@@ -30,7 +30,7 @@ export class TokenBasket implements IBasket {
   }
 
   constructor(
-    readonly universe: Universe,
+    readonly universe: Universe<any>,
     public readonly address: Address,
     public readonly rToken: Token
   ) {

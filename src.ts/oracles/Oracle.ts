@@ -1,34 +1,25 @@
-import { DefaultMap } from '../base/DefaultMap'
+import { Cached } from '../base/Cached'
 import { type Token, type TokenQuantity } from '../entities/Token'
 
-const NULL_VAL = { result: null, block: -1 }
-export class Oracle {
+export class PriceOracle extends Cached<Token, TokenQuantity> {
   constructor(
     public readonly name: string,
-    public readonly fairTokenPriceImplementation: (
+    fetchPrice: (
       token: Token
-    ) => Promise<TokenQuantity | null>
-  ) {}
+    ) => Promise<TokenQuantity | null>,
+    getCurrentBlock: () => number,
+  ) {
+    super(k => fetchPrice(k).then(v => {
+      if (v == null) {
+        throw new Error('Price not found')
+      }
+      return v
+    }), 1, getCurrentBlock)
+  }
 
-  public currentPrices = new DefaultMap<
-    Token,
-    Promise<{ result: TokenQuantity | null; block: number }>
-  >(async () => await Promise.resolve(NULL_VAL))
-  async fairTokenPrice(
-    block: number,
-    token: Token
-  ): Promise<TokenQuantity | null> {
-    const current = await (this.currentPrices.get(token) ??
-      Promise.resolve(NULL_VAL))
-    if (current.block < block) {
-      this.currentPrices.set(
-        token,
-        this.fairTokenPriceImplementation(token).then((result) => ({
-          result,
-          block,
-        }))
-      )
-    }
-    return await this.currentPrices.get(token).then(({ result }) => result)
+  public async quote(
+    token: Token,
+  ) {
+    return this.get(token)
   }
 }

@@ -3,10 +3,8 @@ import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens'
 import { BurnRTokenAction, MintRTokenAction } from '../action/RTokens'
 import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens'
 import { Address } from '../base/Address'
-import { type Universe } from '../Universe'
-import { type ChainConfiguration } from './ChainConfiguration'
-import { StaticConfig } from './StaticConfig'
-import { Oracle } from '../oracles'
+import { Universe } from '../Universe'
+import { PriceOracle } from '../oracles'
 import { Token, TokenQuantity } from '../entities'
 import { IBasket } from '../entities/TokenBasket'
 import { JsonTokenEntry, loadTokens } from './loadTokens'
@@ -15,9 +13,57 @@ import { constants, ethers } from 'ethers'
 import { ContractCall } from '../base'
 import { BurnWStETH, MintWStETH } from '../action/WStEth'
 import { BurnStETH, MintStETH } from '../action/StEth'
+import { makeConfig } from '.'
+import { MokcApprovalsStore } from '../searcher'
+
+export const testConfig = makeConfig(
+  1,
+  {
+    symbol: 'ETH',
+    decimals: 18,
+    name: 'Ether',
+  },
+  {
+    USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
+    WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
+    WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    ERC20GAS: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+  },
+  {
+    eUSD: {
+      main: '0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a',
+      erc20: "0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F"
+    },
+    'ETH+': {
+      main: '0xb6A7d481719E97e142114e905E86a39a2Fa0dfD2',
+      erc20: "0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8"
+    },
+    hyUSD: {
+      main: '0x2cabaa8010b3fbbDEeBe4a2D0fEffC2ed155bf37',
+      erc20: "0xaCdf0DBA4B9839b96221a8487e9ca660a48212be"
+    },
+    RSD: {
+      main: '0xa410AA8304CcBD53F88B4a5d05bD8fa048F42478',
+      erc20: "0xF2098092a5b9D25A3cC7ddc76A0553c9922eEA9E"
+    },
+    iUSD: {
+      main: '0x555143D2E6653c80a399f77c612D33D5Bf67F331',
+      erc20: "0x9b451BEB49a03586e6995E5A93b9c745D068581e"
+    },
+  },
+  {
+    zapperAddress: '0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b',
+    executorAddress: '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11',
+  },
+)
+type BaseTestConfigType = typeof testConfig
+
+export type TestUniverse = Universe<BaseTestConfigType>
 
 const defineRToken = (
-  universe: Universe,
+  universe: Universe<any>,
   rToken: Token,
   basket: TokenQuantity[]
 ) => {
@@ -31,9 +77,10 @@ const defineRToken = (
     new MintRTokenAction(universe, basketHandler),
     new BurnRTokenAction(universe, basketHandler)
   )
+  universe.rTokens[rToken.symbol] = rToken
 }
 
-const initialize = async (universe: Universe) => {
+const initialize = async (universe: TestUniverse) => {
   loadTokens(
     universe,
     require('./data/ethereum/tokens.json') as JsonTokenEntry[]
@@ -72,23 +119,13 @@ const initialize = async (universe: Universe) => {
     18
   )
 
-  universe.rTokens.eUSD = eUSD
-  universe.rTokens['ETH+'] = ETHPlus
 
-  const USDT = universe.commonTokens.USDT!
-  const USDC = universe.commonTokens.USDC!
-  const DAI = universe.commonTokens.DAI!
-  const WETH = universe.commonTokens.ERC20ETH!
-  const prices = new Map<Token, TokenQuantity>([
-    [USDT, universe.usd.one],
-    [WETH, universe.usd.fromDecimal('1750')],
-  ])
-  universe.oracles.push(
-    new Oracle('Test', async (token) => {
-      return prices.get(token) ?? null
-    })
-  )
-
+  const USDT = universe.commonTokens.USDT
+  const USDC = universe.commonTokens.USDC
+  const DAI = universe.commonTokens.DAI
+  const WBTC = universe.commonTokens.WBTC
+  const WETH = universe.commonTokens.WETH
+  
   universe.defineMintable(
     new DepositAction(universe, WETH),
     new WithdrawAction(universe, WETH)
@@ -236,51 +273,39 @@ const initialize = async (universe: Universe) => {
     reth.from('0.5').div(rETHToETHRate),
     wstETH.from('0.5').mul(wstEthPrStEth),
   ])
+
+  const prices = new Map<Token, TokenQuantity>([
+    [USDT, universe.usd.one],
+    [WETH, universe.usd.fromDecimal('1750')],
+    [reth, universe.usd.fromDecimal('1920')],
+    [wstETH, universe.usd.fromDecimal('1900')],
+    [WBTC, universe.usd.fromDecimal('29000')],
+    [DAI, universe.usd.from("0.999")],
+    [USDC, universe.usd.from("1.001")],
+    [universe.nativeToken, universe.usd.from("1750")],
+  ])
+  const oracle = new PriceOracle('Test', async (token) => {
+    return prices.get(token) ?? null
+  }, () => universe.currentBlock)
+  universe.oracles.push(
+    oracle
+  )
 }
 
-const ethereumConfig: ChainConfiguration = {
-  config: new StaticConfig(
+
+
+export const createForTest = async <const Conf extends BaseTestConfigType>(
+  c = testConfig as Conf
+) => {
+  return await Universe.createWithConfig(
+    null as any,
+    c,
+    initialize,
     {
-      symbol: 'ETH',
-      decimals: 18,
-      name: 'Ether',
-    },
-    {
-      convex: Address.from('0xF403C135812408BFbE8713b5A23a04b3D48AAE31'),
-      zapperAddress: Address.from('0x0000000000000000000000000000000000000042'),
-      executorAddress: Address.from(
-        '0x0000000000000000000000000000000000000043'
-      ),
-      rTokenDeployments: {
-        eUSD: null,
-        iUSD: null,
-        'ETH+': null,
-        hyUSD: null,
-        RSD: null,
+      approvalsStore: new MokcApprovalsStore(),
+      tokenLoader: async (_: Address) => {
+        throw new Error('Not implemented')
       },
-      // Points to aave address providers
-      aavev2: Address.from('0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5'),
-      aavev3: Address.from('0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e'),
-
-      // Just points to their vault
-      balancer: Address.from('0xBA12222222228d8Ba445958a75a0704d566BF2C8'),
-
-      // Curve does it's own thing..
-      commonTokens: {
-        USDC: Address.from('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'),
-        USDT: Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7'),
-        DAI: Address.from('0x6b175474e89094c44da98b954eedeac495271d0f'),
-        WBTC: Address.from('0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'),
-
-        // These two are the same on eth, arbi, opti, but will differ on polygon
-        ERC20ETH: Address.from('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
-        ERC20GAS: Address.from('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
-      },
-    },
-    {
-      enable: false,
     }
-  ),
-  initialize,
+  )
 }
-export default ethereumConfig

@@ -9,6 +9,7 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
+    "resolveJsonModule": true,
     "module": "node16",
     "noImplicitThis": true,
     "moduleResolution": "node16",

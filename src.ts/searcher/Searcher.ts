@@ -2,15 +2,17 @@ import {
   PostTradeAction,
   BasketTokenSourcingRuleApplication,
 } from './BasketTokenSourcingRules'
-import { Universe } from '../Universe'
+import { UniverseCommonTokens } from '../Universe'
 import { CurveSwap } from '../action/Curve'
 import { type MintRTokenAction } from '../action/RTokens'
 import { Address } from '../base/Address'
 import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
 import { bfs } from '../exchange-graph/BFS'
 import { SearcherResult } from './SearcherResult'
-import { SingleSwap, SwapPath, SwapPaths, SwapPlan } from './Swap'
-import { retryLoop } from '../base'
+import { SwapPath, SwapPaths, SwapPlan } from './Swap'
+import { RetryLoopException, retryLoop } from '../base'
+
+export type UniverseWithERC20GasTokenDefined = UniverseCommonTokens<"ERC20GAS">
 
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
@@ -28,7 +30,7 @@ import { retryLoop } from '../base'
  * producing the basket from the precursor set.
  */
 export const findPrecursorTokenSet = async (
-  universe: Universe,
+  universe: UniverseWithERC20GasTokenDefined,
   userInputQuantity: TokenQuantity,
   rToken: Token,
   unitBasket: TokenQuantity[]
@@ -60,6 +62,8 @@ export const findPrecursorTokenSet = async (
     return BasketTokenSourcingRuleApplication.noAction([qty])
   }
 
+  console.log(`${unitBasket.join(",")}`)
+
   for (const qty of unitBasket) {
     const application = await recourseOn(qty)
     basketTokenApplications.push(application)
@@ -69,8 +73,8 @@ export const findPrecursorTokenSet = async (
   )
 }
 
-export class Searcher {
-  constructor(private readonly universe: Universe) {}
+export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDefined> {
+  constructor(private readonly universe: SearcherUniverse) { }
 
   /**
    * @note This helper will find some set of operations converting a 'inputQuantity' into
@@ -125,20 +129,20 @@ export class Searcher {
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r))
       : precursorTokenBasket
-          .map((p) => p.into(inputQuantity.token))
-          .reduce((l, r) => l.add(r))
+        .map((p) => p.into(inputQuantity.token))
+        .reduce((l, r) => l.add(r))
 
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
-          input: inputQuantity.mul(
-            precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
-          ),
-          output: token,
-        }))
+        input: inputQuantity.mul(
+          precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
+        ),
+        output: token,
+      }))
       : precursorTokenBasket.map((qty) => ({
-          output: qty.token,
-          input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
-        }))
+        output: qty.token,
+        input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
+      }))
 
     const inputQuantityToTokenSet: SwapPath[] = []
     const tradingBalances = new TokenAmounts()
@@ -384,6 +388,10 @@ export class Searcher {
       {
         maxRetries: 3,
         retryDelay: 500,
+        async onRetry(...args) {
+          console.log(...args)
+          return "RETURN"
+        }
       }
     )
   }
@@ -462,7 +470,7 @@ export class Searcher {
       return []
     }
     const executorAddress =
-      this.universe.chainConfig.config.addresses.executorAddress
+      this.universe.config.addresses.executorAddress
     const out = await Promise.all(
       this.universe.dexAggregators.map(
         async (router) =>

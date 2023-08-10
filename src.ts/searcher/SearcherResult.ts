@@ -10,7 +10,6 @@ import { type Approval } from '../base/Approval'
 import { type Address } from '../base/Address'
 import { SingleSwap, SwapPath, SwapPaths } from '../searcher/Swap'
 import { TokenAmounts, type Token, type TokenQuantity } from '../entities/Token'
-import { Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import {
   TransactionBuilder,
@@ -19,6 +18,7 @@ import {
 } from './TransactionBuilder'
 import { ZapTransaction } from './ZapTransaction'
 import { PermitTransferFrom } from '@uniswap/permit2-sdk'
+import { UniverseWithERC20GasTokenDefined } from '.'
 
 class Step {
   constructor(
@@ -76,7 +76,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
 export class SearcherResult {
   public readonly blockNumber: number
   constructor(
-    readonly universe: Universe,
+    readonly universe: UniverseWithERC20GasTokenDefined,
     readonly userInput: TokenQuantity,
     public readonly swaps: SwapPaths,
     public readonly signer: Address,
@@ -176,7 +176,7 @@ export class SearcherResult {
         }
         duplicate.add(key)
         if (
-          await this.universe.approvalStore.needsApproval(
+          await this.universe.approvalsStore.needsApproval(
             i.token,
             executorAddress,
             i.spender,
@@ -299,14 +299,16 @@ export class SearcherResult {
       value,
       from: this.signer.address,
     }
-    return new ZapTransaction(
-      this.universe,
+
+    const out = new ZapTransaction(
+      this,
       payload,
       tx,
       builder.gasEstimate(),
       this.swaps.inputs[0],
       this.swaps.outputs,
-      this
     )
+
+    return out
   }
 }

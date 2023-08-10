@@ -1,11 +1,9 @@
 import { Address } from '../../src.ts/base/Address'
-import { Universe } from '../../src.ts/Universe'
-import testConfig from '../../src.ts/configuration/testEnvironment'
+import {createForTest} from '../../src.ts/configuration/testEnvironment'
 
 describe('actions/WStETH', () => {
   it('Correctly mints and burns', async () => {
-    const universe = await Universe.createForTest(testConfig)
-    await testConfig.initialize(universe)
+    const universe = await createForTest()
 
     const stETH = await universe.getToken(
       Address.from('0xae7ab96520de3a18e5e111b5eaab095312d7fe84')

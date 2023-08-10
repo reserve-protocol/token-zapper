@@ -26,6 +26,12 @@ import {
   Searcher,
   configuration,
 } from '@reserve-protocol/token-zapper'
+
+const mainnet = configuration.ethereum
+const initCurveOnEthereum = configuration.initCurveOnEthereum
+const loadTokens = configuration.loadTokens
+
+
 ```
 
 Then, create the searcher universe `Universe`, and instantiate a `Searcher`. The `create` factory will
@@ -36,7 +42,18 @@ We currently support mainnet. So make sure you are connected to mainnet when ins
 Otherwise you need to use the `createWithConfig` factory and pass in the network you want to use.
 
 ```typescript
-const universe = await Universe.create(provider)
+const universe = await Universe.createWithConfig(
+  provider,
+  mainnet.ethereumConfig,
+  async uni => {
+    await loadTokens(
+      uni,
+      require('./configuration/data/ethereum/tokens.json')
+    )
+    await mainnet.defaultInit(uni)
+    await initCurveOnEthereum(uni)
+  }
+)
 const searcher = new Searcher(universe)
 ```
 

@@ -34,9 +34,6 @@ git checkout -b $release_branch
 # Run build and test
 if npm run build && npm run test; then
   git add -A
-  git add lib.commonjs/
-  git add lib.esm/
-  git add types/
   # Commit changes
   git commit -m "Release v$new_version binaries"
 

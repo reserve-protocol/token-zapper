@@ -1,7 +1,7 @@
 import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens';
 import { type Address } from '../base/Address';
-import { ICToken__factory } from '../contracts/factories/contracts/ICToken.sol';
 import { IComptroller__factory } from '../contracts/factories/contracts/ICToken.sol/IComptroller__factory';
+import { ICToken__factory } from '../contracts/factories/contracts/ICToken.sol/ICToken__factory';
 import { type Token } from '../entities/Token';
 
 import { type Universe } from '../Universe';

@@ -1,4 +1,3 @@
-import { IERC4626__factory } from '../contracts'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
@@ -6,6 +5,7 @@ import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
 import { Address } from '../base/Address'
+import { IERC4626__factory } from '../contracts/factories/contracts/IERC4626__factory'
 
 const vaultInterface = IERC4626__factory.createInterface()
 

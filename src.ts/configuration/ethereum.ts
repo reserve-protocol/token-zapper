@@ -85,7 +85,7 @@ export const ethereumConfig = makeConfig(
     zapperAddress: '0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b',
     executorAddress: '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11',
   }
-);
+)
 
 
 export const PROTOCOL_CONFIGS = {
@@ -149,4 +149,5 @@ export const PROTOCOL_CONFIGS = {
   }
 };
 
-export type EthereumUniverse = Universe<typeof ethereumConfig>;
+export type EthereumConfigType = typeof ethereumConfig
+export type EthereumUniverse = Universe<EthereumConfigType>;

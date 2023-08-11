@@ -4,15 +4,15 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
-    "lib": ["es2021", "DOM", "ES2021.Weakref"],
+    "lib": ["ES2021", "DOM", "ES2021.Weakref"],
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "resolveJsonModule": true,
-    "module": "node16",
     "noImplicitThis": true,
-    "moduleResolution": "node16",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "noUnusedLocals": false,
     "preserveSymlinks": true,
     "preserveWatchOutput": true,
@@ -21,7 +21,7 @@
     "skipLibCheck": true,
     "strict": true,
     "sourceMap": true,
-    "target": "es2022"
+    "target": "ESNext"
   },
   "include": ["./src.ts/**/*.ts", "./src.ts/**/*.mts", "./src.ts/**/*.json"],
   "exclude": [

@@ -1,4 +1,3 @@
-import { type IRoute } from '@curvefi/api/lib/interfaces';
 import { type Action } from '../action/Action';
 import { setupConvexEdges as setupConvexEdge } from '../action/Convex';
 import { loadCurve } from '../action/Curve';
@@ -11,7 +10,17 @@ import {
   type SourcingRule
 } from '../searcher/BasketTokenSourcingRules';
 import { type EthereumUniverse } from './ethereum';
-
+export interface IRouteStep {
+  poolId: string;
+  poolAddress: string;
+  inputCoinAddress: string;
+  outputCoinAddress: string;
+  i: number;
+  j: number;
+  swapType: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
+  swapAddress: string;
+}
+export type IRoute = IRouteStep[];
 export const initCurveOnEthereum = async (
   universe: EthereumUniverse,
   convexBooster: string

@@ -1,18 +1,19 @@
+import curve from '../curve-js/src'
+import {curve as curveInner} from '../curve-js/src/curve'
+import { type IRoute } from '../curve-js/src/interfaces'
+
+import { ethers } from 'ethers'
+import { formatUnits, parseUnits } from 'ethers/lib/utils'
+import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
+import { Approval } from '../base/Approval'
+import { ContractCall } from '../base/ContractCall'
+import { DefaultMap } from '../base/DefaultMap'
+import { GAS_TOKEN_ADDRESS } from '../base/constants'
+import { parseHexStringIntoBuffer } from "../base/utils"
 import { Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
-import { ContractCall } from '../base/ContractCall'
-import { type Universe } from '../Universe'
-import { Approval } from '../base/Approval'
-import { ethers } from 'ethers'
-import curve from '@curvefi/api'
-import { curve as curveInner } from '@curvefi/api/lib/curve'
-import { formatUnits, parseUnits } from 'ethers/lib/utils'
 import { LPToken } from './LPToken'
-import { DefaultMap } from '../base/DefaultMap'
-import { parseHexStringIntoBuffer } from "../base/utils"
-import { IRoute } from '@curvefi/api/lib/interfaces'
-import { GAS_TOKEN_ADDRESS } from '../base/constants'
 type CurveType = typeof curve
 
 type PoolTemplate = InstanceType<CurveType['PoolTemplate']>
@@ -262,23 +263,11 @@ export const loadCurve = async (
     return swap
   }
   const loadCurvePools = async (universe: Universe) => {
-    const p = universe.provider as ethers.providers.JsonRpcProvider
-
     // const batcher = new ethers.providers.JsonRpcBatchProvider(p.connection.url)
-    await curve.init('Web3', {
-      externalProvider: {
-        request: async (req: any) => {
-          if (req.method === 'eth_chainId') {
-            return '0x' + universe.chainId.toString(16)
-          }
-          if (req.method === 'eth_gasPrice') {
-            return '0x' + universe.gasPrice.toString(16)
-          }
-          const resp = await p.send(req.method, req.params)
-          return resp
-        },
-      },
-    }) // In this case JsonRpc url, privateKey, fee data and chainId will be specified automatically
+    await curve.init(universe.provider, () => ({
+      gasPrice: universe.gasPrice,
+      maxFeePerGas: (universe.gasPrice + universe.gasPrice / 10n),
+    })) // In this case JsonRpc url, privateKey, fee data and chainId will be specified automatically
 
     await Promise.all([
       curve.cryptoFactory.fetchPools(true),

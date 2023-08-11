@@ -39,7 +39,7 @@ export const makeConfig = <
         ) as { [K in keyof RTokens]: string }
       )
     }
-  }
+  } as const
 }
 export type Config<
   ChainId extends number = number,

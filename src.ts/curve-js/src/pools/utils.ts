@@ -40,7 +40,7 @@ const _getUserLpBalances = async (pools: string[], address: string, useCache: bo
 }
 
 export const getUserPoolListByLiquidity = async (address = curve.signerAddress): Promise<string[]> => {
-    const pools = [...curve.getPoolList(), ...curve.getFactoryPoolList(), ...curve.getCryptoFactoryPoolList()];
+    const pools = [...curve.getFactoryPoolList(), ...curve.getCryptoFactoryPoolList()];
     const _lpBalances = await _getUserLpBalances(pools, address, false);
 
     const userPoolList: string[] = []

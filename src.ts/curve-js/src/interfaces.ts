@@ -9,6 +9,7 @@ export interface IDict<T> {
 }
 
 export type ICurve = {
+    whitelist: Set<string>,
     provider: Provider;
     multicallProvider: MulticallProvider;
     signerAddress: string;

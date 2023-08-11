@@ -5,18 +5,12 @@ import { CRYPTO_FACTORY_CONSTANTS } from "./constants-crypto";
 import { formatUnits } from "@ethersproject/units";
 import { BigNumber as ethersBigNumber } from "@ethersproject/bignumber"
 import { AddressZero } from "@ethersproject/constants";
-import { type JsonFragment } from "@ethersproject/abi";
-const called = new Set<string>();
-export const importAbi = <const Path extends string>(name: Path): () => Promise<JsonFragment[]> => () => {
-    if (!called.has(name)) {
-        called.add(name);
-    }
-    return import(name, { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-};
+import { importAbi } from "../importAbi";
 
-const factoryGaugeABI = importAbi("../constants/abis/gauge_factory.json")
-const gaugeChildABI = importAbi("../constants/abis/gauge_child.json")
-const cryptoFactorySwapABI = importAbi("../constants/abis/factory-crypto/factory-crypto-pool-2.json")
+
+const factoryGaugeABI = importAbi("./constants/abis/gauge_factory.json")
+// const gaugeChildABI = importAbi("./constants/abis/gauge_child.json")
+const cryptoFactorySwapABI = importAbi("./constants/abis/factory-crypto/factory-crypto-pool-2.json")
 
 const deepFlatten = (arr: any[]): any[] => [].concat(...arr.map((v) => (Array.isArray(v) ? deepFlatten(v) : v)));
 
@@ -233,7 +227,7 @@ export async function getCryptoFactoryPoolData(this: ICurve, fromIdx = 0, swapAd
                 underlying_decimals: [coinAddressDecimalsDict[underlyingCoinAddresses[i][0]], ...basePoolDecimals],
                 wrapped_decimals: coinAddresses[i].map((addr) => coinAddressDecimalsDict[addr]),
                 swap_abi: cryptoFactorySwapABI,
-                gauge_abi: this.chainId === 1 ? factoryGaugeABI : gaugeChildABI,
+                gauge_abi: factoryGaugeABI,
                 deposit_abi: basePoolZap.ABI,
             };
         } else {
@@ -255,7 +249,7 @@ export async function getCryptoFactoryPoolData(this: ICurve, fromIdx = 0, swapAd
                 underlying_decimals: underlyingCoinAddresses[i].map((addr) => coinAddressDecimalsDict[addr]),
                 wrapped_decimals: coinAddresses[i].map((addr) => coinAddressDecimalsDict[addr]),
                 swap_abi: cryptoFactorySwapABI,
-                gauge_abi: this.chainId === 1 ? factoryGaugeABI : gaugeChildABI,
+                gauge_abi: factoryGaugeABI,
             };
         }
     }

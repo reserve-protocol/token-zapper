@@ -1,20 +1,12 @@
-import { IDict } from "../interfaces";
-import { lowerCaseKeys } from "../constants/utils";
-
 import { type JsonFragment } from "@ethersproject/abi";
-const called = new Set<string>();
-export const importAbi = <const Path extends string>(name: Path): () => Promise<JsonFragment[]> => () => {
-    if (!called.has(name)) {
-        called.add(name);
-    }
-    return import(name, { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-};
-
+import { lowerCaseKeys } from "../constants/utils";
+import { importAbi } from "../importAbi";
+import { type IDict } from "../interfaces";
 
 // --- ZAPS --
-const atricrypto3ZapABI = importAbi("../constants/abis/atricrypto3/base_pool_zap.json")
-const tripoolZapABI = importAbi("../constants/abis/3pool/meta_zap_crypto.json")
-const fraxusdcZapABI = importAbi("../constants/abis/fraxusdc/meta_zap_crypto.json")
+// const atricrypto3ZapABI = importAbi("./constants/abis/atricrypto3/base_pool_zap.json")
+const tripoolZapABI = importAbi("./constants/abis/3pool/meta_zap_crypto.json")
+const fraxusdcZapABI = importAbi("./constants/abis/fraxusdc/meta_zap_crypto.json")
 
 export const lpTokenBasePoolIdDictEthereum: IDict<string> = lowerCaseKeys({
     '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490': '3pool',
@@ -52,12 +44,12 @@ export const basePoolIdZapDictEthereum: IDict<{ address: string, ABI: () => Prom
     },
 };
 
-export const basePoolIdZapDictPolygon: IDict<{ address: string, ABI: () => Promise<JsonFragment[]> }> = {
-    atricrypto3: {
-        address: "0x3d8EADb739D1Ef95dd53D718e4810721837c69c1".toLowerCase(),
-        ABI: atricrypto3ZapABI,
-    },
-};
+// export const basePoolIdZapDictPolygon: IDict<{ address: string, ABI: () => Promise<JsonFragment[]> }> = {
+//     atricrypto3: {
+//         address: "0x3d8EADb739D1Ef95dd53D718e4810721837c69c1".toLowerCase(),
+//         ABI: atricrypto3ZapABI,
+//     },
+// };
 
 export const basePoolIdZapDictFantom: IDict<{ address: string, ABI: () => Promise<JsonFragment[]> }> = {};
 

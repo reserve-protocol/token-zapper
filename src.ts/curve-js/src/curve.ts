@@ -31,7 +31,8 @@ import { Contract } from '@ethersproject/contracts';
 import { Provider as MulticallProvider, Contract as MulticallContract } from '../../ethcall/src';
 import { getFactoryPoolsDataFromApi } from "./factory/factory-api";
 import { JsonFragment } from "@ethersproject/abi";
-
+import * as router from "./router"
+import { getPool } from "./pools";
 
 const _killGauges = async (poolsData: IDict<IPoolData>): Promise<void> => {
     const gaugeData = await _getAllGauges();
@@ -69,10 +70,15 @@ export const NETWORK_CONSTANTS: { [index: number]: any } = {
     }
 }
 class Curve {
+    router = router
+    getPool(i: string) {
+        return getPool(i)
+    }
     provider: Provider;
     multicallProvider: MulticallProvider;
     signerAddress: string;
     chainId: IChainId;
+    whitelist: Set<string> = new Set();
     get options() {
         return this.feeData()
     }
@@ -118,7 +124,11 @@ class Curve {
     async init(
         provider: Provider,
         feeData: () => ({ gasPrice?: bigint, maxFeePerGas?: bigint, maxPriorityFeePerGas?: bigint }),
+        extraOptions: {
+            whitelist: Set<string>
+        }
     ): Promise<void> {
+        this.whitelist = extraOptions.whitelist
         // @ts-ignore
         this.provider = null;
         // @ts-ignore
@@ -174,6 +184,9 @@ class Curve {
         this.feeData = feeData
 
         for (const pool of Object.values(this.constants.POOLS_DATA)) {
+            if (!this.whitelist.has(pool.swap_address.toLowerCase())) {
+                continue
+            }
             await this.setContract(pool.swap_address, pool.swap_abi());
 
             if (pool.token_address !== pool.swap_address) {
@@ -250,6 +263,7 @@ class Curve {
         await this.setContract(this.constants.ALIASES.factory, factoryABI);
 
         await this.setContract(this.constants.ALIASES.crypto_factory, cryptoFactoryABI);
+
     }
 
     async setContract(address: string, abi: Promise<JsonFragment[]> | JsonFragment[]) {

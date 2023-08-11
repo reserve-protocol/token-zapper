@@ -1,100 +1,94 @@
 import { lowerCasePoolDataAddresses } from "../utils";
 import { IDict, IPoolData } from "../../interfaces";
-import { JsonFragment } from "@ethersproject/abi";
-const called = new Set<string>();
-export const importAbi = <const Path extends string>(name: Path): () => Promise<JsonFragment[]> => () => {
-    if (!called.has(name)) {
-        called.add(name);
-    }
-    return import(name, { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-};
-const gaugeABI = importAbi("../abis/gauge.json");
-const gaugeSynthetixABI = importAbi("../abis/gauge_synthetix.json")
-const gaugeV2ABI = importAbi("../abis/gauge_v2.json")
-const gaugeV3ABI = importAbi("../abis/gauge_v3.json")
-const gaugeV4ABI = importAbi("../abis/gauge_v4.json")
-const gaugeV5ABI = importAbi("../abis/gauge_v5.json")
-const gaugeFactoryABI = importAbi("../abis/gauge_factory.json")
-const compoundDepositABI = importAbi('../abis/compound/deposit.json')
-const compoundSwapABI = importAbi('../abis/compound/swap.json')
-const usdtDepositABI = importAbi('../abis/usdt/deposit.json')
-const usdtSwapABI = importAbi('../abis/usdt/swap.json')
-const iearnDepositABI = importAbi('../abis/iearn/deposit.json')
-const iearnSwapABI = importAbi('../abis/iearn/swap.json')
-const busdDepositABI = importAbi('../abis/busd/deposit.json')
-const busdSwapABI = importAbi('../abis/busd/swap.json')
-const susdv2DepositABI = importAbi('../abis/susdv2/deposit.json')
-const susdv2SwapABI = importAbi('../abis/susdv2/swap.json')
-const susdv2SCurveRewards_abi = importAbi('../abis/susdv2/sCurveRewards.json')
-const paxDepositABI = importAbi('../abis/pax/deposit.json')
-const paxSwapABI = importAbi('../abis/pax/swap.json')
-const renSwapABI = importAbi('../abis/ren/swap.json')
-const sbtcSwapABI = importAbi('../abis/sbtc/swap.json')
-const sbtcSCurveRewardsABI = importAbi('../abis/sbtc/sCurveRewards.json')
-const hbtcSwapABI = importAbi('../abis/hbtc/swap.json')
-const tripoolSwapABI = importAbi('../abis/3pool/swap.json')
-const gusdSwapABI = importAbi('../abis/gusd/swap.json')
-const gusdDepositABI = importAbi('../abis/gusd/deposit.json')
-const husdSwapABI = importAbi('../abis/husd/swap.json')
-const husdDepositABI = importAbi('../abis/husd/deposit.json')
-const usdkSwapABI = importAbi('../abis/usdk/swap.json')
-const usdkDepositABI = importAbi('../abis/usdk/deposit.json')
-const usdnSwapABI = importAbi('../abis/usdn/swap.json')
-const usdnDepositABI = importAbi('../abis/usdn/deposit.json')
-const musdSwapABI = importAbi('../abis/musd/swap.json')
-const musdDepositABI = importAbi('../abis/musd/deposit.json')
-const musdSCurveRewards_abi = importAbi('../abis/musd/sCurveRewards.json')
-const rsvSwapABI = importAbi('../abis/rsv/swap.json')
-const rsvDepositABI = importAbi('../abis/rsv/deposit.json')
-const rsvSCurveRewards_abi = importAbi('../abis/rsv/sCurveRewards.json')
-const tbtcSwapABI = importAbi('../abis/tbtc/swap.json')
-const tbtcDepositABI = importAbi('../abis/tbtc/deposit.json')
-const tbtcSCurveRewards_abi = importAbi('../abis/tbtc/sCurveRewards.json')
-const dusdSwapABI = importAbi('../abis/dusd/swap.json')
-const dusdDepositABI = importAbi('../abis/dusd/deposit.json')
-const dusdSCurveRewards_abi = importAbi('../abis/dusd/sCurveRewards.json')
-const pbtcSwapABI = importAbi('../abis/pbtc/swap.json')
-const pbtcDepositABI = importAbi('../abis/pbtc/deposit.json')
-const pbtcSCurveRewards_abi = importAbi('../abis/pbtc/sCurveRewards.json')
-const bbtcSwapABI = importAbi('../abis/bbtc/swap.json')
-const bbtcDepositABI = importAbi('../abis/bbtc/deposit.json')
-const obtcSwapABI = importAbi('../abis/obtc/swap.json')
-const obtcDepositABI = importAbi('../abis/obtc/deposit.json')
-const obtcSCurveRewards_abi = importAbi('../abis/obtc/sCurveRewards.json')
-const sethSwapABI = importAbi('../abis/seth/swap.json')
-const eursSwapABI = importAbi('../abis/eurs/swap.json')
-const eursSCurveRewards_abi = importAbi('../abis/eurs/sCurveRewards.json')
-const ustSwapABI = importAbi('../abis/ust/swap.json')
-const ustDepositABI = importAbi('../abis/ust/deposit.json')
-const aaveSwapABI = importAbi('../abis/aave/swap.json')
-const aaveRewardsABI = importAbi('../abis/aave/rewards.json')
-const stethSwapABI = importAbi('../abis/steth/swap.json')
-const stethSCurveRewards_abi = importAbi('../abis/steth/sCurveRewards.json')
-const saaveSwapABI = importAbi('../abis/saave/swap.json')
-const ankrethSwapABI = importAbi('../abis/ankreth/swap.json')
-const ankrethSCurveRewards_abi = importAbi('../abis/ankreth/sCurveRewards.json')
-const usdpSwapABI = importAbi('../abis/usdp/swap.json')
-const usdpDepositABI = importAbi('../abis/usdp/deposit.json')
-const ibSwapABI = importAbi('../abis/ib/swap.json')
-const linkSwapABI = importAbi('../abis/link/swap.json')
-const rethSwapABI = importAbi('../abis/reth/swap.json')
-const factorySwapABI = importAbi('../abis/factoryPools/swap.json')
-const factoryDepositABI = importAbi('../abis/factoryPools/deposit.json')
-const factoryRewardsABI = importAbi('../abis/factoryPools/rewards.json')
-const tricrypto2SwapABI = importAbi('../abis/tricrypto2/swap.json')
-const tricrypto2DepositABI = importAbi('../abis/tricrypto2/deposit.json')
-const eurtSwapABI = importAbi('../abis/eurt/swap.json')
-const eurtusdSwapABI = importAbi('../abis/eurtusd/swap.json')
-const eurtusdDepositABI = importAbi('../abis/eurtusd/deposit.json')
-const eursusdSwapABI = importAbi('../abis/eursusd/swap.json')
-const crvethSwapABI = importAbi('../abis/crveth/swap.json')
-const raiSwapABI = importAbi('../abis/rai/swap.json')
-const raiDepositABI = importAbi('../abis/rai/deposit.json')
-const twopoolSwapABI = importAbi('../abis/2pool/swap.json')
-const fourpoolSwapABI = importAbi('../abis/4pool/swap.json')
-const fraxusdcSwapABI = importAbi('../abis/fraxusdc/swap.json')
-const frxethSwapABI = importAbi('../abis/frxeth/swap.json')
-const sbtc2SwapABI = importAbi('../abis/sbtc2/swap.json')
+import { importAbi } from "../../importAbi";
+
+const gaugeABI = importAbi("./constants/abis/gauge.json");
+const gaugeSynthetixABI = importAbi("./constants/abis/gauge_synthetix.json")
+const gaugeV2ABI = importAbi("./constants/abis/gauge_v2.json")
+const gaugeV3ABI = importAbi("./constants/abis/gauge_v3.json")
+const gaugeV4ABI = importAbi("./constants/abis/gauge_v4.json")
+const gaugeV5ABI = importAbi("./constants/abis/gauge_v5.json")
+const gaugeFactoryABI = importAbi("./constants/abis/gauge_factory.json")
+const compoundDepositABI = importAbi('./constants/abis/compound/deposit.json')
+const compoundSwapABI = importAbi('./constants/abis/compound/swap.json')
+const usdtDepositABI = importAbi('./constants/abis/usdt/deposit.json')
+const usdtSwapABI = importAbi('./constants/abis/usdt/swap.json')
+// const iearnDepositABI = importAbi('./constants/abis/iearn/deposit.json')
+// const iearnSwapABI = importAbi('./constants/abis/iearn/swap.json')
+const busdDepositABI = importAbi('./constants/abis/busd/deposit.json')
+const busdSwapABI = importAbi('./constants/abis/busd/swap.json')
+const susdv2DepositABI = importAbi('./constants/abis/susdv2/deposit.json')
+const susdv2SwapABI = importAbi('./constants/abis/susdv2/swap.json')
+const susdv2SCurveRewards_abi = importAbi('./constants/abis/susdv2/sCurveRewards.json')
+const paxDepositABI = importAbi('./constants/abis/pax/deposit.json')
+const paxSwapABI = importAbi('./constants/abis/pax/swap.json')
+// const renSwapABI = importAbi('./constants/abis/ren/swap.json')
+// const sbtcSwapABI = importAbi('./constants/abis/sbtc/swap.json')
+// const sbtcSCurveRewardsABI = importAbi('./constants/abis/sbtc/sCurveRewards.json')
+// const hbtcSwapABI = importAbi('./constants/abis/hbtc/swap.json')
+const tripoolSwapABI = importAbi('./constants/abis/3pool/swap.json')
+// const gusdSwapABI = importAbi('./constants/abis/gusd/swap.json')
+// const gusdDepositABI = importAbi('./constants/abis/gusd/deposit.json')
+// const husdSwapABI = importAbi('./constants/abis/husd/swap.json')
+// const husdDepositABI = importAbi('./constants/abis/husd/deposit.json')
+// const usdkSwapABI = importAbi('./constants/abis/usdk/swap.json')
+// const usdkDepositABI = importAbi('./constants/abis/usdk/deposit.json')
+const usdnSwapABI = importAbi('./constants/abis/usdn/swap.json')
+const usdnDepositABI = importAbi('./constants/abis/usdn/deposit.json')
+// const musdSwapABI = importAbi('./constants/abis/musd/swap.json')
+// const musdDepositABI = importAbi('./constants/abis/musd/deposit.json')
+// const musdSCurveRewards_abi = importAbi('./constants/abis/musd/sCurveRewards.json')
+const rsvSwapABI = importAbi('./constants/abis/rsv/swap.json')
+const rsvDepositABI = importAbi('./constants/abis/rsv/deposit.json')
+const rsvSCurveRewards_abi = importAbi('./constants/abis/rsv/sCurveRewards.json')
+// const tbtcSwapABI = importAbi('./constants/abis/tbtc/swap.json')
+// const tbtcDepositABI = importAbi('./constants/abis/tbtc/deposit.json')
+// const tbtcSCurveRewards_abi = importAbi('./constants/abis/tbtc/sCurveRewards.json')
+const dusdSwapABI = importAbi('./constants/abis/dusd/swap.json')
+const dusdDepositABI = importAbi('./constants/abis/dusd/deposit.json')
+const dusdSCurveRewards_abi = importAbi('./constants/abis/dusd/sCurveRewards.json')
+// const pbtcSwapABI = importAbi('./constants/abis/pbtc/swap.json')
+// const pbtcDepositABI = importAbi('./constants/abis/pbtc/deposit.json')
+// const pbtcSCurveRewards_abi = importAbi('./constants/abis/pbtc/sCurveRewards.json')
+// const bbtcSwapABI = importAbi('./constants/abis/bbtc/swap.json')
+// const bbtcDepositABI = importAbi('./constants/abis/bbtc/deposit.json')
+// const obtcSwapABI = importAbi('./constants/abis/obtc/swap.json')
+// const obtcDepositABI = importAbi('./constants/abis/obtc/deposit.json')
+// const obtcSCurveRewards_abi = importAbi('./constants/abis/obtc/sCurveRewards.json')
+const sethSwapABI = importAbi('./constants/abis/seth/swap.json')
+// const eursSwapABI = importAbi('./constants/abis/eurs/swap.json')
+// const eursSCurveRewards_abi = importAbi('./constants/abis/eurs/sCurveRewards.json')
+const ustSwapABI = importAbi('./constants/abis/ust/swap.json')
+const ustDepositABI = importAbi('./constants/abis/ust/deposit.json')
+// const aaveSwapABI = importAbi('./constants/abis/aave/swap.json')
+// const aaveRewardsABI = importAbi('./constants/abis/aave/rewards.json')
+const stethSwapABI = importAbi('./constants/abis/steth/swap.json')
+const stethSCurveRewards_abi = importAbi('./constants/abis/steth/sCurveRewards.json')
+// const saaveSwapABI = importAbi('./constants/abis/saave/swap.json')
+const ankrethSwapABI = importAbi('./constants/abis/ankreth/swap.json')
+const ankrethSCurveRewards_abi = importAbi('./constants/abis/ankreth/sCurveRewards.json')
+const usdpSwapABI = importAbi('./constants/abis/usdp/swap.json')
+const usdpDepositABI = importAbi('./constants/abis/usdp/deposit.json')
+const ibSwapABI = importAbi('./constants/abis/ib/swap.json')
+// const linkSwapABI = importAbi('./constants/abis/link/swap.json')
+const rethSwapABI = importAbi('./constants/abis/reth/swap.json')
+const factorySwapABI = importAbi('./constants/abis/factoryPools/swap.json')
+const factoryDepositABI = importAbi('./constants/abis/factoryPools/deposit.json')
+const factoryRewardsABI = importAbi('./constants/abis/factoryPools/rewards.json')
+const tricrypto2SwapABI = importAbi('./constants/abis/tricrypto2/swap.json')
+const tricrypto2DepositABI = importAbi('./constants/abis/tricrypto2/deposit.json')
+// const eurtSwapABI = importAbi('./constants/abis/eurt/swap.json')
+// const eurtusdSwapABI = importAbi('./constants/abis/eurtusd/swap.json')
+// const eurtusdDepositABI = importAbi('./constants/abis/eurtusd/deposit.json')
+// const eursusdSwapABI = importAbi('./constants/abis/eursusd/swap.json')
+// const crvethSwapABI = importAbi('./constants/abis/crveth/swap.json')
+const raiSwapABI = importAbi('./constants/abis/rai/swap.json')
+const raiDepositABI = importAbi('./constants/abis/rai/deposit.json')
+const twopoolSwapABI = importAbi('./constants/abis/2pool/swap.json')
+const fourpoolSwapABI = importAbi('./constants/abis/4pool/swap.json')
+const fraxusdcSwapABI = importAbi('./constants/abis/fraxusdc/swap.json')
+const frxethSwapABI = importAbi('./constants/abis/frxeth/swap.json')
+// const sbtc2SwapABI = importAbi('./constants/abis/sbtc2/swap.json')
 
 
 export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses({
@@ -156,39 +150,39 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         deposit_abi: usdtDepositABI,
     },
 
-    y: {
-        name: "y",
-        full_name: "y",
-        symbol: "Y",
-        reference_asset: 'USD',
-        swap_address: '0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51',
-        token_address: '0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8',
-        gauge_address: '0xFA712EE4788C042e2B7BB55E6cb8ec569C4530c1',
-        deposit_address: '0xbBC81d23Ea2c3ec7e56D39296F0cbB648873a5d3',
-        // sCurveRewards_address: '0x0001FB050Fe7312791bF6475b96569D83F695C9f',
-        is_lending: true,
-        underlying_coins: ['DAI', 'USDC', 'USDT', 'TUSD'],
-        wrapped_coins: ['yDAI', 'yUSDC', 'yUSDT', 'yTUSD'],
-        underlying_coin_addresses: [
-            '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-            '0x0000000000085d4780B73119b644AE5ecd22b376',
-        ],
-        wrapped_coin_addresses: [
-            '0x16de59092dAE5CcF4A1E6439D611fd0653f0Bd01',
-            '0xd6aD7a6750A7593E092a9B218d66C0A814a3436e',
-            '0x83f798e925BcD4017Eb265844FDDAbb448f1707D',
-            '0x73a052500105205d34Daf004eAb301916DA8190f',
-        ],
-        underlying_decimals: [18, 6, 6, 18],
-        wrapped_decimals: [18, 6, 6, 18],
-        use_lending: [true, true, true, true],
-        swap_abi: iearnSwapABI,
-        gauge_abi: gaugeABI,
-        deposit_abi: iearnDepositABI,
-        // sCurveRewards_abi: iearnSCurveRewardsABI,
-    },
+    // y: {
+    //     name: "y",
+    //     full_name: "y",
+    //     symbol: "Y",
+    //     reference_asset: 'USD',
+    //     swap_address: '0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51',
+    //     token_address: '0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8',
+    //     gauge_address: '0xFA712EE4788C042e2B7BB55E6cb8ec569C4530c1',
+    //     deposit_address: '0xbBC81d23Ea2c3ec7e56D39296F0cbB648873a5d3',
+    //     // sCurveRewards_address: '0x0001FB050Fe7312791bF6475b96569D83F695C9f',
+    //     is_lending: true,
+    //     underlying_coins: ['DAI', 'USDC', 'USDT', 'TUSD'],
+    //     wrapped_coins: ['yDAI', 'yUSDC', 'yUSDT', 'yTUSD'],
+    //     underlying_coin_addresses: [
+    //         '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    //         '0x0000000000085d4780B73119b644AE5ecd22b376',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x16de59092dAE5CcF4A1E6439D611fd0653f0Bd01',
+    //         '0xd6aD7a6750A7593E092a9B218d66C0A814a3436e',
+    //         '0x83f798e925BcD4017Eb265844FDDAbb448f1707D',
+    //         '0x73a052500105205d34Daf004eAb301916DA8190f',
+    //     ],
+    //     underlying_decimals: [18, 6, 6, 18],
+    //     wrapped_decimals: [18, 6, 6, 18],
+    //     use_lending: [true, true, true, true],
+    //     swap_abi: iearnSwapABI,
+    //     gauge_abi: gaugeABI,
+    //     deposit_abi: iearnDepositABI,
+    //     // sCurveRewards_abi: iearnSCurveRewardsABI,
+    // },
     busd: {
         name: "busd",
         full_name: "busd",
@@ -286,84 +280,84 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         deposit_abi: paxDepositABI,
     },
 
-    ren: {
-        name: "ren",
-        full_name: "ren",
-        symbol: "ren",
-        reference_asset: 'BTC',
-        swap_address: '0x93054188d876f558f4a66B2EF1d97d16eDf0895B',
-        token_address: '0x49849C98ae39Fff122806C06791Fa73784FB3675',
-        gauge_address: '0xB1F2cdeC61db658F091671F5f199635aEF202CAC',
-        is_plain: true,
-        underlying_coins: ['renBTC', 'WBTC'],
-        wrapped_coins: ['renBTC', 'WBTC'],
-        underlying_coin_addresses: [
-            '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-        ],
-        wrapped_coin_addresses: [
-            '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-        ],
-        underlying_decimals: [8, 8],
-        wrapped_decimals: [8, 8],
-        swap_abi: renSwapABI,
-        gauge_abi: gaugeABI,
-    },
+    // ren: {
+    //     name: "ren",
+    //     full_name: "ren",
+    //     symbol: "ren",
+    //     reference_asset: 'BTC',
+    //     swap_address: '0x93054188d876f558f4a66B2EF1d97d16eDf0895B',
+    //     token_address: '0x49849C98ae39Fff122806C06791Fa73784FB3675',
+    //     gauge_address: '0xB1F2cdeC61db658F091671F5f199635aEF202CAC',
+    //     is_plain: true,
+    //     underlying_coins: ['renBTC', 'WBTC'],
+    //     wrapped_coins: ['renBTC', 'WBTC'],
+    //     underlying_coin_addresses: [
+    //         '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //     ],
+    //     underlying_decimals: [8, 8],
+    //     wrapped_decimals: [8, 8],
+    //     swap_abi: renSwapABI,
+    //     gauge_abi: gaugeABI,
+    // },
 
-    sbtc: {
-        name: "sbtc",
-        full_name: "sbtc",
-        symbol: "sbtc",
-        reference_asset: 'BTC',
-        swap_address: '0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714',
-        token_address: '0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3',
-        gauge_address: '0x705350c4BcD35c9441419DdD5d2f097d7a55410F',
-        sCurveRewards_address: '0x13C1542A468319688B89E323fe9A3Be3A90EBb27',
-        is_plain: true,
-        underlying_coins: ['renBTC', 'WBTC', 'sBTC'],
-        wrapped_coins: ['renBTC', 'WBTC', 'sBTC'],
-        underlying_coin_addresses: [
-            '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-            '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
-        ],
-        wrapped_coin_addresses: [
-            '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-            '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
-        ],
-        underlying_decimals: [8, 8, 18],
-        wrapped_decimals: [8, 8, 18],
-        swap_abi: sbtcSwapABI,
-        gauge_abi: gaugeSynthetixABI,
-        sCurveRewards_abi: sbtcSCurveRewardsABI,
-    },
+    // sbtc: {
+    //     name: "sbtc",
+    //     full_name: "sbtc",
+    //     symbol: "sbtc",
+    //     reference_asset: 'BTC',
+    //     swap_address: '0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714',
+    //     token_address: '0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3',
+    //     gauge_address: '0x705350c4BcD35c9441419DdD5d2f097d7a55410F',
+    //     sCurveRewards_address: '0x13C1542A468319688B89E323fe9A3Be3A90EBb27',
+    //     is_plain: true,
+    //     underlying_coins: ['renBTC', 'WBTC', 'sBTC'],
+    //     wrapped_coins: ['renBTC', 'WBTC', 'sBTC'],
+    //     underlying_coin_addresses: [
+    //         '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //         '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //         '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
+    //     ],
+    //     underlying_decimals: [8, 8, 18],
+    //     wrapped_decimals: [8, 8, 18],
+    //     swap_abi: sbtcSwapABI,
+    //     gauge_abi: gaugeSynthetixABI,
+    //     sCurveRewards_abi: sbtcSCurveRewardsABI,
+    // },
 
-    hbtc: {
-        name: "hbtc",
-        full_name: "hbtc",
-        symbol: "hbtc",
-        reference_asset: 'BTC',
-        swap_address: '0x4CA9b3063Ec5866A4B82E437059D2C43d1be596F',
-        token_address: '0xb19059ebb43466C323583928285a49f558E572Fd',
-        gauge_address: '0x4c18E409Dc8619bFb6a1cB56D114C3f592E0aE79',
-        is_plain: true,
-        underlying_coins: ['HBTC', 'WBTC'],
-        wrapped_coins: ['HBTC', 'WBTC'],
-        underlying_coin_addresses: [
-            '0x0316EB71485b0Ab14103307bf65a021042c6d380',
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-        ],
-        wrapped_coin_addresses: [
-            '0x0316EB71485b0Ab14103307bf65a021042c6d380',
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-        ],
-        underlying_decimals: [18, 8],
-        wrapped_decimals: [18, 8],
-        swap_abi: hbtcSwapABI,
-        gauge_abi: gaugeABI,
-    },
+    // hbtc: {
+    //     name: "hbtc",
+    //     full_name: "hbtc",
+    //     symbol: "hbtc",
+    //     reference_asset: 'BTC',
+    //     swap_address: '0x4CA9b3063Ec5866A4B82E437059D2C43d1be596F',
+    //     token_address: '0xb19059ebb43466C323583928285a49f558E572Fd',
+    //     gauge_address: '0x4c18E409Dc8619bFb6a1cB56D114C3f592E0aE79',
+    //     is_plain: true,
+    //     underlying_coins: ['HBTC', 'WBTC'],
+    //     wrapped_coins: ['HBTC', 'WBTC'],
+    //     underlying_coin_addresses: [
+    //         '0x0316EB71485b0Ab14103307bf65a021042c6d380',
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x0316EB71485b0Ab14103307bf65a021042c6d380',
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //     ],
+    //     underlying_decimals: [18, 8],
+    //     wrapped_decimals: [18, 8],
+    //     swap_abi: hbtcSwapABI,
+    //     gauge_abi: gaugeABI,
+    // },
 
     '3pool': {
         name: "3pool",
@@ -392,95 +386,95 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         gauge_abi: gaugeABI,
     },
 
-    gusd: {
-        name: "gusd",
-        full_name: "gusd",
-        symbol: "gusd",
-        reference_asset: 'USD',
-        swap_address: '0x4f062658EaAF2C1ccf8C8e36D6824CDf41167956',
-        token_address: '0xD2967f45c4f384DEEa880F807Be904762a3DeA07',
-        gauge_address: '0xC5cfaDA84E902aD92DD40194f0883ad49639b023',
-        deposit_address: '0x64448B78561690B70E17CBE8029a3e5c1bB7136e',
-        is_meta: true,
-        base_pool: '3pool',
-        underlying_coins: ['GUSD', 'DAI', 'USDC', 'USDT'],
-        wrapped_coins: ['GUSD', '3Crv'],
-        underlying_coin_addresses: [
-            '0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd',
-            '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-        ],
-        wrapped_coin_addresses: [
-            '0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd',
-            '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
-        ],
-        underlying_decimals: [2, 18, 6, 6],
-        wrapped_decimals: [2, 18],
-        swap_abi: gusdSwapABI,
-        gauge_abi: gaugeABI,
-        deposit_abi: gusdDepositABI,
-    },
+    // gusd: {
+    //     name: "gusd",
+    //     full_name: "gusd",
+    //     symbol: "gusd",
+    //     reference_asset: 'USD',
+    //     swap_address: '0x4f062658EaAF2C1ccf8C8e36D6824CDf41167956',
+    //     token_address: '0xD2967f45c4f384DEEa880F807Be904762a3DeA07',
+    //     gauge_address: '0xC5cfaDA84E902aD92DD40194f0883ad49639b023',
+    //     deposit_address: '0x64448B78561690B70E17CBE8029a3e5c1bB7136e',
+    //     is_meta: true,
+    //     base_pool: '3pool',
+    //     underlying_coins: ['GUSD', 'DAI', 'USDC', 'USDT'],
+    //     wrapped_coins: ['GUSD', '3Crv'],
+    //     underlying_coin_addresses: [
+    //         '0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd',
+    //         '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd',
+    //         '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+    //     ],
+    //     underlying_decimals: [2, 18, 6, 6],
+    //     wrapped_decimals: [2, 18],
+    //     swap_abi: gusdSwapABI,
+    //     gauge_abi: gaugeABI,
+    //     deposit_abi: gusdDepositABI,
+    // },
 
-    husd: {
-        name: "husd",
-        full_name: "husd",
-        symbol: "husd",
-        reference_asset: 'USD',
-        swap_address: '0x3eF6A01A0f81D6046290f3e2A8c5b843e738E604',
-        token_address: '0x5B5CFE992AdAC0C9D48E05854B2d91C73a003858',
-        gauge_address: '0x2db0E83599a91b508Ac268a6197b8B14F5e72840',
-        deposit_address: '0x09672362833d8f703D5395ef3252D4Bfa51c15ca',
-        is_meta: true,
-        base_pool: '3pool',
-        underlying_coins: ['HUSD', 'DAI', 'USDC', 'USDT'],
-        wrapped_coins: ['HUSD', '3Crv'],
-        underlying_coin_addresses: [
-            '0xdF574c24545E5FfEcb9a659c229253D4111d87e1',
-            '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-        ],
-        wrapped_coin_addresses: [
-            '0xdF574c24545E5FfEcb9a659c229253D4111d87e1',
-            '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
-        ],
-        underlying_decimals: [8, 18, 6, 6],
-        wrapped_decimals: [8, 18],
-        swap_abi: husdSwapABI,
-        gauge_abi: gaugeABI,
-        deposit_abi: husdDepositABI,
-    },
+    // husd: {
+    //     name: "husd",
+    //     full_name: "husd",
+    //     symbol: "husd",
+    //     reference_asset: 'USD',
+    //     swap_address: '0x3eF6A01A0f81D6046290f3e2A8c5b843e738E604',
+    //     token_address: '0x5B5CFE992AdAC0C9D48E05854B2d91C73a003858',
+    //     gauge_address: '0x2db0E83599a91b508Ac268a6197b8B14F5e72840',
+    //     deposit_address: '0x09672362833d8f703D5395ef3252D4Bfa51c15ca',
+    //     is_meta: true,
+    //     base_pool: '3pool',
+    //     underlying_coins: ['HUSD', 'DAI', 'USDC', 'USDT'],
+    //     wrapped_coins: ['HUSD', '3Crv'],
+    //     underlying_coin_addresses: [
+    //         '0xdF574c24545E5FfEcb9a659c229253D4111d87e1',
+    //         '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xdF574c24545E5FfEcb9a659c229253D4111d87e1',
+    //         '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+    //     ],
+    //     underlying_decimals: [8, 18, 6, 6],
+    //     wrapped_decimals: [8, 18],
+    //     swap_abi: husdSwapABI,
+    //     gauge_abi: gaugeABI,
+    //     deposit_abi: husdDepositABI,
+    // },
 
-    usdk: {
-        name: "usdk",
-        full_name: "usdk",
-        symbol: "usdk",
-        reference_asset: 'USD',
-        swap_address: '0x3E01dD8a5E1fb3481F0F589056b428Fc308AF0Fb',
-        token_address: '0x97E2768e8E73511cA874545DC5Ff8067eB19B787',
-        gauge_address: '0xC2b1DF84112619D190193E48148000e3990Bf627',
-        deposit_address: '0xF1f85a74AD6c64315F85af52d3d46bF715236ADc',
-        is_meta: true,
-        base_pool: '3pool',
-        underlying_coins: ['USDK', 'DAI', 'USDC', 'USDT'],
-        wrapped_coins: ['USDK', '3Crv'],
-        underlying_coin_addresses: [
-            '0x1c48f86ae57291F7686349F12601910BD8D470bb',
-            '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-        ],
-        wrapped_coin_addresses: [
-            '0x1c48f86ae57291F7686349F12601910BD8D470bb',
-            '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
-        ],
-        underlying_decimals: [18, 18, 6, 6],
-        wrapped_decimals: [18, 18],
-        swap_abi: usdkSwapABI,
-        gauge_abi: gaugeABI,
-        deposit_abi: usdkDepositABI,
-    },
+    // usdk: {
+    //     name: "usdk",
+    //     full_name: "usdk",
+    //     symbol: "usdk",
+    //     reference_asset: 'USD',
+    //     swap_address: '0x3E01dD8a5E1fb3481F0F589056b428Fc308AF0Fb',
+    //     token_address: '0x97E2768e8E73511cA874545DC5Ff8067eB19B787',
+    //     gauge_address: '0xC2b1DF84112619D190193E48148000e3990Bf627',
+    //     deposit_address: '0xF1f85a74AD6c64315F85af52d3d46bF715236ADc',
+    //     is_meta: true,
+    //     base_pool: '3pool',
+    //     underlying_coins: ['USDK', 'DAI', 'USDC', 'USDT'],
+    //     wrapped_coins: ['USDK', '3Crv'],
+    //     underlying_coin_addresses: [
+    //         '0x1c48f86ae57291F7686349F12601910BD8D470bb',
+    //         '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x1c48f86ae57291F7686349F12601910BD8D470bb',
+    //         '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+    //     ],
+    //     underlying_decimals: [18, 18, 6, 6],
+    //     wrapped_decimals: [18, 18],
+    //     swap_abi: usdkSwapABI,
+    //     gauge_abi: gaugeABI,
+    //     deposit_abi: usdkDepositABI,
+    // },
 
     usdn: {
         name: "usdn",
@@ -512,37 +506,37 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         deposit_abi: usdnDepositABI,
     },
 
-    musd: {
-        name: "musd",
-        full_name: "musd",
-        symbol: "musd",
-        reference_asset: 'USD',
-        swap_address: '0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6',
-        token_address: '0x1AEf73d49Dedc4b1778d0706583995958Dc862e6',
-        gauge_address: '0x5f626c30EC1215f4EdCc9982265E8b1F411D1352',
-        deposit_address: '0x803A2B40c5a9BB2B86DD630B274Fa2A9202874C2',
-        sCurveRewards_address: "0xE6E6E25EfdA5F69687aA9914f8d750C523A1D261",
-        is_meta: true,
-        base_pool: '3pool',
-        underlying_coins: ['mUSD', 'DAI', 'USDC', 'USDT'],
-        wrapped_coins: ['mUSD', '3Crv'],
-        underlying_coin_addresses: [
-            '0xe2f2a5C287993345a840Db3B0845fbC70f5935a5',
-            '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-        ],
-        wrapped_coin_addresses: [
-            '0xe2f2a5C287993345a840Db3B0845fbC70f5935a5',
-            '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
-        ],
-        underlying_decimals: [18, 18, 6, 6],
-        wrapped_decimals: [18, 18],
-        swap_abi: musdSwapABI,
-        gauge_abi: gaugeSynthetixABI,
-        deposit_abi: musdDepositABI,
-        sCurveRewards_abi: musdSCurveRewards_abi,
-    },
+    // musd: {
+    //     name: "musd",
+    //     full_name: "musd",
+    //     symbol: "musd",
+    //     reference_asset: 'USD',
+    //     swap_address: '0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6',
+    //     token_address: '0x1AEf73d49Dedc4b1778d0706583995958Dc862e6',
+    //     gauge_address: '0x5f626c30EC1215f4EdCc9982265E8b1F411D1352',
+    //     deposit_address: '0x803A2B40c5a9BB2B86DD630B274Fa2A9202874C2',
+    //     sCurveRewards_address: "0xE6E6E25EfdA5F69687aA9914f8d750C523A1D261",
+    //     is_meta: true,
+    //     base_pool: '3pool',
+    //     underlying_coins: ['mUSD', 'DAI', 'USDC', 'USDT'],
+    //     wrapped_coins: ['mUSD', '3Crv'],
+    //     underlying_coin_addresses: [
+    //         '0xe2f2a5C287993345a840Db3B0845fbC70f5935a5',
+    //         '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xe2f2a5C287993345a840Db3B0845fbC70f5935a5',
+    //         '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+    //     ],
+    //     underlying_decimals: [18, 18, 6, 6],
+    //     wrapped_decimals: [18, 18],
+    //     swap_abi: musdSwapABI,
+    //     gauge_abi: gaugeSynthetixABI,
+    //     deposit_abi: musdDepositABI,
+    //     sCurveRewards_abi: musdSCurveRewards_abi,
+    // },
 
     rsv: {
         name: "rsv",
@@ -576,37 +570,37 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         sCurveRewards_abi: rsvSCurveRewards_abi,
     },
 
-    tbtc: {
-        name: "tbtc",
-        full_name: "tbtc",
-        symbol: "tbtc",
-        reference_asset: 'BTC',
-        swap_address: '0xC25099792E9349C7DD09759744ea681C7de2cb66',
-        token_address: '0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd',
-        gauge_address: '0x6828bcF74279eE32f2723eC536c22c51Eed383C6',
-        deposit_address: '0xaa82ca713D94bBA7A89CEAB55314F9EfFEdDc78c',
-        sCurveRewards_address: '0xAF379f0228ad0d46bB7B4f38f9dc9bCC1ad0360c',
-        is_meta: true,
-        base_pool: 'sbtc',
-        underlying_coins: ['TBTC', 'renBTC', 'WBTC', 'sBTC'],
-        wrapped_coins: ['TBTC', 'sbtcCrv'],
-        underlying_coin_addresses: [
-            '0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa',
-            '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-            '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
-        ],
-        wrapped_coin_addresses: [
-            '0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa',
-            '0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3',
-        ],
-        underlying_decimals: [18, 8, 8, 18],
-        wrapped_decimals: [18, 18],
-        swap_abi: tbtcSwapABI,
-        gauge_abi: gaugeSynthetixABI,
-        deposit_abi: tbtcDepositABI,
-        sCurveRewards_abi: tbtcSCurveRewards_abi,
-    },
+    // tbtc: {
+    //     name: "tbtc",
+    //     full_name: "tbtc",
+    //     symbol: "tbtc",
+    //     reference_asset: 'BTC',
+    //     swap_address: '0xC25099792E9349C7DD09759744ea681C7de2cb66',
+    //     token_address: '0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd',
+    //     gauge_address: '0x6828bcF74279eE32f2723eC536c22c51Eed383C6',
+    //     deposit_address: '0xaa82ca713D94bBA7A89CEAB55314F9EfFEdDc78c',
+    //     sCurveRewards_address: '0xAF379f0228ad0d46bB7B4f38f9dc9bCC1ad0360c',
+    //     is_meta: true,
+    //     base_pool: 'sbtc',
+    //     underlying_coins: ['TBTC', 'renBTC', 'WBTC', 'sBTC'],
+    //     wrapped_coins: ['TBTC', 'sbtcCrv'],
+    //     underlying_coin_addresses: [
+    //         '0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa',
+    //         '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //         '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa',
+    //         '0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3',
+    //     ],
+    //     underlying_decimals: [18, 8, 8, 18],
+    //     wrapped_decimals: [18, 18],
+    //     swap_abi: tbtcSwapABI,
+    //     gauge_abi: gaugeSynthetixABI,
+    //     deposit_abi: tbtcDepositABI,
+    //     sCurveRewards_abi: tbtcSCurveRewards_abi,
+    // },
 
     dusd: {
         name: "dusd",
@@ -640,99 +634,99 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         sCurveRewards_abi: dusdSCurveRewards_abi,
     },
 
-    pbtc: {
-        name: "pbtc",
-        full_name: "pbtc",
-        symbol: "pbtc",
-        reference_asset: 'BTC',
-        swap_address: '0x7F55DDe206dbAD629C080068923b36fe9D6bDBeF',
-        token_address: '0xDE5331AC4B3630f94853Ff322B66407e0D6331E8',
-        gauge_address: '0xd7d147c6Bb90A718c3De8C0568F9B560C79fa416',
-        deposit_address: '0x11F419AdAbbFF8d595E7d5b223eee3863Bb3902C',
-        sCurveRewards_address: "0xf7977edc1fa61aa9b5f90d70a74a3fbc46e9dad3",
-        is_meta: true,
-        base_pool: 'sbtc',
-        underlying_coins: ['pBTC', 'renBTC', 'WBTC', 'sBTC'],
-        wrapped_coins: ['pBTC', 'sbtcCrv'],
-        underlying_coin_addresses: [
-            '0x5228a22e72ccC52d415EcFd199F99D0665E7733b',
-            '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-            '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
-        ],
-        wrapped_coin_addresses: [
-            '0x5228a22e72ccC52d415EcFd199F99D0665E7733b',
-            '0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3',
-        ],
-        underlying_decimals: [18, 8, 8, 18],
-        wrapped_decimals: [18, 18],
-        swap_abi: pbtcSwapABI,
-        gauge_abi: gaugeV2ABI,
-        deposit_abi: pbtcDepositABI,
-        sCurveRewards_abi: pbtcSCurveRewards_abi,
-    },
+    // pbtc: {
+    //     name: "pbtc",
+    //     full_name: "pbtc",
+    //     symbol: "pbtc",
+    //     reference_asset: 'BTC',
+    //     swap_address: '0x7F55DDe206dbAD629C080068923b36fe9D6bDBeF',
+    //     token_address: '0xDE5331AC4B3630f94853Ff322B66407e0D6331E8',
+    //     gauge_address: '0xd7d147c6Bb90A718c3De8C0568F9B560C79fa416',
+    //     deposit_address: '0x11F419AdAbbFF8d595E7d5b223eee3863Bb3902C',
+    //     sCurveRewards_address: "0xf7977edc1fa61aa9b5f90d70a74a3fbc46e9dad3",
+    //     is_meta: true,
+    //     base_pool: 'sbtc',
+    //     underlying_coins: ['pBTC', 'renBTC', 'WBTC', 'sBTC'],
+    //     wrapped_coins: ['pBTC', 'sbtcCrv'],
+    //     underlying_coin_addresses: [
+    //         '0x5228a22e72ccC52d415EcFd199F99D0665E7733b',
+    //         '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //         '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x5228a22e72ccC52d415EcFd199F99D0665E7733b',
+    //         '0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3',
+    //     ],
+    //     underlying_decimals: [18, 8, 8, 18],
+    //     wrapped_decimals: [18, 18],
+    //     swap_abi: pbtcSwapABI,
+    //     gauge_abi: gaugeV2ABI,
+    //     deposit_abi: pbtcDepositABI,
+    //     sCurveRewards_abi: pbtcSCurveRewards_abi,
+    // },
 
-    bbtc: {
-        name: "bbtc",
-        full_name: "bbtc",
-        symbol: "bbtc",
-        reference_asset: 'BTC',
-        swap_address: '0x071c661B4DeefB59E2a3DdB20Db036821eeE8F4b',
-        token_address: '0x410e3E86ef427e30B9235497143881f717d93c2A',
-        gauge_address: '0xdFc7AdFa664b08767b735dE28f9E84cd30492aeE',
-        deposit_address: '0xC45b2EEe6e09cA176Ca3bB5f7eEe7C47bF93c756',
-        is_meta: true,
-        base_pool: 'sbtc',
-        underlying_coins: ['BBTC', 'renBTC', 'WBTC', 'sBTC'],
-        wrapped_coins: ['BBTC', 'sbtcCrv'],
-        underlying_coin_addresses: [
-            '0x9be89d2a4cd102d8fecc6bf9da793be995c22541',
-            '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-            '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
-        ],
-        wrapped_coin_addresses: [
-            '0x9be89d2a4cd102d8fecc6bf9da793be995c22541',
-            '0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3',
-        ],
-        underlying_decimals: [8, 8, 8, 18],
-        wrapped_decimals: [8, 18],
-        swap_abi: bbtcSwapABI,
-        gauge_abi: gaugeV2ABI,
-        deposit_abi: bbtcDepositABI,
-    },
+    // bbtc: {
+    //     name: "bbtc",
+    //     full_name: "bbtc",
+    //     symbol: "bbtc",
+    //     reference_asset: 'BTC',
+    //     swap_address: '0x071c661B4DeefB59E2a3DdB20Db036821eeE8F4b',
+    //     token_address: '0x410e3E86ef427e30B9235497143881f717d93c2A',
+    //     gauge_address: '0xdFc7AdFa664b08767b735dE28f9E84cd30492aeE',
+    //     deposit_address: '0xC45b2EEe6e09cA176Ca3bB5f7eEe7C47bF93c756',
+    //     is_meta: true,
+    //     base_pool: 'sbtc',
+    //     underlying_coins: ['BBTC', 'renBTC', 'WBTC', 'sBTC'],
+    //     wrapped_coins: ['BBTC', 'sbtcCrv'],
+    //     underlying_coin_addresses: [
+    //         '0x9be89d2a4cd102d8fecc6bf9da793be995c22541',
+    //         '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //         '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x9be89d2a4cd102d8fecc6bf9da793be995c22541',
+    //         '0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3',
+    //     ],
+    //     underlying_decimals: [8, 8, 8, 18],
+    //     wrapped_decimals: [8, 18],
+    //     swap_abi: bbtcSwapABI,
+    //     gauge_abi: gaugeV2ABI,
+    //     deposit_abi: bbtcDepositABI,
+    // },
 
-    obtc: {
-        name: "obtc",
-        full_name: "obtc",
-        symbol: "obtc",
-        reference_asset: 'BTC',
-        swap_address: '0xd81dA8D904b52208541Bade1bD6595D8a251F8dd',
-        token_address: '0x2fE94ea3d5d4a175184081439753DE15AeF9d614',
-        gauge_address: '0x11137B10C210b579405c21A07489e28F3c040AB1',
-        deposit_address: '0xd5BCf53e2C81e1991570f33Fa881c49EEa570C8D',
-        sCurveRewards_address: "0x7f1ae7a1fc275b5b9c3ad4497fa94e3b9424e76e",
-        is_meta: true,
-        base_pool: 'sbtc',
-        underlying_coins: ['oBTC', 'renBTC', 'WBTC', 'sBTC'],
-        wrapped_coins: ['oBTC', 'sbtcCrv'],
-        underlying_coin_addresses: [
-            '0x8064d9Ae6cDf087b1bcd5BDf3531bD5d8C537a68',
-            '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-            '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
-        ],
-        wrapped_coin_addresses: [
-            '0x8064d9Ae6cDf087b1bcd5BDf3531bD5d8C537a68',
-            '0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3',
-        ],
-        underlying_decimals: [18, 8, 8, 18],
-        wrapped_decimals: [18, 18],
-        swap_abi: obtcSwapABI,
-        gauge_abi: gaugeV2ABI,
-        deposit_abi: obtcDepositABI,
-        sCurveRewards_abi: obtcSCurveRewards_abi,
-    },
+    // obtc: {
+    //     name: "obtc",
+    //     full_name: "obtc",
+    //     symbol: "obtc",
+    //     reference_asset: 'BTC',
+    //     swap_address: '0xd81dA8D904b52208541Bade1bD6595D8a251F8dd',
+    //     token_address: '0x2fE94ea3d5d4a175184081439753DE15AeF9d614',
+    //     gauge_address: '0x11137B10C210b579405c21A07489e28F3c040AB1',
+    //     deposit_address: '0xd5BCf53e2C81e1991570f33Fa881c49EEa570C8D',
+    //     sCurveRewards_address: "0x7f1ae7a1fc275b5b9c3ad4497fa94e3b9424e76e",
+    //     is_meta: true,
+    //     base_pool: 'sbtc',
+    //     underlying_coins: ['oBTC', 'renBTC', 'WBTC', 'sBTC'],
+    //     wrapped_coins: ['oBTC', 'sbtcCrv'],
+    //     underlying_coin_addresses: [
+    //         '0x8064d9Ae6cDf087b1bcd5BDf3531bD5d8C537a68',
+    //         '0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D',
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //         '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x8064d9Ae6cDf087b1bcd5BDf3531bD5d8C537a68',
+    //         '0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3',
+    //     ],
+    //     underlying_decimals: [18, 8, 8, 18],
+    //     wrapped_decimals: [18, 18],
+    //     swap_abi: obtcSwapABI,
+    //     gauge_abi: gaugeV2ABI,
+    //     deposit_abi: obtcDepositABI,
+    //     sCurveRewards_abi: obtcSCurveRewards_abi,
+    // },
 
     seth: {
         name: "seth",
@@ -759,32 +753,32 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         gauge_abi: gaugeV2ABI,
     },
 
-    eurs: {
-        name: "eurs",
-        full_name: "eurs",
-        symbol: "eurs",
-        reference_asset: 'EUR',
-        swap_address: '0x0Ce6a5fF5217e38315f87032CF90686C96627CAA',
-        token_address: '0x194eBd173F6cDacE046C53eACcE9B953F28411d1',
-        gauge_address: '0x90Bb609649E0451E5aD952683D64BD2d1f245840',
-        sCurveRewards_address: "0xc0d8994cd78ee1980885df1a0c5470fc977b5cfe",
-        is_plain: true,
-        underlying_coins: ['EURS', 'sEUR'],
-        wrapped_coins: ['EURS', 'sEUR'],
-        underlying_coin_addresses: [
-            '0xdB25f211AB05b1c97D595516F45794528a807ad8',
-            '0xD71eCFF9342A5Ced620049e616c5035F1dB98620',
-        ],
-        wrapped_coin_addresses: [
-            '0xdB25f211AB05b1c97D595516F45794528a807ad8',
-            '0xD71eCFF9342A5Ced620049e616c5035F1dB98620',
-        ],
-        underlying_decimals: [2, 18],
-        wrapped_decimals: [2, 18],
-        swap_abi: eursSwapABI,
-        gauge_abi: gaugeV2ABI,
-        sCurveRewards_abi: eursSCurveRewards_abi,
-    },
+    // eurs: {
+    //     name: "eurs",
+    //     full_name: "eurs",
+    //     symbol: "eurs",
+    //     reference_asset: 'EUR',
+    //     swap_address: '0x0Ce6a5fF5217e38315f87032CF90686C96627CAA',
+    //     token_address: '0x194eBd173F6cDacE046C53eACcE9B953F28411d1',
+    //     gauge_address: '0x90Bb609649E0451E5aD952683D64BD2d1f245840',
+    //     sCurveRewards_address: "0xc0d8994cd78ee1980885df1a0c5470fc977b5cfe",
+    //     is_plain: true,
+    //     underlying_coins: ['EURS', 'sEUR'],
+    //     wrapped_coins: ['EURS', 'sEUR'],
+    //     underlying_coin_addresses: [
+    //         '0xdB25f211AB05b1c97D595516F45794528a807ad8',
+    //         '0xD71eCFF9342A5Ced620049e616c5035F1dB98620',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xdB25f211AB05b1c97D595516F45794528a807ad8',
+    //         '0xD71eCFF9342A5Ced620049e616c5035F1dB98620',
+    //     ],
+    //     underlying_decimals: [2, 18],
+    //     wrapped_decimals: [2, 18],
+    //     swap_abi: eursSwapABI,
+    //     gauge_abi: gaugeV2ABI,
+    //     sCurveRewards_abi: eursSCurveRewards_abi,
+    // },
 
     ust: {
         name: "ust",
@@ -816,35 +810,35 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         deposit_abi: ustDepositABI,
     },
 
-    aave: {
-        name: "aave",
-        full_name: "aave",
-        symbol: "aave",
-        reference_asset: 'USD',
-        swap_address: '0xDeBF20617708857ebe4F679508E7b7863a8A8EeE',
-        token_address: '0xFd2a8fA60Abd58Efe3EeE34dd494cD491dC14900',
-        gauge_address: '0xd662908ADA2Ea1916B3318327A97eB18aD588b5d',
-        sCurveRewards_address: "0x96d7bc17912e4f320c4894194564cf8425cfe8d9",
-        is_lending: true,
-        underlying_coins: ['DAI', 'USDC', 'USDT'],
-        wrapped_coins: ['aDAI', 'aUSDC', 'aUSDT'],
-        underlying_coin_addresses: [
-            '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-        ],
-        wrapped_coin_addresses: [
-            '0x028171bCA77440897B824Ca71D1c56caC55b68A3',
-            '0xBcca60bB61934080951369a648Fb03DF4F96263C',
-            '0x3Ed3B47Dd13EC9a98b44e6204A523E766B225811',
-        ],
-        underlying_decimals: [18, 6, 6],
-        wrapped_decimals: [18, 6, 6],
-        use_lending: [true, true, true],
-        swap_abi: aaveSwapABI,
-        gauge_abi: gaugeV2ABI,
-        sCurveRewards_abi: aaveRewardsABI,
-    },
+    // aave: {
+    //     name: "aave",
+    //     full_name: "aave",
+    //     symbol: "aave",
+    //     reference_asset: 'USD',
+    //     swap_address: '0xDeBF20617708857ebe4F679508E7b7863a8A8EeE',
+    //     token_address: '0xFd2a8fA60Abd58Efe3EeE34dd494cD491dC14900',
+    //     gauge_address: '0xd662908ADA2Ea1916B3318327A97eB18aD588b5d',
+    //     sCurveRewards_address: "0x96d7bc17912e4f320c4894194564cf8425cfe8d9",
+    //     is_lending: true,
+    //     underlying_coins: ['DAI', 'USDC', 'USDT'],
+    //     wrapped_coins: ['aDAI', 'aUSDC', 'aUSDT'],
+    //     underlying_coin_addresses: [
+    //         '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x028171bCA77440897B824Ca71D1c56caC55b68A3',
+    //         '0xBcca60bB61934080951369a648Fb03DF4F96263C',
+    //         '0x3Ed3B47Dd13EC9a98b44e6204A523E766B225811',
+    //     ],
+    //     underlying_decimals: [18, 6, 6],
+    //     wrapped_decimals: [18, 6, 6],
+    //     use_lending: [true, true, true],
+    //     swap_abi: aaveSwapABI,
+    //     gauge_abi: gaugeV2ABI,
+    //     sCurveRewards_abi: aaveRewardsABI,
+    // },
 
     steth: {
         name: "steth",
@@ -873,33 +867,33 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         sCurveRewards_abi: stethSCurveRewards_abi,
     },
 
-    saave: {
-        name: "saave",
-        full_name: "saave",
-        symbol: "saave",
-        reference_asset: 'USD',
-        swap_address: '0xEB16Ae0052ed37f479f7fe63849198Df1765a733',
-        token_address: '0x02d341CcB60fAaf662bC0554d13778015d1b285C',
-        gauge_address: '0x462253b8F74B72304c145DB0e4Eebd326B22ca39',
-        sCurveRewards_address: "0xe5f41acad47849c6eb28b93913ca81893fb5a2a6",
-        is_lending: true,
-        underlying_coins: ['DAI', 'sUSD'],
-        wrapped_coins: ['aDAI', 'aSUSD'],
-        underlying_coin_addresses: [
-            '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-            '0x57Ab1ec28D129707052df4dF418D58a2D46d5f51',
-        ],
-        wrapped_coin_addresses: [
-            '0x028171bCA77440897B824Ca71D1c56caC55b68A3',
-            '0x6c5024cd4f8a59110119c56f8933403a539555eb',
-        ],
-        underlying_decimals: [18, 18],
-        wrapped_decimals: [18, 18],
-        use_lending: [true, true],
-        swap_abi: saaveSwapABI,
-        gauge_abi: gaugeV2ABI,
-        sCurveRewards_abi: aaveRewardsABI,
-    },
+    // saave: {
+    //     name: "saave",
+    //     full_name: "saave",
+    //     symbol: "saave",
+    //     reference_asset: 'USD',
+    //     swap_address: '0xEB16Ae0052ed37f479f7fe63849198Df1765a733',
+    //     token_address: '0x02d341CcB60fAaf662bC0554d13778015d1b285C',
+    //     gauge_address: '0x462253b8F74B72304c145DB0e4Eebd326B22ca39',
+    //     sCurveRewards_address: "0xe5f41acad47849c6eb28b93913ca81893fb5a2a6",
+    //     is_lending: true,
+    //     underlying_coins: ['DAI', 'sUSD'],
+    //     wrapped_coins: ['aDAI', 'aSUSD'],
+    //     underlying_coin_addresses: [
+    //         '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    //         '0x57Ab1ec28D129707052df4dF418D58a2D46d5f51',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x028171bCA77440897B824Ca71D1c56caC55b68A3',
+    //         '0x6c5024cd4f8a59110119c56f8933403a539555eb',
+    //     ],
+    //     underlying_decimals: [18, 18],
+    //     wrapped_decimals: [18, 18],
+    //     use_lending: [true, true],
+    //     swap_abi: saaveSwapABI,
+    //     gauge_abi: gaugeV2ABI,
+    //     sCurveRewards_abi: aaveRewardsABI,
+    // },
 
     ankreth: {
         name: "ankreth",
@@ -986,30 +980,30 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         gauge_abi: gaugeV2ABI,
     },
 
-    link: {
-        name: "link",
-        full_name: "link",
-        symbol: "link",
-        reference_asset: 'LINK',
-        swap_address: '0xF178C0b5Bb7e7aBF4e12A4838C7b7c5bA2C623c0',
-        token_address: '0xcee60cfa923170e4f8204ae08b4fa6a3f5656f3a',
-        gauge_address: '0xfd4d8a17df4c27c1dd245d153ccf4499e806c87d',
-        is_plain: true,
-        underlying_coins: ['LINK', 'sLINK'],
-        wrapped_coins: ['LINK', 'sLINK'],
-        underlying_coin_addresses: [
-            '0x514910771AF9Ca656af840dff83E8264EcF986CA',
-            '0xbBC455cb4F1B9e4bFC4B73970d360c8f032EfEE6',
-        ],
-        wrapped_coin_addresses: [
-            '0x514910771AF9Ca656af840dff83E8264EcF986CA',
-            '0xbBC455cb4F1B9e4bFC4B73970d360c8f032EfEE6',
-        ],
-        underlying_decimals: [18, 18],
-        wrapped_decimals: [18, 18],
-        swap_abi: linkSwapABI,
-        gauge_abi: gaugeV2ABI,
-    },
+    // link: {
+    //     name: "link",
+    //     full_name: "link",
+    //     symbol: "link",
+    //     reference_asset: 'LINK',
+    //     swap_address: '0xF178C0b5Bb7e7aBF4e12A4838C7b7c5bA2C623c0',
+    //     token_address: '0xcee60cfa923170e4f8204ae08b4fa6a3f5656f3a',
+    //     gauge_address: '0xfd4d8a17df4c27c1dd245d153ccf4499e806c87d',
+    //     is_plain: true,
+    //     underlying_coins: ['LINK', 'sLINK'],
+    //     wrapped_coins: ['LINK', 'sLINK'],
+    //     underlying_coin_addresses: [
+    //         '0x514910771AF9Ca656af840dff83E8264EcF986CA',
+    //         '0xbBC455cb4F1B9e4bFC4B73970d360c8f032EfEE6',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x514910771AF9Ca656af840dff83E8264EcF986CA',
+    //         '0xbBC455cb4F1B9e4bFC4B73970d360c8f032EfEE6',
+    //     ],
+    //     underlying_decimals: [18, 18],
+    //     wrapped_decimals: [18, 18],
+    //     swap_abi: linkSwapABI,
+    //     gauge_abi: gaugeV2ABI,
+    // },
     tusd: {
         name: "tusd",
         full_name: "tusd",
@@ -1245,109 +1239,109 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         gauge_abi: gaugeV3ABI,
         deposit_abi: tricrypto2DepositABI,
     },
-    eurt: {
-        name: "eurt",
-        full_name: "eurt",
-        symbol: "eurt",
-        reference_asset: 'EUR',
-        swap_address: '0xfd5db7463a3ab53fd211b4af195c5bccc1a03890',
-        token_address: '0xfd5db7463a3ab53fd211b4af195c5bccc1a03890',
-        gauge_address: '0xe8060Ad8971450E624d5289A10017dD30F5dA85F',
-        is_plain: true,
-        underlying_coins: ['EURT', 'sEUR'],
-        wrapped_coins: ['EURT', 'sEUR'],
-        underlying_coin_addresses: [
-            '0xC581b735A1688071A1746c968e0798D642EDE491',
-            '0xD71eCFF9342A5Ced620049e616c5035F1dB98620',
-        ],
-        wrapped_coin_addresses: [
-            '0xC581b735A1688071A1746c968e0798D642EDE491',
-            '0xD71eCFF9342A5Ced620049e616c5035F1dB98620',
-        ],
-        underlying_decimals: [6, 18],
-        wrapped_decimals: [6, 18],
-        swap_abi: eurtSwapABI,
-        gauge_abi: gaugeV3ABI,
-    },
-    eurtusd: {
-        name: "eurtusd",
-        full_name: "eurtusd",
-        symbol: "eurtusd",
-        reference_asset: 'CRYPTO',
-        swap_address: '0x9838eCcC42659FA8AA7daF2aD134b53984c9427b',
-        token_address: '0x3b6831c0077a1e44ED0a21841C3bC4dC11bCE833',
-        gauge_address: '0x4Fd86Ce7Ecea88F7E0aA78DC12625996Fb3a04bC',
-        deposit_address: '0x5D0F47B32fDd343BfA74cE221808e2abE4A53827',
-        is_meta: true,
-        is_crypto: true,
-        base_pool: '3pool',
-        underlying_coins: ['EURT', 'DAI', 'USDC', 'USDT'],
-        wrapped_coins: ['EURT', '3Crv'],
-        underlying_coin_addresses: [
-            '0xC581b735A1688071A1746c968e0798D642EDE491',
-            '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-        ],
-        wrapped_coin_addresses: [
-            '0xC581b735A1688071A1746c968e0798D642EDE491',
-            '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
-        ],
-        underlying_decimals: [6, 18, 6, 6],
-        wrapped_decimals: [6, 18],
-        swap_abi: eurtusdSwapABI,
-        gauge_abi: gaugeV4ABI,
-        deposit_abi: eurtusdDepositABI,
-    },
-    eursusd: {
-        name: "eursusd",
-        full_name: "eursusd",
-        symbol: "eursusd",
-        reference_asset: 'CRYPTO',
-        swap_address: '0x98a7F18d4E56Cfe84E3D081B40001B3d5bD3eB8B',
-        token_address: '0x3D229E1B4faab62F621eF2F6A610961f7BD7b23B',
-        gauge_address: '0x65CA7Dc5CB661fC58De57B1E1aF404649a27AD35',
-        is_crypto: true,
-        is_plain: true,
-        underlying_coins: ['USDC', 'EURS'],
-        wrapped_coins: ['USDC', 'EURS'],
-        underlying_coin_addresses: [
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdB25f211AB05b1c97D595516F45794528a807ad8',
-        ],
-        wrapped_coin_addresses: [
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdB25f211AB05b1c97D595516F45794528a807ad8',
-        ],
-        underlying_decimals: [6, 2],
-        wrapped_decimals: [6, 2],
-        swap_abi: eursusdSwapABI,
-        gauge_abi: gaugeV4ABI,
-    },
-    crveth: {
-        name: "crveth",
-        full_name: "crveth",
-        symbol: "crveth",
-        reference_asset: 'CRYPTO',
-        swap_address: '0x8301AE4fc9c624d1D396cbDAa1ed877821D7C511',
-        token_address: '0xEd4064f376cB8d68F770FB1Ff088a3d0F3FF5c4d',
-        gauge_address: '0x1cEBdB0856dd985fAe9b8fEa2262469360B8a3a6',
-        is_crypto: true,
-        underlying_coins: ['ETH', 'CRV'],
-        wrapped_coins: ['WETH', 'CRV'],
-        underlying_coin_addresses: [
-            '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-            '0xD533a949740bb3306d119CC777fa900bA034cd52',
-        ],
-        wrapped_coin_addresses: [
-            '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-            '0xD533a949740bb3306d119CC777fa900bA034cd52',
-        ],
-        underlying_decimals: [18, 18],
-        wrapped_decimals: [18, 18],
-        swap_abi: crvethSwapABI,
-        gauge_abi: gaugeV4ABI,
-    },
+    // eurt: {
+    //     name: "eurt",
+    //     full_name: "eurt",
+    //     symbol: "eurt",
+    //     reference_asset: 'EUR',
+    //     swap_address: '0xfd5db7463a3ab53fd211b4af195c5bccc1a03890',
+    //     token_address: '0xfd5db7463a3ab53fd211b4af195c5bccc1a03890',
+    //     gauge_address: '0xe8060Ad8971450E624d5289A10017dD30F5dA85F',
+    //     is_plain: true,
+    //     underlying_coins: ['EURT', 'sEUR'],
+    //     wrapped_coins: ['EURT', 'sEUR'],
+    //     underlying_coin_addresses: [
+    //         '0xC581b735A1688071A1746c968e0798D642EDE491',
+    //         '0xD71eCFF9342A5Ced620049e616c5035F1dB98620',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xC581b735A1688071A1746c968e0798D642EDE491',
+    //         '0xD71eCFF9342A5Ced620049e616c5035F1dB98620',
+    //     ],
+    //     underlying_decimals: [6, 18],
+    //     wrapped_decimals: [6, 18],
+    //     swap_abi: eurtSwapABI,
+    //     gauge_abi: gaugeV3ABI,
+    // },
+    // eurtusd: {
+    //     name: "eurtusd",
+    //     full_name: "eurtusd",
+    //     symbol: "eurtusd",
+    //     reference_asset: 'CRYPTO',
+    //     swap_address: '0x9838eCcC42659FA8AA7daF2aD134b53984c9427b',
+    //     token_address: '0x3b6831c0077a1e44ED0a21841C3bC4dC11bCE833',
+    //     gauge_address: '0x4Fd86Ce7Ecea88F7E0aA78DC12625996Fb3a04bC',
+    //     deposit_address: '0x5D0F47B32fDd343BfA74cE221808e2abE4A53827',
+    //     is_meta: true,
+    //     is_crypto: true,
+    //     base_pool: '3pool',
+    //     underlying_coins: ['EURT', 'DAI', 'USDC', 'USDT'],
+    //     wrapped_coins: ['EURT', '3Crv'],
+    //     underlying_coin_addresses: [
+    //         '0xC581b735A1688071A1746c968e0798D642EDE491',
+    //         '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xC581b735A1688071A1746c968e0798D642EDE491',
+    //         '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+    //     ],
+    //     underlying_decimals: [6, 18, 6, 6],
+    //     wrapped_decimals: [6, 18],
+    //     swap_abi: eurtusdSwapABI,
+    //     gauge_abi: gaugeV4ABI,
+    //     deposit_abi: eurtusdDepositABI,
+    // },
+    // eursusd: {
+    //     name: "eursusd",
+    //     full_name: "eursusd",
+    //     symbol: "eursusd",
+    //     reference_asset: 'CRYPTO',
+    //     swap_address: '0x98a7F18d4E56Cfe84E3D081B40001B3d5bD3eB8B',
+    //     token_address: '0x3D229E1B4faab62F621eF2F6A610961f7BD7b23B',
+    //     gauge_address: '0x65CA7Dc5CB661fC58De57B1E1aF404649a27AD35',
+    //     is_crypto: true,
+    //     is_plain: true,
+    //     underlying_coins: ['USDC', 'EURS'],
+    //     wrapped_coins: ['USDC', 'EURS'],
+    //     underlying_coin_addresses: [
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdB25f211AB05b1c97D595516F45794528a807ad8',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdB25f211AB05b1c97D595516F45794528a807ad8',
+    //     ],
+    //     underlying_decimals: [6, 2],
+    //     wrapped_decimals: [6, 2],
+    //     swap_abi: eursusdSwapABI,
+    //     gauge_abi: gaugeV4ABI,
+    // },
+    // crveth: {
+    //     name: "crveth",
+    //     full_name: "crveth",
+    //     symbol: "crveth",
+    //     reference_asset: 'CRYPTO',
+    //     swap_address: '0x8301AE4fc9c624d1D396cbDAa1ed877821D7C511',
+    //     token_address: '0xEd4064f376cB8d68F770FB1Ff088a3d0F3FF5c4d',
+    //     gauge_address: '0x1cEBdB0856dd985fAe9b8fEa2262469360B8a3a6',
+    //     is_crypto: true,
+    //     underlying_coins: ['ETH', 'CRV'],
+    //     wrapped_coins: ['WETH', 'CRV'],
+    //     underlying_coin_addresses: [
+    //         '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+    //         '0xD533a949740bb3306d119CC777fa900bA034cd52',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    //         '0xD533a949740bb3306d119CC777fa900bA034cd52',
+    //     ],
+    //     underlying_decimals: [18, 18],
+    //     wrapped_decimals: [18, 18],
+    //     swap_abi: crvethSwapABI,
+    //     gauge_abi: gaugeV4ABI,
+    // },
     rai: {
         name: "rai",
         full_name: "rai",
@@ -1377,108 +1371,108 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         gauge_abi: gaugeV4ABI,
         deposit_abi: raiDepositABI,
     },
-    cvxeth: {
-        name: "cvxeth",
-        full_name: "cvxeth",
-        symbol: "cvxeth",
-        reference_asset: 'CRYPTO',
-        swap_address: '0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4',
-        token_address: '0x3A283D9c08E8b55966afb64C515f5143cf907611',
-        gauge_address: '0x7E1444BA99dcdFfE8fBdb42C02F0005D14f13BE1',
-        is_crypto: true,
-        underlying_coins: ['ETH', 'CVX'],
-        wrapped_coins: ['WETH', 'CVX'],
-        underlying_coin_addresses: [
-            '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-            '0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b',
-        ],
-        wrapped_coin_addresses: [
-            '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-            '0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b',
-        ],
-        underlying_decimals: [18, 18],
-        wrapped_decimals: [18, 18],
-        swap_abi: crvethSwapABI,
-        gauge_abi: gaugeV4ABI,
-    },
-    xautusd: {
-        name: "xautusd",
-        full_name: "xautusd",
-        symbol: "xautusd",
-        reference_asset: 'CRYPTO',
-        swap_address: '0xAdCFcf9894335dC340f6Cd182aFA45999F45Fc44',
-        token_address: '0x8484673cA7BfF40F82B041916881aeA15ee84834',
-        gauge_address: '0x1B3E14157ED33F60668f2103bCd5Db39a1573E5B',
-        deposit_address: '0xc5FA220347375ac4f91f9E4A4AAb362F22801504',
-        is_meta: true,
-        is_crypto: true,
-        base_pool: '3pool',
-        underlying_coins: ['XAUt', 'DAI', 'USDC', 'USDT'],
-        wrapped_coins: ['XAUt', '3Crv'],
-        underlying_coin_addresses: [
-            '0x68749665ff8d2d112fa859aa293f07a622782f38',
-            '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-        ],
-        wrapped_coin_addresses: [
-            '0x68749665ff8d2d112fa859aa293f07a622782f38',
-            '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
-        ],
-        underlying_decimals: [6, 18, 6, 6],
-        wrapped_decimals: [6, 18],
-        swap_abi: eurtusdSwapABI,
-        gauge_abi: gaugeV4ABI,
-        deposit_abi: eurtusdDepositABI,
-    },
-    spelleth: {
-        name: "spelleth",
-        full_name: "spelleth",
-        symbol: "spelleth",
-        reference_asset: 'CRYPTO',
-        swap_address: '0x98638FAcf9a3865cd033F36548713183f6996122',
-        token_address: '0x8282BD15dcA2EA2bDf24163E8f2781B30C43A2ef',
-        gauge_address: '0x08380a4999Be1a958E2abbA07968d703C7A3027C',
-        is_crypto: true,
-        underlying_coins: ['ETH', 'SPELL'],
-        wrapped_coins: ['WETH', 'SPELL'],
-        underlying_coin_addresses: [
-            '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-            '0x090185f2135308bad17527004364ebcc2d37e5f6',
-        ],
-        wrapped_coin_addresses: [
-            '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-            '0x090185f2135308bad17527004364ebcc2d37e5f6',
-        ],
-        underlying_decimals: [18, 18],
-        wrapped_decimals: [18, 18],
-        swap_abi: crvethSwapABI,
-        gauge_abi: gaugeV4ABI,
-    },
-    teth: {
-        name: "teth",
-        full_name: "teth",
-        symbol: "teth",
-        reference_asset: 'CRYPTO',
-        swap_address: '0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC',
-        token_address: '0xCb08717451aaE9EF950a2524E33B6DCaBA60147B',
-        gauge_address: '0x6070fBD4E608ee5391189E7205d70cc4A274c017',
-        is_crypto: true,
-        underlying_coins: ['ETH', 'T'],
-        wrapped_coins: ['WETH', 'T'],
-        underlying_coin_addresses: [
-            '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-            '0xCdF7028ceAB81fA0C6971208e83fa7872994beE5',
-        ],
-        wrapped_coin_addresses: [
-            '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-            '0xCdF7028ceAB81fA0C6971208e83fa7872994beE5',
-        ],
-        underlying_decimals: [18, 18],
-        wrapped_decimals: [18, 18],
-        swap_abi: crvethSwapABI,
-        gauge_abi: gaugeV4ABI,
-    },
+    // cvxeth: {
+    //     name: "cvxeth",
+    //     full_name: "cvxeth",
+    //     symbol: "cvxeth",
+    //     reference_asset: 'CRYPTO',
+    //     swap_address: '0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4',
+    //     token_address: '0x3A283D9c08E8b55966afb64C515f5143cf907611',
+    //     gauge_address: '0x7E1444BA99dcdFfE8fBdb42C02F0005D14f13BE1',
+    //     is_crypto: true,
+    //     underlying_coins: ['ETH', 'CVX'],
+    //     wrapped_coins: ['WETH', 'CVX'],
+    //     underlying_coin_addresses: [
+    //         '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+    //         '0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    //         '0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b',
+    //     ],
+    //     underlying_decimals: [18, 18],
+    //     wrapped_decimals: [18, 18],
+    //     swap_abi: crvethSwapABI,
+    //     gauge_abi: gaugeV4ABI,
+    // },
+    // xautusd: {
+    //     name: "xautusd",
+    //     full_name: "xautusd",
+    //     symbol: "xautusd",
+    //     reference_asset: 'CRYPTO',
+    //     swap_address: '0xAdCFcf9894335dC340f6Cd182aFA45999F45Fc44',
+    //     token_address: '0x8484673cA7BfF40F82B041916881aeA15ee84834',
+    //     gauge_address: '0x1B3E14157ED33F60668f2103bCd5Db39a1573E5B',
+    //     deposit_address: '0xc5FA220347375ac4f91f9E4A4AAb362F22801504',
+    //     is_meta: true,
+    //     is_crypto: true,
+    //     base_pool: '3pool',
+    //     underlying_coins: ['XAUt', 'DAI', 'USDC', 'USDT'],
+    //     wrapped_coins: ['XAUt', '3Crv'],
+    //     underlying_coin_addresses: [
+    //         '0x68749665ff8d2d112fa859aa293f07a622782f38',
+    //         '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x68749665ff8d2d112fa859aa293f07a622782f38',
+    //         '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+    //     ],
+    //     underlying_decimals: [6, 18, 6, 6],
+    //     wrapped_decimals: [6, 18],
+    //     swap_abi: eurtusdSwapABI,
+    //     gauge_abi: gaugeV4ABI,
+    //     deposit_abi: eurtusdDepositABI,
+    // },
+    // spelleth: {
+    //     name: "spelleth",
+    //     full_name: "spelleth",
+    //     symbol: "spelleth",
+    //     reference_asset: 'CRYPTO',
+    //     swap_address: '0x98638FAcf9a3865cd033F36548713183f6996122',
+    //     token_address: '0x8282BD15dcA2EA2bDf24163E8f2781B30C43A2ef',
+    //     gauge_address: '0x08380a4999Be1a958E2abbA07968d703C7A3027C',
+    //     is_crypto: true,
+    //     underlying_coins: ['ETH', 'SPELL'],
+    //     wrapped_coins: ['WETH', 'SPELL'],
+    //     underlying_coin_addresses: [
+    //         '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+    //         '0x090185f2135308bad17527004364ebcc2d37e5f6',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    //         '0x090185f2135308bad17527004364ebcc2d37e5f6',
+    //     ],
+    //     underlying_decimals: [18, 18],
+    //     wrapped_decimals: [18, 18],
+    //     swap_abi: crvethSwapABI,
+    //     gauge_abi: gaugeV4ABI,
+    // },
+    // teth: {
+    //     name: "teth",
+    //     full_name: "teth",
+    //     symbol: "teth",
+    //     reference_asset: 'CRYPTO',
+    //     swap_address: '0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC',
+    //     token_address: '0xCb08717451aaE9EF950a2524E33B6DCaBA60147B',
+    //     gauge_address: '0x6070fBD4E608ee5391189E7205d70cc4A274c017',
+    //     is_crypto: true,
+    //     underlying_coins: ['ETH', 'T'],
+    //     wrapped_coins: ['WETH', 'T'],
+    //     underlying_coin_addresses: [
+    //         '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+    //         '0xCdF7028ceAB81fA0C6971208e83fa7872994beE5',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    //         '0xCdF7028ceAB81fA0C6971208e83fa7872994beE5',
+    //     ],
+    //     underlying_decimals: [18, 18],
+    //     wrapped_decimals: [18, 18],
+    //     swap_abi: crvethSwapABI,
+    //     gauge_abi: gaugeV4ABI,
+    // },
     '2pool': {
         name: "2pool",
         full_name: "2pool",
@@ -1555,36 +1549,36 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         swap_abi: fraxusdcSwapABI,
         gauge_abi: gaugeV5ABI,
     },
-    euroc: {
-        name: "euroc",
-        full_name: "euroc",
-        symbol: "euroc",
-        reference_asset: 'CRYPTO',
-        swap_address: '0xE84f5b1582BA325fDf9cE6B0c1F087ccfC924e54',
-        token_address: '0x70fc957eb90E37Af82ACDbd12675699797745F68',
-        gauge_address: '0x4329c8F09725c0e3b6884C1daB1771bcE17934F9',
-        deposit_address: '0xd446A98F88E1d053d1F64986E3Ed083bb1Ab7E5A',
-        is_meta: true,
-        is_crypto: true,
-        base_pool: '3pool',
-        underlying_coins: ['EUROC', 'DAI', 'USDC', 'USDT'],
-        wrapped_coins: ['EUROC', '3Crv'],
-        underlying_coin_addresses: [
-            '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
-            '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-            '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-            '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-        ],
-        wrapped_coin_addresses: [
-            '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
-            '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
-        ],
-        underlying_decimals: [6, 18, 6, 6],
-        wrapped_decimals: [6, 18],
-        swap_abi: eurtusdSwapABI,
-        gauge_abi: gaugeV5ABI,
-        deposit_abi: eurtusdDepositABI,
-    },
+    // euroc: {
+    //     name: "euroc",
+    //     full_name: "euroc",
+    //     symbol: "euroc",
+    //     reference_asset: 'CRYPTO',
+    //     swap_address: '0xE84f5b1582BA325fDf9cE6B0c1F087ccfC924e54',
+    //     token_address: '0x70fc957eb90E37Af82ACDbd12675699797745F68',
+    //     gauge_address: '0x4329c8F09725c0e3b6884C1daB1771bcE17934F9',
+    //     deposit_address: '0xd446A98F88E1d053d1F64986E3Ed083bb1Ab7E5A',
+    //     is_meta: true,
+    //     is_crypto: true,
+    //     base_pool: '3pool',
+    //     underlying_coins: ['EUROC', 'DAI', 'USDC', 'USDT'],
+    //     wrapped_coins: ['EUROC', '3Crv'],
+    //     underlying_coin_addresses: [
+    //         '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
+    //         '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    //         '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    //         '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c',
+    //         '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490',
+    //     ],
+    //     underlying_decimals: [6, 18, 6, 6],
+    //     wrapped_decimals: [6, 18],
+    //     swap_abi: eurtusdSwapABI,
+    //     gauge_abi: gaugeV5ABI,
+    //     deposit_abi: eurtusdDepositABI,
+    // },
     frxeth: {
         name: "frxeth",
         full_name: "frxeth",
@@ -1609,30 +1603,30 @@ export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
         swap_abi: frxethSwapABI,
         gauge_abi: gaugeV5ABI,
     },
-    sbtc2: {
-        name: "sbtc2",
-        full_name: "sbtc2",
-        symbol: "sbtc2",
-        reference_asset: 'BTC',
-        swap_address: "0xf253f83AcA21aAbD2A20553AE0BF7F65C755A07F",
-        token_address: "0x051d7e5609917Bd9b73f04BAc0DED8Dd46a74301",
-        gauge_address: "0x6D787113F23bED1D5e1530402B3f364D0A6e5Af3",
-        is_plain: true,
-        underlying_coins: ['WBTC', 'sBTC'],
-        wrapped_coins: ['WBTC', 'sBTC'],
-        underlying_coin_addresses: [
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-            '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
-        ],
-        wrapped_coin_addresses: [
-            '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-            '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
-        ],
-        underlying_decimals: [8, 18],
-        wrapped_decimals: [8, 18],
-        swap_abi: sbtc2SwapABI,
-        gauge_abi: gaugeV5ABI,
-    },
+    // sbtc2: {
+    //     name: "sbtc2",
+    //     full_name: "sbtc2",
+    //     symbol: "sbtc2",
+    //     reference_asset: 'BTC',
+    //     swap_address: "0xf253f83AcA21aAbD2A20553AE0BF7F65C755A07F",
+    //     token_address: "0x051d7e5609917Bd9b73f04BAc0DED8Dd46a74301",
+    //     gauge_address: "0x6D787113F23bED1D5e1530402B3f364D0A6e5Af3",
+    //     is_plain: true,
+    //     underlying_coins: ['WBTC', 'sBTC'],
+    //     wrapped_coins: ['WBTC', 'sBTC'],
+    //     underlying_coin_addresses: [
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //         '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
+    //     ],
+    //     wrapped_coin_addresses: [
+    //         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    //         '0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6',
+    //     ],
+    //     underlying_decimals: [8, 18],
+    //     wrapped_decimals: [8, 18],
+    //     swap_abi: sbtc2SwapABI,
+    //     gauge_abi: gaugeV5ABI,
+    // },
     fraxusdp: {
         name: "fraxusdp",
         full_name: "fraxusdp",

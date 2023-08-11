@@ -7,16 +7,9 @@ import { formatUnits } from "@ethersproject/units"
 import { BigNumber as ethersBigNumber } from "@ethersproject/bignumber"
 import { AddressZero } from "@ethersproject/constants"
 import { Contract as MulticallContract } from '../../../ethcall/src';
-import { type JsonFragment } from "@ethersproject/abi";
-const called = new Set<string>();
-export const importAbi = <const Path extends string>(name: Path): () => Promise<JsonFragment[]> => () => {
-    if (!called.has(name)) {
-        called.add(name);
-    }
-    return import(name, { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-};
+import { importAbi } from "../importAbi";
 
-const factoryGaugeABI = importAbi("../constants/abis/gauge_factory.json")
+const factoryGaugeABI = importAbi("./constants/abis/gauge_factory.json")
 
 const BLACK_LIST: { [index: number]: any } = {
     1: [

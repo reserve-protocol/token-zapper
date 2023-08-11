@@ -1,0 +1,85 @@
+import { ethers } from 'ethers';
+import { type Action } from './action/Action';
+import { Address } from './base/Address';
+import { Graph } from './exchange-graph/Graph';
+import { Token, type TokenQuantity } from './entities/Token';
+import { TokenLoader } from './entities/makeTokenLoader';
+import { type Config } from './configuration/ChainConfiguration';
+import { DefaultMap } from './base/DefaultMap';
+import { type PriceOracle } from './oracles/PriceOracle';
+import { Refreshable } from './entities/Refreshable';
+import { ApprovalsStore } from './searcher/ApprovalsStore';
+import { LPToken } from './action/LPToken';
+import { SourcingRule } from './searcher/BasketTokenSourcingRules';
+import { SwapPath } from './searcher/Swap';
+import { type SwapSignature } from './aggregators/SwapSignature';
+type TokenList<T> = {
+    [K in keyof T]: Token;
+};
+interface OracleDef {
+    quote: (qty: TokenQuantity) => Promise<TokenQuantity>;
+    quoteIn: (qty: TokenQuantity, tokenToQuoteWith: Token) => Promise<TokenQuantity>;
+}
+export declare class Universe<const UniverseConf extends Config = Config> {
+    readonly provider: ethers.providers.Provider;
+    readonly config: UniverseConf;
+    readonly approvalsStore: ApprovalsStore;
+    readonly loadToken: TokenLoader;
+    get chainId(): UniverseConf["chainId"];
+    readonly refreshableEntities: Map<Address, Refreshable>;
+    readonly tokens: Map<Address, Token>;
+    readonly lpTokens: Map<Token, LPToken>;
+    readonly precursorTokenSourcingSpecialCases: DefaultMap<Token, Map<Token, SourcingRule>>;
+    readonly actions: DefaultMap<Address, Action[]>;
+    private readonly allActions;
+    readonly tokenTradeSpecialCases: Map<Token, (amount: TokenQuantity, destination: Address) => Promise<SwapPath | null>>;
+    readonly nativeToken: Token;
+    readonly usd: Token;
+    readonly graph: Graph;
+    readonly wrappedTokens: Map<Token, {
+        mint: Action;
+        burn: Action;
+    }>;
+    readonly oracles: PriceOracle[];
+    readonly dexAggregators: {
+        swap: SwapSignature;
+    }[];
+    readonly rTokens: TokenList<UniverseConf["addresses"]["rTokens"]>;
+    readonly commonTokens: TokenList<UniverseConf["addresses"]["commonTokens"]>;
+    refresh(entity: Address): Promise<void>;
+    createRefreshableEntity(address: Address, refresh: Refreshable['refreshAddress']): void;
+    private readonly blockState;
+    defineTokenSourcingRule(rToken: Token, precursor: Token, rule: SourcingRule): void;
+    /**
+     * This method try to price a given token in USD.
+     * It will first try and see if there is an canonical way to mint/burn the token,
+     * if there is, it will recursively unwrap the token until it finds a what the token consists of.
+     *
+     * Once the token is fully unwrapped, it will query the oracles to find the price of each underlying
+     * quantity, and sum them up.
+     *
+     * @param qty quantity to price
+     * @returns The price of the qty in USD, or null if the price cannot be determined
+     */
+    oracle?: OracleDef;
+    fairPrice(qty: TokenQuantity): Promise<TokenQuantity | null>;
+    quoteIn(qty: TokenQuantity, tokenToQuoteWith: Token): Promise<TokenQuantity | null>;
+    get currentBlock(): number;
+    get gasPrice(): bigint;
+    getToken(address: Address): Promise<Token>;
+    createToken(address: Address, symbol: string, name: string, decimals: number): Token;
+    addAction(action: Action, actionAddress?: Address): this;
+    defineLPToken(lpTokenInstance: LPToken): void;
+    defineMintable(mint: Action, burn: Action): {
+        mint: Action;
+        burn: Action;
+    };
+    private constructor();
+    updateBlockState(block: number, gasPrice: bigint): void;
+    static createWithConfig<const C extends Config>(provider: ethers.providers.Provider, config: C, initialize: (universe: Universe<C>) => Promise<void>, opts?: Partial<{
+        tokenLoader?: TokenLoader;
+        approvalsStore?: ApprovalsStore;
+    }>): Promise<Universe<C>>;
+}
+export {};
+//# sourceMappingURL=Universe.d.ts.map

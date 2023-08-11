@@ -213,10 +213,7 @@ export class SearcherResult {
       totalDustValue = totalDustValue.add(dustPrice)
     }
 
-    console.log('Value of dust: ' + totalDustValue)
-    console.log('Dust qtys: ' + dustAmounts.join(', '))
     if (totalDustValue.gt(this.universe.usd.one)) {
-      console.log('Dust ' + dustAmounts.join(', '))
       const approxGasCost = BigInt(this.swaps.outputs.length - 1) * 60000n
       const gasPrice = this.universe.gasPrice
       const txFeeToWithdraw = this.universe.nativeToken.from(
@@ -224,10 +221,6 @@ export class SearcherResult {
       )
 
       const txFeeValue = await this.universe.fairPrice(txFeeToWithdraw)
-
-      console.log('Transaction fee: ' + txFeeValue)
-      console.log('Value of dust: ' + totalDustValue)
-      console.log('Dust qtys: ' + dustAmounts.join(', '))
 
       // We return the dust in three cases:
       // 1. The dust is greater than the tx fee
@@ -240,7 +233,6 @@ export class SearcherResult {
     }
 
     if (options.returnDust) {
-      console.log('Will claim dust, and return to ' + this.signer.address)
       builder.drainERC20([...potentialResidualTokens], this.signer)
     }
 
@@ -259,11 +251,6 @@ export class SearcherResult {
     if (amountOut == null) {
       throw new Error('Unexpected: output does not contain RToken')
     }
-    // for(const call of builder.contractCalls) {
-    //   console.log("comment: ", call.comment)
-    //   console.log("to: ", call.to)
-    //   console.log("payload: ", call.payload)
-    // }
     const payload = {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,

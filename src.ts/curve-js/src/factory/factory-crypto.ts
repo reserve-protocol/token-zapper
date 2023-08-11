@@ -6,9 +6,17 @@ import { formatUnits } from "@ethersproject/units";
 import { BigNumber as ethersBigNumber } from "@ethersproject/bignumber"
 import { AddressZero } from "@ethersproject/constants";
 import { type JsonFragment } from "@ethersproject/abi";
-const factoryGaugeABI = async () => (await import("../constants/abis/gauge_factory.json", { assert: { type: "json" } })).default as JsonFragment[];
-const gaugeChildABI = async () => (await import("../constants/abis/gauge_child.json", { assert: { type: "json" } })).default as JsonFragment[];
-const cryptoFactorySwapABI = async () => (await import("../constants/abis/factory-crypto/factory-crypto-pool-2.json", { assert: { type: "json" } })).default as JsonFragment[];
+const called = new Set<string>();
+export const importAbi = <const Path extends string>(name: Path): () => Promise<JsonFragment[]> => () => {
+    if (!called.has(name)) {
+        called.add(name);
+    }
+    return import(name, { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
+};
+
+const factoryGaugeABI = importAbi("../constants/abis/gauge_factory.json")
+const gaugeChildABI = importAbi("../constants/abis/gauge_child.json")
+const cryptoFactorySwapABI = importAbi("../constants/abis/factory-crypto/factory-crypto-pool-2.json")
 
 const deepFlatten = (arr: any[]): any[] => [].concat(...arr.map((v) => (Array.isArray(v) ? deepFlatten(v) : v)));
 

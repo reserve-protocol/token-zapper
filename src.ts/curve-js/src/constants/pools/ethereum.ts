@@ -1,94 +1,100 @@
 import { lowerCasePoolDataAddresses } from "../utils";
 import { IDict, IPoolData } from "../../interfaces";
-import { type JsonFragment } from "@ethersproject/abi";
-
-const gaugeABI = () => import("../abis/gauge.json", { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const gaugeSynthetixABI = () => import("../abis/gauge_synthetix.json", { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const gaugeV2ABI = () => import("../abis/gauge_v2.json", { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const gaugeV3ABI = () => import("../abis/gauge_v3.json", { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const gaugeV4ABI = () => import("../abis/gauge_v4.json", { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const gaugeV5ABI = () => import("../abis/gauge_v5.json", { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const gaugeFactoryABI = () => import("../abis/gauge_factory.json", { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const compoundDepositABI = () => import('../abis/compound/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const compoundSwapABI = () => import('../abis/compound/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const usdtDepositABI = () => import('../abis/usdt/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const usdtSwapABI = () => import('../abis/usdt/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const iearnDepositABI = () => import('../abis/iearn/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const iearnSwapABI = () => import('../abis/iearn/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const busdDepositABI = () => import('../abis/busd/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const busdSwapABI = () => import('../abis/busd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const susdv2DepositABI = () => import('../abis/susdv2/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const susdv2SwapABI = () => import('../abis/susdv2/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const susdv2SCurveRewards_abi = () => import('../abis/susdv2/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const paxDepositABI = () => import('../abis/pax/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const paxSwapABI = () => import('../abis/pax/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const renSwapABI = () => import('../abis/ren/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const sbtcSwapABI = () => import('../abis/sbtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const sbtcSCurveRewardsABI = () => import('../abis/sbtc/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const hbtcSwapABI = () => import('../abis/hbtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const tripoolSwapABI = () => import('../abis/3pool/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const gusdSwapABI = () => import('../abis/gusd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const gusdDepositABI = () => import('../abis/gusd/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const husdSwapABI = () => import('../abis/husd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const husdDepositABI = () => import('../abis/husd/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const usdkSwapABI = () => import('../abis/usdk/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const usdkDepositABI = () => import('../abis/usdk/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const usdnSwapABI = () => import('../abis/usdn/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const usdnDepositABI = () => import('../abis/usdn/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const musdSwapABI = () => import('../abis/musd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const musdDepositABI = () => import('../abis/musd/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const musdSCurveRewards_abi = () => import('../abis/musd/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const rsvSwapABI = () => import('../abis/rsv/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const rsvDepositABI = () => import('../abis/rsv/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const rsvSCurveRewards_abi = () => import('../abis/rsv/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const tbtcSwapABI = () => import('../abis/tbtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const tbtcDepositABI = () => import('../abis/tbtc/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const tbtcSCurveRewards_abi = () => import('../abis/tbtc/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const dusdSwapABI = () => import('../abis/dusd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const dusdDepositABI = () => import('../abis/dusd/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const dusdSCurveRewards_abi = () => import('../abis/dusd/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const pbtcSwapABI = () => import('../abis/pbtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const pbtcDepositABI = () => import('../abis/pbtc/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const pbtcSCurveRewards_abi = () => import('../abis/pbtc/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const bbtcSwapABI = () => import('../abis/bbtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const bbtcDepositABI = () => import('../abis/bbtc/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const obtcSwapABI = () => import('../abis/obtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const obtcDepositABI = () => import('../abis/obtc/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const obtcSCurveRewards_abi = () => import('../abis/obtc/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const sethSwapABI = () => import('../abis/seth/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const eursSwapABI = () => import('../abis/eurs/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const eursSCurveRewards_abi = () => import('../abis/eurs/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const ustSwapABI = () => import('../abis/ust/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const ustDepositABI = () => import('../abis/ust/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const aaveSwapABI = () => import('../abis/aave/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const aaveRewardsABI = () => import('../abis/aave/rewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const stethSwapABI = () => import('../abis/steth/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const stethSCurveRewards_abi = () => import('../abis/steth/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const saaveSwapABI = () => import('../abis/saave/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const ankrethSwapABI = () => import('../abis/ankreth/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const ankrethSCurveRewards_abi = () => import('../abis/ankreth/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const usdpSwapABI = () => import('../abis/usdp/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const usdpDepositABI = () => import('../abis/usdp/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const ibSwapABI = () => import('../abis/ib/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const linkSwapABI = () => import('../abis/link/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const rethSwapABI = () => import('../abis/reth/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const factorySwapABI = () => import('../abis/factoryPools/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const factoryDepositABI = () => import('../abis/factoryPools/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const factoryRewardsABI = () => import('../abis/factoryPools/rewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const tricrypto2SwapABI = () => import('../abis/tricrypto2/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const tricrypto2DepositABI = () => import('../abis/tricrypto2/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const eurtSwapABI = () => import('../abis/eurt/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const eurtusdSwapABI = () => import('../abis/eurtusd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const eurtusdDepositABI = () => import('../abis/eurtusd/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const eursusdSwapABI = () => import('../abis/eursusd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const crvethSwapABI = () => import('../abis/crveth/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const raiSwapABI = () => import('../abis/rai/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const raiDepositABI = () => import('../abis/rai/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const twopoolSwapABI = () => import('../abis/2pool/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const fourpoolSwapABI = () => import('../abis/4pool/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const fraxusdcSwapABI = () => import('../abis/fraxusdc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const frxethSwapABI = () => import('../abis/frxeth/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-const sbtc2SwapABI = () => import('../abis/sbtc2/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
+import { JsonFragment } from "@ethersproject/abi";
+const called = new Set<string>();
+export const importAbi = <const Path extends string>(name: Path): () => Promise<JsonFragment[]> => () => {
+    if (!called.has(name)) {
+        called.add(name);
+    }
+    return import(name, { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
+};
+const gaugeABI = importAbi("../abis/gauge.json");
+const gaugeSynthetixABI = importAbi("../abis/gauge_synthetix.json")
+const gaugeV2ABI = importAbi("../abis/gauge_v2.json")
+const gaugeV3ABI = importAbi("../abis/gauge_v3.json")
+const gaugeV4ABI = importAbi("../abis/gauge_v4.json")
+const gaugeV5ABI = importAbi("../abis/gauge_v5.json")
+const gaugeFactoryABI = importAbi("../abis/gauge_factory.json")
+const compoundDepositABI = importAbi('../abis/compound/deposit.json')
+const compoundSwapABI = importAbi('../abis/compound/swap.json')
+const usdtDepositABI = importAbi('../abis/usdt/deposit.json')
+const usdtSwapABI = importAbi('../abis/usdt/swap.json')
+const iearnDepositABI = importAbi('../abis/iearn/deposit.json')
+const iearnSwapABI = importAbi('../abis/iearn/swap.json')
+const busdDepositABI = importAbi('../abis/busd/deposit.json')
+const busdSwapABI = importAbi('../abis/busd/swap.json')
+const susdv2DepositABI = importAbi('../abis/susdv2/deposit.json')
+const susdv2SwapABI = importAbi('../abis/susdv2/swap.json')
+const susdv2SCurveRewards_abi = importAbi('../abis/susdv2/sCurveRewards.json')
+const paxDepositABI = importAbi('../abis/pax/deposit.json')
+const paxSwapABI = importAbi('../abis/pax/swap.json')
+const renSwapABI = importAbi('../abis/ren/swap.json')
+const sbtcSwapABI = importAbi('../abis/sbtc/swap.json')
+const sbtcSCurveRewardsABI = importAbi('../abis/sbtc/sCurveRewards.json')
+const hbtcSwapABI = importAbi('../abis/hbtc/swap.json')
+const tripoolSwapABI = importAbi('../abis/3pool/swap.json')
+const gusdSwapABI = importAbi('../abis/gusd/swap.json')
+const gusdDepositABI = importAbi('../abis/gusd/deposit.json')
+const husdSwapABI = importAbi('../abis/husd/swap.json')
+const husdDepositABI = importAbi('../abis/husd/deposit.json')
+const usdkSwapABI = importAbi('../abis/usdk/swap.json')
+const usdkDepositABI = importAbi('../abis/usdk/deposit.json')
+const usdnSwapABI = importAbi('../abis/usdn/swap.json')
+const usdnDepositABI = importAbi('../abis/usdn/deposit.json')
+const musdSwapABI = importAbi('../abis/musd/swap.json')
+const musdDepositABI = importAbi('../abis/musd/deposit.json')
+const musdSCurveRewards_abi = importAbi('../abis/musd/sCurveRewards.json')
+const rsvSwapABI = importAbi('../abis/rsv/swap.json')
+const rsvDepositABI = importAbi('../abis/rsv/deposit.json')
+const rsvSCurveRewards_abi = importAbi('../abis/rsv/sCurveRewards.json')
+const tbtcSwapABI = importAbi('../abis/tbtc/swap.json')
+const tbtcDepositABI = importAbi('../abis/tbtc/deposit.json')
+const tbtcSCurveRewards_abi = importAbi('../abis/tbtc/sCurveRewards.json')
+const dusdSwapABI = importAbi('../abis/dusd/swap.json')
+const dusdDepositABI = importAbi('../abis/dusd/deposit.json')
+const dusdSCurveRewards_abi = importAbi('../abis/dusd/sCurveRewards.json')
+const pbtcSwapABI = importAbi('../abis/pbtc/swap.json')
+const pbtcDepositABI = importAbi('../abis/pbtc/deposit.json')
+const pbtcSCurveRewards_abi = importAbi('../abis/pbtc/sCurveRewards.json')
+const bbtcSwapABI = importAbi('../abis/bbtc/swap.json')
+const bbtcDepositABI = importAbi('../abis/bbtc/deposit.json')
+const obtcSwapABI = importAbi('../abis/obtc/swap.json')
+const obtcDepositABI = importAbi('../abis/obtc/deposit.json')
+const obtcSCurveRewards_abi = importAbi('../abis/obtc/sCurveRewards.json')
+const sethSwapABI = importAbi('../abis/seth/swap.json')
+const eursSwapABI = importAbi('../abis/eurs/swap.json')
+const eursSCurveRewards_abi = importAbi('../abis/eurs/sCurveRewards.json')
+const ustSwapABI = importAbi('../abis/ust/swap.json')
+const ustDepositABI = importAbi('../abis/ust/deposit.json')
+const aaveSwapABI = importAbi('../abis/aave/swap.json')
+const aaveRewardsABI = importAbi('../abis/aave/rewards.json')
+const stethSwapABI = importAbi('../abis/steth/swap.json')
+const stethSCurveRewards_abi = importAbi('../abis/steth/sCurveRewards.json')
+const saaveSwapABI = importAbi('../abis/saave/swap.json')
+const ankrethSwapABI = importAbi('../abis/ankreth/swap.json')
+const ankrethSCurveRewards_abi = importAbi('../abis/ankreth/sCurveRewards.json')
+const usdpSwapABI = importAbi('../abis/usdp/swap.json')
+const usdpDepositABI = importAbi('../abis/usdp/deposit.json')
+const ibSwapABI = importAbi('../abis/ib/swap.json')
+const linkSwapABI = importAbi('../abis/link/swap.json')
+const rethSwapABI = importAbi('../abis/reth/swap.json')
+const factorySwapABI = importAbi('../abis/factoryPools/swap.json')
+const factoryDepositABI = importAbi('../abis/factoryPools/deposit.json')
+const factoryRewardsABI = importAbi('../abis/factoryPools/rewards.json')
+const tricrypto2SwapABI = importAbi('../abis/tricrypto2/swap.json')
+const tricrypto2DepositABI = importAbi('../abis/tricrypto2/deposit.json')
+const eurtSwapABI = importAbi('../abis/eurt/swap.json')
+const eurtusdSwapABI = importAbi('../abis/eurtusd/swap.json')
+const eurtusdDepositABI = importAbi('../abis/eurtusd/deposit.json')
+const eursusdSwapABI = importAbi('../abis/eursusd/swap.json')
+const crvethSwapABI = importAbi('../abis/crveth/swap.json')
+const raiSwapABI = importAbi('../abis/rai/swap.json')
+const raiDepositABI = importAbi('../abis/rai/deposit.json')
+const twopoolSwapABI = importAbi('../abis/2pool/swap.json')
+const fourpoolSwapABI = importAbi('../abis/4pool/swap.json')
+const fraxusdcSwapABI = importAbi('../abis/fraxusdc/swap.json')
+const frxethSwapABI = importAbi('../abis/frxeth/swap.json')
+const sbtc2SwapABI = importAbi('../abis/sbtc2/swap.json')
 
 
 export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses({

@@ -432,7 +432,6 @@ export const getCoinsData = async (...coins: string[] | string[][]): Promise<{na
     if (coins.length == 1 && Array.isArray(coins[0])) coins = coins[0];
     coins = coins as string[];
     const coinAddresses = _getCoinAddressesNoCheck(coins);
-    console.log(coinAddresses);
 
     const ethIndex = getEthIndex(coinAddresses);
     if (ethIndex !== -1) {

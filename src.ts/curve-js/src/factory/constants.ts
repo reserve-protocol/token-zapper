@@ -1,35 +1,43 @@
-import { IDict } from "../interfaces";
+import { type IDict } from "../interfaces";
 import { lowerCaseKeys } from "../constants/utils";
-import { JsonFragment } from "@ethersproject/abi";
 
-const factorySwapABI = async () => (await import("../constants/abis/factoryPools/swap.json", { assert: { type: "json" } })).default as JsonFragment[]
-const MetaUSDABI = async () => (await import("../constants/abis/factory-v2/MetaUSD.json", { assert: { type: "json" } })).default as JsonFragment[]
-const MetaUSDBalancesABI = async () => (await import("../constants/abis/factory-v2/MetaUSDBalances.json", { assert: { type: "json" } })).default as JsonFragment[]
-const MetaFraxUSDABI = async () => (await import("../constants/abis/factory-v2/MetaFraxUSD.json", { assert: { type: "json" } })).default as JsonFragment[]
-const MetaFraxUSDBalancesABI = async () => (await import("../constants/abis/factory-v2/MetaFraxUSDBalances.json", { assert: { type: "json" } })).default as JsonFragment[]
-const MetaBTCABI = async () => (await import("../constants/abis/factory-v2/MetaBTC.json", { assert: { type: "json" } })).default as JsonFragment[]
-const MetaBTCBalancesABI = async () => (await import("../constants/abis/factory-v2/MetaBTCBalances.json", { assert: { type: "json" } })).default as JsonFragment[]
-const MetaBTCRenABI = async () => (await import("../constants/abis/factory-v2/MetaBTCRen.json", { assert: { type: "json" } })).default as JsonFragment[]
-const MetaBTCRenBalancesABI = async () => (await import("../constants/abis/factory-v2/MetaBTCBalancesRen.json", { assert: { type: "json" } })).default as JsonFragment[]
-const MetaSbtc2ABI = async () => (await import("../constants/abis/factory-v2/MetaSbtc2.json", { assert: { type: "json" } })).default as JsonFragment[]
-const MetaSbtc2BalancesABI = async () => (await import("../constants/abis/factory-v2/MetaSbtc2Balance.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain2BasicABI = async () => (await import("../constants/abis/factory-v2/Plain2Basic.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain2BalancesABI = async () => (await import("../constants/abis/factory-v2/Plain2Balances.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain2ETHABI = async () => (await import("../constants/abis/factory-v2/Plain2ETH.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain2OptimizedABI = async () => (await import("../constants/abis/factory-v2/Plain2Optimized.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain3BasicABI = async () => (await import("../constants/abis/factory-v2/Plain3Basic.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain3BalancesABI = async () => (await import("../constants/abis/factory-v2/Plain3Balances.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain3ETHABI = async () => (await import("../constants/abis/factory-v2/Plain3ETH.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain3OptimizedABI = async () => (await import("../constants/abis/factory-v2/Plain3Optimized.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain4BasicABI = async () => (await import("../constants/abis/factory-v2/Plain4Basic.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain4BalancesABI = async () => (await import("../constants/abis/factory-v2/Plain4Balances.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain4ETHABI = async () => (await import("../constants/abis/factory-v2/Plain4ETH.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Plain4OptimizedABI = async () => (await import("../constants/abis/factory-v2/Plain4Optimized.json", { assert: { type: "json" } })).default as JsonFragment[]
+import { type JsonFragment } from "@ethersproject/abi";
+const called = new Set<string>();
+export const importAbi = <const Path extends string>(name: Path): () => Promise<JsonFragment[]> => () => {
+    if (!called.has(name)) {
+        called.add(name);
+    }
+    return import(name, { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
+};
+
+const factorySwapABI = importAbi("../constants/abis/factoryPools/swap.json")
+const MetaUSDABI = importAbi("../constants/abis/factory-v2/MetaUSD.json")
+const MetaUSDBalancesABI = importAbi("../constants/abis/factory-v2/MetaUSDBalances.json")
+const MetaFraxUSDABI = importAbi("../constants/abis/factory-v2/MetaFraxUSD.json")
+const MetaFraxUSDBalancesABI = importAbi("../constants/abis/factory-v2/MetaFraxUSDBalances.json")
+const MetaBTCABI = importAbi("../constants/abis/factory-v2/MetaBTC.json")
+const MetaBTCBalancesABI = importAbi("../constants/abis/factory-v2/MetaBTCBalances.json")
+const MetaBTCRenABI = importAbi("../constants/abis/factory-v2/MetaBTCRen.json")
+const MetaBTCRenBalancesABI = importAbi("../constants/abis/factory-v2/MetaBTCBalancesRen.json")
+const MetaSbtc2ABI = importAbi("../constants/abis/factory-v2/MetaSbtc2.json")
+const MetaSbtc2BalancesABI = importAbi("../constants/abis/factory-v2/MetaSbtc2Balance.json")
+const Plain2BasicABI = importAbi("../constants/abis/factory-v2/Plain2Basic.json")
+const Plain2BalancesABI = importAbi("../constants/abis/factory-v2/Plain2Balances.json")
+const Plain2ETHABI = importAbi("../constants/abis/factory-v2/Plain2ETH.json")
+const Plain2OptimizedABI = importAbi("../constants/abis/factory-v2/Plain2Optimized.json")
+const Plain3BasicABI = importAbi("../constants/abis/factory-v2/Plain3Basic.json")
+const Plain3BalancesABI = importAbi("../constants/abis/factory-v2/Plain3Balances.json")
+const Plain3ETHABI = importAbi("../constants/abis/factory-v2/Plain3ETH.json")
+const Plain3OptimizedABI = importAbi("../constants/abis/factory-v2/Plain3Optimized.json")
+const Plain4BasicABI = importAbi("../constants/abis/factory-v2/Plain4Basic.json")
+const Plain4BalancesABI = importAbi("../constants/abis/factory-v2/Plain4Balances.json")
+const Plain4ETHABI = importAbi("../constants/abis/factory-v2/Plain4ETH.json")
+const Plain4OptimizedABI = importAbi("../constants/abis/factory-v2/Plain4Optimized.json")
 // --- ZAPS --
-const factoryDepositABI = async () => (await import("../constants/abis/factoryPools/deposit.json", { assert: { type: "json" } })).default as JsonFragment[]
-const fraxusdcMetaZapABI = async () => (await import("../constants/abis/fraxusdc/meta_zap.json", { assert: { type: "json" } })).default as JsonFragment[]
-const RenMetaZapABI = async () => (await import("../constants/abis/ren/meta_zap.json", { assert: { type: "json" } })).default as JsonFragment[]
-const Sbtc2MetaZapABI = async () => (await import("../constants/abis/sbtc2/meta_zap.json", { assert: { type: "json" } })).default as JsonFragment[]
+const factoryDepositABI = importAbi("../constants/abis/factoryPools/deposit.json", )
+const fraxusdcMetaZapABI = importAbi("../constants/abis/fraxusdc/meta_zap.json", )
+const RenMetaZapABI = importAbi("../constants/abis/ren/meta_zap.json", )
+const Sbtc2MetaZapABI = importAbi("../constants/abis/sbtc2/meta_zap.json", )
 
 
 export const implementationABIDictEthereum: IDict<() => Promise<JsonFragment[]>> = lowerCaseKeys({

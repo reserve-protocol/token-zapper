@@ -278,7 +278,7 @@ export const loadCurve = async (
       .getPoolList()
       .filter((i) => !i.startsWith('factory-'))
       .concat(['factory-v2-147', 'factory-v2-277'])
-
+    
     const poolsUnfiltered = poolNames.map((name) => {
       const pool = getCurvePool(name)
 

@@ -53,18 +53,6 @@ export class PoolTemplate {
     wrappedDecimals: number[];
     useLending: boolean[];
     inApi: boolean;
-    // estimateGas: {
-    //     deposit: (amounts: (number | string)[]) => Promise<number>,
-    //     depositWrapped: (amounts: (number | string)[]) => Promise<number>,
-    //     withdraw: (lpTokenAmount: number | string) => Promise<number>,
-    //     withdrawWrapped: (lpTokenAmount: number | string) => Promise<number>,
-    //     withdrawImbalance: (amounts: (number | string)[]) => Promise<number>,
-    //     withdrawImbalanceWrapped: (amounts: (number | string)[]) => Promise<number>,
-    //     withdrawOneCoin: (lpTokenAmount: number | string, coin: string | number) => Promise<number>,
-    //     withdrawOneCoinWrapped: (lpTokenAmount: number | string, coin: string | number) => Promise<number>,
-    //     swap: (inputCoin: string | number, outputCoin: string | number, amount: number | string, slippage: number) => Promise<number>,
-    //     swapWrapped: (inputCoin: string | number, outputCoin: string | number, amount: number | string, slippage: number) => Promise<number>,
-    // };
     wallet: {
         balances: (...addresses: string[] | string[][]) => Promise<IDict<IDict<string>> | IDict<string>>,
         lpTokenBalances: (...addresses: string[] | string[][]) => Promise<IDict<IDict<string>> | IDict<string>>,
@@ -665,7 +653,7 @@ export class PoolTemplate {
                 const totalLiquidity = poolsData.filter((data) => data.address.toLowerCase() === this.address.toLowerCase())[0].usdTotal;
                 return String(totalLiquidity);
             } catch (err) {
-                console.log(this.id, (err as Error).message);
+                // console.log(this.id, (err as Error).message);
             }
         }
 

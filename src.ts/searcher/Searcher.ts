@@ -383,8 +383,7 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
       {
         maxRetries: 3,
         retryDelay: 500,
-        async onRetry(...args) {
-          console.log(...args)
+        async onRetry() {
           return "RETURN"
         }
       }

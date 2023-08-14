@@ -22,18 +22,12 @@ export class OneInchAction extends Action {
       Address.fromHexString(swap.tx.to),
       BigInt(swap.tx.value),
       this.gasEstimate(),
-      `1Inch Swap (${swap.protocols
-        .flat(5)
-        .map((i: any) => i.name)
-        .join(',')})`
+      `1Inch Swap (...)`
     )
   }
 
   toString() {
-    return `OneInch(path=[${this.actionQuote.protocols
-      .flat(5)
-      .map((i: any) => i.name)
-      .join(',')}])`
+    return `OneInch(path=[...])`
   }
 
   private readonly outputQty: TokenQuantity
@@ -56,9 +50,8 @@ export class OneInchAction extends Action {
       DestinationOptions.Recipient,
       [new Approval(inputToken, Address.fromHexString(actionQuote.tx.to))]
     )
-
     this.outputQty = this.outputToken
-      .fromBigInt(BigInt(this.actionQuote.toTokenAmount))
+      .fromBigInt(BigInt(this.actionQuote.toAmount))
       .mul(outputToken.fromDecimal((100 - slippagePercent) / 100))
   }
 

@@ -9,3 +9,10 @@ export type SwapSignature = (
   output: Token,
   slippage: number
 ) => Promise<SwapPath>;
+
+
+export type QuoteSignature = (
+  input: TokenQuantity,
+  output: Token,
+  slippage: number
+) => Promise<TokenQuantity>;

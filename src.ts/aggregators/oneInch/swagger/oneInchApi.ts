@@ -120,16 +120,7 @@ export interface Tx {
 }
 
 export interface SwapResponseDto {
-  /** Source token info */
-  fromToken: TokenDto
-  /** Destination token info */
-  toToken: TokenDto
-  /** Expected amount of destination token */
-  toTokenAmount: string
-  /** Amount of source token */
-  fromTokenAmount: string
-  /** Selected protocols in a path */
-  protocols: string[]
+  toAmount: string
   /** Transaction object */
   tx: Tx
 }
@@ -329,19 +320,15 @@ export class HttpClient<SecurityDataType = unknown> {
     const queryString = query && this.toQueryString(query)
     const payloadFormatter = this.contentFormatters[type || ContentType.Json]
     const responseFormat = format || requestParams.format
-
+    
+    const url = `${baseUrl || this.baseUrl || ''}${path}${
+      queryString ? `?${queryString}` : ''
+    }`
     return this.customFetch(
-      `${baseUrl || this.baseUrl || ''}${path}${
-        queryString ? `?${queryString}` : ''
-      }`,
+      url,
       {
         ...requestParams,
-        headers: {
-          ...(requestParams.headers || {}),
-          ...(type && type !== ContentType.FormData
-            ? { 'Content-Type': type }
-            : {}),
-        },
+        headers: {},
         signal: cancelToken
           ? this.createAbortSignal(cancelToken)
           : requestParams.signal,
@@ -354,7 +341,6 @@ export class HttpClient<SecurityDataType = unknown> {
       const r = response as HttpResponse<T, E>
       r.data = null as unknown as T
       r.error = null as unknown as E
-
       const data = !responseFormat
         ? r
         : await response[responseFormat]()

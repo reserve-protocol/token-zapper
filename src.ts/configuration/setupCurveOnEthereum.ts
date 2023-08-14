@@ -6,9 +6,8 @@ import { type TokenQuantity } from '../entities/Token';
 import { SwapPlan } from '../searcher/Swap';
 import {
   BasketTokenSourcingRuleApplication,
-  PostTradeAction,
-  type SourcingRule
-} from '../searcher/BasketTokenSourcingRules';
+  PostTradeAction} from '../searcher/BasketTokenSourcingRules';
+import { type SourcingRule } from '../searcher/SourcingRule';
 import { type EthereumUniverse } from './ethereum';
 export interface IRouteStep {
   poolId: string;
@@ -44,6 +43,8 @@ export const initCurveOnEthereum = async (
   const eUSD__FRAX_USDC = universe.commonTokens['eUSD3CRV-f'];
   const mim_3CRV = universe.commonTokens['MIM-3LP3CRV-f'];
   const _3CRV = universe.commonTokens['3CRV'];
+
+  const WETH = universe.commonTokens.WETH;
 
   // We will not implement the full curve router,
   // But rather some predefined paths that are likely to be used

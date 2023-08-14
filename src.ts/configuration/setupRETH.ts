@@ -1,10 +1,9 @@
-import { type Universe } from '../Universe';
 import { ETHToRETH, RETHToETH, REthRouter } from '../action/REth';
 import { Address } from '../base/Address';
-
+import { type EthereumUniverse } from './ethereum';
 
 export const setupRETH = async (
-  universe: Universe,
+  universe: EthereumUniverse,
   rethAddress: string,
   rethRouterAddress: string
 ) => {
@@ -20,5 +19,6 @@ export const setupRETH = async (
   const ethToREth = new ETHToRETH(universe, rethRouter);
   const rEthtoEth = new RETHToETH(universe, rethRouter);
 
-  universe.defineMintable(ethToREth, rEthtoEth);
+  universe.defineMintable(ethToREth, rEthtoEth, true);
+  
 };

@@ -4,9 +4,10 @@ import {
   retryLoop,
   type OnRetryFunctionReturn,
   type RetryLoopConfig,
+  wait,
 } from '../../base/controlflow'
 import { type Token, type TokenQuantity } from '../../entities/Token'
-import { SwapPlan } from '../../searcher/Swap'
+import { SwapPath, SwapPlan } from '../../searcher/Swap'
 import { type Universe } from '../../Universe'
 import { DexAggregator } from '../DexAggregator'
 export { DexAggregator } from '../DexAggregator'
@@ -17,7 +18,6 @@ import {
   type SwapErrorDto,
   type SwapResponseDto,
 } from './swagger/oneInchApi'
-
 
 export type OneInchQuoteResponse = QuoteResponseDto
 export type OneInchSwapResponse = SwapResponseDto
@@ -59,11 +59,11 @@ const numberToSupportedChainId = (n: number): SupportedOneInchChains => {
  * @returns
  */
 export const createV5Api = (
-  baseUrl: string = 'https://api.1inch.io',
+  baseUrl: string = 'https://api.1inch.io/swap',
   chainId: SupportedOneInchChains = 1
 ): IOneInchRouter => {
   const chainApiUrl = new URL(new URL(baseUrl).origin)
-  chainApiUrl.pathname = `/v5.0/${chainId}`
+  chainApiUrl.pathname = `/swap/v5.2/${chainId}`
 
   const api = new Api({
     baseUrl: chainApiUrl.toString(),
@@ -160,24 +160,53 @@ export const createOneInchDexAggregator = (
     },
   }
   const aggregatorName = `aggregator.1inch.${_id++}.${chainIdToUse}`
+
+  let queue: (() => Promise<void>)[] = []
+  let dequeing = false
+  const resolveQueue = async () => {
+    if (dequeing) {
+      return
+    }
+    dequeing = true
+    while (queue.length != 0) {
+      const task = queue.pop()!
+      try {
+        await task()
+        await wait(1000)
+      } catch (e) {}
+    }
+    dequeing = false
+  }
   return new DexAggregator(
     aggregatorName,
     async (user, destination, input, output, slippage) => {
-      return await retryLoop(async () => {
-        const resp = await api.swap(user, destination, input, output, slippage)
-        if (resp.error != null) {
-          throw resp.error
-        }
-        return await new SwapPlan(universe, [
-          OneInchAction.createAction(
-            universe,
-            input.token,
+      const out = new Promise<SwapPath>((resolve, reject) => {
+        queue.push(async () => {
+          const resp = await api.swap(
+            user,
+            destination,
+            input,
             output,
-            resp.data,
             slippage
-          ),
-        ]).quote([input], destination)
-      }, retryConfig)
+          )
+          if (resp.error != null) {
+            reject(resp.error)
+          }
+          resolve(
+            await new SwapPlan(universe, [
+              OneInchAction.createAction(
+                universe,
+                input.token,
+                output,
+                resp.data,
+                slippage
+              ),
+            ]).quote([input], destination)
+          )
+        })
+      })
+      resolveQueue()
+      return await out
     }
   )
 }

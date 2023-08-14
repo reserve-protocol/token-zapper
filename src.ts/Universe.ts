@@ -11,7 +11,7 @@ import { type PriceOracle } from './oracles/PriceOracle'
 import { Refreshable } from './entities/Refreshable'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
 import { LPToken } from './action/LPToken'
-import { SourcingRule } from './searcher/BasketTokenSourcingRules'
+import { SourcingRule } from './searcher/SourcingRule'
 
 import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
 import { SwapPath } from './searcher/Swap'
@@ -58,7 +58,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   public readonly graph: Graph = new Graph()
   public readonly wrappedTokens = new Map<
     Token,
-    { mint: Action; burn: Action }
+    { mint: Action; burn: Action, allowAggregatorSearcher: boolean }
   >()
   public readonly oracles: PriceOracle[] = []
 
@@ -174,13 +174,14 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.defineMintable(lpTokenInstance.mintAction, lpTokenInstance.burnAction)
   }
 
-  public defineMintable(mint: Action, burn: Action) {
+  public defineMintable(mint: Action, burn: Action, allowAggregatorSearcher = false) {
     const output = mint.output[0]
     this.addAction(mint, output.address)
     this.addAction(burn, output.address)
     const out = {
       mint,
       burn,
+      allowAggregatorSearcher
     }
     this.wrappedTokens.set(output, out)
     return out

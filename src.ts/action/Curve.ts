@@ -75,7 +75,7 @@ const whiteList = new Set(
 
     "0xb30da2376f63de30b42dc055c93fa474f31330a5",
     "0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f",
-  ]
+  ].map(i => i.toLowerCase())
 )
 
 class CurvePool {

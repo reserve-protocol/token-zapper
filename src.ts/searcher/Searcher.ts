@@ -31,7 +31,8 @@ export const findPrecursorTokenSet = async (
   universe: UniverseWithERC20GasTokenDefined,
   userInputQuantity: TokenQuantity,
   rToken: Token,
-  unitBasket: TokenQuantity[]
+  unitBasket: TokenQuantity[],
+  searcher: Searcher<UniverseWithERC20GasTokenDefined>
 ) => {
   const specialRules = universe.precursorTokenSourcingSpecialCases.get(rToken)
   const basketTokenApplications: BasketTokenSourcingRuleApplication[] = []
@@ -41,7 +42,7 @@ export const findPrecursorTokenSet = async (
   ): Promise<BasketTokenSourcingRuleApplication> => {
     const tokenSourcingRule = specialRules.get(qty.token)
     if (tokenSourcingRule != null) {
-      return await tokenSourcingRule(userInputQuantity.token, qty)
+      return await tokenSourcingRule(userInputQuantity.token, qty, searcher)
     }
 
     const acts = universe.wrappedTokens.get(qty.token)
@@ -69,8 +70,10 @@ export const findPrecursorTokenSet = async (
   )
 }
 
-export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDefined> {
-  constructor(private readonly universe: SearcherUniverse) { }
+export class Searcher<
+  const SearcherUniverse extends UniverseWithERC20GasTokenDefined
+> {
+  constructor(private readonly universe: SearcherUniverse) {}
 
   /**
    * @note This helper will find some set of operations converting a 'inputQuantity' into
@@ -98,7 +101,8 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
       this.universe,
       inputQuantity,
       rToken,
-      basketUnit
+      basketUnit,
+      this
     )
     /**
      * PHASE 2: Trade inputQuantity into precursor set
@@ -125,20 +129,20 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r))
       : precursorTokenBasket
-        .map((p) => p.into(inputQuantity.token))
-        .reduce((l, r) => l.add(r))
+          .map((p) => p.into(inputQuantity.token))
+          .reduce((l, r) => l.add(r))
 
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
-        input: inputQuantity.mul(
-          precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
-        ),
-        output: token,
-      }))
+          input: inputQuantity.mul(
+            precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
+          ),
+          output: token,
+        }))
       : precursorTokenBasket.map((qty) => ({
-        output: qty.token,
-        input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
-      }))
+          output: qty.token,
+          input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
+        }))
 
     const inputQuantityToTokenSet: SwapPath[] = []
     const tradingBalances = new TokenAmounts()
@@ -332,7 +336,7 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
       this.universe,
       [rTokenQuantity],
       [
-        ...redeemRTokenForUnderlying.swapPaths.map(i => {
+        ...redeemRTokenForUnderlying.swapPaths.map((i) => {
           if (i.outputs.length === 1 && i.outputs[0].token === outputToken) {
             return new SwapPath(
               i.inputs,
@@ -384,8 +388,8 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
         maxRetries: 3,
         retryDelay: 500,
         async onRetry() {
-          return "RETURN"
-        }
+          return 'RETURN'
+        },
       }
     )
   }
@@ -457,14 +461,12 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
     destination: Address,
     slippage: number
   ): Promise<SwapPath[]> {
-    if (
-      this.universe.wrappedTokens.has(output) ||
-      this.universe.lpTokens.has(output)
-    ) {
+    const allowAggregatorSearch =
+      this.universe.wrappedTokens.get(output)?.allowAggregatorSearcher ?? true
+    if (!allowAggregatorSearch || this.universe.lpTokens.has(output)) {
       return []
     }
-    const executorAddress =
-      this.universe.config.addresses.executorAddress
+    const executorAddress = this.universe.config.addresses.executorAddress
     const out = await Promise.all(
       this.universe.dexAggregators.map(
         async (router) =>
@@ -488,7 +490,6 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
     slippage: number = 0.0,
     maxHops: number = 1
   ): Promise<SwapPath[]> {
-    const start = Date.now()
     const bfsResult = bfs(
       this.universe,
       this.universe.graph,
@@ -501,6 +502,9 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
       .map((i) => i.convertToSingularPaths())
       .flat()
       .filter((plan) => {
+        if (plan.steps.length !== maxHops) {
+          return false
+        }
         if (plan.inputs.length !== 1) {
           return false
         }
@@ -513,9 +517,15 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
         return true
       })
 
-    const allPlans = await Promise.all(
+    const allPlans: SwapPath[] = []
+    await Promise.all(
       swapPlans.map(async (plan) => {
-        return await plan.quote([input], destination)
+        try {
+          allPlans.push(await plan.quote([input], destination))
+        } catch (e) {
+          console.log(plan.toString())
+          console.log(e)
+        }
       })
     )
 
@@ -528,7 +538,7 @@ export class Searcher<const SearcherUniverse extends UniverseWithERC20GasTokenDe
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 2
+    maxHops: number = 1
   ): Promise<SwapPath[]> {
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {

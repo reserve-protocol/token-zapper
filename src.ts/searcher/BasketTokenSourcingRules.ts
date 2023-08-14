@@ -1,5 +1,5 @@
 import { type Action } from '../action/Action'
-import { type Token, type TokenQuantity } from '../entities/Token'
+import { type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 
 export class PostTradeAction {
@@ -172,9 +172,3 @@ export class BasketTokenSourcingRuleApplication {
     return new BasketTokenSourcingRuleApplication(precursorToTradeFor, [])
   }
 }
-
-
-export type SourcingRule = (
-  userInputToken: Token,
-  heldQuantity: TokenQuantity
-) => Promise<BasketTokenSourcingRuleApplication>

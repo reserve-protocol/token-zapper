@@ -488,7 +488,7 @@ export class Searcher<
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 1
+    maxHops: number = 2
   ): Promise<SwapPath[]> {
     const bfsResult = bfs(
       this.universe,
@@ -502,9 +502,16 @@ export class Searcher<
       .map((i) => i.convertToSingularPaths())
       .flat()
       .filter((plan) => {
-        if (plan.steps.length !== maxHops) {
+        if (plan.steps.length > maxHops) {
           return false
         }
+        if (
+          new Set(plan.steps.map((i) => i.constructor.name)).size !==
+          plan.steps.length
+        ) {
+          return false
+        }
+
         if (plan.inputs.length !== 1) {
           return false
         }
@@ -538,7 +545,7 @@ export class Searcher<
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 1
+    maxHops: number = 2
   ): Promise<SwapPath[]> {
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {

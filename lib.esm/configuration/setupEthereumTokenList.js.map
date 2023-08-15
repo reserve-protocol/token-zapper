@@ -1,0 +1,1 @@
+{"version":3,"file":"setupEthereumTokenList.js","sourceRoot":"","sources":["../../src.ts/configuration/setupEthereumTokenList.ts"],"names":[],"mappings":"AAAA,OAAO,EAAuB,UAAU,EAAE,MAAM,cAAc,CAAA;AAG9D,MAAM,CAAC,MAAM,qBAAqB,GAAG,KAAK,EAAE,QAAkB,EAAE,EAAE;IAC9D,MAAM,UAAU,CAAC,QAAQ,EAAE,OAAO,CAAC,6BAA6B,CAAqB,CAAC,CAAA;AAC1F,CAAC,CAAA"}

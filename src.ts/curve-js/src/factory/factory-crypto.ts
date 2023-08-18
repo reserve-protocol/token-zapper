@@ -5,12 +5,10 @@ import { CRYPTO_FACTORY_CONSTANTS } from "./constants-crypto";
 import { formatUnits } from "@ethersproject/units";
 import { BigNumber as ethersBigNumber } from "@ethersproject/bignumber"
 import { AddressZero } from "@ethersproject/constants";
-import { importAbi } from "../importAbi";
 
-
-const factoryGaugeABI = importAbi("./constants/abis/gauge_factory.json")
-// const gaugeChildABI = importAbi("./constants/abis/gauge_child.json")
-const cryptoFactorySwapABI = importAbi("./constants/abis/factory-crypto/factory-crypto-pool-2.json")
+const factoryGaugeABI = () => import("../constants/abis/gauge_factory.json").then(i => i.default)
+// const gaugeChildABI = () => import("./constants/abis/gauge_child.json").then(i => i.default)
+const cryptoFactorySwapABI = () => import("../constants/abis/factory-crypto/factory-crypto-pool-2.json").then(i => i.default)
 
 const deepFlatten = (arr: any[]): any[] => [].concat(...arr.map((v) => (Array.isArray(v) ? deepFlatten(v) : v)));
 

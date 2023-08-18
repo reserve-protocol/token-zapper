@@ -3,15 +3,15 @@ import { Contract } from "@ethersproject/contracts";
 import { Contract as MulticallContract } from "../../../ethcall/src";
 import ERC20ABI from "../constants/abis/ERC20.json";
 import { _getPoolsFromApi } from "../external-api";
-import { importAbi } from "../importAbi";
 import { ICurve, IDict, IPoolData, IPoolDataFromApi, REFERENCE_ASSET } from "../interfaces";
 import { setFactoryZapContracts } from "./common";
 import { FACTORY_CONSTANTS } from "./constants";
 import { CRYPTO_FACTORY_CONSTANTS } from "./constants-crypto";
 
-const factoryGaugeABI = importAbi("./constants/abis/gauge_factory.json")
-// const gaugeChildABI = importAbi("./constants/abis/gauge_child.json")
-const cryptoFactorySwapABI = importAbi("./constants/abis/factory-crypto/factory-crypto-pool-2.json")
+
+const factoryGaugeABI = () => import("../constants/abis/gauge_factory.json").then(i => i.default)
+// const gaugeChildABI = () => import("./constants/abis/gauge_child.json").then(i => i.default)
+const cryptoFactorySwapABI = () => import("../constants/abis/factory-crypto/factory-crypto-pool-2.json").then(i => i.default)
 
 export const lowerCasePoolDataAddresses = (poolsData: IPoolDataFromApi[]): IPoolDataFromApi[] => {
     for (const poolData of poolsData) {

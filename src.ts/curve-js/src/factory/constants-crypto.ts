@@ -1,12 +1,11 @@
 import { type JsonFragment } from "@ethersproject/abi";
 import { lowerCaseKeys } from "../constants/utils";
-import { importAbi } from "../importAbi";
+
 import { type IDict } from "../interfaces";
 
 // --- ZAPS --
-// const atricrypto3ZapABI = importAbi("./constants/abis/atricrypto3/base_pool_zap.json")
-const tripoolZapABI = importAbi("./constants/abis/3pool/meta_zap_crypto.json")
-const fraxusdcZapABI = importAbi("./constants/abis/fraxusdc/meta_zap_crypto.json")
+const tripoolZapABI = () => import("../constants/abis/3pool/meta_zap_crypto.json").then(i => i.default)
+const fraxusdcZapABI = () => import("../constants/abis/fraxusdc/meta_zap_crypto.json").then(i => i.default)
 
 export const lpTokenBasePoolIdDictEthereum: IDict<string> = lowerCaseKeys({
     '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490': '3pool',

@@ -1,43 +1,36 @@
 import { type IDict } from "../interfaces";
 import { lowerCaseKeys } from "../constants/utils";
+import { JsonFragment } from "@ethersproject/abi";
 
-import { type JsonFragment } from "@ethersproject/abi";
-const called = new Set<string>();
-export const importAbi = <const Path extends string>(name: Path): () => Promise<JsonFragment[]> => () => {
-    if (!called.has(name)) {
-        called.add(name);
-    }
-    return import(name, { assert: { type: "json" } }).then(i => i.default as JsonFragment[]);
-};
 
-const factorySwapABI = importAbi("../constants/abis/factoryPools/swap.json")
-const MetaUSDABI = importAbi("../constants/abis/factory-v2/MetaUSD.json")
-const MetaUSDBalancesABI = importAbi("../constants/abis/factory-v2/MetaUSDBalances.json")
-const MetaFraxUSDABI = importAbi("../constants/abis/factory-v2/MetaFraxUSD.json")
-const MetaFraxUSDBalancesABI = importAbi("../constants/abis/factory-v2/MetaFraxUSDBalances.json")
-const MetaBTCABI = importAbi("../constants/abis/factory-v2/MetaBTC.json")
-const MetaBTCBalancesABI = importAbi("../constants/abis/factory-v2/MetaBTCBalances.json")
-const MetaBTCRenABI = importAbi("../constants/abis/factory-v2/MetaBTCRen.json")
-const MetaBTCRenBalancesABI = importAbi("../constants/abis/factory-v2/MetaBTCBalancesRen.json")
-const MetaSbtc2ABI = importAbi("../constants/abis/factory-v2/MetaSbtc2.json")
-const MetaSbtc2BalancesABI = importAbi("../constants/abis/factory-v2/MetaSbtc2Balance.json")
-const Plain2BasicABI = importAbi("../constants/abis/factory-v2/Plain2Basic.json")
-const Plain2BalancesABI = importAbi("../constants/abis/factory-v2/Plain2Balances.json")
-const Plain2ETHABI = importAbi("../constants/abis/factory-v2/Plain2ETH.json")
-const Plain2OptimizedABI = importAbi("../constants/abis/factory-v2/Plain2Optimized.json")
-const Plain3BasicABI = importAbi("../constants/abis/factory-v2/Plain3Basic.json")
-const Plain3BalancesABI = importAbi("../constants/abis/factory-v2/Plain3Balances.json")
-const Plain3ETHABI = importAbi("../constants/abis/factory-v2/Plain3ETH.json")
-const Plain3OptimizedABI = importAbi("../constants/abis/factory-v2/Plain3Optimized.json")
-const Plain4BasicABI = importAbi("../constants/abis/factory-v2/Plain4Basic.json")
-const Plain4BalancesABI = importAbi("../constants/abis/factory-v2/Plain4Balances.json")
-const Plain4ETHABI = importAbi("../constants/abis/factory-v2/Plain4ETH.json")
-const Plain4OptimizedABI = importAbi("../constants/abis/factory-v2/Plain4Optimized.json")
+const factorySwapABI = () => import("../constants/abis/factoryPools/swap.json").then(i => i.default)
+const MetaUSDABI = () => import("../constants/abis/factory-v2/MetaUSD.json").then(i => i.default)
+const MetaUSDBalancesABI = () => import("../constants/abis/factory-v2/MetaUSDBalances.json").then(i => i.default)
+const MetaFraxUSDABI = () => import("../constants/abis/factory-v2/MetaFraxUSD.json").then(i => i.default)
+const MetaFraxUSDBalancesABI = () => import("../constants/abis/factory-v2/MetaFraxUSDBalances.json").then(i => i.default)
+const MetaBTCABI = () => import("../constants/abis/factory-v2/MetaBTC.json").then(i => i.default)
+const MetaBTCBalancesABI = () => import("../constants/abis/factory-v2/MetaBTCBalances.json").then(i => i.default)
+const MetaBTCRenABI = () => import("../constants/abis/factory-v2/MetaBTCRen.json").then(i => i.default)
+const MetaBTCRenBalancesABI = () => import("../constants/abis/factory-v2/MetaBTCBalancesRen.json").then(i => i.default)
+const MetaSbtc2ABI = () => import("../constants/abis/factory-v2/MetaSbtc2.json").then(i => i.default)
+const MetaSbtc2BalancesABI = () => import("../constants/abis/factory-v2/MetaSbtc2Balance.json").then(i => i.default)
+const Plain2BasicABI = () => import("../constants/abis/factory-v2/Plain2Basic.json").then(i => i.default)
+const Plain2BalancesABI = () => import("../constants/abis/factory-v2/Plain2Balances.json").then(i => i.default)
+const Plain2ETHABI = () => import("../constants/abis/factory-v2/Plain2ETH.json").then(i => i.default)
+const Plain2OptimizedABI = () => import("../constants/abis/factory-v2/Plain2Optimized.json").then(i => i.default)
+const Plain3BasicABI = () => import("../constants/abis/factory-v2/Plain3Basic.json").then(i => i.default)
+const Plain3BalancesABI = () => import("../constants/abis/factory-v2/Plain3Balances.json").then(i => i.default)
+const Plain3ETHABI = () => import("../constants/abis/factory-v2/Plain3ETH.json").then(i => i.default)
+const Plain3OptimizedABI = () => import("../constants/abis/factory-v2/Plain3Optimized.json").then(i => i.default)
+const Plain4BasicABI = () => import("../constants/abis/factory-v2/Plain4Basic.json").then(i => i.default)
+const Plain4BalancesABI = () => import("../constants/abis/factory-v2/Plain4Balances.json").then(i => i.default)
+const Plain4ETHABI = () => import("../constants/abis/factory-v2/Plain4ETH.json").then(i => i.default)
+const Plain4OptimizedABI = () => import("../constants/abis/factory-v2/Plain4Optimized.json").then(i => i.default)
 // --- ZAPS --
-const factoryDepositABI = importAbi("../constants/abis/factoryPools/deposit.json", )
-const fraxusdcMetaZapABI = importAbi("../constants/abis/fraxusdc/meta_zap.json", )
-const RenMetaZapABI = importAbi("../constants/abis/ren/meta_zap.json", )
-const Sbtc2MetaZapABI = importAbi("../constants/abis/sbtc2/meta_zap.json", )
+const factoryDepositABI = () => import("../constants/abis/factoryPools/deposit.json", ).then(i => i.default)
+const fraxusdcMetaZapABI = () => import("../constants/abis/fraxusdc/meta_zap.json", ).then(i => i.default)
+const RenMetaZapABI = () => import("../constants/abis/ren/meta_zap.json", ).then(i => i.default)
+const Sbtc2MetaZapABI = () => import("../constants/abis/sbtc2/meta_zap.json", ).then(i => i.default)
 
 
 export const implementationABIDictEthereum: IDict<() => Promise<JsonFragment[]>> = lowerCaseKeys({

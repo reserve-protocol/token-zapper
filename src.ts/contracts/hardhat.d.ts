@@ -17,17 +17,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Comet__factory>;
     getContractFactory(
-      name: "IComet",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IComet__factory>;
-    getContractFactory(
       name: "WrappedComet",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.WrappedComet__factory>;
-    getContractFactory(
-      name: "WrapperCompV3",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.WrapperCompV3__factory>;
     getContractFactory(
       name: "IBasketHandler",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -112,6 +104,10 @@ declare module "hardhat/types/runtime" {
       name: "UniswapV2Pair",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.UniswapV2Pair__factory>;
+    getContractFactory(
+      name: "WrapperCompV3",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.WrapperCompV3__factory>;
 
     getContractAt(
       name: "Comet",
@@ -119,20 +115,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.Comet>;
     getContractAt(
-      name: "IComet",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IComet>;
-    getContractAt(
       name: "WrappedComet",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.WrappedComet>;
-    getContractAt(
-      name: "WrapperCompV3",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.WrapperCompV3>;
     getContractAt(
       name: "IBasketHandler",
       address: string,
@@ -238,6 +224,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.UniswapV2Pair>;
+    getContractAt(
+      name: "WrapperCompV3",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.WrapperCompV3>;
 
     // default types
     getContractFactory(

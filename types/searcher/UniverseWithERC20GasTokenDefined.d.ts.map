@@ -1,0 +1,1 @@
+{"version":3,"file":"UniverseWithERC20GasTokenDefined.d.ts","sourceRoot":"","sources":["../../src.ts/searcher/UniverseWithERC20GasTokenDefined.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,QAAQ,EAAE,MAAM,aAAa,CAAC;AAC5C,OAAO,EAAE,KAAK,eAAe,EAAE,MAAM,qCAAqC,CAAC;AAE3E,MAAM,MAAM,gCAAgC,GAAG,QAAQ,CAAC,eAAe,CAAC;IACtE,QAAQ,EAAE,MAAM,CAAC;CAClB,CAAC,CAAC,CAAC"}

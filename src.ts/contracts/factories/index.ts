@@ -20,3 +20,4 @@ export { IStETH__factory } from "./IStETH__factory";
 export { IWStETH__factory } from "./IWStETH__factory";
 export { IWrappedNative__factory } from "./IWrappedNative__factory";
 export { UniswapV2Pair__factory } from "./UniswapV2Pair__factory";
+export { WrapperCompV3__factory } from "./WrapperCompV3__factory";

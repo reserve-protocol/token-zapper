@@ -46,7 +46,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   setupWrappedGasToken(universe)
 
   const wrappedToUnderlyingMapping =
-    require('./data/ethereum/underlying.json') as Record<string, string>
+    (await import ('./data/ethereum/underlying.json', { assert: { type: 'json' }})).default as Record<string, string>
 
   // Set up compound
   const cTokens = await Promise.all((await convertWrapperTokenAddressesIntoWrapperTokenPairs(

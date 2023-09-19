@@ -48,7 +48,7 @@ export const findPrecursorTokenSet = async (
 
     if (acts != null) {
       const baseTokens = await acts.burn.quote([qty])
-      console.log(qty + ' -> ' + baseTokens.join(', '))
+      // console.log(qty + ' -> ' + baseTokens.join(', '))
       const branches = await Promise.all(
         baseTokens.map(async (qty) => await recourseOn(qty))
       )
@@ -551,7 +551,7 @@ export class Searcher<
     slippage: number = 0.0,
     maxHops: number = 2
   ): Promise<SwapPath[]> {
-    console.log(`Finding swap ${input} -> ${output}`)
+    // console.log(`Finding swap ${input} -> ${output}`)
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {
       const out = await tradeSpecialCase(input, destination)

@@ -44,7 +44,7 @@ export const initCurveOnEthereum = async (
     // USDC/USDT -> MIN/eUSD LP
     // This will make UI applications snappier as they will not have to
     // to do any searching
-    require('./data/ethereum/precomputed-curve-routes.json') as Record<
+    ((await import ('./data/ethereum/precomputed-curve-routes.json', { assert: { type: 'json' }})).default) as Record<
       string, IRoute
     >
   );

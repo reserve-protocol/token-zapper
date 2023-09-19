@@ -36,6 +36,14 @@
       "import": "./lib.esm/configuration/setupSAToken.js",
       "types": "./types/configuration/setupSAToken.d.ts"
     },
+    "./protocols/compoundv3": {
+      "import": "./lib.esm/configuration/setupCompoundV3.js",
+      "types": "./types/configuration/setupCompoundV3.d.ts"
+    },
+    "./protocols/erc4626": {
+      "import": "./lib.esm/configuration/setupERC4626.js",
+      "types": "./types/configuration/setupERC4626.d.ts"
+    },
     "./protocols/erc20gas": {
       "import": "./lib.esm/configuration/setupWrappedGasToken.js",
       "types": "./types/configuration/setupWrappedGasToken.d.ts"

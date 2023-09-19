@@ -71,7 +71,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=18.13.0"
+    "node": ">=18.0.0"
   },
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "prettier": {

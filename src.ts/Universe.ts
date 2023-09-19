@@ -220,7 +220,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       approvalsStore?: ApprovalsStore
     }> = {},
   ) {
-    const universe = new Universe(
+    const universe = new Universe<C>(
       provider,
       config,
       opts.approvalsStore ?? new ApprovalsStore(provider),

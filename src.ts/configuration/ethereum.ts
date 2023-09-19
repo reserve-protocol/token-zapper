@@ -71,7 +71,7 @@ export const RTOKENS = {
   iUSD: {
     main: '0x555143D2E6653c80a399f77c612D33D5Bf67F331',
     erc20: "0x9b451BEB49a03586e6995E5A93b9c745D068581e"
-  },
+  }
 } as const;
 
 export const ethereumConfig = makeConfig(
@@ -97,6 +97,7 @@ export const PROTOCOL_CONFIGS = {
       '0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9',
       '0xF6147b4B44aE6240F7955803B2fD5E15c77bD7ea',
       '0x60C384e226b120d93f3e0F4C502957b2B9C32B15',
+      "0xafd16aFdE22D42038223A6FfDF00ee49c8fDa985"
     ],
   },
   compound: {
@@ -122,7 +123,12 @@ export const PROTOCOL_CONFIGS = {
       '0x80a2AE356fc9ef4305676f7a3E2Ed04e12C33946',
       '0x041171993284df560249B57358F931D9eB7b925D',
       '0x7713DD9Ca933848F6819F38B8352D9A15EA73F67'
-    ]
+    ],
+    collaterals: {
+      "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643": [
+        "0x3043be171e846c33D5f06864Cc045d9Fc799aF52"
+      ]
+    } as Record<string, string[]>
   },
 
   fluxFinance: {
@@ -133,7 +139,8 @@ export const PROTOCOL_CONFIGS = {
       '0xe2bA8693cE7474900A045757fe0efCa900F6530b',
       '0x81994b9607e06ab3d5cF3AffF9a67374f05F27d7',
       '0x1C9A2d6b33B4826757273D47ebEe0e2DddcD978B'
-    ]
+    ],
+    collaterals: []
   },
 
   rocketPool: {
@@ -148,7 +155,26 @@ export const PROTOCOL_CONFIGS = {
 
   convex: {
     booster: "0xF403C135812408BFbE8713b5A23a04b3D48AAE31"
-  }
+  },
+  erc4626: [
+    "0x83F20F44975D03b1b09e64809B757c47f942BEeA",
+    "0xaA91d24c2F7DBb6487f61869cD8cd8aFd5c5Cab2",
+    "0x7f7B77e49d5b30445f222764a794AFE14af062eB",
+    "0xE2b16e14dB6216e33082D5A8Be1Ef01DF7511bBb",
+    "0x291ed25eB61fcc074156eE79c5Da87e5DA94198F",
+    "0x97F9d5ed17A0C99B279887caD5254d15fb1B619B"
+  ],
+  compoundV3: {
+    markets: [
+      {
+        baseToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+        receiptToken: "0xc3d688B66703497DAA19211EEdff47f25384cdc3", // cUSDCv3
+        vaults: [
+          "0x7e1e077b289c0153b5ceAD9F264d66215341c9Ab" // Reserve wrapped cUSDCV3
+        ]
+      }
+    ]
+  },
 };
 
 export type EthereumConfigType = typeof ethereumConfig

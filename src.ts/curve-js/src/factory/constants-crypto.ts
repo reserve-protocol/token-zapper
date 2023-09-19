@@ -4,8 +4,8 @@ import { lowerCaseKeys } from "../constants/utils";
 import { type IDict } from "../interfaces";
 
 // --- ZAPS --
-const tripoolZapABI = () => import("../constants/abis/3pool/meta_zap_crypto.json").then(i => i.default)
-const fraxusdcZapABI = () => import("../constants/abis/fraxusdc/meta_zap_crypto.json").then(i => i.default)
+const tripoolZapABI = () => import("../constants/abis/3pool/meta_zap_crypto.json", {assert:{type: "json"}}).then(i => i.default)
+const fraxusdcZapABI = () => import("../constants/abis/fraxusdc/meta_zap_crypto.json", {assert:{type: "json"}}).then(i => i.default)
 
 export const lpTokenBasePoolIdDictEthereum: IDict<string> = lowerCaseKeys({
     '0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490': '3pool',

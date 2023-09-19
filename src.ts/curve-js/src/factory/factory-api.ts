@@ -9,9 +9,9 @@ import { FACTORY_CONSTANTS } from "./constants";
 import { CRYPTO_FACTORY_CONSTANTS } from "./constants-crypto";
 
 
-const factoryGaugeABI = () => import("../constants/abis/gauge_factory.json").then(i => i.default)
+const factoryGaugeABI = () => import("../constants/abis/gauge_factory.json", {assert:{type: "json"}}).then(i => i.default)
 // const gaugeChildABI = () => import("./constants/abis/gauge_child.json").then(i => i.default)
-const cryptoFactorySwapABI = () => import("../constants/abis/factory-crypto/factory-crypto-pool-2.json").then(i => i.default)
+const cryptoFactorySwapABI = () => import("../constants/abis/factory-crypto/factory-crypto-pool-2.json", {assert:{type: "json"}}).then(i => i.default)
 
 export const lowerCasePoolDataAddresses = (poolsData: IPoolDataFromApi[]): IPoolDataFromApi[] => {
     for (const poolData of poolsData) {

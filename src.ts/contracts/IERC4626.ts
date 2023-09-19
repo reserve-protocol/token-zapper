@@ -25,6 +25,7 @@ import type {
 
 export interface IERC4626Interface extends utils.Interface {
   functions: {
+    "asset()": FunctionFragment;
     "deposit(uint256,address)": FunctionFragment;
     "mint(uint256,address)": FunctionFragment;
     "previewDeposit(uint256)": FunctionFragment;
@@ -37,6 +38,7 @@ export interface IERC4626Interface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "asset"
       | "deposit"
       | "mint"
       | "previewDeposit"
@@ -47,6 +49,7 @@ export interface IERC4626Interface extends utils.Interface {
       | "withdraw"
   ): FunctionFragment;
 
+  encodeFunctionData(functionFragment: "asset", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "deposit",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
@@ -88,6 +91,7 @@ export interface IERC4626Interface extends utils.Interface {
     ]
   ): string;
 
+  decodeFunctionResult(functionFragment: "asset", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(
@@ -139,6 +143,8 @@ export interface IERC4626 extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    asset(overrides?: CallOverrides): Promise<[string]>;
+
     deposit(
       assets: PromiseOrValue<BigNumberish>,
       receiver: PromiseOrValue<string>,
@@ -185,6 +191,8 @@ export interface IERC4626 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
+
+  asset(overrides?: CallOverrides): Promise<string>;
 
   deposit(
     assets: PromiseOrValue<BigNumberish>,
@@ -233,6 +241,8 @@ export interface IERC4626 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    asset(overrides?: CallOverrides): Promise<string>;
+
     deposit(
       assets: PromiseOrValue<BigNumberish>,
       receiver: PromiseOrValue<string>,
@@ -283,6 +293,8 @@ export interface IERC4626 extends BaseContract {
   filters: {};
 
   estimateGas: {
+    asset(overrides?: CallOverrides): Promise<BigNumber>;
+
     deposit(
       assets: PromiseOrValue<BigNumberish>,
       receiver: PromiseOrValue<string>,
@@ -331,6 +343,8 @@ export interface IERC4626 extends BaseContract {
   };
 
   populateTransaction: {
+    asset(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     deposit(
       assets: PromiseOrValue<BigNumberish>,
       receiver: PromiseOrValue<string>,

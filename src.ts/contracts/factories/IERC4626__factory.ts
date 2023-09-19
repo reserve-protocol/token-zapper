@@ -8,6 +8,19 @@ import type { IERC4626, IERC4626Interface } from "../IERC4626";
 
 const _abi = [
   {
+    inputs: [],
+    name: "asset",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "uint256",

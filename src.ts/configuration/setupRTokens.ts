@@ -25,6 +25,16 @@ export const loadRToken = async (universe: Universe, rTokenAddress: Address, mai
     new MintRTokenAction(universe, basketHandler),
     new BurnRTokenAction(universe, basketHandler)
   )
+  // setTimeout(async () => {
+  //   console.log(token + " token basket: ")
+  //   console.log(basketHandler.unitBasket.toString())
+  //   for(const tok of basketHandler.basketTokens) {
+  //     const knownMint = universe.wrappedTokens.get(tok) != undefined
+      
+  //     console.log("  " + tok.address + (knownMint ? "[m]" : "[*]") + ": " + tok)
+  //   }
+
+  // }, 2000)
 }
 
 export const loadRTokens = (universe: Universe) => Promise.all(Object.entries(universe.config.addresses.rTokenDeployments).map(

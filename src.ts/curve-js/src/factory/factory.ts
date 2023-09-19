@@ -8,7 +8,7 @@ import { BigNumber as ethersBigNumber } from "@ethersproject/bignumber"
 import { AddressZero } from "@ethersproject/constants"
 import { Contract as MulticallContract } from '../../../ethcall/src';
 
-const factoryGaugeABI = () => import("../constants/abis/gauge_factory.json").then(i => i.default)
+const factoryGaugeABI = () => import("../constants/abis/gauge_factory.json", {assert:{type: "json"}}).then(i => i.default)
 
 const BLACK_LIST: { [index: number]: any } = {
     1: [

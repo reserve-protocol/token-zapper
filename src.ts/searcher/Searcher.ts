@@ -9,7 +9,6 @@ import { TokenAmounts } from '../entities/TokenAmounts'
 import { bfs } from '../exchange-graph/BFS'
 import { SearcherResult } from './SearcherResult'
 import { SwapPath, SwapPaths, SwapPlan } from './Swap'
-import { retryLoop } from '../base/controlflow'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 
 /**
@@ -49,6 +48,7 @@ export const findPrecursorTokenSet = async (
 
     if (acts != null) {
       const baseTokens = await acts.burn.quote([qty])
+      console.log(qty + ' -> ' + baseTokens.join(', '))
       const branches = await Promise.all(
         baseTokens.map(async (qty) => await recourseOn(qty))
       )
@@ -94,6 +94,7 @@ export class Searcher<
     basketUnit: TokenQuantity[],
     slippage: number
   ) {
+    // console.log(basketUnit.join(", "))
     /**
      * PHASE 1: Compute precursor set
      */
@@ -104,10 +105,13 @@ export class Searcher<
       basketUnit,
       this
     )
+    // console.log(precursorTokens.describe().join("\n"))
     /**
      * PHASE 2: Trade inputQuantity into precursor set
      */
     const precursorTokenBasket = precursorTokens.precursorToTradeFor
+    // console.log(precursorTokenBasket.join(", "))
+
     // Split input by how large each token in precursor set is worth.
     // Example: We're trading 0.1 ETH, and precursorTokenSet(rToken) = (0.5 usdc, 0.5 usdt)
     // say usdc is trading at 0.99 usd and usdt 1.01, then the trade will be split as follows
@@ -370,28 +374,28 @@ export class Searcher<
     signerAddress: Address,
     slippage = 0.0
   ): Promise<SearcherResult> {
-    // return this.findSingleInputToRTokenZap_(
-    //   userInput,
-    //   rToken,
-    //   signerAddress,
-    //   slippage
-    // )
-    return retryLoop(
-      () =>
-        this.findSingleInputToRTokenZap_(
-          userInput,
-          rToken,
-          signerAddress,
-          slippage
-        ),
-      {
-        maxRetries: 3,
-        retryDelay: 500,
-        async onRetry() {
-          return 'RETURN'
-        },
-      }
+    return this.findSingleInputToRTokenZap_(
+      userInput,
+      rToken,
+      signerAddress,
+      slippage
     )
+    // return retryLoop(
+    //   () =>
+    //     this.findSingleInputToRTokenZap_(
+    //       userInput,
+    //       rToken,
+    //       signerAddress,
+    //       slippage
+    //     ),
+    //   {
+    //     maxRetries: 3,
+    //     retryDelay: 500,
+    //     async onRetry() {
+    //       return 'RETURN'
+    //     },
+    //   }
+    // )
   }
 
   private async findSingleInputToRTokenZap_(
@@ -547,6 +551,7 @@ export class Searcher<
     slippage: number = 0.0,
     maxHops: number = 2
   ): Promise<SwapPath[]> {
+    console.log(`Finding swap ${input} -> ${output}`)
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {
       const out = await tradeSpecialCase(input, destination)
@@ -555,12 +560,17 @@ export class Searcher<
       }
     }
 
-    const quotes = (
-      await Promise.all([
-        this.internalQuoter(input, output, destination, slippage, maxHops),
-        this.externalQuoters(input, output, destination, slippage),
-      ])
-    ).flat()
+    const quotes: SwapPath[] = []
+    try {
+      quotes.push(...await this.internalQuoter(input, output, destination, slippage, maxHops))
+    } catch(e){}
+    try {
+      if (quotes.length === 0) {
+        quotes.push(
+          ...await this.externalQuoters(input, output, destination, slippage)
+        )
+      }
+    }catch(e) {}
     quotes.sort((l, r) => -l.compare(r))
     return quotes
   }

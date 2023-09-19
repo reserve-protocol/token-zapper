@@ -7,6 +7,8 @@ import { setupCompoundLike } from './setupCompound'
 import { setupSAToken } from './setupSAToken'
 import { setupLido } from './setupLido'
 import { setupRETH } from './setupRETH'
+import { setupERC4626 } from "./setupERC4626"
+import { setupCompoundV3 } from "./setupCompoundV3"
 import { setupChainLink as setupChainLinkRegistry } from './setupChainLink'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { initCurveOnEthereum } from './setupCurveOnEthereum'
@@ -47,11 +49,17 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     require('./data/ethereum/underlying.json') as Record<string, string>
 
   // Set up compound
-  const cTokens = await convertWrapperTokenAddressesIntoWrapperTokenPairs(
+  const cTokens = await Promise.all((await convertWrapperTokenAddressesIntoWrapperTokenPairs(
     universe,
     PROTOCOL_CONFIGS.compound.markets,
     wrappedToUnderlyingMapping
-  )
+  )).map(async a => ({
+    ...a,
+    collaterals: await Promise.all((PROTOCOL_CONFIGS.compound.collaterals[a.wrappedToken.address.address] ?? []).map(a =>
+      universe.getToken(Address.from(a))
+    ))
+  })))
+
   await setupCompoundLike(
     universe,
     {
@@ -77,6 +85,17 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     fTokens
   )
 
+  // Load compound v3
+  const compoundV3Markets = await Promise.all(PROTOCOL_CONFIGS.compoundV3.markets.map(async a => {
+    return {
+      baseToken: await universe.getToken(Address.from(a.baseToken)),
+      receiptToken: await universe.getToken(Address.from(a.receiptToken)),
+      vaults: await Promise.all(a.vaults.map(vault => universe.getToken(Address.from(vault))))
+    }
+  }))
+
+  await setupCompoundV3(universe, compoundV3Markets)
+
   // Set up AAVEV2
   const saTokens = await convertWrapperTokenAddressesIntoWrapperTokenPairs(
     universe,
@@ -90,11 +109,11 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
 
   // Set up RETH
-  // await setupRETH(
-  //   universe,
-  //   PROTOCOL_CONFIGS.rocketPool.reth,
-  //   PROTOCOL_CONFIGS.rocketPool.router
-  // )
+  await setupRETH(
+    universe,
+    PROTOCOL_CONFIGS.rocketPool.reth,
+    PROTOCOL_CONFIGS.rocketPool.router
+  )
 
   // Set up Lido
   await setupLido(
@@ -103,8 +122,18 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     PROTOCOL_CONFIGS.lido.wsteth
   )
 
+  await setupERC4626(
+    universe,
+    PROTOCOL_CONFIGS.erc4626,
+    wrappedToUnderlyingMapping
+  )
+
   // Set up RTokens defined in the config
   await loadRTokens(universe)
 
-  await initCurveOnEthereum(universe, PROTOCOL_CONFIGS.convex.booster)
+  const curve = await initCurveOnEthereum(universe, PROTOCOL_CONFIGS.convex.booster)
+
+  return {
+    curve
+  }
 }

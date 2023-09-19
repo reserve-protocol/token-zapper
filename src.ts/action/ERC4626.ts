@@ -98,11 +98,11 @@ export class ERC4626WithdrawAction extends Action {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [
-      this.shareToken.from(
+      this.underlying.from(
         await IERC4626__factory.connect(
           this.shareToken.address.address,
           this.universe.provider
-        ).previewDeposit(amountsIn.amount)
+        ).previewRedeem(amountsIn.amount)
       ),
     ]
   }

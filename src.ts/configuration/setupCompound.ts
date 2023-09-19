@@ -18,10 +18,12 @@ export const loadCompoundMarketsFromRPC = async (
   ).getAllMarkets();
   return allCTokens
 };
+const ONE = 10n ** 18n
+
 export async function setupCompoundLike(
   universe: Universe,
   deployment: { cEth?: Token; comptroller: Address; },
-  cTokens: {underlying: Token, wrappedToken: Token }[]
+  cTokens: { underlying: Token, wrappedToken: Token, collaterals?: Token[] }[]
 ) {
   const ETH = universe.nativeToken;
   const cETH = deployment.cEth
@@ -41,7 +43,7 @@ export async function setupCompoundLike(
     );
   }
 
-  for (const { wrappedToken, underlying } of cTokens) {
+  for (const { wrappedToken, underlying, collaterals } of cTokens) {
     await setupMintableWithRate(
       universe,
       ICToken__factory,
@@ -54,6 +56,22 @@ export async function setupCompoundLike(
         };
       }
     );
+
+    for (const collateral of collaterals ?? []) {
+      await setupMintableWithRate(
+        universe,
+        ICToken__factory,
+        collateral,
+        async (rate, inst) => {
+          return {
+            fetchRate: async () => ONE,
+            mint: new MintCTokenAction(universe, wrappedToken, collateral, rate),
+            burn: new BurnCTokenAction(universe, wrappedToken, collateral, rate),
+          };
+        }
+      );
+    }
+
   }
   return cTokens
 }

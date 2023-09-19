@@ -1,14 +1,21 @@
 import { type Action } from '../action/Action';
 import { setupConvexEdges as setupConvexEdge } from '../action/Convex';
+
+
 import { loadCurve } from '../action/Curve';
 import { Address } from '../base/Address';
 import { type TokenQuantity } from '../entities/Token';
 import { SwapPlan } from '../searcher/Swap';
 import {
   BasketTokenSourcingRuleApplication,
-  PostTradeAction} from '../searcher/BasketTokenSourcingRules';
+  PostTradeAction
+} from '../searcher/BasketTokenSourcingRules';
+
 import { type SourcingRule } from '../searcher/SourcingRule';
 import { type EthereumUniverse } from './ethereum';
+
+export { BasketTokenSourcingRuleApplication, PostTradeAction } from '../searcher/BasketTokenSourcingRules';
+
 export interface IRouteStep {
   poolId: string;
   poolAddress: string;
@@ -20,6 +27,7 @@ export interface IRouteStep {
   swapAddress: string;
 }
 export type IRoute = IRouteStep[];
+
 export const initCurveOnEthereum = async (
   universe: EthereumUniverse,
   convexBooster: string
@@ -43,8 +51,6 @@ export const initCurveOnEthereum = async (
   const eUSD__FRAX_USDC = universe.commonTokens['eUSD3CRV-f'];
   const mim_3CRV = universe.commonTokens['MIM-3LP3CRV-f'];
   const _3CRV = universe.commonTokens['3CRV'];
-
-  const WETH = universe.commonTokens.WETH;
 
   // We will not implement the full curve router,
   // But rather some predefined paths that are likely to be used
@@ -73,9 +79,10 @@ export const initCurveOnEthereum = async (
   // Add convex edges
   const stkcvxeUSD3CRV = universe.commonTokens['stkcvxeUSD3CRV-f'];
   const stkcvxMIM3LP3CRV = universe.commonTokens['stkcvxMIM-3LP3CRV-f'];
-  const stkcvx3Crv = universe.commonTokens['stkcvx3Crv'];
 
+  const stkcvx3Crv = universe.commonTokens['stkcvx3Crv'];
   const stables = new Set([DAI, MIM, FRAX, USDC, USDT]);
+  const convexBoosterAddress = Address.from(convexBooster)
 
   // This is a sourcing rule, it can be used to define 'shortcuts' or better ways to perform a Zap.
   // The rule defined below instructs the zapper to not mint stkcvxeUSD3CRv/stkcvxMIM3LP3CRV tokens
@@ -105,11 +112,15 @@ export const initCurveOnEthereum = async (
       );
     };
 
-  const convexBoosterAddress = Address.from(convexBooster)
-  const [eUSDConvex, mimConvex, threeCryptoConvex] = await Promise.all([
+
+  const [
+    eUSDConvex,
+    mimConvex,
+    threeCryptoConvex,
+  ] = await Promise.all([
     setupConvexEdge(universe, stkcvxeUSD3CRV, convexBoosterAddress),
     setupConvexEdge(universe, stkcvxMIM3LP3CRV, convexBoosterAddress),
-    setupConvexEdge(universe, stkcvx3Crv, convexBoosterAddress)
+    setupConvexEdge(universe, stkcvx3Crv, convexBoosterAddress),
   ]);
 
   universe.defineTokenSourcingRule(
@@ -148,5 +159,12 @@ export const initCurveOnEthereum = async (
         ]).quote([input], dest);
       }
     );
+  }
+
+  return {
+    stables,
+    setupConvexEdge,
+    makeStkConvexSourcingRule,
+    convexBoosterAddress
   }
 };

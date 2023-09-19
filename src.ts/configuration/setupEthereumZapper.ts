@@ -46,7 +46,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   setupWrappedGasToken(universe)
 
   const wrappedToUnderlyingMapping =
-    (await import ('./data/ethereum/underlying.json', { assert: { type: 'json' }})).default as Record<string, string>
+    (await import('./data/ethereum/underlying.json', { assert: { type: 'json' } })).default as Record<string, string>
 
   // Set up compound
   const cTokens = await Promise.all((await convertWrapperTokenAddressesIntoWrapperTokenPairs(
@@ -72,11 +72,18 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
 
   // Set up flux finance
-  const fTokens = await convertWrapperTokenAddressesIntoWrapperTokenPairs(
-    universe,
-    PROTOCOL_CONFIGS.fluxFinance.markets,
-    wrappedToUnderlyingMapping
-  )
+  const fTokens = await Promise.all(
+    (await convertWrapperTokenAddressesIntoWrapperTokenPairs(
+      universe,
+      PROTOCOL_CONFIGS.fluxFinance.markets,
+      wrappedToUnderlyingMapping
+    )).map(async a => ({
+      ...a,
+      collaterals: await Promise.all((PROTOCOL_CONFIGS.fluxFinance.collaterals[a.wrappedToken.address.address] ?? []).map(a =>
+        universe.getToken(Address.from(a))
+      ))
+    })))
+
   await setupCompoundLike(
     universe,
     {

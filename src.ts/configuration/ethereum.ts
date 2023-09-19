@@ -71,6 +71,10 @@ export const RTOKENS = {
   iUSD: {
     main: '0x555143D2E6653c80a399f77c612D33D5Bf67F331',
     erc20: "0x9b451BEB49a03586e6995E5A93b9c745D068581e"
+  },
+  'USDC+': {
+    main: '0xeC11Cf537497141aC820615F4f399be4a1638Af6',
+    erc20: "0xFc0B1EEf20e4c68B3DCF36c4537Cfa7Ce46CA70b"
   }
 } as const;
 
@@ -140,7 +144,11 @@ export const PROTOCOL_CONFIGS = {
       '0x81994b9607e06ab3d5cF3AffF9a67374f05F27d7',
       '0x1C9A2d6b33B4826757273D47ebEe0e2DddcD978B'
     ],
-    collaterals: []
+    collaterals: {
+      "0x465a5a630482f3abD6d3b84B39B29b07214d19e5": [
+        "0x6D05CB2CB647B58189FA16f81784C05B4bcd4fe9"
+      ]
+    } as Record<string, string[]>
   },
 
   rocketPool: {

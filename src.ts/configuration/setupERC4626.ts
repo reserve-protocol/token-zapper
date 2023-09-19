@@ -31,7 +31,6 @@ export const setupERC4626 = async (
         })
     )
     for (const { wrappedToken, underlying } of tokens) {
-        console.log(`Setting up ERC4626 ${underlying} -> ${wrappedToken}`)
         universe.defineMintable(
             new ERC4626DepositAction(universe, underlying, wrappedToken),
             new ERC4626WithdrawAction(universe, underlying, wrappedToken),

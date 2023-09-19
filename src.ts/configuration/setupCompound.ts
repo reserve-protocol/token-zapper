@@ -1,4 +1,5 @@
 import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens';
+import { BurnCTokenWrapperAction, MintCTokenWrapperAction } from '../action/CTokenWrapper';
 import { type Address } from '../base/Address';
 import { IComptroller__factory } from '../contracts/factories/ICToken.sol/IComptroller__factory';
 import { ICToken__factory } from '../contracts/factories/ICToken.sol/ICToken__factory';
@@ -58,17 +59,9 @@ export async function setupCompoundLike(
     );
 
     for (const collateral of collaterals ?? []) {
-      await setupMintableWithRate(
-        universe,
-        ICToken__factory,
-        collateral,
-        async (rate, inst) => {
-          return {
-            fetchRate: async () => ONE,
-            mint: new MintCTokenAction(universe, wrappedToken, collateral, rate),
-            burn: new BurnCTokenAction(universe, wrappedToken, collateral, rate),
-          };
-        }
+      await universe.defineMintable(
+        new MintCTokenWrapperAction(universe, wrappedToken, collateral, async () => ONE),
+        new BurnCTokenWrapperAction(universe, wrappedToken, collateral, async () => ONE),
       );
     }
 

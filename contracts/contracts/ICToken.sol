@@ -20,6 +20,12 @@ interface ICToken  {
     /// @return The address of the comptroller
     function comptroller() external view returns (address);
 }
+
+interface CTokenWrapper  {
+    function deposit(uint256 mintAmount, address to) external payable returns (uint256);
+    function withdraw(uint256 cTokenAmount, address to) external payable returns (uint256);
+    function exchangeRateStored() external returns (uint256);
+}
 interface CEther  {
     function mint() external payable returns (uint256);
     function redeem(uint256 cTokenAmount) external payable returns (uint256);

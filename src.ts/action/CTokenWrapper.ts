@@ -7,32 +7,31 @@ import { parseHexStringIntoBuffer } from '../base/utils'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-import { WrappedComet__factory } from '../contracts/factories/Compv3.sol/WrappedComet__factory'
-const iWrappedCometInterface = WrappedComet__factory.createInterface()
+import { CTokenWrapper__factory } from '../contracts/factories/ICToken.sol/CTokenWrapper__factory'
+const iCTokenWrapper = CTokenWrapper__factory.createInterface()
 
-export class MintCometWrapperAction extends Action {
+export class MintCTokenWrapperAction extends Action {
   gasEstimate() {
     return BigInt(110000n)
   }
   async encode([amountsIn]: TokenQuantity[], dest: Address): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
-        iWrappedCometInterface.encodeFunctionData('deposit', [
+        iCTokenWrapper.encodeFunctionData('deposit', [
           amountsIn.amount,
+          dest.address
         ])
       ),
       this.receiptToken.address,
       0n,
       this.gasEstimate(),
-      'CompoundV3Wrapper mint ' + this.receiptToken.symbol
+      'CompoundV2Wrapper mint ' + this.receiptToken.symbol
     )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await this.getRate()
-    const amountOut = (amountsIn.amount * amountsIn.token.one.amount) / rate
     return [
-      this.receiptToken.from(amountOut)
+      this.receiptToken.from(amountsIn.amount)
     ]
   }
 
@@ -52,11 +51,11 @@ export class MintCometWrapperAction extends Action {
     )
   }
   toString(): string {
-    return `CompoundV3WrapperMint(${this.receiptToken.toString()})`
+    return `CompoundV2WrapperMint(${this.receiptToken.toString()})`
   }
 }
 
-export class BurnCometWrapperAction extends Action {
+export class BurnCTokenWrapperAction extends Action {
   gasEstimate() {
     return BigInt(110000n)
   }
@@ -64,23 +63,21 @@ export class BurnCometWrapperAction extends Action {
   async encode([amountsIn]: TokenQuantity[], dest: Address): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
-        iWrappedCometInterface.encodeFunctionData('withdrawTo', [
-            dest.address,
+        iCTokenWrapper.encodeFunctionData('withdraw', [
             amountsIn.amount,
+            dest.address,
         ])
       ),
       this.receiptToken.address,
       0n,
       this.gasEstimate(),
-      'CompoundV3Wrapper burn ' + this.receiptToken.symbol
+      'CompoundV2Wrapper burn ' + this.receiptToken.symbol
     )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await this.getRate()
-    const amountOut = (amountsIn.amount * rate) / amountsIn.token.one.amount
     return [
-      this.baseToken.from(amountOut)
+      this.baseToken.from(amountsIn.amount)
     ]
   }
 
@@ -100,6 +97,6 @@ export class BurnCometWrapperAction extends Action {
     )
   }
   toString(): string {
-    return `CompoundV3Burn(${this.receiptToken.toString()})`
+    return `CompoundV2WrapperBurn(${this.receiptToken.toString()})`
   }
 }

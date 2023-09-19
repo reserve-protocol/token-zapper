@@ -4,37 +4,40 @@
 
 import { Contract, Signer, utils } from "ethers";
 import type { Provider } from "@ethersproject/providers";
-import type { IComet, ICometInterface } from "../../Compv3.sol/IComet";
+import type { WrapperCompV3, WrapperCompV3Interface } from "../WrapperCompV3";
 
 const _abi = [
   {
     inputs: [
-      {
-        internalType: "address",
-        name: "asset",
-        type: "address",
-      },
       {
         internalType: "uint256",
         name: "amount",
         type: "uint256",
       },
     ],
-    name: "supply",
+    name: "deposit",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "exchangeRate",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
-        name: "to",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "asset",
+        name: "dst",
         type: "address",
       },
       {
@@ -50,12 +53,15 @@ const _abi = [
   },
 ] as const;
 
-export class IComet__factory {
+export class WrapperCompV3__factory {
   static readonly abi = _abi;
-  static createInterface(): ICometInterface {
-    return new utils.Interface(_abi) as ICometInterface;
+  static createInterface(): WrapperCompV3Interface {
+    return new utils.Interface(_abi) as WrapperCompV3Interface;
   }
-  static connect(address: string, signerOrProvider: Signer | Provider): IComet {
-    return new Contract(address, _abi, signerOrProvider) as IComet;
+  static connect(
+    address: string,
+    signerOrProvider: Signer | Provider
+  ): WrapperCompV3 {
+    return new Contract(address, _abi, signerOrProvider) as WrapperCompV3;
   }
 }

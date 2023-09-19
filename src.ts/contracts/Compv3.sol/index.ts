@@ -2,6 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { Comet } from "./Comet";
-export type { IComet } from "./IComet";
 export type { WrappedComet } from "./WrappedComet";
-export type { WrapperCompV3 } from "./WrapperCompV3";

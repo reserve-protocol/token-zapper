@@ -2,6 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export { Comet__factory } from "./Comet__factory";
-export { IComet__factory } from "./IComet__factory";
 export { WrappedComet__factory } from "./WrappedComet__factory";
-export { WrapperCompV3__factory } from "./WrapperCompV3__factory";

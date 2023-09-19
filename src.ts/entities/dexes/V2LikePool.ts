@@ -1,13 +1,14 @@
+import { Buffer } from 'buffer'
+
 import { Address } from '../../base/Address'
 import { FEE_SCALE } from '../../base/constants'
 import { type Token, type TokenQuantity } from '../Token'
 import { type SwapDirection } from './TwoTokenPoolTypes'
 
-import { keccak256 } from '@ethersproject/keccak256'
 import { getCreate2Address } from '@ethersproject/address'
+import { keccak256 } from '@ethersproject/keccak256'
 
 import { parseHexStringIntoBuffer } from '../../base/utils'
-import { Buffer } from 'buffer'
 import { UniswapV2Pair__factory } from '../../contracts/factories/UniswapV2Pair__factory'
 
 const INIT_CODE_HASH = parseHexStringIntoBuffer(

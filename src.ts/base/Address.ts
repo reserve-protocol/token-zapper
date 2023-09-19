@@ -1,6 +1,6 @@
 import { isAddress, getAddress } from '@ethersproject/address'
 import { AddressZero } from "@ethersproject/constants"
-
+import { Buffer } from 'buffer'
 import { InterningCache } from './InterningCache'
 import { parseHexStringIntoBuffer } from './utils'
 

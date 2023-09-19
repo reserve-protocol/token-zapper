@@ -2,5 +2,6 @@ import { type JsonTokenEntry, loadTokens } from "./loadTokens"
 import { type Universe } from "../Universe"
 
 export const loadEthereumTokenList = async (universe: Universe) => {
-    await loadTokens(universe, require("./data/ethereum/tokens.json") as JsonTokenEntry[])
+    const tokens = (await import("./data/ethereum/tokens.json")).default
+    await loadTokens(universe, tokens as JsonTokenEntry[])
 }

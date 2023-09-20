@@ -15,78 +15,78 @@
   "exports": {
     "./protocols/chainlink": {
       "import": "./lib.esm/configuration/setupChainLink.js",
-      "default": "./lib.commonjs/configuration/setupChainLink.js",
-      "types": "./types/configuration/setupChainLink.d.ts"
+      "types": "./types/configuration/setupChainLink.d.ts",
+      "default": "./lib.commonjs/configuration/setupChainLink.js"
     },
     "./protocols/compoundV2": {
       "import": "./lib.esm/configuration/setupCompound.js",
-      "default": "./lib.commonjs/configuration/setupCompound.js",
-      "types": "./types/configuration/setupCompound.d.ts"
+      "types": "./types/configuration/setupCompound.d.ts",
+      "default": "./lib.commonjs/configuration/setupCompound.js"
     },
     "./protocols/lido": {
       "import": "./lib.esm/configuration/setupLido.js",
-      "default": "./lib.commonjs/configuration/setupLido.js",
-      "types": "./types/configuration/setupLido.d.ts"
+      "types": "./types/configuration/setupLido.d.ts",
+      "default": "./lib.commonjs/configuration/setupLido.js"
     },
     "./protocols/rocketpool": {
       "import": "./lib.esm/configuration/setupRETH.js",
-      "default": "./lib.commonjs/configuration/setupRETH.js",
-      "types": "./types/configuration/setupRETH.d.ts"
+      "types": "./types/configuration/setupRETH.d.ts",
+      "default": "./lib.commonjs/configuration/setupRETH.js"
     },
     "./protocols/reserve": {
       "import": "./lib.esm/configuration/setupRTokens.js",
-      "default": "./lib.commonjs/configuration/setupRTokens.js",
-      "types": "./types/configuration/setupRTokens.d.ts"
+      "types": "./types/configuration/setupRTokens.d.ts",
+      "default": "./lib.commonjs/configuration/setupRTokens.js"
     },
     "./protocols/aaveV2": {
       "import": "./lib.esm/configuration/setupSAToken.js",
-      "default": "./lib.commonjs/configuration/setupSAToken.js",
-      "types": "./types/configuration/setupSAToken.d.ts"
+      "types": "./types/configuration/setupSAToken.d.ts",
+      "default": "./lib.commonjs/configuration/setupSAToken.js"
     },
     "./protocols/compoundv3": {
       "import": "./lib.esm/configuration/setupCompoundV3.js",
-      "default": "./lib.commonjs/configuration/setupCompoundV3.js",
-      "types": "./types/configuration/setupCompoundV3.d.ts"
+      "types": "./types/configuration/setupCompoundV3.d.ts",
+      "default": "./lib.commonjs/configuration/setupCompoundV3.js"
     },
     "./protocols/erc4626": {
       "import": "./lib.esm/configuration/setupERC4626.js",
-      "default": "./lib.commonjs/configuration/setupERC4626.js",
-      "types": "./types/configuration/setupERC4626.d.ts"
+      "types": "./types/configuration/setupERC4626.d.ts",
+      "default": "./lib.commonjs/configuration/setupERC4626.js"
     },
     "./protocols/erc20gas": {
       "import": "./lib.esm/configuration/setupWrappedGasToken.js",
-      "default": "./lib.commonjs/configuration/setupWrappedGasToken.js",
-      "types": "./types/configuration/setupWrappedGasToken.d.ts"
+      "types": "./types/configuration/setupWrappedGasToken.d.ts",
+      "default": "./lib.commonjs/configuration/setupWrappedGasToken.js"
     },
     "./protocols/curve/mainnet": {
       "import": "./lib.esm/configuration/setupCurveOnEthereum.js",
-      "default": "./lib.commonjs/configuration/setupCurveOnEthereum.js",
-      "types": "./types/configuration/setupCurveOnEthereum.d.ts"
+      "types": "./types/configuration/setupCurveOnEthereum.d.ts",
+      "default": "./lib.commonjs/configuration/setupCurveOnEthereum.js"
     },
     "./configuration/ethereum": {
       "import": "./lib.esm/configuration/ethereum.js",
-      "default": "./lib.commonjs/configuration/ethereum.js",
-      "types": "./types/configuration/ethereum.d.ts"
+      "types": "./types/configuration/ethereum.d.ts",
+      "default": "./lib.commonjs/configuration/ethereum.js"
     },
     "./configuration/setupEthereumTokenList": {
       "import": "./lib.esm/configuration/setupEthereumTokenList.js",
-      "default": "./lib.commonjs/configuration/setupEthereumTokenList.js",
-      "types": "./types/configuration/setupEthereumTokenList.d.ts"
+      "types": "./types/configuration/setupEthereumTokenList.d.ts",
+      "default": "./lib.commonjs/configuration/setupEthereumTokenList.js"
     },
     "./configs/mainnet/zapper": {
       "import": "./lib.esm/configuration/setupEthereumZapper.js",
-      "default": "./lib.commonjs/configuration/setupEthereumZapper.js",
-      "types": "./types/configuration/setupEthereumZapper.d.ts"
+      "types": "./types/configuration/setupEthereumZapper.d.ts",
+      "default": "./lib.commonjs/configuration/setupEthereumZapper.js"
     },
     "./aggregators/one-inch": {
       "import": "./lib.esm/aggregators/oneInch/oneInchRegistry.js",
-      "default": "./lib.commonjs/aggregators/oneInch/oneInchRegistry.js",
-      "types": "./types/aggregators/oneInch/oneInchRegistry.d.ts"
+      "types": "./types/aggregators/oneInch/oneInchRegistry.d.ts",
+      "default": "./lib.commonjs/aggregators/oneInch/oneInchRegistry.js"
     },
     ".": {
       "import": "./lib.esm/index.js",
-      "default": "./lib.commonjs/index.js",
-      "types": "./types/index.d.ts"
+      "types": "./types/index.d.ts",
+      "default": "./lib.commonjs/index.js"
     }
   },
   "repository": {

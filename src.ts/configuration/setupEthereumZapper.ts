@@ -16,6 +16,7 @@ import { loadEthereumTokenList } from './setupEthereumTokenList'
 import { loadRTokens } from './setupRTokens'
 import { type EthereumUniverse, PROTOCOL_CONFIGS } from './ethereum'
 import { convertWrapperTokenAddressesIntoWrapperTokenPairs } from './convertWrapperTokenAddressesIntoWrapperTokenPairs'
+import wrappedToUnderlyingMapping from './data/ethereum/underlying.json'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
@@ -45,8 +46,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   setupWrappedGasToken(universe)
 
-  const wrappedToUnderlyingMapping =
-    (await import('./data/ethereum/underlying.json', { assert: { type: 'json' } })).default as Record<string, string>
+  
 
   // Set up compound
   const cTokens = await Promise.all((await convertWrapperTokenAddressesIntoWrapperTokenPairs(

@@ -138,7 +138,11 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   // Set up RTokens defined in the config
   await loadRTokens(universe)
 
-  const curve = await initCurveOnEthereum(universe, PROTOCOL_CONFIGS.convex.booster)
+  const curve = await initCurveOnEthereum(universe, PROTOCOL_CONFIGS.convex.booster).catch(e => {
+    console.log("Failed to intialize curve")
+    console.log(e)
+    return null as any
+  })
 
   return {
     curve

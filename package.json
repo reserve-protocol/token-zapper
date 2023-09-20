@@ -4,13 +4,14 @@
     "access": "public",
     "tag": "latest"
   },
-  "version": "2.1.0-rc-15",
+  "version": "2.1.0-rc-13",
   "description": "A library to help convert tokens into RTokens",
   "keywords": [],
   "module": "./lib.esm/index.js",
-  "main": "./lib.commonjs/index.register.js",
   "sideEffects": false,
+  "types": "./types/index.d.ts",
   "author": "jan.demidov@reserve.org",
+  "main": "./lib.commonjs/index.js",
   "exports": {
     "./protocols/chainlink": {
       "import": "./lib.esm/configuration/setupChainLink.js",
@@ -81,6 +82,11 @@
       "import": "./lib.esm/aggregators/oneInch/oneInchRegistry.js",
       "types": "./types/aggregators/oneInch/oneInchRegistry.d.ts",
       "require": "./lib.commonjs/aggregators/oneInch/oneInchRegistry.js"
+    },
+    ".": {
+      "import": "./lib.esm/index.js",
+      "types": "./types/index.d.ts",
+      "require": "./lib.commonjs/index.js"
     }
   },
   "repository": {

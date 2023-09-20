@@ -14,3 +14,7 @@ export const configuration = {
 
 export { Searcher } from './searcher/Searcher'
 export { Universe } from './Universe'
+
+export { ethereumConfig } from './configuration/ethereum'
+export { setupEthereumZapper } from './configuration/setupEthereumZapper'
+export { DexAggregator, createOneInchDexAggregator } from './aggregators/oneInch/oneInchRegistry'

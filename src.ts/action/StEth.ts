@@ -4,7 +4,7 @@ import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { AddressZero } from '@ethersproject/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { IStETH__factory } from '../contracts/factories/IStETH__factory'
+import { IStETH__factory } from '../contracts/factories/contracts/IStETH__factory'
 
 const stETHInterface = IStETH__factory.createInterface()
 export class StETHRateProvider {

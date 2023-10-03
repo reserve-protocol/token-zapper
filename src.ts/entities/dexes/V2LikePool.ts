@@ -9,7 +9,7 @@ import { getCreate2Address } from '@ethersproject/address'
 import { keccak256 } from '@ethersproject/keccak256'
 
 import { parseHexStringIntoBuffer } from '../../base/utils'
-import { UniswapV2Pair__factory } from '../../contracts/factories/UniswapV2Pair__factory'
+import { UniswapV2Pair__factory } from '../../contracts/factories/contracts/UniswapV2Pair__factory'
 
 const INIT_CODE_HASH = parseHexStringIntoBuffer(
   '0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f'

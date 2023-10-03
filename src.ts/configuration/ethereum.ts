@@ -88,13 +88,15 @@ export const ethereumConfig = makeConfig(
   COMMON_TOKENS,
   RTOKENS,
   {
-    zapperAddress: '0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b',
-    executorAddress: '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11',
+    facadeAddress: "0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C",
+    zapperAddress: '0x8cE5ee761fF619c889F007CB4D708178E87C11D8',
+    executorAddress: '0xe18a821ea1f1796A0797CEa01A3f86ebEab0f9B6',
   }
 )
 
 
 export const PROTOCOL_CONFIGS = {
+  facadeRead: "0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C",
   chainLinkRegistry: "0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf",
   aavev2: {
     tokenWrappers: [

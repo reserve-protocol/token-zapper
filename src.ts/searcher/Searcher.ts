@@ -160,6 +160,8 @@ export class Searcher<
         continue
       }
 
+      // console.log(input + " -> " + output)
+
       // Swaps are sorted by output amount in descending order
       const swaps = await this.findSingleInputTokenSwap(
         input,
@@ -550,7 +552,6 @@ export class Searcher<
     slippage: number = 0.0,
     maxHops: number = 2
   ): Promise<SwapPath[]> {
-    // console.log(`Finding swap ${input} -> ${output}`)
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {
       const out = await tradeSpecialCase(input, destination)

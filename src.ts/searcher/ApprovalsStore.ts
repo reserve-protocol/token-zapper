@@ -1,7 +1,7 @@
 import { type Provider } from '@ethersproject/providers'
 import { type Address } from '../base/Address'
 import { type Token } from '../entities/Token'
-import { IERC20__factory } from '../contracts/factories/IERC20__factory'
+import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory';
 
 export class ApprovalsStore {
   constructor(private readonly provider: Provider) { }

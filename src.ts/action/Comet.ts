@@ -4,7 +4,7 @@ import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { Comet__factory } from '../contracts/factories/Compv3.sol/Comet__factory'
+import { Comet__factory } from '../contracts/factories/contracts/Compv3.sol/Comet__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 

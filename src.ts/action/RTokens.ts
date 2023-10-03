@@ -46,6 +46,18 @@ export class MintRTokenAction extends Action {
     destination: Address
   ): Promise<ContractCall> {
     const units = (await this.quote(amountsIn))[0]
+    return this.encodeIssueTo(
+      amountsIn,
+      units,
+      destination
+    )
+  }
+
+  async encodeIssueTo(
+    amountsIn: TokenQuantity[],
+    units: TokenQuantity,
+    destination: Address
+  ): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
         rTokenIFace.encodeFunctionData('issueTo', [
@@ -56,7 +68,7 @@ export class MintRTokenAction extends Action {
       this.basket.rToken.address,
       0n,
       this.gasEstimate(),
-      `RToken(${this.basket.rToken},input:${amountsIn},issueAmount:${units},destination: ${destination})`
+      `Issue RToken(${this.basket.rToken},input:${amountsIn},issueAmount:${units},destination: ${destination})`
     )
   }
 

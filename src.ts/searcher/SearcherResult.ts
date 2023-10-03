@@ -1,5 +1,5 @@
-import { BigNumber } from "@ethersproject/bignumber"
-import { Zero } from "@ethersproject/constants"
+import { BigNumber } from '@ethersproject/bignumber'
+import { Zero } from '@ethersproject/constants'
 import { type PermitTransferFrom } from '@uniswap/permit2-sdk'
 import {
   DestinationOptions,
@@ -12,22 +12,24 @@ import { type ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
-import { type SingleSwap, type SwapPath, type SwapPaths } from '../searcher/Swap'
-import {
-  TransactionBuilder,
-  zapperExecutorInterface,
-  zapperInterface,
-} from './TransactionBuilder'
+import { type SingleSwap, SwapPath, SwapPaths } from '../searcher/Swap'
+import { TransactionBuilder, zapperInterface } from './TransactionBuilder'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction } from './ZapTransaction'
 
+import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
+
+// import ZapperExecutorAbi from '../contracts/ZapperExecutor.json'
+// import ZapperAbi from '../contracts/Zapper.json'
+import { MintRTokenAction } from '../action/RTokens'
+const MINT_DIGITS = 10n ** 9n
 class Step {
   constructor(
     readonly inputs: TokenQuantity[],
     readonly action: Action,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) { }
+  ) {}
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -58,7 +60,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-        InteractionConvention.PayBeforeCall
+          InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -79,7 +81,7 @@ export class SearcherResult {
   constructor(
     readonly universe: UniverseWithERC20GasTokenDefined,
     readonly userInput: TokenQuantity,
-    public readonly swaps: SwapPaths,
+    public swaps: SwapPaths,
     public readonly signer: Address,
     public readonly outputToken: Token
   ) {
@@ -112,19 +114,7 @@ export class SearcherResult {
         step.action.interactionConvention ===
         InteractionConvention.CallbackBased
       ) {
-        const rest = await this.encodeActions(steps.slice(i + 1))
-        const encoding = parseHexStringIntoBuffer(
-          zapperExecutorInterface.encodeFunctionData('execute', [
-            rest.map((i) => ({
-              to: i.to.address,
-              value: i.value,
-              data: i.payload,
-            })),
-          ])
-        )
-        blockBuilder.addCall(
-          await step.action.encode(step.inputs, step.destination, encoding)
-        )
+        throw new Error('Not implemented')
       } else {
         blockBuilder.addCall(
           await step.action.encode(step.inputs, step.destination)
@@ -132,6 +122,53 @@ export class SearcherResult {
       }
     }
     return blockBuilder.contractCalls
+  }
+
+  async simulate({
+    data,
+    value,
+    inputToken,
+  }: {
+    data: string
+    value: bigint
+    inputToken: Token
+  }) {
+    const overrides = {
+      // [this.universe.config.addresses.zapperAddress.address]: {
+      //   code: ZapperAbi.deployedBytecode,
+      // },
+      // [this.universe.config.addresses.executorAddress.address]: {
+      //   code: ZapperExecutorAbi.deployedBytecode,
+      // },
+    }
+    const body = JSON.stringify({
+      from: this.signer.address,
+      to: this.universe.config.addresses.zapperAddress.address,
+      data,
+      gasLimit: 3000000,
+      value: '0x' + value.toString(16),
+      token: inputToken.address.address,
+      overrides,
+    })
+
+    // console.log(body)
+
+    return await (
+      await fetch('https://worker-rapid-glitter-6517.mig2151.workers.dev/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body,
+      })
+    )
+      .json()
+      .then(
+        (a: { data: string }) =>{
+          return zapperInterface.decodeFunctionResult('zapERC20', a.data)
+            .out as ZapperOutputStructOutput
+        }
+      )
   }
 
   async toTransaction(
@@ -193,47 +230,8 @@ export class SearcherResult {
       builder.setupApprovals(approvalNeeded)
     }
 
-    // const rTokenResult = endBalances.get(this.rToken)
-    endBalances.tokenBalances.delete(this.outputToken)
-
-    const dustAmounts = endBalances.toTokenQuantities()
-
     for (const encodedSubCall of await this.encodeActions(steps)) {
       builder.addCall(encodedSubCall)
-    }
-
-    // Return dust to user if the dust is greater than the tx fee
-    let totalDustValue = this.universe.usd.zero
-    for (const [, dustPrice] of await Promise.all(
-      dustAmounts.map(async (qty) => [
-        qty,
-        (await this.universe.fairPrice(qty)) ?? this.universe.usd.zero,
-      ])
-    )) {
-      totalDustValue = totalDustValue.add(dustPrice)
-    }
-
-    if (totalDustValue.gt(this.universe.usd.one)) {
-      const approxGasCost = BigInt(this.swaps.outputs.length - 1) * 60000n
-      const gasPrice = this.universe.gasPrice
-      const txFeeToWithdraw = this.universe.nativeToken.from(
-        gasPrice * approxGasCost
-      )
-
-      const txFeeValue = await this.universe.fairPrice(txFeeToWithdraw)
-
-      // We return the dust in three cases:
-      // 1. The dust is greater than the tx fee
-      // 2. The dust is, in total greater than 10 USD
-      // 3. We failed to estimate the tx fee for whatever reason
-      options.returnDust =
-        txFeeValue == null ||
-        totalDustValue.gt(txFeeValue) ||
-        totalDustValue.gt(this.universe.usd.one.scalarMul(10n))
-    }
-
-    if (options.returnDust) {
-      builder.drainERC20([...potentialResidualTokens], this.signer)
     }
 
     let inputToken = this.swaps.inputs[0].token
@@ -251,27 +249,161 @@ export class SearcherResult {
     if (amountOut == null) {
       throw new Error('Unexpected: output does not contain RToken')
     }
-    const payload = {
+    const dustTokens = [...potentialResidualTokens]
+
+    const outputIsRToken = Object.values(this.universe.rTokens).includes(
+      this.outputToken
+    )
+
+    if (outputIsRToken) {
+      builder.contractCalls.pop()
+      builder.issueMaxRTokens(this.outputToken, this.signer)
+    }
+
+    let payload = {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
       amountOut: amountOut.amount,
       tokenOut: amountOut.token.address.address,
+      tokensUsedByZap: dustTokens.map((i) => i.address.address),
     }
+    const value = inputIsNativeToken ? BigNumber.from(payload.amountIn) : Zero
 
-    const value = inputIsNativeToken
-      ? BigNumber.from(this.swaps.inputs[0].amount)
-      : Zero
-
-    const data = inputIsNativeToken
+    let data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
         ])
+    const zapperResult = await this.simulate({
+      data,
+      value: value.toBigInt(),
+      inputToken,
+    })
+
+    const dustQuantities = zapperResult.dust
+      .map((qty, index) => dustTokens[index].from(qty))
+      .filter((i) => i.token !== this.outputToken && i.amount !== 0n)
+
+    const dustValues = await Promise.all(
+      dustQuantities.map(
+        async (i) => [await this.universe.fairPrice(i), i] as const
+      )
+    )
+    const amount = zapperResult.amountOut.toBigInt()
+    const outputTokenOutput = this.outputToken.from((amount / MINT_DIGITS) * MINT_DIGITS)
+
+    console.log(
+      `Zapper output: ${outputTokenOutput}, dust: ${dustQuantities.join(', ')}`
+    )
+
+    let valueOfDust = this.universe.usd.zero
+    for (const [usdValue, dustQuantity] of dustValues) {
+      if (usdValue == null) {
+        console.info(`Failed to find a price for ${dustQuantity}`)
+        continue
+      }
+      valueOfDust = valueOfDust.add(usdValue)
+    }
+
+    console.log(`Dust worth: ~${valueOfDust}`)
+
+    const simulatedOutputs = [...dustQuantities, outputTokenOutput]
+    const totalValue = (await this.universe.fairPrice(
+      outputTokenOutput
+    ))?.add(valueOfDust) ?? valueOfDust
+    this.swaps = new SwapPaths(
+      this.universe,
+      this.swaps.inputs,
+      this.swaps.swapPaths,
+      simulatedOutputs,
+      totalValue,
+      this.swaps.destination
+    )
+    
+
+    if (outputIsRToken) {
+      builder.contractCalls.pop()
+      const previous = this.swaps.swapPaths.pop()!
+      const mintRtoken = this.universe.wrappedTokens.get(this.outputToken)!
+        .mint as MintRTokenAction
+      this.swaps.swapPaths.push(new SwapPath(
+        previous.inputs,
+        previous.steps,
+        simulatedOutputs,
+        totalValue,
+        previous.destination
+      ))
+      builder.addCall(
+        await mintRtoken.encodeIssueTo(
+          previous.inputs,
+          // TODO: Find a better way to avoid off by one errors
+          outputTokenOutput.token.from(outputTokenOutput.amount),
+          this.signer
+        )
+      )
+    }
+    if (options.returnDust) {
+      builder.drainERC20(
+        dustQuantities.map((i) => i.token),
+        this.signer
+      )
+    }
+    console.log('Final Zap:')
+    console.log('  ' + builder.contractCalls.map((i) => i.comment).join('\n  '))
+    payload = {
+      tokenIn: inputToken.address.address,
+      amountIn: this.swaps.inputs[0].amount,
+      commands: builder.contractCalls.map((i) => i.encode()),
+      amountOut: outputTokenOutput.amount - 10_000_000n,
+      tokenOut: amountOut.token.address.address,
+      tokensUsedByZap: dustTokens.map((i) => i.address.address),
+    }
+    data = inputIsNativeToken
+      ? zapperInterface.encodeFunctionData('zapETH', [payload])
+      : options.permit2 == null
+      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+          payload,
+          options.permit2.permit,
+          parseHexStringIntoBuffer(options.permit2.signature),
+        ])
+
+    const zapperResult2 = await this.simulate({
+      data,
+      value: value.toBigInt(),
+      inputToken,
+    })
+
+    let gasNeeded = zapperResult2.gasUsed.toBigInt() + 50000n
+
+    if (
+      inputIsNativeToken ||
+      !(await this.universe.approvalsStore.needsApproval(
+        inputToken,
+        executorAddress,
+        this.universe.config.addresses.zapperAddress,
+        this.swaps.inputs[0].amount
+      ))
+    ) {
+      gasNeeded = (await this.universe.provider.estimateGas({
+        to: this.universe.config.addresses.zapperAddress.address,
+        data,
+        value: value.toBigInt(),
+        from: this.signer.address,
+      })).toBigInt()
+    }
+
+    const txFee = this.universe.nativeToken.from(
+      gasNeeded * this.universe.gasPrice
+    )
+    const txUsdFee = await this.universe.fairPrice(txFee)
+
+    console.log(`Gas used ${gasNeeded}, Tx fee: ${txFee} (${txUsdFee})`)
 
     const tx = {
       to: this.universe.config.addresses.zapperAddress.address,
@@ -291,9 +423,9 @@ export class SearcherResult {
     const out = new ZapTransaction(
       payload,
       tx,
-      builder.gasEstimate(),
+      zapperResult2.gasUsed.toBigInt(),
       this.swaps.inputs[0],
-      this.swaps.outputs,
+      this.swaps.outputs
     )
 
     return out

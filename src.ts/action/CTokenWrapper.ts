@@ -4,10 +4,10 @@ import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
+import { CTokenWrapper__factory } from '../contracts/factories/contracts/ICToken.sol/CTokenWrapper__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-import { CTokenWrapper__factory } from '../contracts/factories/ICToken.sol/CTokenWrapper__factory'
 const iCTokenWrapper = CTokenWrapper__factory.createInterface()
 
 export class MintCTokenWrapperAction extends Action {

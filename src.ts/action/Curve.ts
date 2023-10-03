@@ -55,7 +55,7 @@ const whiteList = new Set(
     "0xf9440930043eb3997fc70e1339dbb11f341de7a8", // reth
     // "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c", // alusd
     "0x5a6a4d54456819380173272a5e8e9b9904bdf41b", // mim
-    "0xd51a44d3fae010294c616388b506acda1bfaae46", // tricrypto2
+    // "0xd51a44d3fae010294c616388b506acda1bfaae46", // tricrypto2
     // "0xfd5db7463a3ab53fd211b4af195c5bccc1a03890", // eurt
     // "0x9838eccc42659fa8aa7daf2ad134b53984c9427b", // eurtusd
     // "0x98a7f18d4e56cfe84e3d081b40001b3d5bd3eb8b", // eursusd
@@ -65,8 +65,8 @@ const whiteList = new Set(
     // "0xadcfcf9894335dc340f6cd182afa45999f45fc44", // xautusd
     // "0x98638facf9a3865cd033f36548713183f6996122", // spelleth
     // "0x752ebeb79963cf0732e9c0fec72a49fd1defaeac", // teth
-    "0x1005f7406f32a61bd760cfa14accd2737913d546", // 2pool
-    "0x4e0915c88bc70750d68c481540f081fefaf22273", // 4pool
+    // "0x1005f7406f32a61bd760cfa14accd2737913d546", // 2pool
+    // "0x4e0915c88bc70750d68c481540f081fefaf22273", // 4pool
     "0xdcef968d416a41cdac0ed8702fac8128a64241a2", // fraxusdc
     // "0xe84f5b1582ba325fdf9ce6b0c1f087ccfc924e54", // euroc
     "0xa1f8a6807c402e4a15ef4eba36528a3fed24e577", // frxeth
@@ -504,7 +504,7 @@ export const loadCurve = async (
     }
   }
 
-  const pools = await loadCurvePools(universe)
+  const pools = (await loadCurvePools(universe)).filter(i => whiteList.has(i.address.address.toLowerCase()))
   await addCurvePoolEdges(universe, pools)
 
   return {

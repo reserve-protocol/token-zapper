@@ -18,6 +18,7 @@ export const makeConfig = <
   commonTokens: CommonTokens,
   rTokenDeployments: RTokens,
   addresses: {
+    facadeAddress: string
     executorAddress: string
     zapperAddress: string
   }

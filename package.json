@@ -137,7 +137,8 @@
   "scripts": {
     "clean": "rm -rf dist/ lib.esm/ lib.commonjs/ types/",
     "build:types": "tsc --project tsconfig.types.json",
-    "build": "npm run clean && npm run build:typechain && npm run build:esm && npm run build:commonjs && npm run build:types",
+    "build": "npm run clean && npm run build:contracts && npm run build:typechain && npm run build:esm && npm run build:commonjs && npm run build:types",
+    "build:contracts": "npm run compile:contracts && npm run copy:artifacts",
     "build:typechain": "rm -rf contracts/artifacts/ && rm -rf contracts/cache/ && rm -rf src/contracts && cd contracts/ && npx hardhat compile",
     "build:esm": "tsc --project tsconfig.esm.json && cp -r src.ts/configuration/data/ lib.esm/configuration/data",
     "build:commonjs": "tsc --project tsconfig.commonjs.json && cp -r src.ts/configuration/data/ lib.commonjs/configuration/data",
@@ -145,10 +146,12 @@
     "format": "npm run prettier:fix",
     "prettier": "prettier '**/*.{ts,json,md}'",
     "prettier:check": "npm run prettier -- --check",
-    "prettier:fix": "npm run prettier -- --write"
+    "prettier:fix": "npm run prettier -- --write",
+    "compile:contracts": "cd contracts/ && npx hardhat compile",
+    "copy:artifacts": "cp contracts/artifacts/contracts/Zapper.sol/Zapper.json src.ts/contracts/Zapper.json && cp contracts/artifacts/contracts/Zapper.sol/ZapperExecutor.json src.ts/contracts/ZapperExecutor.json"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.2.2",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@openzeppelin/contracts": "^4.8.2",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@typechain/ethers-v5": "^10.2.0",
@@ -166,6 +169,7 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-promise": "^6.1.1",
     "hardhat": "^2.13.0",
+    "hardhat-deploy": "^0.11.37",
     "jest": "^29.5.0",
     "jest-config": "^29.5.0",
     "lodash.camelcase": "4.3.0",
@@ -184,6 +188,7 @@
     "bignumber.js": "^9.1.1",
     "ethers": "^5.7.2",
     "ganache": "^7.9.0",
+    "hardhat-deploy-ethers": "^0.3.0-beta.13",
     "memoizee": "^0.4.15"
   }
 }

@@ -1,8 +1,8 @@
 import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens';
 import { BurnCTokenWrapperAction, MintCTokenWrapperAction } from '../action/CTokenWrapper';
 import { type Address } from '../base/Address';
-import { IComptroller__factory } from '../contracts/factories/ICToken.sol/IComptroller__factory';
-import { ICToken__factory } from '../contracts/factories/ICToken.sol/ICToken__factory';
+import { IComptroller__factory } from '../contracts/factories/contracts/ICToken.sol/IComptroller__factory';
+import { ICToken__factory } from '../contracts/factories/contracts/ICToken.sol/ICToken__factory';
 import { type Token } from '../entities/Token';
 
 import { type Universe } from '../Universe';

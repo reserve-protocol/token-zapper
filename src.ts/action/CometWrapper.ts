@@ -4,10 +4,10 @@ import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
+import { WrappedComet__factory } from '../contracts/factories/contracts/Compv3.sol/WrappedComet__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-import { WrappedComet__factory } from '../contracts/factories/Compv3.sol/WrappedComet__factory'
 const iWrappedCometInterface = WrappedComet__factory.createInterface()
 
 export class MintCometWrapperAction extends Action {

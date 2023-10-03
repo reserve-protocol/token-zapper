@@ -3,7 +3,7 @@ import { parseHexStringIntoBuffer } from '../base/utils';
 import { id } from "@ethersproject/hash";
 import { defaultAbiCoder } from "@ethersproject/abi";
 import { type Provider } from '@ethersproject/providers'
-import { IERC20__factory } from '../contracts/factories/IERC20__factory';
+import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory';
 
 export const makeTokenLoader = (provider: Provider) => async (
   address: Address

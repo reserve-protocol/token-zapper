@@ -1,8 +1,8 @@
 import { MintCometAction, BurnCometAction } from '../action/Comet';
 import { MintCometWrapperAction, BurnCometWrapperAction } from '../action/CometWrapper';
+import { WrappedComet__factory } from '../contracts/factories/contracts/Compv3.sol/WrappedComet__factory';
 import { type Token } from '../entities/Token'
 import { type Universe } from '../Universe';
-import { WrappedComet__factory } from '../contracts/factories/Compv3.sol/WrappedComet__factory'
 
 interface Market {
   baseToken: Token

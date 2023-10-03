@@ -3,13 +3,14 @@ import { type Address } from '../base/Address'
 import { type Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { IZapperExecutor__factory } from '../contracts/factories/IZapper.sol/IZapperExecutor__factory'
-import { IZapper__factory } from '../contracts/factories/IZapper.sol/IZapper__factory'
+import { ZapperExecutor__factory } from '../contracts/factories/contracts/Zapper.sol/ZapperExecutor__factory'
+import { Zapper__factory } from '../contracts/factories/contracts/Zapper.sol/Zapper__factory'
 import { type Token } from '../entities/Token'
 
+
 export const zapperExecutorInterface =
-  IZapperExecutor__factory.createInterface()
-export const zapperInterface = IZapper__factory.createInterface()
+  ZapperExecutor__factory.createInterface()
+export const zapperInterface = Zapper__factory.createInterface()
 export class TransactionBuilder {
   constructor(readonly universe: Universe) {}
   public contractCalls: ContractCall[] = []
@@ -31,6 +32,24 @@ export class TransactionBuilder {
     )
   }
 
+  issueMaxRTokens(rToken: Token, destination: Address) {
+    this.addCall(
+      new ContractCall(
+        parseHexStringIntoBuffer(
+          zapperExecutorInterface.encodeFunctionData('mintMaxRToken', [
+            this.universe.config.addresses.facadeAddress.address,
+            rToken.address.address,
+            destination.address,
+          ])
+        ),
+        this.universe.config.addresses.executorAddress,
+        0n,
+        600000n,
+        'Issue max rTokens'
+      )
+    )
+  }
+
   drainERC20(tokens: Token[], destination: Address) {
     
     this.addCall(
@@ -44,7 +63,7 @@ export class TransactionBuilder {
         this.universe.config.addresses.executorAddress,
         0n,
         BigInt(tokens.length) * 50000n,
-        'Cleanup'
+        `Drain ERC20s ${tokens.map((i) => i.toString()).join(', ')} to ${destination}` 
       )
     )
   }

@@ -1,5 +1,5 @@
 import { Address } from '../base/Address'
-import { IBasketHandler__factory } from '../contracts/factories/IBasketHandler__factory'
+import { IBasketHandler__factory } from '../contracts/factories/contracts/IBasketHandler__factory'
 
 
 import { type Token, type TokenQuantity } from '../entities/Token'

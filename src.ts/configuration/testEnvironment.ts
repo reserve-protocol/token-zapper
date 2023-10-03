@@ -55,6 +55,7 @@ export const testConfig = makeConfig(
     },
   },
   {
+    facadeAddress: "0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C",
     zapperAddress: '0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b',
     executorAddress: '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11',
   },

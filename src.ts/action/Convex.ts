@@ -5,8 +5,8 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { IBooster__factory } from '../contracts/factories/IBooster__factory'
-import { IConvexWrapper__factory } from '../contracts/factories/IConvexWrapper__factory'
+import { IConvexWrapper__factory } from '../contracts/factories/contracts/IConvexWrapper__factory'
+import { IBooster__factory } from '../contracts/factories/contracts/IBooster__factory'
 
 class ConvexPool {
   constructor(

@@ -128,7 +128,7 @@ export class SearcherResult {
     data,
     value,
     inputToken,
-    gasLimit = 10000000
+    gasLimit = 10000000,
   }: {
     data: string
     value: bigint
@@ -143,15 +143,21 @@ export class SearcherResult {
       //   code: ZapperExecutorAbi.deployedBytecode,
       // },
     }
-    const body = JSON.stringify({
-      from: this.signer.address,
-      to: this.universe.config.addresses.zapperAddress.address,
-      data,
-      gasLimit,
-      value: '0x' + value.toString(16),
-      token: inputToken.address.address,
-      overrides,
-    })
+    const body = JSON.stringify(
+      {
+        from: this.signer.address,
+        to: this.universe.config.addresses.zapperAddress.address,
+        data,
+        gasLimit,
+        value: '0x' + value.toString(16),
+        token: inputToken.address.address,
+        overrides,
+      },
+      null,
+      1
+    )
+
+    // console.log(body)
 
     return await (
       await fetch('https://worker-rapid-glitter-6517.mig2151.workers.dev/', {
@@ -163,12 +169,10 @@ export class SearcherResult {
       })
     )
       .json()
-      .then(
-        (a: { data: string }) => {
-          return zapperInterface.decodeFunctionResult('zapERC20', a.data)
-            .out as ZapperOutputStructOutput
-        }
-      )
+      .then((a: { data: string }) => {
+        return zapperInterface.decodeFunctionResult('zapERC20', a.data)
+          .out as ZapperOutputStructOutput
+      })
   }
 
   async toTransaction(
@@ -297,7 +301,9 @@ export class SearcherResult {
       )
     )
     const amount = zapperResult.amountOut.toBigInt()
-    const outputTokenOutput = this.outputToken.from((amount / MINT_DIGITS) * MINT_DIGITS)
+    const outputTokenOutput = this.outputToken.from(
+      (amount / MINT_DIGITS) * MINT_DIGITS
+    )
 
     console.log(
       `Zapper output: ${outputTokenOutput}, dust: ${dustQuantities.join(', ')}`
@@ -315,9 +321,9 @@ export class SearcherResult {
     console.log(`Dust worth: ~${valueOfDust}`)
 
     const simulatedOutputs = [...dustQuantities, outputTokenOutput]
-    const totalValue = (await this.universe.fairPrice(
-      outputTokenOutput
-    ))?.add(valueOfDust) ?? valueOfDust
+    const totalValue =
+      (await this.universe.fairPrice(outputTokenOutput))?.add(valueOfDust) ??
+      valueOfDust
     this.swaps = new SwapPaths(
       this.universe,
       this.swaps.inputs,
@@ -332,13 +338,15 @@ export class SearcherResult {
       const previous = this.swaps.swapPaths.pop()!
       const mintRtoken = this.universe.wrappedTokens.get(this.outputToken)!
         .mint as MintRTokenAction
-      this.swaps.swapPaths.push(new SwapPath(
-        previous.inputs,
-        previous.steps,
-        simulatedOutputs,
-        totalValue,
-        previous.destination
-      ))
+      this.swaps.swapPaths.push(
+        new SwapPath(
+          previous.inputs,
+          previous.steps,
+          simulatedOutputs,
+          totalValue,
+          previous.destination
+        )
+      )
       builder.addCall(
         await mintRtoken.encodeIssueTo(
           previous.inputs,
@@ -360,7 +368,7 @@ export class SearcherResult {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
-      amountOut: outputTokenOutput.amount - 10_000_000n,
+      amountOut: outputTokenOutput.amount - 1_000_000n,
       tokenOut: amountOut.token.address.address,
       tokensUsedByZap: dustTokens.map((i) => i.address.address),
     }
@@ -383,7 +391,11 @@ export class SearcherResult {
 
     let gasNeeded = zapperResult2.gasUsed.toBigInt() + 50000n
 
-    const tokenBalance = await this.universe.approvalsStore.queryBalance(this.userInput.token, this.signer, this.universe)
+    const tokenBalance = await this.universe.approvalsStore.queryBalance(
+      this.userInput.token,
+      this.signer,
+      this.universe
+    )
     const sufficientBalance = tokenBalance.gte(this.swaps.inputs[0])
 
     if (
@@ -396,12 +408,14 @@ export class SearcherResult {
           this.swaps.inputs[0].amount
         )))
     ) {
-      gasNeeded = (await this.universe.provider.estimateGas({
-        to: this.universe.config.addresses.zapperAddress.address,
-        data,
-        value: value.toBigInt(),
-        from: this.signer.address,
-      })).toBigInt()
+      gasNeeded = (
+        await this.universe.provider.estimateGas({
+          to: this.universe.config.addresses.zapperAddress.address,
+          data,
+          value: value.toBigInt(),
+          from: this.signer.address,
+        })
+      ).toBigInt()
     }
 
     const txFee = this.universe.nativeToken.from(

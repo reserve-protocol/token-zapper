@@ -265,7 +265,7 @@ export class SearcherResult {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
-      amountOut: amountOut.amount,
+      amountOut: 1n,
       tokenOut: amountOut.token.address.address,
       tokensUsedByZap: dustTokens.map((i) => i.address.address),
     }
@@ -343,7 +343,7 @@ export class SearcherResult {
         await mintRtoken.encodeIssueTo(
           previous.inputs,
           // TODO: Find a better way to avoid off by one errors
-          outputTokenOutput.token.from(outputTokenOutput.amount),
+          outputTokenOutput.token.from(outputTokenOutput.amount - 1_000n),
           this.signer
         )
       )

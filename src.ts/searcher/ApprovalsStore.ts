@@ -2,6 +2,7 @@ import { type Provider } from '@ethersproject/providers'
 import { type Address } from '../base/Address'
 import { type Token } from '../entities/Token'
 import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory';
+import { type Universe } from '../Universe';
 
 export class ApprovalsStore {
   constructor(private readonly provider: Provider) { }
@@ -16,6 +17,20 @@ export class ApprovalsStore {
       token.address.address,
       this.provider
     ).allowance(owner.address, spender.address)
+  }
+
+  public async queryBalance(
+    token: Token,
+    owner: Address,
+    universe: Universe
+  ) {
+    if (token === universe.nativeToken) {
+      return token.from(await this.provider.getBalance(owner.address))
+    }
+    return token.from(await IERC20__factory.connect(
+      token.address.address,
+      this.provider
+    ).balanceOf(owner.address))
   }
   public async needsApproval(
     token: Token,

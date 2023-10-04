@@ -29,7 +29,7 @@ class Step {
     readonly action: Action,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) {}
+  ) { }
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -60,7 +60,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-          InteractionConvention.PayBeforeCall
+        InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -128,10 +128,12 @@ export class SearcherResult {
     data,
     value,
     inputToken,
+    gasLimit = 10000000
   }: {
     data: string
     value: bigint
     inputToken: Token
+    gasLimit?: number
   }) {
     const overrides = {
       // [this.universe.config.addresses.zapperAddress.address]: {
@@ -145,7 +147,7 @@ export class SearcherResult {
       from: this.signer.address,
       to: this.universe.config.addresses.zapperAddress.address,
       data,
-      gasLimit: 3000000,
+      gasLimit,
       value: '0x' + value.toString(16),
       token: inputToken.address.address,
       overrides,
@@ -162,7 +164,7 @@ export class SearcherResult {
     )
       .json()
       .then(
-        (a: { data: string }) =>{
+        (a: { data: string }) => {
           return zapperInterface.decodeFunctionResult('zapERC20', a.data)
             .out as ZapperOutputStructOutput
         }
@@ -172,6 +174,7 @@ export class SearcherResult {
   async toTransaction(
     options: Partial<{
       returnDust: boolean
+      gasLimit?: number
       permit2: {
         permit: PermitTransferFrom
         signature: string
@@ -271,14 +274,15 @@ export class SearcherResult {
     let data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
         ])
     const zapperResult = await this.simulate({
       data,
+      gasLimit: options.gasLimit,
       value: value.toBigInt(),
       inputToken,
     })
@@ -322,7 +326,6 @@ export class SearcherResult {
       totalValue,
       this.swaps.destination
     )
-    
 
     if (outputIsRToken) {
       builder.contractCalls.pop()
@@ -364,8 +367,8 @@ export class SearcherResult {
     data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -373,20 +376,25 @@ export class SearcherResult {
 
     const zapperResult2 = await this.simulate({
       data,
+      gasLimit: options.gasLimit,
       value: value.toBigInt(),
       inputToken,
     })
 
     let gasNeeded = zapperResult2.gasUsed.toBigInt() + 50000n
 
+    const tokenBalance = await this.universe.approvalsStore.queryBalance(this.userInput.token, this.signer, this.universe)
+    const sufficientBalance = tokenBalance.gte(this.swaps.inputs[0])
+
     if (
-      inputIsNativeToken ||
-      !(await this.universe.approvalsStore.needsApproval(
-        inputToken,
-        executorAddress,
-        this.universe.config.addresses.zapperAddress,
-        this.swaps.inputs[0].amount
-      ))
+      sufficientBalance &&
+      (inputIsNativeToken ||
+        !(await this.universe.approvalsStore.needsApproval(
+          inputToken,
+          executorAddress,
+          this.universe.config.addresses.zapperAddress,
+          this.swaps.inputs[0].amount
+        )))
     ) {
       gasNeeded = (await this.universe.provider.estimateGas({
         to: this.universe.config.addresses.zapperAddress.address,

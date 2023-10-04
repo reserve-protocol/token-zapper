@@ -25,6 +25,10 @@ interface OracleDef {
   quoteIn: (qty: TokenQuantity, tokenToQuoteWith: Token) => Promise<TokenQuantity>,
 }
 export class Universe<const UniverseConf extends Config = Config> {
+  public _finishResolving: () => void = () => {}
+  public initialized: Promise<void> = new Promise(resolve => {
+    this._finishResolving = resolve
+  });
   get chainId(): UniverseConf["chainId"] { return this.config.chainId }
 
   public readonly refreshableEntities = new Map<Address, Refreshable>()
@@ -227,7 +231,10 @@ export class Universe<const UniverseConf extends Config = Config> {
       opts.tokenLoader ?? makeTokenLoader(provider),
     )
 
-    await initialize(universe)
+    initialize(universe).then(() => {
+      universe._finishResolving()
+    })
+    
 
     return universe
   }

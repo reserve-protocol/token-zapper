@@ -292,6 +292,7 @@ export class Searcher<
     signerAddress: Address,
     slippage = 0.0
   ) {
+    await this.universe.initialized
     const outputIsNative = output === this.universe.nativeToken
     let outputToken = output
     if (outputIsNative) {
@@ -369,12 +370,13 @@ export class Searcher<
     )
   }
 
-  public findSingleInputToRTokenZap(
+  public async findSingleInputToRTokenZap(
     userInput: TokenQuantity,
     rToken: Token,
     signerAddress: Address,
     slippage = 0.0
   ): Promise<SearcherResult> {
+    await this.universe.initialized
     return this.findSingleInputToRTokenZap_(
       userInput,
       rToken,

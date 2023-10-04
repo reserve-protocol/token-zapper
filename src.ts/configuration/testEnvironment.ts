@@ -315,7 +315,7 @@ export class MockApprovalsStore extends ApprovalsStore {
 export const createForTest = async <const Conf extends BaseTestConfigType>(
   c = testConfig as Conf
 ) => {
-  return await Universe.createWithConfig(
+  const universe = await Universe.createWithConfig(
     null as any,
     c,
     initialize,
@@ -326,4 +326,8 @@ export const createForTest = async <const Conf extends BaseTestConfigType>(
       },
     }
   )
+
+  await universe.initialized
+
+  return universe
 }

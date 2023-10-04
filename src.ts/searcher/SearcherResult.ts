@@ -151,8 +151,6 @@ export class SearcherResult {
       overrides,
     })
 
-    // console.log(body)
-
     return await (
       await fetch('https://worker-rapid-glitter-6517.mig2151.workers.dev/', {
         method: 'POST',

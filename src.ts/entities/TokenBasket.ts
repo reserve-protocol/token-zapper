@@ -37,12 +37,10 @@ export class TokenBasket implements IBasket {
   }
 
   async update() {
-    const [nonce, { quantities, erc20s }] = await Promise.all([
-      this.basketHandler.callStatic.nonce(),
+    const [{ quantities, erc20s }] = await Promise.all([
       this.basketHandler.callStatic.quote(this.rToken.scale.toString(), 2),
     ])
 
-    this.basketNonce = nonce
     this.unitBasket = await Promise.all(
       quantities.map(async (q, i) => {
         const token = await this.universe.getToken(

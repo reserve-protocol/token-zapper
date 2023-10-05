@@ -4,7 +4,7 @@
     "access": "public",
     "tag": "latest"
   },
-  "version": "2.5.1",
+  "version": "2.5.2",
   "description": "A library to help convert tokens into RTokens",
   "keywords": [],
   "module": "./lib.esm/index.js",

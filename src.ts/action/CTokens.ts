@@ -46,7 +46,7 @@ export class MintCTokenAction extends Action {
       this.cToken.fromBigInt(
         (amountsIn.amount * this.rateScale) /
           this.rate.value /
-          this.underlying.scale
+          this.underlying.scale  - 100_000n
       ),
     ]
   }

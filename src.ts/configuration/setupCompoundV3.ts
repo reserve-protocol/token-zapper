@@ -38,7 +38,7 @@ export const setupSingleCompoundV3Market = async (
     };
 
     universe.defineMintable(
-      new MintCometWrapperAction(universe, market.receiptToken, vaultToken,  getRate),
+      new MintCometWrapperAction(universe, market.receiptToken, vaultToken, getRate),
       new BurnCometWrapperAction(universe, market.receiptToken, vaultToken, getRate),
     )
   }

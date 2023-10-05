@@ -41,7 +41,7 @@ export async function setupCompoundLike(
           fetchRate: async () =>
             (await cInst.callStatic.exchangeRateCurrent()).toBigInt(),
           mint: new MintCTokenAction(universe, ETH, cETH, cEthRate),
-          burn: new MintCTokenAction(universe, cETH, ETH, cEthRate),
+          burn: new BurnCTokenAction(universe, ETH, cETH, cEthRate),
         }
       }
     )
@@ -63,7 +63,7 @@ export async function setupCompoundLike(
     )
 
     for (const collateral of collaterals ?? []) {
-      await universe.defineMintable(
+      universe.defineMintable(
         new MintCTokenWrapperAction(
           universe,
           wrappedToken,

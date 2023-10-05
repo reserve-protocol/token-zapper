@@ -1,7 +1,7 @@
 import { HardhatUserConfig } from 'hardhat/config'
 import '@typechain/hardhat'
 import '@nomiclabs/hardhat-ethers'
-
+import '@nomicfoundation/hardhat-verify'
 import 'hardhat-deploy'
 import 'hardhat-deploy-ethers'
 import * as dotenv from "dotenv"
@@ -12,6 +12,9 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: '../src.ts/contracts',
     target: 'ethers-v5',
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
   networks: {
     local: {

@@ -151,6 +151,7 @@
     "copy:artifacts": "cp contracts/artifacts/contracts/Zapper.sol/Zapper.json src.ts/contracts/Zapper.json && cp contracts/artifacts/contracts/Zapper.sol/ZapperExecutor.json src.ts/contracts/ZapperExecutor.json"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-verify": "^1.1.1",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@openzeppelin/contracts": "^4.8.2",
     "@rollup/plugin-node-resolve": "13.3.0",
@@ -187,7 +188,6 @@
     "@uniswap/permit2-sdk": "^1.2.0",
     "bignumber.js": "^9.1.1",
     "ethers": "^5.7.2",
-    "ganache": "^7.9.0",
     "hardhat-deploy-ethers": "^0.3.0-beta.13",
     "memoizee": "^0.4.15"
   }

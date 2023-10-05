@@ -127,11 +127,13 @@ export class SearcherResult {
   async simulate({
     data,
     value,
+    quantity,
     inputToken,
     gasLimit = 10000000,
   }: {
     data: string
     value: bigint
+    quantity: bigint
     inputToken: Token
     gasLimit?: number
   }) {
@@ -148,6 +150,7 @@ export class SearcherResult {
         from: this.signer.address,
         to: this.universe.config.addresses.zapperAddress.address,
         data,
+        quantity: '0x' + quantity.toString(16),
         gasLimit,
         value: '0x' + value.toString(16),
         token: inputToken.address.address,
@@ -157,15 +160,15 @@ export class SearcherResult {
       1
     )
 
-    console.log(JSON.stringify({
-      from: this.signer.address,
-      to: this.universe.config.addresses.zapperAddress.address,
-      data,
-      value: '0x' + value.toString(16),
-    }, null, 2))
+    // console.log(JSON.stringify({
+    //   from: this.signer.address,
+    //   to: this.universe.config.addresses.zapperAddress.address,
+    //   data,
+    //   value: '0x' + value.toString(16),
+    // }, null, 2))
 
     return await (
-      await fetch('https://worker-rapid-glitter-6517.mig2151.workers.dev/', {
+      await fetch('https://worker-frosty-pine-5440.mig2151.workers.dev/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -294,6 +297,7 @@ export class SearcherResult {
     const zapperResult = await this.simulate({
       data,
       gasLimit: options.gasLimit,
+      quantity: this.userInput.amount,
       value: value.toBigInt(),
       inputToken,
     })
@@ -358,7 +362,7 @@ export class SearcherResult {
         await mintRtoken.encodeIssueTo(
           previous.inputs,
           // TODO: Find a better way to avoid off by one errors
-          outputTokenOutput.token.from(outputTokenOutput.amount - 1_000n),
+          outputTokenOutput.token.from(outputTokenOutput.amount - 1_000_000n),
           this.signer
         )
       )
@@ -392,6 +396,7 @@ export class SearcherResult {
     const zapperResult2 = await this.simulate({
       data,
       gasLimit: options.gasLimit,
+      quantity: this.userInput.amount,
       value: value.toBigInt(),
       inputToken,
     })

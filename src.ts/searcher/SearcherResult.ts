@@ -157,7 +157,12 @@ export class SearcherResult {
       1
     )
 
-    // console.log(body)
+    console.log(JSON.stringify({
+      from: this.signer.address,
+      to: this.universe.config.addresses.zapperAddress.address,
+      data,
+      value: '0x' + value.toString(16),
+    }, null, 2))
 
     return await (
       await fetch('https://worker-rapid-glitter-6517.mig2151.workers.dev/', {
@@ -191,7 +196,7 @@ export class SearcherResult {
     const builder = new TransactionBuilder(this.universe)
 
     const potentialResidualTokens = new Set<Token>()
-    const [steps, endBalances, allApprovals] = linearize(
+    const [steps, , allApprovals] = linearize(
       executorAddress,
       this.swaps
     )
@@ -263,6 +268,8 @@ export class SearcherResult {
     if (outputIsRToken) {
       builder.contractCalls.pop()
       builder.issueMaxRTokens(this.outputToken, this.signer)
+    } else {
+      console.log("Will not apply maxIssueance optimisation")
     }
 
     let payload = {
@@ -368,7 +375,7 @@ export class SearcherResult {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
-      amountOut: outputTokenOutput.amount - 1_000_000n,
+      amountOut: outputTokenOutput.amount - 1_000_000_000_000n,
       tokenOut: amountOut.token.address.address,
       tokensUsedByZap: dustTokens.map((i) => i.address.address),
     }

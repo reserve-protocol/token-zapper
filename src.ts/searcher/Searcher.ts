@@ -10,6 +10,7 @@ import { bfs } from '../exchange-graph/BFS'
 import { SearcherResult } from './SearcherResult'
 import { SwapPath, SwapPaths, SwapPlan } from './Swap'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
+import { retryLoop } from '../base/controlflow'
 
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
@@ -72,7 +73,7 @@ export const findPrecursorTokenSet = async (
 export class Searcher<
   const SearcherUniverse extends UniverseWithERC20GasTokenDefined
 > {
-  constructor(private readonly universe: SearcherUniverse) {}
+  constructor(private readonly universe: SearcherUniverse) { }
 
   /**
    * @note This helper will find some set of operations converting a 'inputQuantity' into
@@ -104,12 +105,11 @@ export class Searcher<
       basketUnit,
       this
     )
-    // console.log(precursorTokens.describe().join("\n"))
+
     /**
      * PHASE 2: Trade inputQuantity into precursor set
      */
     const precursorTokenBasket = precursorTokens.precursorToTradeFor
-    // console.log(precursorTokenBasket.join(", "))
 
     // Split input by how large each token in precursor set is worth.
     // Example: We're trading 0.1 ETH, and precursorTokenSet(rToken) = (0.5 usdc, 0.5 usdt)
@@ -132,20 +132,20 @@ export class Searcher<
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r))
       : precursorTokenBasket
-          .map((p) => p.into(inputQuantity.token))
-          .reduce((l, r) => l.add(r))
+        .map((p) => p.into(inputQuantity.token))
+        .reduce((l, r) => l.add(r))
 
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
-          input: inputQuantity.mul(
-            precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
-          ),
-          output: token,
-        }))
+        input: inputQuantity.mul(
+          precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
+        ),
+        output: token,
+      }))
       : precursorTokenBasket.map((qty) => ({
-          output: qty.token,
-          input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
-        }))
+        output: qty.token,
+        input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
+      }))
 
     const inputQuantityToTokenSet: SwapPath[] = []
     const tradingBalances = new TokenAmounts()
@@ -377,28 +377,26 @@ export class Searcher<
     slippage = 0.0
   ): Promise<SearcherResult> {
     await this.universe.initialized
-    return this.findSingleInputToRTokenZap_(
-      userInput,
-      rToken,
-      signerAddress,
-      slippage
+    const block = this.universe.currentBlock
+    return retryLoop(
+      () =>
+        this.findSingleInputToRTokenZap_(
+          userInput,
+          rToken,
+          signerAddress,
+          slippage
+        ),
+      {
+        maxRetries: 3,
+        retryDelay: 50,
+        onRetry: async () => {
+          if (block !== this.universe.currentBlock) {
+            throw new Error("Block changed during search")
+          }
+          return "CONTINUE"
+        }
+      }
     )
-    // return retryLoop(
-    //   () =>
-    //     this.findSingleInputToRTokenZap_(
-    //       userInput,
-    //       rToken,
-    //       signerAddress,
-    //       slippage
-    //     ),
-    //   {
-    //     maxRetries: 3,
-    //     retryDelay: 500,
-    //     async onRetry() {
-    //       return 'RETURN'
-    //     },
-    //   }
-    // )
   }
 
   private async findSingleInputToRTokenZap_(
@@ -565,14 +563,14 @@ export class Searcher<
     const quotes: SwapPath[] = []
     try {
       quotes.push(...await this.internalQuoter(input, output, destination, slippage, maxHops))
-    } catch(e){}
+    } catch (e) { }
     try {
       if (quotes.length === 0) {
         quotes.push(
           ...await this.externalQuoters(input, output, destination, slippage)
         )
       }
-    }catch(e) {}
+    } catch (e) { }
     quotes.sort((l, r) => -l.compare(r))
     return quotes
   }

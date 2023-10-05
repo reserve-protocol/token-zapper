@@ -36,17 +36,17 @@ export class MintCTokenAction extends Action {
       this.cToken.address,
       0n,
       this.gasEstimate(),
-      'Mint ' + this.cToken.symbol
+      `Deposit ${amountsIn} into ${this.cToken.symbol}`
     )
   }
-
+  
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
+    let out = (amountsIn.amount * this.rateScale) / this.rate.value / this.underlying.scale
+    out = out - 10_000_000_000n;
     return [
       this.cToken.fromBigInt(
-        (amountsIn.amount * this.rateScale) /
-          this.rate.value /
-          this.underlying.scale  - 100_000n
+        out
       ),
     ]
   }
@@ -92,10 +92,15 @@ export class BurnCTokenAction extends Action {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
+    let out = (amountsIn.amount * this.rate.value * this.underlying.scale) / this.rateScale
+    out = out - 50n;
+    // const fourDigits = 10n ** BigInt(this.underlying.decimals - 5)
+    // out = (out / fourDigits) * fourDigits;
+
+
     return [
       this.underlying.fromBigInt(
-        (amountsIn.amount * this.rate.value * this.underlying.scale) /
-          this.rateScale
+        out
       ),
     ]
   }

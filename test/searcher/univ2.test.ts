@@ -61,7 +61,7 @@ describe('searcher/v2-actions', () => {
       cUSDT!,
       Address.ZERO
     )
-    expect(result[0].outputs[0].formatWithSymbol()).toBe('784.52007909 cUSDT')
+    expect(result[0].outputs[0].formatWithSymbol()).toBe('784.42107909 cUSDT')
     expect(result[0].steps.length).toBe(2)
   })
 
@@ -77,7 +77,7 @@ describe('searcher/v2-actions', () => {
       Address.ZERO
     )
     expect(result[0].outputs[0].formatWithSymbol()).toBe(
-      '0.006333066959642829 WETH'
+      '0.006333064111792962 WETH'
     )
     expect(result[0].steps.length).toBe(2)
   })

@@ -31,14 +31,14 @@ describe('searcher/pricing', () => {
             Address.from('0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8'),
         )
 
-        expect("" + await universe.fairPrice(fUSDC.one)).toBe("0.002019 USD")
+        expect("" + await universe.fairPrice(fUSDC.one)).toBe("0.002014 USD")
         expect("" + await universe.fairPrice(fDAI.one)).toBe("0.02014569 USD")
         expect("" + await universe.fairPrice(saUSDT.one)).toBe("1.110924 USD")
-        expect("" + await universe.fairPrice(cUSDT.one)).toBe("0.022235 USD")
+        expect("" + await universe.fairPrice(cUSDT.one)).toBe("0.02223 USD")
         expect("" + await universe.fairPrice(saUSDC.one)).toBe("1.085883 USD")
-        expect("" + await universe.fairPrice(cUSDC.one)).toBe("0.022804 USD")
+        expect("" + await universe.fairPrice(cUSDC.one)).toBe("0.022799 USD")
 
-        expect("" + await universe.fairPrice(eUSD.one)).toBe("1.000031 USD")
+        expect("" + await universe.fairPrice(eUSD.one)).toBe("1.000026 USD")
         expect("" + await universe.fairPrice(ETHPlus.one)).toBe("1749.99999998 USD")
         expect("" + await universe.fairPrice(universe.commonTokens.WETH.one)).toBe("1750.0 USD")
         expect("" + await universe.fairPrice(universe.commonTokens.USDC.one)).toBe("1.001 USD")

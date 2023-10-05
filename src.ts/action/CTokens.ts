@@ -43,7 +43,7 @@ export class MintCTokenAction extends Action {
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
     let out = (amountsIn.amount * this.rateScale) / this.rate.value / this.underlying.scale
-    out = out - 10_000_000_000n;
+    out = out - 10_000_000n;
     return [
       this.cToken.fromBigInt(
         out
@@ -93,7 +93,7 @@ export class BurnCTokenAction extends Action {
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
     let out = (amountsIn.amount * this.rate.value * this.underlying.scale) / this.rateScale
-    out = out - 50n;
+    out = out - 5n;
     // const fourDigits = 10n ** BigInt(this.underlying.decimals - 5)
     // out = (out / fourDigits) * fourDigits;
 

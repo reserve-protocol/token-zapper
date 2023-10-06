@@ -43,7 +43,8 @@ export class MintCTokenAction extends Action {
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
     let out = (amountsIn.amount * this.rateScale) / this.rate.value / this.underlying.scale
-    out = out - 10_000_000n;
+    // out = out - 10_000_000n;
+    out = out - out / 2_000_000n;
     return [
       this.cToken.fromBigInt(
         out

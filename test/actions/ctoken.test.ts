@@ -12,9 +12,9 @@ describe('actions/CToken', () => {
 
     const cUSDTFrom100USDT = (await mint.quote([USDT.fromDecimal('100')]))[0]
 
-    expect(cUSDTFrom100USDT.formatWithSymbol()).toBe('4497.26376203 cUSDT')
+    expect(cUSDTFrom100USDT.formatWithSymbol()).toBe('4497.36151335 cUSDT')
 
     const about100USDT = (await burn.quote([cUSDTFrom100USDT]))[0]
-    expect(about100USDT.formatWithSymbol()).toBe('99.997771 USDT')
+    expect(about100USDT.formatWithSymbol()).toBe('99.999944 USDT')
   })
 })

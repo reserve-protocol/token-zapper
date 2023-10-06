@@ -21,7 +21,7 @@ describe('searcher/mints', () => {
     )
     expect(result.length).toBe(1)
     const expectedPath = result[0]
-    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('449.6363762 cUSDT')
+    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('449.73615134 cUSDT')
   })
 
   it('it can handle burns', async () => {

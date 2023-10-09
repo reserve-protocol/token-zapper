@@ -17,4 +17,6 @@ export { Universe } from './Universe'
 
 export { ethereumConfig } from './configuration/ethereum'
 export { setupEthereumZapper } from './configuration/setupEthereumZapper'
+export { baseConfig } from './configuration/base'
+export { setupBaseZapper } from './configuration/setupBaseZapper'
 export { DexAggregator, createOneInchDexAggregator } from './aggregators/oneInch/oneInchRegistry'

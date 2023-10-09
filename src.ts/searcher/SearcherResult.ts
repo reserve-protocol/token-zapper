@@ -16,13 +16,20 @@ import { type SingleSwap, SwapPath, SwapPaths } from '../searcher/Swap'
 import { TransactionBuilder, zapperInterface } from './TransactionBuilder'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction } from './ZapTransaction'
-
 import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
-
-// import ZapperExecutorAbi from '../contracts/ZapperExecutor.json'
-// import ZapperAbi from '../contracts/Zapper.json'
 import { MintRTokenAction } from '../action/RTokens'
+import { TransactionRequest } from '@ethersproject/providers'
+
+interface SimulateParams {
+  data: string
+  value: bigint
+  quantity: bigint
+  inputToken: Token
+  gasLimit?: number
+}
+
 const MINT_DIGITS = 10n ** 9n
+
 class Step {
   constructor(
     readonly inputs: TokenQuantity[],
@@ -124,27 +131,39 @@ export class SearcherResult {
     return blockBuilder.contractCalls
   }
 
+  async simulateNoNode({
+    data,
+    value,
+  }: SimulateParams) {
+
+    const resp = await this.universe.provider.call({
+      data,
+      from: this.signer.address,
+      to: this.universe.config.addresses.zapperAddress.address,
+      value
+    })
+
+    return zapperInterface.decodeFunctionResult('zapERC20', resp)
+      .out as ZapperOutputStructOutput
+  }
+
   async simulate({
     data,
     value,
     quantity,
     inputToken,
     gasLimit = 10000000,
-  }: {
-    data: string
-    value: bigint
-    quantity: bigint
-    inputToken: Token
-    gasLimit?: number
-  }) {
-    const overrides = {
-      // [this.universe.config.addresses.zapperAddress.address]: {
-      //   code: ZapperAbi.deployedBytecode,
-      // },
-      // [this.universe.config.addresses.executorAddress.address]: {
-      //   code: ZapperExecutorAbi.deployedBytecode,
-      // },
+  }: SimulateParams) {
+    if (this.universe.chainId !== 1) {
+      return this.simulateNoNode({
+        data,
+        value,
+        quantity,
+        inputToken,
+        gasLimit,
+      })
     }
+    const overrides = {}
     const body = JSON.stringify(
       {
         from: this.signer.address,
@@ -159,14 +178,6 @@ export class SearcherResult {
       null,
       1
     )
-
-    // console.log(JSON.stringify({
-    //   from: this.signer.address,
-    //   to: this.universe.config.addresses.zapperAddress.address,
-    //   data,
-    //   value: '0x' + value.toString(16),
-    // }, null, 2))
-
     return await (
       await fetch('https://worker-frosty-pine-5440.mig2151.workers.dev/', {
         method: 'POST',
@@ -437,19 +448,33 @@ export class SearcherResult {
 
     console.log(`Gas used ${gasNeeded}, Tx fee: ${txFee} (${txUsdFee})`)
 
-    const tx = {
+    let tx = {
       to: this.universe.config.addresses.zapperAddress.address,
       data,
+      gasLimit: gasNeeded + gasNeeded / 10n,
       chainId: this.universe.chainId,
-
       // TODO: For opti & arbi this needs updating to use type: 0 transactions
-      type: 2,
-      maxFeePerGas: BigNumber.from(
-        this.universe.gasPrice + this.universe.gasPrice / 12n
-      ),
-
       value,
       from: this.signer.address,
+    } as TransactionRequest
+
+    if (this.universe.chainId === 1) {
+      tx = {
+        ...tx,
+        type: 2,
+        maxFeePerGas: BigNumber.from(
+          this.universe.gasPrice + this.universe.gasPrice / 12n
+        ),
+      }
+    } else {
+      tx = {
+        ...tx,
+        type: 0,
+        gasPrice: BigNumber.from(
+          this.universe.gasPrice
+        ),
+      }
+
     }
 
     const out = new ZapTransaction(

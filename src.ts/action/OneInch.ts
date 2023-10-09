@@ -22,7 +22,7 @@ export class OneInchAction extends Action {
       Address.fromHexString(swap.tx.to),
       BigInt(swap.tx.value),
       this.gasEstimate(),
-      `1Inch Swap (${this.input.join(",")}) -> (${this.output[0].from(BigInt(this.actionQuote.toAmount))}})`
+      `1Inch Swap (${this.input.join(",")}) -> (${this.output[0].from(BigInt(this.actionQuote.toAmount))})`
     )
   }
 

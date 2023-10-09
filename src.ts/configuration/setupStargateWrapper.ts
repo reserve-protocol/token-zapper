@@ -1,9 +1,9 @@
-import { Universe } from '../Universe';
-import { ERC4626DepositAction, ERC4626WithdrawAction } from '../action/ERC4626';
-import { Address } from '../base/Address';
-import { IERC4626__factory } from '../contracts';
+import { Address } from "../base/Address"
+import { type Universe } from "../Universe"
+import { IStargateRewardableWrapper__factory } from "../contracts"
+import { StargateWrapperWithdrawAction, StargateWrapperDepositAction } from "../action/StargateWrapper"
 
-export const setupERC4626 = async (
+export const setupStargateWrapper = async (
     universe: Universe,
     vaultAddr: string[],
     wrappedToUnderlyingMapping: Record<string, string>
@@ -12,11 +12,11 @@ export const setupERC4626 = async (
     const tokens = await Promise.all(
         vaultAddr.map(async (addr) => {
             
-            const vaultInst = IERC4626__factory.connect(
+            const vaultInst = IStargateRewardableWrapper__factory.connect(
                 addr,
                 universe.provider
             )
-            const asset = await vaultInst.callStatic.asset()
+            const asset = await vaultInst.callStatic.underlying()
             const vaultToken = await universe.getToken(
                 Address.from(addr)
             )
@@ -32,8 +32,8 @@ export const setupERC4626 = async (
     )
     for (const { wrappedToken, underlying } of tokens) {
         universe.defineMintable(
-            new ERC4626DepositAction(universe, underlying, wrappedToken),
-            new ERC4626WithdrawAction(universe, underlying, wrappedToken),
+            new StargateWrapperDepositAction(universe, underlying, wrappedToken),
+            new StargateWrapperWithdrawAction(universe, underlying, wrappedToken),
             false
         )
       }

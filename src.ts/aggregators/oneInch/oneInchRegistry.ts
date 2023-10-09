@@ -36,7 +36,7 @@ export interface IOneInchRouter {
 }
 
 const SUPPORTED_ONE_INCH_CHAINS = [
-  1, 56, 137, 10, 42161, 100, 43114, 250, 8217, 1313161554, 31337,
+  1, 56, 137, 10, 42161, 100, 43114, 250, 8217, 1313161554, 31337, 8453
 ] as const
 type SupportedChainIDSTupleType = typeof SUPPORTED_ONE_INCH_CHAINS
 type SupportedOneInchChains = keyof {
@@ -144,21 +144,7 @@ export const createOneInchDexAggregator = (
     config?.baseUrl ?? 'https://api.1inch.io',
     chainIdToUse
   )
-  const resolved = { ...(config?.retryConfig ?? DEFAULT_RETRY_CONFIG) }
-  const retryConfig: RetryLoopConfig = {
-    ...resolved,
-    onRetry: async (e: any) => {
-      if (
-        'statusCode' in e &&
-        'error' in e &&
-        'message' in e.error &&
-        'meta' in e.error
-      ) {
-        return resolved.onRetry(e as SwapErrorDto)
-      }
-      return 'RETURN'
-    },
-  }
+
   const aggregatorName = `aggregator.1inch.${_id++}.${chainIdToUse}`
 
   let queue: (() => Promise<void>)[] = []

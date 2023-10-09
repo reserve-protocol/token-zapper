@@ -4,13 +4,17 @@
 export * as compv3Sol from "./Compv3.sol";
 export * as icTokenSol from "./ICToken.sol";
 export * as irTokenZapperSol from "./IRTokenZapper.sol";
+export * as isav3TokenSol from "./ISAV3Token.sol";
 export * as isAtokenSol from "./ISAtoken.sol";
+export * as iStargadeWrapperSol from "./IStargadeWrapper.sol";
+export * as iStargateRouterSol from "./IStargateRouter.sol";
 export * as zapperSol from "./Zapper.sol";
 export { IBasketHandler__factory } from "./IBasketHandler__factory";
 export { IBooster__factory } from "./IBooster__factory";
 export { IChainLinkFeedRegistry__factory } from "./IChainLinkFeedRegistry__factory";
 export { IConvexBaseRewardsPool__factory } from "./IConvexBaseRewardsPool__factory";
 export { IConvexWrapper__factory } from "./IConvexWrapper__factory";
+export { IEACAggregatorProxy__factory } from "./IEACAggregatorProxy__factory";
 export { IERC20__factory } from "./IERC20__factory";
 export { IERC4626__factory } from "./IERC4626__factory";
 export { IMain__factory } from "./IMain__factory";

@@ -105,6 +105,7 @@ export class Searcher<
       basketUnit,
       this
     )
+    // console.log(precursorTokens.describe().join("\n"))
 
     /**
      * PHASE 2: Trade inputQuantity into precursor set
@@ -389,7 +390,8 @@ export class Searcher<
       {
         maxRetries: 3,
         retryDelay: 50,
-        onRetry: async () => {
+        onRetry: async (e: any) => {
+          console.log(e)
           if (block !== this.universe.currentBlock) {
             throw new Error("Block changed during search")
           }

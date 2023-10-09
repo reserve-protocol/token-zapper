@@ -2,4 +2,5 @@
 node_modules/
 dist/*.gz
 src.ts/testRun.ts
+src.ts/testRunBase.ts
 .env

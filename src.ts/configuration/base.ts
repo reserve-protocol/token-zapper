@@ -10,9 +10,9 @@ export const COMMON_TOKENS = {
 } as const;
 
 export const RTOKENS = {
-  testUSD: {
-    main: '0x4A8A34eEFc4892BF2d663FFd85668E80d54c3fE6',
-    erc20: "0x50249C768A6D3Cb4B6565c0a2bfBDb62BE94915C"
+  hyUSD: {
+    main: '0xA582985c68ED30a052Ff0b07D74931140bd5a00F',
+    erc20: "0xCc7FF230365bD730eE4B352cC2492CEdAC49383e"
   }
 } as const;
 

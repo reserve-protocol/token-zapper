@@ -23,16 +23,16 @@ export class WStETHRateProvider {
   }
 
   async quoteMint(amountsIn: TokenQuantity): Promise<TokenQuantity> {
-    const out = await this.wstethInstance.callStatic.getWstETHByStETH(
+    const out = (await this.wstethInstance.callStatic.getWstETHByStETH(
       amountsIn.amount
-    )
-    return this.wsteth.from(out)
+    )).toBigInt()
+    return this.wsteth.from(out - out / 3000000n)
   }
 
   async quoteBurn(amountsIn: TokenQuantity): Promise<TokenQuantity> {
-    const out = await this.wstethInstance.callStatic.getStETHByWstETH(
+    const out = (await this.wstethInstance.callStatic.getStETHByWstETH(
       amountsIn.amount
-    )
+    ))
     return this.steth.from(out)
   }
 }

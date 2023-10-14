@@ -14,7 +14,6 @@ import { IRToken__factory } from '../contracts'
 
 const rTokenIFace = IRToken__factory.createInterface()
 
-const MINT_DIGITS = 10n ** 9n
 export class MintRTokenAction extends Action {
   gasEstimate() {
     return BigInt(600000n)
@@ -25,10 +24,10 @@ export class MintRTokenAction extends Action {
       throw new Error('Invalid inputs for RToken mint')
     }
     const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket)
-
+    const out = unitsRequested - unitsRequested / 3_000_000n
     return [
       this.basket.rToken.fromBigInt(
-        (unitsRequested / MINT_DIGITS) * MINT_DIGITS
+        out
       ),
     ]
   }

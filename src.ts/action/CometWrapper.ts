@@ -30,7 +30,8 @@ export class MintCometWrapperAction extends Action {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const rate = await this.getRate()
-    const amountOut = (amountsIn.amount * amountsIn.token.one.amount) / rate
+    let amountOut = (amountsIn.amount * amountsIn.token.one.amount) / rate
+    amountOut = amountOut - amountOut / 3_000_000n;
     return [
       this.receiptToken.from(amountOut)
     ]

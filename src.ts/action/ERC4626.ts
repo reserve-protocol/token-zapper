@@ -43,13 +43,15 @@ export class ERC4626DepositAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const x = (await IERC4626__factory.connect(
+      this.shareToken.address.address,
+      this.universe.provider
+    ).previewDeposit(amountsIn.amount)).toBigInt()
+
     return [
       this.shareToken.from(
-        await IERC4626__factory.connect(
-          this.shareToken.address.address,
-          this.universe.provider
-        ).previewDeposit(amountsIn.amount)
-      ),
+        x - x / 3000000n
+      )
     ]
   }
 

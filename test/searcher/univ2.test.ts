@@ -61,7 +61,7 @@ describe('searcher/v2-actions', () => {
       cUSDT!,
       Address.ZERO
     )
-    expect(result[0].outputs[0].formatWithSymbol()).toBe('784.52068683 cUSDT')
+    expect(result[0].outputs[0].formatWithSymbol()).toBe('784.52081759 cUSDT')
     expect(result[0].steps.length).toBe(2)
   })
 

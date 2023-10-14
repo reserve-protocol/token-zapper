@@ -51,7 +51,7 @@ describe('searcher/rtokenzaps', () => {
       result.swaps.outputs
         .find((i) => i.token === universe.rTokens['ETH+']!)
         ?.formatWithSymbol()
-    ).toBe('1.0 ETH+')
+    ).toBe('0.999999666666666667 ETH+')
   })
 
   it('It can do an eUSD zap', async () => {
@@ -71,7 +71,7 @@ describe('searcher/rtokenzaps', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
-    ).toBe('9.999475 eUSD')
+    ).toBe('9.99947333684111 eUSD')
   })
 
   it('It can can trade then RToken', async () => {
@@ -89,7 +89,7 @@ describe('searcher/rtokenzaps', () => {
 
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
-    ).toBe('174.11864501 eUSD')
+    ).toBe('174.11861599044199 eUSD')
   })
 
   it('It can can burn then RToken', async () => {
@@ -108,7 +108,7 @@ describe('searcher/rtokenzaps', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
-    ).toBe('22.23407289 eUSD')
+    ).toBe('22.234069178641136667 eUSD')
   })
 
   it('Old eUSD', async () => {
@@ -143,7 +143,7 @@ describe('searcher/rtokenzaps', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === oldEUSD)?.formatWithSymbol()
-    ).toBe('171.89448207 oldEUSD')
+    ).toBe('171.89445342182976 oldEUSD')
   })
 
   it('recursive RTokens', async () => {
@@ -164,7 +164,7 @@ describe('searcher/rtokenzaps', () => {
       result.swaps.outputs
         .find((i) => i.token === eUSDSquared)
         ?.formatWithSymbol()
-    ).toBe('9.999475 eUSD^2')
+    ).toBe('9.999470003683331053 eUSD^2')
   })
 
   it('recursive RTokens2', async () => {
@@ -188,7 +188,7 @@ describe('searcher/rtokenzaps', () => {
       result.swaps.outputs
         .find((i) => i.token === eUSDSquared)
         ?.formatWithSymbol()
-    ).toBe('9.999387 eUSD^3')
+    ).toBe('9.999381993742004378 eUSD^3')
   })
 
   it('Inputs differently priced', async () => {
@@ -239,7 +239,7 @@ describe('searcher/rtokenzaps', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === oldEUSD)?.formatWithSymbol()
-    ).toBe('183.46299635 oldEUSD')
+    ).toBe('183.462965765657693334 oldEUSD')
   })
 
   it('rToken = (0.25 USDC, 0.75 USDT) && 1 USDC = $0.95', async () => {
@@ -282,6 +282,6 @@ describe('searcher/rtokenzaps', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === rToken)?.formatWithSymbol()
-    ).toBe('176.416373 unevenUSD')
+    ).toBe('176.416314194542333334 unevenUSD')
   })
 })

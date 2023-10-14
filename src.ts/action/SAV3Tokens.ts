@@ -43,9 +43,10 @@ export class MintSAV3TokensAction extends Action {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
+    const x = rayDiv(amountsIn.into(this.saToken).amount, this.rate.value)
     return [
       this.saToken.fromBigInt(
-        rayDiv(amountsIn.into(this.saToken).amount, this.rate.value)
+        x - x / 3000000n
       ),
     ]
   }

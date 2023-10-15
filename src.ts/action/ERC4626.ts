@@ -50,7 +50,7 @@ export class ERC4626DepositAction extends Action {
 
     return [
       this.shareToken.from(
-        x - x / 3000000n
+        x - x / 3_000_000n
       )
     ]
   }

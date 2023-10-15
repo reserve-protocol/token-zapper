@@ -390,7 +390,7 @@ export class SearcherResult {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
-      amountOut: outputTokenOutput.amount - outputTokenOutput.amount / 4_000_000n,
+      amountOut: outputTokenOutput.amount - outputTokenOutput.amount / 2_000_000n,
       tokenOut: amountOut.token.address.address,
       tokensUsedByZap: dustTokens.map((i) => i.address.address),
     }

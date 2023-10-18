@@ -85,7 +85,8 @@ const idToSlug: Record<number, string> = {
 class KyberAction extends Action {
   constructor(
     public readonly request: KyberswapAggregatorResult,
-    public readonly universe: Universe
+    public readonly universe: Universe,
+    public readonly slippage: number
   ) {
     super(
       Address.from(request.req.data.routerAddress),
@@ -102,7 +103,8 @@ class KyberAction extends Action {
     )
   }
   async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const out = this.output[0].from(BigInt(this.request.swap.data.amountOut))
+    const amount = BigInt(this.request.swap.data.amountOut)
+    const out = this.output[0].from(amount - amount / 100000n * BigInt(this.slippage))
     return [out]
   }
   gasEstimate(): bigint {
@@ -177,10 +179,10 @@ export const createKyberswap = (aggregatorName: string, universe: Universe, slip
 
   return new DexAggregator(
     aggregatorName,
-    async (_, destination, input, output, slippage) => {
+    async (_, destination, input, output, __) => {
       const req = await getQuoteAndSwap(input, output, destination)
       return await new SwapPlan(universe, [
-        new KyberAction(req, universe),
+        new KyberAction(req, universe, slippage),
       ]).quote([input], destination)
     }
   )

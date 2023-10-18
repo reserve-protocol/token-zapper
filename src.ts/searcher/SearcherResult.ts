@@ -163,7 +163,8 @@ export class SearcherResult {
         gasLimit,
       })
     }
-    const overrides = {}
+    try {
+      const overrides = {}
     const body = JSON.stringify(
       {
         from: this.signer.address,
@@ -189,9 +190,21 @@ export class SearcherResult {
     )
       .json()
       .then((a: { data: string }) => {
+        if (a.data === '0xundefined') {
+          throw new Error("Failed to simulate")
+        }
         return zapperInterface.decodeFunctionResult('zapERC20', a.data)
           .out as ZapperOutputStructOutput
       })
+    } catch(e) {
+      return this.simulateNoNode({
+        data,
+        value,
+        quantity,
+        inputToken,
+        gasLimit,
+      })
+    }
   }
 
   async toTransaction(
@@ -284,6 +297,10 @@ export class SearcherResult {
       builder.issueMaxRTokens(this.outputToken, this.signer)
     } else {
       console.log("Will not apply maxIssueance optimisation")
+    }
+
+    for(const a of builder.contractCalls) {
+      console.log('  ' + a.comment)
     }
 
     let payload = {

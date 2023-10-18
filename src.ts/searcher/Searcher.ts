@@ -477,13 +477,22 @@ export class Searcher<
     const out = await Promise.all(
       this.universe.dexAggregators.map(
         async (router) =>
-          await router.swap(
-            executorAddress,
-            destination,
-            input,
-            output,
-            slippage
-          )
+          {
+            try {
+              const out = await router.swap(
+                executorAddress,
+                destination,
+                input,
+                output,
+                slippage
+              )
+  
+              return out
+            } catch(e) {
+              console.log(e)
+              throw e
+            }
+          }
       )
     )
 

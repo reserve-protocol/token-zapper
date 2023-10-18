@@ -122,7 +122,7 @@ class KyberAction extends Action {
   }
 }
 
-export const createKyberswap = (aggregatorName: string, universe: Universe) => {
+export const createKyberswap = (aggregatorName: string, universe: Universe, slippage: number) => {
   if (idToSlug[universe.chainId] == null) {
     throw new Error('Kyberswap: Unsupported chain')
   }
@@ -150,7 +150,7 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
       body: JSON.stringify({
         ...req.data,
         recipient: recipient.address,
-        slippageTolerance: 10,
+        slippageTolerance: slippage,
       }),
       headers: {
         'Content-Type': 'application/json',

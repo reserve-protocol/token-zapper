@@ -104,7 +104,8 @@ class KyberAction extends Action {
   }
   async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
     const amount = BigInt(this.request.swap.data.amountOut)
-    const out = this.output[0].from(amount - amount / 100000n * BigInt(this.slippage))
+    const minOut = amount - (amount / 10000n * BigInt(this.slippage))
+    const out = this.output[0].from(minOut)
     return [out]
   }
   gasEstimate(): bigint {
@@ -136,8 +137,9 @@ export const createKyberswap = (aggregatorName: string, universe: Universe, slip
   }/api/v1/route/build`
 
   const fetchRoute = async (quantityIn: TokenQuantity, tokenOut: Token) => {
+    const url = `${GET_ROUTE_SWAP}?source=register&amountIn=${quantityIn.amount}&tokenIn=${quantityIn.token.address.address}&tokenOut=${tokenOut.address.address}`
     return fetch(
-      `${GET_ROUTE_SWAP}?source=register&amountIn=${quantityIn.amount}&tokenIn=${quantityIn.token.address.address}&tokenOut=${tokenOut.address.address}`,
+      url,
       {
         method: 'GET',
         headers: {
@@ -151,8 +153,11 @@ export const createKyberswap = (aggregatorName: string, universe: Universe, slip
       method: 'POST',
       body: JSON.stringify({
         ...req.data,
-        recipient: recipient.address,
+        sender: universe.config.addresses.executorAddress.address,
+        recipient: universe.config.addresses.executorAddress.address,
+        skipSimulateTx: true,
         slippageTolerance: slippage,
+        source: "register"
       }),
       headers: {
         'Content-Type': 'application/json',

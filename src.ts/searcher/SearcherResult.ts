@@ -19,6 +19,7 @@ import { ZapTransaction } from './ZapTransaction'
 import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
 import { MintRTokenAction } from '../action/RTokens'
 import { TransactionRequest } from '@ethersproject/providers'
+import { defaultAbiCoder } from '@ethersproject/abi'
 
 interface SimulateParams {
   data: string
@@ -36,7 +37,7 @@ class Step {
     readonly action: Action,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) { }
+  ) {}
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -67,7 +68,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-        InteractionConvention.PayBeforeCall
+          InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -131,18 +132,17 @@ export class SearcherResult {
     return blockBuilder.contractCalls
   }
 
-  async simulateNoNode({
-    data,
-    value,
-  }: SimulateParams) {
-
+  async simulateNoNode({ data, value }: SimulateParams) {
     const resp = await this.universe.provider.call({
       data,
       from: this.signer.address,
       to: this.universe.config.addresses.zapperAddress.address,
-      value
+      value,
     })
-
+    if (resp.startsWith("0x08c379a0")) {
+      const msg = defaultAbiCoder.decode(["string"], '0x' + resp.slice(10))[0]
+      throw new Error(msg)
+    }
     return zapperInterface.decodeFunctionResult('zapERC20', resp)
       .out as ZapperOutputStructOutput
   }
@@ -165,38 +165,38 @@ export class SearcherResult {
     }
     try {
       const overrides = {}
-    const body = JSON.stringify(
-      {
-        from: this.signer.address,
-        to: this.universe.config.addresses.zapperAddress.address,
-        data,
-        quantity: '0x' + quantity.toString(16),
-        gasLimit,
-        value: '0x' + value.toString(16),
-        token: inputToken.address.address,
-        overrides,
-      },
-      null,
-      1
-    )
-    return await (
-      await fetch('https://worker-frosty-pine-5440.mig2151.workers.dev/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const body = JSON.stringify(
+        {
+          from: this.signer.address,
+          to: this.universe.config.addresses.zapperAddress.address,
+          data,
+          quantity: '0x' + quantity.toString(16),
+          gasLimit,
+          value: '0x' + value.toString(16),
+          token: inputToken.address.address,
+          overrides,
         },
-        body,
-      })
-    )
-      .json()
-      .then((a: { data: string }) => {
-        if (a.data === '0xundefined') {
-          throw new Error("Failed to simulate")
-        }
-        return zapperInterface.decodeFunctionResult('zapERC20', a.data)
-          .out as ZapperOutputStructOutput
-      })
-    } catch(e) {
+        null,
+        1
+      )
+      return await (
+        await fetch('https://worker-frosty-pine-5440.mig2151.workers.dev/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body,
+        })
+      )
+        .json()
+        .then((a: { data: string }) => {
+          if (a.data === '0xundefined') {
+            throw new Error('Failed to simulate')
+          }
+          return zapperInterface.decodeFunctionResult('zapERC20', a.data)
+            .out as ZapperOutputStructOutput
+        })
+    } catch (e) {
       return this.simulateNoNode({
         data,
         value,
@@ -223,10 +223,7 @@ export class SearcherResult {
     const builder = new TransactionBuilder(this.universe)
 
     const potentialResidualTokens = new Set<Token>()
-    const [steps, , allApprovals] = linearize(
-      executorAddress,
-      this.swaps
-    )
+    const [steps, , allApprovals] = linearize(executorAddress, this.swaps)
     for (const step of steps) {
       for (const qty of step.inputs) {
         if (qty.token === this.universe.nativeToken) {
@@ -296,10 +293,10 @@ export class SearcherResult {
       builder.contractCalls.pop()
       builder.issueMaxRTokens(this.outputToken, this.signer)
     } else {
-      console.log("Will not apply maxIssueance optimisation")
+      console.log('Will not apply maxIssueance optimisation')
     }
 
-    for(const a of builder.contractCalls) {
+    for (const a of builder.contractCalls) {
       console.log('  ' + a.comment)
     }
 
@@ -316,8 +313,8 @@ export class SearcherResult {
     let data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -390,7 +387,9 @@ export class SearcherResult {
         await mintRtoken.encodeIssueTo(
           previous.inputs,
           // TODO: Find a better way to avoid off by one errors
-          outputTokenOutput.token.from(outputTokenOutput.amount - outputTokenOutput.amount / 10_000_000n),
+          outputTokenOutput.token.from(
+            outputTokenOutput.amount - outputTokenOutput.amount / 10_000_000n
+          ),
           this.signer
         )
       )
@@ -407,15 +406,16 @@ export class SearcherResult {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
-      amountOut: outputTokenOutput.amount - outputTokenOutput.amount / 9_000_000n,
+      amountOut:
+        outputTokenOutput.amount - outputTokenOutput.amount / 9_000_000n,
       tokenOut: amountOut.token.address.address,
       tokensUsedByZap: dustTokens.map((i) => i.address.address),
     }
     data = inputIsNativeToken
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -487,11 +487,8 @@ export class SearcherResult {
       tx = {
         ...tx,
         type: 0,
-        gasPrice: BigNumber.from(
-          this.universe.gasPrice
-        ),
+        gasPrice: BigNumber.from(this.universe.gasPrice),
       }
-
     }
 
     const out = new ZapTransaction(

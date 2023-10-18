@@ -1,0 +1,1 @@
+{"version":3,"file":"calls.js","sourceRoot":"","sources":["../../../src.ts/ethcall/src/calls.ts"],"names":[],"mappings":";;;;;AAAA,0EAAgD;AAEhD,0DAAkC;AAElC,SAAS,aAAa,CAAC,OAAe,EAAE,gBAAwB;IAC9D,MAAM,SAAS,GAAG,IAAI,kBAAQ,CAAC,gBAAgB,EAAE,wBAAY,CAAC,CAAC;IAC/D,OAAO,SAAS,CAAC,aAAa,CAAC,OAAO,CAAS,CAAC;AAClD,CAAC;AAED,kBAAe,aAAa,CAAC"}

@@ -139,8 +139,8 @@ export class SearcherResult {
       to: this.universe.config.addresses.zapperAddress.address,
       value,
     })
-    if (resp.startsWith("0x08c379a0")) {
-      const msg = defaultAbiCoder.decode(["string"], '0x' + resp.slice(10))[0]
+    if (resp.startsWith('0x08c379a0')) {
+      const msg = defaultAbiCoder.decode(['string'], '0x' + resp.slice(10))[0]
       throw new Error(msg)
     }
     return zapperInterface.decodeFunctionResult('zapERC20', resp)
@@ -210,6 +210,7 @@ export class SearcherResult {
   async toTransaction(
     options: Partial<{
       returnDust: boolean
+      maxIssueance?: boolean
       gasLimit?: number
       permit2: {
         permit: PermitTransferFrom
@@ -369,7 +370,7 @@ export class SearcherResult {
       this.swaps.destination
     )
 
-    if (outputIsRToken) {
+    if (outputIsRToken && options.maxIssueance !== true) {
       builder.contractCalls.pop()
       const previous = this.swaps.swapPaths.pop()!
       const mintRtoken = this.universe.wrappedTokens.get(this.outputToken)!
@@ -387,7 +388,9 @@ export class SearcherResult {
         await mintRtoken.encodeIssueTo(
           previous.inputs,
           // TODO: Find a better way to avoid off by one errors
-          outputTokenOutput.token.from(outputTokenOutput.amount - outputTokenOutput.amount / 3_000_000n),
+          outputTokenOutput.token.from(
+            outputTokenOutput.amount - outputTokenOutput.amount / 3_000_000n
+          ),
           this.signer
         )
       )
@@ -404,7 +407,8 @@ export class SearcherResult {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
-      amountOut: outputTokenOutput.amount - outputTokenOutput.amount / 2_500_000n,
+      amountOut:
+        outputTokenOutput.amount - outputTokenOutput.amount / 2_500_000n,
       tokenOut: amountOut.token.address.address,
       tokensUsedByZap: dustTokens.map((i) => i.address.address),
     }

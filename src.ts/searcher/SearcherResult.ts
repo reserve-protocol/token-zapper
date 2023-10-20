@@ -401,14 +401,28 @@ export class SearcherResult {
         this.signer
       )
     }
+    this.swaps = new SwapPaths(
+      this.universe,
+      this.swaps.inputs,
+      this.swaps.swapPaths,
+      simulatedOutputs.map((i) => {
+        if (i.token === this.outputToken) {
+          return i.token.from(
+            outputTokenOutput.amount - outputTokenOutput.amount / 250_000n
+          )
+        }
+        return i
+      }),
+      totalValue,
+      this.swaps.destination
+    )
     console.log('Final Zap:')
     console.log('  ' + builder.contractCalls.map((i) => i.comment).join('\n  '))
     payload = {
       tokenIn: inputToken.address.address,
       amountIn: this.swaps.inputs[0].amount,
       commands: builder.contractCalls.map((i) => i.encode()),
-      amountOut:
-        outputTokenOutput.amount - outputTokenOutput.amount / 250_000n,
+      amountOut: outputTokenOutput.amount - outputTokenOutput.amount / 250_000n,
       tokenOut: amountOut.token.address.address,
       tokensUsedByZap: dustTokens.map((i) => i.address.address),
     }

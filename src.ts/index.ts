@@ -6,10 +6,10 @@ import { makeConfig } from './configuration/ChainConfiguration'
 export { type Config } from './configuration/ChainConfiguration'
 
 export const configuration = {
-    utils: {
-        loadTokens,
-    },
-    makeConfig,
+  utils: {
+    loadTokens,
+  },
+  makeConfig,
 }
 
 export { Searcher } from './searcher/Searcher'
@@ -17,7 +17,13 @@ export { Universe } from './Universe'
 
 export { ethereumConfig } from './configuration/ethereum'
 export { setupEthereumZapper } from './configuration/setupEthereumZapper'
+
 export { baseConfig } from './configuration/base'
 export { setupBaseZapper } from './configuration/setupBaseZapper'
-export { DexAggregator, createOneInchDexAggregator } from './aggregators/oneInch/oneInchRegistry'
+
 export { createKyberswap } from './aggregators/Kyberswap'
+export { createDefillama } from './aggregators/DefiLlama'
+export {
+  DexAggregator,
+  createOneInchDexAggregator,
+} from './aggregators/oneInch/oneInchRegistry'

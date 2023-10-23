@@ -211,6 +211,7 @@ export class SearcherResult {
     options: Partial<{
       returnDust: boolean
       maxIssueance?: boolean
+      outputSlippage?: bigint
       gasLimit?: number
       permit2: {
         permit: PermitTransferFrom
@@ -408,7 +409,8 @@ export class SearcherResult {
       simulatedOutputs.map((i) => {
         if (i.token === this.outputToken) {
           return i.token.from(
-            outputTokenOutput.amount - outputTokenOutput.amount / 250_000n
+            outputTokenOutput.amount -
+              outputTokenOutput.amount / (options.outputSlippage ?? 250_000n)
           )
         }
         return i

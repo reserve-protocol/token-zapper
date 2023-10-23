@@ -29,6 +29,7 @@ export const baseConfig = makeConfig(
     facadeAddress: "0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF",
     zapperAddress: '0x0326bF8E7efEBAe81898d366c1491D196d143a4C',
     executorAddress: '0x8cE5ee761fF619c889F007CB4D708178E87C11D8',
+    wrappedNative: "0x4200000000000000000000000000000000000006"
   }
 )
 

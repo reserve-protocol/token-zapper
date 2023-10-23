@@ -1,4 +1,4 @@
-import { Universe } from '../Universe'
+import { type Universe } from '../Universe'
 import {
   Action,
   DestinationOptions,
@@ -9,7 +9,7 @@ import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { GAS_TOKEN_ADDRESS, ZERO } from '../base/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { Token, TokenQuantity } from '../entities/Token'
+import { type Token, type TokenQuantity } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
 import { DexAggregator } from './DexAggregator'
 
@@ -23,12 +23,13 @@ const tokenToDefillameAddress = (token: Token) => {
     // Remap to address 0
     return ZERO
   }
-  return token.address.address
+  return token.address.address.toLowerCase()
 }
 
-const tokenToRequest = (token: Token, chainId: number) => {
+const tokenToRequest = (universe: Universe, token: Token, chainId: number) => {
   const address = tokenToDefillameAddress(token)
-  return {
+  const out = {
+    volume24h: 145686469.40093708,
     address: address,
     chainId: chainId,
     name: token.name,
@@ -36,9 +37,29 @@ const tokenToRequest = (token: Token, chainId: number) => {
     decimals: token.decimals,
     label: token.symbol,
     value: address,
+    logoURI:
+      'https://token-icons.llamao.fi/icons/tokens/1/' + address + '?h=20&w=20',
+    logoURI2: 'https://token-icons.llamao.fi/icons/tokens/1/' + address,
+    tags: ['tokens'],
     geckoId: null,
+    wrappedNative: universe.config.addresses.wrappedNative === token.address,
   }
+
+  if (out.wrappedNative === false) {
+    delete (out as any).wrappedNative
+  }
+
+  return out
 }
+
+export const protocol = {
+  Matcha: 'Matcha/0x',
+  Hashflow: 'Hashflow',
+} as const
+
+export type PROTOCOLS = {
+  [K in keyof typeof protocol]: (typeof protocol)[K]
+}[keyof typeof protocol]
 
 interface Quote {
   amountReturned: string
@@ -74,50 +95,60 @@ interface Quote {
   }
 }
 
-export const fetchQuote = async ({
-  userAddress,
-  destination,
-  quantity: qty,
-  output,
-  chainId,
-  slippage,
-}: {
-  userAddress: Address
-  destination: Address
-  quantity: TokenQuantity
-  output: Token
-  chainId: number
-  slippage: number
-}) => {
+export const fetchQuote = async (
+  protocol: PROTOCOLS,
+  universe: Universe,
+  {
+    userAddress,
+    destination,
+    quantity: qty,
+    output,
+    chainId,
+    slippage,
+  }: {
+    userAddress: Address
+    destination: Address
+    quantity: TokenQuantity
+    output: Token
+    chainId: number
+    slippage: number
+  }
+) => {
   if (CHAIN_SLUG[chainId] == null) {
     throw new Error(`Chain ${chainId} not supported`)
   }
+  const feeData = await universe.provider.getFeeData()
   const request = {
-    userAddress: userAddress.address,
-    fromToken: tokenToRequest(qty.token, chainId),
-    toToken: tokenToRequest(output, chainId),
-    slippage,
+    gasPriceData: {
+      formatted: {
+        gasPrice: feeData.gasPrice?.toString(),
+        maxFeePerGas: feeData.maxFeePerGas?.toString(),
+        maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString(),
+      },
+      ...feeData,
+    },
+    userAddress: userAddress.address.toLowerCase(),
+    fromToken: tokenToRequest(universe, qty.token, chainId),
+    toToken: tokenToRequest(universe, output, chainId),
+    slippage: slippage / 10000,
     amount: qty.format(),
     isPrivacyEnabled: false,
     amountOut: 0,
   }
 
   const BASE = 'https://swap-api.defillama.com/dexAggregatorQuote'
-  const response = await fetch(
-    `${BASE}?api_key=zT82BQ38E5unVRDGswzgUzfM2yyaQBK8mFBrzTzX6s&protocol=Matcha/0x&chain=${
-      CHAIN_SLUG[chainId]
-    }&from=${
-      userAddress.address
-    }&to=${destination}&amount=${qty.amount.toString()}`,
-    {
-      method: 'POST',
-      body: JSON.stringify(request),
-      headers: {
-        'Content-Type': 'text/plain;charset=UTF-8',
-      },
-    }
-  )
+  const url = `${BASE}?api_key=zT82BQ38E5unVRDGswzgUzfM2yyaQBK8mFBrzTzX6s&protocol=Matcha/0x&chain=${
+    CHAIN_SLUG[chainId]
+  }&from=${qty.token.address.address.toLowerCase()}&to=${output.address.address.toLowerCase()}&amount=${qty.amount.toString()}`
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(request),
+    headers: {
+      'Content-Type': 'text/plain;charset=UTF-8',
+    },
+  })
   const json = await response.json()
+
   return json as Quote
 }
 
@@ -158,7 +189,7 @@ class DefillamaAction extends Action {
       Address.from(this.request.rawQuote.to),
       0n,
       this.gasEstimate(),
-      `Kyberswap(${this.address}) (${inputs.join(',')}) -> (${await this.quote(
+      `DefiLlama(${this.address}) (${inputs.join(',')}) -> (${await this.quote(
         inputs
       )})`
     )
@@ -168,12 +199,13 @@ class DefillamaAction extends Action {
 export const createDefillama = (
   aggregatorName: string,
   universe: Universe,
-  slippage: number
+  slippage: number,
+  protocol: PROTOCOLS
 ) => {
   return new DexAggregator(
     aggregatorName,
     async (_, destination, input, output, __) => {
-      const req = await fetchQuote({
+      const req = await fetchQuote(protocol, universe, {
         userAddress: universe.config.addresses.zapperAddress,
         destination,
         quantity: input,

@@ -21,6 +21,7 @@ export const makeConfig = <
     facadeAddress: string
     executorAddress: string
     zapperAddress: string
+    wrappedNative: string
   }
 ) => {
   return {
@@ -46,7 +47,7 @@ export type Config<
   ChainId extends number = number,
   NativeToken extends NativeTokenDefinition<string, string> = NativeTokenDefinition<string, string>,
   CommonTokens extends Record<string, string> = {},
-  RTokens extends Record<string, { main: string, erc20: string }> = Record<string, { main: string, erc20: string }>
+  RTokens extends Record<string, { main: string, erc20: string }> = Record<string, { main: string, erc20: string }>,
 > = ReturnType<(typeof makeConfig<ChainId, NativeToken, CommonTokens, RTokens>)>
 
 

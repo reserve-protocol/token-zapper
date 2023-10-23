@@ -91,6 +91,7 @@ export const ethereumConfig = makeConfig(
     facadeAddress: "0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C",
     zapperAddress: '0x8cE5ee761fF619c889F007CB4D708178E87C11D8',
     executorAddress: '0xe18a821ea1f1796A0797CEa01A3f86ebEab0f9B6',
+    wrappedNative: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
   }
 )
 

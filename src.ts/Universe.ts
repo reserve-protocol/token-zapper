@@ -16,6 +16,10 @@ import { SourcingRule } from './searcher/SourcingRule'
 import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
 import { SwapPath } from './searcher/Swap'
 import { type SwapSignature } from './aggregators/SwapSignature'
+import { BurnRTokenAction, MintRTokenAction } from './action/RTokens'
+import { wrap } from 'module'
+import { Searcher } from '.'
+import { findPrecursorTokenSet } from './searcher/Searcher'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -189,6 +193,30 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
     this.wrappedTokens.set(output, out)
     return out
+  }
+
+  public async canZapIntoRToken(token: Token) {
+    const wrappable = this.wrappedTokens.get(token)
+    if (wrappable == null) {
+      return false
+    }
+    if (!(wrappable.mint instanceof MintRTokenAction)) {
+      return false
+    }
+    const action = wrappable.mint as MintRTokenAction
+    const unit = action.basket.unitBasket
+    const searcher = new Searcher(this as any)
+
+    try {
+      const input = this.nativeToken.from("0.1")
+      const precursorSet = await findPrecursorTokenSet(this as any, input, token, unit, searcher)
+      for(const qty of precursorSet.precursorToTradeFor) {
+        await searcher.findSingleInputTokenSwap(input, qty.token, this.config.addresses.executorAddress, 0.1, 1)
+      }
+      return true
+    } catch(e) {
+      return false
+    }
   }
 
   private constructor(

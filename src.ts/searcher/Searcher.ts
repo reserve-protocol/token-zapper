@@ -88,7 +88,7 @@ export class Searcher<
    * @param inputQuantity the token quantity to convert into the token basket
    * @param basketUnit a token quantity set representing one unit of output
    **/
-  private async findSingleInputToBasketGivenBasketUnit(
+  public async findSingleInputToBasketGivenBasketUnit(
     inputQuantity: TokenQuantity,
     rToken: Token,
     basketUnit: TokenQuantity[],

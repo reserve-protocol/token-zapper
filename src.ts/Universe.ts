@@ -16,24 +16,28 @@ import { SourcingRule } from './searcher/SourcingRule'
 import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
 import { SwapPath } from './searcher/Swap'
 import { type SwapSignature } from './aggregators/SwapSignature'
-import { BurnRTokenAction, MintRTokenAction } from './action/RTokens'
-import { wrap } from 'module'
-import { Searcher } from '.'
+import { MintRTokenAction } from './action/RTokens'
+import { Searcher } from './searcher/Searcher'
 import { findPrecursorTokenSet } from './searcher/Searcher'
 
 type TokenList<T> = {
   [K in keyof T]: Token
 }
 interface OracleDef {
-  quote: (qty: TokenQuantity) => Promise<TokenQuantity>,
-  quoteIn: (qty: TokenQuantity, tokenToQuoteWith: Token) => Promise<TokenQuantity>,
+  quote: (qty: TokenQuantity) => Promise<TokenQuantity>
+  quoteIn: (
+    qty: TokenQuantity,
+    tokenToQuoteWith: Token
+  ) => Promise<TokenQuantity>
 }
 export class Universe<const UniverseConf extends Config = Config> {
   public _finishResolving: () => void = () => {}
-  public initialized: Promise<void> = new Promise(resolve => {
+  public initialized: Promise<void> = new Promise((resolve) => {
     this._finishResolving = resolve
-  });
-  get chainId(): UniverseConf["chainId"] { return this.config.chainId }
+  })
+  get chainId(): UniverseConf['chainId'] {
+    return this.config.chainId
+  }
 
   public readonly refreshableEntities = new Map<Address, Refreshable>()
   public readonly tokens = new Map<Address, Token>()
@@ -66,15 +70,19 @@ export class Universe<const UniverseConf extends Config = Config> {
   public readonly graph: Graph = new Graph()
   public readonly wrappedTokens = new Map<
     Token,
-    { mint: Action; burn: Action, allowAggregatorSearcher: boolean }
+    { mint: Action; burn: Action; allowAggregatorSearcher: boolean }
   >()
   public readonly oracles: PriceOracle[] = []
 
-  public readonly dexAggregators: {swap: SwapSignature}[] = []
+  public readonly dexAggregators: { swap: SwapSignature }[] = []
 
   // Sentinel token used for pricing things
-  public readonly rTokens = {} as TokenList<UniverseConf["addresses"]["rTokens"]>
-  public readonly commonTokens = {} as TokenList<UniverseConf["addresses"]["commonTokens"]>
+  public readonly rTokens = {} as TokenList<
+    UniverseConf['addresses']['rTokens']
+  >
+  public readonly commonTokens = {} as TokenList<
+    UniverseConf['addresses']['commonTokens']
+  >
 
   async refresh(entity: Address) {
     const refreshable = this.refreshableEntities.get(entity)
@@ -182,14 +190,18 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.defineMintable(lpTokenInstance.mintAction, lpTokenInstance.burnAction)
   }
 
-  public defineMintable(mint: Action, burn: Action, allowAggregatorSearcher = false) {
+  public defineMintable(
+    mint: Action,
+    burn: Action,
+    allowAggregatorSearcher = false
+  ) {
     const output = mint.output[0]
     this.addAction(mint, output.address)
     this.addAction(burn, output.address)
     const out = {
       mint,
       burn,
-      allowAggregatorSearcher
+      allowAggregatorSearcher,
     }
     this.wrappedTokens.set(output, out)
     return out
@@ -208,13 +220,25 @@ export class Universe<const UniverseConf extends Config = Config> {
     const searcher = new Searcher(this as any)
 
     try {
-      const input = this.nativeToken.from("0.1")
-      const precursorSet = await findPrecursorTokenSet(this as any, input, token, unit, searcher)
-      for(const qty of precursorSet.precursorToTradeFor) {
-        await searcher.findSingleInputTokenSwap(input, qty.token, this.config.addresses.executorAddress, 0.1, 1)
+      const input = this.nativeToken.from('0.1')
+      const precursorSet = await findPrecursorTokenSet(
+        this as any,
+        input,
+        token,
+        unit,
+        searcher
+      )
+      for (const qty of precursorSet.precursorToTradeFor) {
+        await searcher.findSingleInputTokenSwap(
+          input,
+          qty.token,
+          this.config.addresses.executorAddress,
+          0.1,
+          1
+        )
       }
       return true
-    } catch(e) {
+    } catch (e) {
       return false
     }
   }
@@ -223,7 +247,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     public readonly provider: ethers.providers.Provider,
     public readonly config: UniverseConf,
     public readonly approvalsStore: ApprovalsStore,
-    public readonly loadToken: TokenLoader,
+    public readonly loadToken: TokenLoader
   ) {
     const nativeToken = config.nativeToken
     this.nativeToken = Token.createToken(
@@ -250,19 +274,18 @@ export class Universe<const UniverseConf extends Config = Config> {
     opts: Partial<{
       tokenLoader?: TokenLoader
       approvalsStore?: ApprovalsStore
-    }> = {},
+    }> = {}
   ) {
     const universe = new Universe<C>(
       provider,
       config,
       opts.approvalsStore ?? new ApprovalsStore(provider),
-      opts.tokenLoader ?? makeTokenLoader(provider),
+      opts.tokenLoader ?? makeTokenLoader(provider)
     )
 
     initialize(universe).then(() => {
       universe._finishResolving()
     })
-    
 
     return universe
   }

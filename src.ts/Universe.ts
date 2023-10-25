@@ -210,36 +210,43 @@ export class Universe<const UniverseConf extends Config = Config> {
   public async canZapIntoRToken(token: Token) {
     const wrappable = this.wrappedTokens.get(token)
     if (wrappable == null) {
-      return false
+      throw new Error('Not an rToken')
     }
     if (!(wrappable.mint instanceof MintRTokenAction)) {
-      return false
+      throw new Error('Not an rToken')
     }
     const action = wrappable.mint as MintRTokenAction
     const unit = action.basket.unitBasket
     const searcher = new Searcher(this as any)
 
-    try {
-      const input = this.nativeToken.from('0.1')
-      const precursorSet = await findPrecursorTokenSet(
-        this as any,
-        input,
-        token,
-        unit,
-        searcher
-      )
-      for (const qty of precursorSet.precursorToTradeFor) {
-        await searcher.findSingleInputTokenSwap(
+    const input = this.nativeToken.from('0.1')
+    const precursorSet = await findPrecursorTokenSet(
+      this as any,
+      input,
+      token,
+      unit,
+      searcher
+    )
+    let tokensMissings: Token[] = []
+    for (const qty of precursorSet.precursorToTradeFor) {
+      try {
+        const out = await searcher.findSingleInputTokenSwap(
           input,
           qty.token,
           this.config.addresses.executorAddress,
           0.1,
           1
         )
+        if (out.length === 0) {
+          tokensMissings.push(qty.token)
+        }
+      } catch (e) {
+        tokensMissings.push(qty.token)
       }
-      return true
-    } catch (e) {
-      return false
+    }
+    return {
+      canZap: tokensMissings.length === 0,
+      tokensMissings,
     }
   }
 

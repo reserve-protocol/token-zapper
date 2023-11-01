@@ -117,7 +117,7 @@ export class BurnRTokenAction extends Action {
 
   async quote([quantity]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
-    return await this.basketHandler.quote(quantity.amount)
+    return await this.basketHandler.redeem(quantity)
   }
 
   constructor(readonly universe: Universe, readonly basketHandler: IBasket) {

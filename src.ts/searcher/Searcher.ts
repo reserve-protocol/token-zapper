@@ -1,21 +1,21 @@
-import {
-  type PostTradeAction,
-  BasketTokenSourcingRuleApplication,
-} from './BasketTokenSourcingRules'
 import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
+import { retryLoop } from '../base/controlflow'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { bfs } from '../exchange-graph/BFS'
 import {
+  BasketTokenSourcingRuleApplication,
+  type PostTradeAction,
+} from './BasketTokenSourcingRules'
+import {
   BaseSearcherResult,
-  MintRTokenSearcherResult,
   BurnRTokenSearcherResult,
+  MintRTokenSearcherResult,
   TradeSearcherResult,
 } from './SearcherResult'
 import { SwapPath, SwapPaths, SwapPlan } from './Swap'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
-import { retryLoop } from '../base/controlflow'
 
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
@@ -291,8 +291,43 @@ export class Searcher<
       this.universe.config.addresses.executorAddress
     )
   }
-
   async findRTokenIntoSingleTokenZap(
+    rTokenQuantity: TokenQuantity,
+    output: Token,
+    signerAddress: Address,
+    slippage = 0.0
+  ) {
+    await this.universe.initialized
+    const [mintResults, tradeResults] = await Promise.all([
+      this.findRTokenIntoSingleTokenZapViaIssueance(
+        rTokenQuantity,
+        output,
+        signerAddress,
+        slippage
+      ),
+      this.findTokenZapViaTrade(
+        rTokenQuantity,
+        output,
+        signerAddress,
+        slippage
+      ),
+    ])
+
+    const results = await Promise.all(
+      [mintResults, ...tradeResults].map(async (i) => {
+        return {
+          quote: i,
+          cost: await i.swaps.cost(this.universe),
+          netValue: await i.swaps.netValue(this.universe),
+        }
+      })
+    )
+    results.sort((l, r) => -l.netValue.compare(r.netValue))
+
+    return results[0].quote
+  }
+
+  async findRTokenIntoSingleTokenZapViaIssueance(
     rTokenQuantity: TokenQuantity,
     output: Token,
     signerAddress: Address,
@@ -334,6 +369,17 @@ export class Searcher<
             signerAddress,
             slippage
           )
+          if (potentialSwaps.length === 0) {
+            throw Error(
+              'Failed to find trade for: ' +
+                qty +
+                ' -> ' +
+                outputToken +
+                '(' +
+                output.address +
+                ')'
+            )
+          }
           const trade = potentialSwaps[0]
           await trade.exchange(tokenAmounts)
           return trade
@@ -457,34 +503,17 @@ export class Searcher<
       this.findTokenZapViaTrade(userInput, rToken, signerAddress, slippage),
     ])
 
-    const results = (
-      await Promise.all(
-        [...mintResults, ...tradeResults].map(async (i) => {
-          return {
-            quote: i,
-            zapTx: await i.toTransaction({ returnDust: false }).catch((e) => {
-              return null
-            }),
-            cost: await i.swaps.cost(this.universe),
-            netValue: await i.swaps.netValue(this.universe),
-          }
-        })
-      )
-    ).filter((i) => i.zapTx !== null)
+    const results = await Promise.all(
+      [...mintResults, ...tradeResults].map(async (i) => {
+        return {
+          quote: i,
+          cost: await i.swaps.cost(this.universe),
+          netValue: await i.swaps.netValue(this.universe),
+        }
+      })
+    )
     results.sort((l, r) => -l.netValue.compare(r.netValue))
 
-    // console.log(
-    //   results
-    //     .map((i) => {
-    //       let out = ' - ' + i.quote.swaps.toShortString() + '\n'
-    //       out += '   output: ' + i.quote.swaps.outputValue + '\n'
-    //       out += '   cost: -' + i.cost.txFeeUsd.toString() + '\n'
-    //       out += '   net: ' + i.netValue + '\n'
-    //       return out
-    //     })
-    //     .join('\n')
-    // )
-    // console.log('')
     return results[0].quote
   }
 

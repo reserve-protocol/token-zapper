@@ -1,10 +1,9 @@
 import { Address } from '../base/Address'
 import { IBasketHandler__factory } from '../contracts/factories/contracts/IBasketHandler__factory'
-
+import { RTokenLens__factory } from '../contracts/factories/contracts/RTokenLens__factory'
 
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
-
 
 export interface IBasket {
   basketNonce: number
@@ -12,11 +11,12 @@ export interface IBasket {
   basketTokens: Token[]
   rToken: Token
 
-  quote(baskets: bigint): Promise<TokenQuantity[]>
+  redeem(amount: TokenQuantity): Promise<TokenQuantity[]>
 }
 
 export class TokenBasket implements IBasket {
   private readonly basketHandler: ReturnType<typeof IBasketHandler__factory.connect>
+  private readonly lens: ReturnType<typeof RTokenLens__factory.connect>
 
   public issueRate = 10n ** 18n
   public basketNonce = 0
@@ -28,30 +28,46 @@ export class TokenBasket implements IBasket {
   }
 
   constructor(
-    readonly universe: Universe<any>,
-    public readonly address: Address,
-    public readonly rToken: Token
+    readonly universe: Universe,
+    public readonly basketHandlerAddress: Address,
+    public readonly rToken: Token,
+    public readonly assetRegistry: Address,
+
   ) {
     this.basketHandler = IBasketHandler__factory.connect(
-      address.address,
+      basketHandlerAddress.address,
+      universe.provider
+    )
+    this.lens = RTokenLens__factory.connect(
+      universe.config.addresses.rtokenLens.address,
       universe.provider
     )
   }
 
   async update() {
     const [unit, nonce] = await Promise.all([
-      this.quote(this.rToken.scale),
+      this.redeem(
+        this.rToken.one
+      ),
       this.basketHandler.nonce()
     ])
     this.basketNonce = nonce
     this.unitBasket = unit
   }
 
-  async quote(baskets: bigint) {
+  async redeem(quantity: TokenQuantity) {
     const {
       quantities,
       erc20s
-    } = await this.basketHandler.callStatic.quote(baskets, 2)
+    } = await this.lens.callStatic.redeem(
+      this.assetRegistry.address,
+      this.basketHandlerAddress.address,
+      this.rToken.address.address,
+      quantity.amount
+    ).catch(() => this.basketHandler.quote(
+      quantity.amount,
+      2
+    ))
 
     return await Promise.all(
       quantities.map(async (q, i) => {
@@ -61,6 +77,5 @@ export class TokenBasket implements IBasket {
         return token.fromBigInt(q.toBigInt())
       })
     )
-
   }
 }

@@ -22,6 +22,7 @@ export const makeConfig = <
     executorAddress: string
     zapperAddress: string
     wrappedNative: string
+    rtokenLens: string
   }
 ) => {
   return {

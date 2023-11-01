@@ -27,8 +27,8 @@ const createRToken = (
     unitBasket: quantities,
     rToken,
     basketNonce: 0,
-    async quote(baskets) {
-      return quantities.map((i) => i.scalarMul(baskets).scalarDiv(rToken.scale))
+    async redeem(baskets) {
+      return quantities.map((i) => i.scalarMul(baskets.amount).scalarDiv(rToken.scale))
     }
   }
 

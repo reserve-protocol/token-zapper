@@ -6,19 +6,24 @@ import { TokenBasket } from '../entities/TokenBasket';
 
 export const loadRToken = async (universe: Universe, rTokenAddress: Address, mainAddr: Address) => {
   const mainInst = IMain__factory.connect(mainAddr.address, universe.provider)
-  const [basketHandlerAddress] = await Promise.all([
+  const [
+    basketHandlerAddress,
+    assetRegistryAddress,
+  ] = await Promise.all([
     mainInst.basketHandler(),
+    mainInst.assetRegistry(),
   ])
 
   const token = await universe.getToken(rTokenAddress)
   const basketHandler = new TokenBasket(
     universe,
     Address.from(basketHandlerAddress),
-    token
+    token,
+    Address.from(assetRegistryAddress)
   );
   (universe.rTokens as any)[token.symbol] = token
   await basketHandler.update()
-  universe.createRefreshableEntity(basketHandler.address, () =>
+  universe.createRefreshableEntity(basketHandler.basketHandlerAddress, () =>
     basketHandler.update()
   )
   universe.defineMintable(

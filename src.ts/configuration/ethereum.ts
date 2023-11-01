@@ -1,6 +1,5 @@
 import { type Universe } from '../Universe';
 import { makeConfig } from './ChainConfiguration';
-
 export const COMMON_TOKENS = {
   USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
   USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
@@ -91,7 +90,8 @@ export const ethereumConfig = makeConfig(
     facadeAddress: "0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C",
     zapperAddress: '0x8cE5ee761fF619c889F007CB4D708178E87C11D8',
     executorAddress: '0xe18a821ea1f1796A0797CEa01A3f86ebEab0f9B6',
-    wrappedNative: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+    wrappedNative: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    rtokenLens: "0xf221BB6aBF67186576363514D638835Ffe66F2D9"
   }
 )
 

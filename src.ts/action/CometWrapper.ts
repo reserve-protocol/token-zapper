@@ -1,4 +1,3 @@
-
 import { type Universe } from '../Universe'
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
@@ -14,12 +13,13 @@ export class MintCometWrapperAction extends Action {
   gasEstimate() {
     return BigInt(110000n)
   }
-  async encode([amountsIn]: TokenQuantity[], dest: Address): Promise<ContractCall> {
+  async encode(
+    [amountsIn]: TokenQuantity[],
+    dest: Address
+  ): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
-        iWrappedCometInterface.encodeFunctionData('deposit', [
-          amountsIn.amount,
-        ])
+        iWrappedCometInterface.encodeFunctionData('deposit', [amountsIn.amount])
       ),
       this.receiptToken.address,
       0n,
@@ -31,10 +31,11 @@ export class MintCometWrapperAction extends Action {
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [
       this.receiptToken.from(
-        await WrappedComet__factory.connect(this.receiptToken.address.address, this.universe.provider).convertDynamicToStatic(
-          amountsIn.amount
-        )
-      )
+        await WrappedComet__factory.connect(
+          this.receiptToken.address.address,
+          this.universe.provider
+        ).convertDynamicToStatic(amountsIn.amount)
+      ),
     ]
   }
 
@@ -58,7 +59,7 @@ export class MintCometWrapperAction extends Action {
   }
 
   get outputSlippage() {
-    return 3000000n;
+    return 3000000n
   }
 }
 
@@ -67,8 +68,10 @@ export class BurnCometWrapperAction extends Action {
     return BigInt(110000n)
   }
 
-  async encode([amountsIn]: TokenQuantity[], dest: Address): Promise<ContractCall> {
-
+  async encode(
+    [amountsIn]: TokenQuantity[],
+    dest: Address
+  ): Promise<ContractCall> {
     const [withdrawalAmount] = await this.quote([amountsIn])
     return new ContractCall(
       parseHexStringIntoBuffer(
@@ -87,10 +90,11 @@ export class BurnCometWrapperAction extends Action {
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [
       this.baseToken.from(
-        await WrappedComet__factory.connect(this.receiptToken.address.address, this.universe.provider).convertStaticToDynamic(
-          amountsIn.amount
-        )
-      )
+        await WrappedComet__factory.connect(
+          this.receiptToken.address.address,
+          this.universe.provider
+        ).convertStaticToDynamic(amountsIn.amount)
+      ),
     ]
   }
 
@@ -113,6 +117,6 @@ export class BurnCometWrapperAction extends Action {
     return `CompoundV3Burn(${this.receiptToken.toString()})`
   }
   get outputSlippage() {
-    return 300000n;
+    return 300000n
   }
 }

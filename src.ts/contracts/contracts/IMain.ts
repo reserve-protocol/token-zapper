@@ -22,16 +22,37 @@ import type {
 
 export interface IMainInterface extends utils.Interface {
   functions: {
+    "assetRegistry()": FunctionFragment;
     "backingManager()": FunctionFragment;
     "basketHandler()": FunctionFragment;
+    "broker()": FunctionFragment;
+    "distributor()": FunctionFragment;
+    "furnace()": FunctionFragment;
     "rToken()": FunctionFragment;
+    "rTokenTrader()": FunctionFragment;
+    "rsrTrader()": FunctionFragment;
+    "stRSR()": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "backingManager" | "basketHandler" | "rToken"
+    nameOrSignatureOrTopic:
+      | "assetRegistry"
+      | "backingManager"
+      | "basketHandler"
+      | "broker"
+      | "distributor"
+      | "furnace"
+      | "rToken"
+      | "rTokenTrader"
+      | "rsrTrader"
+      | "stRSR"
   ): FunctionFragment;
 
   encodeFunctionData(
+    functionFragment: "assetRegistry",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "backingManager",
     values?: undefined
   ): string;
@@ -39,8 +60,24 @@ export interface IMainInterface extends utils.Interface {
     functionFragment: "basketHandler",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "broker", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "distributor",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "furnace", values?: undefined): string;
   encodeFunctionData(functionFragment: "rToken", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "rTokenTrader",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "rsrTrader", values?: undefined): string;
+  encodeFunctionData(functionFragment: "stRSR", values?: undefined): string;
 
+  decodeFunctionResult(
+    functionFragment: "assetRegistry",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "backingManager",
     data: BytesLike
@@ -49,7 +86,19 @@ export interface IMainInterface extends utils.Interface {
     functionFragment: "basketHandler",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "broker", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "distributor",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "furnace", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "rToken", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "rTokenTrader",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "rsrTrader", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "stRSR", data: BytesLike): Result;
 
   events: {};
 }
@@ -81,42 +130,112 @@ export interface IMain extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    assetRegistry(overrides?: CallOverrides): Promise<[string]>;
+
     backingManager(overrides?: CallOverrides): Promise<[string]>;
 
     basketHandler(overrides?: CallOverrides): Promise<[string]>;
 
+    broker(overrides?: CallOverrides): Promise<[string]>;
+
+    distributor(overrides?: CallOverrides): Promise<[string]>;
+
+    furnace(overrides?: CallOverrides): Promise<[string]>;
+
     rToken(overrides?: CallOverrides): Promise<[string]>;
+
+    rTokenTrader(overrides?: CallOverrides): Promise<[string]>;
+
+    rsrTrader(overrides?: CallOverrides): Promise<[string]>;
+
+    stRSR(overrides?: CallOverrides): Promise<[string]>;
   };
+
+  assetRegistry(overrides?: CallOverrides): Promise<string>;
 
   backingManager(overrides?: CallOverrides): Promise<string>;
 
   basketHandler(overrides?: CallOverrides): Promise<string>;
 
+  broker(overrides?: CallOverrides): Promise<string>;
+
+  distributor(overrides?: CallOverrides): Promise<string>;
+
+  furnace(overrides?: CallOverrides): Promise<string>;
+
   rToken(overrides?: CallOverrides): Promise<string>;
 
+  rTokenTrader(overrides?: CallOverrides): Promise<string>;
+
+  rsrTrader(overrides?: CallOverrides): Promise<string>;
+
+  stRSR(overrides?: CallOverrides): Promise<string>;
+
   callStatic: {
+    assetRegistry(overrides?: CallOverrides): Promise<string>;
+
     backingManager(overrides?: CallOverrides): Promise<string>;
 
     basketHandler(overrides?: CallOverrides): Promise<string>;
 
+    broker(overrides?: CallOverrides): Promise<string>;
+
+    distributor(overrides?: CallOverrides): Promise<string>;
+
+    furnace(overrides?: CallOverrides): Promise<string>;
+
     rToken(overrides?: CallOverrides): Promise<string>;
+
+    rTokenTrader(overrides?: CallOverrides): Promise<string>;
+
+    rsrTrader(overrides?: CallOverrides): Promise<string>;
+
+    stRSR(overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {};
 
   estimateGas: {
+    assetRegistry(overrides?: CallOverrides): Promise<BigNumber>;
+
     backingManager(overrides?: CallOverrides): Promise<BigNumber>;
 
     basketHandler(overrides?: CallOverrides): Promise<BigNumber>;
 
+    broker(overrides?: CallOverrides): Promise<BigNumber>;
+
+    distributor(overrides?: CallOverrides): Promise<BigNumber>;
+
+    furnace(overrides?: CallOverrides): Promise<BigNumber>;
+
     rToken(overrides?: CallOverrides): Promise<BigNumber>;
+
+    rTokenTrader(overrides?: CallOverrides): Promise<BigNumber>;
+
+    rsrTrader(overrides?: CallOverrides): Promise<BigNumber>;
+
+    stRSR(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    assetRegistry(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     backingManager(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     basketHandler(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    broker(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    distributor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    furnace(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     rToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    rTokenTrader(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    rsrTrader(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    stRSR(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

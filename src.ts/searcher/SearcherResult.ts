@@ -35,7 +35,7 @@ class Step {
     readonly action: Action,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) {}
+  ) { }
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -66,7 +66,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-          InteractionConvention.PayBeforeCall
+        InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -186,8 +186,15 @@ export abstract class BaseSearcherResult {
       value,
     })
     if (resp.startsWith('0x08c379a0')) {
-      const msg = defaultAbiCoder.decode(['string'], '0x' + resp.slice(10))[0]
-      throw new Error(msg)
+      // const len = Number(BigInt('0x'+resp.slice(10, 74)))
+      const data = resp.slice(138)
+      const msg = Buffer.from(data, "hex").toString()
+      throw new Error(
+        `${data}: ${msg}`
+      )
+    } else if (resp.length <= 10 + 64 * 2) {
+
+      throw new Error('Failed with error: ' + resp)
     }
     return zapperInterface.decodeFunctionResult('zapERC20', resp)
       .out as ZapperOutputStructOutput
@@ -304,7 +311,7 @@ export abstract class BaseSearcherResult {
           if (i.token === this.outputToken) {
             return i.token.from(
               outputTokenOutput.amount -
-                outputTokenOutput.amount / (options.outputSlippage ?? 250_000n)
+              outputTokenOutput.amount / (options.outputSlippage ?? 250_000n)
             )
           }
           return i
@@ -372,8 +379,8 @@ export abstract class BaseSearcherResult {
     return this.inputIsNative
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -478,7 +485,17 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
       throw new Error('Unexpected: output does not contain RToken')
     }
 
+    const dustTokens = [this.outputToken]
+    if (options.returnDust) {
+      dustTokens.push(
+        ...this.potentialResidualTokens
+      )
+    }
+
+    builder.drainERC20([...new Set(dustTokens)], this.signer)
+
     // First simulate the transaction with infinite slippage
+    // console.log(this.swaps.describe().join('\n'))
     const simulationResult = await this.simulateAndParse(
       options,
       this.encodeCall(
@@ -488,16 +505,6 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
     )
     this.swaps = simulationResult.swaps
 
-    const dustTokens = [this.outputToken]
-    if (options.returnDust) {
-      dustTokens.push(
-        ...simulationResult.dust
-          .filter((i) => i.amount !== 0n)
-          .map((i) => i.token)
-      )
-    }
-
-    builder.drainERC20([...new Set(dustTokens)], this.signer)
 
     const payload = this.encodePayload(simulationResult.output, options)
     const data = this.encodeCall(options, payload)
@@ -568,7 +575,7 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
           // TODO: Find a better way to avoid off by one errors
           simulationResult.output.token.from(
             simulationResult.output.amount -
-              simulationResult.output.amount / mintRtoken.outputSlippage
+            simulationResult.output.amount / mintRtoken.outputSlippage
           ),
           this.signer
         )

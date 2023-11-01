@@ -21,7 +21,8 @@ export const setupWrappedGasToken = async <
 
   const wrappedGasTokenActions = universe.defineMintable(
     new DepositAction(universe, wrappedToken),
-    new WithdrawAction(universe, wrappedToken)
+    new WithdrawAction(universe, wrappedToken),
+    true
   );
   universe.tokenTradeSpecialCases.set(
     universe.nativeToken,

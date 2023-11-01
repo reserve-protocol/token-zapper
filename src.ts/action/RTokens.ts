@@ -18,16 +18,19 @@ export class MintRTokenAction extends Action {
   gasEstimate() {
     return BigInt(600000n)
   }
+
+  get outputSlippage() {
+    return 3000000n;
+  }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
     if (amountsIn.length !== this.input.length) {
       throw new Error('Invalid inputs for RToken mint')
     }
     const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket)
-    const out = unitsRequested - unitsRequested / 3_000_000n
     return [
       this.basket.rToken.fromBigInt(
-        out
+        unitsRequested
       ),
     ]
   }
@@ -93,26 +96,28 @@ export class MintRTokenAction extends Action {
 }
 
 export class BurnRTokenAction extends Action {
+
+  get outputSlippage() {
+    return 300000n;
+  }
   gasEstimate() {
     return BigInt(600000n)
   }
-  async encode([quantity]: TokenQuantity[]): Promise<ContractCall> {
-    const nonce = await this.basketHandler.basketNonce
+  async encode([quantity]: TokenQuantity[], destination: Address): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
-        rTokenIFace.encodeFunctionData('redeem', [quantity.amount, nonce])
+        rTokenIFace.encodeFunctionData('redeem', [quantity.amount])
       ),
       this.basketHandler.rToken.address,
       0n,
       this.gasEstimate(),
-      'RToken Burn'
+      `Burn RToken(${this.output.join(",")},input:${quantity},destination: ${destination})`
     )
   }
 
   async quote([quantity]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
-    const quantityPrToken = this.basketHandler.unitBasket
-    return quantityPrToken.map((qty) => quantity.into(qty.token).mul(qty))
+    return await this.basketHandler.quote(quantity.amount)
   }
 
   constructor(readonly universe: Universe, readonly basketHandler: IBasket) {
@@ -121,7 +126,7 @@ export class BurnRTokenAction extends Action {
       [basketHandler.rToken],
       basketHandler.basketTokens,
       InteractionConvention.None,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

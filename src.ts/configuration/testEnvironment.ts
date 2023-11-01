@@ -75,6 +75,9 @@ const defineRToken = (
     unitBasket: basket,
     rToken: rToken,
     basketNonce: 0,
+    async quote(baskets) {
+      return basket.map((i) => i.scalarMul(baskets).scalarDiv(rToken.scale))
+    }
   }
   universe.defineMintable(
     new MintRTokenAction(universe, basketHandler),

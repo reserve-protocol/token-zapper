@@ -137,9 +137,8 @@ export const fetchQuote = async (
   }
 
   const BASE = 'https://swap-api.defillama.com/dexAggregatorQuote'
-  const url = `${BASE}?api_key=zT82BQ38E5unVRDGswzgUzfM2yyaQBK8mFBrzTzX6s&protocol=Matcha/0x&chain=${
-    CHAIN_SLUG[chainId]
-  }&from=${qty.token.address.address.toLowerCase()}&to=${output.address.address.toLowerCase()}&amount=${qty.amount.toString()}`
+  const url = `${BASE}?api_key=zT82BQ38E5unVRDGswzgUzfM2yyaQBK8mFBrzTzX6s&protocol=Matcha/0x&chain=${CHAIN_SLUG[chainId]
+    }&from=${qty.token.address.address.toLowerCase()}&to=${output.address.address.toLowerCase()}&amount=${qty.amount.toString()}`
   const response = await fetch(url, {
     method: 'POST',
     body: JSON.stringify(request),
@@ -153,12 +152,14 @@ export const fetchQuote = async (
 }
 
 class DefillamaAction extends Action {
+  public outputQuantity: TokenQuantity[] = []
   constructor(
     public readonly request: Quote,
     public readonly quantityIn: TokenQuantity,
     output: Token,
     public readonly universe: Universe,
-    public readonly slippage: number
+    public readonly slippage: number,
+    public readonly protocol: PROTOCOLS
   ) {
     super(
       Address.from(request.tokenApprovalAddress),
@@ -173,12 +174,17 @@ class DefillamaAction extends Action {
         ),
       ]
     )
-  }
-  async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
+
     const amount = BigInt(this.request.amountReturned)
     const minOut = amount - (amount / 10000n) * BigInt(this.slippage)
     const out = this.output[0].from(minOut)
-    return [out]
+    this.outputQuantity = [out]
+  }
+  toString(): string {
+    return `DefiLama[${this.protocol}](${this.quantityIn} => ${this.outputQuantity}})`
+  }
+  async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return this.outputQuantity
   }
   gasEstimate(): bigint {
     return BigInt(this.request.rawQuote.estimatedGas)
@@ -189,9 +195,7 @@ class DefillamaAction extends Action {
       Address.from(this.request.rawQuote.to),
       0n,
       this.gasEstimate(),
-      `DefiLlama(${this.address}) (${inputs.join(',')}) -> (${await this.quote(
-        inputs
-      )})`
+      `DefiLlama(${this.address}) (${inputs.join(',')}) -> (${this.outputQuantity})`
     )
   }
 }
@@ -214,7 +218,7 @@ export const createDefillama = (
         slippage,
       })
       return await new SwapPlan(universe, [
-        new DefillamaAction(req, input, output, universe, slippage),
+        new DefillamaAction(req, input, output, universe, slippage, protocol),
       ]).quote([input], destination)
     }
   )

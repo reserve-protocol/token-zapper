@@ -10,6 +10,10 @@ import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 const wstETHInterface = IWStETH__factory.createInterface()
 export class WStETHRateProvider {
+
+  get outputSlippage() {
+    return 3000000n;
+  }
   private wstethInstance: IWStETH
   constructor(
     readonly universe: Universe,
@@ -26,7 +30,7 @@ export class WStETHRateProvider {
     const out = (await this.wstethInstance.callStatic.getWstETHByStETH(
       amountsIn.amount
     )).toBigInt()
-    return this.wsteth.from(out - out / 3000000n)
+    return this.wsteth.from(out)
   }
 
   async quoteBurn(amountsIn: TokenQuantity): Promise<TokenQuantity> {
@@ -38,6 +42,9 @@ export class WStETHRateProvider {
 }
 
 export class MintWStETH extends Action {
+  get outputSlippage() {
+    return 3000000n;
+  }
   gasEstimate() {
     return BigInt(175000n)
   }
@@ -80,6 +87,9 @@ export class MintWStETH extends Action {
 }
 
 export class BurnWStETH extends Action {
+  get outputSlippage() {
+    return 3000000n;
+  }
   gasEstimate() {
     return BigInt(175000n)
   }

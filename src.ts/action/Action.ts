@@ -27,6 +27,17 @@ export abstract class Action {
   ) {}
 
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
+  
+  async quoteWithSlippage(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const outputs = await this.quote(amountsIn)
+    if (this.outputSlippage === 0n) {
+      return outputs
+    }
+    return outputs.map(i => {
+      const slippageAmount = i.scalarDiv(this.outputSlippage)
+      return i.sub(slippageAmount)
+    });
+  }
   abstract gasEstimate(): bigint
   async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {
     const outputs = await this.quote(amountsIn)
@@ -47,5 +58,9 @@ export abstract class Action {
   // to have the token actually appear in paths.
   get addToGraph() {
     return true
+  }
+
+  get outputSlippage() {
+    return 0n;
   }
 }

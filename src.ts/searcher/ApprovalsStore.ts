@@ -3,6 +3,7 @@ import { type Address } from '../base/Address'
 import { type Token } from '../entities/Token'
 import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory';
 import { type Universe } from '../Universe';
+import { GAS_TOKEN_ADDRESS } from '../base/constants';
 
 export class ApprovalsStore {
   constructor(private readonly provider: Provider) { }
@@ -38,6 +39,9 @@ export class ApprovalsStore {
     spender: Address,
     amount: bigint
   ): Promise<boolean> {
+    if (token.address.address === GAS_TOKEN_ADDRESS) {
+      return false
+    }
     const key = `${token}.${owner}.${spender}`
     let check = this.cache.get(key)
     if (check == null) {

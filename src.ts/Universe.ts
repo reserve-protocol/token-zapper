@@ -43,6 +43,24 @@ export class Universe<const UniverseConf extends Config = Config> {
   public readonly tokens = new Map<Address, Token>()
   public readonly lpTokens = new Map<Token, LPToken>()
 
+  private _gasTokenPrice: TokenQuantity | null = null
+  public get gasTokenPrice() {
+    return this._gasTokenPrice ?? this.usd.from(0)
+  }
+
+  public async quoteGas(units: bigint) {
+    if (this._gasTokenPrice == null) {
+      this._gasTokenPrice = await this.fairPrice(this.nativeToken.one)
+    }
+    const txFee = this.nativeToken.from(units * this.gasPrice)
+    const txFeeUsd = txFee.into(this.usd).mul(this.gasTokenPrice)
+    return {
+      units,
+      txFee,
+      txFeeUsd
+    }
+  }
+
   public readonly precursorTokenSourcingSpecialCases = new DefaultMap<
     Token,
     Map<Token, SourcingRule>
@@ -57,6 +75,7 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   // The GAS token for the EVM chain, set by the StaticConfig
   public readonly nativeToken: Token
+  public readonly wrappedNativeToken: Token
 
   // 'Virtual' token used for pricing things
   public readonly usd: Token = Token.createToken(
@@ -125,7 +144,11 @@ export class Universe<const UniverseConf extends Config = Config> {
    */
   public oracle?: OracleDef = undefined
   async fairPrice(qty: TokenQuantity) {
-    return this.oracle?.quote(qty).catch(() => null) ?? null
+    const out = await this.oracle?.quote(qty).catch(() => {
+      return null
+    }) ?? null
+
+    return out
   }
   async quoteIn(qty: TokenQuantity, tokenToQuoteWith: Token) {
     return this.oracle?.quoteIn(qty, tokenToQuoteWith).catch(() => null) ?? null
@@ -257,6 +280,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     public readonly loadToken: TokenLoader
   ) {
     const nativeToken = config.nativeToken
+    
     this.nativeToken = Token.createToken(
       this.tokens,
       Address.fromHexString(GAS_TOKEN_ADDRESS),
@@ -264,14 +288,24 @@ export class Universe<const UniverseConf extends Config = Config> {
       nativeToken.name,
       nativeToken.decimals
     )
+
+    this.wrappedNativeToken = Token.createToken(
+      this.tokens,
+      config.addresses.wrappedNative,
+      'W'+nativeToken.symbol,
+      'Wrapped '+nativeToken.name,
+      nativeToken.decimals
+    )
+    
   }
 
-  public updateBlockState(block: number, gasPrice: bigint) {
+  public async updateBlockState(block: number, gasPrice: bigint) {
     if (block <= this.blockState.currentBlock) {
       return
     }
     this.blockState.currentBlock = block
     this.blockState.gasPrice = gasPrice
+    this._gasTokenPrice = await this.fairPrice(this.nativeToken.one)
   }
 
   static async createWithConfig<const C extends Config>(

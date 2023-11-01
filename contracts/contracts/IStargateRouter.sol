@@ -11,7 +11,7 @@ interface IStargateRouter {
 
     // Withdraw
     function instantRedeemLocal(
-        uint256 poolId,
+        uint16 poolId,
         uint256 amountLD,
         address _to
     ) external returns (uint256 amountSD);

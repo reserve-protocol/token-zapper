@@ -29,8 +29,8 @@ export interface IRTokenInterface extends utils.Interface {
     "issue(uint256)": FunctionFragment;
     "issueTo(address,uint256)": FunctionFragment;
     "mint(address,uint256)": FunctionFragment;
-    "redeem(uint256,uint48)": FunctionFragment;
-    "redeemTo(address,uint256,uint48)": FunctionFragment;
+    "redeem(uint256)": FunctionFragment;
+    "redeemTo(address,uint256)": FunctionFragment;
   };
 
   getFunction(
@@ -61,15 +61,11 @@ export interface IRTokenInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "redeem",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "redeemTo",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
 
   decodeFunctionResult(
@@ -133,14 +129,12 @@ export interface IRToken extends BaseContract {
 
     redeem(
       amount: PromiseOrValue<BigNumberish>,
-      basketNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     redeemTo(
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
-      basketNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -166,14 +160,12 @@ export interface IRToken extends BaseContract {
 
   redeem(
     amount: PromiseOrValue<BigNumberish>,
-    basketNonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   redeemTo(
     recipient: PromiseOrValue<string>,
     amount: PromiseOrValue<BigNumberish>,
-    basketNonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -199,14 +191,12 @@ export interface IRToken extends BaseContract {
 
     redeem(
       amount: PromiseOrValue<BigNumberish>,
-      basketNonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     redeemTo(
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
-      basketNonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -235,14 +225,12 @@ export interface IRToken extends BaseContract {
 
     redeem(
       amount: PromiseOrValue<BigNumberish>,
-      basketNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     redeemTo(
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
-      basketNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -269,14 +257,12 @@ export interface IRToken extends BaseContract {
 
     redeem(
       amount: PromiseOrValue<BigNumberish>,
-      basketNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     redeemTo(
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
-      basketNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

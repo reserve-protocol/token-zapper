@@ -22,17 +22,17 @@ describe('actions/RToken', () => {
     ]
     const eUSDQtyFromAbout100USDOfBasket = (await mint.quote(quantitiesIn))[0]
 
-    expect(eUSDQtyFromAbout100USDOfBasket.formatWithSymbol()).toBe('99.999966666666666667 eUSD')
+    expect(eUSDQtyFromAbout100USDOfBasket.formatWithSymbol()).toBe('100.0 eUSD')
 
     const about100USDT = await burn.quote([eUSDQtyFromAbout100USDOfBasket])
     expect(about100USDT[0].formatWithSymbol()).toBe(
-      "22.506292 saUSDT"
+      "22.5063 saUSDT"
     )
     expect(about100USDT[1].formatWithSymbol()).toBe(
-      "50.000382 USDT"
+      "50.0004 USDT"
     )
     expect(about100USDT[2].formatWithSymbol()).toBe(
-      "1124.34056514 cUSDT"
+      "1124.34094 cUSDT"
     )
   })
 })

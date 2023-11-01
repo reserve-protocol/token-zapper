@@ -18,6 +18,10 @@ function rayDiv(a: bigint, b: bigint): bigint {
 }
 const saTokenInterface = IStaticAV3TokenLM__factory.createInterface()
 export class MintSAV3TokensAction extends Action {
+
+  get outputSlippage() {
+    return 3000000n;
+  }
   gasEstimate() {
     return BigInt(300000n)
   }
@@ -46,7 +50,7 @@ export class MintSAV3TokensAction extends Action {
     const x = rayDiv(amountsIn.into(this.saToken).amount, this.rate.value)
     return [
       this.saToken.fromBigInt(
-        x - x / 3000000n
+        x
       ),
     ]
   }
@@ -72,6 +76,10 @@ export class MintSAV3TokensAction extends Action {
   }
 }
 export class BurnSAV3TokensAction extends Action {
+
+  get outputSlippage() {
+    return 3000000n;
+  }
   gasEstimate() {
     return BigInt(300000n)
   }

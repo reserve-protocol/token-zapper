@@ -26,7 +26,7 @@ import type {
 export interface IStargateRouterInterface extends utils.Interface {
   functions: {
     "addLiquidity(uint256,uint256,address)": FunctionFragment;
-    "instantRedeemLocal(uint256,uint256,address)": FunctionFragment;
+    "instantRedeemLocal(uint16,uint256,address)": FunctionFragment;
   };
 
   getFunction(

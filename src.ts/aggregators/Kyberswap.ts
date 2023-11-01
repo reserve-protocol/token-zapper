@@ -83,6 +83,7 @@ const idToSlug: Record<number, string> = {
 }
 
 class KyberAction extends Action {
+  public outputQuantity: TokenQuantity[] = []
   constructor(
     public readonly request: KyberswapAggregatorResult,
     public readonly universe: Universe,
@@ -101,15 +102,20 @@ class KyberAction extends Action {
         ),
       ]
     )
-  }
-  async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
+
     const amount = BigInt(this.request.swap.data.amountOut)
     const minOut = amount - (amount / 10000n * BigInt(this.slippage))
     const out = this.output[0].from(minOut)
-    return [out]
+    this.outputQuantity = [out]
+  }
+  toString() {
+    return `Kyberswap(${this.request.quantityIn} => ${this.request.output})`
+  }
+  async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return this.outputQuantity
   }
   gasEstimate(): bigint {
-    return 200_000n
+    return BigInt(this.request.req.data.routeSummary.gas)
   }
   async encode(
     inputs: TokenQuantity[],
@@ -120,7 +126,7 @@ class KyberAction extends Action {
       Address.from(this.request.req.data.routerAddress),
       0n,
       this.gasEstimate(),
-      `Kyberswap(${this.address}) (${inputs.join(",")}) -> (${await this.quote(inputs)})`
+      `Kyberswap(${this.address}) (${inputs.join(",")}) -> (${this.outputQuantity})`
     )
   }
 }
@@ -154,7 +160,7 @@ export const createKyberswap = (aggregatorName: string, universe: Universe, slip
       body: JSON.stringify({
         ...req.data,
         sender: universe.config.addresses.executorAddress.address,
-        recipient: universe.config.addresses.executorAddress.address,
+        recipient: recipient.address,
         skipSimulateTx: true,
         slippageTolerance: slippage,
         source: "register"

@@ -19,6 +19,7 @@ export class StETHRateProvider {
 }
 
 export class MintStETH extends Action {
+  
   gasEstimate() {
     return BigInt(200000n)
   }
@@ -67,8 +68,8 @@ export class BurnStETH extends Action {
     throw new Error('Not implemented')
   }
 
-  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [await this.rateProvider.quoteBurn(amountsIn)]
+  async quote([qty]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return [await this.rateProvider.quoteBurn(qty)]
   }
 
   constructor(

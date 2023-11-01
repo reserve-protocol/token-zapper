@@ -14,7 +14,8 @@ export const setupLido = async (
   const stRate = new StETHRateProvider(universe, stakedToken);
   universe.defineMintable(
     new MintStETH(universe, stakedToken, stRate),
-    new BurnStETH(universe, stakedToken, stRate)
+    new BurnStETH(universe, stakedToken, stRate),
+    true
   );
   const wrappedStakedToken = await universe.getToken(
     Address.from(wrappedStakedAddress)
@@ -22,6 +23,7 @@ export const setupLido = async (
   const wstRate = new WStETHRateProvider(universe, stakedToken, wrappedStakedToken);
   universe.defineMintable(
     new MintWStETH(universe, stakedToken, wrappedStakedToken, wstRate),
-    new BurnWStETH(universe, stakedToken, wrappedStakedToken, wstRate)
+    new BurnWStETH(universe, stakedToken, wrappedStakedToken, wstRate),
+    true
   );
 };

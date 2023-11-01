@@ -43,6 +43,6 @@ describe('searcher/mints', () => {
 
     expect(result.length).toBe(1)
     const expectedPath = result[0]
-    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('9.999994 USDT')
+    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('9.999996 USDT')
   })
 })

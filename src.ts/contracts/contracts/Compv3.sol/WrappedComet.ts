@@ -25,15 +25,30 @@ import type {
 
 export interface WrappedCometInterface extends utils.Interface {
   functions: {
+    "convertDynamicToStatic(uint256)": FunctionFragment;
+    "convertStaticToDynamic(uint104)": FunctionFragment;
     "deposit(uint256)": FunctionFragment;
     "exchangeRate()": FunctionFragment;
     "withdrawTo(address,uint256)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "deposit" | "exchangeRate" | "withdrawTo"
+    nameOrSignatureOrTopic:
+      | "convertDynamicToStatic"
+      | "convertStaticToDynamic"
+      | "deposit"
+      | "exchangeRate"
+      | "withdrawTo"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "convertDynamicToStatic",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "convertStaticToDynamic",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
   encodeFunctionData(
     functionFragment: "deposit",
     values: [PromiseOrValue<BigNumberish>]
@@ -47,6 +62,14 @@ export interface WrappedCometInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "convertDynamicToStatic",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "convertStaticToDynamic",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "exchangeRate",
@@ -84,6 +107,16 @@ export interface WrappedComet extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    convertDynamicToStatic(
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    convertStaticToDynamic(
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     deposit(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -97,6 +130,16 @@ export interface WrappedComet extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
+
+  convertDynamicToStatic(
+    amount: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  convertStaticToDynamic(
+    amount: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   deposit(
     amount: PromiseOrValue<BigNumberish>,
@@ -112,6 +155,16 @@ export interface WrappedComet extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    convertDynamicToStatic(
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    convertStaticToDynamic(
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     deposit(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -129,6 +182,16 @@ export interface WrappedComet extends BaseContract {
   filters: {};
 
   estimateGas: {
+    convertDynamicToStatic(
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    convertStaticToDynamic(
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     deposit(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -144,6 +207,16 @@ export interface WrappedComet extends BaseContract {
   };
 
   populateTransaction: {
+    convertDynamicToStatic(
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    convertStaticToDynamic(
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     deposit(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }

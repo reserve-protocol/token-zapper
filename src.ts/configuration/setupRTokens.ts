@@ -23,7 +23,8 @@ export const loadRToken = async (universe: Universe, rTokenAddress: Address, mai
   )
   universe.defineMintable(
     new MintRTokenAction(universe, basketHandler),
-    new BurnRTokenAction(universe, basketHandler)
+    new BurnRTokenAction(universe, basketHandler),
+    true
   )
   // setTimeout(async () => {
   //   console.log(token + " token basket: ")

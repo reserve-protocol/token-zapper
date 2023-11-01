@@ -13,7 +13,6 @@ import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { parseHexStringIntoBuffer } from "../base/utils"
 import { Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
-import { LPToken } from './LPToken'
 
 const whiteList = new Set(
   [
@@ -131,7 +130,7 @@ const _getExchangeMultipleArgs = (
 export class CurveSwap extends Action {
   private estimate?: bigint
   gasEstimate() {
-    return BigInt(250000n)
+    return this.estimate ?? 205000n
   }
   async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
     const output = await this._quote(amountsIn)
@@ -230,7 +229,8 @@ export class CurveSwap extends Action {
           )
 
         this.estimate = gasEstimate.toBigInt()
-        const outParsed = parseUnits(out.output, 18)
+        const outParsed = parseUnits(parseFloat(out.output).toFixed(this.output[0].decimals), this.output[0].decimals)
+
         out.output = formatUnits(outParsed.sub(outParsed.div(1000n)), this.output[0].decimals)
 
         return out
@@ -403,36 +403,36 @@ export const loadCurve = async (
   }
 
   const addLpToken = async (universe: Universe, pool: CurvePool) => {
-    const tokensInPosition = pool.meta.wrappedCoinAddresses.map(
-      (a) => universe.tokens.get(Address.from(a))!
-    )
+    // const tokensInPosition = pool.meta.wrappedCoinAddresses.map(
+    //   (a) => universe.tokens.get(Address.from(a))!
+    // )
     const lpToken = await universe.getToken(Address.from(pool.meta.lpToken))
 
     if (universe.lpTokens.has(lpToken)) {
       return
     }
 
-    const burn = async (qty: TokenQuantity) => {
-      try {
-        const out = await (pool.meta.isPlain
-          ? pool.meta.withdrawExpected(formatUnits(qty.amount, 18))
-          : pool.meta.withdrawWrappedExpected(formatUnits(qty.amount, 18)))
-        return out.map((amount, i) => tokensInPosition[i].from(amount))
-      } catch (e) {
-        console.log(pool.meta)
-        throw e
-      }
-    }
+    // const burn = async (qty: TokenQuantity) => {
+    //   try {
+    //     const out = await (pool.meta.isPlain
+    //       ? pool.meta.withdrawExpected(formatUnits(qty.amount, 18))
+    //       : pool.meta.withdrawWrappedExpected(formatUnits(qty.amount, 18)))
+    //     return out.map((amount, i) => tokensInPosition[i].from(amount))
+    //   } catch (e) {
+    //     console.log(pool.meta)
+    //     throw e
+    //   }
+    // }
 
-    const mint = async (poolTokens: TokenQuantity[]) => {
-      const out = await pool.meta.depositWrappedExpected(
-        poolTokens.map((q) => formatUnits(q.amount, 18))
-      )
-      return lpToken.from(out)
-    }
+    // const mint = async (poolTokens: TokenQuantity[]) => {
+    //   const out = await pool.meta.depositWrappedExpected(
+    //     poolTokens.map((q) => formatUnits(q.amount, 18))
+    //   )
+    //   return lpToken.from(out)
+    // }
 
-    const lpTokenInstance = new LPToken(lpToken, tokensInPosition, burn, mint)
-    universe.defineLPToken(lpTokenInstance)
+    // const lpTokenInstance = new LPToken(lpToken, tokensInPosition, burn, mint)
+    // universe.defineLPToken(lpTokenInstance)
 
     // const gaugeToken = await universe.getToken(Address.from(pool.meta.token))
     // universe.lpTokens.set(gaugeToken, lpTokenInstance)

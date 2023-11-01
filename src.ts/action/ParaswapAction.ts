@@ -1,25 +1,25 @@
 import { Transaction } from "paraswap";
-import { TokenQuantity, Address, Universe } from "..";
-import { ContractCall } from "../base/ContractCall";
-import { Action, DestinationOptions, InteractionConvention } from "./Action";
+import { Address, TokenQuantity, Universe } from "..";
 import { Approval } from "../base/Approval";
+import { ContractCall } from "../base/ContractCall";
 import { parseHexStringIntoBuffer } from "../base/utils";
+import { Action, DestinationOptions, InteractionConvention } from "./Action";
 
 
 export class ParaswapAction extends Action {
   constructor(
     public readonly universe: Universe,
     public readonly tx: Transaction,
-    input: TokenQuantity,
+    public readonly inputQuantity: TokenQuantity,
     public readonly outputQuantity: TokenQuantity
   ) {
     super(
       Address.from(tx.to),
-      [input.token],
+      [inputQuantity.token],
       [outputQuantity.token],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Recipient,
-      [new Approval(input.token, Address.from(tx.to))]
+      [new Approval(inputQuantity.token, Address.from(tx.to))]
     )
   }
 
@@ -28,6 +28,10 @@ export class ParaswapAction extends Action {
   }
   gasEstimate(): bigint {
     return 200_000n
+  }
+
+  toString() {
+    return `ParaswapAction(${this.inputQuantity} => ${this.outputQuantity})`
   }
 
   async encode(amountsIn: TokenQuantity[], destination: Address, bytes?: Buffer | undefined): Promise<ContractCall> {

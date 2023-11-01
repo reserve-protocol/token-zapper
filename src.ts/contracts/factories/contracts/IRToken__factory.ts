@@ -76,11 +76,6 @@ const _abi = [
         name: "amount",
         type: "uint256",
       },
-      {
-        internalType: "uint48",
-        name: "basketNonce",
-        type: "uint48",
-      },
     ],
     name: "redeem",
     outputs: [],
@@ -98,11 +93,6 @@ const _abi = [
         internalType: "uint256",
         name: "amount",
         type: "uint256",
-      },
-      {
-        internalType: "uint48",
-        name: "basketNonce",
-        type: "uint48",
       },
     ],
     name: "redeemTo",

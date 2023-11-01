@@ -33,14 +33,20 @@ export class SingleSwap {
     tokenAmounts.exchange(this.inputs, this.outputs)
   }
 
+  toString() {
+    return `SingleSwap(input: ${this.inputs
+      .map((i) => i.formatWithSymbol())
+      .join(', ')}, action: ${this.action}, output: ${this.outputs
+      .map((i) => i.formatWithSymbol())
+      .join(', ')})`
+  }
+
   describe() {
-    return [
-      `SingleSwap(input: ${this.inputs
-        .map((i) => i.formatWithSymbol())
-        .join(', ')}, action: ${this.action}, output: ${this.outputs
-        .map((i) => i.formatWithSymbol())
-        .join(', ')})`,
-    ]
+    return [this.toString()]
+  }
+
+  get gasUnits() {
+    return this.action.gasEstimate()
   }
 }
 
@@ -116,9 +122,22 @@ export class SwapPath {
         }
       }
     }
-    out.push(`  outputs: ${this.outputs.join(', ')} ${this.destination}`)
+    out.push(`  outputs: ${this.outputs.join(', ')} -> ${this.destination}`)
     out.push('}')
     return out
+  }
+
+  async cost(universe: Universe) {
+    return await universe.quoteGas(this.gasUnits)
+  }
+
+  async netValue(universe: Universe) {
+    const txPrice = await this.cost(universe)
+    return this.outputValue.sub(txPrice.txFeeUsd)
+  }
+
+  get gasUnits(): bigint {
+    return this.steps.map((s) => s.gasUnits).reduce((l, r) => l + r, 0n)
   }
 }
 
@@ -143,6 +162,20 @@ export class SwapPaths {
 
   async exchange(tokenAmounts: TokenAmounts) {
     tokenAmounts.exchange(this.inputs, this.outputs)
+  }
+
+  get gasUnits() {
+    return this.swapPaths.map((s) => s.gasUnits).reduce((l, r) => l + r, 0n)
+  }
+
+  toShortString() {
+    return `SwapPaths(input:${this.inputs},output:${
+      this.outputs
+    },ops:[${this.swapPaths
+      .map((i) => {
+        return `[${i.inputs.join(', ')} => ${i.outputs.join(', ')}]`
+      })
+      .join(', ')}])`
   }
 
   toString() {
@@ -172,6 +205,15 @@ export class SwapPaths {
     out.push(`  outputs: ${this.outputs.join(', ')}`)
     out.push('}')
     return out
+  }
+
+  async cost(universe: Universe) {
+    return await universe.quoteGas(this.gasUnits)
+  }
+
+  async netValue(universe: Universe) {
+    const txPrice = await this.cost(universe)
+    return this.outputValue.sub(txPrice.txFeeUsd)
   }
 }
 
@@ -207,10 +249,20 @@ export class SwapPlan {
           'Invalid input, input count does not match Action input length: ' +
             step.input.join(', ') +
             ' vs ' +
-            legAmount.join(', ') + " " + this.toString()
+            legAmount.join(', ') +
+            ' ' +
+            this.toString()
         )
       }
-      const output = await step.quote(legAmount)
+
+      let output = await step.quote(legAmount)
+      const outputSlippage = step.outputSlippage
+      if (outputSlippage !== 0n) {
+        output = output.map((i) => {
+          let amount = i.scalarDiv(outputSlippage)
+          return i.sub(amount)
+        })
+      }
       swaps.push(new SingleSwap(legAmount, step, output))
       legAmount = output
     }
@@ -226,13 +278,7 @@ export class SwapPlan {
       )
     ).reduce((l, r) => l.add(r))
 
-    return new SwapPath(
-      input,
-      swaps,
-      legAmount,
-      value,
-      destination
-    )
+    return new SwapPath(input, swaps, legAmount, value, destination)
   }
 
   toString() {

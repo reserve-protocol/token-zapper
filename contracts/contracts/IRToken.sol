@@ -9,11 +9,10 @@ pragma solidity 0.8.17;
 interface IRToken  {
     function issue(uint256 amount) external;
     function issueTo(address recipient, uint256 amount) external;
-    function redeem(uint256 amount, uint48 basketNonce) external;
+    function redeem(uint256 amount) external;
     function redeemTo(
         address recipient,
-        uint256 amount,
-        uint48 basketNonce
+        uint256 amount
     ) external;
     function mint(address recipient, uint256 amount) external;
     function basketsNeeded() external view returns (uint192);

@@ -36,9 +36,9 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "uint256",
+        internalType: "uint16",
         name: "poolId",
-        type: "uint256",
+        type: "uint16",
       },
       {
         internalType: "uint256",

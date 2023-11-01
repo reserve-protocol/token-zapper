@@ -4,7 +4,7 @@ import { setupConvexEdges as setupConvexEdge } from '../action/Convex';
 
 import { loadCurve } from '../action/Curve';
 import { Address } from '../base/Address';
-import { type TokenQuantity } from '../entities/Token';
+import { Token, type TokenQuantity } from '../entities/Token';
 import { SwapPlan } from '../searcher/Swap';
 import {
   BasketTokenSourcingRuleApplication,
@@ -13,6 +13,7 @@ import {
 
 import { type SourcingRule } from '../searcher/SourcingRule';
 import { type EthereumUniverse } from './ethereum';
+import { DexAggregator } from '..';
 
 export { BasketTokenSourcingRuleApplication, PostTradeAction } from '../searcher/BasketTokenSourcingRules';
 
@@ -55,26 +56,31 @@ export const initCurveOnEthereum = async (
   // We will not implement the full curve router,
   // But rather some predefined paths that are likely to be used
   // by users
-  curveApi.createRouterEdge(USDC, USDT);
-  curveApi.createRouterEdge(USDT, USDC);
+  // curveApi.createRouterEdge(USDC, USDT);
+  // curveApi.createRouterEdge(USDT, USDC);
 
-  curveApi.createRouterEdge(FRAX, eUSD__FRAX_USDC);
-  curveApi.createRouterEdge(MIM, eUSD__FRAX_USDC);
-  curveApi.createRouterEdge(USDC, eUSD__FRAX_USDC);
-  curveApi.createRouterEdge(USDT, eUSD__FRAX_USDC);
-  curveApi.createRouterEdge(DAI, eUSD__FRAX_USDC);
+  const setupLPTokenEdge = (tokenA: Token, tokenB: Token) => {
+    curveApi.createRouterEdge(tokenA, tokenB);
+    curveApi.createRouterEdge(tokenB, tokenA);
+  }
 
-  curveApi.createRouterEdge(FRAX, mim_3CRV);
-  curveApi.createRouterEdge(MIM, mim_3CRV);
-  curveApi.createRouterEdge(USDC, mim_3CRV);
-  curveApi.createRouterEdge(USDT, mim_3CRV);
-  curveApi.createRouterEdge(DAI, mim_3CRV);
+  setupLPTokenEdge(FRAX, eUSD__FRAX_USDC);
+  setupLPTokenEdge(MIM, eUSD__FRAX_USDC);
+  setupLPTokenEdge(USDC, eUSD__FRAX_USDC);
+  setupLPTokenEdge(USDT, eUSD__FRAX_USDC);
+  setupLPTokenEdge(DAI, eUSD__FRAX_USDC);
 
-  curveApi.createRouterEdge(FRAX, _3CRV);
-  curveApi.createRouterEdge(MIM, _3CRV);
-  curveApi.createRouterEdge(USDC, _3CRV);
-  curveApi.createRouterEdge(USDT, _3CRV);
-  curveApi.createRouterEdge(DAI, _3CRV);
+  setupLPTokenEdge(FRAX, mim_3CRV);
+  setupLPTokenEdge(MIM, mim_3CRV);
+  setupLPTokenEdge(USDC, mim_3CRV);
+  setupLPTokenEdge(USDT, mim_3CRV);
+  setupLPTokenEdge(DAI, mim_3CRV);
+
+  setupLPTokenEdge(FRAX, _3CRV);
+  setupLPTokenEdge(MIM, _3CRV);
+  setupLPTokenEdge(USDC, _3CRV);
+  setupLPTokenEdge(USDT, _3CRV);
+  setupLPTokenEdge(DAI, _3CRV);
 
   // Add convex edges
   const stkcvxeUSD3CRV = universe.commonTokens['stkcvxeUSD3CRV-f'];
@@ -147,19 +153,25 @@ export const initCurveOnEthereum = async (
     makeStkConvexSourcingRule(threeCryptoConvex.depositAndStakeAction)
   );
 
-  for (const stable of stables) {
-    universe.tokenTradeSpecialCases.set(
-      stable,
-      async (input: TokenQuantity, dest: Address) => {
-        if (!stables.has(input.token)) {
-          return null;
+  universe.dexAggregators.push(
+    new DexAggregator(
+      "Curve",
+      async (_, destination, input, output, __) => {
+        if (stables.has(input.token)&&stables.has(output)) {
+          return await new SwapPlan(universe, [
+            curveApi.createRouterEdge(input.token, output),
+          ]).quote([input], destination);
         }
-        return await new SwapPlan(universe, [
-          curveApi.createRouterEdge(input.token, stable),
-        ]).quote([input], dest);
-      }
-    );
-  }
+        if (Object.values(universe.rTokens).includes(input.token)) {
+          return await new SwapPlan(universe, [
+            curveApi.createRouterEdge(input.token, output),
+          ]).quote([input], destination);
+        }
+        throw new Error("Unsupported trade")
+        
+      },
+    )
+  )
 
   return {
     stables,

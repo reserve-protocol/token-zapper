@@ -18,6 +18,9 @@ function rayDiv(a: bigint, b: bigint): bigint {
 }
 const saTokenInterface = IStaticATokenLM__factory.createInterface()
 export class MintSATokensAction extends Action {
+  get outputSlippage() {
+    return 3000000n;
+  }
   gasEstimate() {
     return BigInt(300000n)
   }
@@ -71,6 +74,10 @@ export class MintSATokensAction extends Action {
   }
 }
 export class BurnSATokensAction extends Action {
+
+  get outputSlippage() {
+    return 3000000n;
+  }
   gasEstimate() {
     return BigInt(300000n)
   }

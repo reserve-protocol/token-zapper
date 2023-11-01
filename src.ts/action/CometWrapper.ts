@@ -29,11 +29,12 @@ export class MintCometWrapperAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await this.getRate()
-    let amountOut = (amountsIn.amount * amountsIn.token.one.amount) / rate
-    amountOut = amountOut - amountOut / 3_000_000n;
     return [
-      this.receiptToken.from(amountOut)
+      this.receiptToken.from(
+        await WrappedComet__factory.connect(this.receiptToken.address.address, this.universe.provider).convertDynamicToStatic(
+          amountsIn.amount
+        )
+      )
     ]
   }
 
@@ -55,6 +56,10 @@ export class MintCometWrapperAction extends Action {
   toString(): string {
     return `CompoundV3WrapperMint(${this.receiptToken.toString()})`
   }
+
+  get outputSlippage() {
+    return 3000000n;
+  }
 }
 
 export class BurnCometWrapperAction extends Action {
@@ -63,11 +68,13 @@ export class BurnCometWrapperAction extends Action {
   }
 
   async encode([amountsIn]: TokenQuantity[], dest: Address): Promise<ContractCall> {
+
+    const [withdrawalAmount] = await this.quote([amountsIn])
     return new ContractCall(
       parseHexStringIntoBuffer(
         iWrappedCometInterface.encodeFunctionData('withdrawTo', [
-            dest.address,
-            amountsIn.amount,
+          dest.address,
+          withdrawalAmount.amount,
         ])
       ),
       this.receiptToken.address,
@@ -78,10 +85,12 @@ export class BurnCometWrapperAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await this.getRate()
-    const amountOut = (amountsIn.amount * rate) / amountsIn.token.one.amount
     return [
-      this.baseToken.from(amountOut)
+      this.baseToken.from(
+        await WrappedComet__factory.connect(this.receiptToken.address.address, this.universe.provider).convertStaticToDynamic(
+          amountsIn.amount
+        )
+      )
     ]
   }
 
@@ -102,5 +111,8 @@ export class BurnCometWrapperAction extends Action {
   }
   toString(): string {
     return `CompoundV3Burn(${this.receiptToken.toString()})`
+  }
+  get outputSlippage() {
+    return 300000n;
   }
 }

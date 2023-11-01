@@ -11,6 +11,8 @@ export interface IBasket {
   unitBasket: TokenQuantity[]
   basketTokens: Token[]
   rToken: Token
+
+  quote(baskets: bigint): Promise<TokenQuantity[]>
 }
 
 export class TokenBasket implements IBasket {
@@ -37,11 +39,21 @@ export class TokenBasket implements IBasket {
   }
 
   async update() {
-    const [{ quantities, erc20s }] = await Promise.all([
-      this.basketHandler.callStatic.quote(this.rToken.scale.toString(), 2),
+    const [unit, nonce] = await Promise.all([
+      this.quote(this.rToken.scale),
+      this.basketHandler.nonce()
     ])
+    this.basketNonce = nonce
+    this.unitBasket = unit
+  }
 
-    this.unitBasket = await Promise.all(
+  async quote(baskets: bigint) {
+    const {
+      quantities,
+      erc20s
+    } = await this.basketHandler.callStatic.quote(baskets, 2)
+
+    return await Promise.all(
       quantities.map(async (q, i) => {
         const token = await this.universe.getToken(
           Address.fromHexString(erc20s[i])
@@ -49,5 +61,6 @@ export class TokenBasket implements IBasket {
         return token.fromBigInt(q.toBigInt())
       })
     )
+
   }
 }

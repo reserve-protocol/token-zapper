@@ -1,11 +1,11 @@
-import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
-import { parseHexStringIntoBuffer } from '../base/utils'
-import { InteractionConvention, DestinationOptions, Action } from './Action'
-import { ContractCall } from '../base/ContractCall'
-import { Approval } from '../base/Approval'
 import { Address } from '../base/Address'
+import { Approval } from '../base/Approval'
+import { ContractCall } from '../base/ContractCall'
+import { parseHexStringIntoBuffer } from '../base/utils'
 import { IERC4626__factory } from '../contracts/factories/contracts/IERC4626__factory'
+import { type Token, type TokenQuantity } from '../entities/Token'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 const vaultInterface = IERC4626__factory.createInterface()
 
@@ -13,7 +13,7 @@ export class ERC4626TokenVault {
   constructor(
     public readonly shareToken: Token,
     public readonly underlying: Token,
-  ) {}
+  ) { }
 
   get address(): Address {
     return this.shareToken.address
@@ -21,6 +21,10 @@ export class ERC4626TokenVault {
 }
 
 export class ERC4626DepositAction extends Action {
+
+  get outputSlippage() {
+    return 3000000n;
+  }
   gasEstimate() {
     return BigInt(200000n)
   }
@@ -47,10 +51,9 @@ export class ERC4626DepositAction extends Action {
       this.shareToken.address.address,
       this.universe.provider
     ).previewDeposit(amountsIn.amount)).toBigInt()
-
     return [
       this.shareToken.from(
-        x - x / 3_000_000n
+        x
       )
     ]
   }
@@ -85,7 +88,7 @@ export class ERC4626WithdrawAction extends Action {
   ): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
-        vaultInterface.encodeFunctionData('withdraw', [
+        vaultInterface.encodeFunctionData('redeem', [
           amountsIn.amount,
           destination.address,
           this.universe.config.addresses.executorAddress.address,
@@ -125,5 +128,9 @@ export class ERC4626WithdrawAction extends Action {
   }
   toString(): string {
     return `ERC4626Withdraw(${this.shareToken.toString()})`
+  }
+
+  get outputSlippage() {
+    return 3000000n;
   }
 }

@@ -22,54 +22,61 @@ To use the library, import it in your TypeScript file:
 
 ```typescript
 import {
-  Universe,
+  Address,
+  createDefillama,
+  setupEthereumZapper,
+  ethereumConfig,
   Searcher,
-  configuration,
+  Universe,
+  createKyberswap,
 } from '@reserve-protocol/token-zapper'
-
-const mainnet = configuration.ethereum
-const initCurveOnEthereum = configuration.initCurveOnEthereum
-const loadTokens = configuration.loadTokens
-
-
 ```
 
-Then, create the searcher universe `Universe`, and instantiate a `Searcher`. The `create` factory will
-create a searcher universe using the current providers network.
-
-We currently support mainnet. So make sure you are connected to mainnet when instantiating the searcher.
+Then, create the searcher universe `Universe`, and instantiate a `Searcher`.
 
 Otherwise you need to use the `createWithConfig` factory and pass in the network you want to use.
 
 ```typescript
 const universe = await Universe.createWithConfig(
   provider,
-  mainnet.ethereumConfig,
-  async uni => {
-    await loadTokens(
-      uni,
-      require('./configuration/data/ethereum/tokens.json')
-    )
-    await mainnet.defaultInit(uni)
-    await initCurveOnEthereum(uni)
-  }
+  ethereumConfig,
+  setupEthereumZapper
 )
+
+// Zapper loads asynchroniously, you can wait the initialized promise to wait for it to fully bootstrap
+await universe.initialized
+
+// The zapper can use multiple dex aggregators as liquidity sources. We recommend initializing a few of these for
+// better zaps
+universe.dexAggregators.push(
+  createDefillama('DefiLlama:macha', universe, 10, 'Matcha/0x')
+)
+universe.dexAggregators.push(createKyberswap('KyberSwap', universe, 50))
+
+// The zapper does not pull data unless it's needed for a zap, so you need to hook this into your own
+// on 'block' handler.
+provider.on('block', async (blockNumber) => {
+  universe.updateBlockState(
+    blockNumber,
+    (await provider.getGasPrice()).toBigInt()
+  )
+})
+
 const searcher = new Searcher(universe)
 ```
 
-Use the searcher to find a swap:
+Use the searcher to compose some transaction that will either attempt to mint eUSD, or buy it off a dex, whatever gives the better quote.
 
 ```typescript
-const result = await searcher.findSingleInputToRTokenZap({
-    input: universe.commonTokens.ERC20ETH.from("0.1"),
-    rToken: universe.rTokens.eUSD!,
-    signerAddress: Address.from(your ADDRESS)
-});
-
-console.log(result.describe().join("\n"))
+const searchResult = await searcher.findSingleInputToRTokenZap(
+    universe.nativeToken.from("1.0"),
+    universe.rTokens.eUSD!,
+    Address.from(your ADDRESS)
+);
 ```
+A search result contains a description of your zap based on the current state of the zapper, and state the zapper managed to infer while searching for a way to zap into the RToken.
 
-This should generate an output that looks like the one below:
+You can use `.describe()` to dump an abstract description of how the zapper ended up assembling your token. 
 
 ```text
 SwapPaths {
@@ -93,7 +100,7 @@ SwapPaths {
 }
 ```
 
-The `SearcherResult` will show you the path the path the searcher will use and an on the individual swaps it will execute. The `SearcherResult` can be converted into a transaction via the `.toTransaction()` method on the `SearcherResult`. This will encode all the individual `Action's` into something the `ZapperExecutor` can run. It will also simulate the transaction and estimate gas.
+The `SearcherResult` will show you the path the path the searcher will use and an on the individual swaps it will execute. The `SearcherResult` can be converted into a transaction via the `.toTransaction()` method on the `SearcherResult`. This will encode all the individual `Action's` into something the `ZapperExecutor` can run. It will also simulate the transaction fully estimate gas and outputs.
 
 ```typescript
 const transaction = await searcherResult.toTransaction()
@@ -107,11 +114,31 @@ const pendingTx = await provider.sendTransaction(
 )
 ```
 
-Zapping out of rtoken:
+You can dump a textural description of the final zap transaction if you're curious about such things.
+
+```typescript
+console.log(transaction.describe().join("\n"))
+```
+
+```
+Transaction {
+  Commands: [
+    Setup approvals: Approval(token: WETH, spender: 0x6131B5fae19EA4f9D964eAc0408E4408b66337b5)
+    Kyberswap(0x6131B5fae19EA4f9D964eAc0408E4408b66337b5) (1.0 WETH) -> (1825.486423921903285671 eUSD)
+    Drain ERC20s eUSD to 0x.....
+  ],
+  input: 1.0 WETH
+  outputs: 1834.62955555997961 eUSD
+}
+```
+
+### Redemption zaps
+
+The zapper can also work in reverse, 
 
 ```typescript
 const res = await searcher.findRTokenIntoSingleTokenZap(
-  universe.rTokens.eUSD!.from("50.0"),
+  universe.rTokens.eUSD!.from('50.0'),
   universe.commonTokens.USDC!,
   testUserAddr,
   0.0
@@ -122,7 +149,7 @@ const res = await searcher.findRTokenIntoSingleTokenZap(
 
 ```typescript
 await searcher.findRTokenIntoSingleTokenZap(
-  universe.rTokens.eUSD!.from("50.0"),
+  universe.rTokens.eUSD!.from('50.0'),
   universe.nativeToken!,
   testUserAddr,
   0.0
@@ -130,7 +157,7 @@ await searcher.findRTokenIntoSingleTokenZap(
 
 // Is the same as:
 await searcher.findRTokenIntoSingleTokenZap(
-  universe.rTokens.eUSD!.from("50.0"),
+  universe.rTokens.eUSD!.from('50.0'),
   universe.commonTokens.ERC20GAS!,
   testUserAddr,
   0.0
@@ -140,10 +167,6 @@ await searcher.findRTokenIntoSingleTokenZap(
 ```
 
 ## Current features and limitations
-
-While the library does support Searching on uniswap v2 like venues, and the contracts are set up to swap directly using v3 pools. We do not currently support using the build in searcher for Swaps, and are relying on 1inch.
-
-We may expand support for the zapper to be able to search pools directly, as it can potentially be more efficient.
 
 **RToken to RToken zaps are not currently supported**
 

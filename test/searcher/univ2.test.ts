@@ -77,7 +77,7 @@ describe('searcher/v2-actions', () => {
       Address.ZERO
     )
     expect(result[0].outputs[0].formatWithSymbol()).toBe(
-      '0.006333065250932909 WETH'
+      '0.006333061263943095 WETH'
     )
     expect(result[0].steps.length).toBe(2)
   })

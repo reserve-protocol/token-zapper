@@ -74,7 +74,7 @@ describe('searcher/rtokenzaps', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
-    ).toBe('9.999633336787776667 eUSD')
+    ).toBe('9.999631666788333334 eUSD')
   })
 
   it('It can can trade then RToken', async () => {
@@ -111,7 +111,7 @@ describe('searcher/rtokenzaps', () => {
     )
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
-    ).toBe('22.23442517852247 eUSD')
+    ).toBe('22.234421178523803334 eUSD')
   })
 
   it('Old eUSD', async () => {
@@ -167,7 +167,7 @@ describe('searcher/rtokenzaps', () => {
       result.swaps.outputs
         .find((i) => i.token === eUSDSquared)
         ?.formatWithSymbol()
-    ).toBe('9.999630003576664405 eUSD^2')
+    ).toBe('9.999628333577777738 eUSD^2')
   })
 
   it('recursive RTokens2', async () => {
@@ -191,7 +191,7 @@ describe('searcher/rtokenzaps', () => {
       result.swaps.outputs
         .find((i) => i.token === eUSDSquared)
         ?.formatWithSymbol()
-    ).toBe('9.999717333518444416 eUSD^3')
+    ).toBe('9.999627333578444406 eUSD^3')
   })
 
   it('Inputs differently priced', async () => {

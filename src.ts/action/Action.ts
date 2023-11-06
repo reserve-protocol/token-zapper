@@ -24,17 +24,20 @@ export abstract class Action {
     public readonly interactionConvention: InteractionConvention,
     public readonly proceedsOptions: DestinationOptions,
     public readonly approvals: readonly Approval[]
-  ) {}
+  ) { }
 
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
-  
+
   async quoteWithSlippage(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     const outputs = await this.quote(amountsIn)
     if (this.outputSlippage === 0n) {
       return outputs
     }
     return outputs.map(i => {
-      const slippageAmount = i.scalarDiv(this.outputSlippage)
+      let slippageAmount = i.scalarDiv(this.outputSlippage)
+      if (slippageAmount.amount < 10n) {
+        return i.sub(i.token.from(10n))
+      }
       return i.sub(slippageAmount)
     });
   }

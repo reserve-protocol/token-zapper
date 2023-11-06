@@ -309,9 +309,9 @@ export abstract class BaseSearcherResult {
         this.swaps.swapPaths,
         simulatedOutputs.map((i) => {
           if (i.token === this.outputToken) {
+            const slippage = outputTokenOutput.amount / (options.outputSlippage ?? 250_000n)
             return i.token.from(
-              outputTokenOutput.amount -
-              outputTokenOutput.amount / (options.outputSlippage ?? 250_000n)
+              outputTokenOutput.amount - (slippage === 0n ? 1n : slippage)
             )
           }
           return i

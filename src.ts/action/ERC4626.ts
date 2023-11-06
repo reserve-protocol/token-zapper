@@ -130,7 +130,7 @@ export class ERC4626WithdrawAction extends Action {
     return `ERC4626Withdraw(${this.shareToken.toString()})`
   }
 
-  get outputSlippage() {
+  get outputSliptepage() {
     return 3000000n;
   }
 }

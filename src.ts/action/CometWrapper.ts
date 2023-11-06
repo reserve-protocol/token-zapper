@@ -59,7 +59,7 @@ export class MintCometWrapperAction extends Action {
   }
 
   get outputSlippage() {
-    return 3000000n
+    return 1000000n
   }
 }
 
@@ -117,6 +117,6 @@ export class BurnCometWrapperAction extends Action {
     return `CompoundV3Burn(${this.receiptToken.toString()})`
   }
   get outputSlippage() {
-    return 300000n
+    return 1500000n
   }
 }

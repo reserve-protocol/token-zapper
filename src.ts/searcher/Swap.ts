@@ -255,14 +255,7 @@ export class SwapPlan {
         )
       }
 
-      let output = await step.quote(legAmount)
-      const outputSlippage = step.outputSlippage
-      if (outputSlippage !== 0n) {
-        output = output.map((i) => {
-          let amount = i.scalarDiv(outputSlippage)
-          return i.sub(amount)
-        })
-      }
+      const output = await step.quoteWithSlippage(legAmount)
       swaps.push(new SingleSwap(legAmount, step, output))
       legAmount = output
     }

@@ -19,6 +19,8 @@ import { type SwapSignature } from './aggregators/SwapSignature'
 import { MintRTokenAction } from './action/RTokens'
 import { Searcher } from './searcher/Searcher'
 import { findPrecursorTokenSet } from './searcher/Searcher'
+import EventEmitter from 'events'
+import { DexAggregator } from '.'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -31,7 +33,8 @@ interface OracleDef {
   ) => Promise<TokenQuantity>
 }
 export class Universe<const UniverseConf extends Config = Config> {
-  public _finishResolving: () => void = () => {}
+  private emitter = new EventEmitter()
+  public _finishResolving: () => void = () => { }
   public initialized: Promise<void> = new Promise((resolve) => {
     this._finishResolving = resolve
   })
@@ -93,7 +96,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   >()
   public readonly oracles: PriceOracle[] = []
 
-  public readonly dexAggregators: { swap: SwapSignature }[] = []
+  public readonly dexAggregators: DexAggregator[] = []
 
   // Sentinel token used for pricing things
   public readonly rTokens = {} as TokenList<
@@ -210,7 +213,7 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   public defineLPToken(lpTokenInstance: LPToken) {
     this.lpTokens.set(lpTokenInstance.token, lpTokenInstance)
-    this.defineMintable(lpTokenInstance.mintAction, lpTokenInstance.burnAction)
+    this.defineMintable(lpTokenInstance.mintAction, lpTokenInstance.burnAction, true)
   }
 
   public defineMintable(
@@ -280,7 +283,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     public readonly loadToken: TokenLoader
   ) {
     const nativeToken = config.nativeToken
-    
+
     this.nativeToken = Token.createToken(
       this.tokens,
       Address.fromHexString(GAS_TOKEN_ADDRESS),
@@ -292,11 +295,11 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.wrappedNativeToken = Token.createToken(
       this.tokens,
       config.addresses.wrappedNative,
-      'W'+nativeToken.symbol,
-      'Wrapped '+nativeToken.name,
+      'W' + nativeToken.symbol,
+      'Wrapped ' + nativeToken.name,
       nativeToken.decimals
     )
-    
+
   }
 
   public async updateBlockState(block: number, gasPrice: bigint) {
@@ -329,5 +332,27 @@ export class Universe<const UniverseConf extends Config = Config> {
     })
 
     return universe
+  }
+
+  // Used for analytics to track interesting zapper events
+  public emitEvent(object: {
+    type: string,
+    params: Record<string, any>
+  }) {
+    this.emitter.emit("event", {
+      ...object,
+      chainId: this.chainId
+    })
+  }
+
+  public onEvent(cb: (event: {
+    type: string,
+    params: Record<string, any>,
+    chainId: number
+  }) => void): () => void {
+    this.emitter.on("event", cb)
+    return () => {
+      this.emitter.off("event", cb)
+    }
   }
 }

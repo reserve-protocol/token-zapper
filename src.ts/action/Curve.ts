@@ -13,6 +13,7 @@ import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { parseHexStringIntoBuffer } from "../base/utils"
 import { Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
+import { LPToken } from './LPToken'
 
 const whiteList = new Set(
   [
@@ -403,39 +404,39 @@ export const loadCurve = async (
   }
 
   const addLpToken = async (universe: Universe, pool: CurvePool) => {
-    // const tokensInPosition = pool.meta.wrappedCoinAddresses.map(
-    //   (a) => universe.tokens.get(Address.from(a))!
-    // )
+    const tokensInPosition = pool.meta.wrappedCoinAddresses.map(
+      (a) => universe.tokens.get(Address.from(a))!
+    )
     const lpToken = await universe.getToken(Address.from(pool.meta.lpToken))
 
     if (universe.lpTokens.has(lpToken)) {
       return
     }
 
-    // const burn = async (qty: TokenQuantity) => {
-    //   try {
-    //     const out = await (pool.meta.isPlain
-    //       ? pool.meta.withdrawExpected(formatUnits(qty.amount, 18))
-    //       : pool.meta.withdrawWrappedExpected(formatUnits(qty.amount, 18)))
-    //     return out.map((amount, i) => tokensInPosition[i].from(amount))
-    //   } catch (e) {
-    //     console.log(pool.meta)
-    //     throw e
-    //   }
-    // }
+    const burn = async (qty: TokenQuantity) => {
+      try {
+        const out = await (pool.meta.isPlain
+          ? pool.meta.withdrawExpected(formatUnits(qty.amount, 18))
+          : pool.meta.withdrawWrappedExpected(formatUnits(qty.amount, 18)))
+        return out.map((amount, i) => tokensInPosition[i].from(amount))
+      } catch (e) {
+        console.log(pool.meta)
+        throw e
+      }
+    }
 
-    // const mint = async (poolTokens: TokenQuantity[]) => {
-    //   const out = await pool.meta.depositWrappedExpected(
-    //     poolTokens.map((q) => formatUnits(q.amount, 18))
-    //   )
-    //   return lpToken.from(out)
-    // }
+    const mint = async (poolTokens: TokenQuantity[]) => {
+      const out = await pool.meta.depositWrappedExpected(
+        poolTokens.map((q) => formatUnits(q.amount, 18))
+      )
+      return lpToken.from(out)
+    }
 
-    // const lpTokenInstance = new LPToken(lpToken, tokensInPosition, burn, mint)
-    // universe.defineLPToken(lpTokenInstance)
+    const lpTokenInstance = new LPToken(lpToken, tokensInPosition, burn, mint)
+    universe.defineLPToken(lpTokenInstance)
 
-    // const gaugeToken = await universe.getToken(Address.from(pool.meta.token))
-    // universe.lpTokens.set(gaugeToken, lpTokenInstance)
+    const gaugeToken = await universe.getToken(Address.from(pool.meta.lpToken))
+    universe.lpTokens.set(gaugeToken, lpTokenInstance)
   }
 
   const addCurvePoolEdges = async (universe: Universe, pools: CurvePool[]) => {

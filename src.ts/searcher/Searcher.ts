@@ -78,7 +78,7 @@ export const findPrecursorTokenSet = async (
 export class Searcher<
   const SearcherUniverse extends UniverseWithERC20GasTokenDefined
 > {
-  constructor(private readonly universe: SearcherUniverse) {}
+  constructor(private readonly universe: SearcherUniverse) { }
 
   /**
    * @note This helper will find some set of operations converting a 'inputQuantity' into
@@ -111,6 +111,7 @@ export class Searcher<
       this
     )
     // console.log(precursorTokens.describe().join("\n"))
+    // console.log(precursorTokens.precursorToTradeFor.join(", "))
 
     /**
      * PHASE 2: Trade inputQuantity into precursor set
@@ -138,20 +139,20 @@ export class Searcher<
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r))
       : precursorTokenBasket
-          .map((p) => p.into(inputQuantity.token))
-          .reduce((l, r) => l.add(r))
+        .map((p) => p.into(inputQuantity.token))
+        .reduce((l, r) => l.add(r))
 
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
-          input: inputQuantity.mul(
-            precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
-          ),
-          output: token,
-        }))
+        input: inputQuantity.mul(
+          precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
+        ),
+        output: token,
+      }))
       : precursorTokenBasket.map((qty) => ({
-          output: qty.token,
-          input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
-        }))
+        output: qty.token,
+        input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
+      }))
 
     const inputQuantityToTokenSet: SwapPath[] = []
     const tradingBalances = new TokenAmounts()
@@ -372,12 +373,12 @@ export class Searcher<
           if (potentialSwaps.length === 0) {
             throw Error(
               'Failed to find trade for: ' +
-                qty +
-                ' -> ' +
-                outputToken +
-                '(' +
-                output.address +
-                ')'
+              qty +
+              ' -> ' +
+              outputToken +
+              '(' +
+              output.address +
+              ')'
             )
           }
           const trade = potentialSwaps[0]
@@ -603,6 +604,14 @@ export class Searcher<
 
           return out
         } catch (e) {
+          this.universe.emitEvent({
+            type: 'aggregator-quote-failed',
+            params: {
+              aggregator: router.name,
+              from: input.token.symbol.toString(),
+              to: output.symbol.toString(),
+            }
+          })
           return null!
         }
       })

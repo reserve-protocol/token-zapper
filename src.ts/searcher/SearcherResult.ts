@@ -207,6 +207,18 @@ export abstract class BaseSearcherResult {
     inputToken,
     gasLimit = 10000000,
   }: SimulateParams) {
+    // console.log(JSON.stringify(
+    //   {
+    //     block: this.universe.currentBlock,
+    //     from: this.signer.address,
+    //     to: this.universe.config.addresses.zapperAddress.address,
+    //     data,
+    //     value: '0x' + value.toString(16),
+    //     gasLimit: '0x' + gasLimit.toString(16),
+    //   },
+    //   null,
+    //   2
+    // ))
     if (this.universe.chainId !== 1) {
       return this.simulateNoNode({
         data,
@@ -544,7 +556,13 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
 
     builder.contractCalls.pop()
     builder.issueMaxRTokens(this.outputToken, this.signer)
-
+    // console.log(
+    //   [
+    //     '  Commands: [',
+    //     ...this.builder.contractCalls.map(i => '    ' + i.comment),
+    //     '  ],',
+    //   ].join('\n')
+    // )
     // First simulate the transaction with infinite slippage
     const simulationResult = await this.simulateAndParse(
       options,

@@ -16,7 +16,7 @@ const iCEtherInterface = CEther__factory.createInterface()
 const ONEFP18 = 10n ** 18n
 
 export class MintCTokenAction extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     throw new Error('Method not implemented.')
   }
   gasEstimate() {

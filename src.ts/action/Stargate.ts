@@ -39,7 +39,7 @@ export class StargateDepositAction extends Action {
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [
       this.stargateToken.from(
-        amountsIn.amount
+        amountsIn.amount - 1n
       ),
     ]
   }

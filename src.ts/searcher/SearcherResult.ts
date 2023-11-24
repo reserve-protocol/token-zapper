@@ -1,25 +1,23 @@
 import { BigNumber } from '@ethersproject/bignumber'
-import { Zero } from '@ethersproject/constants'
+import { TransactionRequest } from '@ethersproject/providers'
 import { type PermitTransferFrom } from '@uniswap/permit2-sdk'
 import {
   DestinationOptions,
   InteractionConvention,
   type Action,
 } from '../action/Action'
+import { MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
+import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
-import { type SingleSwap, SwapPath, SwapPaths } from '../searcher/Swap'
+import { SwapPath, SwapPaths, type SingleSwap } from '../searcher/Swap'
 import { TransactionBuilder, zapperInterface } from './TransactionBuilder'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction } from './ZapTransaction'
-import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
-import { MintRTokenAction } from '../action/RTokens'
-import { TransactionRequest } from '@ethersproject/providers'
-import { defaultAbiCoder } from '@ethersproject/abi'
 
 interface SimulateParams {
   data: string
@@ -35,7 +33,7 @@ class Step {
     readonly action: Action,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) { }
+  ) {}
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -66,7 +64,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-        InteractionConvention.PayBeforeCall
+          InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -188,12 +186,9 @@ export abstract class BaseSearcherResult {
     if (resp.startsWith('0x08c379a0')) {
       // const len = Number(BigInt('0x'+resp.slice(10, 74)))
       const data = resp.slice(138)
-      const msg = Buffer.from(data, "hex").toString()
-      throw new Error(
-        `${data}: ${msg}`
-      )
+      const msg = Buffer.from(data, 'hex').toString()
+      throw new Error(`${data}: ${msg}`)
     } else if (resp.length <= 10 + 64 * 2) {
-
       throw new Error('Failed with error: ' + resp)
     }
     return zapperInterface.decodeFunctionResult('zapERC20', resp)
@@ -207,18 +202,6 @@ export abstract class BaseSearcherResult {
     inputToken,
     gasLimit = 10000000,
   }: SimulateParams) {
-    // console.log(JSON.stringify(
-    //   {
-    //     block: this.universe.currentBlock,
-    //     from: this.signer.address,
-    //     to: this.universe.config.addresses.zapperAddress.address,
-    //     data,
-    //     value: '0x' + value.toString(16),
-    //     gasLimit: '0x' + gasLimit.toString(16),
-    //   },
-    //   null,
-    //   2
-    // ))
     if (this.universe.chainId !== 1) {
       return this.simulateNoNode({
         data,
@@ -321,7 +304,8 @@ export abstract class BaseSearcherResult {
         this.swaps.swapPaths,
         simulatedOutputs.map((i) => {
           if (i.token === this.outputToken) {
-            const slippage = outputTokenOutput.amount / (options.outputSlippage ?? 250_000n)
+            const slippage =
+              outputTokenOutput.amount / (options.outputSlippage ?? 250_000n)
             return i.token.from(
               outputTokenOutput.amount - (slippage === 0n ? 1n : slippage)
             )
@@ -391,8 +375,8 @@ export abstract class BaseSearcherResult {
     return this.inputIsNative
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -499,9 +483,7 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
 
     const dustTokens = [this.outputToken]
     if (options.returnDust) {
-      dustTokens.push(
-        ...this.potentialResidualTokens
-      )
+      dustTokens.push(...this.potentialResidualTokens)
     }
 
     builder.drainERC20([...new Set(dustTokens)], this.signer)
@@ -516,7 +498,6 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
       )
     )
     this.swaps = simulationResult.swaps
-
 
     const payload = this.encodePayload(simulationResult.output, options)
     const data = this.encodeCall(options, payload)
@@ -593,7 +574,7 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
           // TODO: Find a better way to avoid off by one errors
           simulationResult.output.token.from(
             simulationResult.output.amount -
-            simulationResult.output.amount / mintRtoken.outputSlippage
+              simulationResult.output.amount / mintRtoken.outputSlippage
           ),
           this.signer
         )

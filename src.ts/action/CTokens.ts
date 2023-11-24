@@ -7,6 +7,8 @@ import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
 import { ICToken__factory } from '../contracts/factories/contracts/ICToken.sol/ICToken__factory'
 import { CEther__factory } from '../contracts/factories/contracts/ICToken.sol/CEther__factory'
+import { Address } from '..'
+import { Planner, Value } from '../tx-gen/Planner'
 
 const iCTokenInterface = ICToken__factory.createInterface()
 const iCEtherInterface = CEther__factory.createInterface()
@@ -14,6 +16,9 @@ const iCEtherInterface = CEther__factory.createInterface()
 const ONEFP18 = 10n ** 18n
 
 export class MintCTokenAction extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   gasEstimate() {
     return BigInt(175000n)
   }
@@ -78,9 +83,11 @@ export class MintCTokenAction extends Action {
 }
 
 export class BurnCTokenAction extends Action {
-
   get outputSlippage() {
     return 3000000n;
+  }
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
   }
   gasEstimate() {
     return BigInt(175000n)

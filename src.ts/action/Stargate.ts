@@ -6,6 +6,7 @@ import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
 import { Address } from '../base/Address'
 import { IStargateRouter__factory } from '../contracts'
+import { Planner, Value } from '../tx-gen/Planner'
 
 /**
  * Used to mint/burn stargate LP tokens
@@ -14,6 +15,14 @@ import { IStargateRouter__factory } from '../contracts'
 const routerInterface = IStargateRouter__factory.createInterface()
 
 export class StargateDepositAction extends Action {
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const lib = this.gen.Contract.createLibrary(IStargateRouter__factory.connect(
+      this.router.address,
+      this.universe.provider
+    ))
+    planner.add(lib.addLiquidity(this.poolId, inputs[0], destination.address))
+    return [inputs[0]]
+  }
   gasEstimate() {
     return BigInt(200000n)
   }
@@ -71,6 +80,14 @@ export class StargateDepositAction extends Action {
 }
 
 export class StargateWithdrawAction extends Action {
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const lib = this.gen.Contract.createLibrary(IStargateRouter__factory.connect(
+      this.router.address,
+      this.universe.provider
+    ))
+    planner.add(lib.instantRedeemLocal(this.poolId, inputs[0], destination.address))
+    return [inputs[0]]
+  }
   gasEstimate() {
     return BigInt(200000n)
   }

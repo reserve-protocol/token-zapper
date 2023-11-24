@@ -11,10 +11,19 @@ import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
 import { IBasket } from '../entities/TokenBasket'
 import { IRToken__factory } from '../contracts'
+import { Planner, Value } from '../tx-gen/Planner'
 
 const rTokenIFace = IRToken__factory.createInterface()
 
 export class MintRTokenAction extends Action {
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const lib = this.gen.Contract.createLibrary(IRToken__factory.connect(
+      this.input[0].address.address,
+      this.universe.provider
+    ))
+    const out = planner.add(lib.issueTo(inputs[0], destination.address))
+    return [out!]
+  }
   gasEstimate() {
     return BigInt(600000n)
   }
@@ -96,14 +105,23 @@ export class MintRTokenAction extends Action {
 }
 
 export class BurnRTokenAction extends Action {
-
   get outputSlippage() {
     return 300000n;
+  }
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const nonce = this.basketHandler.basketNonce
+    const lib = this.gen.Contract.createLibrary(IRToken__factory.connect(
+      this.input[0].address.address,
+      this.universe.provider
+    ))
+    const out = planner.add(lib.redeem(inputs[0], nonce))
+    return [out!]
   }
   gasEstimate() {
     return BigInt(600000n)
   }
   async encode([quantity]: TokenQuantity[], destination: Address): Promise<ContractCall> {
+    const nonce = this.basketHandler.basketNonce
     return new ContractCall(
       parseHexStringIntoBuffer(
         rTokenIFace.encodeFunctionData('redeem', [quantity.amount])

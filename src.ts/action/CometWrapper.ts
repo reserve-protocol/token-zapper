@@ -5,11 +5,15 @@ import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { WrappedComet__factory } from '../contracts/factories/contracts/Compv3.sol/WrappedComet__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
+import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 const iWrappedCometInterface = WrappedComet__factory.createInterface()
 
 export class MintCometWrapperAction extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   gasEstimate() {
     return BigInt(110000n)
   }
@@ -64,6 +68,9 @@ export class MintCometWrapperAction extends Action {
 }
 
 export class BurnCometWrapperAction extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   gasEstimate() {
     return BigInt(110000n)
   }

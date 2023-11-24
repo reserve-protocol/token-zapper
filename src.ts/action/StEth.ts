@@ -5,6 +5,8 @@ import { ContractCall } from '../base/ContractCall'
 import { AddressZero } from '@ethersproject/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { IStETH__factory } from '../contracts/factories/contracts/IStETH__factory'
+import { Planner, Value } from '../tx-gen/Planner'
+import { Address } from '..'
 
 const stETHInterface = IStETH__factory.createInterface()
 export class StETHRateProvider {
@@ -19,7 +21,24 @@ export class StETHRateProvider {
 }
 
 export class MintStETH extends Action {
-  
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const wsteth = this.gen.Contract.createLibrary(
+      IStETH__factory.connect(
+        this.steth.address.address,
+        this.universe.provider
+      )
+    )
+
+    const out = planner.add(wsteth.submit(inputs[0]))
+    this.genUtils.planForwardERC20(
+      this.universe,
+      planner,
+      this.steth,
+      out!,
+      destination
+    )
+    return [out!]
+  }
   gasEstimate() {
     return BigInt(200000n)
   }
@@ -65,6 +84,9 @@ export class BurnStETH extends Action {
     return BigInt(0n)
   }
   async encode(_: TokenQuantity[]): Promise<ContractCall> {
+    throw new Error('Not implemented')
+  }
+  async plan(planner: Planner, inputs: Value[]): Promise<Value[]> {
     throw new Error('Not implemented')
   }
 

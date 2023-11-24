@@ -6,9 +6,10 @@ import { ContractCall } from '../base/ContractCall'
 import { type Address } from '../base/Address'
 import { IRETHRouter } from '../contracts/contracts/IRETHRouter'
 import { IRETHRouter__factory } from '../contracts/factories/contracts/IRETHRouter__factory'
+import { Planner, Value } from '../tx-gen/Planner'
 
 export class REthRouter {
-  private readonly routerInstance: IRETHRouter
+  public readonly routerInstance: IRETHRouter
   constructor(
     private readonly universe: Universe,
     public readonly reth: Token,
@@ -84,10 +85,22 @@ export class REthRouter {
 
 type IRouter = Pick<
   InstanceType<typeof REthRouter>,
-  'optimiseToREth' | 'optimiseFromREth' | 'reth' | 'gasEstimate'
+  | 'optimiseToREth'
+  | 'optimiseFromREth'
+  | 'reth'
+  | 'gasEstimate'
+  | 'routerInstance'
 >
 
 export class ETHToRETH extends Action {
+  async plan(
+    planner: Planner,
+    [input]: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    throw new Error('Panner not supported, use router')
+  }
+
   gasEstimate(): bigint {
     return this.router.gasEstimate()
   }
@@ -120,6 +133,13 @@ export class ETHToRETH extends Action {
 }
 
 export class RETHToETH extends Action {
+  plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    throw new Error('Panner not supported, use router')
+  }
   gasEstimate(): bigint {
     return this.router.gasEstimate()
   }

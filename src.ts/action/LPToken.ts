@@ -2,6 +2,7 @@ import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { type ContractCall } from '../base/ContractCall'
 import { type Token, type TokenQuantity } from '../entities/Token'
+import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 export class LPToken {
@@ -23,6 +24,9 @@ export class LPToken {
 }
 
 export class LPTokenMint extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   toString() {
     return `MintLP(${this.lpToken})`
   }
@@ -53,6 +57,9 @@ export class LPTokenMint extends Action {
   }
 }
 export class LPTokenBurn extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   toString() {
     return `BurnLP(${this.lpToken})`
   }

@@ -7,6 +7,7 @@ import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { IConvexWrapper__factory } from '../contracts/factories/contracts/IConvexWrapper__factory'
 import { IBooster__factory } from '../contracts/factories/contracts/IBooster__factory'
+import { Planner, Value } from '../tx-gen/Planner'
 
 class ConvexPool {
   constructor(
@@ -27,6 +28,9 @@ const boosterInterface = IBooster__factory.createInterface()
 const wrapperInterface = IConvexWrapper__factory.createInterface()
 
 export class ConvexDepositAndStake extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   toString(): string {
     return `ConvexDepositAndStake(${this.convexPool})`
   }
@@ -71,6 +75,9 @@ export class ConvexDepositAndStake extends Action {
 }
 
 export class ConvexDeposit extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   toString(): string {
     return `ConvexDeposit(${this.convexPool})`
   }
@@ -108,6 +115,9 @@ export class ConvexDeposit extends Action {
 }
 
 export class ConvexStake extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   toString(): string {
     return `ConvexStake(${this.convexPool})`
   }
@@ -152,6 +162,9 @@ export class ConvexStake extends Action {
 }
 
 export class ConvexUnstake extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   toString(): string {
     return `ConvexUnstake(${this.convexPool})`
   }
@@ -185,6 +198,9 @@ export class ConvexUnstake extends Action {
 }
 
 export class ConvexWithdraw extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   toString(): string {
     return `ConvexWithdraw(${this.convexPool})`
   }
@@ -221,6 +237,9 @@ export class ConvexWithdraw extends Action {
 }
 
 export class ConvexUnstakeAndWithdraw extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   toString(): string {
     return `ConvexUnstakeAndWithdraw(${this.convexPool})`
   }

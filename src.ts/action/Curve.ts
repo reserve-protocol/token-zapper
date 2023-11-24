@@ -14,6 +14,7 @@ import { parseHexStringIntoBuffer } from "../base/utils"
 import { Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 import { LPToken } from './LPToken'
+import { Planner, Value } from '../tx-gen/Planner'
 
 const whiteList = new Set(
   [
@@ -129,6 +130,9 @@ const _getExchangeMultipleArgs = (
 }
 
 export class CurveSwap extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   private estimate?: bigint
   gasEstimate() {
     return this.estimate ?? 205000n

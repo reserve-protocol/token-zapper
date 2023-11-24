@@ -9,10 +9,14 @@ import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Buffer } from 'buffer'
 import { UniswapV2Pair__factory } from '../contracts/factories/contracts/UniswapV2Pair__factory'
+import { Planner, Value } from '../tx-gen/Planner'
 
 const iface = UniswapV2Pair__factory.createInterface()
 
 export class UniV2Like extends UniBase {
+  async plan(planner: Planner, inputs: Value[], _: Address): Promise<Value[]> {
+    throw new Error('Method not implemented.')
+  }
   gasEstimate() {
     return BigInt(110000n)
   }

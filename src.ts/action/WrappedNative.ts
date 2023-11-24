@@ -4,10 +4,13 @@ import { parseHexStringIntoBuffer } from '../base/utils'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { IWrappedNative__factory } from '../contracts/factories/contracts/IWrappedNative__factory'
+import * as gen from '../tx-gen/Planner'
+import { Address } from '..'
 
 const iWrappedNativeIFace = IWrappedNative__factory.createInterface()
 
 export class DepositAction extends Action {
+  
   gasEstimate(): bigint {
     return 25000n
   }
@@ -21,6 +24,21 @@ export class DepositAction extends Action {
       this.gasEstimate(),
       'Wrap Native Token'
     )
+  }
+  async plan(planner: gen.Planner, inputs: gen.Value[], destination: Address) {
+    const wsteth = gen.Contract.createLibrary(IWrappedNative__factory.connect(
+      this.wrappedToken.address.address,
+      this.universe.provider
+    ))
+    const out = planner.add(wsteth.deposit({ value: inputs[0] }))
+    this.genUtils.planForwardERC20(
+      this.universe,
+      planner,
+      this.output[0],
+      inputs[0],
+      destination
+    )
+    return [inputs[0]]
   }
 
   async quote([qty]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -57,6 +75,21 @@ export class WithdrawAction extends Action {
       this.gasEstimate(),
       'Unwrap Native Token'
     )
+  }
+  async plan(planner: gen.Planner, inputs: gen.Value[], destination: Address) {
+    const wsteth = gen.Contract.createLibrary(IWrappedNative__factory.connect(
+      this.wrappedToken.address.address,
+      this.universe.provider
+    ))
+    planner.add(wsteth.withdraw(inputs[0]))
+    this.genUtils.planForwardERC20(
+      this.universe,
+      planner,
+      this.output[0],
+      inputs[0],
+      destination
+    )
+    return [inputs[0]]
   }
 
   async quote([qty]: TokenQuantity[]): Promise<TokenQuantity[]> {

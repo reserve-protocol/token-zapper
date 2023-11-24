@@ -6,11 +6,15 @@ import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { CTokenWrapper__factory } from '../contracts/factories/contracts/ICToken.sol/CTokenWrapper__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
+import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 const iCTokenWrapper = CTokenWrapper__factory.createInterface()
 
 export class MintCTokenWrapperAction extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   gasEstimate() {
     return BigInt(110000n)
   }
@@ -56,6 +60,9 @@ export class MintCTokenWrapperAction extends Action {
 }
 
 export class BurnCTokenWrapperAction extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   gasEstimate() {
     return BigInt(110000n)
   }

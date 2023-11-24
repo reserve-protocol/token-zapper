@@ -1,3 +1,4 @@
+import { Address } from '..'
 import { type Universe } from '../Universe'
 import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
@@ -6,6 +7,7 @@ import { type IWStETH } from '../contracts/contracts/IWStETH'
 import { IWStETH__factory } from '../contracts/factories/contracts/IWStETH__factory'
 
 import { type Token, type TokenQuantity } from '../entities/Token'
+import * as gen from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 const wstETHInterface = IWStETH__factory.createInterface()
@@ -61,6 +63,22 @@ export class MintWStETH extends Action {
     )
   }
 
+  async plan(planner: gen.Planner, inputs: gen.Value[], destination: Address) {
+    const wsteth = gen.Contract.createLibrary(IWStETH__factory.connect(
+      this.wsteth.address.address,
+      this.universe.provider
+    ))
+    const out = planner.add(wsteth.wrap(inputs[0]))
+    this.genUtils.planForwardERC20(
+      this.universe,
+      planner,
+      this.steth,
+      out!,
+      destination
+    )
+    return [out!]
+  }
+
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [await this.rateProvider.quoteMint(amountsIn)]
   }
@@ -104,6 +122,21 @@ export class BurnWStETH extends Action {
       this.gasEstimate(),
       'Mint wstETH'
     )
+  }
+  async plan(planner: gen.Planner, inputs: gen.Value[], destination: Address) {
+    const wsteth = gen.Contract.createLibrary(IWStETH__factory.connect(
+      this.wsteth.address.address,
+      this.universe.provider
+    ))
+    const out = planner.add(wsteth.unwrap(inputs[0]))
+    this.genUtils.planForwardERC20(
+      this.universe,
+      planner,
+      this.output[0],
+      out!,
+      destination
+    )
+    return [out!]
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

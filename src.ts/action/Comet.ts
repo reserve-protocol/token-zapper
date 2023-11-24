@@ -6,11 +6,15 @@ import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Comet__factory } from '../contracts/factories/contracts/Compv3.sol/Comet__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
+import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 const iCometInterface = Comet__factory.createInterface()
 
 export class MintCometAction extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   gasEstimate() {
     return BigInt(110000n)
   }
@@ -55,6 +59,9 @@ export class MintCometAction extends Action {
 }
 
 export class BurnCometAction extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+    throw new Error('Method not implemented.')
+  }
   gasEstimate() {
     return BigInt(110000n)
   }

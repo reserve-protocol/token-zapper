@@ -1,4 +1,3 @@
-
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
@@ -16,8 +15,27 @@ const iCEtherInterface = CEther__factory.createInterface()
 const ONEFP18 = 10n ** 18n
 
 export class MintCTokenAction extends Action {
-  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
-    throw new Error('Method not implemented.')
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    if (this.underlying === this.universe.nativeToken) {
+      const lib = this.gen.Contract.createLibrary(
+        CEther__factory.connect(
+          this.cToken.address.address,
+          this.universe.provider
+        )
+      )
+      return [planner.add(lib.mint().withValue(inputs[0]))!]
+    }
+    const lib = this.gen.Contract.createLibrary(
+      ICToken__factory.connect(
+        this.cToken.address.address,
+        this.universe.provider
+      )
+    )
+    return [planner.add(lib.mint(inputs[0]))!]
   }
   gasEstimate() {
     return BigInt(175000n)
@@ -44,20 +62,19 @@ export class MintCTokenAction extends Action {
       `Deposit ${amountsIn} into ${this.cToken.symbol}`
     )
   }
-  
+
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
-    let out = (amountsIn.amount * this.rateScale) / this.rate.value / this.underlying.scale
+    let out =
+      (amountsIn.amount * this.rateScale) /
+      this.rate.value /
+      this.underlying.scale
     // out = out - out / 3_000_000n;
-    return [
-      this.cToken.fromBigInt(
-        out
-      ),
-    ]
+    return [this.cToken.fromBigInt(out)]
   }
 
   get outputSlippage() {
-    return 3000000n;
+    return 3000000n
   }
 
   constructor(
@@ -84,10 +101,21 @@ export class MintCTokenAction extends Action {
 
 export class BurnCTokenAction extends Action {
   get outputSlippage() {
-    return 3000000n;
+    return 3000000n
   }
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
-    throw new Error('Method not implemented.')
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    const lib = this.gen.Contract.createLibrary(
+      ICToken__factory.connect(
+        this.cToken.address.address,
+        this.universe.provider
+      )
+    )
+    const out = planner.add(lib.redeem(inputs[0]))
+    return [out!]
   }
   gasEstimate() {
     return BigInt(175000n)
@@ -101,19 +129,17 @@ export class BurnCTokenAction extends Action {
       this.cToken.address,
       0n,
       this.gasEstimate(),
-      'Burn ' + this.cToken.symbol,
+      'Burn ' + this.cToken.symbol
     )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
-    let out = (amountsIn.amount * this.rate.value * this.underlying.scale) / this.rateScale
+    let out =
+      (amountsIn.amount * this.rate.value * this.underlying.scale) /
+      this.rateScale
 
-    return [
-      this.underlying.fromBigInt(
-        out
-      ),
-    ]
+    return [this.underlying.fromBigInt(out)]
   }
 
   constructor(

@@ -1,4 +1,3 @@
-
 import { type Universe } from '../Universe'
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
@@ -12,8 +11,25 @@ import { Action, DestinationOptions, InteractionConvention } from './Action'
 const iCometInterface = Comet__factory.createInterface()
 
 export class MintCometAction extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
-    throw new Error('Method not implemented.')
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    const lib = this.gen.Contract.createLibrary(
+      Comet__factory.connect(
+        this.receiptToken.address.address,
+        this.universe.provider
+      )
+    )
+    planner.add(lib.supply(this.baseToken.address.address, inputs[0]))
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      destination
+    )
+    return [out!]
   }
   gasEstimate() {
     return BigInt(110000n)
@@ -34,9 +50,7 @@ export class MintCometAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.receiptToken.from(amountsIn.amount)
-    ]
+    return [this.receiptToken.from(amountsIn.amount)]
   }
 
   constructor(
@@ -59,14 +73,40 @@ export class MintCometAction extends Action {
 }
 
 export class BurnCometAction extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
-    throw new Error('Method not implemented.')
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    const lib = this.gen.Contract.createLibrary(
+      Comet__factory.connect(
+        this.receiptToken.address.address,
+        this.universe.provider
+      )
+    )
+    planner.add(
+      lib.withdrawTo(
+        destination.address,
+        this.baseToken.address.address,
+        inputs[0]
+      )
+    )
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      destination
+    )
+    return [out!]
   }
   gasEstimate() {
     return BigInt(110000n)
   }
 
-  async encode([amountsIn]: TokenQuantity[], dest: Address): Promise<ContractCall> {
+  async encode(
+    [amountsIn]: TokenQuantity[],
+    dest: Address
+  ): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(
         iCometInterface.encodeFunctionData('withdrawTo', [
@@ -83,9 +123,7 @@ export class BurnCometAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.baseToken.from(amountsIn.amount)
-    ]
+    return [this.baseToken.from(amountsIn.amount)]
   }
 
   constructor(

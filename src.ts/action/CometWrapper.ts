@@ -11,8 +11,25 @@ import { Action, DestinationOptions, InteractionConvention } from './Action'
 const iWrappedCometInterface = WrappedComet__factory.createInterface()
 
 export class MintCometWrapperAction extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
-    throw new Error('Method not implemented.')
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    const lib = this.gen.Contract.createLibrary(
+      WrappedComet__factory.connect(
+        this.receiptToken.address.address,
+        this.universe.provider
+      )
+    )
+    planner.add(lib.deposit(inputs[0]))
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      destination
+    )
+    return [out!]
   }
   gasEstimate() {
     return BigInt(110000n)
@@ -68,8 +85,26 @@ export class MintCometWrapperAction extends Action {
 }
 
 export class BurnCometWrapperAction extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
-    throw new Error('Method not implemented.')
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    const lib = this.gen.Contract.createLibrary(
+      WrappedComet__factory.connect(
+        this.receiptToken.address.address,
+        this.universe.provider
+      )
+    )
+    const amount = planner.add(lib.convertStaticToDynamic(inputs[0]))
+    planner.add(lib.withdrawTo(destination.address, amount))
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      destination
+    )
+    return [out!]
   }
   gasEstimate() {
     return BigInt(110000n)

@@ -25,9 +25,9 @@ export class ERC4626DepositAction extends Action {
   get outputSlippage() {
     return 3000000n;
   }
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     const lib = this.gen.Contract.createLibrary(IERC4626__factory.connect(
-      this.input[0].address.address,
+      this.shareToken.address.address,
       this.universe.provider
     ))
     const out = planner.add(lib.deposit(inputs[0], destination.address))
@@ -87,12 +87,12 @@ export class ERC4626DepositAction extends Action {
 }
 
 export class ERC4626WithdrawAction extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     const lib = this.gen.Contract.createLibrary(IERC4626__factory.connect(
-      this.input[0].address.address,
+      this.shareToken.address.address,
       this.universe.provider
     ))
-    const out = planner.add(lib.withdraw(inputs[0], destination.address, this.universe.config.addresses.executorAddress.address))
+    const out = planner.add(lib.redeem(inputs[0], destination.address, this.universe.config.addresses.executorAddress.address))
     return [out!]
   }
   gasEstimate() {

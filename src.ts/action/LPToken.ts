@@ -24,7 +24,7 @@ export class LPToken {
 }
 
 export class LPTokenMint extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     throw new Error('Method not implemented.')
   }
   toString() {
@@ -57,7 +57,7 @@ export class LPTokenMint extends Action {
   }
 }
 export class LPTokenBurn extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     throw new Error('Method not implemented.')
   }
   toString() {

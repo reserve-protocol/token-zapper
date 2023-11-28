@@ -40,10 +40,9 @@ const plannerUtils = {
       token: Token,
       destination: Address
     ) {
-      const erc20 = gen.Contract.createLibrary(IERC20__factory.connect(
-        token.address.address,
-        universe.provider
-      ))
+      const erc20 = gen.Contract.createLibrary(
+        IERC20__factory.connect(token.address.address, universe.provider)
+      )
       planner.add(erc20.transfer(amount, destination.address))
     },
     balanceOf(
@@ -52,19 +51,18 @@ const plannerUtils = {
       token: Token,
       owner: Address
     ): gen.Value {
-      const erc20 = gen.Contract.createLibrary(IERC20__factory.connect(
-        token.address.address,
-        universe.provider
-      ))
+      const erc20 = gen.Contract.createLibrary(
+        IERC20__factory.connect(token.address.address, universe.provider)
+      )
       return planner.add(erc20.balanceOf(owner.address))!
-    }
-  }
+    },
+  },
 }
 
 export abstract class Action {
   protected readonly gen = gen
   protected readonly genUtils = plannerUtils
-  
+
   constructor(
     public readonly address: Address,
     public readonly input: readonly Token[],
@@ -72,22 +70,24 @@ export abstract class Action {
     public readonly interactionConvention: InteractionConvention,
     public readonly proceedsOptions: DestinationOptions,
     public readonly approvals: readonly Approval[]
-  ) { }
+  ) {}
 
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
 
-  async quoteWithSlippage(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+  async quoteWithSlippage(
+    amountsIn: TokenQuantity[]
+  ): Promise<TokenQuantity[]> {
     const outputs = await this.quote(amountsIn)
     if (this.outputSlippage === 0n) {
       return outputs
     }
-    return outputs.map(i => {
+    return outputs.map((i) => {
       let slippageAmount = i.scalarDiv(this.outputSlippage)
       if (slippageAmount.amount < 10n) {
         return i.sub(i.token.from(10n))
       }
       return i.sub(slippageAmount)
-    });
+    })
   }
   abstract gasEstimate(): bigint
   async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {
@@ -100,10 +100,14 @@ export abstract class Action {
     bytes?: Buffer
   ): Promise<ContractCall>
 
-  abstract plan(planner: gen.Planner, inputs: gen.Value[], destination: Address): Promise<gen.Value[]>;
+  abstract plan(
+    planner: gen.Planner,
+    inputs: gen.Value[],
+    destination: Address
+  ): Promise<gen.Value[]>
 
   toString() {
-    return 'Action'
+    return 'UnnamedAction'
   }
 
   // TODO: This is sort of a hack for stETH as it's a mintable but not burnable token.
@@ -114,6 +118,6 @@ export abstract class Action {
   }
 
   get outputSlippage() {
-    return 0n;
+    return 0n
   }
 }

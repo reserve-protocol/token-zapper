@@ -53,6 +53,16 @@ contract ZapperExecutor {
         token.issueTo(recipient, maxIssueableAmount);
     }
 
+    function issueRToken(
+        FacadeRead facade,
+        RToken token,
+        address recipient,
+        uint256[] calldata amts
+    ) external {
+        uint256 maxIssueableAmount = facade.maxIssuable(token, address(this));
+        token.issueTo(recipient, maxIssueableAmount);
+    }
+
     /** @dev Utility for returning remaining funds back to user
      * @param tokens - Tokens to move out of the ZapperExecutor contract
      * @param destination - Recipient of the ERC20 transfers

@@ -28,7 +28,7 @@ const boosterInterface = IBooster__factory.createInterface()
 const wrapperInterface = IConvexWrapper__factory.createInterface()
 
 export class ConvexDepositAndStake extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     throw new Error('Method not implemented.')
   }
   toString(): string {
@@ -75,7 +75,7 @@ export class ConvexDepositAndStake extends Action {
 }
 
 export class ConvexDeposit extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     throw new Error('Method not implemented.')
   }
   toString(): string {
@@ -115,7 +115,7 @@ export class ConvexDeposit extends Action {
 }
 
 export class ConvexStake extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     throw new Error('Method not implemented.')
   }
   toString(): string {
@@ -162,7 +162,7 @@ export class ConvexStake extends Action {
 }
 
 export class ConvexUnstake extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     throw new Error('Method not implemented.')
   }
   toString(): string {
@@ -198,7 +198,7 @@ export class ConvexUnstake extends Action {
 }
 
 export class ConvexWithdraw extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     throw new Error('Method not implemented.')
   }
   toString(): string {
@@ -237,7 +237,7 @@ export class ConvexWithdraw extends Action {
 }
 
 export class ConvexUnstakeAndWithdraw extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address): Value[] {
+  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
     throw new Error('Method not implemented.')
   }
   toString(): string {

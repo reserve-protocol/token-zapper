@@ -177,6 +177,12 @@ export abstract class BaseSearcherResult {
   }
 
   async simulateNoNode({ data, value }: SimulateParams) {
+    // console.log({
+    //   data,
+    //   from: this.signer.address,
+    //   to: this.universe.config.addresses.zapperAddress.address,
+    //   value: value.toString(),
+    // })
     const resp = await this.universe.provider.call({
       data,
       from: this.signer.address,

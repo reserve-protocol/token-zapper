@@ -37,9 +37,13 @@ export class StargateDepositAction extends Action {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    let slipapgeAmt = amountsIn.amount / 100000n
+    if (slipapgeAmt <= 100n) {
+      slipapgeAmt = 100n
+    }
     return [
       this.stargateToken.from(
-        amountsIn.amount - amountsIn.amount / 1000000n
+        amountsIn.amount - slipapgeAmt
       ),
     ]
   }

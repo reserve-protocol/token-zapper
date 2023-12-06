@@ -93,6 +93,8 @@ export const ethereumConfig = makeConfig(
     executorAddress: '0xe18a821ea1f1796A0797CEa01A3f86ebEab0f9B6',
     wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     rtokenLens: '0xf221BB6aBF67186576363514D638835Ffe66F2D9',
+
+    expressionEvaluator: "0xf221BB6aBF67186576363514D638835Ffe66F2D9"
   }
 )
 

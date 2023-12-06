@@ -43,6 +43,7 @@ export interface ZapperExecutorInterface extends utils.Interface {
   functions: {
     "drainERC20s(address[],address)": FunctionFragment;
     "execute((address,bytes,uint256)[],address[])": FunctionFragment;
+    "issueRToken(address,address,address,uint256[])": FunctionFragment;
     "mintMaxRToken(address,address,address)": FunctionFragment;
     "setupApprovals(address[],address[])": FunctionFragment;
   };
@@ -51,6 +52,7 @@ export interface ZapperExecutorInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "drainERC20s"
       | "execute"
+      | "issueRToken"
       | "mintMaxRToken"
       | "setupApprovals"
   ): FunctionFragment;
@@ -62,6 +64,15 @@ export interface ZapperExecutorInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "execute",
     values: [CallStruct[], PromiseOrValue<string>[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "issueRToken",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>[]
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "mintMaxRToken",
@@ -81,6 +92,10 @@ export interface ZapperExecutorInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "issueRToken",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "mintMaxRToken",
     data: BytesLike
@@ -132,6 +147,14 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    issueRToken(
+      facade: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      recipient: PromiseOrValue<string>,
+      amts: PromiseOrValue<BigNumberish>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     mintMaxRToken(
       facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
@@ -155,6 +178,14 @@ export interface ZapperExecutor extends BaseContract {
   execute(
     calls: CallStruct[],
     tokens: PromiseOrValue<string>[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  issueRToken(
+    facade: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    recipient: PromiseOrValue<string>,
+    amts: PromiseOrValue<BigNumberish>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -183,6 +214,14 @@ export interface ZapperExecutor extends BaseContract {
       tokens: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<ExecuteOutputStructOutput>;
+
+    issueRToken(
+      facade: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      recipient: PromiseOrValue<string>,
+      amts: PromiseOrValue<BigNumberish>[],
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     mintMaxRToken(
       facade: PromiseOrValue<string>,
@@ -213,6 +252,14 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    issueRToken(
+      facade: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      recipient: PromiseOrValue<string>,
+      amts: PromiseOrValue<BigNumberish>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     mintMaxRToken(
       facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
@@ -237,6 +284,14 @@ export interface ZapperExecutor extends BaseContract {
     execute(
       calls: CallStruct[],
       tokens: PromiseOrValue<string>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    issueRToken(
+      facade: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      recipient: PromiseOrValue<string>,
+      amts: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

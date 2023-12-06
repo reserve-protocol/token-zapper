@@ -30,7 +30,9 @@ export const baseConfig = makeConfig(
     zapperAddress: '0x0326bF8E7efEBAe81898d366c1491D196d143a4C',
     executorAddress: '0x8cE5ee761fF619c889F007CB4D708178E87C11D8',
     wrappedNative: "0x4200000000000000000000000000000000000006",
-    rtokenLens: "0x323EB0B5e2a59d5565E59CBEb965f00298d3A2a1"
+    rtokenLens: "0x323EB0B5e2a59d5565E59CBEb965f00298d3A2a1",
+
+    expressionEvaluator: "0xf221BB6aBF67186576363514D638835Ffe66F2D9"
   }
 )
 

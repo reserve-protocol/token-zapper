@@ -6,6 +6,7 @@ import { ContractCall } from '../base/ContractCall'
 import { type Address } from '../base/Address'
 import { IRETHRouter } from '../contracts/contracts/IRETHRouter'
 import { IRETHRouter__factory } from '../contracts/factories/contracts/IRETHRouter__factory'
+import { ExpressionEvaluator__factory } from '../contracts/factories/contracts/weiroll-helpers/ExpressionEvaluator__factory'
 import { Planner, Value } from '../tx-gen/Planner'
 
 export class REthRouter {
@@ -36,6 +37,13 @@ export class REthRouter {
     return {
       portions: params.portions,
       amountOut: this.reth.from(params.amountOut),
+      params: [
+        params.portions[0],
+        params.portions[1],
+        params.amountOut,
+        params.amountOut,
+        qtyETH.amount,
+      ] as const,
       contractCall: new ContractCall(
         parseHexStringIntoBuffer(
           this.routerInstance.interface.encodeFunctionData('swapTo', [
@@ -64,6 +72,13 @@ export class REthRouter {
     return {
       portions: params.portions,
       amountOut: this.universe.nativeToken.from(params.amountOut),
+      params: [
+        params.portions[0],
+        params.portions[1],
+        params.amountOut,
+        params.amountOut,
+        qtyETH.amount,
+      ] as const,
       contractCall: new ContractCall(
         parseHexStringIntoBuffer(
           this.routerInstance.interface.encodeFunctionData('swapFrom', [
@@ -92,12 +107,61 @@ type IRouter = Pick<
   | 'routerInstance'
 >
 
+const ONE = 10n ** 18n
+
+interface Exp {
+}
+
+const createExpression = (
+  fn: (
+    set: (to: Exp, value: Exp) => void,
+    a: Exp,
+    b: Exp,
+    c: Exp,
+    d: Exp
+  ) => {}
+) => {
+  const mkVar = (index: number) => {
+    return {
+    } as Exp
+  }
+
+  fn(
+    (to, value) => { 
+    },
+    mkVar(0),
+    mkVar(1),
+    mkVar(2),
+    mkVar(3)
+  )
+}
+
 export class ETHToRETH extends Action {
   async plan(
     planner: Planner,
     [input]: Value[],
-    destination: Address
+    destination: Address,
+    [inputPrecomputed]: TokenQuantity[]
   ): Promise<Value[]> {
+    const { params: [p0, p1, aout, , qty] } = await this.router.optimiseToREth(inputPrecomputed)
+    const f0 = p0.toBigInt() * ONE / qty
+    const f1 = p1.toBigInt() * ONE / qty
+
+    const expressionEval = this.gen.Contract.createLibrary(ExpressionEvaluator__factory.connect(
+      this.universe.config.addresses.expressionEvaluator.address,
+      this.universe.provider
+    ))
+
+    const input0 = expressionEval.evalExpression(
+      f0, input, 0, 0,
+      // 
+    )
+    const input1 = expressionEval.evalExpression(
+      f0, input, 0, 0,
+      // 
+    )
+
+    
     throw new Error('Panner not supported, use router')
   }
 

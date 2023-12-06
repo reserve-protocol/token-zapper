@@ -694,9 +694,8 @@ export class Planner {
           hexConcat([
             d.data.slice(0, 10),
             [0b00000100],
-            padArray([], 6, 0xff),
-            [0xff],
             command.call.contract.address,
+            [d.data.length]
           ])
         )
         continue

@@ -102,8 +102,12 @@ export abstract class Action {
 
   abstract plan(
     planner: gen.Planner,
+    // Actual abstract inputs
     inputs: gen.Value[],
-    destination: Address
+    destination: Address,
+
+    // Inputs we predicted
+    predictedInputs: TokenQuantity[]
   ): Promise<gen.Value[]>
 
   toString() {

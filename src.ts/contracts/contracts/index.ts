@@ -17,6 +17,8 @@ import type * as iStargateRouterSol from "./IStargateRouter.sol";
 export type { iStargateRouterSol };
 import type * as zapperSol from "./Zapper.sol";
 export type { zapperSol };
+import type * as weirollHelpers from "./weiroll-helpers";
+export type { weirollHelpers };
 export type { IAssetRegistry } from "./IAssetRegistry";
 export type { IBasketHandler } from "./IBasketHandler";
 export type { IBooster } from "./IBooster";

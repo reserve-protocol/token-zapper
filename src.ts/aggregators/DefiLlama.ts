@@ -136,18 +136,30 @@ export const fetchQuote = async (
     amountOut: 0,
   }
 
-  const BASE = 'https://swap-api.defillama.com/dexAggregatorQuote'
-  const url = `${BASE}?api_key=zT82BQ38E5unVRDGswzgUzfM2yyaQBK8mFBrzTzX6s&protocol=Matcha/0x&chain=${CHAIN_SLUG[chainId]
-    }&from=${qty.token.address.address.toLowerCase()}&to=${output.address.address.toLowerCase()}&amount=${qty.amount.toString()}`
+  const url = `https://swap-api.defillama.com/dexAggregatorQuote?protocol=${protocol}&chain=${
+    CHAIN_SLUG[chainId]
+  }&from=${qty.token.address.address.toLowerCase()}&to=${output.address.address.toLowerCase()}&amount=${qty.amount.toString()}&api_key=nsr_UYWxuvj1hOCgHxJhDEKZ0g30c4Be3I5fOMBtFAA`
   const response = await fetch(url, {
     method: 'POST',
-    body: JSON.stringify(request),
+    credentials: 'omit',
     headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0',
+      Accept: '*/*',
+      'Accept-Language': 'en-GB,en;q=0.5',
       'Content-Type': 'text/plain;charset=UTF-8',
+      'Sec-Fetch-Dest': 'empty',
+      'Sec-Fetch-Mode': 'cors',
+      'Sec-Fetch-Site': 'same-site',
     },
+    referrer: 'https://swap.defillama.com/',
+    body: JSON.stringify(request),
+    mode: 'cors',
   })
-  const json = await response.json()
-
+  console.log(await response.text())
+  const p = response.json()
+  const json = await p
+  console.log(json)
   return json as Quote
 }
 
@@ -195,7 +207,9 @@ class DefillamaAction extends Action {
       Address.from(this.request.rawQuote.to),
       0n,
       this.gasEstimate(),
-      `DefiLlama(${this.address}) (${inputs.join(',')}) -> (${this.outputQuantity})`
+      `DefiLlama(${this.address}) (${inputs.join(',')}) -> (${
+        this.outputQuantity
+      })`
     )
   }
 }

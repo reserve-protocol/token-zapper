@@ -43,7 +43,7 @@ export const PROTOCOL_CONFIGS = {
     [GAS_TOKEN_ADDRESS]: "0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70", // ETH/USD
     "0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22": "0xd7818272b9e248357d13057aab0b417af31e817d", // cbETH/USD
     // "": "0xccadc697c55bbb68dc5bcdf8d3cbe83cdd4e071e", // WBTC / USD
-    
+
   },
   ethPriceOracles: {
     "0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22": "0x806b4ac04501c29769051e42783cf04dce41440b", // cbETH / ETH
@@ -70,7 +70,8 @@ export const PROTOCOL_CONFIGS = {
         baseToken: "0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca", // USDC
         receiptToken: "0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf", // cUSDCv3
         vaults: [
-          "0xbC0033679AEf41Fb9FeB553Fdf55a8Bb2fC5B29e" // Reserve wrapped cUSDCV3
+          "0xbC0033679AEf41Fb9FeB553Fdf55a8Bb2fC5B29e", // Reserve wrapped cUSDCV3
+          "0xa8d818C719c1034E731Feba2088F4F011D44ACB3"
         ]
       }
     ]

@@ -24,41 +24,32 @@ import type {
   PromiseOrValue,
 } from "../../common";
 
-export type CallStruct = {
-  to: PromiseOrValue<string>;
-  data: PromiseOrValue<BytesLike>;
-  value: PromiseOrValue<BigNumberish>;
-};
-
-export type CallStructOutput = [string, string, BigNumber] & {
-  to: string;
-  data: string;
-  value: BigNumber;
-};
-
 export type ZapERC20ParamsStruct = {
   tokenIn: PromiseOrValue<string>;
   amountIn: PromiseOrValue<BigNumberish>;
-  commands: CallStruct[];
+  commands: PromiseOrValue<BytesLike>[];
+  state: PromiseOrValue<BytesLike>[];
+  tokens: PromiseOrValue<string>[];
   amountOut: PromiseOrValue<BigNumberish>;
   tokenOut: PromiseOrValue<string>;
-  tokensUsedByZap: PromiseOrValue<string>[];
 };
 
 export type ZapERC20ParamsStructOutput = [
   string,
   BigNumber,
-  CallStructOutput[],
+  string[],
+  string[],
+  string[],
   BigNumber,
-  string,
-  string[]
+  string
 ] & {
   tokenIn: string;
   amountIn: BigNumber;
-  commands: CallStructOutput[];
+  commands: string[];
+  state: string[];
+  tokens: string[];
   amountOut: BigNumber;
   tokenOut: string;
-  tokensUsedByZap: string[];
 };
 
 export type ZapperOutputStruct = {
@@ -101,9 +92,9 @@ export type PermitTransferFromStructOutput = [
 
 export interface ZapperInterface extends utils.Interface {
   functions: {
-    "zapERC20((address,uint256,(address,bytes,uint256)[],uint256,address,address[]))": FunctionFragment;
-    "zapERC20WithPermit2((address,uint256,(address,bytes,uint256)[],uint256,address,address[]),((address,uint256),uint256,uint256),bytes)": FunctionFragment;
-    "zapETH((address,uint256,(address,bytes,uint256)[],uint256,address,address[]))": FunctionFragment;
+    "zapERC20((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
+    "zapERC20WithPermit2((address,uint256,bytes32[],bytes[],address[],uint256,address),((address,uint256),uint256,uint256),bytes)": FunctionFragment;
+    "zapETH((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
   };
 
   getFunction(

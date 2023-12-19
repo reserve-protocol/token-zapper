@@ -16,7 +16,7 @@ export class MintCometWrapperAction extends Action {
     inputs: Value[],
     destination: Address
   ): Promise<Value[]> {
-    const lib = this.gen.Contract.createLibrary(
+    const lib = this.gen.Contract.createContract(
       WrappedComet__factory.connect(
         this.receiptToken.address.address,
         this.universe.provider
@@ -90,7 +90,7 @@ export class BurnCometWrapperAction extends Action {
     inputs: Value[],
     destination: Address
   ): Promise<Value[]> {
-    const lib = this.gen.Contract.createLibrary(
+    const lib = this.gen.Contract.createContract(
       WrappedComet__factory.connect(
         this.receiptToken.address.address,
         this.universe.provider
@@ -98,13 +98,7 @@ export class BurnCometWrapperAction extends Action {
     )
     const amount = planner.add(lib.convertStaticToDynamic(inputs[0]))
     planner.add(lib.withdrawTo(destination.address, amount))
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.output[0],
-      destination
-    )
-    return [out!]
+    return [amount!]
   }
   gasEstimate() {
     return BigInt(110000n)

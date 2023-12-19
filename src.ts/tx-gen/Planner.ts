@@ -4,6 +4,43 @@ import { Interface, ParamType, defaultAbiCoder } from '@ethersproject/abi'
 import type { FunctionFragment } from '@ethersproject/abi'
 import { defineReadOnly, getStatic } from '@ethersproject/properties'
 import { hexConcat, hexDataSlice } from '@ethersproject/bytes'
+import { DefaultMap } from '../base/DefaultMap'
+import { Address } from '../base/Address'
+import type { Universe } from "../Universe"
+
+const variableNames = [
+  'a',
+  'b',
+  'c',
+  'd',
+  'e',
+  'f',
+  'g',
+  'h',
+  'i',
+  'j',
+  'k',
+  'm',
+  'n',
+  'o',
+  'p',
+  'q',
+  'r',
+  's',
+  't',
+  'u',
+  'v',
+  'w',
+  'x',
+  'y',
+  'z',
+]
+let valueId = 0
+const valueNames = new DefaultMap<Value, string>(() => {
+  const thisId = valueId++
+  const name = variableNames[thisId % variableNames.length]
+  return name
+})
 
 /**
  * Represents a value that can be passed to a function call.
@@ -33,14 +70,16 @@ export class LiteralValue implements Value {
 export class ReturnValue implements Value {
   readonly param: ParamType
   readonly command: Command // Function call we want the return value of
+  readonly name: string
 
-  constructor(param: ParamType, command: Command) {
+  constructor(param: ParamType, command: Command, name?: string) {
     this.param = param
     this.command = command
+    this.name = name ?? valueNames.get(this)
   }
 }
 
-class StateValue implements Value {
+export class StateValue implements Value {
   readonly param: ParamType
 
   constructor() {
@@ -48,7 +87,7 @@ class StateValue implements Value {
   }
 }
 
-class SubplanValue implements Value {
+export class SubplanValue implements Value {
   readonly param: ParamType
   readonly planner: Planner
 
@@ -80,7 +119,6 @@ export enum CommandFlags {
   TUPLE_RETURN = 0x80,
 }
 
-
 /**
  * Represents a call to a contract function as part of a Weiroll plan.
  *
@@ -88,7 +126,6 @@ export enum CommandFlags {
  * passing it to [[Planner.add]], [[Planner.addSubplan]] or [[Planner.replaceState]]
  */
 export class FunctionCall {
-
   /** The Contract this function is on. */
   readonly contract: Contract
   /** Flags modifying the execution of this function call. */
@@ -174,7 +211,9 @@ export type ContractFunction = (...args: Array<any>) => FunctionCall
 
 function isDynamicType(param?: ParamType): boolean {
   if (typeof param === 'undefined') return false
-
+  if (param.baseType === 'array' && param.arrayLength !== -1) {
+    return false
+  }
   return ['string', 'bytes', 'array', 'tuple'].includes(param.baseType)
 }
 
@@ -380,26 +419,18 @@ export class Contract extends BaseContract {
   readonly [key: string]: ContractFunction | any
 }
 
-enum CommandType {
+export enum CommandType {
   CALL,
   RAWCALL,
   SUBPLAN,
-  UNTYPED_CALL
-}
-interface UntypedCommand {
-  data: string
-  to: string
-  value: string
 }
 class Command {
   readonly call: FunctionCall
   readonly type: CommandType
-  readonly untypedCall?: UntypedCommand
 
-  constructor(call: FunctionCall, type: CommandType, untypedCall?: UntypedCommand) {
+  constructor(call: FunctionCall, type: CommandType) {
     this.call = call
     this.type = type
-    this.untypedCall = untypedCall
   }
 }
 
@@ -444,6 +475,8 @@ export class Planner {
 
   /** @hidden */
   commands: Command[]
+  comments: (string | undefined)[] = []
+  returnVals = new Map<Command, ReturnValue>()
 
   constructor() {
     this.state = new StateValue()
@@ -465,9 +498,15 @@ export class Planner {
    * @param call The [[FunctionCall]] to add to the planner
    * @returns An object representing the return value of the call, or null if it does not return a value.
    */
-  add(call: FunctionCall): ReturnValue | null {
+  add(
+    call: FunctionCall,
+    comment?: string,
+    variableName?: string
+  ): ReturnValue | null {
     const command = new Command(call, CommandType.CALL)
+
     this.commands.push(command)
+    this.comments.push(comment)
 
     for (const arg of call.args) {
       if (arg instanceof SubplanValue) {
@@ -476,17 +515,20 @@ export class Planner {
     }
 
     if (call.flags & CommandFlags.TUPLE_RETURN) {
-      return new ReturnValue(ParamType.fromString('bytes'), command)
+      const ret = new ReturnValue(
+        ParamType.fromString('bytes'),
+        command,
+        variableName
+      )
+      this.returnVals.set(command, ret)
+      return ret
     }
     if (call.fragment.outputs?.length !== 1) {
       return null
     }
-    return new ReturnValue(call.fragment.outputs[0], command)
-  }
-
-  addRaw(call: UntypedCommand): void {
-    const command = new Command(null as any, CommandType.UNTYPED_CALL, call)
-    this.commands.push(command)
+    const ret = new ReturnValue(call.fragment.outputs[0], command, variableName)
+    this.returnVals.set(command, ret)
+    return ret
   }
 
   /**
@@ -593,9 +635,6 @@ export class Planner {
 
     // Build visibility maps
     for (let command of this.commands) {
-      if (command.type === CommandType.UNTYPED_CALL) {
-        continue
-      }
       let inargs = command.call.args
       if (
         (command.call.flags & CommandFlags.CALLTYPE_MASK) ===
@@ -688,18 +727,6 @@ export class Planner {
     const encodedCommands = new Array<string>()
     // Build commands, and add state entries as needed
     for (let command of this.commands) {
-      if (command.type === CommandType.UNTYPED_CALL) {
-        const d = command.untypedCall!
-        encodedCommands.push(
-          hexConcat([
-            d.data.slice(0, 10),
-            [0b00000100],
-            command.call.contract.address,
-            [d.data.length]
-          ])
-        )
-        continue
-      }
       if (command.type === CommandType.SUBPLAN) {
         // Find the subplan
         const subplanner = (
@@ -853,4 +880,121 @@ export class Planner {
 
     return { commands: encodedCommands, state }
   }
+}
+
+const formatBytes = (bytes: string): string => {
+  if (bytes.length < 64) {
+    return bytes
+  }
+  return `[len=${bytes.length}]${bytes.slice(0, 32)}...${bytes.slice(-32)}`
+}
+const formatAddress = (address: string, universe: Universe): string => {
+  const addr =
+    address.length === 66
+      ? Address.from('0x' + address.slice(26, 66))
+      : Address.from(address)
+
+  if (universe.tokens.has(addr)) {
+    return `[tok=${universe.tokens.get(addr)!.symbol}]`
+  }
+  if (universe.config.addresses.executorAddress === addr) {
+    return `[this]`
+  }
+  if (universe.config.addresses.facadeAddress === addr) {
+    return `[facade]`
+  }
+  if (addr === Address.ZERO) {
+    return `[${0x0}]`
+  }
+  return `[${addr.toShortString()}]`
+}
+const formatValue = (value: Value, universe: Universe): string => {
+  if (value instanceof ReturnValue) {
+    return value.name
+  } else if (value instanceof LiteralValue) {
+    if (value.param.baseType === 'array') {
+      const out = defaultAbiCoder.decode([value.param], value.value)
+      return `[ ${(out[0] as Array<any>)
+        .map((o) =>
+          formatValue(
+            new LiteralValue(
+              value.param.arrayChildren,
+              defaultAbiCoder.encode([value.param.arrayChildren], [o])
+            ),
+            universe
+          )
+        )
+        .join(', ')} ]`
+    }
+    if (value.param.type === 'bytes') {
+      return `${formatBytes(value.value)}`
+    }
+    if (value.param.type === 'address') {
+      return `${formatAddress(value.value, universe)}`
+    }
+    const out = defaultAbiCoder.decode([value.param], value.value)
+    return `${out.length <= 1 ? out[0] : `[ ${out.join(', ')} ]`}`
+  } else if (value instanceof SubplanValue) {
+    return `(subplan)(${value.param.type})`
+  } else if (value instanceof StateValue) {
+    return `(state)(${value.param.type})`
+  }
+  return ''
+}
+export const printPlan = (plan: Planner, universe: Universe): string[] => {
+  const out: string[] = []
+
+  for (let i = 0; i < plan.commands.length; i++) {
+    const step = plan.commands[i]
+
+
+    let callFlags = ''
+    if ((step.call.flags & CommandFlags.CALLTYPE_MASK) === CommandFlags.DELEGATECALL) {
+      callFlags = ':delegate'
+    }
+    if ((step.call.flags & CommandFlags.CALLTYPE_MASK) === CommandFlags.STATICCALL) {
+      callFlags = ':static'
+    }
+    const comment = plan.comments[i]
+    if (comment != null) {
+      out.push('// ' + comment)
+    }
+
+    const addr = formatAddress(step.call.contract.address, universe)
+    const methodName = step.call.fragment.name
+    let formattedArgs: string[] = []
+
+    for (let i = 0; i < step.call.args.length; i++) {
+      const value = step.call.args[i]
+      const paramName = step.call.fragment.inputs[i].name
+      const paramType = step.call.fragment.inputs[i].type
+      formattedArgs.push(
+        paramName + ': ' + paramType + ' = ' + formatValue(value, universe)
+      )
+    }
+
+    let valueParms = ''
+    if (step.call.callvalue != null) {
+      valueParms = `{value: ${formatValue(step.call.callvalue, universe)}}`
+    }
+
+    let argsArray = formattedArgs.join(', ')
+    if (argsArray.length > 100) {
+      argsArray = '\n' + '   ' + formattedArgs.join(',\n   ') + '\n'
+    }
+
+    const formatted = `${addr}${callFlags}.${methodName}${valueParms}(${argsArray})`
+    
+    const retVal = plan.returnVals.get(step)
+
+    const finalStr =
+      retVal == null
+        ? formatted + ';'
+        : `let ${retVal.name}: ${retVal.param.type} = ${formatted};`
+    out.push(...finalStr.split('\n'))
+
+    out.push('')
+  }
+
+  return out
 }

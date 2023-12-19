@@ -9,6 +9,7 @@ import type {
   CallOverrides,
   ContractTransaction,
   Overrides,
+  PayableOverrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -23,52 +24,67 @@ import type {
   PromiseOrValue,
 } from "../../common";
 
-export type CallStruct = {
-  to: PromiseOrValue<string>;
-  data: PromiseOrValue<BytesLike>;
-  value: PromiseOrValue<BigNumberish>;
-};
-
-export type CallStructOutput = [string, string, BigNumber] & {
-  to: string;
-  data: string;
-  value: BigNumber;
-};
-
 export type ExecuteOutputStruct = { dust: PromiseOrValue<BigNumberish>[] };
 
 export type ExecuteOutputStructOutput = [BigNumber[]] & { dust: BigNumber[] };
 
 export interface ZapperExecutorInterface extends utils.Interface {
   functions: {
-    "drainERC20s(address[],address)": FunctionFragment;
-    "execute((address,bytes,uint256)[],address[])": FunctionFragment;
-    "issueRToken(address,address,address,uint256[])": FunctionFragment;
+    "add(uint256,uint256)": FunctionFragment;
+    "assertEqual(uint256,uint256)": FunctionFragment;
+    "assertLarger(uint256,uint256)": FunctionFragment;
+    "execute(bytes32[],bytes[],address[])": FunctionFragment;
+    "fpMul(uint256,uint256,uint256)": FunctionFragment;
+    "issueRToken(address,address,uint256[])": FunctionFragment;
     "mintMaxRToken(address,address,address)": FunctionFragment;
-    "setupApprovals(address[],address[])": FunctionFragment;
+    "rawCall(address,uint256,bytes)": FunctionFragment;
+    "sub(uint256,uint256)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "drainERC20s"
+      | "add"
+      | "assertEqual"
+      | "assertLarger"
       | "execute"
+      | "fpMul"
       | "issueRToken"
       | "mintMaxRToken"
-      | "setupApprovals"
+      | "rawCall"
+      | "sub"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "drainERC20s",
-    values: [PromiseOrValue<string>[], PromiseOrValue<string>]
+    functionFragment: "add",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "assertEqual",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "assertLarger",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "execute",
-    values: [CallStruct[], PromiseOrValue<string>[]]
+    values: [
+      PromiseOrValue<BytesLike>[],
+      PromiseOrValue<BytesLike>[],
+      PromiseOrValue<string>[]
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "fpMul",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "issueRToken",
     values: [
-      PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>[]
@@ -83,15 +99,29 @@ export interface ZapperExecutorInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "setupApprovals",
-    values: [PromiseOrValue<string>[], PromiseOrValue<string>[]]
+    functionFragment: "rawCall",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "sub",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
 
+  decodeFunctionResult(functionFragment: "add", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "drainERC20s",
+    functionFragment: "assertEqual",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "assertLarger",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "fpMul", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "issueRToken",
     data: BytesLike
@@ -100,10 +130,8 @@ export interface ZapperExecutorInterface extends utils.Interface {
     functionFragment: "mintMaxRToken",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "setupApprovals",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "rawCall", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "sub", data: BytesLike): Result;
 
   events: {};
 }
@@ -135,20 +163,39 @@ export interface ZapperExecutor extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    drainERC20s(
-      tokens: PromiseOrValue<string>[],
-      destination: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+    add(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    assertEqual(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[void]>;
+
+    assertLarger(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[void]>;
 
     execute(
-      calls: CallStruct[],
+      commands: PromiseOrValue<BytesLike>[],
+      state: PromiseOrValue<BytesLike>[],
       tokens: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    fpMul(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      scale: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     issueRToken(
-      facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       amts: PromiseOrValue<BigNumberish>[],
@@ -162,27 +209,53 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    setupApprovals(
-      tokens: PromiseOrValue<string>[],
-      spenders: PromiseOrValue<string>[],
+    rawCall(
+      to: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    sub(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
   };
 
-  drainERC20s(
-    tokens: PromiseOrValue<string>[],
-    destination: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  add(
+    a: PromiseOrValue<BigNumberish>,
+    b: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  assertEqual(
+    a: PromiseOrValue<BigNumberish>,
+    b: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<void>;
+
+  assertLarger(
+    a: PromiseOrValue<BigNumberish>,
+    b: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<void>;
 
   execute(
-    calls: CallStruct[],
+    commands: PromiseOrValue<BytesLike>[],
+    state: PromiseOrValue<BytesLike>[],
     tokens: PromiseOrValue<string>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  fpMul(
+    a: PromiseOrValue<BigNumberish>,
+    b: PromiseOrValue<BigNumberish>,
+    scale: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   issueRToken(
-    facade: PromiseOrValue<string>,
     token: PromiseOrValue<string>,
     recipient: PromiseOrValue<string>,
     amts: PromiseOrValue<BigNumberish>[],
@@ -196,27 +269,53 @@ export interface ZapperExecutor extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  setupApprovals(
-    tokens: PromiseOrValue<string>[],
-    spenders: PromiseOrValue<string>[],
+  rawCall(
+    to: PromiseOrValue<string>,
+    value: PromiseOrValue<BigNumberish>,
+    data: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  sub(
+    a: PromiseOrValue<BigNumberish>,
+    b: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   callStatic: {
-    drainERC20s(
-      tokens: PromiseOrValue<string>[],
-      destination: PromiseOrValue<string>,
+    add(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    assertEqual(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    assertLarger(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     execute(
-      calls: CallStruct[],
+      commands: PromiseOrValue<BytesLike>[],
+      state: PromiseOrValue<BytesLike>[],
       tokens: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<ExecuteOutputStructOutput>;
 
+    fpMul(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      scale: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     issueRToken(
-      facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       amts: PromiseOrValue<BigNumberish>[],
@@ -230,30 +329,56 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setupApprovals(
-      tokens: PromiseOrValue<string>[],
-      spenders: PromiseOrValue<string>[],
+    rawCall(
+      to: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<[boolean, string] & { success: boolean; out: string }>;
+
+    sub(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
   };
 
   filters: {};
 
   estimateGas: {
-    drainERC20s(
-      tokens: PromiseOrValue<string>[],
-      destination: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    add(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    assertEqual(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    assertLarger(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     execute(
-      calls: CallStruct[],
+      commands: PromiseOrValue<BytesLike>[],
+      state: PromiseOrValue<BytesLike>[],
       tokens: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    fpMul(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      scale: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     issueRToken(
-      facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       amts: PromiseOrValue<BigNumberish>[],
@@ -267,28 +392,54 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    setupApprovals(
-      tokens: PromiseOrValue<string>[],
-      spenders: PromiseOrValue<string>[],
+    rawCall(
+      to: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    sub(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    drainERC20s(
-      tokens: PromiseOrValue<string>[],
-      destination: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    add(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    assertEqual(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    assertLarger(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     execute(
-      calls: CallStruct[],
+      commands: PromiseOrValue<BytesLike>[],
+      state: PromiseOrValue<BytesLike>[],
       tokens: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    fpMul(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      scale: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     issueRToken(
-      facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       amts: PromiseOrValue<BigNumberish>[],
@@ -302,10 +453,17 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    setupApprovals(
-      tokens: PromiseOrValue<string>[],
-      spenders: PromiseOrValue<string>[],
+    rawCall(
+      to: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    sub(
+      a: PromiseOrValue<BigNumberish>,
+      b: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };
 }

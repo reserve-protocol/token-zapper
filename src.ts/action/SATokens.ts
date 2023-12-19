@@ -23,14 +23,16 @@ export class MintSATokensAction extends Action {
     return 3000000n
   }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const lib = this.gen.Contract.createLibrary(
+    const lib = this.gen.Contract.createContract(
       IStaticATokenLM__factory.connect(
-        this.input[0].address.address,
+        this.saToken.address.address,
         this.universe.provider
       )
     )
     const out = planner.add(
-      lib.deposit(destination.address, inputs[0], 0, true)
+      lib.deposit(destination.address, inputs[0], 0, true),
+      undefined,
+      `bal_${this.output[0].symbol}`
     )
     return [out!]
   }
@@ -91,13 +93,17 @@ export class BurnSATokensAction extends Action {
     return 3000000n
   }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const lib = this.gen.Contract.createLibrary(
+    const lib = this.gen.Contract.createContract(
       IStaticATokenLM__factory.connect(
-        this.input[0].address.address,
+        this.saToken.address.address,
         this.universe.provider
       )
     )
-    const out = planner.add(lib.withdraw(destination.address, inputs[0], true))
+    const out = planner.add(
+      lib.withdraw(destination.address, inputs[0], true),
+      undefined,
+      `bal_${this.output[0].symbol}`
+    )
     return [out!]
   }
   gasEstimate() {

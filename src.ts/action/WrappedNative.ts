@@ -26,18 +26,11 @@ export class DepositAction extends Action {
     )
   }
   async plan(planner: gen.Planner, inputs: gen.Value[], destination: Address) {
-    const wsteth = gen.Contract.createLibrary(IWrappedNative__factory.connect(
+    const wethlib = gen.Contract.createContract(IWrappedNative__factory.connect(
       this.wrappedToken.address.address,
       this.universe.provider
     ))
-    const out = planner.add(wsteth.deposit({ value: inputs[0] }))
-    this.genUtils.planForwardERC20(
-      this.universe,
-      planner,
-      this.output[0],
-      inputs[0],
-      destination
-    )
+    planner.add(wethlib.deposit({ value: inputs[0] }))
     return [inputs[0]]
   }
 
@@ -77,18 +70,11 @@ export class WithdrawAction extends Action {
     )
   }
   async plan(planner: gen.Planner, inputs: gen.Value[], destination: Address) {
-    const wsteth = gen.Contract.createLibrary(IWrappedNative__factory.connect(
+    const wethlib = gen.Contract.createContract(IWrappedNative__factory.connect(
       this.wrappedToken.address.address,
       this.universe.provider
     ))
-    planner.add(wsteth.withdraw(inputs[0]))
-    this.genUtils.planForwardERC20(
-      this.universe,
-      planner,
-      this.output[0],
-      inputs[0],
-      destination
-    )
+    planner.add(wethlib.withdraw(inputs[0]))
     return [inputs[0]]
   }
 

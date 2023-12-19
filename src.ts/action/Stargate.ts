@@ -5,7 +5,7 @@ import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
 import { Address } from '../base/Address'
-import { IStargateRouter__factory } from '../contracts'
+import { IStargateRouter__factory, ZapperExecutor__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 
 /**
@@ -16,12 +16,22 @@ const routerInterface = IStargateRouter__factory.createInterface()
 
 export class StargateDepositAction extends Action {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const lib = this.gen.Contract.createLibrary(IStargateRouter__factory.connect(
-      this.router.address,
-      this.universe.provider
-    ))
+    const lib = this.gen.Contract.createContract(
+      IStargateRouter__factory.connect(
+        this.router.address,
+        this.universe.provider
+      )
+    )
     planner.add(lib.addLiquidity(this.poolId, inputs[0], destination.address))
-    return [inputs[0]]
+
+    return [
+      this.genUtils.erc20.balanceOf(
+        this.universe,
+        planner,
+        this.output[0],
+        destination
+      ),
+    ]
   }
   gasEstimate() {
     return BigInt(200000n)
@@ -41,7 +51,9 @@ export class StargateDepositAction extends Action {
       this.router,
       0n,
       this.gasEstimate(),
-      `Deposit ${amountsIn} into Stargate via router (${this.router}) receiving ${amountsIn.into(this.stargateToken)}`
+      `Deposit ${amountsIn} into Stargate via router (${
+        this.router
+      }) receiving ${amountsIn.into(this.stargateToken)}`
     )
   }
 
@@ -50,11 +62,7 @@ export class StargateDepositAction extends Action {
     if (slipapgeAmt <= 100n) {
       slipapgeAmt = 100n
     }
-    return [
-      this.stargateToken.from(
-        amountsIn.amount - slipapgeAmt
-      ),
-    ]
+    return [this.stargateToken.from(amountsIn.amount - slipapgeAmt)]
   }
 
   constructor(
@@ -81,11 +89,15 @@ export class StargateDepositAction extends Action {
 
 export class StargateWithdrawAction extends Action {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const lib = this.gen.Contract.createLibrary(IStargateRouter__factory.connect(
-      this.router.address,
-      this.universe.provider
-    ))
-    planner.add(lib.instantRedeemLocal(this.poolId, inputs[0], destination.address))
+    const lib = this.gen.Contract.createContract(
+      IStargateRouter__factory.connect(
+        this.router.address,
+        this.universe.provider
+      )
+    )
+    planner.add(
+      lib.instantRedeemLocal(this.poolId, inputs[0], destination.address)
+    )
     return [inputs[0]]
   }
   gasEstimate() {
@@ -100,22 +112,20 @@ export class StargateWithdrawAction extends Action {
         routerInterface.encodeFunctionData('instantRedeemLocal', [
           this.poolId,
           amountsIn.amount,
-          destination.address
+          destination.address,
         ])
       ),
       this.router,
       0n,
       this.gasEstimate(),
-      `Redeem ${amountsIn} from Stargate via router (${this.router}) receiving ${amountsIn.into(this.underlying)}`
+      `Redeem ${amountsIn} from Stargate via router (${
+        this.router
+      }) receiving ${amountsIn.into(this.underlying)}`
     )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.underlying.from(
-        amountsIn.amount
-      ),
-    ]
+    return [this.underlying.from(amountsIn.amount)]
   }
 
   constructor(

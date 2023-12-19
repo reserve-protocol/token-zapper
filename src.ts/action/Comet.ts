@@ -16,7 +16,7 @@ export class MintCometAction extends Action {
     inputs: Value[],
     destination: Address
   ): Promise<Value[]> {
-    const lib = this.gen.Contract.createLibrary(
+    const lib = this.gen.Contract.createContract(
       Comet__factory.connect(
         this.receiptToken.address.address,
         this.universe.provider
@@ -78,7 +78,7 @@ export class BurnCometAction extends Action {
     inputs: Value[],
     destination: Address
   ): Promise<Value[]> {
-    const lib = this.gen.Contract.createLibrary(
+    const lib = this.gen.Contract.createContract(
       Comet__factory.connect(
         this.receiptToken.address.address,
         this.universe.provider

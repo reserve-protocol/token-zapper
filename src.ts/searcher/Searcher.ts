@@ -78,7 +78,7 @@ export const findPrecursorTokenSet = async (
 export class Searcher<
   const SearcherUniverse extends UniverseWithERC20GasTokenDefined
 > {
-  constructor(private readonly universe: SearcherUniverse) { }
+  constructor(private readonly universe: SearcherUniverse) {}
 
   /**
    * @note This helper will find some set of operations converting a 'inputQuantity' into
@@ -139,22 +139,23 @@ export class Searcher<
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r))
       : precursorTokenBasket
-        .map((p) => p.into(inputQuantity.token))
-        .reduce((l, r) => l.add(r))
+          .map((p) => p.into(inputQuantity.token))
+          .reduce((l, r) => l.add(r))
 
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
-        input: inputQuantity.mul(
-          precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
-        ),
-        output: token,
-      }))
+          input: inputQuantity.mul(
+            precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
+          ),
+          output: token,
+        }))
       : precursorTokenBasket.map((qty) => ({
-        output: qty.token,
-        input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
-      }))
+          output: qty.token,
+          input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
+        }))
 
-    const inputQuantityToTokenSet: SwapPath[] = []
+    const tradeInputToTokenSet: SwapPath[] = []
+    const tokenSetToBasket: SwapPath[] = []
     const tradingBalances = new TokenAmounts()
     tradingBalances.add(inputQuantity)
 
@@ -187,7 +188,7 @@ export class Searcher<
         throw new Error('Failed to find token zap')
       }
       await trade.exchange(tradingBalances)
-      inputQuantityToTokenSet.push(trade)
+      tradeInputToTokenSet.push(trade)
     }
 
     /**
@@ -211,7 +212,7 @@ export class Searcher<
           tradeAction.action,
         ]).quote(actionInput, this.universe.config.addresses.executorAddress)
         exchanges.push(mintExec)
-        inputQuantityToTokenSet.push(mintExec)
+        tokenSetToBasket.push(mintExec)
         subBranchBalances.exchange(actionInput, mintExec.outputs)
 
         balances.exchange(actionInput, mintExec.outputs)
@@ -241,17 +242,40 @@ export class Searcher<
       }
     }
 
-    return new SwapPaths(
-      this.universe,
-      [inputQuantity],
-      inputQuantityToTokenSet,
-      tradingBalances.toTokenQuantities(),
-      inputQuantityToTokenSet.reduce(
-        (l, r) => l.add(r.outputValue),
-        this.universe.usd.zero
+    const fullPath = [...tradeInputToTokenSet, ...tokenSetToBasket]
+
+    return {
+      fullSwap: new SwapPaths(
+        this.universe,
+        [inputQuantity],
+        fullPath,
+        tradingBalances.toTokenQuantities(),
+        fullPath.reduce((l, r) => l.add(r.outputValue), this.universe.usd.zero),
+        this.universe.config.addresses.executorAddress
       ),
-      this.universe.config.addresses.executorAddress
-    )
+      trading: new SwapPaths(
+        this.universe,
+        [inputQuantity],
+        tradeInputToTokenSet,
+        tradingBalances.toTokenQuantities(),
+        tradeInputToTokenSet.reduce(
+          (l, r) => l.add(r.outputValue),
+          this.universe.usd.zero
+        ),
+        this.universe.config.addresses.executorAddress
+      ),
+      minting: new SwapPaths(
+        this.universe,
+        tradingBalancesUsedForMinting.toTokenQuantities(),
+        tokenSetToBasket,
+        tradingBalances.toTokenQuantities(),
+        tokenSetToBasket.reduce(
+          (l, r) => l.add(r.outputValue),
+          this.universe.usd.zero
+        ),
+        this.universe.config.addresses.executorAddress
+      ),
+    }
   }
 
   async recursivelyUnwrapQty(qty: TokenQuantity): Promise<SwapPaths> {
@@ -346,7 +370,6 @@ export class Searcher<
       outputToken = this.universe.commonTokens.ERC20GAS
     }
     const rToken = rTokenQuantity.token
-
     const rTokenActions = this.universe.wrappedTokens.get(rToken)
     if (rTokenActions == null) {
       throw new Error('RToken has no mint/burn actions')
@@ -373,12 +396,12 @@ export class Searcher<
           if (potentialSwaps.length === 0) {
             throw Error(
               'Failed to find trade for: ' +
-              qty +
-              ' -> ' +
-              outputToken +
-              '(' +
-              output.address +
-              ')'
+                qty +
+                ' -> ' +
+                outputToken +
+                '(' +
+                output.address +
+                ')'
             )
           }
           const trade = potentialSwaps[0]
@@ -450,7 +473,7 @@ export class Searcher<
     rToken: Token,
     signerAddress: Address,
     slippage = 0.0
-  ): Promise<BaseSearcherResult[]> {
+  ): Promise<TradeSearcherResult[]> {
     await this.universe.initialized
 
     const inputIsNative = userInput.token === this.universe.nativeToken
@@ -550,7 +573,7 @@ export class Searcher<
         mintAction.basket.unitBasket,
         slippage
       )
-    await inputQuantityToBasketTokens.exchange(tradingBalances)
+    await inputQuantityToBasketTokens.fullSwap.exchange(tradingBalances)
 
     const rTokenMint = await new SwapPlan(this.universe, [
       rTokenActions.mint,
@@ -562,17 +585,24 @@ export class Searcher<
 
     const output = tradingBalances.toTokenQuantities()
 
-    const searcherResult = new MintRTokenSearcherResult(
-      this.universe,
-      userInput,
-      new SwapPaths(
+    const parts = {
+      trading: inputQuantityToBasketTokens.trading,
+      minting: inputQuantityToBasketTokens.minting,
+      rTokenMint,
+      full: new SwapPaths(
         this.universe,
         [inputTokenQuantity],
-        [...inputQuantityToBasketTokens.swapPaths, rTokenMint],
+        [...inputQuantityToBasketTokens.fullSwap.swapPaths, rTokenMint],
         output,
         rTokenMint.outputValue,
         signerAddress
       ),
+    }
+
+    const searcherResult = new MintRTokenSearcherResult(
+      this.universe,
+      userInput,
+      parts,
       signerAddress,
       rToken
     )
@@ -610,7 +640,7 @@ export class Searcher<
               aggregator: router.name,
               from: input.token.symbol.toString(),
               to: output.symbol.toString(),
-            }
+            },
           })
           return null!
         }

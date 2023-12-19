@@ -24,7 +24,7 @@ export const makeConfig = <
     wrappedNative: string
     rtokenLens: string
 
-    expressionEvaluator: string
+    balanceOf: string
   }
 ) => {
   return {

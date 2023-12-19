@@ -14,14 +14,16 @@ struct ZapERC20Params {
     IERC20 tokenIn;
     // Total amount to zap / pull from user
     uint256 amountIn;
-    // Smart contract calls to execute to produce 'amountOut' of 'tokenOut'
-    Call[] commands;
+    
+    // Weiroll code to execute to produce 'amountOut' of 'tokenOut'
+    bytes32[] commands;
+    bytes[] state;
+    IERC20[] tokens;
+
     // RTokens the user requested
     uint256 amountOut;
     // RToken to issue
     IERC20 tokenOut;
-
-    IERC20[] tokensUsedByZap;
 }
 
 interface FacadeRead {

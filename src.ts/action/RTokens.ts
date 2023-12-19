@@ -17,7 +17,7 @@ const rTokenIFace = IRToken__factory.createInterface()
 
 export class MintRTokenAction extends Action {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const lib = this.gen.Contract.createLibrary(IRToken__factory.connect(
+    const lib = this.gen.Contract.createContract(IRToken__factory.connect(
       this.input[0].address.address,
       this.universe.provider
     ))
@@ -110,7 +110,7 @@ export class BurnRTokenAction extends Action {
   }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const nonce = this.basketHandler.basketNonce
-    const lib = this.gen.Contract.createLibrary(IRToken__factory.connect(
+    const lib = this.gen.Contract.createContract(IRToken__factory.connect(
       this.input[0].address.address,
       this.universe.provider
     ))

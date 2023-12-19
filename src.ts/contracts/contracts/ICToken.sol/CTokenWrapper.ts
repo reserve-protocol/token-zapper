@@ -123,7 +123,7 @@ export interface CTokenWrapper extends BaseContract {
       mintAmount: PromiseOrValue<BigNumberish>,
       to: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<void>;
 
     exchangeRateStored(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -131,7 +131,7 @@ export interface CTokenWrapper extends BaseContract {
       cTokenAmount: PromiseOrValue<BigNumberish>,
       to: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<void>;
   };
 
   filters: {};

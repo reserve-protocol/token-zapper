@@ -6,6 +6,7 @@ import { type ContractCall } from '../base/ContractCall'
 import * as gen from '../tx-gen/Planner'
 import { IERC20__factory } from '../contracts/factories/contracts'
 import { Universe } from '..'
+import { ExpressionEvaluator__factory } from '../contracts/factories/contracts/weiroll-helpers/ExpressionEvaluator__factory'
 
 export enum InteractionConvention {
   PayBeforeCall,
@@ -19,7 +20,7 @@ export enum DestinationOptions {
   Callee,
 }
 
-const plannerUtils = {
+export const plannerUtils = {
   planForwardERC20(
     universe: Universe,
     planner: gen.Planner,
@@ -40,21 +41,26 @@ const plannerUtils = {
       token: Token,
       destination: Address
     ) {
-      const erc20 = gen.Contract.createLibrary(
+      const erc20 = gen.Contract.createContract(
         IERC20__factory.connect(token.address.address, universe.provider)
       )
-      planner.add(erc20.transfer(amount, destination.address))
+      planner.add(erc20.transfer(destination.address, amount))
     },
     balanceOf(
       universe: Universe,
       planner: gen.Planner,
       token: Token,
-      owner: Address
+      owner: Address,
+      comment?: string
     ): gen.Value {
-      const erc20 = gen.Contract.createLibrary(
+      const erc20 = gen.Contract.createContract(
         IERC20__factory.connect(token.address.address, universe.provider)
       )
-      return planner.add(erc20.balanceOf(owner.address))!
+      return planner.add(
+        erc20.balanceOf(owner.address),
+        comment,
+        `bal_${token.symbol}`
+      )!
     },
   },
 }
@@ -70,7 +76,7 @@ export abstract class Action {
     public readonly interactionConvention: InteractionConvention,
     public readonly proceedsOptions: DestinationOptions,
     public readonly approvals: readonly Approval[]
-  ) {}
+  ) { }
 
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
 

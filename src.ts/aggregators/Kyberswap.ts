@@ -10,6 +10,8 @@ import {
 import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
 import { parseHexStringIntoBuffer } from '../base/utils'
+import { Planner, Value } from '../tx-gen/Planner'
+import { ZapperExecutor__factory } from '../contracts'
 
 export interface GetRoute {
   code: number
@@ -46,7 +48,7 @@ export interface GetRoute {
         poolType: string
         poolExtra: null
         extra: any
-      }>
+      }>[]
     }
     routerAddress: string
   }
@@ -83,6 +85,35 @@ const idToSlug: Record<number, string> = {
 }
 
 class KyberAction extends Action {
+  async plan(planner: Planner): Promise<Value[]> {
+    const zapperLib = this.gen.Contract.createContract(
+      ZapperExecutor__factory.connect(
+        this.universe.config.addresses.executorAddress.address,
+        this.universe.provider
+      )
+    )
+    planner.add(
+      zapperLib.rawCall(
+        this.request.req.data.routerAddress,
+        0,
+        this.request.swap.data.data
+      ),
+      `kyberswap,swap=${this.request.quantityIn} -> ${
+        this.outputQuantity
+      },route=${this.request.req.data.routeSummary.route
+        .flat()
+        .map((i) => `(${i.poolType})${Address.from(i.pool).toShortString()}`)
+        .join(' -> ')}`
+    )
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      this.universe.config.addresses.executorAddress,
+      "kyberswap,output of swap"
+    )
+    return [out!]
+  }
   public outputQuantity: TokenQuantity[] = []
   constructor(
     public readonly request: KyberswapAggregatorResult,
@@ -94,7 +125,7 @@ class KyberAction extends Action {
       [request.quantityIn.token],
       [request.output],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       [
         new Approval(
           request.quantityIn.token,
@@ -104,7 +135,7 @@ class KyberAction extends Action {
     )
 
     const amount = BigInt(this.request.swap.data.amountOut)
-    const minOut = amount - (amount / 10000n * BigInt(this.slippage))
+    const minOut = amount - (amount / 10000n) * BigInt(this.slippage)
     const out = this.output[0].from(minOut)
     this.outputQuantity = [out]
   }
@@ -117,21 +148,24 @@ class KyberAction extends Action {
   gasEstimate(): bigint {
     return BigInt(this.request.req.data.routeSummary.gas)
   }
-  async encode(
-    inputs: TokenQuantity[],
-    __: Address
-  ): Promise<ContractCall> {
+  async encode(inputs: TokenQuantity[], __: Address): Promise<ContractCall> {
     return new ContractCall(
       parseHexStringIntoBuffer(this.request.swap.data.data),
       Address.from(this.request.req.data.routerAddress),
       0n,
       this.gasEstimate(),
-      `Kyberswap(${this.address}) (${inputs.join(",")}) -> (${this.outputQuantity})`
+      `Kyberswap(${this.address}) (${inputs.join(',')}) -> (${
+        this.outputQuantity
+      })`
     )
   }
 }
 
-export const createKyberswap = (aggregatorName: string, universe: Universe, slippage: number) => {
+export const createKyberswap = (
+  aggregatorName: string,
+  universe: Universe,
+  slippage: number
+) => {
   if (idToSlug[universe.chainId] == null) {
     throw new Error('Kyberswap: Unsupported chain')
   }
@@ -144,15 +178,12 @@ export const createKyberswap = (aggregatorName: string, universe: Universe, slip
 
   const fetchRoute = async (quantityIn: TokenQuantity, tokenOut: Token) => {
     const url = `${GET_ROUTE_SWAP}?source=register&amountIn=${quantityIn.amount}&tokenIn=${quantityIn.token.address.address}&tokenOut=${tokenOut.address.address}`
-    return fetch(
-      url,
-      {
-        method: 'GET',
-        headers: {
-          'x-client-id': 'register',
-        },
-      }
-    ).then((res) => res.json()) as Promise<GetRoute>
+    return fetch(url, {
+      method: 'GET',
+      headers: {
+        'x-client-id': 'register',
+      },
+    }).then((res) => res.json()) as Promise<GetRoute>
   }
   const fetchSwap = async (req: GetRoute, recipient: Address) => {
     return fetch(`${POST_GET_SWAP}?source=register`, {
@@ -163,7 +194,7 @@ export const createKyberswap = (aggregatorName: string, universe: Universe, slip
         recipient: recipient.address,
         skipSimulateTx: true,
         slippageTolerance: slippage,
-        source: "register"
+        source: 'register',
       }),
       headers: {
         'Content-Type': 'application/json',

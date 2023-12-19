@@ -23,7 +23,7 @@ export class MintSAV3TokensAction extends Action {
     return 3000000n
   }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const lib = this.gen.Contract.createLibrary(
+    const lib = this.gen.Contract.createContract(
       IStaticAV3TokenLM__factory.connect(
         this.input[0].address.address,
         this.universe.provider
@@ -88,7 +88,7 @@ export class BurnSAV3TokensAction extends Action {
     return 3000000n
   }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const lib = this.gen.Contract.createLibrary(
+    const lib = this.gen.Contract.createContract(
       IStaticAV3TokenLM__factory.connect(
         this.input[0].address.address,
         this.universe.provider

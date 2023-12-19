@@ -59,7 +59,8 @@ export const testConfig = makeConfig(
     zapperAddress: '0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b',
     executorAddress: '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11',
     wrappedNative: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    rtokenLens: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+    rtokenLens: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    balanceOf: "0x0000000000000000000000000000000000000000"
   },
 )
 type BaseTestConfigType = typeof testConfig

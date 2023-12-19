@@ -16,13 +16,14 @@ export class MintCTokenWrapperAction extends Action {
     inputs: Value[],
     destination: Address
   ): Promise<Value[]> {
-    const lib = this.gen.Contract.createLibrary(
+    const lib = this.gen.Contract.createContract(
       CTokenWrapper__factory.connect(
         this.receiptToken.address.address,
         this.universe.provider
       )
     )
-    planner.add(lib.deposit(inputs[0], destination.address))!
+    const dep = lib.deposit(inputs[0], destination.address)
+    planner.add(dep)
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
@@ -82,7 +83,7 @@ export class BurnCTokenWrapperAction extends Action {
     inputs: Value[],
     destination: Address
   ): Promise<Value[]> {
-    const lib = this.gen.Contract.createLibrary(
+    const lib = this.gen.Contract.createContract(
       CTokenWrapper__factory.connect(
         this.receiptToken.address.address,
         this.universe.provider

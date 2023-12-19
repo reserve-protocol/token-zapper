@@ -26,7 +26,7 @@ export class ERC4626DepositAction extends Action {
     return 3000000n;
   }
   async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
-    const lib = this.gen.Contract.createLibrary(IERC4626__factory.connect(
+    const lib = this.gen.Contract.createContract(IERC4626__factory.connect(
       this.shareToken.address.address,
       this.universe.provider
     ))
@@ -88,7 +88,7 @@ export class ERC4626DepositAction extends Action {
 
 export class ERC4626WithdrawAction extends Action {
   async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
-    const lib = this.gen.Contract.createLibrary(IERC4626__factory.connect(
+    const lib = this.gen.Contract.createContract(IERC4626__factory.connect(
       this.shareToken.address.address,
       this.universe.provider
     ))

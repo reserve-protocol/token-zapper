@@ -9,8 +9,10 @@ import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { GAS_TOKEN_ADDRESS, ZERO } from '../base/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
+import { ZapperExecutor__factory } from '../contracts/factories/contracts/Zapper.sol/ZapperExecutor__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
+import { Planner, Value } from '../tx-gen/Planner'
 import { DexAggregator } from './DexAggregator'
 
 const CHAIN_SLUG: Record<number, string> = {
@@ -164,6 +166,28 @@ export const fetchQuote = async (
 }
 
 class DefillamaAction extends Action {
+  async plan(planner: Planner): Promise<Value[]> {
+    const zapperLib = this.gen.Contract.createContract(
+      ZapperExecutor__factory.connect(
+        this.universe.config.addresses.executorAddress.address,
+        this.universe.provider
+      )
+    )
+    planner.add(
+      zapperLib.rawCall(
+        this.request.rawQuote.to,
+        this.request.rawQuote.value,
+        this.request.rawQuote.data
+      )
+    )
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      this.universe.config.addresses.executorAddress
+    )
+    return [out!]
+  }
   public outputQuantity: TokenQuantity[] = []
   constructor(
     public readonly request: Quote,
@@ -178,7 +202,7 @@ class DefillamaAction extends Action {
       [quantityIn.token],
       [output],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       [
         new Approval(
           quantityIn.token,

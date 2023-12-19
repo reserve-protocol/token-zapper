@@ -22,7 +22,7 @@ export class StETHRateProvider {
 
 export class MintStETH extends Action {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const wsteth = this.gen.Contract.createLibrary(
+    const wsteth = this.gen.Contract.createContract(
       IStETH__factory.connect(
         this.steth.address.address,
         this.universe.provider
@@ -30,13 +30,6 @@ export class MintStETH extends Action {
     )
 
     const out = planner.add(wsteth.submit(inputs[0]))
-    this.genUtils.planForwardERC20(
-      this.universe,
-      planner,
-      this.steth,
-      out!,
-      destination
-    )
     return [out!]
   }
   gasEstimate() {

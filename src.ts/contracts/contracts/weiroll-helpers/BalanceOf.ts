@@ -4,7 +4,6 @@
 import type {
   BaseContract,
   BigNumber,
-  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -23,34 +22,29 @@ import type {
   PromiseOrValue,
 } from "../../common";
 
-export interface RTokenLensInterface extends utils.Interface {
+export interface BalanceOfInterface extends utils.Interface {
   functions: {
-    "redeem(address,address,address,uint256)": FunctionFragment;
+    "balanceOf(address,address)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "redeem"): FunctionFragment;
+  getFunction(nameOrSignatureOrTopic: "balanceOf"): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "redeem",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
+    functionFragment: "balanceOf",
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
 
-  decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
 
   events: {};
 }
 
-export interface RTokenLens extends BaseContract {
+export interface BalanceOf extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: RTokenLensInterface;
+  interface: BalanceOfInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -72,53 +66,41 @@ export interface RTokenLens extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    redeem(
-      assetRegistry: PromiseOrValue<string>,
-      basketHandler: PromiseOrValue<string>,
-      rToken: PromiseOrValue<string>,
-      amount: PromiseOrValue<BigNumberish>,
+    balanceOf(
+      token: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
-  redeem(
-    assetRegistry: PromiseOrValue<string>,
-    basketHandler: PromiseOrValue<string>,
-    rToken: PromiseOrValue<string>,
-    amount: PromiseOrValue<BigNumberish>,
+  balanceOf(
+    token: PromiseOrValue<string>,
+    account: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    redeem(
-      assetRegistry: PromiseOrValue<string>,
-      basketHandler: PromiseOrValue<string>,
-      rToken: PromiseOrValue<string>,
-      amount: PromiseOrValue<BigNumberish>,
+    balanceOf(
+      token: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<
-      [string[], BigNumber[]] & { erc20s: string[]; quantities: BigNumber[] }
-    >;
+    ): Promise<BigNumber>;
   };
 
   filters: {};
 
   estimateGas: {
-    redeem(
-      assetRegistry: PromiseOrValue<string>,
-      basketHandler: PromiseOrValue<string>,
-      rToken: PromiseOrValue<string>,
-      amount: PromiseOrValue<BigNumberish>,
+    balanceOf(
+      token: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    redeem(
-      assetRegistry: PromiseOrValue<string>,
-      basketHandler: PromiseOrValue<string>,
-      rToken: PromiseOrValue<string>,
-      amount: PromiseOrValue<BigNumberish>,
+    balanceOf(
+      token: PromiseOrValue<string>,
+      account: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

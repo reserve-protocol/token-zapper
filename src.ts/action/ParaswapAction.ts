@@ -4,9 +4,13 @@ import { Approval } from "../base/Approval";
 import { ContractCall } from "../base/ContractCall";
 import { parseHexStringIntoBuffer } from "../base/utils";
 import { Action, DestinationOptions, InteractionConvention } from "./Action";
+import { Planner, Value } from "../tx-gen/Planner";
 
 
 export class ParaswapAction extends Action {
+  plan(planner: Planner, inputs: Value[], destination: Address, predictedInputs: TokenQuantity[]): Promise<Value[]> {
+    throw new Error("Method not implemented.");
+  }
   constructor(
     public readonly universe: Universe,
     public readonly tx: Transaction,

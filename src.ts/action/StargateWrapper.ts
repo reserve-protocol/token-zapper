@@ -16,7 +16,7 @@ const vaultInterface = IStargateRewardableWrapper__factory.createInterface()
 
 export class StargateWrapperDepositAction extends Action {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const wSGToken = this.gen.Contract.createLibrary(IStargateRewardableWrapper__factory.connect(
+    const wSGToken = this.gen.Contract.createContract(IStargateRewardableWrapper__factory.connect(
       this.stargateToken.address.address,
       this.universe.provider
     ))
@@ -77,7 +77,7 @@ export class StargateWrapperWithdrawAction extends Action {
     return BigInt(200000n)
   }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const wSGToken = this.gen.Contract.createLibrary(IStargateRewardableWrapper__factory.connect(
+    const wSGToken = this.gen.Contract.createContract(IStargateRewardableWrapper__factory.connect(
       this.stargateToken.address.address,
       this.universe.provider
     ))

@@ -24,7 +24,10 @@ export const makeConfig = <
     wrappedNative: string
     rtokenLens: string
 
+    // Weiroll toolkits
     balanceOf: string
+    curveRouterCall: string
+
   }
 ) => {
   return {

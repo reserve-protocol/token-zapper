@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/weiroll-helpers/BalanceOf.sol": {
+      "content": "// SPDX-License-Identifier: BlueOak-1.0.0\npragma solidity 0.8.17;\n\ncontract BalanceOf {\n    error BalanceOfFailed(address token, address account);\n    function balanceOf(address token, address account) external returns (uint256) {\n        (bool success, bytes memory data) = token.call(\n            abi.encodeWithSelector(\n                0x70a08231, // balanceOf(address)\n                account\n            )\n        );\n        if (!success) {\n            revert BalanceOfFailed(token, account);\n        }\n        return abi.decode(data, (uint256));\n    }\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

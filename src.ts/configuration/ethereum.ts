@@ -94,7 +94,8 @@ export const ethereumConfig = makeConfig(
     wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     rtokenLens: '0xf221BB6aBF67186576363514D638835Ffe66F2D9',
 
-    balanceOf: "0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D"
+    balanceOf: "0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D",
+    curveRouterCall: "0xA18ad6dCb6B217A4c3810f865f5eEf45570024dc",
   }
 )
 

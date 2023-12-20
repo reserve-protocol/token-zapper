@@ -112,6 +112,13 @@ class KyberAction extends Action {
       this.universe.config.addresses.executorAddress,
       "kyberswap,output of swap"
     )
+    planner.add(
+      zapperLib.assertLarger(
+        out,
+        this.outputQuantity[0].amount,
+      ),
+      "kyberswap,assert minimum output"
+    )
     return [out!]
   }
   public outputQuantity: TokenQuantity[] = []

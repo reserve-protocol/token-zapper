@@ -7,6 +7,7 @@ import { parseHexStringIntoBuffer } from '../base/utils'
 import { IStETH__factory } from '../contracts/factories/contracts/IStETH__factory'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Address } from '..'
+import { constants } from 'ethers'
 
 const stETHInterface = IStETH__factory.createInterface()
 export class StETHRateProvider {
@@ -21,7 +22,7 @@ export class StETHRateProvider {
 }
 
 export class MintStETH extends Action {
-  async plan(planner: Planner, inputs: Value[], destination: Address) {
+  async plan(planner: Planner, inputs: Value[]) {
     const wsteth = this.gen.Contract.createContract(
       IStETH__factory.connect(
         this.steth.address.address,
@@ -29,7 +30,13 @@ export class MintStETH extends Action {
       )
     )
 
-    const out = planner.add(wsteth.submit(inputs[0]))
+    planner.add(wsteth.submit(constants.AddressZero).withValue(inputs[0]))
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      this.universe.config.addresses.executorAddress
+    )
     return [out!]
   }
   gasEstimate() {

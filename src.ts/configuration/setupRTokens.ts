@@ -1,6 +1,7 @@
 import { type Universe } from '../Universe';
 import { MintRTokenAction, BurnRTokenAction } from '../action/RTokens';
 import { Address } from '../base/Address';
+import { IRToken__factory } from '../contracts';
 import { IMain__factory } from '../contracts/factories/contracts/IMain__factory';
 import { TokenBasket } from '../entities/TokenBasket';
 
@@ -15,11 +16,14 @@ export const loadRToken = async (universe: Universe, rTokenAddress: Address, mai
   ])
 
   const token = await universe.getToken(rTokenAddress)
+
+  const rtoken = IRToken__factory.connect(rTokenAddress.address, universe.provider)
   const basketHandler = new TokenBasket(
     universe,
     Address.from(basketHandlerAddress),
     token,
-    Address.from(assetRegistryAddress)
+    Address.from(assetRegistryAddress),
+    await rtoken.version()
   );
   (universe.rTokens as any)[token.symbol] = token
   await basketHandler.update()

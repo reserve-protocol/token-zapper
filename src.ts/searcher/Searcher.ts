@@ -14,7 +14,7 @@ import {
   MintRTokenSearcherResult,
   TradeSearcherResult,
 } from './SearcherResult'
-import { SwapPath, SwapPaths, SwapPlan } from './Swap'
+import { SingleSwap, SwapPath, SwapPaths, SwapPlan } from './Swap'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 
 /**
@@ -153,6 +153,17 @@ export class Searcher<
           output: qty.token,
           input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
         }))
+    const total = inputPrTrade.reduce(
+      (l, r) => l.add(r.input),
+      inputQuantity.token.zero
+    )
+    const leftOver = inputQuantity.sub(total)
+    if (leftOver.amount > 0n) {
+      inputPrTrade[0].input = inputPrTrade[0].input.add(leftOver)
+    }
+    console.log(
+      inputPrTrade.map((i) => i.input.toString() + ' -> ' + i.output).join(', ')
+    )
 
     const tradeInputToTokenSet: SwapPath[] = []
     const tokenSetToBasket: SwapPath[] = []
@@ -278,10 +289,23 @@ export class Searcher<
     }
   }
 
-  async recursivelyUnwrapQty(qty: TokenQuantity): Promise<SwapPaths> {
+  async unwrapOnce(qty: TokenQuantity): Promise<SingleSwap> {
+    const mintBurnActions = this.universe.wrappedTokens.get(qty.token)
+    if (mintBurnActions == null) {
+      throw new Error('Token has no mint/burn actions')
+    }
+    const output = await mintBurnActions.burn.quoteWithSlippage([qty])
+    const plan = new SwapPlan(this.universe, [mintBurnActions.burn])
+    const swap = (await plan.quote(
+      [qty],
+      this.universe.config.addresses.executorAddress
+    )).steps[0]
+    return swap
+  }
+  async recursivelyUnwrapQty(qty: TokenQuantity): Promise<SwapPath> {
     const potentiallyUnwrappable = [qty]
     const tokenAmounts = new TokenAmounts()
-    const swapPlans: SwapPath[] = []
+    const swapPlans: SingleSwap[] = []
 
     while (potentiallyUnwrappable.length !== 0) {
       const qty = potentiallyUnwrappable.pop()!
@@ -290,13 +314,14 @@ export class Searcher<
         tokenAmounts.add(qty)
         continue
       }
+      this.unwrapOnce(qty)
       const output = await mintBurnActions.burn.quoteWithSlippage([qty])
       const plan = new SwapPlan(this.universe, [mintBurnActions.burn])
       swapPlans.push(
-        await plan.quote([qty], this.universe.config.addresses.executorAddress)
+        (await plan.quote([qty], this.universe.config.addresses.executorAddress)).steps[0]
       )
-      for (const underylingQty of output) {
-        potentiallyUnwrappable.push(underylingQty)
+      for (const underlyingQty of output) {
+        potentiallyUnwrappable.push(underlyingQty)
       }
     }
     const output = tokenAmounts.toTokenQuantities()
@@ -307,8 +332,7 @@ export class Searcher<
       )
     )
 
-    return new SwapPaths(
-      this.universe,
+    return new SwapPath(
       [qty],
       swapPlans,
       output,
@@ -374,17 +398,31 @@ export class Searcher<
     if (rTokenActions == null) {
       throw new Error('RToken has no mint/burn actions')
     }
-
-    const redeemRTokenForUnderlying = await this.recursivelyUnwrapQty(
-      rTokenQuantity
+    const redeemStep = await this.unwrapOnce(rTokenQuantity)
+    const redeem = new SwapPath(
+      [rTokenQuantity],
+      [redeemStep],
+      redeemStep.outputs,
+      this.universe.usd.zero,
+      this.universe.config.addresses.executorAddress
     )
-
-    // Trade each underlying for output
     const tokenAmounts = new TokenAmounts()
-    tokenAmounts.addQtys(redeemRTokenForUnderlying.outputs)
+    const redeemSwapPaths: SwapPath[] = []
 
-    const underlyingToOutputTrade = await Promise.all(
-      redeemRTokenForUnderlying.outputs
+    for (const basketTokenQty of redeem.outputs) {
+      const basketTokenToOutput = await this.recursivelyUnwrapQty(
+        basketTokenQty
+      )
+      tokenAmounts.addQtys(basketTokenToOutput.outputs)
+      redeemSwapPaths.push(basketTokenToOutput)
+    }
+    
+    // Trade each underlying for output
+    
+    
+    const unwrapTokenQtys = tokenAmounts.toTokenQuantities()
+    const underlyingToOutputTrades = await Promise.all(
+      unwrapTokenQtys
         .filter((qty) => qty.token !== outputToken)
         .map(async (qty) => {
           const potentialSwaps = await this.findSingleInputTokenSwap(
@@ -418,19 +456,9 @@ export class Searcher<
       this.universe,
       [rTokenQuantity],
       [
-        ...redeemRTokenForUnderlying.swapPaths.map((i) => {
-          if (i.outputs.length === 1 && i.outputs[0].token === outputToken) {
-            return new SwapPath(
-              i.inputs,
-              i.steps,
-              i.outputs,
-              i.outputValue,
-              signerAddress
-            )
-          }
-          return i
-        }),
-        ...underlyingToOutputTrade,
+        redeem,
+        ...redeemSwapPaths,
+        ...underlyingToOutputTrades,
       ],
       tokenAmounts.toTokenQuantities(),
       outputValue,
@@ -440,7 +468,12 @@ export class Searcher<
     return new BurnRTokenSearcherResult(
       this.universe,
       rTokenQuantity,
-      outputSwap,
+      {
+        full: outputSwap,
+        rtokenRedemption: redeem,
+        tokenBasketUnwrap: redeemSwapPaths,
+        tradesToOutput: underlyingToOutputTrades,
+      },
       signerAddress,
       outputToken
     )

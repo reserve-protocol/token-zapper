@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/weiroll-helpers/CurveRouterCall.sol": {
+      "content": "// SPDX-License-Identifier: BlueOak-1.0.0\npragma solidity 0.8.17;\ninterface ICurveRouter {\n    function exchange_multiple(\n        address[9] calldata _route,\n        uint256[3][4] calldata _swap_params,\n        uint256 _amount,\n        uint256 _expected,\n        address[4] calldata _pools\n    ) external returns (uint256);\n}\ncontract CurveRouterCall {\n    function exchange(uint256 amountIn, uint256 _expected, address router, bytes memory encodedRouterCall) external returns (uint256) {\n        (address[9] memory _route, uint256[3][4] memory _swap_params, address[4] memory _pools ) = abi.decode(\n            encodedRouterCall,\n            (address[9], uint256[3][4], address[4])\n        );\n        return ICurveRouter(router).exchange_multiple(\n            _route,\n            _swap_params,\n            amountIn,\n            _expected,\n            _pools\n        );\n    }\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

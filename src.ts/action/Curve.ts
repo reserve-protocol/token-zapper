@@ -3,7 +3,7 @@ import { curve as curveInner } from '../curve-js/src/curve'
 import { type IRoute } from '../curve-js/src/interfaces'
 
 import { ethers } from 'ethers'
-import { formatUnits, parseUnits } from 'ethers/lib/utils'
+import { defaultAbiCoder, formatUnits, parseUnits } from 'ethers/lib/utils'
 import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
@@ -15,7 +15,7 @@ import { Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 import { LPToken } from './LPToken'
 import { Planner, Value } from '../tx-gen/Planner'
-import { ZapperExecutor__factory } from '../contracts'
+import { CurveRouterCall__factory, ZapperExecutor__factory } from '../contracts'
 
 const whiteList = new Set(
   [
@@ -139,25 +139,35 @@ export class CurveSwap extends Action {
   ): Promise<Value[]> {
     const output = await this._quote(amountsIn)
     const minOut = this.output[0].fromScale18BN(parseUnits(output.output, 18))
-
-    const libCurveRouter = this.gen.Contract.createContract(
+    const routerContract =
       curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
         .contract
+    const curveRouterCallLib = this.gen.Contract.createLibrary(
+      CurveRouterCall__factory.connect(
+        this.universe.config.addresses.curveRouterCall.address,
+        this.universe.provider
+      )
     )
     const { _route, _swapParams, _factorySwapAddresses } =
-      _getExchangeMultipleArgs(output.route) 
+      _getExchangeMultipleArgs(output.route)
+    
+    const payload = parseHexStringIntoBuffer(
+      defaultAbiCoder.encode(
+        ["address[9]", "uint256[3][4]", "address[4]"],
+        [_route, _swapParams, _factorySwapAddresses]
+      )
+    )
+
     const out = planner.add(
-      libCurveRouter.exchange_multiple(
-        _route,
-        _swapParams,
+      curveRouterCallLib.exchange(
         inputs[0] ?? amountsIn.amount,
         minOut.amount,
-        _factorySwapAddresses
+        routerContract.address,
+        payload
       ),
       `Curve,swap=${amountsIn} -> ${minOut}`,
       `amt_${this.output[0].symbol}`
     )
-
     return [out!]
   }
   private estimate?: bigint

@@ -41,6 +41,7 @@ export interface IRTokenInterface extends utils.Interface {
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
+    "version()": FunctionFragment;
   };
 
   getFunction(
@@ -57,6 +58,7 @@ export interface IRTokenInterface extends utils.Interface {
       | "totalSupply"
       | "transfer"
       | "transferFrom"
+      | "version"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -111,6 +113,7 @@ export interface IRTokenInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>
     ]
   ): string;
+  encodeFunctionData(functionFragment: "version", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
@@ -133,6 +136,7 @@ export interface IRTokenInterface extends utils.Interface {
     functionFragment: "transferFrom",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "version", data: BytesLike): Result;
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
@@ -255,6 +259,8 @@ export interface IRToken extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    version(overrides?: CallOverrides): Promise<[string]>;
   };
 
   allowance(
@@ -319,6 +325,8 @@ export interface IRToken extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  version(overrides?: CallOverrides): Promise<string>;
+
   callStatic: {
     allowance(
       owner: PromiseOrValue<string>,
@@ -381,6 +389,8 @@ export interface IRToken extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    version(overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {
@@ -469,6 +479,8 @@ export interface IRToken extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    version(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -533,5 +545,7 @@ export interface IRToken extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    version(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

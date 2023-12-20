@@ -22,6 +22,10 @@ export class ZapTransaction {
       ...printPlan(this.planner, this.universe).map((c) => '   ' + c),
       '  ],',
       `  input: ${this.input}`,
+      `  gas: ${this.gasEstimate}`,
+      `  fee: ${this.universe.nativeToken.from(
+        this.universe.gasPrice * this.gasEstimate
+      )}`,
       `  outputs: ${this.output.join(', ')}`,
       '}',
     ]

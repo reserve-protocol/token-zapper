@@ -7,6 +7,7 @@ import { hexConcat, hexDataSlice } from '@ethersproject/bytes'
 import { DefaultMap } from '../base/DefaultMap'
 import { Address } from '../base/Address'
 import type { Universe } from "../Universe"
+import { constants } from 'ethers'
 
 const variableNames = [
   'a',
@@ -886,7 +887,7 @@ const formatBytes = (bytes: string): string => {
   if (bytes.length < 64) {
     return bytes
   }
-  return `[len=${bytes.length}]${bytes.slice(0, 32)}...${bytes.slice(-32)}`
+  return `[len=${bytes.length}]0x${bytes.slice(66, 66+32)}...${bytes.slice(-32)}`
 }
 const formatAddress = (address: string, universe: Universe): string => {
   const addr =
@@ -902,6 +903,12 @@ const formatAddress = (address: string, universe: Universe): string => {
   }
   if (universe.config.addresses.facadeAddress === addr) {
     return `[facade]`
+  }
+  if (universe.config.addresses.balanceOf === addr) {
+    return `[balanceOf]`
+  }
+  if (universe.config.addresses.curveRouterCall === addr) {
+    return `[curve-router-caller]`
   }
   if (addr === Address.ZERO) {
     return `[${0x0}]`
@@ -933,6 +940,9 @@ const formatValue = (value: Value, universe: Universe): string => {
       return `${formatAddress(value.value, universe)}`
     }
     const out = defaultAbiCoder.decode([value.param], value.value)
+    if (value.param.type === 'uint256' && out[0] === '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff') {
+      return 'type(uint256).max'
+    }
     return `${out.length <= 1 ? out[0] : `[ ${out.join(', ')} ]`}`
   } else if (value instanceof SubplanValue) {
     return `(subplan)(${value.param.type})`

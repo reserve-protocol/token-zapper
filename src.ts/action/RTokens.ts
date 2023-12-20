@@ -1,8 +1,5 @@
 import { Address } from '../base/Address'
-import {
-  numberOfUnits,
-  type TokenQuantity,
-} from '../entities/Token'
+import { numberOfUnits, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
@@ -17,10 +14,12 @@ const rTokenIFace = IRToken__factory.createInterface()
 
 export class MintRTokenAction extends Action {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const lib = this.gen.Contract.createContract(IRToken__factory.connect(
-      this.input[0].address.address,
-      this.universe.provider
-    ))
+    const lib = this.gen.Contract.createContract(
+      IRToken__factory.connect(
+        this.input[0].address.address,
+        this.universe.provider
+      )
+    )
     const out = planner.add(lib.issueTo(inputs[0], destination.address))
     return [out!]
   }
@@ -29,7 +28,7 @@ export class MintRTokenAction extends Action {
   }
 
   get outputSlippage() {
-    return 3000000n;
+    return 3000000n
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
@@ -37,11 +36,7 @@ export class MintRTokenAction extends Action {
       throw new Error('Invalid inputs for RToken mint')
     }
     const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket)
-    return [
-      this.basket.rToken.fromBigInt(
-        unitsRequested
-      ),
-    ]
+    return [this.basket.rToken.fromBigInt(unitsRequested)]
   }
 
   async exchange(input: TokenQuantity[], balances: TokenAmounts) {
@@ -57,11 +52,7 @@ export class MintRTokenAction extends Action {
     destination: Address
   ): Promise<ContractCall> {
     const units = (await this.quote(amountsIn))[0]
-    return this.encodeIssueTo(
-      amountsIn,
-      units,
-      destination
-    )
+    return this.encodeIssueTo(amountsIn, units, destination)
   }
 
   async encodeIssueTo(
@@ -106,21 +97,34 @@ export class MintRTokenAction extends Action {
 
 export class BurnRTokenAction extends Action {
   get outputSlippage() {
-    return 300000n;
+    return 300000n
   }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const nonce = this.basketHandler.basketNonce
-    const lib = this.gen.Contract.createContract(IRToken__factory.connect(
-      this.input[0].address.address,
-      this.universe.provider
-    ))
-    const out = planner.add(lib.redeem(inputs[0], nonce))
-    return [out!]
+    const lib = this.gen.Contract.createContract(
+      IRToken__factory.connect(
+        this.input[0].address.address,
+        this.universe.provider
+      )
+    )
+
+    planner.add(lib.redeem(inputs[0]))
+
+    return this.basketHandler.unitBasket.map(({ token }) =>
+      this.genUtils.erc20.balanceOf(
+        this.universe,
+        planner,
+        token,
+        this.universe.config.addresses.executorAddress
+      )
+    )
   }
   gasEstimate() {
     return BigInt(600000n)
   }
-  async encode([quantity]: TokenQuantity[], destination: Address): Promise<ContractCall> {
+  async encode(
+    [quantity]: TokenQuantity[],
+    destination: Address
+  ): Promise<ContractCall> {
     const nonce = this.basketHandler.basketNonce
     return new ContractCall(
       parseHexStringIntoBuffer(
@@ -129,7 +133,9 @@ export class BurnRTokenAction extends Action {
       this.basketHandler.rToken.address,
       0n,
       this.gasEstimate(),
-      `Burn RToken(${this.output.join(",")},input:${quantity},destination: ${destination})`
+      `Burn RToken(${this.output.join(
+        ','
+      )},input:${quantity},destination: ${destination})`
     )
   }
 

@@ -30,7 +30,7 @@ export class DepositAction extends Action {
       this.wrappedToken.address.address,
       this.universe.provider
     ))
-    planner.add(wethlib.deposit({ value: inputs[0] }))
+    planner.add(wethlib.deposit().withValue(inputs[0]))
     return [inputs[0]]
   }
 

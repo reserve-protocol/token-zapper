@@ -8,6 +8,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  *   exchange rate against a single unit: baskets, or {BU} in our type notation.
  */
 interface IRToken is IERC20 {
+    function version() external pure returns (string memory);
     function issue(uint256 amount) external;
     function issueTo(address recipient, uint256 amount) external;
     function redeem(uint256 amount) external;

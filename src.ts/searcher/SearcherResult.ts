@@ -171,19 +171,6 @@ export abstract class BaseSearcherResult {
   }
 
   async simulateNoNode({ data, value }: SimulateParams) {
-    // console.log(
-    //   JSON.stringify(
-    //     {
-    //       data,
-    //       from: this.signer.address,
-    //       to: this.universe.config.addresses.zapperAddress.address,
-    //       value: value.toString(),
-    //       block: this.blockNumber,
-    //     },
-    //     null,
-    //     2
-    //   )
-    // )
     const resp = await this.universe.provider.call({
       data,
       from: this.signer.address,
@@ -431,36 +418,8 @@ export abstract class BaseSearcherResult {
   }
 
   abstract toTransaction(options: ToTransactionArgs): Promise<ZapTransaction>
-}
 
-export class TradeSearcherResult extends BaseSearcherResult {
-  async toTransaction(
-    options: ToTransactionArgs = {}
-  ): Promise<ZapTransaction> {
-    await this.setupApprovals()
-
-    for (const step of this.swaps.swapPaths[0].steps) {
-      const output = await step.action.plan(
-        this.planner,
-        [],
-        this.universe.config.addresses.executorAddress,
-        [this.userInput]
-      )
-      plannerUtils.planForwardERC20(
-        this.universe,
-        this.planner,
-        step.action.output[0],
-        output[0],
-        this.signer
-      )
-    }
-
-    // console.log(
-    //   printPlan(this.planner, this.universe)
-    //     .map((i) => '  ' + i)
-    //     .join('\n')
-    // )
-
+  async createZapTransaction(options: ToTransactionArgs) {
     const params = this.encodePayload(
       this.swaps.outputs[0].token.from(1n),
       options
@@ -483,13 +442,39 @@ export class TradeSearcherResult extends BaseSearcherResult {
       dust = dust.slice(0, dust.length - 1)
 
       dust = dust.filter((i) => i.amount !== 0n)
-      const updatedOutputs = [this.outputToken.from(result.amountOut), ...dust]
+
+      if (options.returnDust === true) {
+        for (const tok of dust) {
+          const balanceOfDust = plannerUtils.erc20.balanceOf(
+            this.universe,
+            this.planner,
+            tok.token,
+            this.universe.config.addresses.executorAddress
+          )
+          plannerUtils.erc20.transfer(
+            this.universe,
+            this.planner,
+            balanceOfDust,
+            tok.token,
+            this.signer
+          )
+        }
+      }
+
+      const finalParams = this.encodePayload(
+        this.outputToken.from(result.amountOut),
+        options
+      )
+
+      const updatedOutputs = [
+        this.outputToken.from(BigNumber.from(finalParams.amountOut)),
+        ...dust,
+      ]
       const values = await Promise.all(
         updatedOutputs.map(
           async (i) => [await this.universe.fairPrice(i), i] as const
         )
       )
-
       this.swaps = new SwapPaths(
         this.swaps.universe,
         this.swaps.inputs,
@@ -500,11 +485,6 @@ export class TradeSearcherResult extends BaseSearcherResult {
           this.universe.usd.zero
         ),
         this.swaps.destination
-      )
-
-      const finalParams = this.encodePayload(
-        this.outputToken.from(result.amountOut),
-        options
       )
       const estimate =
         result.gasUsed.toBigInt() + result.gasUsed.toBigInt() / 10n
@@ -530,15 +510,50 @@ export class TradeSearcherResult extends BaseSearcherResult {
   }
 }
 
+export class TradeSearcherResult extends BaseSearcherResult {
+  async toTransaction(
+    options: ToTransactionArgs = {}
+  ): Promise<ZapTransaction> {
+    await this.setupApprovals()
+
+    for (const step of this.swaps.swapPaths[0].steps) {
+      await step.action.plan(
+        this.planner,
+        [],
+        this.signer,
+        [this.userInput]
+      )
+      if (
+        step.action.proceedsOptions === DestinationOptions.Callee) {
+        const out = plannerUtils.erc20.balanceOf(
+          this.universe,
+          this.planner,
+          step.outputs[0].token,
+          this.universe.config.addresses.executorAddress
+        )
+        plannerUtils.planForwardERC20(
+          this.universe,
+          this.planner,
+          step.outputs[0].token,
+          out,
+          this.signer
+        )
+      }
+    }
+
+    return this.createZapTransaction(options)
+  }
+}
+
 export class BurnRTokenSearcherResult extends BaseSearcherResult {
   constructor(
     readonly universe: UniverseWithERC20GasTokenDefined,
     readonly userInput: TokenQuantity,
     readonly parts: {
-      full: SwapPaths,
-      rtokenRedemption: SwapPath,
-      tokenBasketUnwrap: SwapPath[],
-      tradesToOutput: SwapPath[],
+      full: SwapPaths
+      rtokenRedemption: SwapPath
+      tokenBasketUnwrap: SwapPath[]
+      tradesToOutput: SwapPath[]
     },
     public readonly signer: Address,
     public readonly outputToken: Token
@@ -549,28 +564,43 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
     options: ToTransactionArgs = {}
   ): Promise<ZapTransaction> {
     await this.setupApprovals()
-    const zapperLib = Contract.createContract(
-      ZapperExecutor__factory.connect(
-        this.universe.config.addresses.executorAddress.address,
-        this.universe.provider
-      )
-    )
 
     const tokens = new Map<Token, Value[]>()
     const outputs = await this.parts.rtokenRedemption.steps[0].action.plan(
       this.planner,
-      [new LiteralValue(ParamType.fromString('uint256'), defaultAbiCoder.encode(['uint256'], [this.userInput.amount]))],
+      [
+        new LiteralValue(
+          ParamType.fromString('uint256'),
+          defaultAbiCoder.encode(['uint256'], [this.userInput.amount])
+        ),
+      ],
       this.universe.config.addresses.executorAddress,
       [this.userInput]
     )
-    for(const outputToken of this.parts.rtokenRedemption.steps[0].action.output) {
-      tokens.set(outputToken, [outputs[0]])
+
+    for(let i = 0 ; i < this.parts.rtokenRedemption.steps[0].action.output.length; i++) {
+      tokens.set(this.parts.rtokenRedemption.steps[0].action.output[i], [outputs[i]])
     }
+    let outputTokenOnZapper = false
+    
     for (const unwrapBasketTokenPath of this.parts.tokenBasketUnwrap) {
       for (const step of unwrapBasketTokenPath.steps) {
-        let input = tokens.get(step.inputs[0].token)
+        let input = tokens.get(step.action.input[0])
         if (input == null) {
           throw new Error('MISSING INPUT')
+        }
+        const outputIsDest = step.outputs[0].token === this.outputToken
+        if (outputIsDest) {
+          await step.action.plan(
+            this.planner,
+            input,
+            this.signer,
+            step.inputs
+          )
+          if (step.proceedsOptions === DestinationOptions.Callee) {
+            outputTokenOnZapper = true
+          }
+          continue
         }
         const output = await step.action.plan(
           this.planner,
@@ -581,7 +611,7 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
         if (output.length !== 1) {
           throw new Error("Unexpected: Didn't get an output")
         }
-        tokens.set(step.outputs[0].token, [output[0]])
+        tokens.set(step.action.output[0], [output[0]])
       }
     }
 
@@ -591,86 +621,30 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
         if (input == null) {
           throw new Error('MISSING INPUT')
         }
-        const output = await step.action.plan(
+        await step.action.plan(
           this.planner,
           input,
           this.signer,
           step.inputs
         )
-        if (output.length !== 1) {
-          throw new Error("Unexpected: Didn't get an output")
-        }
-        tokens.set(step.outputs[0].token, [output[0]])
       }
     }
-
-    const params = this.encodePayload(
-      this.swaps.outputs[0].token.from(1n),
-      options
-    )
-    const data = this.encodeCall(options, params)
-    const tx = this.encodeTx(data, 300000n)
-
-    try {
-      const result = await this.simulate({
-        data: tx.data!.toString(),
-        value: BigNumber.from(tx.value).toBigInt(),
-        quantity: this.swaps.outputs[0].amount,
-        inputToken: this.inputToken,
-      })
-
-      let dust = result.dust.map((qty, index) =>
-        this.potentialResidualTokens[index].from(qty)
-      )
-
-      dust = dust.slice(0, dust.length - 1)
-
-      dust = dust.filter((i) => i.amount !== 0n)
-      const updatedOutputs = [this.outputToken.from(result.amountOut), ...dust]
-      const values = await Promise.all(
-        updatedOutputs.map(
-          async (i) => [await this.universe.fairPrice(i), i] as const
-        )
-      )
-
-      this.swaps = new SwapPaths(
-        this.swaps.universe,
-        this.swaps.inputs,
-        this.swaps.swapPaths,
-        updatedOutputs,
-        values.reduce(
-          (a, b) => a.add(b[0] ?? this.universe.usd.zero),
-          this.universe.usd.zero
-        ),
-        this.swaps.destination
-      )
-
-      const finalParams = this.encodePayload(
-        this.outputToken.from(result.amountOut),
-        options
-      )
-      const estimate =
-        result.gasUsed.toBigInt() + result.gasUsed.toBigInt() / 10n
-      const finalTx = this.encodeTx(this.encodeCall(options, params), estimate)
-
-      return new ZapTransaction(
+    if (outputTokenOnZapper) {
+      const out = plannerUtils.erc20.balanceOf(
         this.universe,
-        finalParams,
-        finalTx,
-        estimate,
-        this.swaps.inputs[0],
-        this.swaps.outputs,
-        this.planner
+        this.planner,
+        this.outputToken,
+        this.universe.config.addresses.executorAddress
       )
-    } catch (e) {
-      console.log(
-        printPlan(this.planner, this.universe)
-          .map((i) => '  ' + i)
-          .join('\n')
+      plannerUtils.planForwardERC20(
+        this.universe,
+        this.planner,
+        this.outputToken,
+        out,
+        this.signer
       )
-      throw e
     }
-
+    return this.createZapTransaction(options)
   }
 }
 
@@ -802,71 +776,6 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
       'txGen,mint rToken via mintMaxRToken helper'
     )
 
-    const params = this.encodePayload(
-      this.swaps.outputs[0].token.from(1n),
-      options
-    )
-    const data = this.encodeCall(options, params)
-    const tx = this.encodeTx(data, 300000n)
-
-    try {
-      const result = await this.simulate({
-        data: tx.data!.toString(),
-        value: BigNumber.from(tx.value).toBigInt(),
-        quantity: this.swaps.outputs[0].amount,
-        inputToken: this.inputToken,
-      })
-
-      let dust = result.dust.map((qty, index) =>
-        this.potentialResidualTokens[index].from(qty)
-      )
-
-      dust = dust.slice(0, dust.length - 1)
-
-      dust = dust.filter((i) => i.amount !== 0n)
-      const updatedOutputs = [this.outputToken.from(result.amountOut), ...dust]
-      const values = await Promise.all(
-        updatedOutputs.map(
-          async (i) => [await this.universe.fairPrice(i), i] as const
-        )
-      )
-
-      this.swaps = new SwapPaths(
-        this.swaps.universe,
-        this.swaps.inputs,
-        this.swaps.swapPaths,
-        updatedOutputs,
-        values.reduce(
-          (a, b) => a.add(b[0] ?? this.universe.usd.zero),
-          this.universe.usd.zero
-        ),
-        this.swaps.destination
-      )
-
-      const finalParams = this.encodePayload(
-        this.outputToken.from(result.amountOut),
-        options
-      )
-      const estimate =
-        result.gasUsed.toBigInt() + result.gasUsed.toBigInt() / 10n
-      const finalTx = this.encodeTx(this.encodeCall(options, params), estimate)
-
-      return new ZapTransaction(
-        this.universe,
-        finalParams,
-        finalTx,
-        estimate,
-        this.swaps.inputs[0],
-        this.swaps.outputs,
-        this.planner
-      )
-    } catch (e) {
-      console.log(
-        printPlan(this.planner, this.universe)
-          .map((i) => '  ' + i)
-          .join('\n')
-      )
-      throw e
-    }
+    return this.createZapTransaction(options)
   }
 }

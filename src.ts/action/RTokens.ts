@@ -109,7 +109,7 @@ export class BurnRTokenAction extends Action {
 
     planner.add(lib.redeem(inputs[0]))
 
-    return this.basketHandler.unitBasket.map(({ token }) =>
+    return this.output.map(token =>
       this.genUtils.erc20.balanceOf(
         this.universe,
         planner,

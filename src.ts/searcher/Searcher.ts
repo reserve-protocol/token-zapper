@@ -161,9 +161,9 @@ export class Searcher<
     if (leftOver.amount > 0n) {
       inputPrTrade[0].input = inputPrTrade[0].input.add(leftOver)
     }
-    console.log(
-      inputPrTrade.map((i) => i.input.toString() + ' -> ' + i.output).join(', ')
-    )
+    // console.log(
+    //   inputPrTrade.map((i) => i.input.toString() + ' -> ' + i.output).join(', ')
+    // )
 
     const tradeInputToTokenSet: SwapPath[] = []
     const tokenSetToBasket: SwapPath[] = []

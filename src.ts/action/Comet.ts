@@ -141,6 +141,6 @@ export class BurnCometAction extends Action {
     )
   }
   toString(): string {
-    return `CompoundV3Burn(${this.receiptToken.toString()})`
+    return `CommetWithdraw(${this.receiptToken.toString()})`
   }
 }

@@ -85,41 +85,59 @@ const idToSlug: Record<number, string> = {
 }
 
 class KyberAction extends Action {
-  async plan(planner: Planner): Promise<Value[]> {
+  async plan(
+    planner: Planner,
+    _: Value[],
+    destination: Address,
+  ): Promise<Value[]> {
     const zapperLib = this.gen.Contract.createContract(
       ZapperExecutor__factory.connect(
         this.universe.config.addresses.executorAddress.address,
         this.universe.provider
       )
     )
+    if (destination === this.universe.config.addresses.executorAddress) {
+      planner.add(
+        zapperLib.rawCall(
+          this.request.req.data.routerAddress,
+          0,
+          this.request.swap.data.data
+        ),
+        `kyberswap,router=${this.request.swap.data.routerAddress},swap=${this.request.quantityIn} -> ${
+          this.outputQuantity
+        },route=${this.request.req.data.routeSummary.route
+          .flat()
+          .map((i) => `(${i.poolType})${Address.from(i.pool).toShortString()}`)
+          .join(' -> ')},destination=${destination}`
+      )
+      const out = this.genUtils.erc20.balanceOf(
+        this.universe,
+        planner,
+        this.output[0],
+        destination,
+        'kyberswap,after swap',
+        `bal_${this.output[0].symbol}_after`
+      )
+      planner.add(
+        zapperLib.assertLarger(out, this.outputQuantity[0].amount),
+        'kyberswap,assert minimum output'
+      )
+      return [out!]
+    }
     planner.add(
       zapperLib.rawCall(
         this.request.req.data.routerAddress,
         0,
         this.request.swap.data.data
       ),
-      `kyberswap,swap=${this.request.quantityIn} -> ${
+      `kyberswap,router=${this.request.swap.data.routerAddress},swap=${this.request.quantityIn} -> ${
         this.outputQuantity
       },route=${this.request.req.data.routeSummary.route
         .flat()
         .map((i) => `(${i.poolType})${Address.from(i.pool).toShortString()}`)
         .join(' -> ')}`
     )
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.output[0],
-      this.universe.config.addresses.executorAddress,
-      "kyberswap,output of swap"
-    )
-    planner.add(
-      zapperLib.assertLarger(
-        out,
-        this.outputQuantity[0].amount,
-      ),
-      "kyberswap,assert minimum output"
-    )
-    return [out!]
+    return []
   }
   public outputQuantity: TokenQuantity[] = []
   constructor(
@@ -132,7 +150,7 @@ class KyberAction extends Action {
       [request.quantityIn.token],
       [request.output],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Callee,
+      DestinationOptions.Recipient,
       [
         new Approval(
           request.quantityIn.token,

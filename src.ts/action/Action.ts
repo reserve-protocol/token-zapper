@@ -51,7 +51,8 @@ export const plannerUtils = {
       planner: gen.Planner,
       token: Token,
       owner: Address,
-      comment?: string
+      comment?: string,
+      varName?: string
     ): gen.Value {
       const erc20 = gen.Contract.createContract(
         IERC20__factory.connect(token.address.address, universe.provider)
@@ -59,7 +60,7 @@ export const plannerUtils = {
       return planner.add(
         erc20.balanceOf(owner.address),
         comment,
-        `bal_${token.symbol}`
+        varName??`bal_${token.symbol}`
       )!
     },
   },
@@ -113,7 +114,8 @@ export abstract class Action {
     destination: Address,
 
     // Inputs we predicted
-    predictedInputs: TokenQuantity[]
+    predictedInputs: TokenQuantity[],
+    outputNotUsed?: boolean
   ): Promise<gen.Value[]>
 
   toString() {

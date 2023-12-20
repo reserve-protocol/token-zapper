@@ -51,7 +51,7 @@ const valueNames = new DefaultMap<Value, string>(() => {
  */
 export interface Value {
   /** The ethers.js `ParamType` describing the type of this value. */
-  readonly param: ParamType
+  param: ParamType
 }
 
 function isValue(arg: any): arg is Value {
@@ -231,6 +231,9 @@ function abiEncodeSingle(param: ParamType, value: any): LiteralValue {
 function encodeArg(arg: any, param: ParamType): Value {
   if (isValue(arg)) {
     if (arg.param.type !== param.type) {
+      if (arg.param.type.startsWith("uint") && param.type.startsWith("uint")) {
+        return arg
+      }
       // Todo: type casting rules
       throw new Error(
         `Cannot pass value of type ${arg.param.type} to input of type ${param.type}`

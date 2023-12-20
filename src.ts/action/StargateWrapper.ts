@@ -81,7 +81,14 @@ export class StargateWrapperWithdrawAction extends Action {
       this.stargateToken.address.address,
       this.universe.provider
     ))
-    const out = planner.add(wSGToken.withdraw(inputs[0], destination.address))
+    planner.add(wSGToken.withdraw(inputs[0], destination.address))
+
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      destination
+    )
 
     return [out!]
   }

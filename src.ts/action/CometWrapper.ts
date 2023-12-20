@@ -1,3 +1,4 @@
+import { ParamType } from '@ethersproject/abi'
 import { type Universe } from '../Universe'
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
@@ -98,7 +99,14 @@ export class BurnCometWrapperAction extends Action {
     )
     const amount = planner.add(lib.convertStaticToDynamic(inputs[0]))
     planner.add(lib.withdrawTo(destination.address, amount))
-    return [amount!]
+
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      destination
+    )
+    return [out!]
   }
   gasEstimate() {
     return BigInt(110000n)
@@ -145,7 +153,7 @@ export class BurnCometWrapperAction extends Action {
       [receiptToken],
       [baseToken],
       InteractionConvention.None,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

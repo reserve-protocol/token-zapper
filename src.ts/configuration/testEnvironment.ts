@@ -60,7 +60,8 @@ export const testConfig = makeConfig(
     executorAddress: '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11',
     wrappedNative: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
     rtokenLens: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    balanceOf: "0x0000000000000000000000000000000000000000"
+    balanceOf: "0x0000000000000000000000000000000000000000",
+    curveRouterCall: "0x0000000000000000000000000000000000000000"
   },
 )
 type BaseTestConfigType = typeof testConfig
@@ -77,6 +78,7 @@ const defineRToken = (
     unitBasket: basket,
     rToken: rToken,
     basketNonce: 0,
+    version: "3.1.0",
     async redeem(baskets) {
       return basket.map((i) => i.scalarMul(baskets.amount).scalarDiv(rToken.scale))
     }
@@ -201,6 +203,7 @@ const initialize = async (universe: TestUniverse) => {
     gasEstimate(): bigint {
       return 250000n
     },
+    routerInstance: null as any,
     async optimiseToREth(qtyETH: TokenQuantity) {
       return {
         portions: mockPortions,
@@ -227,8 +230,8 @@ const initialize = async (universe: TestUniverse) => {
     },
   }
 
-  const ethToREth = new ETHToRETH(universe, rethRouter)
-  const rEthtoEth = new RETHToETH(universe, rethRouter)
+  const ethToREth = new ETHToRETH(universe, rethRouter as any)
+  const rEthtoEth = new RETHToETH(universe, rethRouter as any)
 
   universe.defineMintable(ethToREth, rEthtoEth)
 

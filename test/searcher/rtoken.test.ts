@@ -23,6 +23,7 @@ const createRToken = (
   const quantities = qty
 
   const basketHandler: IBasket = {
+    version: '3.0.0',
     basketTokens: quantities.map((i) => i.token),
     unitBasket: quantities,
     rToken,

@@ -174,10 +174,11 @@ export abstract class BaseSearcherResult {
     // console.log(
     //   JSON.stringify({
     //     data,
+    //     block: this.blockNumber,
     //     from: this.signer.address,
     //     to: this.universe.config.addresses.zapperAddress.address,
-    //     value,
-    //   })
+    //     value: value.toString(),
+    //   }, null, 2)
     // )
     const resp = await this.universe.provider.call({
       data,
@@ -610,6 +611,10 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
           }
           continue
         }
+
+        if (step.proceedsOptions === DestinationOptions.Callee) {
+          outputTokenOnZapper = true
+        }
         const output = await step.action.plan(
           this.planner,
           input,
@@ -628,6 +633,9 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
         let input = tokens.get(step.inputs[0].token)
         if (input == null) {
           throw new Error('MISSING INPUT')
+        }
+        if (step.proceedsOptions === DestinationOptions.Callee) {
+          outputTokenOnZapper = true
         }
         await step.action.plan(
           this.planner,

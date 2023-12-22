@@ -41,20 +41,13 @@ export class MintCTokenAction extends Action {
     )
     planner.add(lib.mint(inputs[0]))
 
-    const balanceOfLib = this.gen.Contract.createContract(
-      BalanceOf__factory.connect(
-        this.universe.config.addresses.balanceOf.address,
-        this.universe.provider
-      )
-    )
-
     return [
-      planner.add(
-        balanceOfLib.balanceOf(
-          this.output[0].address.address,
-          this.universe.config.addresses.executorAddress.address
-        )
-      )!,
+      this.genUtils.erc20.balanceOf(
+        this.universe,
+        planner,
+        this.output[0],
+        this.universe.config.addresses.executorAddress
+      ),
     ]
   }
   gasEstimate() {

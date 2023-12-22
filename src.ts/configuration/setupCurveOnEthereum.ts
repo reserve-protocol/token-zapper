@@ -68,6 +68,7 @@ export const initCurveOnEthereum = async (
     curveApi.createRouterEdge(tokenB, tokenA)
   }
 
+  setupLPTokenEdge(universe.wrappedNativeToken, eUSD__FRAX_USDC)
   setupLPTokenEdge(FRAX, eUSD__FRAX_USDC)
   setupLPTokenEdge(MIM, eUSD__FRAX_USDC)
   setupLPTokenEdge(USDC, eUSD__FRAX_USDC)

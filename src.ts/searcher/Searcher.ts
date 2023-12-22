@@ -301,7 +301,7 @@ export class Searcher<
     )).steps[0]
     return swap
   }
-  async recursivelyUnwrapQty(qty: TokenQuantity): Promise<SwapPath> {
+  async recursivelyUnwrapQty(qty: TokenQuantity): Promise<SwapPath|null> {
     const potentiallyUnwrappable = [qty]
     const tokenAmounts = new TokenAmounts()
     const swapPlans: SingleSwap[] = []
@@ -330,6 +330,10 @@ export class Searcher<
           (await this.universe.fairPrice(qty)) ?? this.universe.usd.zero
       )
     )
+    if (swapPlans.length === 0) {
+      console.log(qty, "not unwrapable")
+      return null
+    }
 
     return new SwapPath(
       [qty],
@@ -346,8 +350,12 @@ export class Searcher<
     slippage = 0.0
   ) {
     await this.universe.initialized
+
+    if (output === this.universe.nativeToken) {
+      output = this.universe.wrappedNativeToken
+    }
     const [mintResults, tradeResults] = await Promise.all([
-      this.findRTokenIntoSingleTokenZapViaIssueance(
+      this.findRTokenIntoSingleTokenZapViaRedeem(
         rTokenQuantity,
         output,
         signerAddress,
@@ -375,7 +383,7 @@ export class Searcher<
     return results[0].quote
   }
 
-  async findRTokenIntoSingleTokenZapViaIssueance(
+  async findRTokenIntoSingleTokenZapViaRedeem(
     rTokenQuantity: TokenQuantity,
     output: Token,
     signerAddress: Address,
@@ -412,8 +420,13 @@ export class Searcher<
       const basketTokenToOutput = await this.recursivelyUnwrapQty(
         basketTokenQty
       )
-      tokenAmounts.addQtys(basketTokenToOutput.outputs)
-      redeemSwapPaths.push(basketTokenToOutput)
+      if (basketTokenToOutput == null) {
+        tokenAmounts.addQtys([basketTokenQty])
+      } else {
+        tokenAmounts.addQtys(basketTokenToOutput.outputs)
+        redeemSwapPaths.push(basketTokenToOutput)
+      }
+      
     }
     
     // Trade each underlying for output
@@ -433,7 +446,7 @@ export class Searcher<
           if (potentialSwaps.length === 0) {
             throw Error(
               'Failed to find trade for: ' +
-                qty +
+              qty + "(" + qty.token.address + ")" +
                 ' -> ' +
                 outputToken +
                 '(' +

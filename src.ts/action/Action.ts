@@ -1,4 +1,4 @@
-import { type Address } from '../base/Address'
+import { Address } from '../base/Address'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Approval } from '../base/Approval'
@@ -7,6 +7,7 @@ import * as gen from '../tx-gen/Planner'
 import { IERC20__factory } from '../contracts/factories/contracts'
 import { Universe } from '..'
 import { ExpressionEvaluator__factory } from '../contracts/factories/contracts/weiroll-helpers/ExpressionEvaluator__factory'
+import { BalanceOf__factory } from '../contracts'
 
 export enum InteractionConvention {
   PayBeforeCall,
@@ -19,6 +20,10 @@ export enum DestinationOptions {
   Recipient,
   Callee,
 }
+
+const useSpecialCaseBalanceOf = new Set<Address>([
+  Address.from("0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9")
+])
 
 export const plannerUtils = {
   planForwardERC20(
@@ -54,6 +59,12 @@ export const plannerUtils = {
       comment?: string,
       varName?: string
     ): gen.Value {
+      if (useSpecialCaseBalanceOf.has(token.address)) {
+        const lib = gen.Contract.createContract(
+          BalanceOf__factory.connect(universe.config.addresses.balanceOf.address, universe.provider)
+        )
+        return planner.add(lib.balanceOf(token.address.address, owner.address), comment, varName??`bal_${token.symbol}`)!
+      }
       const erc20 = gen.Contract.createContract(
         IERC20__factory.connect(token.address.address, universe.provider)
       )

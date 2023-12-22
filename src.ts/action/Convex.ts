@@ -73,7 +73,7 @@ export class ConvexDepositAndStake extends Action {
       [convexPool.curveLPToken],
       [convexPool.stakedConvexDepositToken],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Callee,
+      DestinationOptions.Recipient,
       [
         new Approval(
           convexPool.curveLPToken,
@@ -96,7 +96,7 @@ export class ConvexUnstakeAndWithdraw extends Action {
         this.universe.provider
       )
     )
-    planner.add(lib.withdrawAndUnwrap(inputs[0], destination.address))
+    planner.add(lib.withdrawAndUnwrap(inputs[0]))
     return [inputs[0]]
   }
   toString(): string {
@@ -127,7 +127,7 @@ export class ConvexUnstakeAndWithdraw extends Action {
       [convexPool.stakedConvexDepositToken],
       [convexPool.curveLPToken],
       InteractionConvention.None,
-      DestinationOptions.Callee,
+      DestinationOptions.Recipient,
       []
     )
   }
@@ -180,8 +180,7 @@ export const setupConvexEdges = async (
     universe,
     convexPool
   )
-  universe.addAction(unstakeAndWithdrawAction)
-  universe.addAction(depositAndStakeAction)
+  universe.defineMintable(depositAndStakeAction, unstakeAndWithdrawAction)
 
   return {
     pool: convexPool,

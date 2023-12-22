@@ -6,8 +6,7 @@ import { type ContractCall } from '../base/ContractCall'
 import * as gen from '../tx-gen/Planner'
 import { IERC20__factory } from '../contracts/factories/contracts'
 import { Universe } from '..'
-import { ExpressionEvaluator__factory } from '../contracts/factories/contracts/weiroll-helpers/ExpressionEvaluator__factory'
-import { BalanceOf__factory } from '../contracts'
+import { BalanceOf__factory, EthBalance__factory } from '../contracts'
 
 export enum InteractionConvention {
   PayBeforeCall,
@@ -59,6 +58,12 @@ export const plannerUtils = {
       comment?: string,
       varName?: string
     ): gen.Value {
+      if (token == universe.nativeToken) {
+        const lib = gen.Contract.createContract(
+          EthBalance__factory.connect(universe.config.addresses.ethBalanceOf.address, universe.provider)
+        )
+        return planner.add(lib.ethBalance(owner.address), comment, varName??`bal_${token.symbol}`)!
+      }
       if (useSpecialCaseBalanceOf.has(token.address)) {
         const lib = gen.Contract.createContract(
           BalanceOf__factory.connect(universe.config.addresses.balanceOf.address, universe.provider)

@@ -185,7 +185,8 @@ export class Searcher<
         input,
         output,
         this.universe.config.addresses.executorAddress,
-        slippage
+        slippage,
+        1
       )
 
       const trade = swaps[0]
@@ -742,8 +743,8 @@ export class Searcher<
         try {
           allPlans.push(await plan.quote([input], destination))
         } catch (e) {
-          console.log(plan.toString())
-          console.log(e)
+          // console.log(plan.toString())
+          // console.log(e)
         }
       })
     )

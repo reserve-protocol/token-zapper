@@ -107,7 +107,7 @@ class KyberAction extends Action {
           this.outputQuantity
         },route=${this.request.req.data.routeSummary.route
           .flat()
-          .map((i) => `(${i.poolType})${Address.from(i.pool).toShortString()}`)
+          .map((i) => `(${i.poolType})`)
           .join(' -> ')},destination=${destination}`
       )
       const out = this.genUtils.erc20.balanceOf(
@@ -119,7 +119,7 @@ class KyberAction extends Action {
         `bal_${this.output[0].symbol}_after`
       )
       planner.add(
-        zapperLib.assertLarger(out, this.outputQuantity[0].amount),
+        zapperLib.assertLarger(out, this.outputQuantity[0].amount - this.outputQuantity[0].amount / 100n),
         'kyberswap,assert minimum output'
       )
       return [out!]

@@ -15,7 +15,7 @@ import { Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 import { LPToken } from './LPToken'
 import { Planner, Value } from '../tx-gen/Planner'
-import { CurveRouterCall__factory, ZapperExecutor__factory } from '../contracts'
+import { CurveRouterCall__factory } from '../contracts'
 
 const whiteList = new Set(
   [
@@ -48,7 +48,7 @@ const whiteList = new Set(
     // "0xeb16ae0052ed37f479f7fe63849198df1765a733", // saave
     '0xa96a65c051bf88b4095ee1f2451c2a9d43f53ae2', // ankreth
     '0x42d7025938bec20b69cbae5a77421082407f053a', // usdp
-    '0x2dded6da1bf5dbdf597c45fcfaa3194e53ecfeaf', // ironbank
+    // '0x2dded6da1bf5dbdf597c45fcfaa3194e53ecfeaf', // ironbank
     // "0xf178c0b5bb7e7abf4e12a4838c7b7c5ba2c623c0", // link
     '0xecd5e75afb02efa118af914515d6521aabd189f1', // tusd
     '0xd632f22692fac7611d2aa1c0d552930d43caed3b', // frax
@@ -150,15 +150,16 @@ export class CurveSwap extends Action {
     )
     const { _route, _swapParams, _factorySwapAddresses } =
       _getExchangeMultipleArgs(output.route)
-    
+
     const payload = parseHexStringIntoBuffer(
       defaultAbiCoder.encode(
-        ["address[9]", "uint256[3][4]", "address[4]"],
+        ['address[9]', 'uint256[3][4]', 'address[4]'],
         [_route, _swapParams, _factorySwapAddresses]
       )
     )
+    // console.log(output.route)
 
-    const out = planner.add(
+    planner.add(
       curveRouterCallLib.exchange(
         inputs[0] ?? amountsIn.amount,
         minOut.amount,
@@ -167,6 +168,13 @@ export class CurveSwap extends Action {
       ),
       `Curve,swap=${amountsIn} -> ${minOut}`,
       `amt_${this.output[0].symbol}`
+    )
+
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      this.universe.config.addresses.executorAddress
     )
     return [out!]
   }
@@ -224,6 +232,7 @@ export class CurveSwap extends Action {
 
       const { _route, _swapParams, _factorySwapAddresses } =
         _getExchangeMultipleArgs(route)
+
       const [out, gasEstimate]: [ethers.BigNumber, ethers.BigNumber] =
         await Promise.all([
           contract.get_exchange_multiple_amount(
@@ -244,7 +253,7 @@ export class CurveSwap extends Action {
       this.estimate = gasEstimate.toBigInt()
 
       const output = formatUnits(
-        out.sub(out.div(1000n)),
+        out.sub(out.div(700n)),
         this.output[0].decimals
       )
       return {
@@ -259,6 +268,9 @@ export class CurveSwap extends Action {
           this.output[0].address.address,
           amountsIn.format()
         )
+        if (!out.route.every(i => whiteList.has(i.poolAddress))) {
+          throw new Error('Route not in whitelist')
+        }
         const { _route, _swapParams, _factorySwapAddresses } =
           _getExchangeMultipleArgs(out.route)
         const gasEstimate: ethers.BigNumber =
@@ -277,7 +289,7 @@ export class CurveSwap extends Action {
         )
 
         out.output = formatUnits(
-          outParsed.sub(outParsed.div(1000n)),
+          outParsed.sub(outParsed.div(700n)),
           this.output[0].decimals
         )
 
@@ -286,14 +298,15 @@ export class CurveSwap extends Action {
         throw e
       }
     })()
-    this.predefinedRoutes[key] = task.then((out) => out.route)
+    // this.predefinedRoutes[key] = task.then((out) => out.route)
     return await task
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const out = (await this._quote(amountsIn)).output
 
-    return [this.output[0].fromScale18BN(parseUnits(out, 18))]
+    const q = [this.output[0].fromScale18BN(parseUnits(out, 18))]
+    return q
   }
 
   constructor(

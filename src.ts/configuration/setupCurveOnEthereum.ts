@@ -47,11 +47,12 @@ export const initCurveOnEthereum = async (
     // USDC/USDT -> MIN/eUSD LP
     // This will make UI applications snappier as they will not have to
     // to do any searching
-    (
-      await import('./data/ethereum/precomputed-curve-routes.json', {
-        assert: { type: 'json' },
-      })
-    ).default as Record<string, IRoute>
+    {}
+    // (
+    //   await import('./data/ethereum/precomputed-curve-routes.json', {
+    //     assert: { type: 'json' },
+    //   })
+    // ).default as Record<string, IRoute>
   )
   const eUSD__FRAX_USDC = universe.commonTokens['eUSD3CRV-f']
   const mim_3CRV = universe.commonTokens['MIM-3LP3CRV-f']

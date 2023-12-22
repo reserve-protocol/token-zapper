@@ -12,7 +12,11 @@ import {
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { EthBalance__factory, ZapperExecutor__factory, Zapper__factory } from '../contracts'
+import {
+  EthBalance__factory,
+  ZapperExecutor__factory,
+  Zapper__factory,
+} from '../contracts'
 import {
   ZapERC20ParamsStruct,
   ZapperOutputStructOutput,
@@ -437,16 +441,9 @@ export abstract class BaseSearcherResult {
     const tx = this.encodeTx(data, 300000n)
 
     try {
-      const result = await this.simulate({
-        data: tx.data!.toString(),
-        value: BigNumber.from(tx.value).toBigInt(),
-        quantity: this.swaps.outputs[0].amount,
-        inputToken: this.inputToken,
-      })
+      const result = await this.simulateAndParse(options, tx.data!.toString())
 
-      let dust = result.dust.map((qty, index) =>
-        this.potentialResidualTokens[index].from(qty)
-      )
+      let dust = result.dust.map((qty, index) => qty)
 
       dust = dust.slice(0, dust.length - 1)
 
@@ -470,10 +467,7 @@ export abstract class BaseSearcherResult {
         }
       }
 
-      const finalParams = this.encodePayload(
-        this.outputToken.from(result.amountOut),
-        options
-      )
+      const finalParams = this.encodePayload(result.output, options)
 
       const updatedOutputs = [
         this.outputToken.from(BigNumber.from(finalParams.amountOut)),
@@ -495,8 +489,7 @@ export abstract class BaseSearcherResult {
         ),
         this.swaps.destination
       )
-      const estimate =
-        result.gasUsed.toBigInt() + result.gasUsed.toBigInt() / 10n
+      const estimate = result.gasUsed + result.gasUsed / 10n
       const finalTx = this.encodeTx(this.encodeCall(options, params), estimate)
 
       return new ZapTransaction(
@@ -526,14 +519,8 @@ export class TradeSearcherResult extends BaseSearcherResult {
     await this.setupApprovals()
 
     for (const step of this.swaps.swapPaths[0].steps) {
-      await step.action.plan(
-        this.planner,
-        [],
-        this.signer,
-        [this.userInput]
-      )
-      if (
-        step.action.proceedsOptions === DestinationOptions.Callee) {
+      await step.action.plan(this.planner, [], this.signer, [this.userInput])
+      if (step.action.proceedsOptions === DestinationOptions.Callee) {
         const out = plannerUtils.erc20.balanceOf(
           this.universe,
           this.planner,
@@ -587,11 +574,17 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
       [this.userInput]
     )
 
-    for(let i = 0 ; i < this.parts.rtokenRedemption.steps[0].action.output.length; i++) {
-      tokens.set(this.parts.rtokenRedemption.steps[0].action.output[i], [outputs[i]])
+    for (
+      let i = 0;
+      i < this.parts.rtokenRedemption.steps[0].action.output.length;
+      i++
+    ) {
+      tokens.set(this.parts.rtokenRedemption.steps[0].action.output[i], [
+        outputs[i],
+      ])
     }
     let outputTokenOnZapper = false
-    
+
     for (const unwrapBasketTokenPath of this.parts.tokenBasketUnwrap) {
       for (const step of unwrapBasketTokenPath.steps) {
         let input = tokens.get(step.action.input[0])
@@ -600,12 +593,7 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
         }
         const outputIsDest = step.outputs[0].token === this.outputToken
         if (outputIsDest) {
-          await step.action.plan(
-            this.planner,
-            input,
-            this.signer,
-            step.inputs
-          )
+          await step.action.plan(this.planner, input, this.signer, step.inputs)
           if (step.proceedsOptions === DestinationOptions.Callee) {
             outputTokenOnZapper = true
           }
@@ -637,12 +625,7 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
         if (step.proceedsOptions === DestinationOptions.Callee) {
           outputTokenOnZapper = true
         }
-        await step.action.plan(
-          this.planner,
-          input,
-          this.signer,
-          step.inputs
-        )
+        await step.action.plan(this.planner, input, this.signer, step.inputs)
       }
     }
     if (outputTokenOnZapper) {
@@ -763,7 +746,9 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
           if (currentUsersLeft === 1) {
             if (inputToken === this.universe.nativeToken) {
               actionInput = this.planner.add(
-                ethBalance.ethBalance(this.universe.config.addresses.executorAddress.address),
+                ethBalance.ethBalance(
+                  this.universe.config.addresses.executorAddress.address
+                )
               )!
             } else {
               actionInput = plannerUtils.erc20.balanceOf(
@@ -774,7 +759,8 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
               )
             }
           } else {
-            const fraction = step.inputs[0].toScaled(ONE) * ONE / total.toScaled(ONE)
+            const fraction =
+              (step.inputs[0].toScaled(ONE) * ONE) / total.toScaled(ONE)
             actionInput = this.planner.add(
               zapperLib.fpMul(actionInput, fraction, ONE_Val),
               `${inputToken} * ${formatEther(fraction)}`,

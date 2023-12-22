@@ -85,16 +85,7 @@ export abstract class Action {
     amountsIn: TokenQuantity[]
   ): Promise<TokenQuantity[]> {
     const outputs = await this.quote(amountsIn)
-    if (this.outputSlippage === 0n) {
-      return outputs
-    }
-    return outputs.map((i) => {
-      let slippageAmount = i.scalarDiv(this.outputSlippage)
-      if (slippageAmount.amount < 10n) {
-        return i.sub(i.token.from(10n))
-      }
-      return i.sub(slippageAmount)
-    })
+    return outputs
   }
   abstract gasEstimate(): bigint
   async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {

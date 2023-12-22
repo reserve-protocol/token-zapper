@@ -27,6 +27,7 @@ export const makeConfig = <
     // Weiroll toolkits
     balanceOf: string
     curveRouterCall: string
+    ethBalanceOf: string
 
   }
 ) => {

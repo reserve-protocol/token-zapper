@@ -61,7 +61,8 @@ export const testConfig = makeConfig(
     wrappedNative: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
     rtokenLens: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
     balanceOf: "0x0000000000000000000000000000000000000000",
-    curveRouterCall: "0x0000000000000000000000000000000000000000"
+    curveRouterCall: "0x0000000000000000000000000000000000000000",
+    ethBalanceOf: "0x0000000000000000000000000000000000000000"
   },
 )
 type BaseTestConfigType = typeof testConfig

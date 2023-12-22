@@ -1,3 +1,4 @@
+import { constants } from 'ethers'
 import { type Universe } from '../Universe'
 import { makeConfig } from './ChainConfiguration'
 export const COMMON_TOKENS = {
@@ -96,6 +97,7 @@ export const ethereumConfig = makeConfig(
 
     balanceOf: "0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D",
     curveRouterCall: "0xA18ad6dCb6B217A4c3810f865f5eEf45570024dc",
+    ethBalanceOf: "0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092"
   }
 )
 
@@ -190,6 +192,7 @@ export const PROTOCOL_CONFIGS = {
         receiptToken: '0xc3d688B66703497DAA19211EEdff47f25384cdc3', // cUSDCv3
         vaults: [
           '0x7e1e077b289c0153b5ceAD9F264d66215341c9Ab', // Reserve wrapped cUSDCV3
+          "0x093c07787920eB34A0A0c7a09823510725Aee4Af"
         ],
       },
     ],

@@ -33,7 +33,7 @@ export class REthRouter {
     }
     const params = await this.routerInstance.callStatic.optimiseSwapTo(
       qtyETH.amount,
-      10
+      20
     )
     return {
       portions: params.portions,
@@ -68,7 +68,7 @@ export class REthRouter {
     }
     const params = await this.routerInstance.callStatic.optimiseSwapFrom(
       qtyETH.amount,
-      10
+      20
     )
     return {
       portions: params.portions,

@@ -34,6 +34,7 @@ export const baseConfig = makeConfig(
 
     balanceOf: '0x9554DBb835886FC1f37835A1C83CeA3c20e5950A',
     curveRouterCall: '0x1A7F7C1b870ad69D19a899B2A3BA6EBEea77033f',
+    ethBalanceOf: '0x858b62D160788864c65222d7a3777a19B370Abd8'
   }
 )
 

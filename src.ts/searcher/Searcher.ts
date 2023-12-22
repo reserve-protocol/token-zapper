@@ -99,7 +99,6 @@ export class Searcher<
     basketUnit: TokenQuantity[],
     slippage: number
   ) {
-    // console.log(basketUnit.join(", "))
     /**
      * PHASE 1: Compute precursor set
      */

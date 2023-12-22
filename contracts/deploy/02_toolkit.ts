@@ -13,6 +13,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   })
   console.log('curveRouterCall deployed to:', curveRouterCall.address)
 
+  const ethhBalance = await hre.deployments.deploy('EthBalance', {
+    from: deployer,
+  })
+  console.log('ethhBalance deployed to:', ethhBalance.address)
+
 
   
 }

@@ -12,7 +12,7 @@ import {
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { ZapperExecutor__factory, Zapper__factory } from '../contracts'
+import { EthBalance__factory, ZapperExecutor__factory, Zapper__factory } from '../contracts'
 import {
   ZapERC20ParamsStruct,
   ZapperOutputStructOutput,
@@ -171,6 +171,14 @@ export abstract class BaseSearcherResult {
   }
 
   async simulateNoNode({ data, value }: SimulateParams) {
+    // console.log(
+    //   JSON.stringify({
+    //     data,
+    //     from: this.signer.address,
+    //     to: this.universe.config.addresses.zapperAddress.address,
+    //     value,
+    //   })
+    // )
     const resp = await this.universe.provider.call({
       data,
       from: this.signer.address,
@@ -673,6 +681,13 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
   ): Promise<ZapTransaction> {
     await this.setupApprovals()
 
+    const ethBalance = Contract.createContract(
+      EthBalance__factory.connect(
+        this.universe.config.addresses.ethBalanceOf.address,
+        this.universe.provider
+      )
+    )
+
     const zapperLib = Contract.createContract(
       ZapperExecutor__factory.connect(
         this.universe.config.addresses.executorAddress.address,
@@ -738,14 +753,20 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
         if (total.amount !== step.inputs[0].amount) {
           const currentUsersLeft = numberOfUsers.get(inputToken)
           if (currentUsersLeft === 1) {
-            actionInput = plannerUtils.erc20.balanceOf(
-              this.universe,
-              this.planner,
-              inputToken,
-              this.universe.config.addresses.executorAddress
-            )
+            if (inputToken === this.universe.nativeToken) {
+              actionInput = this.planner.add(
+                ethBalance.ethBalance(this.universe.config.addresses.executorAddress.address),
+              )!
+            } else {
+              actionInput = plannerUtils.erc20.balanceOf(
+                this.universe,
+                this.planner,
+                inputToken,
+                this.universe.config.addresses.executorAddress
+              )
+            }
           } else {
-            const fraction = step.inputs[0].div(total).toScaled(ONE)
+            const fraction = step.inputs[0].toScaled(ONE) * ONE / total.toScaled(ONE)
             actionInput = this.planner.add(
               zapperLib.fpMul(actionInput, fraction, ONE_Val),
               `${inputToken} * ${formatEther(fraction)}`,

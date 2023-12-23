@@ -162,7 +162,7 @@ export class CurveSwap extends Action {
     planner.add(
       curveRouterCallLib.exchange(
         inputs[0] ?? amountsIn.amount,
-        minOut.amount,
+        minOut.amount - minOut.amount / 100n,
         routerContract.address,
         payload
       ),
@@ -253,7 +253,7 @@ export class CurveSwap extends Action {
       this.estimate = gasEstimate.toBigInt()
 
       const output = formatUnits(
-        out.sub(out.div(700n)),
+        out.sub(out.div(600n)),
         this.output[0].decimals
       )
       return {
@@ -289,7 +289,7 @@ export class CurveSwap extends Action {
         )
 
         out.output = formatUnits(
-          outParsed.sub(outParsed.div(700n)),
+          outParsed.sub(outParsed.div(600n)),
           this.output[0].decimals
         )
 

@@ -99,13 +99,6 @@ contract ZapperExecutor is VM {
         uint256 maxIssueableAmount = facade.maxIssuable(token, address(this));
         token.issueTo(recipient, maxIssueableAmount);
     }
-
-    function issueRToken(
-        RToken token,
-        address recipient,
-        uint256[] calldata amts
-    ) external {
-    }
 }
 
 struct ZapperOutput {

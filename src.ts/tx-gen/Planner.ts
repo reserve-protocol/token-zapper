@@ -7,7 +7,6 @@ import { hexConcat, hexDataSlice } from '@ethersproject/bytes'
 import { DefaultMap } from '../base/DefaultMap'
 import { Address } from '../base/Address'
 import type { Universe } from "../Universe"
-import { constants } from 'ethers'
 
 const variableNames = [
   'a',

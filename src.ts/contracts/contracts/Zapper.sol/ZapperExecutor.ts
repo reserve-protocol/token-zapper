@@ -35,7 +35,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
     "assertLarger(uint256,uint256)": FunctionFragment;
     "execute(bytes32[],bytes[],address[])": FunctionFragment;
     "fpMul(uint256,uint256,uint256)": FunctionFragment;
-    "issueRToken(address,address,uint256[])": FunctionFragment;
     "mintMaxRToken(address,address,address)": FunctionFragment;
     "rawCall(address,uint256,bytes)": FunctionFragment;
     "sub(uint256,uint256)": FunctionFragment;
@@ -48,7 +47,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
       | "assertLarger"
       | "execute"
       | "fpMul"
-      | "issueRToken"
       | "mintMaxRToken"
       | "rawCall"
       | "sub"
@@ -83,14 +81,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "issueRToken",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>[]
-    ]
-  ): string;
-  encodeFunctionData(
     functionFragment: "mintMaxRToken",
     values: [
       PromiseOrValue<string>,
@@ -122,10 +112,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "fpMul", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "issueRToken",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "mintMaxRToken",
     data: BytesLike
@@ -195,13 +181,6 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    issueRToken(
-      token: PromiseOrValue<string>,
-      recipient: PromiseOrValue<string>,
-      amts: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     mintMaxRToken(
       facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
@@ -255,13 +234,6 @@ export interface ZapperExecutor extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  issueRToken(
-    token: PromiseOrValue<string>,
-    recipient: PromiseOrValue<string>,
-    amts: PromiseOrValue<BigNumberish>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   mintMaxRToken(
     facade: PromiseOrValue<string>,
     token: PromiseOrValue<string>,
@@ -314,13 +286,6 @@ export interface ZapperExecutor extends BaseContract {
       scale: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    issueRToken(
-      token: PromiseOrValue<string>,
-      recipient: PromiseOrValue<string>,
-      amts: PromiseOrValue<BigNumberish>[],
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     mintMaxRToken(
       facade: PromiseOrValue<string>,
@@ -378,13 +343,6 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    issueRToken(
-      token: PromiseOrValue<string>,
-      recipient: PromiseOrValue<string>,
-      amts: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     mintMaxRToken(
       facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
@@ -437,13 +395,6 @@ export interface ZapperExecutor extends BaseContract {
       b: PromiseOrValue<BigNumberish>,
       scale: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    issueRToken(
-      token: PromiseOrValue<string>,
-      recipient: PromiseOrValue<string>,
-      amts: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     mintMaxRToken(

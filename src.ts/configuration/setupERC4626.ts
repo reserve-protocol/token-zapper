@@ -1,7 +1,8 @@
 import { Universe } from '../Universe';
 import { ERC4626DepositAction, ERC4626WithdrawAction } from '../action/ERC4626';
 import { Address } from '../base/Address';
-import { IERC4626__factory } from '../contracts';
+import { IERC4626__factory } from '../contracts/factories/contracts/IERC4626__factory';
+
 
 export const setupERC4626 = async (
     universe: Universe,

@@ -28,8 +28,6 @@ export type { IChainLinkFeedRegistry } from "./IChainLinkFeedRegistry";
 export type { IConvexBaseRewardsPool } from "./IConvexBaseRewardsPool";
 export type { IConvexWrapper } from "./IConvexWrapper";
 export type { IEACAggregatorProxy } from "./IEACAggregatorProxy";
-export type { IERC20 } from "./IERC20";
-export type { IERC4626 } from "./IERC4626";
 export type { IMain } from "./IMain";
 export type { IPermit2 } from "./IPermit2";
 export type { IRETHRouter } from "./IRETHRouter";

@@ -4,9 +4,9 @@ import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Approval } from '../base/Approval'
 import { type ContractCall } from '../base/ContractCall'
 import * as gen from '../tx-gen/Planner'
-import { IERC20__factory } from '../contracts/factories/contracts'
 import { Universe } from '..'
 import { BalanceOf__factory, EthBalance__factory } from '../contracts'
+import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory'
 
 export enum InteractionConvention {
   PayBeforeCall,

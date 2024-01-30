@@ -10,6 +10,8 @@ export type { ERC2771Context } from "./@openzeppelin/contracts/metatx/ERC2771Con
 export { ERC2771Context__factory } from "./factories/@openzeppelin/contracts/metatx/ERC2771Context__factory";
 export type { IERC20Permit } from "./@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol/IERC20Permit";
 export { IERC20Permit__factory } from "./factories/@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol/IERC20Permit__factory";
+export type { IERC20Metadata } from "./@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata";
+export { IERC20Metadata__factory } from "./factories/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata__factory";
 export type { IERC20 } from "./@openzeppelin/contracts/token/ERC20/IERC20";
 export { IERC20__factory } from "./factories/@openzeppelin/contracts/token/ERC20/IERC20__factory";
 export type { Comet } from "./contracts/Compv3.sol/Comet";
@@ -38,8 +40,6 @@ export type { ICToken } from "./contracts/ICToken.sol/ICToken";
 export { ICToken__factory } from "./factories/contracts/ICToken.sol/ICToken__factory";
 export type { IEACAggregatorProxy } from "./contracts/IEACAggregatorProxy";
 export { IEACAggregatorProxy__factory } from "./factories/contracts/IEACAggregatorProxy__factory";
-export type { IERC4626 } from "./contracts/IERC4626";
-export { IERC4626__factory } from "./factories/contracts/IERC4626__factory";
 export type { IMain } from "./contracts/IMain";
 export { IMain__factory } from "./factories/contracts/IMain__factory";
 export type { IPermit2 } from "./contracts/IPermit2";

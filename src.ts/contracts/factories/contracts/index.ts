@@ -18,8 +18,6 @@ export { IChainLinkFeedRegistry__factory } from "./IChainLinkFeedRegistry__facto
 export { IConvexBaseRewardsPool__factory } from "./IConvexBaseRewardsPool__factory";
 export { IConvexWrapper__factory } from "./IConvexWrapper__factory";
 export { IEACAggregatorProxy__factory } from "./IEACAggregatorProxy__factory";
-export { IERC20__factory } from "./IERC20__factory";
-export { IERC4626__factory } from "./IERC4626__factory";
 export { IMain__factory } from "./IMain__factory";
 export { IPermit2__factory } from "./IPermit2__factory";
 export { IRETHRouter__factory } from "./IRETHRouter__factory";

@@ -21,7 +21,6 @@ import {
   ZapERC20ParamsStruct,
   ZapperOutputStructOutput,
 } from '../contracts/contracts/Zapper.sol/Zapper'
-import { IERC20__factory } from '../contracts/factories/contracts'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { SwapPath, SwapPaths, type SingleSwap } from '../searcher/Swap'
@@ -35,6 +34,7 @@ import {
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction } from './ZapTransaction'
 import { DefaultMap } from '../base/DefaultMap'
+import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory'
 
 const zapperInterface = Zapper__factory.createInterface()
 interface SimulateParams {

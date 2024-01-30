@@ -70,7 +70,7 @@ export class SwapPath {
 
   constructor(
     public readonly inputs: TokenQuantity[],
-    public readonly steps: (SwapPath | SingleSwap)[],
+    public readonly steps: SingleSwap[],
     public readonly outputs: TokenQuantity[],
     public readonly outputValue: TokenQuantity,
     public readonly destination: Address

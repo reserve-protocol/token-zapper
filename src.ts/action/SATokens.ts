@@ -6,6 +6,7 @@ import { DestinationOptions, Action, InteractionConvention } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
 import { IStaticATokenLM__factory } from '../contracts/factories/contracts/ISAtoken.sol/IStaticATokenLM__factory'
+import { Planner, Value } from '../tx-gen/Planner'
 
 const ray = 10n ** 27n
 const halfRay = ray / 2n
@@ -19,7 +20,21 @@ function rayDiv(a: bigint, b: bigint): bigint {
 const saTokenInterface = IStaticATokenLM__factory.createInterface()
 export class MintSATokensAction extends Action {
   get outputSlippage() {
-    return 3000000n;
+    return 3000000n
+  }
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const lib = this.gen.Contract.createContract(
+      IStaticATokenLM__factory.connect(
+        this.saToken.address.address,
+        this.universe.provider
+      )
+    )
+    const out = planner.add(
+      lib.deposit(destination.address, inputs[0], 0, true),
+      undefined,
+      `bal_${this.output[0].symbol}`
+    )
+    return [out!]
   }
   gasEstimate() {
     return BigInt(300000n)
@@ -74,9 +89,22 @@ export class MintSATokensAction extends Action {
   }
 }
 export class BurnSATokensAction extends Action {
-
   get outputSlippage() {
-    return 3000000n;
+    return 3000000n
+  }
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const lib = this.gen.Contract.createContract(
+      IStaticATokenLM__factory.connect(
+        this.saToken.address.address,
+        this.universe.provider
+      )
+    )
+    const out = planner.add(
+      lib.withdraw(destination.address, inputs[0], true),
+      undefined,
+      `bal_${this.output[0].symbol}`
+    )
+    return [out!]
   }
   gasEstimate() {
     return BigInt(300000n)

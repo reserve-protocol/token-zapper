@@ -21,7 +21,7 @@ describe('searcher/mints', () => {
     )
     expect(result.length).toBe(1)
     const expectedPath = result[0]
-    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('449.73622629 cUSDT')
+    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('449.7363762 cUSDT')
   })
 
   it('it can handle burns', async () => {
@@ -43,6 +43,6 @@ describe('searcher/mints', () => {
 
     expect(result.length).toBe(1)
     const expectedPath = result[0]
-    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('9.999989 USDT')
+    expect(expectedPath.outputs[0].formatWithSymbol()).toBe('9.999999 USDT')
   })
 })

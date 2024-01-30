@@ -4,10 +4,13 @@ import { parseHexStringIntoBuffer } from '../base/utils'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { IWrappedNative__factory } from '../contracts/factories/contracts/IWrappedNative__factory'
+import * as gen from '../tx-gen/Planner'
+import { Address } from '..'
 
 const iWrappedNativeIFace = IWrappedNative__factory.createInterface()
 
 export class DepositAction extends Action {
+  
   gasEstimate(): bigint {
     return 25000n
   }
@@ -21,6 +24,14 @@ export class DepositAction extends Action {
       this.gasEstimate(),
       'Wrap Native Token'
     )
+  }
+  async plan(planner: gen.Planner, inputs: gen.Value[], destination: Address) {
+    const wethlib = gen.Contract.createContract(IWrappedNative__factory.connect(
+      this.wrappedToken.address.address,
+      this.universe.provider
+    ))
+    planner.add(wethlib.deposit().withValue(inputs[0]))
+    return [inputs[0]]
   }
 
   async quote([qty]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -57,6 +68,14 @@ export class WithdrawAction extends Action {
       this.gasEstimate(),
       'Unwrap Native Token'
     )
+  }
+  async plan(planner: gen.Planner, inputs: gen.Value[], destination: Address) {
+    const wethlib = gen.Contract.createContract(IWrappedNative__factory.connect(
+      this.wrappedToken.address.address,
+      this.universe.provider
+    ))
+    planner.add(wethlib.withdraw(inputs[0]))
+    return [inputs[0]]
   }
 
   async quote([qty]: TokenQuantity[]): Promise<TokenQuantity[]> {

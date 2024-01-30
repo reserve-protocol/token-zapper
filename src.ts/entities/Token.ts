@@ -32,7 +32,7 @@ export class Token {
     public readonly symbol: string,
     public readonly name: string,
     public readonly decimals: number,
-    public readonly scale: bigint
+    public readonly scale: bigint,
   ) {
     this.zero = this.fromBigInt(0n)
     this.one = this.fromBigInt(scale)

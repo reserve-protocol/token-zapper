@@ -6,6 +6,7 @@ import { DestinationOptions, Action, InteractionConvention } from './Action'
 import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
 import { IStaticAV3TokenLM__factory } from '../contracts/factories/contracts/ISAV3Token.sol/IStaticAV3TokenLM__factory'
+import { Planner, Value } from '../tx-gen/Planner'
 
 const ray = 10n ** 27n
 const halfRay = ray / 2n
@@ -18,9 +19,20 @@ function rayDiv(a: bigint, b: bigint): bigint {
 }
 const saTokenInterface = IStaticAV3TokenLM__factory.createInterface()
 export class MintSAV3TokensAction extends Action {
-
   get outputSlippage() {
-    return 3000000n;
+    return 3000000n
+  }
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const lib = this.gen.Contract.createContract(
+      IStaticAV3TokenLM__factory.connect(
+        this.input[0].address.address,
+        this.universe.provider
+      )
+    )
+    const out = planner.add(
+      lib.deposit(inputs[0], destination.address, 0, true)
+    )
+    return [out!]
   }
   gasEstimate() {
     return BigInt(300000n)
@@ -48,11 +60,7 @@ export class MintSAV3TokensAction extends Action {
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
     const x = rayDiv(amountsIn.into(this.saToken).amount, this.rate.value)
-    return [
-      this.saToken.fromBigInt(
-        x
-      ),
-    ]
+    return [this.saToken.fromBigInt(x)]
   }
 
   constructor(
@@ -76,9 +84,24 @@ export class MintSAV3TokensAction extends Action {
   }
 }
 export class BurnSAV3TokensAction extends Action {
-
   get outputSlippage() {
-    return 3000000n;
+    return 3000000n
+  }
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const lib = this.gen.Contract.createContract(
+      IStaticAV3TokenLM__factory.connect(
+        this.input[0].address.address,
+        this.universe.provider
+      )
+    )
+    const out = planner.add(
+      lib.withdraw(
+        inputs[0],
+        destination.address,
+        this.universe.config.addresses.executorAddress.address
+      )
+    )
+    return [out!]
   }
   gasEstimate() {
     return BigInt(300000n)
@@ -92,7 +115,7 @@ export class BurnSAV3TokensAction extends Action {
         saTokenInterface.encodeFunctionData('withdraw', [
           amountsIn.amount,
           destination.address,
-          this.universe.config.addresses.executorAddress.address
+          this.universe.config.addresses.executorAddress.address,
         ])
       ),
       this.saToken.address,

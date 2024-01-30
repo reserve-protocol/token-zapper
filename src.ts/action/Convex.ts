@@ -7,6 +7,7 @@ import { ContractCall } from '../base/ContractCall'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { IConvexWrapper__factory } from '../contracts/factories/contracts/IConvexWrapper__factory'
 import { IBooster__factory } from '../contracts/factories/contracts/IBooster__factory'
+import { Planner, Value } from '../tx-gen/Planner'
 
 class ConvexPool {
   constructor(
@@ -16,17 +17,30 @@ class ConvexPool {
     public readonly convexDepositToken: Token,
     public readonly stakedConvexDepositToken: Token,
     public readonly rewardsAddress: Address
-  ) { }
+  ) {}
 
   toString() {
     return `ConvexPool(id=${this.convexPoolId})`
   }
 }
 
-const boosterInterface = IBooster__factory.createInterface()
 const wrapperInterface = IConvexWrapper__factory.createInterface()
 
 export class ConvexDepositAndStake extends Action {
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    const lib = this.gen.Contract.createContract(
+      IConvexWrapper__factory.connect(
+        this.convexPool.stakedConvexDepositToken.address.address,
+        this.universe.provider
+      )
+    )
+    planner.add(lib.deposit(inputs[0], destination.address))
+    return [inputs[0]]
+  }
   toString(): string {
     return `ConvexDepositAndStake(${this.convexPool})`
   }
@@ -53,13 +67,13 @@ export class ConvexDepositAndStake extends Action {
       `Deposit ${amountsIn} on Convex and stake on ${this.convexPool.rewardsAddress}`
     )
   }
-  constructor(readonly convexPool: ConvexPool) {
+  constructor(readonly universe: Universe, readonly convexPool: ConvexPool) {
     super(
       convexPool.stakedConvexDepositToken.address,
       [convexPool.curveLPToken],
       [convexPool.stakedConvexDepositToken],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Callee,
+      DestinationOptions.Recipient,
       [
         new Approval(
           convexPool.curveLPToken,
@@ -70,157 +84,21 @@ export class ConvexDepositAndStake extends Action {
   }
 }
 
-export class ConvexDeposit extends Action {
-  toString(): string {
-    return `ConvexDeposit(${this.convexPool})`
-  }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountIn.into(this.output[0])]
-  }
-  gasEstimate(): bigint {
-    return 250000n
-  }
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        boosterInterface.encodeFunctionData('deposit', [
-          this.convexPool.convexPoolId,
-          amountsIn.amount,
-          false,
-        ])
-      ),
-      this.convexPool.convexBooster,
-      0n,
-      this.gasEstimate(),
-      `Deposit ${amountsIn} on Convex`
-    )
-  }
-  constructor(readonly convexPool: ConvexPool) {
-    super(
-      convexPool.convexDepositToken.address,
-      [convexPool.curveLPToken],
-      [convexPool.convexDepositToken],
-      InteractionConvention.ApprovalRequired,
-      DestinationOptions.Callee,
-      [new Approval(convexPool.curveLPToken, convexPool.convexBooster)]
-    )
-  }
-}
-
-export class ConvexStake extends Action {
-  toString(): string {
-    return `ConvexStake(${this.convexPool})`
-  }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountIn.into(this.output[0])]
-  }
-  gasEstimate(): bigint {
-    return 250000n
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        wrapperInterface.encodeFunctionData('stake', [
-          amountsIn.amount,
-          destination.address,
-        ])
-      ),
-      this.convexPool.stakedConvexDepositToken.address,
-      0n,
-      this.gasEstimate(),
-      `Stake ${amountsIn} on Convex and stake on ${this.convexPool.rewardsAddress}`
-    )
-  }
-  constructor(readonly convexPool: ConvexPool) {
-    super(
-      convexPool.stakedConvexDepositToken.address,
-      [convexPool.convexDepositToken],
-      [convexPool.stakedConvexDepositToken],
-      InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
-      [
-        new Approval(
-          convexPool.convexDepositToken,
-          convexPool.stakedConvexDepositToken.address
-        ),
-      ]
-    )
-  }
-}
-
-export class ConvexUnstake extends Action {
-  toString(): string {
-    return `ConvexUnstake(${this.convexPool})`
-  }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountIn.into(this.output[0])]
-  }
-  gasEstimate(): bigint {
-    return 250000n
-  }
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        wrapperInterface.encodeFunctionData('withdraw', [amountsIn.amount])
-      ),
-      this.convexPool.stakedConvexDepositToken.address,
-      0n,
-      this.gasEstimate(),
-      `Unstake ${amountsIn} on ${this.convexPool.rewardsAddress}, returning deposit token (${this.convexPool.convexDepositToken}) to caller`
-    )
-  }
-  constructor(readonly convexPool: ConvexPool) {
-    super(
-      convexPool.stakedConvexDepositToken.address,
-      [convexPool.stakedConvexDepositToken],
-      [convexPool.convexDepositToken],
-      InteractionConvention.None,
-      DestinationOptions.Callee,
-      []
-    )
-  }
-}
-
-export class ConvexWithdraw extends Action {
-  toString(): string {
-    return `ConvexWithdraw(${this.convexPool})`
-  }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountIn.into(this.output[0])]
-  }
-  gasEstimate(): bigint {
-    return 250000n
-  }
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        boosterInterface.encodeFunctionData('withdraw', [
-          this.convexPool.convexPoolId,
-          amountsIn.amount,
-        ])
-      ),
-      this.convexPool.convexBooster,
-      0n,
-      this.gasEstimate(),
-      `Withdraw ${amountsIn} from Convex returning curve LP token (${this.convexPool.curveLPToken}) to caller`
-    )
-  }
-  constructor(readonly convexPool: ConvexPool) {
-    super(
-      convexPool.stakedConvexDepositToken.address,
-      [convexPool.convexDepositToken],
-      [convexPool.curveLPToken],
-      InteractionConvention.None,
-      DestinationOptions.Callee,
-      []
-    )
-  }
-}
-
 export class ConvexUnstakeAndWithdraw extends Action {
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    const lib = this.gen.Contract.createContract(
+      IConvexWrapper__factory.connect(
+        this.convexPool.stakedConvexDepositToken.address.address,
+        this.universe.provider
+      )
+    )
+    planner.add(lib.withdrawAndUnwrap(inputs[0]))
+    return [inputs[0]]
+  }
   toString(): string {
     return `ConvexUnstakeAndWithdraw(${this.convexPool})`
   }
@@ -243,13 +121,13 @@ export class ConvexUnstakeAndWithdraw extends Action {
       `Unstake ${amountsIn} from rewards pool (${this.convexPool.rewardsAddress}), and withdraw from Convex returning ${this.output[0]} to caller`
     )
   }
-  constructor(readonly convexPool: ConvexPool) {
+  constructor(readonly universe: Universe, readonly convexPool: ConvexPool) {
     super(
       convexPool.stakedConvexDepositToken.address,
       [convexPool.stakedConvexDepositToken],
       [convexPool.curveLPToken],
       InteractionConvention.None,
-      DestinationOptions.Callee,
+      DestinationOptions.Recipient,
       []
     )
   }
@@ -296,28 +174,16 @@ export const setupConvexEdges = async (
     crvRewards
   )
 
-  // Define canonical way mint deposit token
-  const depositAction = new ConvexDeposit(convexPool)
-  const withdrawAction = new ConvexWithdraw(convexPool)
-  universe.defineMintable(depositAction, withdrawAction)
-
-  // Define canonical way to mint staked token
-  const stakeAction = new ConvexStake(convexPool)
-  const unstakeAction = new ConvexUnstake(convexPool)
-  universe.defineMintable(stakeAction, unstakeAction)
-
   // Add one step actions that are actually used for the most part
-  const depositAndStakeAction = new ConvexDepositAndStake(convexPool)
-  const unstakeAndWithdrawAction = new ConvexUnstakeAndWithdraw(convexPool)
-  universe.addAction(unstakeAndWithdrawAction)
-  universe.addAction(depositAndStakeAction)
+  const depositAndStakeAction = new ConvexDepositAndStake(universe, convexPool)
+  const unstakeAndWithdrawAction = new ConvexUnstakeAndWithdraw(
+    universe,
+    convexPool
+  )
+  universe.defineMintable(depositAndStakeAction, unstakeAndWithdrawAction)
 
   return {
     pool: convexPool,
-    depositAction,
-    withdrawAction,
-    stakeAction,
-    unstakeAction,
     depositAndStakeAction,
     unstakeAndWithdrawAction,
   }

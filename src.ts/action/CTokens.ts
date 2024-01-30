@@ -1,12 +1,13 @@
-
-import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
-import { parseHexStringIntoBuffer } from '../base/utils'
-import { InteractionConvention, DestinationOptions, Action } from './Action'
-import { ContractCall } from '../base/ContractCall'
 import { Approval } from '../base/Approval'
-import { ICToken__factory } from '../contracts/factories/contracts/ICToken.sol/ICToken__factory'
+import { ContractCall } from '../base/ContractCall'
+import { parseHexStringIntoBuffer } from '../base/utils'
+import { BalanceOf__factory } from '../contracts'
 import { CEther__factory } from '../contracts/factories/contracts/ICToken.sol/CEther__factory'
+import { ICToken__factory } from '../contracts/factories/contracts/ICToken.sol/ICToken__factory'
+import { type Token, type TokenQuantity } from '../entities/Token'
+import { Planner, Value } from '../tx-gen/Planner'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 const iCTokenInterface = ICToken__factory.createInterface()
 const iCEtherInterface = CEther__factory.createInterface()
@@ -14,6 +15,41 @@ const iCEtherInterface = CEther__factory.createInterface()
 const ONEFP18 = 10n ** 18n
 
 export class MintCTokenAction extends Action {
+  async plan(planner: Planner, inputs: Value[]): Promise<Value[]> {
+    if (this.underlying === this.universe.nativeToken) {
+      const lib = this.gen.Contract.createContract(
+        CEther__factory.connect(
+          this.cToken.address.address,
+          this.universe.provider
+        )
+      )
+      planner.add(lib.mint().withValue(inputs[0]))
+      return [
+        this.genUtils.erc20.balanceOf(
+          this.universe,
+          planner,
+          this.output[0],
+          this.universe.config.addresses.executorAddress
+        ),
+      ]
+    }
+    const lib = this.gen.Contract.createContract(
+      ICToken__factory.connect(
+        this.cToken.address.address,
+        this.universe.provider
+      )
+    )
+    planner.add(lib.mint(inputs[0]))
+
+    return [
+      this.genUtils.erc20.balanceOf(
+        this.universe,
+        planner,
+        this.output[0],
+        this.universe.config.addresses.executorAddress
+      ),
+    ]
+  }
   gasEstimate() {
     return BigInt(175000n)
   }
@@ -39,20 +75,19 @@ export class MintCTokenAction extends Action {
       `Deposit ${amountsIn} into ${this.cToken.symbol}`
     )
   }
-  
+
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
-    let out = (amountsIn.amount * this.rateScale) / this.rate.value / this.underlying.scale
+    let out =
+      (amountsIn.amount * this.rateScale) /
+      this.rate.value /
+      this.underlying.scale
     // out = out - out / 3_000_000n;
-    return [
-      this.cToken.fromBigInt(
-        out
-      ),
-    ]
+    return [this.cToken.fromBigInt(out)]
   }
 
   get outputSlippage() {
-    return 3000000n;
+    return 3000000n
   }
 
   constructor(
@@ -78,9 +113,25 @@ export class MintCTokenAction extends Action {
 }
 
 export class BurnCTokenAction extends Action {
-
   get outputSlippage() {
-    return 3000000n;
+    return 3000000n
+  }
+  async plan(planner: Planner, inputs: Value[]): Promise<Value[]> {
+    const lib = this.gen.Contract.createContract(
+      ICToken__factory.connect(
+        this.cToken.address.address,
+        this.universe.provider
+      )
+    )
+    planner.add(lib.redeem(inputs[0]))
+    return [
+      this.genUtils.erc20.balanceOf(
+        this.universe,
+        planner,
+        this.output[0],
+        this.universe.config.addresses.executorAddress
+      ),
+    ]
   }
   gasEstimate() {
     return BigInt(175000n)
@@ -94,19 +145,17 @@ export class BurnCTokenAction extends Action {
       this.cToken.address,
       0n,
       this.gasEstimate(),
-      'Burn ' + this.cToken.symbol,
+      'Burn ' + this.cToken.symbol
     )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
-    let out = (amountsIn.amount * this.rate.value * this.underlying.scale) / this.rateScale
+    let out =
+      (amountsIn.amount * this.rate.value * this.underlying.scale) /
+      this.rateScale
 
-    return [
-      this.underlying.fromBigInt(
-        out
-      ),
-    ]
+    return [this.underlying.fromBigInt(out)]
   }
 
   constructor(

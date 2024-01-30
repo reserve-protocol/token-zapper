@@ -11,6 +11,8 @@ export interface IBasket {
   basketTokens: Token[]
   rToken: Token
 
+  version: string
+
   redeem(amount: TokenQuantity): Promise<TokenQuantity[]>
 }
 
@@ -32,6 +34,7 @@ export class TokenBasket implements IBasket {
     public readonly basketHandlerAddress: Address,
     public readonly rToken: Token,
     public readonly assetRegistry: Address,
+    public readonly version: string
 
   ) {
     this.basketHandler = IBasketHandler__factory.connect(

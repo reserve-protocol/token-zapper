@@ -89,10 +89,14 @@ export const ethereumConfig = makeConfig(
   RTOKENS,
   {
     facadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
-    zapperAddress: '0x8cE5ee761fF619c889F007CB4D708178E87C11D8',
-    executorAddress: '0xe18a821ea1f1796A0797CEa01A3f86ebEab0f9B6',
+    zapperAddress: '0xcc2b9b55952718b210660b56ca12eb88694dc60f',
+    executorAddress: '0x675D37489A7A64c051D0204e5c72a469f6558a47',
     wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-    rtokenLens: '0xf221BB6aBF67186576363514D638835Ffe66F2D9',
+    rtokenLens: '0xE787491314A3Da6412Ac4DeEB39c0F8EfdE1b53C',
+
+    balanceOf: "0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D",
+    curveRouterCall: "0xA18ad6dCb6B217A4c3810f865f5eEf45570024dc",
+    ethBalanceOf: "0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092"
   }
 )
 

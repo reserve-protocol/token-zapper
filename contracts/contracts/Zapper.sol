@@ -10,32 +10,79 @@ import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.so
 import { IWrappedNative } from "./IWrappedNative.sol";
 import { FacadeRead, RToken, Call, ZapERC20Params } from "./IRTokenZapper.sol";
 import { IPermit2, SignatureTransferDetails, PermitTransferFrom } from "./IPermit2.sol";
+import { VM } from "./weiroll/VM.sol";
 
 struct ExecuteOutput {
     uint256[] dust;
 }
-contract ZapperExecutor {
+contract ZapperExecutor is VM {
     receive() external payable {}
 
+    function add(
+        uint256 a,
+        uint256 b
+    ) external pure returns (uint256) {
+        return a + b;
+    }
+    function sub(
+        uint256 a,
+        uint256 b
+    ) external pure returns (uint256) {
+        return a - b;
+    }
+    function fpMul(
+        uint256 a,
+        uint256 b,
+        uint256 scale
+    ) external pure returns (uint256) {
+        return (a * b) / scale;
+    }
+    function assertLarger(
+        uint256 a,
+        uint256 b
+    ) external pure {
+        require(a > b, "!ASSERT_GT");
+    }
+    function assertEqual(
+        uint256 a,
+        uint256 b
+    ) external pure {
+        require(a == b, "!ASSERT_EQ");
+    }
+
+
     /** @dev Main endpoint to call
-     * @param calls - Each call to execute
+     * @param commands - Weiroll code to execute
+     * @param state - Intiaial Weiroll state to use
+     * @param tokens - All tokens used by the Zap in order to calculate dust
      */
     function execute(
-        Call[] calldata calls,
-        IERC20[] calldata tokens
-    ) external returns (ExecuteOutput memory out) {
-        uint256 len = calls.length;
-        for (uint256 i; i < len; i++) {
-            address target = calls[i].to;
-            (bool success, bytes memory data) = target.call{
-                value: calls[i].value
-            }(abi.encodePacked(calls[i].data));
-            require(success, string(data));
-        }
+        bytes32[] calldata commands,
+        bytes[] memory state,
+        IERC20[] memory tokens
+    )
+        public
+        payable
+        returns (ExecuteOutput memory out)
+    {
+        _execute(commands, state);
         out.dust = new uint256[](tokens.length);
         for(uint256 i; i < tokens.length; i++) {
             out.dust[i] = tokens[i].balanceOf(address(this));
         }
+    }
+
+    /** @dev Workaround for weiroll not supporting a way to make untyped calls.
+      * @param to - Address to call
+      * @param value - Amount of ETH to send
+      * @param data - Data to send
+     */
+    function rawCall(
+        address to,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bool success, bytes memory out) {
+        (success, out) = to.call{value: value}(data);
     }
 
     /**   @dev Utility for minting max amount of rToken.
@@ -51,42 +98,6 @@ contract ZapperExecutor {
     ) external {
         uint256 maxIssueableAmount = facade.maxIssuable(token, address(this));
         token.issueTo(recipient, maxIssueableAmount);
-    }
-
-    /** @dev Utility for returning remaining funds back to user
-     * @param tokens - Tokens to move out of the ZapperExecutor contract
-     * @param destination - Recipient of the ERC20 transfers
-     */
-    function drainERC20s(IERC20[] calldata tokens, address destination) external {
-        uint256 len = tokens.length;
-        for (uint256 i; i < len; i++) {
-            IERC20 token = tokens[i];
-            uint256 balance = token.balanceOf(address(this));
-            if (balance == 0) {
-                continue;
-            }
-            SafeERC20.safeTransfer(token, destination, balance);
-        }
-    }
-
-    /** @dev Utility for setting up all neccesary approvals for Zap
-     * @param tokens - Tokens to set up approvals
-     * @param spenders - Spenders - i'th token will be approved for i'th spender
-     */
-    function setupApprovals(IERC20[] calldata tokens, address[] calldata spenders) external {
-        require(tokens.length == spenders.length, "Invalid params");
-        uint256 len = tokens.length;
-        for (uint256 i; i < len; i++) {
-            IERC20 token = tokens[i];
-            address spender = spenders[i];
-
-            uint256 allowance = token.allowance(address(this), spender);
-
-            if (allowance != 0) {
-                continue;
-            }
-            SafeERC20.safeApprove(token, spender, type(uint256).max);
-        }
     }
 }
 
@@ -116,7 +127,8 @@ contract Zapper is ReentrancyGuard {
         // STEP 1: Execute
         out.dust = zapperExecutor.execute(
             params.commands,
-            params.tokensUsedByZap
+            params.state,
+            params.tokens
         ).dust;
 
         // STEP 2: Verify that the user has gotten the tokens they requested

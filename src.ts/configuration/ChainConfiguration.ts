@@ -23,6 +23,12 @@ export const makeConfig = <
     zapperAddress: string
     wrappedNative: string
     rtokenLens: string
+
+    // Weiroll toolkits
+    balanceOf: string
+    curveRouterCall: string
+    ethBalanceOf: string
+
   }
 ) => {
   return {

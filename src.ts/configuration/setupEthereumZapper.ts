@@ -116,11 +116,13 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
 
   // Set up RETH
-  await setupRETH(
-    universe,
-    PROTOCOL_CONFIGS.rocketPool.reth,
-    PROTOCOL_CONFIGS.rocketPool.router
-  )
+  if (0) {
+    await setupRETH(
+      universe,
+      PROTOCOL_CONFIGS.rocketPool.reth,
+      PROTOCOL_CONFIGS.rocketPool.router
+    )
+  }
 
   // Set up Lido
   await setupLido(

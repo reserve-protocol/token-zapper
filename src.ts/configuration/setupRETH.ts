@@ -20,5 +20,4 @@ export const setupRETH = async (
   const rEthtoEth = new RETHToETH(universe, rethRouter);
 
   universe.defineMintable(ethToREth, rEthtoEth, true);
-  
 };

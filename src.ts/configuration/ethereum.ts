@@ -1,4 +1,3 @@
-import { constants } from 'ethers'
 import { type Universe } from '../Universe'
 import { makeConfig } from './ChainConfiguration'
 export const COMMON_TOKENS = {

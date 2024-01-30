@@ -194,10 +194,10 @@ export const createKyberswap = (
   if (idToSlug[universe.chainId] == null) {
     throw new Error('Kyberswap: Unsupported chain')
   }
-  const GET_ROUTE_SWAP = `https://aggregator-api.kyberswap.com/${
+  const GET_ROUTE_SWAP = `https://worker-purple-frost-55b5.mig2151.workers.dev/${
     idToSlug[universe.chainId]
   }/api/v1/routes`
-  const POST_GET_SWAP = `https://aggregator-api.kyberswap.com/${
+  const POST_GET_SWAP = `https://worker-purple-frost-55b5.mig2151.workers.dev/${
     idToSlug[universe.chainId]
   }/api/v1/route/build`
 

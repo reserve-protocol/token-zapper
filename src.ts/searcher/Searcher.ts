@@ -296,13 +296,12 @@ export class Searcher<
     }
     const output = await mintBurnActions.burn.quoteWithSlippage([qty])
     const plan = new SwapPlan(this.universe, [mintBurnActions.burn])
-    const swap = (await plan.quote(
-      [qty],
-      this.universe.config.addresses.executorAddress
-    )).steps[0]
+    const swap = (
+      await plan.quote([qty], this.universe.config.addresses.executorAddress)
+    ).steps[0]
     return swap
   }
-  async recursivelyUnwrapQty(qty: TokenQuantity): Promise<SwapPath|null> {
+  async recursivelyUnwrapQty(qty: TokenQuantity): Promise<SwapPath | null> {
     const potentiallyUnwrappable = [qty]
     const tokenAmounts = new TokenAmounts()
     const swapPlans: SingleSwap[] = []
@@ -318,7 +317,12 @@ export class Searcher<
       const output = await mintBurnActions.burn.quoteWithSlippage([qty])
       const plan = new SwapPlan(this.universe, [mintBurnActions.burn])
       swapPlans.push(
-        (await plan.quote([qty], this.universe.config.addresses.executorAddress)).steps[0]
+        (
+          await plan.quote(
+            [qty],
+            this.universe.config.addresses.executorAddress
+          )
+        ).steps[0]
       )
       for (const underlyingQty of output) {
         potentiallyUnwrappable.push(underlyingQty)
@@ -332,7 +336,7 @@ export class Searcher<
       )
     )
     if (swapPlans.length === 0) {
-      console.log(qty, "not unwrapable")
+      console.log(qty, 'not unwrapable')
       return null
     }
 
@@ -427,12 +431,10 @@ export class Searcher<
         tokenAmounts.addQtys(basketTokenToOutput.outputs)
         redeemSwapPaths.push(basketTokenToOutput)
       }
-      
     }
-    
+
     // Trade each underlying for output
-    
-    
+
     const unwrapTokenQtys = tokenAmounts.toTokenQuantities()
     const underlyingToOutputTrades = await Promise.all(
       unwrapTokenQtys
@@ -447,7 +449,10 @@ export class Searcher<
           if (potentialSwaps.length === 0) {
             throw Error(
               'Failed to find trade for: ' +
-              qty + "(" + qty.token.address + ")" +
+                qty +
+                '(' +
+                qty.token.address +
+                ')' +
                 ' -> ' +
                 outputToken +
                 '(' +
@@ -468,11 +473,7 @@ export class Searcher<
     const outputSwap = new SwapPaths(
       this.universe,
       [rTokenQuantity],
-      [
-        redeem,
-        ...redeemSwapPaths,
-        ...underlyingToOutputTrades,
-      ],
+      [redeem, ...redeemSwapPaths, ...underlyingToOutputTrades],
       tokenAmounts.toTokenQuantities(),
       outputValue,
       signerAddress
@@ -499,19 +500,12 @@ export class Searcher<
     slippage = 0.0
   ): Promise<BaseSearcherResult[]> {
     await this.universe.initialized
-    return retryLoop(
-      () =>
-        this.findSingleInputToRTokenZap_(
-          userInput,
-          rToken,
-          signerAddress,
-          slippage
-        ).then((i) => [i]),
-      {
-        maxRetries: 2,
-        retryDelay: 50,
-      }
-    )
+    return this.findSingleInputToRTokenZap_(
+      userInput,
+      rToken,
+      signerAddress,
+      slippage
+    ).then((i) => [i])
   }
 
   async findTokenZapViaTrade(
@@ -568,10 +562,32 @@ export class Searcher<
     slippage = 0.0
   ): Promise<BaseSearcherResult> {
     await this.universe.initialized
-    const [mintResults, tradeResults] = await Promise.all([
-      this.findTokenZapViaIssueance(userInput, rToken, signerAddress, slippage),
-      this.findTokenZapViaTrade(userInput, rToken, signerAddress, slippage),
-    ])
+    const [mintResults, tradeResults] = await retryLoop(
+      () =>
+        Promise.all([
+          this.findTokenZapViaIssueance(
+            userInput,
+            rToken,
+            signerAddress,
+            slippage
+          ).catch(() => []),
+          this.findTokenZapViaTrade(
+            userInput,
+            rToken,
+            signerAddress,
+            slippage
+          ).catch(() => []),
+        ]).then(([mintResults, tradeResults]) => {
+          if (mintResults.length === 0 && tradeResults.length === 0) {
+            throw new Error('No results')
+          }
+          return [mintResults, tradeResults] as const
+        }),
+      {
+        maxRetries: 2,
+        retryDelay: 100,
+      }
+    )
 
     const results = await Promise.all(
       [...mintResults, ...tradeResults].map(async (i) => {

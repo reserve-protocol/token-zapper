@@ -47,6 +47,7 @@ const encodeToken = (universe: Universe, token: Token) => {
   // }
   return token.address.address.toLowerCase()
 }
+const ensoBlacklist = new Set(['0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8'])
 const getEnsoQuote = async (
   slippage: number,
   universe: Universe,
@@ -54,6 +55,9 @@ const getEnsoQuote = async (
   tokenOut: Token,
   recipient: Address
 ) => {
+  if (ensoBlacklist.has(tokenOut.address.address.toLowerCase())) {
+    throw new Error('Enso does not support rTokens')
+  }
   const execAddr: string =
     universe.config.addresses.executorAddress.address.toLowerCase()
   const inputTokenStr: string = encodeToken(universe, quantityIn.token)
@@ -72,6 +76,9 @@ const getEnsoQuote = async (
     })
   ).json()
 
+  // if (quote.tx?.data == null) {
+  //   console.log(quote)
+  // }
 
   try {
     let pos = 10
@@ -118,13 +125,12 @@ const getEnsoQuote = async (
           state,
         },
       },
+      tokenIn: inputTokenStr,
       tokenOut: outputTokenStr,
     }
 
     return parsed
   } catch (e) {
-    console.log(e)
-
     throw e
   }
 }
@@ -145,13 +151,28 @@ type ParsedQuote = Awaited<ReturnType<typeof getEnsoQuote>>
 // bytes32[] calldata commands,
 // bytes[] calldata state
 class EnsoAction extends Action {
-  async plan(planner: Planner, [input]: Value[]): Promise<Value[]> {
+  async plan(planner: Planner, [input]: Value[], _: Address, predicted: TokenQuantity[]): Promise<Value[]> {
     const ensoLib = this.gen.Contract.createContract(
       EnsoRouter__factory.connect(this.request.tx.to, this.universe.provider)
     )
+    
+
+    const inputV = input ?? predicted[0].amount
+    if (
+      this.request.tokenIn === ENSO_GAS_TOKEN &&
+      this.input[0] === this.universe.wrappedNativeToken
+    ) {
+      const wethlib = this.gen.Contract.createContract(
+        IWrappedNative__factory.connect(
+          this.universe.wrappedNativeToken.address.address,
+          this.universe.provider
+        )
+      )
+      planner.add(wethlib.deposit().withValue(inputV))
+    }
     let routeSingleCall: FunctionCall = ensoLib.routeSingle(
-      encodeToken(this.universe, this.inputQty.token),
-      input,
+      this.request.tokenIn,
+      inputV,
       this.request.tx.data.commands,
       this.request.tx.data.state
     )
@@ -176,7 +197,7 @@ class EnsoAction extends Action {
       this.request.tokenOut === ENSO_GAS_TOKEN &&
       this.output[0] === this.universe.wrappedNativeToken
     ) {
-      console.log('Adding WETH deposit')
+      console.log('Adding WETH deposit for out')
       const wethlib = this.gen.Contract.createContract(
         IWrappedNative__factory.connect(
           this.universe.wrappedNativeToken.address.address,

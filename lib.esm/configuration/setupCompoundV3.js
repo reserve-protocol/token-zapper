@@ -1,0 +1,34 @@
+import { MintCometAction, BurnCometAction } from '../action/Comet';
+import { MintCometWrapperAction, BurnCometWrapperAction } from '../action/CometWrapper';
+import { WrappedComet__factory } from '../contracts/factories/contracts/Compv3.sol/WrappedComet__factory';
+export const setupSingleCompoundV3Market = async (universe, market) => {
+    // Define baseToken -> receiptToken
+    universe.defineMintable(new MintCometAction(universe, market.baseToken, market.receiptToken), new BurnCometAction(universe, market.baseToken, market.receiptToken));
+    // Set up vaults
+    for (const vaultToken of market.vaults) {
+        const rate = { value: market.baseToken.one.amount };
+        const inst = WrappedComet__factory.connect(vaultToken.address.address, universe.provider);
+        const updateRate = async () => {
+            rate.value = (await inst.callStatic.exchangeRate()).toBigInt();
+        };
+        await updateRate();
+        universe.createRefreshableEntity(vaultToken.address, updateRate);
+        const getRate = async () => {
+            universe.refresh(vaultToken.address);
+            return rate.value;
+        };
+        universe.defineMintable(new MintCometWrapperAction(universe, market.receiptToken, vaultToken, getRate), new BurnCometWrapperAction(universe, market.receiptToken, vaultToken, getRate));
+    }
+};
+export const setupCompoundV3 = async (universe, markets) => {
+    await Promise.all(markets.map(async (m) => {
+        try {
+            await setupSingleCompoundV3Market(universe, m);
+        }
+        catch (e) {
+            console.error(`Failed to setup compound v3 market ${m.baseToken} ${m.receiptToken}`);
+            throw e;
+        }
+    }));
+};
+//# sourceMappingURL=setupCompoundV3.js.map

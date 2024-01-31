@@ -88,7 +88,7 @@ class KyberAction extends Action {
   async plan(
     planner: Planner,
     _: Value[],
-    destination: Address,
+    destination: Address
   ): Promise<Value[]> {
     const zapperLib = this.gen.Contract.createContract(
       ZapperExecutor__factory.connect(
@@ -103,7 +103,9 @@ class KyberAction extends Action {
           0,
           this.request.swap.data.data
         ),
-        `kyberswap,router=${this.request.swap.data.routerAddress},swap=${this.request.quantityIn} -> ${
+        `kyberswap,router=${this.request.swap.data.routerAddress},swap=${
+          this.request.quantityIn
+        } -> ${
           this.outputQuantity
         },route=${this.request.req.data.routeSummary.route
           .flat()
@@ -119,7 +121,10 @@ class KyberAction extends Action {
         `bal_${this.output[0].symbol}_after`
       )
       planner.add(
-        zapperLib.assertLarger(out, this.outputQuantity[0].amount - this.outputQuantity[0].amount / 100n),
+        zapperLib.assertLarger(
+          out,
+          this.outputQuantity[0].amount - this.outputQuantity[0].amount / 100n
+        ),
         'kyberswap,assert minimum output'
       )
       return [out!]
@@ -130,7 +135,9 @@ class KyberAction extends Action {
         0,
         this.request.swap.data.data
       ),
-      `kyberswap,router=${this.request.swap.data.routerAddress},swap=${this.request.quantityIn} -> ${
+      `kyberswap,router=${this.request.swap.data.routerAddress},swap=${
+        this.request.quantityIn
+      } -> ${
         this.outputQuantity
       },route=${this.request.req.data.routeSummary.route
         .flat()
@@ -194,10 +201,11 @@ export const createKyberswap = (
   if (idToSlug[universe.chainId] == null) {
     throw new Error('Kyberswap: Unsupported chain')
   }
-  const GET_ROUTE_SWAP = `https://worker-purple-frost-55b5.mig2151.workers.dev/${
+
+  const GET_ROUTE_SWAP = `https://aggregator-api.kyberswap.com/${
     idToSlug[universe.chainId]
   }/api/v1/routes`
-  const POST_GET_SWAP = `https://worker-purple-frost-55b5.mig2151.workers.dev/${
+  const POST_GET_SWAP = `https://aggregator-api.kyberswap.com/${
     idToSlug[universe.chainId]
   }/api/v1/route/build`
 

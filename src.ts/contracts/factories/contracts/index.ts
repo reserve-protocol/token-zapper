@@ -11,6 +11,7 @@ export * as iStargateRouterSol from "./IStargateRouter.sol";
 export * as zapperSol from "./Zapper.sol";
 export * as weiroll from "./weiroll";
 export * as weirollHelpers from "./weiroll-helpers";
+export { EnsoRouter__factory } from "./EnsoRouter__factory";
 export { IAssetRegistry__factory } from "./IAssetRegistry__factory";
 export { IBasketHandler__factory } from "./IBasketHandler__factory";
 export { IBooster__factory } from "./IBooster__factory";

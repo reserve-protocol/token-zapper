@@ -5,8 +5,8 @@ import {
 } from '../base/constants'
 import { setupCompoundLike } from './setupCompound'
 import { setupSAToken } from './setupSAToken'
-import { setupLido } from './setupLido'
-import { setupRETH } from './setupRETH'
+// import { setupLido } from './setupLido'
+// import { setupRETH } from './setupRETH'
 import { setupERC4626 } from "./setupERC4626"
 import { setupCompoundV3 } from "./setupCompoundV3"
 import { setupChainLink as setupChainLinkRegistry } from './setupChainLink'
@@ -116,20 +116,20 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
 
   // Set up RETH
-  if (0) {
-    await setupRETH(
-      universe,
-      PROTOCOL_CONFIGS.rocketPool.reth,
-      PROTOCOL_CONFIGS.rocketPool.router
-    )
-  }
+  // if (0) {
+  //   await setupRETH(
+  //     universe,
+  //     PROTOCOL_CONFIGS.rocketPool.reth,
+  //     PROTOCOL_CONFIGS.rocketPool.router
+  //   )
+  // }
 
   // Set up Lido
-  await setupLido(
-    universe,
-    PROTOCOL_CONFIGS.lido.steth,
-    PROTOCOL_CONFIGS.lido.wsteth
-  )
+  // await setupLido(
+  //   universe,
+  //   PROTOCOL_CONFIGS.lido.steth,
+  //   PROTOCOL_CONFIGS.lido.wsteth
+  // )
 
   await setupERC4626(
     universe,

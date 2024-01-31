@@ -6,6 +6,6 @@
     "declarationMap": true,
     "declarationDir": "./types",
     "emitDeclarationOnly": true,
-    "moduleResolution": "node"
+    "moduleResolution": "NodeNext"
   }
 }

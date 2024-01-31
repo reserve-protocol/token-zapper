@@ -176,13 +176,17 @@ export abstract class BaseSearcherResult {
 
   async simulateNoNode({ data, value }: SimulateParams) {
     // console.log(
-    //   JSON.stringify({
-    //     data,
-    //     block: this.blockNumber,
-    //     from: this.signer.address,
-    //     to: this.universe.config.addresses.zapperAddress.address,
-    //     value: value.toString(),
-    //   }, null, 2)
+    //   JSON.stringify(
+    //     {
+    //       data,
+    //       block: this.blockNumber,
+    //       from: this.signer.address,
+    //       to: this.universe.config.addresses.zapperAddress.address,
+    //       value: value.toString(),
+    //     },
+    //     null,
+    //     2
+    //   )
     // )
     const resp = await this.universe.provider.call({
       data,
@@ -246,11 +250,14 @@ export abstract class BaseSearcherResult {
       )
         .json()
         .then((a: { data: string }) => {
+          // console.log(data)
           if (a.data === '0xundefined') {
             throw new Error('Failed to simulate')
           }
-          return zapperInterface.decodeFunctionResult('zapERC20', a.data)
+          const out = zapperInterface.decodeFunctionResult('zapERC20', a.data)
             .out as ZapperOutputStructOutput
+          // console.log(out)
+          return out
         })
     } catch (e) {
       return this.simulateNoNode({

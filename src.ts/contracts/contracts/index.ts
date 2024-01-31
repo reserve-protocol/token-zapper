@@ -21,6 +21,7 @@ import type * as weiroll from "./weiroll";
 export type { weiroll };
 import type * as weirollHelpers from "./weiroll-helpers";
 export type { weirollHelpers };
+export type { EnsoRouter } from "./EnsoRouter";
 export type { IAssetRegistry } from "./IAssetRegistry";
 export type { IBasketHandler } from "./IBasketHandler";
 export type { IBooster } from "./IBooster";

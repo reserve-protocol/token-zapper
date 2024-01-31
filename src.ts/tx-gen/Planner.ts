@@ -6,7 +6,7 @@ import { defineReadOnly, getStatic } from '@ethersproject/properties'
 import { hexConcat, hexDataSlice } from '@ethersproject/bytes'
 import { DefaultMap } from '../base/DefaultMap'
 import { Address } from '../base/Address'
-import type { Universe } from "../Universe"
+import type { Universe } from '../Universe'
 
 const variableNames = [
   'a',
@@ -114,7 +114,7 @@ export enum CommandFlags {
   /** A bitmask that selects calltype flags */
   CALLTYPE_MASK = 0x03,
   /** Specifies that this is an extended command, with an additional command word for indices. Internal use only. */
-  EXTENDED_COMMAND = 0x40,
+  EXTENDED_COMMAND = 0x80,
   /** Specifies that the return value of this call should be wrapped in a `bytes`. Internal use only. */
   TUPLE_RETURN = 0x80,
 }
@@ -211,10 +211,18 @@ export type ContractFunction = (...args: Array<any>) => FunctionCall
 
 function isDynamicType(param?: ParamType): boolean {
   if (typeof param === 'undefined') return false
-  if (param.baseType === 'array' && param.arrayLength !== -1) {
-    return false
+  if (param.baseType === 'array') {
+    // Fixed length arrays are only dynamic if the child type is dynamic
+    if (param.arrayLength !== -1) {
+      return isDynamicType(param.arrayChildren)
+    }
+    return true
   }
-  return ['string', 'bytes', 'array', 'tuple'].includes(param.baseType)
+  if (param.baseType === 'tuple') {
+    // Only if any component of the tuple is dynamic the tuple is dynamic
+    return param.components.some((i) => isDynamicType(i))
+  }
+  return ['string', 'bytes'].includes(param.baseType)
 }
 
 function abiEncodeSingle(param: ParamType, value: any): LiteralValue {
@@ -227,10 +235,34 @@ function abiEncodeSingle(param: ParamType, value: any): LiteralValue {
   return new LiteralValue(param, defaultAbiCoder.encode([param], [value]))
 }
 
-function encodeArg(arg: any, param: ParamType): Value {
+export function encodeArg(arg: unknown, param: ParamType): Value {
   if (isValue(arg)) {
     if (arg.param.type !== param.type) {
-      if (arg.param.type.startsWith("uint") && param.type.startsWith("uint")) {
+      if (
+        param.type === 'bytes' &&
+        (arg.param.baseType === 'array' || arg.param.baseType === 'tuple')
+      ) {
+        return arg
+      }
+      if (
+        arg.param.type === 'bytes' &&
+        (param.baseType === 'array' || param.baseType === 'tuple')
+      ) {
+        return arg
+      }
+      if (param.type === 'bytes' && arg instanceof LiteralValue) {
+        return abiEncodeSingle(param, arg.value)
+      }
+      if (arg.param.type.includes('int') && param.type.includes('int')) {
+        return arg
+      }
+      if (arg.param.type.startsWith('bytes32') && !isDynamicType(param)) {
+        return arg
+      }
+      if (param.type.startsWith('bytes32') && !isDynamicType(arg.param)) {
+        return arg
+      }
+      if (arg.param.type.includes('int') && param.type === 'bool') {
         return arg
       }
       // Todo: type casting rules
@@ -889,7 +921,9 @@ const formatBytes = (bytes: string): string => {
   if (bytes.length < 64) {
     return bytes
   }
-  return `[len=${bytes.length}]0x${bytes.slice(66, 66+32)}...${bytes.slice(-32)}`
+  return `[len=${bytes.length}]0x${bytes.slice(66, 66 + 32)}...${bytes.slice(
+    -32
+  )}`
 }
 const formatAddress = (address: string, universe: Universe): string => {
   const addr =
@@ -921,33 +955,46 @@ const formatValue = (value: Value, universe: Universe): string => {
   if (value instanceof ReturnValue) {
     return value.name
   } else if (value instanceof LiteralValue) {
+    if (value.param.type === 'string') {
+      let chars = value.value.slice(66)
+      for (let i = 0; i < chars.length; i += 2) {
+        if (chars[i] === '0' && chars[i + 1] === '0') {
+          chars = chars.slice(0, i)
+          break
+        }
+      }
+      return (
+        '(string,len=' +
+        chars.length / 2 +
+        ')"' +
+        Buffer.from(chars, 'hex').toString('utf8') +
+        '"'
+      )
+    }
     if (value.param.baseType === 'array') {
-      const out = defaultAbiCoder.decode([value.param], value.value)
-      return `[ ${(out[0] as Array<any>)
-        .map((o) =>
-          formatValue(
-            new LiteralValue(
-              value.param.arrayChildren,
-              defaultAbiCoder.encode([value.param.arrayChildren], [o])
-            ),
-            universe
-          )
-        )
-        .join(', ')} ]`
+      return `(${value.param.type})`
     }
     if (value.param.type === 'bytes') {
       return `${formatBytes(value.value)}`
     }
     if (value.param.type === 'address') {
+      if (value.value === '0x') {
+        return `[${0x0}]`
+      }
       return `${formatAddress(value.value, universe)}`
     }
+    if (value.param.type === 'tuple') {
+      return `(${value.param.components.map((i) => i.type)})` //(${decoded.map(formatDecoded).join(", ")})`
+    }
     const out = defaultAbiCoder.decode([value.param], value.value)
-    if (value.param.type === 'uint256' && out[0] === '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff') {
+    if (
+      value.param.type === 'uint256' &&
+      out[0] ===
+        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+    ) {
       return 'type(uint256).max'
     }
     return `${out.length <= 1 ? out[0] : `[ ${out.join(', ')} ]`}`
-  } else if (value instanceof SubplanValue) {
-    return `(subplan)(${value.param.type})`
   } else if (value instanceof StateValue) {
     return `(state)(${value.param.type})`
   }
@@ -959,12 +1006,17 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
   for (let i = 0; i < plan.commands.length; i++) {
     const step = plan.commands[i]
 
-
     let callFlags = ''
-    if ((step.call.flags & CommandFlags.CALLTYPE_MASK) === CommandFlags.DELEGATECALL) {
+    if (
+      (step.call.flags & CommandFlags.CALLTYPE_MASK) ===
+      CommandFlags.DELEGATECALL
+    ) {
       callFlags = ':delegate'
     }
-    if ((step.call.flags & CommandFlags.CALLTYPE_MASK) === CommandFlags.STATICCALL) {
+    if (
+      (step.call.flags & CommandFlags.CALLTYPE_MASK) ===
+      CommandFlags.STATICCALL
+    ) {
       callFlags = ':static'
     }
     const comment = plan.comments[i]
@@ -996,7 +1048,7 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
     }
 
     const formatted = `${addr}${callFlags}.${methodName}${valueParms}(${argsArray})`
-    
+
     const retVal = plan.returnVals.get(step)
 
     const finalStr =

@@ -22,6 +22,7 @@ export { baseConfig } from './configuration/base'
 export { setupBaseZapper } from './configuration/setupBaseZapper'
 
 export { createKyberswap } from './aggregators/Kyberswap'
+export { createEnso } from './aggregators/Enso'
 export { createDefillama } from './aggregators/DefiLlama'
 export {
   DexAggregator,

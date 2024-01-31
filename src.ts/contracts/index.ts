@@ -18,6 +18,8 @@ export type { Comet } from "./contracts/Compv3.sol/Comet";
 export { Comet__factory } from "./factories/contracts/Compv3.sol/Comet__factory";
 export type { WrappedComet } from "./contracts/Compv3.sol/WrappedComet";
 export { WrappedComet__factory } from "./factories/contracts/Compv3.sol/WrappedComet__factory";
+export type { EnsoRouter } from "./contracts/EnsoRouter";
+export { EnsoRouter__factory } from "./factories/contracts/EnsoRouter__factory";
 export type { IAssetRegistry } from "./contracts/IAssetRegistry";
 export { IAssetRegistry__factory } from "./factories/contracts/IAssetRegistry__factory";
 export type { IBasketHandler } from "./contracts/IBasketHandler";

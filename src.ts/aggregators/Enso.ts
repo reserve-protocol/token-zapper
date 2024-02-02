@@ -9,11 +9,11 @@ import {
 import { Approval } from '../base/Approval'
 import { ContractCall } from '../base/ContractCall'
 import { EnsoRouter__factory } from '../contracts/factories/contracts/EnsoRouter__factory'
-import { EnsoRouter } from '../contracts/contracts/EnsoRouter'
 import { SwapPlan } from '../searcher/Swap'
 import { FunctionCall, Planner, Value } from '../tx-gen/Planner'
 import { DexAggregator } from './DexAggregator'
 import { IWrappedNative__factory } from '../contracts/factories/contracts/IWrappedNative__factory'
+import { wait } from '../base/controlflow'
 
 export interface EnsoQuote {
   gas: string
@@ -47,17 +47,17 @@ const encodeToken = (universe: Universe, token: Token) => {
   // }
   return token.address.address.toLowerCase()
 }
-const ensoBlacklist = new Set(['0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8'])
-const getEnsoQuote = async (
+// const ensoBlacklist = new Set() // ['0xe72b141df173b999ae7c1adcbf60cc9833ce56a8']
+const getEnsoQuote_ = async (
   slippage: number,
   universe: Universe,
   quantityIn: TokenQuantity,
   tokenOut: Token,
   recipient: Address
 ) => {
-  if (ensoBlacklist.has(tokenOut.address.address.toLowerCase())) {
-    throw new Error('Enso does not support rTokens')
-  }
+  // if (ensoBlacklist.has(tokenOut.address.address.toLowerCase())) {
+  //   throw new Error('Enso does not support rTokens')
+  // }
   const execAddr: string =
     universe.config.addresses.executorAddress.address.toLowerCase()
   const inputTokenStr: string = encodeToken(universe, quantityIn.token)
@@ -134,28 +134,41 @@ const getEnsoQuote = async (
     throw e
   }
 }
+const getEnsoQuote = async (
+  slippage: number,
+  universe: Universe,
+  quantityIn: TokenQuantity,
+  tokenOut: Token,
+  recipient: Address
+) => {
+  for (let i = 0; i < 3; i++) {
+    try {
+      return await getEnsoQuote_(
+        slippage,
+        universe,
+        quantityIn,
+        tokenOut,
+        recipient
+      )
+    } catch (e) {
+      await wait(250)
+      continue
+    }
+  }
+  throw new Error('Failed to get enso quote')
+}
 type ParsedQuote = Awaited<ReturnType<typeof getEnsoQuote>>
 
-// function safeRouteSingle(
-//   address tokenIn,
-//   address tokenOut,
-//   uint256 amountIn,
-//   uint256 minAmountOut,
-//   address receiver,
-//   bytes32[] calldata commands,
-//   bytes[] calldata state
-// ) external payable returns (bytes[] memory returnData);
-
-// IERC20 tokenIn,
-// uint256 amountIn,
-// bytes32[] calldata commands,
-// bytes[] calldata state
 class EnsoAction extends Action {
-  async plan(planner: Planner, [input]: Value[], _: Address, predicted: TokenQuantity[]): Promise<Value[]> {
+  async plan(
+    planner: Planner,
+    [input]: Value[],
+    _: Address,
+    predicted: TokenQuantity[]
+  ): Promise<Value[]> {
     const ensoLib = this.gen.Contract.createContract(
       EnsoRouter__factory.connect(this.request.tx.to, this.universe.provider)
     )
-    
 
     const inputV = input ?? predicted[0].amount
     if (

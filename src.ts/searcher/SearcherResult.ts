@@ -485,15 +485,18 @@ export abstract class BaseSearcherResult {
           async (i) => [await this.universe.fairPrice(i), i] as const
         )
       )
+
+      const outputValue = values.reduce(
+        (a, b) => a.add(b[0] ?? this.universe.usd.zero),
+        this.universe.usd.zero
+      )
+
       this.swaps = new SwapPaths(
         this.swaps.universe,
         this.swaps.inputs,
         this.swaps.swapPaths,
         updatedOutputs,
-        values.reduce(
-          (a, b) => a.add(b[0] ?? this.universe.usd.zero),
-          this.universe.usd.zero
-        ),
+        outputValue,
         this.swaps.destination
       )
       const estimate = result.gasUsed + result.gasUsed / 10n

@@ -534,7 +534,25 @@ export class Searcher<
       slippage
     )
 
+    const inputValue = await this.universe.fairPrice(inputTokenQuantity)
+    const slippageCheckValue = this.universe.usd.from(10000)
+
     return paths
+      .filter(async (path) => {
+        if (
+          inputValue == null ||
+          slippageCheckValue.gt(inputValue) || // only check slippage if the value is large enough
+          path.outputValue.gte(inputValue)
+        ) {
+          return true
+        }
+        const slippage = parseFloat(path.outputValue.div(inputValue).toString())
+        if (slippage < 0.997) {
+          return false
+        }
+
+        return true
+      })
       .slice(0, 3)
       .map(
         (path) =>

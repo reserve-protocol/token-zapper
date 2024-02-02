@@ -192,7 +192,7 @@ class EnsoAction extends Action {
     if (this.inputQty.token === this.universe.nativeToken) {
       routeSingleCall = routeSingleCall.withValue(input)
     }
-    planner.add(routeSingleCall)
+    planner.add(routeSingleCall, `Enso(${this.inputQty}, ${this.request.route.map(i => i.protocol).join(',')}, ${this.outputQty})`)
 
     const outToken =
       this.request.tokenOut === ENSO_GAS_TOKEN

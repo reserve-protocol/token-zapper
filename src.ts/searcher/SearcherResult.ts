@@ -9,7 +9,7 @@ import {
   plannerUtils,
   type Action,
 } from '../action/Action'
-import { type Address } from '../base/Address'
+import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import {
@@ -136,6 +136,8 @@ export abstract class BaseSearcherResult {
     this.blockNumber = universe.currentBlock
     const potentialResidualTokens = new Set<Token>()
     const executorAddress = this.universe.config.addresses.executorAddress
+
+    
     const [steps, , allApprovals] = linearize(executorAddress, this.swaps)
     this.allApprovals = allApprovals
     this.commands = steps
@@ -153,7 +155,9 @@ export abstract class BaseSearcherResult {
         potentialResidualTokens.add(qty.token)
       }
     }
+
     this.potentialResidualTokens = [...potentialResidualTokens]
+    
     this.inputIsNative = this.userInput.token === this.universe.nativeToken
   }
 
@@ -294,7 +298,7 @@ export abstract class BaseSearcherResult {
     )
 
     let valueOfDust = this.universe.usd.zero
-    for (const [usdValue, dustQuantity] of dustValues) {
+    for (const [usdValue] of dustValues) {
       if (usdValue == null) {
         // console.info(`Failed to find a price for ${dustQuantity}`)
         continue
@@ -386,7 +390,7 @@ export abstract class BaseSearcherResult {
         outputTokenOutput.amount -
         outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
       tokenOut: this.outputToken.address.address,
-      tokens: this.potentialResidualTokens.map((i) => i.address.address),
+      tokens: this.potentialResidualTokens.map((i) => i.address.address)
     }
   }
 
@@ -440,35 +444,34 @@ export abstract class BaseSearcherResult {
   abstract toTransaction(options: ToTransactionArgs): Promise<ZapTransaction>
 
   async createZapTransaction(options: ToTransactionArgs) {
-    const params = this.encodePayload(
-      this.swaps.outputs[0].token.from(1n),
-      options
-    )
-    const data = this.encodeCall(options, params)
-    const tx = this.encodeTx(data, 300000n)
+    
 
     try {
+      const params = this.encodePayload(
+        this.swaps.outputs[0].token.from(1n),
+        {
+          ...options,
+          returnDust: false
+        }
+      )
+      const data = this.encodeCall(options, params)
+      const tx = this.encodeTx(data, 300000n)
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
-      let dust = result.dust.map((qty, index) => qty)
-
-      dust = dust.slice(0, dust.length - 1)
-
-      dust = dust.filter((i) => i.amount !== 0n)
-
+      let dust = this.potentialResidualTokens.map(qty => qty)
       if (options.returnDust === true) {
         for (const tok of dust) {
           const balanceOfDust = plannerUtils.erc20.balanceOf(
             this.universe,
             this.planner,
-            tok.token,
+            tok,
             this.universe.config.addresses.executorAddress
           )
           plannerUtils.erc20.transfer(
             this.universe,
             this.planner,
             balanceOfDust,
-            tok.token,
+            tok,
             this.signer
           )
         }
@@ -478,7 +481,7 @@ export abstract class BaseSearcherResult {
 
       const updatedOutputs = [
         this.outputToken.from(BigNumber.from(finalParams.amountOut)),
-        ...dust,
+        ...result.simulatedOutputs.filter(i => i.token !== this.outputToken),
       ]
       const values = await Promise.all(
         updatedOutputs.map(
@@ -500,7 +503,7 @@ export abstract class BaseSearcherResult {
         this.swaps.destination
       )
       const estimate = result.gasUsed + result.gasUsed / 10n
-      const finalTx = this.encodeTx(this.encodeCall(options, params), estimate)
+      const finalTx = this.encodeTx(this.encodeCall(options, finalParams), estimate)
 
       return new ZapTransaction(
         this.universe,

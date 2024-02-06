@@ -529,7 +529,7 @@ export const loadCurve = async (
           break
         }
       }
-      // await addLpToken(universe, pool)
+      await addLpToken(universe, pool)
       if (missingTok) {
         continue
       }

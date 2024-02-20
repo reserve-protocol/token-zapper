@@ -25,7 +25,7 @@ export class MintSAV3TokensAction extends Action {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
       IStaticAV3TokenLM__factory.connect(
-        this.input[0].address.address,
+        this.output[0].address.address,
         this.universe.provider
       )
     )

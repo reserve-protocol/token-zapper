@@ -14,6 +14,10 @@ export const RTOKENS = {
     main: '0xA582985c68ED30a052Ff0b07D74931140bd5a00F',
     erc20: '0xCc7FF230365bD730eE4B352cC2492CEdAC49383e',
   },
+  iUSD: {
+    erc20: '0xfE0D6D83033e313691E96909d2188C150b834285',
+    main: '0x520b2781C96d0Bd130c9b50930965779Eb572A40',
+  },
 } as const
 
 export const baseConfig = makeConfig(
@@ -34,7 +38,7 @@ export const baseConfig = makeConfig(
 
     balanceOf: '0x9554DBb835886FC1f37835A1C83CeA3c20e5950A',
     curveRouterCall: '0x1A7F7C1b870ad69D19a899B2A3BA6EBEea77033f',
-    ethBalanceOf: '0x858b62D160788864c65222d7a3777a19B370Abd8'
+    ethBalanceOf: '0x858b62D160788864c65222d7a3777a19B370Abd8',
   }
 )
 

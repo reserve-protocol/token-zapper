@@ -56,16 +56,16 @@ export const PROTOCOL_CONFIGS = {
     [GAS_TOKEN_ADDRESS]: '0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70', // ETH/USD
     '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22':
       '0xd7818272b9e248357d13057aab0b417af31e817d', // cbETH/USD
+    // '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452':
+    //   '0xf586d0728a47229e747d824a939000Cf21dEF5A0', // wsteth/USD
     // "": "0xccadc697c55bbb68dc5bcdf8d3cbe83cdd4e071e", // WBTC / USD
-
   },
   ethPriceOracles: {
     '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22':
       '0x806b4ac04501c29769051e42783cf04dce41440b', // cbETH / ETH
-    // "": "0xf586d0728a47229e747d824a939000cf21def5a0", // stETH / ETH
+    '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452':
+      '0xB88BAc61a4Ca37C43a3725912B1f472c9A5bc061', // wsteth / ETH
     // "": "0xf397bf97280b488ca19ee3093e81c0a77f02e9a5", // rETH / ETH
-    '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452': 
-      '0xa669E5272E60f78299F4824495cE01a3923f4380' // wstETH / ETH
   },
   aave: {
     tokenWrappers: ['0x308447562442Cc43978f8274fA722C9C14BafF8b'],

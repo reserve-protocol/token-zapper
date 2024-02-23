@@ -157,6 +157,7 @@ export abstract class BaseSearcherResult {
     }
 
     this.potentialResidualTokens = [...potentialResidualTokens]
+    console.log(this.potentialResidualTokens.join(", "))
     
     this.inputIsNative = this.userInput.token === this.universe.nativeToken
   }

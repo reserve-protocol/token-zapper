@@ -441,7 +441,7 @@ export class Searcher<
         .filter((qty) => qty.token !== outputToken)
         .map(async (qty) => {
           const potentialSwaps = await this.findSingleInputTokenSwap(
-            qty,
+            qty, //qty.sub(qty.scalarDiv(5000n)),
             outputToken,
             signerAddress,
             slippage

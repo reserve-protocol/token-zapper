@@ -97,8 +97,16 @@ export class StargateWithdrawAction extends Action {
     )
     planner.add(
       lib.instantRedeemLocal(this.poolId, inputs[0], destination.address)
-    )
-    return [inputs[0]]
+    )!
+
+    return [
+      this.genUtils.erc20.balanceOf(
+        this.universe,
+        planner,
+        this.output[0],
+        destination
+      ),
+    ]
   }
   gasEstimate() {
     return BigInt(200000n)

@@ -35,6 +35,7 @@ import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTok
 import { ZapTransaction } from './ZapTransaction'
 import { DefaultMap } from '../base/DefaultMap'
 import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory'
+import { wait } from '../base/controlflow'
 
 const zapperInterface = Zapper__factory.createInterface()
 interface SimulateParams {
@@ -137,7 +138,6 @@ export abstract class BaseSearcherResult {
     const potentialResidualTokens = new Set<Token>()
     const executorAddress = this.universe.config.addresses.executorAddress
 
-    
     const [steps, , allApprovals] = linearize(executorAddress, this.swaps)
     this.allApprovals = allApprovals
     this.commands = steps
@@ -157,8 +157,7 @@ export abstract class BaseSearcherResult {
     }
 
     this.potentialResidualTokens = [...potentialResidualTokens]
-    console.log(this.potentialResidualTokens.join(", "))
-    
+
     this.inputIsNative = this.userInput.token === this.universe.nativeToken
   }
 
@@ -180,35 +179,42 @@ export abstract class BaseSearcherResult {
   }
 
   async simulateNoNode({ data, value }: SimulateParams) {
-    // console.log(
-    //   JSON.stringify(
-    //     {
-    //       data,
-    //       block: this.blockNumber,
-    //       from: this.signer.address,
-    //       to: this.universe.config.addresses.zapperAddress.address,
-    //       value: value.toString(),
-    //     },
-    //     null,
-    //     2
-    //   )
-    // )
-    const resp = await this.universe.provider.call({
-      data,
-      from: this.signer.address,
-      to: this.universe.config.addresses.zapperAddress.address,
-      value,
-    })
-    if (resp.startsWith('0x08c379a0')) {
-      // const len = Number(BigInt('0x'+resp.slice(10, 74)))
-      const data = resp.slice(138)
-      const msg = Buffer.from(data, 'hex').toString()
-      throw new Error(`${data}: ${msg}`)
-    } else if (resp.length <= 10 + 64 * 2) {
-      throw new Error('Failed with error: ' + resp)
+    for (let i = 0; i < 3; i++) {
+      try {
+        const resp = await this.universe.provider.call({
+          data,
+          from: this.signer.address,
+          to: this.universe.config.addresses.zapperAddress.address,
+          value,
+        })
+        if (resp.startsWith('0x08c379a0')) {
+          // const len = Number(BigInt('0x'+resp.slice(10, 74)))
+          const data = resp.slice(138)
+          const msg = Buffer.from(data, 'hex').toString()
+          throw new Error(`${data}: ${msg}`)
+        } else if (resp.length <= 10 + 64 * 2) {
+          throw new Error('Failed with error: ' + resp)
+        }
+        return zapperInterface.decodeFunctionResult('zapERC20', resp)
+          .out as ZapperOutputStructOutput
+      } catch (e) {
+        if (i === 2) {
+          throw e
+        }
+        console.log('Failed to simulate, retrying')
+        console.log(
+          JSON.stringify({
+            data,
+            value: value.toString(),
+            address: this.universe.config.addresses.zapperAddress.address,
+            from: this.signer.address,
+            block: Number((await this.universe.provider.getBlockNumber())),
+          })
+        )
+        await wait(100)
+      }
     }
-    return zapperInterface.decodeFunctionResult('zapERC20', resp)
-      .out as ZapperOutputStructOutput
+    throw new Error('Failed to simulate')
   }
 
   async simulate({
@@ -391,7 +397,7 @@ export abstract class BaseSearcherResult {
         outputTokenOutput.amount -
         outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
       tokenOut: this.outputToken.address.address,
-      tokens: this.potentialResidualTokens.map((i) => i.address.address)
+      tokens: this.potentialResidualTokens.map((i) => i.address.address),
     }
   }
 
@@ -445,21 +451,16 @@ export abstract class BaseSearcherResult {
   abstract toTransaction(options: ToTransactionArgs): Promise<ZapTransaction>
 
   async createZapTransaction(options: ToTransactionArgs) {
-    
-
     try {
-      const params = this.encodePayload(
-        this.swaps.outputs[0].token.from(1n),
-        {
-          ...options,
-          returnDust: false
-        }
-      )
+      const params = this.encodePayload(this.swaps.outputs[0].token.from(1n), {
+        ...options,
+        returnDust: false,
+      })
       const data = this.encodeCall(options, params)
       const tx = this.encodeTx(data, 300000n)
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
-      let dust = this.potentialResidualTokens.map(qty => qty)
+      let dust = this.potentialResidualTokens.map((qty) => qty)
       if (options.returnDust === true) {
         for (const tok of dust) {
           const balanceOfDust = plannerUtils.erc20.balanceOf(
@@ -482,7 +483,7 @@ export abstract class BaseSearcherResult {
 
       const updatedOutputs = [
         this.outputToken.from(BigNumber.from(finalParams.amountOut)),
-        ...result.simulatedOutputs.filter(i => i.token !== this.outputToken),
+        ...result.simulatedOutputs.filter((i) => i.token !== this.outputToken),
       ]
       const values = await Promise.all(
         updatedOutputs.map(
@@ -504,7 +505,10 @@ export abstract class BaseSearcherResult {
         this.swaps.destination
       )
       const estimate = result.gasUsed + result.gasUsed / 10n
-      const finalTx = this.encodeTx(this.encodeCall(options, finalParams), estimate)
+      const finalTx = this.encodeTx(
+        this.encodeCall(options, finalParams),
+        estimate
+      )
 
       return new ZapTransaction(
         this.universe,

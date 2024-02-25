@@ -17,6 +17,12 @@ import {
 import { SingleSwap, SwapPath, SwapPaths, SwapPlan } from './Swap'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 
+const whitelist = new Set([
+  "0xa0d69e286b938e21cbf7e51d71f6a4c8918f482f",
+  "0xe72b141df173b999ae7c1adcbf60cc9833ce56a8",
+  "0xacdf0dba4b9839b96221a8487e9ca660a48212be",
+  "0xcc7ff230365bd730ee4b352cc2492cedac49383e"
+])
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
  * precursor set, in which the while basket can be derived via mints.
@@ -170,37 +176,40 @@ export class Searcher<
     tradingBalances.add(inputQuantity)
 
     // Trade inputs for precursor set.
-    for (const { input, output } of inputPrTrade) {
-      if (
-        // Skip trade if user input is part of precursor set
-        input.token === output
-      ) {
-        continue
-      }
 
-      // console.log(input + " -> " + output)
+    await Promise.all(
+      inputPrTrade.map(async ({ input, output }) => {
+        if (
+          // Skip trade if user input is part of precursor set
+          input.token === output
+        ) {
+          return
+        }
 
-      // Swaps are sorted by output amount in descending order
-      const swaps = await this.findSingleInputTokenSwap(
-        input,
-        output,
-        this.universe.config.addresses.executorAddress,
-        slippage,
-        1
-      )
+        // console.log(input + " -> " + output)
 
-      const trade = swaps[0]
-      if (trade == null) {
-        throw new Error(
-          `Could not find way to swap into precursor token ${input} -> ${output}`
+        // Swaps are sorted by output amount in descending order
+        const swaps = await this.findSingleInputTokenSwap(
+          input,
+          output,
+          this.universe.config.addresses.executorAddress,
+          slippage,
+          1
         )
-      }
-      if (!tradingBalances.hasBalance(trade.inputs)) {
-        throw new Error('Failed to find token zap')
-      }
-      await trade.exchange(tradingBalances)
-      tradeInputToTokenSet.push(trade)
-    }
+
+        const trade = swaps[0]
+        if (trade == null) {
+          throw new Error(
+            `Could not find way to swap into precursor token ${input} -> ${output}`
+          )
+        }
+        if (!tradingBalances.hasBalance(trade.inputs)) {
+          throw new Error('Failed to find token zap')
+        }
+        await trade.exchange(tradingBalances)
+        tradeInputToTokenSet.push(trade)
+      })
+    )
 
     /**
      * PHASE 3: Mint basket token set from precursor set
@@ -514,6 +523,9 @@ export class Searcher<
     signerAddress: Address,
     slippage = 0.0
   ): Promise<TradeSearcherResult[]> {
+    if (!whitelist.has(rToken.address.address.toLowerCase())) {
+      return []
+    }
     await this.universe.initialized
 
     const inputIsNative = userInput.token === this.universe.nativeToken

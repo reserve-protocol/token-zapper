@@ -37,13 +37,10 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
           await oraclewstethToEth.callStatic.latestAnswer()
         )
 
-        const oneETHInUSD = universe.usd.from(
-          await oracleethToUsd.callStatic.latestAnswer()
-        )
+        const oneETHInUSD = (await universe.fairPrice(
+          universe.nativeToken.one
+        ))!
         const priceOfOnewsteth = oneETHInUSD.mul(oneWSTInETH.into(universe.usd))
-        console.log(
-          `1 wsteth in eth = ${oneWSTInETH} | 1 eth in usd = ${oneETHInUSD} | 1 wsteth in usd = ${priceOfOnewsteth}`
-        )
         return priceOfOnewsteth
       }
 

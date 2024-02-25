@@ -62,10 +62,8 @@ const getEnsoQuote_ = async (
     universe.config.addresses.executorAddress.address.toLowerCase()
   const inputTokenStr: string = encodeToken(universe, quantityIn.token)
   const outputTokenStr: string = encodeToken(universe, tokenOut)
-  const GET_QUOTE_DATA = `${API_ROOT}?chainId=${universe.chainId}&fromAddress=${execAddr}&routingStrategy=router&priceImpact=false&spender=${execAddr}`
-  const reqUrl = `${GET_QUOTE_DATA}&receiver=${
-    recipient.address
-  }&amountIn=${quantityIn.amount.toString()}&slippage=${slippage}&tokenIn=${inputTokenStr}&tokenOut=${outputTokenStr}`
+  const GET_QUOTE_DATA = `${API_ROOT}?chainId=${universe.chainId}&fromAddress=${execAddr}&routingStrategy=router&priceImpact=true&spender=${execAddr}`
+  const reqUrl = `${GET_QUOTE_DATA}&receiver=${execAddr}&amountIn=${quantityIn.amount.toString()}&slippage=${slippage}&tokenIn=${inputTokenStr}&tokenOut=${outputTokenStr}`
 
   const quote: EnsoQuote = await (
     await fetch(reqUrl, {
@@ -77,6 +75,7 @@ const getEnsoQuote_ = async (
   ).json()
 
   // if (quote.tx?.data == null) {
+  //   console.log(reqUrl)
   //   console.log(quote)
   // }
 
@@ -141,7 +140,7 @@ const getEnsoQuote = async (
   tokenOut: Token,
   recipient: Address
 ) => {
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     try {
       return await getEnsoQuote_(
         slippage,
@@ -151,7 +150,14 @@ const getEnsoQuote = async (
         recipient
       )
     } catch (e) {
-      await wait(250)
+      console.log(
+        'Enso failed to quote ' +
+          quantityIn.toString() +
+          ' -> ' +
+          tokenOut +
+          '  retrying...'
+      )
+      await wait(100)
       continue
     }
   }
@@ -192,7 +198,12 @@ class EnsoAction extends Action {
     if (this.inputQty.token === this.universe.nativeToken) {
       routeSingleCall = routeSingleCall.withValue(input)
     }
-    planner.add(routeSingleCall, `Enso(${this.inputQty}, ${this.request.route.map(i => i.protocol).join(',')}, ${this.outputQty})`)
+    planner.add(
+      routeSingleCall,
+      `Enso(${this.inputQty}, ${this.request.route
+        .map((i) => i.protocol)
+        .join(',')}, ${this.outputQty})`
+    )
 
     const outToken =
       this.request.tokenOut === ENSO_GAS_TOKEN

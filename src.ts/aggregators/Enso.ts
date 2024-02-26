@@ -62,8 +62,8 @@ const getEnsoQuote_ = async (
     universe.config.addresses.executorAddress.address.toLowerCase()
   const inputTokenStr: string = encodeToken(universe, quantityIn.token)
   const outputTokenStr: string = encodeToken(universe, tokenOut)
-  const GET_QUOTE_DATA = `${API_ROOT}?chainId=${universe.chainId}&fromAddress=${execAddr}&routingStrategy=router&priceImpact=true&spender=${execAddr}`
-  const reqUrl = `${GET_QUOTE_DATA}&receiver=${execAddr}&amountIn=${quantityIn.amount.toString()}&slippage=${slippage}&tokenIn=${inputTokenStr}&tokenOut=${outputTokenStr}`
+  const GET_QUOTE_DATA = `${API_ROOT}?chainId=${universe.chainId}&slippage=${slippage}&fromAddress=${execAddr}&routingStrategy=router&priceImpact=false&spender=${execAddr}`
+  const reqUrl = `${GET_QUOTE_DATA}&receiver=${execAddr}&amountIn=${quantityIn.amount.toString()}&tokenIn=${inputTokenStr}&tokenOut=${outputTokenStr}`
 
   const quote: EnsoQuote = await (
     await fetch(reqUrl, {
@@ -74,10 +74,9 @@ const getEnsoQuote_ = async (
     })
   ).json()
 
-  // if (quote.tx?.data == null) {
-  //   console.log(reqUrl)
-  //   console.log(quote)
-  // }
+  if (quote.tx?.data == null) {
+    throw new Error((quote as any).message)
+  }
 
   try {
     let pos = 10
@@ -149,7 +148,7 @@ const getEnsoQuote = async (
         tokenOut,
         recipient
       )
-    } catch (e) {
+    } catch (e: any) {
       console.log(
         'Enso failed to quote ' +
           quantityIn.toString() +
@@ -157,7 +156,8 @@ const getEnsoQuote = async (
           tokenOut +
           '  retrying...'
       )
-      await wait(100)
+      console.log(e.message)
+      await wait(500)
       continue
     }
   }
@@ -264,7 +264,11 @@ class EnsoAction extends Action {
     )
     this.inputQty = input[0]
     this.outputQty = this.outputQty.token.from(BigInt(this.request.amountOut))
-
+    // if (this.request.createdAt !== this.universe.currentBlock) {
+    //   console.log(
+    //     `?Enso quote created at: ${this.request.createdAt} but current block is: ${this.universe.currentBlock}`
+    //   )
+    // }
     return [this.outputQty]
   }
 

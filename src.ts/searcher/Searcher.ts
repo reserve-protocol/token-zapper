@@ -18,10 +18,10 @@ import { SingleSwap, SwapPath, SwapPaths, SwapPlan } from './Swap'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 
 const whitelist = new Set([
-  "0xa0d69e286b938e21cbf7e51d71f6a4c8918f482f",
-  "0xe72b141df173b999ae7c1adcbf60cc9833ce56a8",
-  "0xacdf0dba4b9839b96221a8487e9ca660a48212be",
-  "0xcc7ff230365bd730ee4b352cc2492cedac49383e"
+  '0xa0d69e286b938e21cbf7e51d71f6a4c8918f482f',
+  '0xe72b141df173b999ae7c1adcbf60cc9833ce56a8',
+  '0xacdf0dba4b9839b96221a8487e9ca660a48212be',
+  '0xcc7ff230365bd730ee4b352cc2492cedac49383e',
 ])
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
@@ -450,7 +450,7 @@ export class Searcher<
         .filter((qty) => qty.token !== outputToken)
         .map(async (qty) => {
           const potentialSwaps = await this.findSingleInputTokenSwap(
-            qty, //qty.sub(qty.scalarDiv(5000n)),
+            qty,
             outputToken,
             signerAddress,
             slippage
@@ -509,12 +509,16 @@ export class Searcher<
     slippage = 0.0
   ): Promise<BaseSearcherResult[]> {
     await this.universe.initialized
-    return this.findSingleInputToRTokenZap_(
+    const out = this.findSingleInputToRTokenZap_(
       userInput,
       rToken,
       signerAddress,
       slippage
     ).then((i) => [i])
+
+    out.catch(console.error)
+
+    return out
   }
 
   async findTokenZapViaTrade(

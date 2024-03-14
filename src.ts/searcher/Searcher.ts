@@ -1,6 +1,5 @@
 import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
-import { retryLoop } from '../base/controlflow'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { bfs } from '../exchange-graph/BFS'
@@ -596,32 +595,25 @@ export class Searcher<
     slippage = 0.0
   ): Promise<BaseSearcherResult> {
     await this.universe.initialized
-    const [mintResults, tradeResults] = await retryLoop(
-      () =>
-        Promise.all([
-          this.findTokenZapViaIssueance(
-            userInput,
-            rToken,
-            signerAddress,
-            slippage
-          ).catch(() => []),
-          this.findTokenZapViaTrade(
-            userInput,
-            rToken,
-            signerAddress,
-            slippage
-          ).catch(() => []),
-        ]).then(([mintResults, tradeResults]) => {
-          if (mintResults.length === 0 && tradeResults.length === 0) {
-            throw new Error('No results')
-          }
-          return [mintResults, tradeResults] as const
-        }),
-      {
-        maxRetries: 2,
-        retryDelay: 50,
+    const [mintResults, tradeResults] = await Promise.all([
+      this.findTokenZapViaIssueance(
+        userInput,
+        rToken,
+        signerAddress,
+        slippage
+      ).catch(() => []),
+      this.findTokenZapViaTrade(
+        userInput,
+        rToken,
+        signerAddress,
+        slippage
+      ).catch(() => []),
+    ]).then(([mintResults, tradeResults]) => {
+      if (mintResults.length === 0 && tradeResults.length === 0) {
+        throw new Error('No results')
       }
-    )
+      return [mintResults, tradeResults] as const
+    })
 
     const results = await Promise.all(
       [...mintResults, ...tradeResults].map(async (i) => {

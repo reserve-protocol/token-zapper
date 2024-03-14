@@ -129,9 +129,10 @@ const getEnsoQuote = async (
   universe: Universe,
   quantityIn: TokenQuantity,
   tokenOut: Token,
-  recipient: Address
+  recipient: Address,
+  retries = 2
 ) => {
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < retries; i++) {
     try {
       return await getEnsoQuote_(
         slippage,
@@ -226,6 +227,7 @@ class EnsoAction extends Action {
     return [out]
   }
   public outputQuantity: TokenQuantity[] = []
+  private lastQuoteBlock: number = 0
   constructor(
     public readonly universe: Universe,
     private inputQty: TokenQuantity,
@@ -241,19 +243,24 @@ class EnsoAction extends Action {
       DestinationOptions.Callee,
       [new Approval(inputQty.token, Address.from(request.tx.to))]
     )
+    this.lastQuoteBlock = universe.currentBlock
   }
   toString() {
     return `Enso(${this.inputQty} => ${this.outputQty})`
   }
 
   async quote(input: TokenQuantity[]): Promise<TokenQuantity[]> {
-    this.request = await getEnsoQuote(
-      this.slippage,
-      this.universe,
-      this.inputQty,
-      this.outputQty.token,
-      this.address
-    )
+    this.request =
+      this.lastQuoteBlock === this.universe.currentBlock
+        ? this.request
+        : await getEnsoQuote(
+            this.slippage,
+            this.universe,
+            this.inputQty,
+            this.outputQty.token,
+            this.address,
+            1
+          )
     this.inputQty = input[0]
     this.outputQty = this.outputQty.token.from(BigInt(this.request.amountOut))
     // if (this.request.createdAt !== this.universe.currentBlock) {
@@ -278,7 +285,8 @@ const API_ROOT =
 export const createEnso = (
   aggregatorName: string,
   universe: Universe,
-  slippage: number
+  slippage: number,
+  retries = 2
 ) => {
   return new DexAggregator(
     aggregatorName,
@@ -288,7 +296,8 @@ export const createEnso = (
         universe,
         input,
         output,
-        destination
+        destination,
+        retries
       )
       return await new SwapPlan(universe, [
         new EnsoAction(

@@ -470,7 +470,7 @@ export abstract class BaseSearcherResult {
 
   public async toTransactionWithRetry(opts: ToTransactionArgs) {
     let root: BaseSearcherResult = this
-    for (let i = 0; i <= 3; i++) {
+    for (let i = 0; i < 3; i++) {
       try {
         return root.toTransaction(opts)
       } catch (e) {
@@ -482,8 +482,7 @@ export abstract class BaseSearcherResult {
           )
           throw e
         }
-        await wait(100)
-        console.log('Failed to create transaction.. Retrying')
+        await wait(50)
         const [block, gas] = await Promise.all([
           this.universe.provider.getBlockNumber(),
           this.universe.provider.getGasPrice().then((i) => i.toBigInt()),

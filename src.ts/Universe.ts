@@ -15,7 +15,6 @@ import { SourcingRule } from './searcher/SourcingRule'
 
 import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
 import { SwapPath } from './searcher/Swap'
-import { type SwapSignature } from './aggregators/SwapSignature'
 import { MintRTokenAction } from './action/RTokens'
 import { Searcher } from './searcher/Searcher'
 import { findPrecursorTokenSet } from './searcher/Searcher'
@@ -34,7 +33,7 @@ interface OracleDef {
 }
 export class Universe<const UniverseConf extends Config = Config> {
   private emitter = new EventEmitter()
-  public _finishResolving: () => void = () => { }
+  public _finishResolving: () => void = () => {}
   public initialized: Promise<void> = new Promise((resolve) => {
     this._finishResolving = resolve
   })
@@ -60,7 +59,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     return {
       units,
       txFee,
-      txFeeUsd
+      txFeeUsd,
     }
   }
 
@@ -147,15 +146,18 @@ export class Universe<const UniverseConf extends Config = Config> {
    */
   public oracle?: OracleDef = undefined
   async fairPrice(qty: TokenQuantity) {
-    const out = await this.oracle?.quote(qty).catch(() => {
-      return null
-    }) ?? null
+    const out =
+      (await this.oracle?.quote(qty).catch(() => {
+        return null
+      })) ?? null
 
     return out
   }
   async quoteIn(qty: TokenQuantity, tokenToQuoteWith: Token) {
     return this.oracle?.quoteIn(qty, tokenToQuoteWith).catch(() => null) ?? null
   }
+
+  public readonly searcher: Searcher<Universe<any>>
 
   get currentBlock() {
     return this.blockState.currentBlock
@@ -213,7 +215,11 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   public defineLPToken(lpTokenInstance: LPToken) {
     this.lpTokens.set(lpTokenInstance.token, lpTokenInstance)
-    this.defineMintable(lpTokenInstance.mintAction, lpTokenInstance.burnAction, true)
+    this.defineMintable(
+      lpTokenInstance.mintAction,
+      lpTokenInstance.burnAction,
+      true
+    )
   }
 
   public defineMintable(
@@ -283,7 +289,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     public readonly loadToken: TokenLoader
   ) {
     const nativeToken = config.nativeToken
-
+    this.searcher = new Searcher(this as any)
     this.nativeToken = Token.createToken(
       this.tokens,
       Address.fromHexString(GAS_TOKEN_ADDRESS),
@@ -299,7 +305,6 @@ export class Universe<const UniverseConf extends Config = Config> {
       'Wrapped ' + nativeToken.name,
       nativeToken.decimals
     )
-
   }
 
   public async updateBlockState(block: number, gasPrice: bigint) {
@@ -335,24 +340,74 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   // Used for analytics to track interesting zapper events
-  public emitEvent(object: {
-    type: string,
-    params: Record<string, any>
-  }) {
-    this.emitter.emit("event", {
+  public emitEvent(object: { type: string; params: Record<string, any> }) {
+    this.emitter.emit('event', {
       ...object,
-      chainId: this.chainId
+      chainId: this.chainId,
     })
   }
 
-  public onEvent(cb: (event: {
-    type: string,
-    params: Record<string, any>,
-    chainId: number
-  }) => void): () => void {
-    this.emitter.on("event", cb)
+  public onEvent(
+    cb: (event: {
+      type: string
+      params: Record<string, any>
+      chainId: number
+    }) => void
+  ): () => void {
+    this.emitter.on('event', cb)
     return () => {
-      this.emitter.off("event", cb)
+      this.emitter.off('event', cb)
     }
+  }
+
+  get approvalAddress() {
+    return this.config.addresses.zapperAddress.address
+  }
+
+  public async zap(
+    tokenIn: string,
+    amountIn: bigint,
+    rToken: string,
+    signerAddress: string
+  ) {
+    const inputTokenQty = (await this.getToken(Address.from(tokenIn))).from(
+      amountIn
+    )
+    const outputToken = await this.getToken(Address.from(rToken))
+
+    return this.searcher.findSingleInputToRTokenZap(
+      inputTokenQty,
+      outputToken,
+      Address.from(signerAddress)
+    )
+  }
+
+  public async zapETH(amountIn: bigint, rToken: string, signerAddress: string) {
+    const inputTokenQty = this.nativeToken.from(amountIn)
+    const outputToken = await this.getToken(Address.from(rToken))
+
+    return this.searcher.findSingleInputToRTokenZap(
+      inputTokenQty,
+      outputToken,
+      Address.from(signerAddress)
+    )
+  }
+
+  public async redeem(
+    rToken: string,
+    amount: bigint,
+    output: string,
+    signerAddress: string
+  ) {
+    const inputTokenQty = (await this.getToken(Address.from(rToken))).from(
+      amount
+    )
+    const outputToken = await this.getToken(Address.from(output))
+
+    return this.searcher.findRTokenIntoSingleTokenZap(
+      inputTokenQty,
+      outputToken,
+      Address.from(signerAddress)
+    )
   }
 }

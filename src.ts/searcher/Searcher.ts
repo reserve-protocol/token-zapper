@@ -548,12 +548,9 @@ export class Searcher<
       rToken,
       signerAddress,
       slippage
-    )
+    ).catch(() => [])
 
     const inputValue = await this.universe.fairPrice(inputTokenQuantity)
-    if (inputValue?.gt(this.universe.usd.from(100000))) {
-      return []
-    }
     const slippageCheckValue = this.universe.usd.from(10000)
 
     return paths
@@ -622,7 +619,7 @@ export class Searcher<
         }),
       {
         maxRetries: 2,
-        retryDelay: 100,
+        retryDelay: 50,
       }
     )
 

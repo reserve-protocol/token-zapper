@@ -1,5 +1,5 @@
-import { BigNumber, constants, ethers } from 'ethers'
-import { Address, Token, TokenQuantity } from '..'
+import { Address } from '../base/Address'
+import { Token, TokenQuantity } from '../entities/Token'
 import { Universe } from '../Universe'
 import {
   Action,
@@ -25,16 +25,14 @@ export interface EnsoQuote {
     from: string
     value: string
   }
-  route: [
-    {
-      action: string
-      protocol: string
-      tokenIn: [string]
-      tokenOut: [string]
-      positionInId: [string]
-      positionOutId: [string]
-    }
-  ]
+  route: {
+    action: string
+    protocol: string
+    tokenIn: [string]
+    tokenOut: [string]
+    positionInId: [string]
+    positionOutId: [string]
+  }[]
 }
 
 const ENSO_GAS_TOKEN = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
@@ -42,12 +40,8 @@ const encodeToken = (universe: Universe, token: Token) => {
   if (token === universe.nativeToken) {
     return ENSO_GAS_TOKEN
   }
-  // if (token === universe.wrappedNativeToken) {
-  //   return ENSO_GAS_TOKEN
-  // }
   return token.address.address.toLowerCase()
 }
-// const ensoBlacklist = new Set() // ['0xe72b141df173b999ae7c1adcbf60cc9833ce56a8']
 const getEnsoQuote_ = async (
   slippage: number,
   universe: Universe,
@@ -55,9 +49,6 @@ const getEnsoQuote_ = async (
   tokenOut: Token,
   recipient: Address
 ) => {
-  // if (ensoBlacklist.has(tokenOut.address.address.toLowerCase())) {
-  //   throw new Error('Enso does not support rTokens')
-  // }
   const execAddr: string =
     universe.config.addresses.executorAddress.address.toLowerCase()
   const inputTokenStr: string = encodeToken(universe, quantityIn.token)
@@ -75,6 +66,7 @@ const getEnsoQuote_ = async (
   ).json()
 
   if (quote.tx?.data == null) {
+    console.log(reqUrl)
     throw new Error((quote as any).message)
   }
 
@@ -157,7 +149,7 @@ const getEnsoQuote = async (
           '  retrying...'
       )
       console.log(e.message)
-      await wait(500)
+      await wait(50)
       continue
     }
   }

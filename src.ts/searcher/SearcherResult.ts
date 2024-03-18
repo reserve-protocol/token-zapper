@@ -38,6 +38,10 @@ import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factor
 import { Searcher } from './Searcher'
 import { wait } from '../base/controlflow'
 
+const simulationUrls: Record<number, string | undefined> = {
+  // 8453: 'https://resbasesimulator.mig2151.workers.dev',
+  1: 'https://worker-frosty-pine-5440.mig2151.workers.dev',
+}
 const zapperInterface = Zapper__factory.createInterface()
 interface SimulateParams {
   data: string
@@ -186,7 +190,6 @@ export abstract class BaseSearcherResult {
   }
 
   async simulateNoNode({ data, value }: SimulateParams) {
-    const block = Number(this.universe.currentBlock)
     try {
       const resp = await this.universe.provider.call(
         {
@@ -200,7 +203,9 @@ export abstract class BaseSearcherResult {
       try {
         return zapperInterface.decodeFunctionResult('zapERC20', resp)
           .out as ZapperOutputStructOutput
-      } catch (e) {}
+      } catch (e) {
+        console.log(resp)
+      }
       if (resp.startsWith('0x08c379a0')) {
         const data = resp.slice(138)
         const msg = Buffer.from(data, 'hex').toString()
@@ -221,6 +226,7 @@ export abstract class BaseSearcherResult {
         console.error('Stargate staking contract out of funds.. Aborting')
         throw new ThirdPartyIssue('Stargate out of funds')
       }
+      console.log(e)
     }
 
     // console.log(
@@ -242,7 +248,9 @@ export abstract class BaseSearcherResult {
     inputToken,
     gasLimit = 10000000,
   }: SimulateParams) {
-    if (this.universe.chainId !== 1) {
+    const url = simulationUrls[this.universe.chainId]
+
+    if (url == null) {
       return this.simulateNoNode({
         data,
         value,
@@ -268,8 +276,9 @@ export abstract class BaseSearcherResult {
         null,
         1
       )
+
       return await (
-        await fetch('https://worker-frosty-pine-5440.mig2151.workers.dev/', {
+        await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -279,7 +288,7 @@ export abstract class BaseSearcherResult {
       )
         .json()
         .then((a: { data: string }) => {
-          // console.log(data)
+          console.log(a)
           if (a.data === '0xundefined') {
             throw new Error('Failed to simulate')
           }
@@ -289,6 +298,7 @@ export abstract class BaseSearcherResult {
           return out
         })
     } catch (e) {
+      console.log(e)
       return this.simulateNoNode({
         data,
         value,

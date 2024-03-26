@@ -94,9 +94,9 @@ export const ethereumConfig = makeConfig(
     wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     rtokenLens: '0xE787491314A3Da6412Ac4DeEB39c0F8EfdE1b53C',
 
-    balanceOf: "0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D",
-    curveRouterCall: "0xA18ad6dCb6B217A4c3810f865f5eEf45570024dc",
-    ethBalanceOf: "0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092"
+    balanceOf: '0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D',
+    curveRouterCall: '0xA18ad6dCb6B217A4c3810f865f5eEf45570024dc',
+    ethBalanceOf: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
   }
 )
 
@@ -184,6 +184,10 @@ export const PROTOCOL_CONFIGS = {
     '0x291ed25eB61fcc074156eE79c5Da87e5DA94198F',
     '0x97F9d5ed17A0C99B279887caD5254d15fb1B619B',
   ],
+
+  aavev3: {
+    tokenWrappers: ['0x093cB4f405924a0C468b43209d5E466F1dd0aC7d'],
+  },
   compoundV3: {
     markets: [
       {
@@ -191,7 +195,8 @@ export const PROTOCOL_CONFIGS = {
         receiptToken: '0xc3d688B66703497DAA19211EEdff47f25384cdc3', // cUSDCv3
         vaults: [
           '0x7e1e077b289c0153b5ceAD9F264d66215341c9Ab', // Reserve wrapped cUSDCV3
-          "0x093c07787920eB34A0A0c7a09823510725Aee4Af"
+          '0x093c07787920eB34A0A0c7a09823510725Aee4Af',
+          '0xfbd1a538f5707c0d67a16ca4e3fc711b80bd931a'
         ],
       },
     ],

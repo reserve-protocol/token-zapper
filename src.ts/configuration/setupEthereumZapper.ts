@@ -17,6 +17,7 @@ import { loadRTokens } from './setupRTokens'
 import { type EthereumUniverse, PROTOCOL_CONFIGS } from './ethereum'
 import { convertWrapperTokenAddressesIntoWrapperTokenPairs } from './convertWrapperTokenAddressesIntoWrapperTokenPairs'
 import wrappedToUnderlyingMapping from './data/ethereum/underlying.json'
+import { setupSAV3Token } from './setupSAV3Tokens'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
@@ -165,6 +166,21 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     console.log(e)
     return null as any
   })
+
+  const aaveWrapperToUnderlying = {
+    '0x093cB4f405924a0C468b43209d5E466F1dd0aC7d':
+      '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  }
+  const saV3Tokens = await convertWrapperTokenAddressesIntoWrapperTokenPairs(
+    universe,
+    PROTOCOL_CONFIGS.aavev3.tokenWrappers,
+    aaveWrapperToUnderlying
+  )
+  await Promise.all(
+    saV3Tokens.map(({ underlying, wrappedToken }) =>
+      setupSAV3Token(universe, wrappedToken, underlying)
+    )
+  )
 
   return {
     curve,

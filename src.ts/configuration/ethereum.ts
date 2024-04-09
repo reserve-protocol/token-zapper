@@ -49,6 +49,13 @@ export const COMMON_TOKENS = {
   saUSDC: '0x60C384e226b120d93f3e0F4C502957b2B9C32B15',
 
   reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
+
+  pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
+
+  aEthPYUSD: '0x0C0d01AbF3e6aDfcA0989eBbA9d6e85dD58EaB1E',
+  saEthPyUSD: '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b',
+  payPool: '0x383E6b4437b59fff47B619CBA855CA29342A8559',
+  steakPYUSD: '0xbEEF02e5E13584ab96848af90261f0C8Ee04722a',
 } as const
 
 export const RTOKENS = {
@@ -75,6 +82,14 @@ export const RTOKENS = {
   'USDC+': {
     main: '0xeC11Cf537497141aC820615F4f399be4a1638Af6',
     erc20: '0xFc0B1EEf20e4c68B3DCF36c4537Cfa7Ce46CA70b',
+  },
+  USD3: {
+    erc20: '0x0d86883faf4ffd7aeb116390af37746f45b6f378',
+    main: '0x81117e3e98910C3dCF956b5Fc97a7212E047AcF4',
+  },
+  rgUSD: {
+    erc20: '0x78da5799cf427fee11e9996982f4150ece7a99a7',
+    main: '0xB436459251b144e6CfEDa33f8b814fFF450053B2',
   },
 } as const
 
@@ -196,7 +211,7 @@ export const PROTOCOL_CONFIGS = {
         vaults: [
           '0x7e1e077b289c0153b5ceAD9F264d66215341c9Ab', // Reserve wrapped cUSDCV3
           '0x093c07787920eB34A0A0c7a09823510725Aee4Af',
-          '0xfbd1a538f5707c0d67a16ca4e3fc711b80bd931a'
+          '0xfbd1a538f5707c0d67a16ca4e3fc711b80bd931a',
         ],
       },
     ],

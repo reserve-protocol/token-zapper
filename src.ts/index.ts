@@ -17,7 +17,7 @@ export { Universe } from './Universe'
 
 export { ethereumConfig } from './configuration/ethereum'
 export { setupEthereumZapper } from './configuration/setupEthereumZapper'
-
+export { loadRToken } from './configuration/setupRTokens'
 export { baseConfig } from './configuration/base'
 export { setupBaseZapper } from './configuration/setupBaseZapper'
 

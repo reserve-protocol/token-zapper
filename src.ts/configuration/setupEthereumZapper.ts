@@ -170,6 +170,8 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   const aaveWrapperToUnderlying = {
     '0x093cB4f405924a0C468b43209d5E466F1dd0aC7d':
       '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b':
+      '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
   }
   const saV3Tokens = await convertWrapperTokenAddressesIntoWrapperTokenPairs(
     universe,

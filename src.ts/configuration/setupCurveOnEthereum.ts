@@ -40,6 +40,7 @@ export const initCurveOnEthereum = async (
   const USDT = universe.commonTokens.USDT
   const DAI = universe.commonTokens.DAI
   const USDC = universe.commonTokens.USDC
+  const pyUSD = universe.commonTokens.pyUSD
 
   const curveApi = await loadCurve(
     universe,
@@ -94,7 +95,7 @@ export const initCurveOnEthereum = async (
   const stkcvxMIM3LP3CRV = universe.commonTokens['stkcvxMIM-3LP3CRV-f']
 
   const stkcvx3Crv = universe.commonTokens['stkcvx3Crv']
-  const stables = new Set([DAI, MIM, FRAX, USDC, USDT])
+  const stables = new Set([DAI, MIM, FRAX, USDC, USDT, pyUSD])
   const convexBoosterAddress = Address.from(convexBooster)
 
   // This is a sourcing rule, it can be used to define 'shortcuts' or better ways to perform a Zap.

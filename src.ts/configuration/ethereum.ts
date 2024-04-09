@@ -201,7 +201,10 @@ export const PROTOCOL_CONFIGS = {
   ],
 
   aavev3: {
-    tokenWrappers: ['0x093cB4f405924a0C468b43209d5E466F1dd0aC7d'],
+    tokenWrappers: [
+      '0x093cB4f405924a0C468b43209d5E466F1dd0aC7d',
+      '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b'
+    ],
   },
   compoundV3: {
     markets: [

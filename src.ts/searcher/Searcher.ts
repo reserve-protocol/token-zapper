@@ -344,7 +344,6 @@ export class Searcher<
       )
     )
     if (swapPlans.length === 0) {
-      console.log(qty, 'not unwrapable')
       return null
     }
 

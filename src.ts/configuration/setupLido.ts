@@ -12,11 +12,7 @@ export const setupLido = async (
     Address.from(stakedTokenAddress)
   );
   const stRate = new StETHRateProvider(universe, stakedToken);
-  universe.defineMintable(
-    new MintStETH(universe, stakedToken, stRate),
-    new BurnStETH(universe, stakedToken, stRate),
-    true
-  );
+  universe.addAction(new MintStETH(universe, stakedToken, stRate), stakedToken.address)
   const wrappedStakedToken = await universe.getToken(
     Address.from(wrappedStakedAddress)
   );

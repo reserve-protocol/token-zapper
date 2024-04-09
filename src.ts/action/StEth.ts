@@ -6,7 +6,6 @@ import { AddressZero } from '@ethersproject/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { IStETH__factory } from '../contracts/factories/contracts/IStETH__factory'
 import { Planner, Value } from '../tx-gen/Planner'
-import { Address } from '..'
 import { constants } from 'ethers'
 
 const stETHInterface = IStETH__factory.createInterface()
@@ -81,7 +80,7 @@ export class MintStETH extends Action {
 
 export class BurnStETH extends Action {
   gasEstimate() {
-    return BigInt(0n)
+    return BigInt(500000n)
   }
   async encode(_: TokenQuantity[]): Promise<ContractCall> {
     throw new Error('Not implemented')

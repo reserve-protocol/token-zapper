@@ -268,7 +268,7 @@ export class CurveSwap extends Action {
           this.output[0].address.address,
           amountsIn.format()
         )
-        if (!out.route.every(i => whiteList.has(i.poolAddress))) {
+        if (!out.route.every((i) => whiteList.has(i.poolAddress))) {
           throw new Error('Route not in whitelist')
         }
         const { _route, _swapParams, _factorySwapAddresses } =
@@ -507,7 +507,12 @@ export const loadCurve = async (
       return lpToken.from(out)
     }
 
-    const lpTokenInstance = new LPToken(lpToken, tokensInPosition, burn, mint)
+    const lpTokenInstance = new LPToken(
+      lpToken,
+      tokensInPosition,
+      burn,
+      mint
+    )
     universe.defineLPToken(lpTokenInstance)
 
     const gaugeToken = await universe.getToken(Address.from(pool.meta.lpToken))

@@ -91,7 +91,8 @@ export const initCurveOnEthereum = async (
 
   // Add convex edges
   // const stkcvxeUSD3CRV_OLD = universe.commonTokens['stkcvxeUSD3CRV-f']
-  const stkcvxeUSD3CRV_NEW = universe.commonTokens['stkcvxeUSD3CRV-f2']
+  // const stkcvxeUSD3CRV_NEW = universe.commonTokens['stkcvxeUSD3CRV-f2']
+  const stkcvxeUSD3CRV_NEW = universe.commonTokens['stkcvxeUSD3CRV-f3']
   const stkcvxMIM3LP3CRV = universe.commonTokens['stkcvxMIM-3LP3CRV-f']
 
   const stkcvx3Crv = universe.commonTokens['stkcvx3Crv']
@@ -129,10 +130,11 @@ export const initCurveOnEthereum = async (
 
   const [/*eUSDConvexOld,*/ eUSDConvexNew, mimConvex, threeCryptoConvex] =
     await Promise.all([
-      // setupConvexEdge(universe, stkcvxeUSD3CRV_OLD, convexBoosterAddress),
       setupConvexEdge(universe, stkcvxeUSD3CRV_NEW, convexBoosterAddress),
       setupConvexEdge(universe, stkcvxMIM3LP3CRV, convexBoosterAddress),
       setupConvexEdge(universe, stkcvx3Crv, convexBoosterAddress),
+
+      // setupConvexEdge(universe, stkcvxeUSD3CRV_OLD, convexBoosterAddress),
     ])
 
   // universe.defineTokenSourcingRule(
@@ -148,11 +150,6 @@ export const initCurveOnEthereum = async (
 
   universe.defineTokenSourcingRule(
     universe.rTokens.hyUSD,
-    stkcvxeUSD3CRV_NEW,
-    makeStkConvexSourcingRule(eUSDConvexNew.depositAndStakeAction)
-  )
-  universe.defineTokenSourcingRule(
-    universe.rTokens.RSD,
     stkcvxeUSD3CRV_NEW,
     makeStkConvexSourcingRule(eUSDConvexNew.depositAndStakeAction)
   )

@@ -12,7 +12,14 @@ export class LPToken {
     public readonly token: Token,
     public readonly poolTokens: Token[],
     public readonly burn: (amount: TokenQuantity) => Promise<TokenQuantity[]>,
-    public readonly mint: (amountsIn: TokenQuantity[]) => Promise<TokenQuantity>
+    public readonly mint: (
+      amountsIn: TokenQuantity[]
+    ) => Promise<TokenQuantity>,
+    public readonly planBurn?: (
+      planner: Planner,
+      inputs: Value[],
+      destination: Address
+    ) => Promise<Value[]>
   ) {
     this.mintAction = new LPTokenMint(this)
     this.burnAction = new LPTokenBurn(this)
@@ -24,8 +31,16 @@ export class LPToken {
 }
 
 export class LPTokenMint extends Action {
-  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
-    throw new Error('Method not implemented.')
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    throw new Error(
+      `Method not implemented. For ${this.input.join(
+        ', '
+      )} -> ${this.output.join(', ')}`
+    )
   }
   toString() {
     return `MintLP(${this.lpToken})`
@@ -57,8 +72,19 @@ export class LPTokenMint extends Action {
   }
 }
 export class LPTokenBurn extends Action {
-  async plan(planner: Planner, inputs: Value[], destination: Address): Promise<Value[]> {
-    throw new Error('Method not implemented.')
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    if (this.lpToken.planBurn) {
+      return await this.lpToken.planBurn(planner, inputs, destination)
+    }
+    throw new Error(
+      `Method not implemented. For ${this.input.join(
+        ', '
+      )} -> ${this.output.join(', ')}`
+    )
   }
   toString() {
     return `BurnLP(${this.lpToken})`

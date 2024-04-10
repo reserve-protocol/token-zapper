@@ -215,11 +215,12 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   public defineLPToken(lpTokenInstance: LPToken) {
     this.lpTokens.set(lpTokenInstance.token, lpTokenInstance)
-    this.defineMintable(
-      lpTokenInstance.mintAction,
-      lpTokenInstance.burnAction,
-      true
-    )
+    this.addAction(lpTokenInstance.mintAction)
+    // this.defineMintable(
+    //   lpTokenInstance.mintAction,
+    //   lpTokenInstance.burnAction,
+    //   true
+    // )
   }
 
   public defineMintable(

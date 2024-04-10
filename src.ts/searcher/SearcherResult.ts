@@ -288,7 +288,12 @@ export abstract class BaseSearcherResult {
       )
         .json()
         .then((a: { data: string }) => {
-          console.log(a)
+          if (a.data.startsWith('0x08c379a0')) {
+            const length = BigInt('0x' + a.data.slice(10, 74))
+            const data = a.data.slice(74, 74 + Number(length) * 2)
+            const msg = Buffer.from(data, 'hex').toString()
+            throw new Error(msg)
+          }
           if (a.data === '0xundefined') {
             throw new Error('Failed to simulate')
           }
@@ -529,6 +534,8 @@ export abstract class BaseSearcherResult {
       })
       const data = this.encodeCall(options, params)
       const tx = this.encodeTx(data, 300000n)
+      console.log(printPlan(this.planner, this.universe).join('\n'))
+
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
       let dust = this.potentialResidualTokens.map((qty) => qty)
@@ -715,6 +722,7 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
       out,
       this.signer
     )
+
 
     return this.createZapTransaction(options)
   }

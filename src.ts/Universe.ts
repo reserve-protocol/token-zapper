@@ -8,6 +8,7 @@ import { TokenLoader, makeTokenLoader } from './entities/makeTokenLoader'
 import { type Config } from './configuration/ChainConfiguration'
 import { DefaultMap } from './base/DefaultMap'
 import { type PriceOracle } from './oracles/PriceOracle'
+import { LPTokenPriceOracle } from './oracles/LPTokenPriceOracle'
 import { Refreshable } from './entities/Refreshable'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
 import { LPToken } from './action/LPToken'
@@ -332,6 +333,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       opts.approvalsStore ?? new ApprovalsStore(provider),
       opts.tokenLoader ?? makeTokenLoader(provider)
     )
+    universe.oracles.push(new LPTokenPriceOracle(universe))
 
     initialize(universe).then(() => {
       universe._finishResolving()

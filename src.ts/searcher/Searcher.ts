@@ -623,6 +623,7 @@ export class Searcher<
         }
       })
     )
+    console.log(results.map(i => `v: ${i.quote.swaps.outputValue} c: ${i.cost.txFeeUsd}`))
     results.sort((l, r) => -l.netValue.compare(r.netValue))
 
     return results[0].quote
@@ -671,7 +672,6 @@ export class Searcher<
     await rTokenMint.exchange(tradingBalances)
 
     const output = tradingBalances.toTokenQuantities()
-
     const parts = {
       trading: inputQuantityToBasketTokens.trading,
       minting: inputQuantityToBasketTokens.minting,

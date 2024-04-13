@@ -72,7 +72,10 @@ export const PROTOCOL_CONFIGS = {
     // "": "0xf397bf97280b488ca19ee3093e81c0a77f02e9a5", // rETH / ETH
   },
   aave: {
-    tokenWrappers: ['0x308447562442Cc43978f8274fA722C9C14BafF8b'],
+    tokenWrappers: [
+      '0x308447562442Cc43978f8274fA722C9C14BafF8b',
+      '0x184460704886f9F2A7F3A0c2887680867954dC6E',
+    ],
   },
   stargate: {
     router: '0x45f1A95A4D3f3836523F5c83673c797f4d4d263B',
@@ -88,6 +91,11 @@ export const PROTOCOL_CONFIGS = {
           '0xbC0033679AEf41Fb9FeB553Fdf55a8Bb2fC5B29e', // Reserve wrapped cUSDCV3
           '0xa8d818C719c1034E731Feba2088F4F011D44ACB3',
         ],
+      },
+      {
+        baseToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
+        receiptToken: '0xb125E6687d4313864e53df431d5425969c15Eb2F', // cUSDCv3
+        vaults: ['0xa694f7177c6c839c951c74c797283b35d0a486c8'],
       },
     ],
   },

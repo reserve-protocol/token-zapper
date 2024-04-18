@@ -39,7 +39,7 @@ import { Searcher } from './Searcher'
 import { wait } from '../base/controlflow'
 
 const simulationUrls: Record<number, string | undefined> = {
-  // 8453: 'https://resbasesimulator.mig2151.workers.dev',
+  8453: 'https://resbasesimulator.mig2151.workers.dev',
   1: 'https://worker-frosty-pine-5440.mig2151.workers.dev',
 }
 const zapperInterface = Zapper__factory.createInterface()

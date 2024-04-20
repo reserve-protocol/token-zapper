@@ -24,13 +24,13 @@ export class MintCometWrapperAction extends Action {
       )
     )
     planner.add(lib.deposit(inputs[0]))
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.output[0],
-      destination
-    )
-    return [out!]
+    // const out = this.genUtils.erc20.balanceOf(
+    //   this.universe,
+    //   planner,
+    //   this.output[0],
+    //   destination
+    // )
+    return [inputs[0]]
   }
   gasEstimate() {
     return BigInt(110000n)

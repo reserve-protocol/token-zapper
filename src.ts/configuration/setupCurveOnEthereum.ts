@@ -41,6 +41,7 @@ export const initCurveOnEthereum = async (
   const DAI = universe.commonTokens.DAI
   const USDC = universe.commonTokens.USDC
   const pyUSD = universe.commonTokens.pyUSD
+  const steth = universe.commonTokens.steth
 
   const curveApi = await loadCurve(
     universe,
@@ -65,29 +66,35 @@ export const initCurveOnEthereum = async (
   // curveApi.createRouterEdge(USDC, USDT);
   // curveApi.createRouterEdge(USDT, USDC);
 
-  const setupLPTokenEdge = (tokenA: Token, tokenB: Token) => {
+  const setupBidirectionalEdge = (tokenA: Token, tokenB: Token) => {
     curveApi.createRouterEdge(tokenA, tokenB)
     curveApi.createRouterEdge(tokenB, tokenA)
   }
 
-  setupLPTokenEdge(universe.wrappedNativeToken, eUSD__FRAX_USDC)
-  setupLPTokenEdge(FRAX, eUSD__FRAX_USDC)
-  setupLPTokenEdge(MIM, eUSD__FRAX_USDC)
-  setupLPTokenEdge(USDC, eUSD__FRAX_USDC)
-  setupLPTokenEdge(USDT, eUSD__FRAX_USDC)
-  setupLPTokenEdge(DAI, eUSD__FRAX_USDC)
+  setupBidirectionalEdge(universe.wrappedNativeToken, eUSD__FRAX_USDC)
+  setupBidirectionalEdge(FRAX, eUSD__FRAX_USDC)
+  setupBidirectionalEdge(MIM, eUSD__FRAX_USDC)
+  setupBidirectionalEdge(USDC, eUSD__FRAX_USDC)
+  setupBidirectionalEdge(USDT, eUSD__FRAX_USDC)
+  setupBidirectionalEdge(DAI, eUSD__FRAX_USDC)
 
-  setupLPTokenEdge(FRAX, mim_3CRV)
-  setupLPTokenEdge(MIM, mim_3CRV)
-  setupLPTokenEdge(USDC, mim_3CRV)
-  setupLPTokenEdge(USDT, mim_3CRV)
-  setupLPTokenEdge(DAI, mim_3CRV)
+  setupBidirectionalEdge(FRAX, mim_3CRV)
+  setupBidirectionalEdge(MIM, mim_3CRV)
+  setupBidirectionalEdge(USDC, mim_3CRV)
+  setupBidirectionalEdge(USDT, mim_3CRV)
+  setupBidirectionalEdge(DAI, mim_3CRV)
 
-  setupLPTokenEdge(FRAX, _3CRV)
-  setupLPTokenEdge(MIM, _3CRV)
-  setupLPTokenEdge(USDC, _3CRV)
-  setupLPTokenEdge(USDT, _3CRV)
-  setupLPTokenEdge(DAI, _3CRV)
+  setupBidirectionalEdge(FRAX, _3CRV)
+  setupBidirectionalEdge(MIM, _3CRV)
+  setupBidirectionalEdge(USDC, _3CRV)
+  setupBidirectionalEdge(USDT, _3CRV)
+  setupBidirectionalEdge(DAI, _3CRV)
+
+  setupBidirectionalEdge(FRAX, _3CRV)
+  setupBidirectionalEdge(MIM, _3CRV)
+  setupBidirectionalEdge(USDC, _3CRV)
+  setupBidirectionalEdge(USDT, _3CRV)
+  setupBidirectionalEdge(DAI, _3CRV)
 
   // Add convex edges
   // const stkcvxeUSD3CRV_OLD = universe.commonTokens['stkcvxeUSD3CRV-f']
@@ -166,14 +173,10 @@ export const initCurveOnEthereum = async (
     makeStkConvexSourcingRule(threeCryptoConvex.depositAndStakeAction)
   )
 
+  const whitelistedRouterOutputs = new Set([...stables, ...Object.values(universe.rTokens), steth])
   universe.dexAggregators.push(
     new DexAggregator('Curve', async (_, destination, input, output, __) => {
-      if (stables.has(input.token) && stables.has(output)) {
-        return await new SwapPlan(universe, [
-          curveApi.createRouterEdge(input.token, output),
-        ]).quote([input], destination)
-      }
-      if (Object.values(universe.rTokens).includes(input.token)) {
+      if (stables.has(input.token) && whitelistedRouterOutputs.has(output)) {
         return await new SwapPlan(universe, [
           curveApi.createRouterEdge(input.token, output),
         ]).quote([input], destination)

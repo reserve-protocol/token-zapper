@@ -57,6 +57,8 @@ export const COMMON_TOKENS = {
   saEthPyUSD: '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b',
   payPool: '0x383E6b4437b59fff47B619CBA855CA29342A8559',
   steakPYUSD: '0xbEEF02e5E13584ab96848af90261f0C8Ee04722a',
+
+  steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
 } as const
 
 export const RTOKENS = {

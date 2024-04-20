@@ -229,15 +229,15 @@ export abstract class BaseSearcherResult {
       console.log(e)
     }
 
-    // console.log(
-    //   JSON.stringify({
-    //     data,
-    //     value: value.toString(),
-    //     address: this.universe.config.addresses.zapperAddress.address,
-    //     from: this.signer.address,
-    //     block,
-    //   })
-    // )
+    console.log(
+      JSON.stringify({
+        data,
+        value: value.toString(),
+        address: this.universe.zapperAddress.address,
+        from: this.signer.address,
+        block: this.blockNumber
+      })
+    )
     throw new Error('Failed to simulate')
   }
 
@@ -287,7 +287,10 @@ export abstract class BaseSearcherResult {
         })
       )
         .json()
-        .then((a: { data: string }) => {
+        .then((a: { data: string; error?: string }) => {
+          if (a.error != null) {
+            throw new Error(a.error)
+          }
           if (a.data.startsWith('0x08c379a0')) {
             const length = BigInt('0x' + a.data.slice(10, 74))
             const data = a.data.slice(74, 74 + Number(length) * 2)
@@ -303,7 +306,7 @@ export abstract class BaseSearcherResult {
           return out
         })
     } catch (e) {
-      console.log(e)
+      // console.log(e)
       return this.simulateNoNode({
         data,
         value,
@@ -722,7 +725,6 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
       out,
       this.signer
     )
-
 
     return this.createZapTransaction(options)
   }

@@ -224,6 +224,13 @@ export class Universe<const UniverseConf extends Config = Config> {
     // )
   }
 
+  get execAddress() {
+    return this.config.addresses.executorAddress
+  }
+  get zapperAddress() {
+    return this.config.addresses.zapperAddress
+  }
+
   public defineMintable(
     mint: Action,
     burn: Action,

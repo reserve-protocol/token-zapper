@@ -49,32 +49,6 @@ export class UniswapRouterAction extends Action {
         this.universe.provider
       )
     )
-    if (destination === this.universe.config.addresses.executorAddress) {
-      planner.add(
-        zapperLib.rawCall(
-          this.route.methodParameters!.to,
-          this.route.methodParameters!.value,
-          this.route.methodParameters!.calldata
-        ),
-        `UniswapSmartRouter ${this.inputQty} => ${this.outputQty}`
-      )
-      const out = this.genUtils.erc20.balanceOf(
-        this.universe,
-        planner,
-        this.output[0],
-        destination,
-        'UniswapRouter,after swap',
-        `bal_${this.output[0].symbol}_after`
-      )
-      planner.add(
-        zapperLib.assertLarger(
-          out,
-          this.outputQty.amount - this.outputQty.amount / 100n
-        ),
-        'UniswapRouter,assert minimum output'
-      )
-      return [out!]
-    }
     planner.add(
       zapperLib.rawCall(
         this.route.methodParameters!.to,
@@ -83,7 +57,15 @@ export class UniswapRouterAction extends Action {
       ),
       `UniswapSmartRouter ${this.inputQty} => ${this.outputQty}`
     )
-    return []
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      destination,
+      'UniswapRouter,after swap',
+      `bal_${this.output[0].symbol}_after`
+    )
+    return [out!]
   }
   constructor(
     public readonly route: SwapRoute,
@@ -96,7 +78,7 @@ export class UniswapRouterAction extends Action {
       [inputQty.token],
       [outputQty.token],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       [new Approval(inputQty.token, Address.from(route.methodParameters!.to))]
     )
   }

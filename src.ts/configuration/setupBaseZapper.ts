@@ -11,6 +11,7 @@ import { setupStargate } from './setupStargate'
 import { setupSAV3Token } from './setupSAV3Tokens'
 import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
 import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
+import { setupUniswapRouter } from './setupUniswapRouter'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   await loadBaseTokenList(universe)
@@ -96,7 +97,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     '0x308447562442Cc43978f8274fA722C9C14BafF8b':
       '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA',
     '0x184460704886f9F2A7F3A0c2887680867954dC6E':
-      '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+      '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   }
 
   // Set up AAVEV3
@@ -122,6 +123,8 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
 
   // Set up RTokens defined in the config
   await loadRTokens(universe)
+
+  await setupUniswapRouter(universe)
 
   return {
     curve: null,

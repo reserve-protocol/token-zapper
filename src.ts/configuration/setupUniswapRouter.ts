@@ -111,23 +111,26 @@ export class UniswapRouterAction extends Action {
   }
 }
 
-const ourTokenToUni = (token: Token): Currency => {
+const ourTokenToUni = (universe: Universe, token: Token): Currency => {
   if (token.address.address === GAS_TOKEN_ADDRESS) {
-    return Ether.onChain(1)
+    return Ether.onChain(universe.chainId)
   }
   return new UniToken(
-    1,
+    universe.chainId,
     token.address.address,
     token.decimals,
     token.symbol,
     token.name
   )
 }
-const tokenQtyToCurrencyAmt = (qty: TokenQuantity): CurrencyAmount => {
-  const uniToken = ourTokenToUni(qty.token)
+const tokenQtyToCurrencyAmt = (
+  universe: Universe,
+  qty: TokenQuantity
+): CurrencyAmount => {
+  const uniToken = ourTokenToUni(universe, qty.token)
   return CurrencyAmount.fromRawAmount(uniToken, qty.amount.toString())
 }
-export const setupUniswapRouter = async (universe: EthereumUniverse) => {
+export const setupUniswapRouter = async (universe: Universe) => {
   const router = new AlphaRouter({
     chainId: universe.chainId,
     provider: universe.provider,
@@ -135,8 +138,8 @@ export const setupUniswapRouter = async (universe: EthereumUniverse) => {
 
   universe.dexAggregators.push(
     new DexAggregator('uniswap', async (src, dst, input, output, slippage) => {
-      const inp = tokenQtyToCurrencyAmt(input)
-      const outp = ourTokenToUni(output)
+      const inp = tokenQtyToCurrencyAmt(universe, input)
+      const outp = ourTokenToUni(universe, output)
 
       const route = await router.route(inp, outp, TradeType.EXACT_INPUT, {
         recipient: dst.address,

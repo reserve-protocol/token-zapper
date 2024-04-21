@@ -96,39 +96,6 @@ class KyberAction extends Action {
         this.universe.provider
       )
     )
-    if (destination === this.universe.config.addresses.executorAddress) {
-      planner.add(
-        zapperLib.rawCall(
-          this.request.req.data.routerAddress,
-          0,
-          this.request.swap.data.data
-        ),
-        `kyberswap,router=${this.request.swap.data.routerAddress},swap=${
-          this.request.quantityIn
-        } -> ${
-          this.outputQuantity
-        },route=${this.request.req.data.routeSummary.route
-          .flat()
-          .map((i) => `(${i.poolType})`)
-          .join(' -> ')},destination=${destination}`
-      )
-      const out = this.genUtils.erc20.balanceOf(
-        this.universe,
-        planner,
-        this.output[0],
-        destination,
-        'kyberswap,after swap',
-        `bal_${this.output[0].symbol}_after`
-      )
-      planner.add(
-        zapperLib.assertLarger(
-          out,
-          this.outputQuantity[0].amount - this.outputQuantity[0].amount / 100n
-        ),
-        'kyberswap,assert minimum output'
-      )
-      return [out!]
-    }
     planner.add(
       zapperLib.rawCall(
         this.request.req.data.routerAddress,
@@ -141,10 +108,18 @@ class KyberAction extends Action {
         this.outputQuantity
       },route=${this.request.req.data.routeSummary.route
         .flat()
-        .map((i) => `(${i.poolType})${Address.from(i.pool).toShortString()}`)
-        .join(' -> ')}`
+        .map((i) => `(${i.poolType})`)
+        .join(' -> ')},destination=${destination}`
     )
-    return []
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      destination,
+      'kyberswap,after swap',
+      `bal_${this.output[0].symbol}_after`
+    )
+    return [out!]
   }
   public outputQuantity: TokenQuantity[] = []
   constructor(
@@ -157,7 +132,7 @@ class KyberAction extends Action {
       [request.quantityIn.token],
       [request.output],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       [
         new Approval(
           request.quantityIn.token,

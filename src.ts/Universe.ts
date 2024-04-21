@@ -292,7 +292,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   private constructor(
-    public readonly provider: ethers.providers.Provider,
+    public readonly provider: ethers.providers.JsonRpcProvider,
     public readonly config: UniverseConf,
     public readonly approvalsStore: ApprovalsStore,
     public readonly loadToken: TokenLoader
@@ -326,7 +326,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   static async createWithConfig<const C extends Config>(
-    provider: ethers.providers.Provider,
+    provider: ethers.providers.JsonRpcProvider,
     config: C,
     initialize: (universe: Universe<C>) => Promise<void>,
     opts: Partial<{

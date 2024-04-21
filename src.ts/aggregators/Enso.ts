@@ -66,7 +66,7 @@ const getEnsoQuote_ = async (
   ).json()
 
   if (quote.tx?.data == null) {
-    console.log(reqUrl)
+    // console.log(reqUrl)
     throw new Error((quote as any).message)
   }
 
@@ -142,15 +142,14 @@ const getEnsoQuote = async (
         recipient
       )
     } catch (e: any) {
-      console.log(
-        'Enso failed to quote ' +
-          quantityIn.toString() +
-          ' -> ' +
-          tokenOut +
-          '  retrying...'
-      )
-      console.log(e.message)
-      await wait(50)
+      // console.log(
+      //   'Enso failed to quote ' +
+      //     quantityIn.toString() +
+      //     ' -> ' +
+      //     tokenOut +
+      //     '  retrying...'
+      // )
+      // console.log(e.message)
       continue
     }
   }

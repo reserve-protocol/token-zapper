@@ -115,7 +115,9 @@ export class Searcher<
       this
     )
     // console.log(precursorTokens.describe().join('\n'))
-    console.log("precursor tokens: " + precursorTokens.precursorToTradeFor.join(', '))
+    console.log(
+      'precursor tokens: ' + precursorTokens.precursorToTradeFor.join(', ')
+    )
 
     /**
      * PHASE 2: Trade inputQuantity into precursor set
@@ -726,15 +728,6 @@ export class Searcher<
 
           return out
         } catch (e) {
-          // console.log(e)
-          this.universe.emitEvent({
-            type: 'aggregator-quote-failed',
-            params: {
-              aggregator: router.name,
-              from: input.token.symbol.toString(),
-              to: output.symbol.toString(),
-            },
-          })
           return null!
         }
       })
@@ -828,18 +821,20 @@ export class Searcher<
       })
     )
     quotes.sort((l, r) => -l.netValue.compare(r.netValue))
-    // console.log("Quotes for " + input.toString() + " -> " + output.toString())
-    // console.log(
-    //   quotes.map(i => {
-    //     let out = " - " + i.quote.toString() + "\n"
-    //     out    += "   output: " + i.quote.outputValue + "\n"
-    //     out    += "   cost: -" + i.cost.txFee.toString() + "\n"
-    //     out    += "   cost: -" + i.cost.txFeeUsd.toString() + "\n"
-    //     out    += "   net: " + i.netValue + "\n"
-    //     return out
-    //   }).join("\n")
-    // )
-    // console.log("")
+    console.log('Quotes for ' + input.toString() + ' -> ' + output.toString())
+    console.log(
+      quotes
+        .map((i) => {
+          let out = ' - ' + i.quote.toString() + '\n'
+          out += '   output: ' + i.quote.outputValue + '\n'
+          out += '   cost: -' + i.cost.txFee.toString() + '\n'
+          out += '   cost: -' + i.cost.txFeeUsd.toString() + '\n'
+          out += '   net: ' + i.netValue + '\n'
+          return out
+        })
+        .join('\n')
+    )
+    console.log('')
     return quotes.map((i) => i.quote)
   }
 }

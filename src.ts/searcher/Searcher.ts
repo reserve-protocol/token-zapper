@@ -28,13 +28,20 @@ const promiseRaceWithin = async <T>(
   promises: Promise<T>[],
   timeout: number
 ): Promise<T[]> => {
+  const timeEnd = Date.now() + timeout
   const waitingPromise = wait(timeout)
   const out: T[] = []
   const wrappedPromises = await Promise.all(
     promises.map((promise) =>
-      Promise.race([promise, waitingPromise.then((i) => null)]).catch(
-        () => null
-      )
+      Promise.race([
+        promise.then((res) => {
+          if (Date.now() < timeEnd || out.length === 0) {
+            return res
+          }
+          return null
+        }),
+        waitingPromise.then((i) => null),
+      ]).catch(() => null)
     )
   )
   for (const o of wrappedPromises) {

@@ -1,5 +1,6 @@
 import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
+import { wait } from '../base/controlflow'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { bfs } from '../exchange-graph/BFS'
@@ -22,6 +23,27 @@ const whitelist = new Set([
   '0xacdf0dba4b9839b96221a8487e9ca660a48212be',
   '0xcc7ff230365bd730ee4b352cc2492cedac49383e',
 ])
+
+const promiseRaceWithin = async <T>(
+  promises: Promise<T>[],
+  timeout: number
+): Promise<T[]> => {
+  const waitingPromise = wait(timeout)
+  const out: T[] = []
+  const wrappedPromises = await Promise.all(
+    promises.map((promise) =>
+      Promise.race([promise, waitingPromise.then((i) => null)]).catch(
+        () => null
+      )
+    )
+  )
+  for (const o of wrappedPromises) {
+    if (o != null) {
+      out.push(o)
+    }
+  }
+  return out
+}
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
  * precursor set, in which the while basket can be derived via mints.
@@ -715,7 +737,7 @@ export class Searcher<
       return []
     }
     const executorAddress = this.universe.config.addresses.executorAddress
-    const out = await Promise.all(
+    const out = await promiseRaceWithin(
       this.universe.dexAggregators.map(async (router) => {
         try {
           const out = await router.swap(
@@ -730,7 +752,8 @@ export class Searcher<
         } catch (e) {
           return null!
         }
-      })
+      }),
+      1000
     )
 
     return out.filter((i) => i != null)

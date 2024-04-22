@@ -829,7 +829,7 @@ export class Searcher<
         }
       })
     )
-    // quotes.sort((l, r) => -l.netValue.compare(r.netValue))
+    quotes.sort((l, r) => -l.netValue.compare(r.netValue))
     // console.log('Quotes for ' + input.toString() + ' -> ' + output.toString())
     // console.log(
     //   quotes

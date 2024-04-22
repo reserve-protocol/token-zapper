@@ -152,6 +152,9 @@ export class UniswapRouterAction extends Action {
         throw new Error('Not implemented')
       }
     }
+    if (input == null) {
+      throw new Error('Failed to plan')
+    }
     return [input]
   }
   constructor(

@@ -197,7 +197,7 @@ export class Searcher<
           output,
           this.universe.config.addresses.executorAddress,
           slippage,
-          2,
+          1,
           false
         )
 
@@ -457,7 +457,7 @@ export class Searcher<
             outputToken,
             signerAddress,
             slippage,
-            3,
+            1,
             true
           )
           if (potentialSwaps.length === 0) {
@@ -747,7 +747,7 @@ export class Searcher<
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 3
+    maxHops: number = 2
   ): Promise<SwapPath[]> {
     const bfsResult = bfs(
       this.universe,
@@ -805,7 +805,7 @@ export class Searcher<
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 3,
+    maxHops: number = 2,
     dynamicInput: boolean = false
   ): Promise<SwapPath[]> {
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)

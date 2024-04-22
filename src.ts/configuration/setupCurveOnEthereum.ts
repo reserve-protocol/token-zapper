@@ -173,7 +173,7 @@ export const initCurveOnEthereum = async (
     makeStkConvexSourcingRule(threeCryptoConvex.depositAndStakeAction)
   )
 
-  const whitelistedRouterOutputs = new Set([...stables, ...Object.values(universe.rTokens), steth])
+  const whitelistedRouterOutputs = new Set(stables)
   universe.dexAggregators.push(
     new DexAggregator('Curve', async (_, destination, input, output, __) => {
       if (stables.has(input.token) && whitelistedRouterOutputs.has(output)) {

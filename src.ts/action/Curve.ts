@@ -9,7 +9,6 @@ import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 
 import { DefaultMap } from '../base/DefaultMap'
-import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'

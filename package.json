@@ -4,7 +4,7 @@
     "access": "public",
     "tag": "latest"
   },
-  "version": "3.3.0",
+  "version": "3.3.2",
   "description": "A library to help convert tokens into RTokens",
   "keywords": [],
   "module": "./lib.esm/index.js",
@@ -154,7 +154,6 @@
     "@nomicfoundation/hardhat-verify": "^1.1.1",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@openzeppelin/contracts": "^4.8.2",
-    "@rollup/plugin-node-resolve": "13.3.0",
     "@typechain/ethers-v5": "^10.2.0",
     "@typechain/hardhat": "^6.1.5",
     "@types/jest": "^29.5.0",

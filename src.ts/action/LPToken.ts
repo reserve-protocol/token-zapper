@@ -1,6 +1,5 @@
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { type ContractCall } from '../base/ContractCall'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
@@ -51,13 +50,7 @@ export class LPTokenMint extends Action {
   gasEstimate(): bigint {
     return 200_000n
   }
-  encode(
-    amountsIn: TokenQuantity[],
-    destination: Address,
-    bytes?: Buffer | undefined
-  ): Promise<ContractCall> {
-    throw new Error('Method not implemented.')
-  }
+  
   constructor(public readonly lpToken: LPToken) {
     super(
       lpToken.token.address,
@@ -95,13 +88,7 @@ export class LPTokenBurn extends Action {
   gasEstimate(): bigint {
     return 200_000n
   }
-  encode(
-    amountsIn: TokenQuantity[],
-    destination: Address,
-    bytes?: Buffer | undefined
-  ): Promise<ContractCall> {
-    throw new Error('Method not implemented.')
-  }
+
   constructor(public readonly lpToken: LPToken) {
     super(
       lpToken.token.address,

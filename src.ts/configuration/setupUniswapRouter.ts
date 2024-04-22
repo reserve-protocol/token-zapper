@@ -27,17 +27,10 @@ import { ZapperExecutor__factory } from '../contracts'
 import { Address } from '../base/Address'
 import { Universe } from '../Universe'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+
 import { SwapPlan } from '../searcher/Swap'
 
 export class UniswapRouterAction extends Action {
-  encode(
-    amountsIn: TokenQuantity[],
-    destination: Address,
-    bytes?: Buffer | undefined
-  ): Promise<ContractCall> {
-    throw new Error('Deprecated')
-  }
   async plan(
     planner: Planner,
     _: Value[],
@@ -124,7 +117,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
       const outp = ourTokenToUni(universe, output)
 
       const route = await router.route(inp, outp, TradeType.EXACT_INPUT, {
-        recipient: dst.address,
+        recipient: universe.execAddress.address,
         slippageTolerance: new Percent(50, 10000),
         deadline: Math.floor(Date.now() / 1000 + 1800),
         type: SwapType.SWAP_ROUTER_02,
@@ -135,10 +128,6 @@ export const setupUniswapRouter = async (universe: Universe) => {
       const outputAmt = output.fromBigInt(
         BigInt(route.trade.outputAmount.quotient.toString())
       )
-
-      // console.log(
-      //   `Uniswap: ${input} -> ${outputAmt} via ${routeAmountsToString(route.route)}`
-      // )
 
       return await new SwapPlan(universe, [
         new UniswapRouterAction(route, input, outputAmt, universe),

@@ -7,7 +7,7 @@ import {
   InteractionConvention,
 } from '../action/Action'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+
 import { EnsoRouter__factory } from '../contracts/factories/contracts/EnsoRouter__factory'
 import { SwapPlan } from '../searcher/Swap'
 import { FunctionCall, Planner, Value } from '../tx-gen/Planner'
@@ -272,10 +272,6 @@ class EnsoAction extends Action {
 
   gasEstimate(): bigint {
     return BigInt(this.request.gas)
-  }
-  async encode(inputs: TokenQuantity[], __: Address): Promise<ContractCall> {
-    // console.log('Encoding enso')
-    throw new Error('Method not implemented.')
   }
 }
 

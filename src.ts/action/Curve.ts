@@ -7,7 +7,7 @@ import { defaultAbiCoder, formatUnits, parseUnits } from 'ethers/lib/utils'
 import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+
 import { DefaultMap } from '../base/DefaultMap'
 import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
@@ -181,38 +181,6 @@ export class CurveSwap extends Action {
   private estimate?: bigint
   gasEstimate() {
     return this.estimate ?? 205000n
-  }
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    const output = await this._quote(amountsIn)
-    const minOut = this.output[0].fromScale18BN(parseUnits(output.output, 18))
-    const contract: ethers.Contract =
-      curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
-        .contract
-    let value = 0n
-    if (amountsIn.token.address.address === GAS_TOKEN_ADDRESS) {
-      value = amountsIn.amount
-    }
-    const { _route, _swapParams, _factorySwapAddresses } =
-      _getExchangeMultipleArgs(output.route)
-
-    const data = contract.interface.encodeFunctionData('exchange_multiple', [
-      _route,
-      _swapParams,
-      amountsIn.amount,
-      minOut.amount,
-      _factorySwapAddresses,
-    ])
-    const exchangeAddress = Address.from(
-      curveInner.constants.ALIASES.registry_exchange
-    )
-
-    return new ContractCall(
-      parseHexStringIntoBuffer(data),
-      exchangeAddress,
-      value,
-      this.gasEstimate(),
-      `Swap ${amountsIn} for at least ${minOut} on Curve}`
-    )
   }
 
   private async _quote(amountsIn: TokenQuantity): Promise<{

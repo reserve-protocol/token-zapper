@@ -1,7 +1,7 @@
 import { formatEther } from 'ethers/lib/utils'
 import { type Universe } from '../Universe'
 import { type Address } from '../base/Address'
-import { ContractCall } from '../base/ContractCall'
+
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { ZapperExecutor__factory } from '../contracts'
 import { IRETHRouter } from '../contracts/contracts/IRETHRouter'
@@ -45,20 +45,6 @@ export class REthRouter {
         params.amountOut,
         qtyETH.amount,
       ] as const,
-      contractCall: new ContractCall(
-        parseHexStringIntoBuffer(
-          this.routerInstance.interface.encodeFunctionData('swapTo', [
-            params.portions[0],
-            params.portions[1],
-            params.amountOut,
-            params.amountOut,
-          ])
-        ),
-        this.routerAddress,
-        qtyETH.amount,
-        this.gasEstimate(),
-        'Swap ETH to RETH via RETHRouter'
-      ),
     }
   }
 
@@ -80,21 +66,6 @@ export class REthRouter {
         params.amountOut,
         qtyETH.amount,
       ] as const,
-      contractCall: new ContractCall(
-        parseHexStringIntoBuffer(
-          this.routerInstance.interface.encodeFunctionData('swapFrom', [
-            params.portions[0],
-            params.portions[1],
-            params.amountOut,
-            params.amountOut,
-            qtyETH.amount,
-          ])
-        ),
-        this.routerAddress,
-        qtyETH.amount,
-        this.gasEstimate(),
-        'Swap RETH to ETH via RETHRouter'
-      ),
     }
   }
 }
@@ -133,12 +104,20 @@ export class ETHToRETH extends Action {
         this.universe.config.addresses.zapperAddress.address,
         this.universe.provider
       )
-    );
+    )
     if (f0 !== 0n && f1 !== 0n) {
       // Using a helper library we
-      const input0 = planner.add(zapperLib.fpMul(f0, input, ONE), `input * ${formatEther(f0)}`, "frac0");
-      const input1 = planner.add(zapperLib.fpMul(f1, input, ONE), `input * ${formatEther(f1)}`, "frac1");
-      
+      const input0 = planner.add(
+        zapperLib.fpMul(f0, input, ONE),
+        `input * ${formatEther(f0)}`,
+        'frac0'
+      )
+      const input1 = planner.add(
+        zapperLib.fpMul(f1, input, ONE),
+        `input * ${formatEther(f1)}`,
+        'frac1'
+      )
+
       return [
         planner.add(
           routerLib.swapTo(input0, input1, aout, aout).withValue(input),
@@ -159,10 +138,6 @@ export class ETHToRETH extends Action {
 
   gasEstimate(): bigint {
     return this.router.gasEstimate()
-  }
-  async encode([ethQty]: TokenQuantity[]): Promise<ContractCall> {
-    const { contractCall } = await this.router.optimiseToREth(ethQty)
-    return contractCall
   }
 
   async quote([ethQty]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -200,7 +175,7 @@ export class RETHToETH extends Action {
         this.universe.config.addresses.zapperAddress.address,
         this.universe.provider
       )
-    );
+    )
     // We want to avoid running the optimiseToREth on-chain.
     // So rather we precompute it during searching and convert the split into two fractions
     const {
@@ -214,17 +189,21 @@ export class RETHToETH extends Action {
     )
 
     // Using a helper library we
-    const input0 = planner.add(zapperLib.fpMul(f0, input, ONE), `input * ${formatEther(f0)}`, "frac0");
-    const input1 = planner.add(zapperLib.fpMul(f1, input, ONE), `input * ${formatEther(f1)}`, "frac1");
+    const input0 = planner.add(
+      zapperLib.fpMul(f0, input, ONE),
+      `input * ${formatEther(f0)}`,
+      'frac0'
+    )
+    const input1 = planner.add(
+      zapperLib.fpMul(f1, input, ONE),
+      `input * ${formatEther(f1)}`,
+      'frac1'
+    )
 
     return [planner.add(routerLib.swapTo(input0, input1, aout, aout))!]
   }
   gasEstimate(): bigint {
     return this.router.gasEstimate()
-  }
-  async encode([rethQty]: TokenQuantity[]): Promise<ContractCall> {
-    const { contractCall } = await this.router.optimiseFromREth(rethQty)
-    return contractCall
   }
 
   async quote([ethQty]: TokenQuantity[]): Promise<TokenQuantity[]> {

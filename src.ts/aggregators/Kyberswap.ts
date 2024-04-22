@@ -7,7 +7,7 @@ import {
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
-import { ContractCall } from '../base/ContractCall'
+
 import { Approval } from '../base/Approval'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Planner, Value } from '../tx-gen/Planner'
@@ -154,17 +154,6 @@ class KyberAction extends Action {
   }
   gasEstimate(): bigint {
     return BigInt(this.request.req.data.routeSummary.gas)
-  }
-  async encode(inputs: TokenQuantity[], __: Address): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(this.request.swap.data.data),
-      Address.from(this.request.req.data.routerAddress),
-      0n,
-      this.gasEstimate(),
-      `Kyberswap(${this.address}) (${inputs.join(',')}) -> (${
-        this.outputQuantity
-      })`
-    )
   }
 }
 

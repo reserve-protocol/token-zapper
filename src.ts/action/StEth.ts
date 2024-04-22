@@ -1,7 +1,7 @@
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
-import { ContractCall } from '../base/ContractCall'
+
 import { AddressZero } from '@ethersproject/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { IStETH__factory } from '../contracts/factories/contracts/IStETH__factory'
@@ -41,18 +41,6 @@ export class MintStETH extends Action {
   gasEstimate() {
     return BigInt(200000n)
   }
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    const hexEncodedWrapCall = stETHInterface.encodeFunctionData('submit', [
-      AddressZero,
-    ])
-    return new ContractCall(
-      parseHexStringIntoBuffer(hexEncodedWrapCall),
-      this.steth.address,
-      amountsIn.amount,
-      this.gasEstimate(),
-      'Mint stETH'
-    )
-  }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [await this.rateProvider.quoteMint(amountsIn)]
@@ -81,9 +69,6 @@ export class MintStETH extends Action {
 export class BurnStETH extends Action {
   gasEstimate() {
     return BigInt(500000n)
-  }
-  async encode(_: TokenQuantity[]): Promise<ContractCall> {
-    throw new Error('Not implemented')
   }
   async plan(planner: Planner, inputs: Value[]): Promise<Value[]> {
     throw new Error('Not implemented')

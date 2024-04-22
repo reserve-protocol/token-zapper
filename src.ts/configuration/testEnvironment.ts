@@ -10,7 +10,7 @@ import { IBasket } from '../entities/TokenBasket'
 import { JsonTokenEntry, loadTokens } from './loadTokens'
 import { ETHToRETH, RETHToETH } from '../action/REth'
 import { constants, ethers } from 'ethers'
-import { ContractCall } from '../base/ContractCall'
+
 import { BurnWStETH, MintWStETH } from '../action/WStEth'
 import { BurnStETH, MintStETH } from '../action/StEth'
 import { makeConfig } from './ChainConfiguration'

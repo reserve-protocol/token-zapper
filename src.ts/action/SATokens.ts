@@ -3,7 +3,7 @@ import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { DestinationOptions, Action, InteractionConvention } from './Action'
-import { ContractCall } from '../base/ContractCall'
+
 import { Approval } from '../base/Approval'
 import { IStaticATokenLM__factory } from '../contracts/factories/contracts/ISAtoken.sol/IStaticATokenLM__factory'
 import { Planner, Value } from '../tx-gen/Planner'
@@ -38,25 +38,6 @@ export class MintSATokensAction extends Action {
   }
   gasEstimate() {
     return BigInt(300000n)
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        saTokenInterface.encodeFunctionData('deposit', [
-          destination.address,
-          amountsIn.amount,
-          0,
-          true,
-        ])
-      ),
-      this.saToken.address,
-      0n,
-      this.gasEstimate(),
-      `Mint(${this.saToken}, input: ${amountsIn}, destination: ${destination})`
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -108,24 +89,6 @@ export class BurnSATokensAction extends Action {
   }
   gasEstimate() {
     return BigInt(300000n)
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        saTokenInterface.encodeFunctionData('withdraw', [
-          destination.address,
-          amountsIn.amount,
-          true,
-        ])
-      ),
-      this.saToken.address,
-      0n,
-      this.gasEstimate(),
-      'Burn ' + this.saToken.name
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

@@ -1,6 +1,6 @@
 import { type Universe } from '../Universe'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { ZapperExecutor__factory } from '../contracts'
 import { type IWStETH } from '../contracts/contracts/IWStETH'
@@ -48,18 +48,6 @@ export class MintWStETH extends Action {
   }
   gasEstimate() {
     return BigInt(175000n)
-  }
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    const hexEncodedWrapCall = wstETHInterface.encodeFunctionData('wrap', [
-      amountsIn.amount,
-    ])
-    return new ContractCall(
-      parseHexStringIntoBuffer(hexEncodedWrapCall),
-      this.wsteth.address,
-      0n,
-      this.gasEstimate(),
-      'Mint wstETH'
-    )
   }
 
   async plan(planner: gen.Planner, inputs: gen.Value[]) {
@@ -113,18 +101,6 @@ export class BurnWStETH extends Action {
   }
   gasEstimate() {
     return BigInt(175000n)
-  }
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    const hexEncodedWrapCall = wstETHInterface.encodeFunctionData('unwrap', [
-      amountsIn.amount,
-    ])
-    return new ContractCall(
-      parseHexStringIntoBuffer(hexEncodedWrapCall),
-      this.wsteth.address,
-      0n,
-      this.gasEstimate(),
-      'Mint wstETH'
-    )
   }
   async plan(planner: gen.Planner, inputs: gen.Value[]) {
     const wsteth = gen.Contract.createContract(

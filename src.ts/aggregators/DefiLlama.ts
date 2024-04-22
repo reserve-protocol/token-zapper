@@ -6,7 +6,7 @@ import {
 } from '../action/Action'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+
 import { GAS_TOKEN_ADDRESS, ZERO } from '../base/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { ZapperExecutor__factory } from '../contracts/factories/contracts/Zapper.sol/ZapperExecutor__factory'
@@ -224,17 +224,6 @@ class DefillamaAction extends Action {
   }
   gasEstimate(): bigint {
     return BigInt(this.request.rawQuote.estimatedGas)
-  }
-  async encode(inputs: TokenQuantity[], __: Address): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(this.request.rawQuote.data),
-      Address.from(this.request.rawQuote.to),
-      0n,
-      this.gasEstimate(),
-      `DefiLlama(${this.address}) (${inputs.join(',')}) -> (${
-        this.outputQuantity
-      })`
-    )
   }
 }
 

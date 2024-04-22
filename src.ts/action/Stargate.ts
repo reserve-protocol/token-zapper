@@ -2,7 +2,7 @@ import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
-import { ContractCall } from '../base/ContractCall'
+
 import { Approval } from '../base/Approval'
 import { Address } from '../base/Address'
 import { IStargateRouter__factory, ZapperExecutor__factory } from '../contracts'
@@ -35,26 +35,6 @@ export class StargateDepositAction extends Action {
   }
   gasEstimate() {
     return BigInt(200000n)
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        routerInterface.encodeFunctionData('addLiquidity', [
-          this.poolId,
-          amountsIn.amount,
-          destination.address,
-        ])
-      ),
-      this.router,
-      0n,
-      this.gasEstimate(),
-      `Deposit ${amountsIn} into Stargate via router (${
-        this.router
-      }) receiving ${amountsIn.into(this.stargateToken)}`
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -103,26 +83,6 @@ export class StargateWithdrawAction extends Action {
   }
   gasEstimate() {
     return BigInt(200000n)
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        routerInterface.encodeFunctionData('instantRedeemLocal', [
-          this.poolId,
-          amountsIn.amount,
-          destination.address,
-        ])
-      ),
-      this.router,
-      0n,
-      this.gasEstimate(),
-      `Redeem ${amountsIn} from Stargate via router (${
-        this.router
-      }) receiving ${amountsIn.into(this.underlying)}`
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

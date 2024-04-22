@@ -61,7 +61,7 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "assets",
+        name: "shares",
         type: "uint256",
       },
       {
@@ -74,8 +74,13 @@ const _abi = [
         name: "owner",
         type: "address",
       },
+      {
+        internalType: "bool",
+        name: "withdrawFromAave",
+        type: "bool",
+      },
     ],
-    name: "withdraw",
+    name: "redeem",
     outputs: [
       {
         internalType: "uint256",

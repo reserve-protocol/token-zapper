@@ -1,6 +1,6 @@
 import { type Universe } from '../Universe'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { BalanceOf__factory } from '../contracts'
 import { CEther__factory } from '../contracts/factories/contracts/ICToken.sol/CEther__factory'
@@ -54,27 +54,6 @@ export class MintCTokenAction extends Action {
     return BigInt(175000n)
   }
   private readonly rateScale: bigint
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    if (this.underlying === this.universe.nativeToken) {
-      return new ContractCall(
-        parseHexStringIntoBuffer(iCEtherInterface.encodeFunctionData('mint')),
-        this.cToken.address,
-        amountsIn.amount,
-        this.gasEstimate(),
-        'Mint CEther'
-      )
-    }
-
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        iCTokenInterface.encodeFunctionData('mint', [amountsIn.amount])
-      ),
-      this.cToken.address,
-      0n,
-      this.gasEstimate(),
-      `Deposit ${amountsIn} into ${this.cToken.symbol}`
-    )
-  }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
@@ -137,17 +116,6 @@ export class BurnCTokenAction extends Action {
     return BigInt(175000n)
   }
   private readonly rateScale: bigint
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        iCTokenInterface.encodeFunctionData('redeem', [amountsIn.amount])
-      ),
-      this.cToken.address,
-      0n,
-      this.gasEstimate(),
-      'Burn ' + this.cToken.symbol
-    )
-  }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)

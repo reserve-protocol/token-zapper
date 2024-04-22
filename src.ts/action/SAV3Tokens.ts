@@ -1,12 +1,10 @@
-import { type Address } from '../base/Address'
-import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
-import { parseHexStringIntoBuffer } from '../base/utils'
-import { DestinationOptions, Action, InteractionConvention } from './Action'
-import { ContractCall } from '../base/ContractCall'
+import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { IStaticAV3TokenLM__factory } from '../contracts/factories/contracts/ISAV3Token.sol/IStaticAV3TokenLM__factory'
+import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 const ray = 10n ** 27n
 const halfRay = ray / 2n
@@ -17,44 +15,36 @@ function rayDiv(a: bigint, b: bigint): bigint {
   const halfB = b / 2n
   return (halfB + a * ray) / b
 }
-const saTokenInterface = IStaticAV3TokenLM__factory.createInterface()
 export class MintSAV3TokensAction extends Action {
   get outputSlippage() {
     return 3000000n
   }
-  async plan(planner: Planner, inputs: Value[], destination: Address) {
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address,
+    predicted: TokenQuantity[]
+  ) {
     const lib = this.gen.Contract.createContract(
       IStaticAV3TokenLM__factory.connect(
         this.output[0].address.address,
         this.universe.provider
       )
     )
-    const out = planner.add(
-      lib.deposit(inputs[0], destination.address, 0, true)
+    planner.add(
+      lib.deposit(inputs[0], destination.address, 0, true),
+      `AaveV3 mint: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
+    )
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      destination
     )
     return [out!]
   }
   gasEstimate() {
     return BigInt(300000n)
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        saTokenInterface.encodeFunctionData('deposit', [
-          amountsIn.amount,
-          destination.address,
-          0,
-          true,
-        ])
-      ),
-      this.saToken.address,
-      0n,
-      this.gasEstimate(),
-      `Mint(${this.saToken}, input: ${amountsIn}, destination: ${destination})`
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -84,48 +74,48 @@ export class MintSAV3TokensAction extends Action {
   }
 }
 export class BurnSAV3TokensAction extends Action {
+  private inst: IStaticAV3TokenLM__factory
   get outputSlippage() {
     return 3000000n
   }
-  async plan(planner: Planner, inputs: Value[], destination: Address) {
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address,
+    predicted: TokenQuantity[]
+  ) {
     const lib = this.gen.Contract.createContract(
       IStaticAV3TokenLM__factory.connect(
         this.input[0].address.address,
         this.universe.provider
       )
     )
-    const out = planner.add(
-      lib.withdraw(
+    planner.add(
+      lib.redeem(
         inputs[0],
         destination.address,
-        this.universe.config.addresses.executorAddress.address
-      )
+        this.universe.execAddress.address,
+        true
+      ),
+      `AaveV3 burn: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
+    )
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.output[0],
+      destination
     )
     return [out!]
   }
   gasEstimate() {
     return BigInt(300000n)
   }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        saTokenInterface.encodeFunctionData('withdraw', [
-          amountsIn.amount,
-          destination.address,
-          this.universe.config.addresses.executorAddress.address,
-        ])
-      ),
-      this.saToken.address,
-      0n,
-      this.gasEstimate(),
-      'Burn ' + this.saToken.name
-    )
-  }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    IStaticAV3TokenLM__factory.connect(
+      this.input[0].address.address,
+      this.universe.provider
+    )
     await this.universe.refresh(this.address)
     return [
       this.saToken
@@ -147,6 +137,10 @@ export class BurnSAV3TokensAction extends Action {
       InteractionConvention.None,
       DestinationOptions.Recipient,
       []
+    )
+    this.inst = IStaticAV3TokenLM__factory.connect(
+      saToken.address.address,
+      universe.provider
     )
   }
 

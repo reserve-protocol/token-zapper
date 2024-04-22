@@ -2,7 +2,7 @@ import { Address } from '../base/Address'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { DestinationOptions, Action, InteractionConvention } from './Action'
-import { ContractCall } from '../base/ContractCall'
+
 import { Approval } from '../base/Approval'
 import { type OneInchSwapResponse } from '../aggregators/oneInch/oneInchRegistry'
 import { parseHexStringIntoBuffer } from '../base/utils'
@@ -15,19 +15,6 @@ export class OneInchAction extends Action {
   }
   gasEstimate() {
     return BigInt(this.actionQuote.tx.gas)
-  }
-  async encode(): Promise<ContractCall> {
-    const swap = this.actionQuote
-    if (swap == null) {
-      throw new Error('Failed to generate swap')
-    }
-    return new ContractCall(
-      parseHexStringIntoBuffer(swap.tx.data),
-      Address.fromHexString(swap.tx.to),
-      BigInt(swap.tx.value),
-      this.gasEstimate(),
-      `1Inch Swap (${this.input.join(",")}) -> (${this.output[0].from(BigInt(this.actionQuote.toAmount))})`
-    )
   }
 
   toString() {

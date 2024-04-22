@@ -1,7 +1,7 @@
 import { type Universe } from '../Universe'
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { CTokenWrapper__factory } from '../contracts/factories/contracts/ICToken.sol/CTokenWrapper__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
@@ -34,23 +34,6 @@ export class MintCTokenWrapperAction extends Action {
   }
   gasEstimate() {
     return BigInt(110000n)
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    dest: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        iCTokenWrapper.encodeFunctionData('deposit', [
-          amountsIn.amount,
-          dest.address,
-        ])
-      ),
-      this.receiptToken.address,
-      0n,
-      this.gasEstimate(),
-      'CompoundV2Wrapper mint ' + this.receiptToken.symbol
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -100,24 +83,6 @@ export class BurnCTokenWrapperAction extends Action {
   }
   gasEstimate() {
     return BigInt(110000n)
-  }
-
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    dest: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        iCTokenWrapper.encodeFunctionData('withdraw', [
-          amountsIn.amount,
-          dest.address,
-        ])
-      ),
-      this.receiptToken.address,
-      0n,
-      this.gasEstimate(),
-      'CompoundV2Wrapper burn ' + this.receiptToken.symbol
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

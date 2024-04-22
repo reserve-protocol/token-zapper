@@ -209,24 +209,12 @@ const initialize = async (universe: TestUniverse) => {
       return {
         portions: mockPortions,
         amountOut: qtyETH.mul(ETHToRETHRate).into(reth),
-        contractCall: new ContractCall(
-          Buffer.alloc(0),
-          rethRouterAddress,
-          qtyETH.amount,
-          0n
-        ),
       }
     },
     async optimiseFromREth(qtyRETH: TokenQuantity) {
       return {
         portions: mockPortions,
         amountOut: qtyRETH.mul(rETHToETHRate).into(universe.nativeToken),
-        contractCall: new ContractCall(
-          Buffer.alloc(0),
-          rethRouterAddress,
-          0n,
-          0n
-        ),
       }
     },
   }

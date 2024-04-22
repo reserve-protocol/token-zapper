@@ -45,7 +45,7 @@ export class ConvexDepositAndStake extends Action {
     return `ConvexDepositAndStake(${this.convexPool})`
   }
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountIn.into(this.output[0])]
+    return [amountIn.into(this.outputToken[0])]
   }
   gasEstimate(): bigint {
     return 250000n
@@ -86,7 +86,7 @@ export class ConvexUnstakeAndWithdraw extends Action {
     return `ConvexUnstakeAndWithdraw(${this.convexPool})`
   }
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountIn.into(this.output[0])]
+    return [amountIn.into(this.outputToken[0])]
   }
   gasEstimate(): bigint {
     return 250000n

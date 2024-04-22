@@ -33,7 +33,7 @@ export class MintStETH extends Action {
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       this.universe.config.addresses.executorAddress
     )
     return [out!]

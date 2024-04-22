@@ -36,9 +36,9 @@ export class LPTokenMint extends Action {
     destination: Address
   ): Promise<Value[]> {
     throw new Error(
-      `Method not implemented. For ${this.input.join(
+      `Method not implemented. For ${this.inputToken.join(
         ', '
-      )} -> ${this.output.join(', ')}`
+      )} -> ${this.outputToken.join(', ')}`
     )
   }
   toString() {
@@ -74,9 +74,9 @@ export class LPTokenBurn extends Action {
       return await this.lpToken.planBurn(planner, inputs, destination)
     }
     throw new Error(
-      `Method not implemented. For ${this.input.join(
+      `Method not implemented. For ${this.inputToken.join(
         ', '
-      )} -> ${this.output.join(', ')}`
+      )} -> ${this.outputToken.join(', ')}`
     )
   }
   toString() {

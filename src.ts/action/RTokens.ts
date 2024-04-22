@@ -13,7 +13,7 @@ export class MintRTokenAction extends Action {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
       IRToken__factory.connect(
-        this.input[0].address.address,
+        this.inputToken[0].address.address,
         this.universe.provider
       )
     )
@@ -29,7 +29,7 @@ export class MintRTokenAction extends Action {
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
-    if (amountsIn.length !== this.input.length) {
+    if (amountsIn.length !== this.inputToken.length) {
       throw new Error('Invalid inputs for RToken mint')
     }
     const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket)
@@ -77,7 +77,7 @@ export class BurnRTokenAction extends Action {
   ) {
     const lib = this.gen.Contract.createContract(
       IRToken__factory.connect(
-        this.input[0].address.address,
+        this.inputToken[0].address.address,
         this.universe.provider
       )
     )
@@ -89,7 +89,7 @@ export class BurnRTokenAction extends Action {
       ).join(', ')}`
     )
 
-    return this.output.map((token) =>
+    return this.outputToken.map((token) =>
       this.genUtils.erc20.balanceOf(
         this.universe,
         planner,

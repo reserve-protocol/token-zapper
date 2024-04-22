@@ -138,7 +138,7 @@ export class CurveSwap extends Action {
     [amountsIn]: TokenQuantity[]
   ): Promise<Value[]> {
     const output = await this._quote(amountsIn)
-    const minOut = this.output[0].fromScale18BN(parseUnits(output.output, 18))
+    const minOut = this.outputToken[0].fromScale18BN(parseUnits(output.output, 18))
     const routerContract =
       curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
         .contract
@@ -167,13 +167,13 @@ export class CurveSwap extends Action {
         payload
       ),
       `Curve,swap=${amountsIn} -> ${minOut}`,
-      `amt_${this.output[0].symbol}`
+      `amt_${this.outputToken[0].symbol}`
     )
 
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       this.universe.config.addresses.executorAddress
     )
     return [out!]
@@ -188,9 +188,9 @@ export class CurveSwap extends Action {
     route: IRoute
   }> {
     const key = (
-      this.input[0].address +
+      this.inputToken[0].address +
       '.' +
-      this.output[0].address
+      this.outputToken[0].address
     ).toLowerCase()
     const contract =
       curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
@@ -222,7 +222,7 @@ export class CurveSwap extends Action {
 
       const output = formatUnits(
         out.sub(out.div(600n)),
-        this.output[0].decimals
+        this.outputToken[0].decimals
       )
       return {
         output,
@@ -233,7 +233,7 @@ export class CurveSwap extends Action {
       try {
         const out = await curve.router.getBestRouteAndOutput(
           amountsIn.token.address.address,
-          this.output[0].address.address,
+          this.outputToken[0].address.address,
           amountsIn.format()
         )
         // if (!out.route.every((i) => whiteList.has(i.poolAddress))) {
@@ -252,13 +252,13 @@ export class CurveSwap extends Action {
 
         this.estimate = gasEstimate.toBigInt()
         const outParsed = parseUnits(
-          parseFloat(out.output).toFixed(this.output[0].decimals),
-          this.output[0].decimals
+          parseFloat(out.output).toFixed(this.outputToken[0].decimals),
+          this.outputToken[0].decimals
         )
 
         out.output = formatUnits(
           outParsed.sub(outParsed.div(600n)),
-          this.output[0].decimals
+          this.outputToken[0].decimals
         )
 
         return out
@@ -273,7 +273,7 @@ export class CurveSwap extends Action {
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const out = (await this._quote(amountsIn)).output
 
-    const q = [this.output[0].fromScale18BN(parseUnits(out, 18))]
+    const q = [this.outputToken[0].fromScale18BN(parseUnits(out, 18))]
     return q
   }
 

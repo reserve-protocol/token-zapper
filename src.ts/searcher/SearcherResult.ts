@@ -235,7 +235,7 @@ export abstract class BaseSearcherResult {
         value: value.toString(),
         address: this.universe.zapperAddress.address,
         from: this.signer.address,
-        block: this.blockNumber
+        block: this.blockNumber,
       })
     )
     throw new Error('Failed to simulate')
@@ -616,21 +616,21 @@ export class TradeSearcherResult extends BaseSearcherResult {
 
     for (const step of this.swaps.swapPaths[0].steps) {
       await step.action.plan(this.planner, [], this.signer, [this.userInput])
-      if (step.action.proceedsOptions === DestinationOptions.Callee) {
-        const out = plannerUtils.erc20.balanceOf(
-          this.universe,
-          this.planner,
-          step.outputs[0].token,
-          this.universe.config.addresses.executorAddress
-        )
-        plannerUtils.planForwardERC20(
-          this.universe,
-          this.planner,
-          step.outputs[0].token,
-          out,
-          this.signer
-        )
-      }
+    }
+    for (const token of this.potentialResidualTokens) {
+      const out = plannerUtils.erc20.balanceOf(
+        this.universe,
+        this.planner,
+        token,
+        this.universe.config.addresses.executorAddress
+      )
+      plannerUtils.planForwardERC20(
+        this.universe,
+        this.planner,
+        token,
+        out,
+        this.signer
+      )
     }
 
     return this.createZapTransaction(options)
@@ -672,10 +672,10 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
 
     for (
       let i = 0;
-      i < this.parts.rtokenRedemption.steps[0].action.output.length;
+      i < this.parts.rtokenRedemption.steps[0].action.outputToken.length;
       i++
     ) {
-      tokens.set(this.parts.rtokenRedemption.steps[0].action.output[i], [
+      tokens.set(this.parts.rtokenRedemption.steps[0].action.outputToken[i], [
         outputs[i],
       ])
     }
@@ -683,7 +683,7 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
     const tradeOutputs = new Map<Token, Value>()
     for (const unwrapBasketTokenPath of this.parts.tokenBasketUnwrap) {
       for (const step of unwrapBasketTokenPath.steps) {
-        let input = tokens.get(step.action.input[0])
+        let input = tokens.get(step.action.inputToken[0])
         if (input == null) {
           throw new Error('MISSING INPUT')
         }
@@ -709,14 +709,12 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
         tradeOutputs.set(step.outputs[0].token, out[0])
       }
     }
-    const out = tradeOutputs.has(this.outputToken)
-      ? tradeOutputs.get(this.outputToken)!
-      : plannerUtils.erc20.balanceOf(
-          this.universe,
-          this.planner,
-          this.outputToken,
-          executorAddress
-        )
+    const out = plannerUtils.erc20.balanceOf(
+      this.universe,
+      this.planner,
+      this.outputToken,
+      executorAddress
+    )
     plannerUtils.planForwardERC20(
       this.universe,
       this.planner,
@@ -785,8 +783,8 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
         if (output.length === 0) {
           throw new Error("Unexpected: Didn't get an output")
         }
-        for (let i = 0; i < step.action.output.length; i++) {
-          trades.set(step.action.output[i], output[i])
+        for (let i = 0; i < step.action.outputToken.length; i++) {
+          trades.set(step.action.outputToken[i], output[i])
         }
       }
     }

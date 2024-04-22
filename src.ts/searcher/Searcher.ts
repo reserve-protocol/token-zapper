@@ -24,33 +24,6 @@ const whitelist = new Set([
   '0xcc7ff230365bd730ee4b352cc2492cedac49383e',
 ])
 
-const promiseRaceWithin = async <T>(
-  promises: Promise<T>[],
-  timeout: number
-): Promise<T[]> => {
-  const timeEnd = Date.now() + timeout
-  const waitingPromise = wait(timeout)
-  const out: T[] = []
-  const wrappedPromises = await Promise.all(
-    promises.map((promise) =>
-      Promise.race([
-        promise.then((res) => {
-          if (Date.now() < timeEnd || out.length === 0) {
-            return res
-          }
-          return null
-        }),
-        waitingPromise.then((i) => null),
-      ]).catch(() => null)
-    )
-  )
-  for (const o of wrappedPromises) {
-    if (o != null) {
-      out.push(o)
-    }
-  }
-  return out
-}
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
  * precursor set, in which the while basket can be derived via mints.
@@ -224,7 +197,8 @@ export class Searcher<
           output,
           this.universe.config.addresses.executorAddress,
           slippage,
-          1
+          2,
+          false
         )
 
         const trade = swaps[0]
@@ -482,7 +456,9 @@ export class Searcher<
             qty,
             outputToken,
             signerAddress,
-            slippage
+            slippage,
+            3,
+            true
           )
           if (potentialSwaps.length === 0) {
             throw Error(
@@ -576,7 +552,8 @@ export class Searcher<
       inputTokenQuantity,
       rToken,
       signerAddress,
-      slippage
+      slippage,
+      false
     ).catch(() => [])
 
     const inputValue = await this.universe.fairPrice(inputTokenQuantity)
@@ -701,7 +678,7 @@ export class Searcher<
     const rTokenMint = await new SwapPlan(this.universe, [
       rTokenActions.mint,
     ]).quote(
-      mintAction.input.map((token) => tradingBalances.get(token)),
+      mintAction.inputToken.map((token) => tradingBalances.get(token)),
       signerAddress
     )
     await rTokenMint.exchange(tradingBalances)
@@ -735,7 +712,8 @@ export class Searcher<
     input: TokenQuantity,
     output: Token,
     destination: Address,
-    slippage: number
+    slippage: number,
+    dynamicInput: boolean
   ): Promise<SwapPath[]> {
     const allowAggregatorSearch =
       this.universe.wrappedTokens.get(output)?.allowAggregatorSearcher ?? true
@@ -744,26 +722,24 @@ export class Searcher<
       return []
     }
     const executorAddress = this.universe.config.addresses.executorAddress
-    const out = await promiseRaceWithin(
-      this.universe.dexAggregators.map(async (router) => {
-        try {
-          const out = await router.swap(
-            executorAddress,
-            destination,
-            input,
-            output,
-            slippage
-          )
-
-          return out
-        } catch (e) {
-          return null!
-        }
-      }),
-      1000
+    const out: SwapPath[] = []
+    let aggregators = this.universe.dexAggregators
+    if (dynamicInput) {
+      aggregators = aggregators.filter((i) => i.dynamicInput)
+    }
+    if (aggregators.length === 0) {
+      console.log('No aggregators available')
+      return []
+    }
+    await Promise.all(
+      aggregators.map((router) =>
+        router
+          .swap(executorAddress, destination, input, output, slippage)
+          .then((i) => out.push(i))
+          .catch(() => null)
+      )
     )
-
-    return out.filter((i) => i != null)
+    return out
   }
 
   async internalQuoter(
@@ -771,7 +747,7 @@ export class Searcher<
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 4
+    maxHops: number = 3
   ): Promise<SwapPath[]> {
     const bfsResult = bfs(
       this.universe,
@@ -788,18 +764,18 @@ export class Searcher<
         if (plan.steps.length > maxHops) {
           return false
         }
-        if (
-          new Set(plan.steps.map((i) => i.constructor.name)).size !==
-          plan.steps.length
-        ) {
-          return false
-        }
-
         if (plan.inputs.length !== 1) {
           return false
         }
         if (
-          plan.steps.some((i) => i.input.length !== 1 || i.output.length !== 1)
+          plan.steps.some(
+            (i) => i.inputToken.length !== 1 || i.outputToken.length !== 1
+          )
+        ) {
+          return false
+        }
+        if (
+          new Set(plan.steps.map((i) => i.address)).size !== plan.steps.length
         ) {
           return false
         }
@@ -813,6 +789,7 @@ export class Searcher<
         try {
           allPlans.push(await plan.quote([input], destination))
         } catch (e) {
+          console.log(e)
           // console.log(plan.toString())
           // console.log(e)
         }
@@ -828,10 +805,12 @@ export class Searcher<
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 4
+    maxHops: number = 3,
+    dynamicInput: boolean = false
   ): Promise<SwapPath[]> {
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {
+      console.log('Special case for ' + output.toString())
       const out = await tradeSpecialCase(input, destination)
       if (out != null) {
         return [out]
@@ -839,7 +818,7 @@ export class Searcher<
     }
     const [quotesInternal, quotesExternal] = await Promise.all([
       this.internalQuoter(input, output, destination, slippage, maxHops),
-      this.externalQuoters(input, output, destination, slippage),
+      this.externalQuoters(input, output, destination, slippage, dynamicInput),
     ])
     const quotes = await Promise.all(
       [...quotesInternal, ...quotesExternal].map(async (q) => {
@@ -850,21 +829,21 @@ export class Searcher<
         }
       })
     )
-    quotes.sort((l, r) => -l.netValue.compare(r.netValue))
-    console.log('Quotes for ' + input.toString() + ' -> ' + output.toString())
-    console.log(
-      quotes
-        .map((i) => {
-          let out = ' - ' + i.quote.toString() + '\n'
-          out += '   output: ' + i.quote.outputValue + '\n'
-          out += '   cost: -' + i.cost.txFee.toString() + '\n'
-          out += '   cost: -' + i.cost.txFeeUsd.toString() + '\n'
-          out += '   net: ' + i.netValue + '\n'
-          return out
-        })
-        .join('\n')
-    )
-    console.log('')
+    // quotes.sort((l, r) => -l.netValue.compare(r.netValue))
+    // console.log('Quotes for ' + input.toString() + ' -> ' + output.toString())
+    // console.log(
+    //   quotes
+    //     .map((i) => {
+    //       let out = ' - ' + i.quote.toString() + '\n'
+    //       out += '   output: ' + i.quote.outputValue + '\n'
+    //       out += '   cost: -' + i.cost.txFee.toString() + '\n'
+    //       out += '   cost: -' + i.cost.txFeeUsd.toString() + '\n'
+    //       out += '   net: ' + i.netValue + '\n'
+    //       return out
+    //     })
+    //     .join('\n')
+    // )
+    // console.log('')
     return quotes.map((i) => i.quote)
   }
 }

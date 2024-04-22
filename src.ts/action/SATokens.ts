@@ -32,7 +32,7 @@ export class MintSATokensAction extends Action {
     const out = planner.add(
       lib.deposit(destination.address, inputs[0], 0, true),
       undefined,
-      `bal_${this.output[0].symbol}`
+      `bal_${this.outputToken[0].symbol}`
     )
     return [out!]
   }
@@ -83,7 +83,7 @@ export class BurnSATokensAction extends Action {
     const out = planner.add(
       lib.withdraw(destination.address, inputs[0], true),
       undefined,
-      `bal_${this.output[0].symbol}`
+      `bal_${this.outputToken[0].symbol}`
     )
     return [out!]
   }

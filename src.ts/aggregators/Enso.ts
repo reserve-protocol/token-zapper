@@ -11,7 +11,7 @@ import { Approval } from '../base/Approval'
 import { EnsoRouter__factory } from '../contracts/factories/contracts/EnsoRouter__factory'
 import { SwapPlan } from '../searcher/Swap'
 import { FunctionCall, Planner, Value } from '../tx-gen/Planner'
-import { DexAggregator } from './DexAggregator'
+import { DexRouter } from './DexAggregator'
 import { IWrappedNative__factory } from '../contracts/factories/contracts/IWrappedNative__factory'
 import { wait } from '../base/controlflow'
 
@@ -59,6 +59,7 @@ const getEnsoQuote_ = async (
   const quote: EnsoQuote = await (
     await fetch(reqUrl, {
       method: 'GET',
+      signal: AbortSignal.timeout(4000),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -171,7 +172,7 @@ class EnsoAction extends Action {
     const inputV = input ?? predicted[0].amount
     if (
       this.request.tokenIn === ENSO_GAS_TOKEN &&
-      this.input[0] === this.universe.wrappedNativeToken
+      this.inputToken[0] === this.universe.wrappedNativeToken
     ) {
       const wethlib = this.gen.Contract.createContract(
         IWrappedNative__factory.connect(
@@ -211,7 +212,7 @@ class EnsoAction extends Action {
     )
     if (
       this.request.tokenOut === ENSO_GAS_TOKEN &&
-      this.output[0] === this.universe.wrappedNativeToken
+      this.outputToken[0] === this.universe.wrappedNativeToken
     ) {
       console.log('Adding WETH deposit for out')
       const wethlib = this.gen.Contract.createContract(
@@ -283,7 +284,7 @@ export const createEnso = (
   slippage: number,
   retries = 2
 ) => {
-  return new DexAggregator(
+  return new DexRouter(
     aggregatorName,
     async (_, destination, input, output, __) => {
       const req = await getEnsoQuote(
@@ -303,6 +304,7 @@ export const createEnso = (
           slippage
         ),
       ]).quote([input], destination)
-    }
+    },
+    true
   )
 }

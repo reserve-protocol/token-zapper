@@ -13,7 +13,7 @@ import { ZapperExecutor__factory } from '../contracts/factories/contracts/Zapper
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
 import { Planner, Value } from '../tx-gen/Planner'
-import { DexAggregator } from './DexAggregator'
+import { DexRouter } from './DexAggregator'
 
 const CHAIN_SLUG: Record<number, string> = {
   1: 'ethereum',
@@ -183,7 +183,7 @@ class DefillamaAction extends Action {
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       this.universe.config.addresses.executorAddress
     )
     return [out!]
@@ -213,7 +213,7 @@ class DefillamaAction extends Action {
 
     const amount = BigInt(this.request.amountReturned)
     const minOut = amount - (amount / 10000n) * BigInt(this.slippage)
-    const out = this.output[0].from(minOut)
+    const out = this.outputToken[0].from(minOut)
     this.outputQuantity = [out]
   }
   toString(): string {
@@ -233,7 +233,7 @@ export const createDefillama = (
   slippage: number,
   protocol: PROTOCOLS
 ) => {
-  return new DexAggregator(
+  return new DexRouter(
     aggregatorName,
     async (_, destination, input, output, __) => {
       const req = await fetchQuote(protocol, universe, {

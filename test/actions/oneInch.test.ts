@@ -1,4 +1,4 @@
-import {createForTest} from '../../src.ts/configuration/testEnvironment'
+import { createForTest } from '../../src.ts/configuration/testEnvironment'
 import { OneInchAction } from '../../src.ts/action/OneInch'
 import swap0_1ForUSDT from './data/oneInchSwap0.1ETHForUSDT.json'
 
@@ -15,7 +15,9 @@ describe('actions/OneInch', () => {
     )
     expect(
       (
-        await oneInchAction.quote([oneInchAction.input[0].fromDecimal('0')])
+        await oneInchAction.quote([
+          oneInchAction.inputToken[0].fromDecimal('0'),
+        ])
       )[0].formatWithSymbol()
     ).toBe('175.741568 USDT')
   })

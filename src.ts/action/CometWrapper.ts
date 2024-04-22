@@ -28,7 +28,7 @@ export class MintCometWrapperAction extends Action {
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       destination
     )
     return [out!]
@@ -96,7 +96,7 @@ export class BurnCometWrapperAction extends Action {
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       destination
     )
     return [out!]

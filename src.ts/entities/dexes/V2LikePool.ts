@@ -19,8 +19,8 @@ const sortTokens = (tokenA: Token, tokenB: Token) => {
 }
 type Env = {
   pool: V2Pool
-  inputToken: Token
-  outputToken: Token
+  input: Token
+  output: Token
   direction: SwapDirection
 }
 const computeV2PoolAddress = (

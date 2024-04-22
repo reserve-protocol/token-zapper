@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/weiroll-helpers/UniV3RouterCall.sol": {
+      "content": "// SPDX-License-Identifier: BlueOak-1.0.0\npragma solidity 0.8.17;\n\ninterface IUniV3Router {\n    struct ExactInputSingleParams {\n        address tokenIn;\n        address tokenOut;\n        uint24 fee;\n        address recipient;\n        uint256 deadline;\n        uint256 amountIn;\n        uint256 amountOutMinimum;\n        uint160 sqrtPriceLimitX96;\n    }\n    \n    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);\n\n    struct ExactInputParams {\n        bytes path;\n        address recipient;\n        uint256 deadline;\n        uint256 amountIn;\n        uint256 amountOutMinimum;\n    }\n\n    function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);\n}\n\ncontract UniV3RouterCall {\n    function exactInputSingle(\n        uint256 amountIn,\n        uint256 _expected,\n        address router,\n        bytes memory encodedRouterCall\n    ) external returns (uint256) {\n        (IUniV3Router.ExactInputSingleParams memory decodedCall) = abi.decode(\n            encodedRouterCall,\n            (IUniV3Router.ExactInputSingleParams)\n        );\n        decodedCall.amountIn = amountIn;\n        decodedCall.amountOutMinimum = _expected;\n        return IUniV3Router(router).exactInputSingle(decodedCall);\n    }\n\n    function exactInput(\n        uint256 amountIn,\n        uint256 _expected,\n        address router,\n        bytes memory encodedRouterCall\n    ) external returns (uint256) {\n        (IUniV3Router.ExactInputParams memory decodedCall) = abi.decode(\n            encodedRouterCall,\n            (IUniV3Router.ExactInputParams)\n        );\n        decodedCall.amountIn = amountIn;\n        decodedCall.amountOutMinimum = _expected;\n        return IUniV3Router(router).exactInput(decodedCall);\n    }\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

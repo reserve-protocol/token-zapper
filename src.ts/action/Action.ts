@@ -87,8 +87,8 @@ export abstract class Action {
 
   constructor(
     public readonly address: Address,
-    public readonly input: readonly Token[],
-    public readonly output: readonly Token[],
+    public readonly inputToken: readonly Token[],
+    public readonly outputToken: readonly Token[],
     public readonly interactionConvention: InteractionConvention,
     public readonly proceedsOptions: DestinationOptions,
     public readonly approvals: readonly Approval[]

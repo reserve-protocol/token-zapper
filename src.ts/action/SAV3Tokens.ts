@@ -27,7 +27,7 @@ export class MintSAV3TokensAction extends Action {
   ) {
     const lib = this.gen.Contract.createContract(
       IStaticAV3TokenLM__factory.connect(
-        this.output[0].address.address,
+        this.outputToken[0].address.address,
         this.universe.provider
       )
     )
@@ -38,7 +38,7 @@ export class MintSAV3TokensAction extends Action {
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       destination
     )
     return [out!]
@@ -86,7 +86,7 @@ export class BurnSAV3TokensAction extends Action {
   ) {
     const lib = this.gen.Contract.createContract(
       IStaticAV3TokenLM__factory.connect(
-        this.input[0].address.address,
+        this.inputToken[0].address.address,
         this.universe.provider
       )
     )
@@ -102,7 +102,7 @@ export class BurnSAV3TokensAction extends Action {
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       destination
     )
     return [out!]
@@ -113,7 +113,7 @@ export class BurnSAV3TokensAction extends Action {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     IStaticAV3TokenLM__factory.connect(
-      this.input[0].address.address,
+      this.inputToken[0].address.address,
       this.universe.provider
     )
     await this.universe.refresh(this.address)

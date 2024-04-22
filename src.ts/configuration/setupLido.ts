@@ -1,5 +1,5 @@
 import { type Universe } from '../Universe';
-import { BurnStETH, MintStETH, StETHRateProvider } from '../action/StEth';
+import { MintStETH, StETHRateProvider } from '../action/StEth';
 import { BurnWStETH, MintWStETH, WStETHRateProvider } from '../action/WStEth';
 import { Address } from '../base/Address';
 

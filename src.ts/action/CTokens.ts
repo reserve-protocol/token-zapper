@@ -28,7 +28,7 @@ export class MintCTokenAction extends Action {
         this.genUtils.erc20.balanceOf(
           this.universe,
           planner,
-          this.output[0],
+          this.outputToken[0],
           this.universe.config.addresses.executorAddress
         ),
       ]
@@ -45,7 +45,7 @@ export class MintCTokenAction extends Action {
       this.genUtils.erc20.balanceOf(
         this.universe,
         planner,
-        this.output[0],
+        this.outputToken[0],
         this.universe.config.addresses.executorAddress
       ),
     ]
@@ -107,7 +107,7 @@ export class BurnCTokenAction extends Action {
       this.genUtils.erc20.balanceOf(
         this.universe,
         planner,
-        this.output[0],
+        this.outputToken[0],
         this.universe.config.addresses.executorAddress
       ),
     ]

@@ -47,7 +47,7 @@ export class PostTradeAction {
     update?: boolean
   ) {
     return new PostTradeAction(
-      action.input.map((input) => input.one),
+      action.inputToken.map((input) => input.one),
       action,
       [],
       update
@@ -60,7 +60,7 @@ export class PostTradeAction {
     update?: boolean
   ) {
     return new PostTradeAction(
-      action.input.map((input) => input.one),
+      action.inputToken.map((input) => input.one),
       action,
       postTradeActions,
       update

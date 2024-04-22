@@ -1,0 +1,41 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol": {
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity >=0.5.0;\n\n/// @title Callback for IUniswapV3PoolActions#swap\n/// @notice Any contract that calls IUniswapV3PoolActions#swap must implement this interface\ninterface IUniswapV3SwapCallback {\n    /// @notice Called to `msg.sender` after executing a swap via IUniswapV3Pool#swap.\n    /// @dev In the implementation you must pay the pool tokens owed for the swap.\n    /// The caller of this method must be checked to be a UniswapV3Pool deployed by the canonical UniswapV3Factory.\n    /// amount0Delta and amount1Delta can both be 0 if no tokens were swapped.\n    /// @param amount0Delta The amount of token0 that was sent (negative) or must be received (positive) by the pool by\n    /// the end of the swap. If positive, the callback must send that amount of token0 to the pool.\n    /// @param amount1Delta The amount of token1 that was sent (negative) or must be received (positive) by the pool by\n    /// the end of the swap. If positive, the callback must send that amount of token1 to the pool.\n    /// @param data Any data passed through by the caller via the IUniswapV3PoolActions#swap call\n    function uniswapV3SwapCallback(\n        int256 amount0Delta,\n        int256 amount1Delta,\n        bytes calldata data\n    ) external;\n}\n"
+    },
+    "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol": {
+      "content": "// SPDX-License-Identifier: GPL-2.0-or-later\npragma solidity >=0.7.5;\npragma abicoder v2;\n\nimport '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';\n\n/// @title Router token swapping functionality\n/// @notice Functions for swapping tokens via Uniswap V3\ninterface ISwapRouter is IUniswapV3SwapCallback {\n    struct ExactInputSingleParams {\n        address tokenIn;\n        address tokenOut;\n        uint24 fee;\n        address recipient;\n        uint256 deadline;\n        uint256 amountIn;\n        uint256 amountOutMinimum;\n        uint160 sqrtPriceLimitX96;\n    }\n\n    /// @notice Swaps `amountIn` of one token for as much as possible of another token\n    /// @param params The parameters necessary for the swap, encoded as `ExactInputSingleParams` in calldata\n    /// @return amountOut The amount of the received token\n    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);\n\n    struct ExactInputParams {\n        bytes path;\n        address recipient;\n        uint256 deadline;\n        uint256 amountIn;\n        uint256 amountOutMinimum;\n    }\n\n    /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path\n    /// @param params The parameters necessary for the multi-hop swap, encoded as `ExactInputParams` in calldata\n    /// @return amountOut The amount of the received token\n    function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);\n\n    struct ExactOutputSingleParams {\n        address tokenIn;\n        address tokenOut;\n        uint24 fee;\n        address recipient;\n        uint256 deadline;\n        uint256 amountOut;\n        uint256 amountInMaximum;\n        uint160 sqrtPriceLimitX96;\n    }\n\n    /// @notice Swaps as little as possible of one token for `amountOut` of another token\n    /// @param params The parameters necessary for the swap, encoded as `ExactOutputSingleParams` in calldata\n    /// @return amountIn The amount of the input token\n    function exactOutputSingle(ExactOutputSingleParams calldata params) external payable returns (uint256 amountIn);\n\n    struct ExactOutputParams {\n        bytes path;\n        address recipient;\n        uint256 deadline;\n        uint256 amountOut;\n        uint256 amountInMaximum;\n    }\n\n    /// @notice Swaps as little as possible of one token for `amountOut` of another along the specified path (reversed)\n    /// @param params The parameters necessary for the multi-hop swap, encoded as `ExactOutputParams` in calldata\n    /// @return amountIn The amount of the input token\n    function exactOutput(ExactOutputParams calldata params) external payable returns (uint256 amountIn);\n}\n"
+    },
+    "contracts/weiroll-helpers/UniV3RouterCall.sol": {
+      "content": "// SPDX-License-Identifier: BlueOak-1.0.0\npragma solidity 0.8.17;\nimport { ISwapRouter } from \"@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol\";\n\ncontract UniV3RouterCall {\n    function exactInputSingle(\n        uint256 amountIn,\n        uint256 _expected,\n        address router,\n        bytes calldata encodedRouterCall\n    ) external returns (uint256) {\n        (ISwapRouter.ExactInputSingleParams memory decodedCall) = abi.decode(\n            encodedRouterCall,\n            (ISwapRouter.ExactInputSingleParams)\n        );\n        decodedCall.amountIn = amountIn;\n        decodedCall.amountOutMinimum = _expected;\n        return ISwapRouter(router).exactInputSingle(decodedCall);\n    }\n\n    function exactInput(\n        uint256 amountIn,\n        uint256 _expected,\n        address router,\n        bytes calldata encodedRouterCall\n    ) external returns (uint256) {\n        (ISwapRouter.ExactInputParams memory decodedCall) = abi.decode(\n            encodedRouterCall,\n            (ISwapRouter.ExactInputParams)\n        );\n        decodedCall.amountIn = amountIn;\n        decodedCall.amountOutMinimum = _expected;\n        return ISwapRouter(router).exactInput(decodedCall);\n    }\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

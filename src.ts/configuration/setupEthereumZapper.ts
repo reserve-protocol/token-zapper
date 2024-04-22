@@ -19,6 +19,7 @@ import { convertWrapperTokenAddressesIntoWrapperTokenPairs } from './convertWrap
 import wrappedToUnderlyingMapping from './data/ethereum/underlying.json'
 import { setupSAV3Token } from './setupSAV3Tokens'
 import { setupUniswapRouter } from './setupUniswapRouter'
+import { RouterAction } from '../action/RouterAction'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
@@ -185,7 +186,26 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     )
   )
 
-  await setupUniswapRouter(universe)
+  const uni = await setupUniswapRouter(universe)
+
+  // const internallyTradeableTokens = [
+  //   universe.commonTokens.DAI,
+  //   universe.commonTokens.USDC,
+  //   // universe.commonTokens.USDT,
+  //   // universe.commonTokens.WETH,
+  //   // universe.commonTokens.WBTC,
+  //   universe.commonTokens.reth,
+  //   universe.commonTokens.steth
+  // ]
+
+  // for(const input of internallyTradeableTokens) {
+  //   for(const output of internallyTradeableTokens) {
+  //     if(input === output) {
+  //       continue
+  //     }
+  //     uni.addTradeAction(input, output)
+  //   }
+  // }
 
   return {
     curve,

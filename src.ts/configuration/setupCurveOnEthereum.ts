@@ -116,7 +116,7 @@ export const initCurveOnEthereum = async (
   const makeStkConvexSourcingRule =
     (depositAndStake: Action): SourcingRule =>
     async (input, unitAmount) => {
-      const lpTokenQty = unitAmount.into(depositAndStake.input[0])
+      const lpTokenQty = unitAmount.into(depositAndStake.inputToken[0])
       if (stables.has(input)) {
         return BasketTokenSourcingRuleApplication.singleBranch(
           [lpTokenQty],

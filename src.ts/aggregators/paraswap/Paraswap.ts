@@ -1,5 +1,5 @@
 import { ParaSwap, NetworkID, APIError, Transaction } from "paraswap";
-import { DexAggregator } from "../DexAggregator";
+import { DexRouter } from "../DexAggregator";
 import { SwapPlan } from "../../searcher/Swap";
 import { Universe } from "../..";
 import { OptimalRate } from "paraswap-core";
@@ -19,7 +19,7 @@ export const createParaswap = (
   )
 
 
-  return new DexAggregator(
+  return new DexRouter(
     aggregatorName,
     async (_, destination, input, output, slippage) => {
       let rate = await client.getRate(

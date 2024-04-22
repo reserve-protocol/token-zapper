@@ -115,6 +115,7 @@ export const ethereumConfig = makeConfig(
     balanceOf: '0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D',
     curveRouterCall: '0xA18ad6dCb6B217A4c3810f865f5eEf45570024dc',
     ethBalanceOf: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
+    uniV3Router: '0x32F59e2881e1DC9a808DE8C37545FE33F2B617A9'
   }
 )
 

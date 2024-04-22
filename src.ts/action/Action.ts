@@ -108,11 +108,6 @@ export abstract class Action {
     const outputs = await this.quote(amountsIn)
     balances.exchange(amountsIn, outputs)
   }
-  abstract encode(
-    amountsIn: TokenQuantity[],
-    destination: Address,
-    bytes?: Buffer
-  ): Promise<ContractCall>
 
   abstract plan(
     planner: gen.Planner,

@@ -8,6 +8,7 @@ import { TokenLoader, makeTokenLoader } from './entities/makeTokenLoader'
 import { type Config } from './configuration/ChainConfiguration'
 import { DefaultMap } from './base/DefaultMap'
 import { type PriceOracle } from './oracles/PriceOracle'
+import { LPTokenPriceOracle } from './oracles/LPTokenPriceOracle'
 import { Refreshable } from './entities/Refreshable'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
 import { LPToken } from './action/LPToken'
@@ -215,11 +216,19 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   public defineLPToken(lpTokenInstance: LPToken) {
     this.lpTokens.set(lpTokenInstance.token, lpTokenInstance)
-    this.defineMintable(
-      lpTokenInstance.mintAction,
-      lpTokenInstance.burnAction,
-      true
-    )
+    this.addAction(lpTokenInstance.mintAction)
+    // this.defineMintable(
+    //   lpTokenInstance.mintAction,
+    //   lpTokenInstance.burnAction,
+    //   true
+    // )
+  }
+
+  get execAddress() {
+    return this.config.addresses.executorAddress
+  }
+  get zapperAddress() {
+    return this.config.addresses.zapperAddress
   }
 
   public defineMintable(
@@ -283,7 +292,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   private constructor(
-    public readonly provider: ethers.providers.Provider,
+    public readonly provider: ethers.providers.JsonRpcProvider,
     public readonly config: UniverseConf,
     public readonly approvalsStore: ApprovalsStore,
     public readonly loadToken: TokenLoader
@@ -317,7 +326,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   static async createWithConfig<const C extends Config>(
-    provider: ethers.providers.Provider,
+    provider: ethers.providers.JsonRpcProvider,
     config: C,
     initialize: (universe: Universe<C>) => Promise<void>,
     opts: Partial<{
@@ -331,6 +340,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       opts.approvalsStore ?? new ApprovalsStore(provider),
       opts.tokenLoader ?? makeTokenLoader(provider)
     )
+    universe.oracles.push(new LPTokenPriceOracle(universe))
 
     initialize(universe).then(() => {
       universe._finishResolving()

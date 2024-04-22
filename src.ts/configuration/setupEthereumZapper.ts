@@ -18,6 +18,7 @@ import { type EthereumUniverse, PROTOCOL_CONFIGS } from './ethereum'
 import { convertWrapperTokenAddressesIntoWrapperTokenPairs } from './convertWrapperTokenAddressesIntoWrapperTokenPairs'
 import wrappedToUnderlyingMapping from './data/ethereum/underlying.json'
 import { setupSAV3Token } from './setupSAV3Tokens'
+import { setupUniswapRouter } from './setupUniswapRouter'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
@@ -183,6 +184,8 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       setupSAV3Token(universe, wrappedToken, underlying)
     )
   )
+
+  await setupUniswapRouter(universe)
 
   return {
     curve,

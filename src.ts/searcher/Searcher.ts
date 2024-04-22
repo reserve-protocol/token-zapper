@@ -114,8 +114,10 @@ export class Searcher<
       basketUnit,
       this
     )
-    // console.log(precursorTokens.describe().join("\n"))
-    // console.log(precursorTokens.precursorToTradeFor.join(", "))
+    // console.log(precursorTokens.describe().join('\n'))
+    console.log(
+      'precursor tokens: ' + precursorTokens.precursorToTradeFor.join(', ')
+    )
 
     /**
      * PHASE 2: Trade inputQuantity into precursor set
@@ -302,7 +304,7 @@ export class Searcher<
     if (mintBurnActions == null) {
       throw new Error('Token has no mint/burn actions')
     }
-    const output = await mintBurnActions.burn.quoteWithSlippage([qty])
+    await mintBurnActions.burn.quoteWithSlippage([qty])
     const plan = new SwapPlan(this.universe, [mintBurnActions.burn])
     const swap = (
       await plan.quote([qty], this.universe.config.addresses.executorAddress)
@@ -623,6 +625,11 @@ export class Searcher<
         }
       })
     )
+    console.log(
+      results.map(
+        (i) => `v: ${i.quote.swaps.outputValue} c: ${i.cost.txFeeUsd}`
+      )
+    )
     results.sort((l, r) => -l.netValue.compare(r.netValue))
 
     return results[0].quote
@@ -671,7 +678,6 @@ export class Searcher<
     await rTokenMint.exchange(tradingBalances)
 
     const output = tradingBalances.toTokenQuantities()
-
     const parts = {
       trading: inputQuantityToBasketTokens.trading,
       minting: inputQuantityToBasketTokens.minting,
@@ -705,6 +711,7 @@ export class Searcher<
     const allowAggregatorSearch =
       this.universe.wrappedTokens.get(output)?.allowAggregatorSearcher ?? true
     if (!allowAggregatorSearch || this.universe.lpTokens.has(output)) {
+      // console.log('External quoter disabled for ' + output.toString())
       return []
     }
     const executorAddress = this.universe.config.addresses.executorAddress
@@ -721,14 +728,6 @@ export class Searcher<
 
           return out
         } catch (e) {
-          this.universe.emitEvent({
-            type: 'aggregator-quote-failed',
-            params: {
-              aggregator: router.name,
-              from: input.token.symbol.toString(),
-              to: output.symbol.toString(),
-            },
-          })
           return null!
         }
       })
@@ -742,7 +741,7 @@ export class Searcher<
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 2
+    maxHops: number = 4
   ): Promise<SwapPath[]> {
     const bfsResult = bfs(
       this.universe,
@@ -799,7 +798,7 @@ export class Searcher<
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 2
+    maxHops: number = 4
   ): Promise<SwapPath[]> {
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {
@@ -822,18 +821,20 @@ export class Searcher<
       })
     )
     quotes.sort((l, r) => -l.netValue.compare(r.netValue))
-    // console.log("Quotes for " + input.toString() + " -> " + output.toString())
-    // console.log(
-    //   quotes.map(i => {
-    //     let out = " - " + i.quote.toString() + "\n"
-    //     out    += "   output: " + i.quote.outputValue + "\n"
-    //     out    += "   cost: -" + i.cost.txFee.toString() + "\n"
-    //     out    += "   cost: -" + i.cost.txFeeUsd.toString() + "\n"
-    //     out    += "   net: " + i.netValue + "\n"
-    //     return out
-    //   }).join("\n")
-    // )
-    // console.log("")
+    console.log('Quotes for ' + input.toString() + ' -> ' + output.toString())
+    console.log(
+      quotes
+        .map((i) => {
+          let out = ' - ' + i.quote.toString() + '\n'
+          out += '   output: ' + i.quote.outputValue + '\n'
+          out += '   cost: -' + i.cost.txFee.toString() + '\n'
+          out += '   cost: -' + i.cost.txFeeUsd.toString() + '\n'
+          out += '   net: ' + i.netValue + '\n'
+          return out
+        })
+        .join('\n')
+    )
+    console.log('')
     return quotes.map((i) => i.quote)
   }
 }

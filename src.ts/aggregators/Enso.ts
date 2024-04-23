@@ -42,6 +42,10 @@ const encodeToken = (universe: Universe, token: Token) => {
   }
   return token.address.address.toLowerCase()
 }
+
+const specialCasesLongTimeout = new Set([
+  '0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f',
+])
 const getEnsoQuote_ = async (
   slippage: number,
   universe: Universe,
@@ -56,10 +60,14 @@ const getEnsoQuote_ = async (
   const GET_QUOTE_DATA = `${API_ROOT}?chainId=${universe.chainId}&slippage=${slippage}&fromAddress=${execAddr}&routingStrategy=router&priceImpact=false&spender=${execAddr}`
   const reqUrl = `${GET_QUOTE_DATA}&receiver=${execAddr}&amountIn=${quantityIn.amount.toString()}&tokenIn=${inputTokenStr}&tokenOut=${outputTokenStr}`
 
+  let timeout = 2000
+  if (specialCasesLongTimeout.has(inputTokenStr)) {
+    timeout = 6000
+  }
   const quote: EnsoQuote = await (
     await fetch(reqUrl, {
       method: 'GET',
-      signal: AbortSignal.timeout(2000),
+      signal: AbortSignal.timeout(timeout),
       headers: {
         'Content-Type': 'application/json',
       },

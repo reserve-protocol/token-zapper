@@ -13,6 +13,7 @@ import {
 import { type SourcingRule } from '../searcher/SourcingRule'
 import { type EthereumUniverse } from './ethereum'
 import { DexAggregator } from '..'
+import { setupCurveStableSwapNGPool } from '../action/CurveStableSwapNG'
 
 export {
   BasketTokenSourcingRuleApplication,
@@ -135,14 +136,28 @@ export const initCurveOnEthereum = async (
       )
     }
 
-  const [/*eUSDConvexOld,*/ eUSDConvexNew, mimConvex, threeCryptoConvex] =
-    await Promise.all([
-      setupConvexEdge(universe, stkcvxeUSD3CRV_NEW, convexBoosterAddress),
-      setupConvexEdge(universe, stkcvxMIM3LP3CRV, convexBoosterAddress),
-      setupConvexEdge(universe, stkcvx3Crv, convexBoosterAddress),
+  const pyUSDCPool = await setupCurveStableSwapNGPool(
+    universe,
+    universe.commonTokens.PYUSDUSDC
+  )
 
-      // setupConvexEdge(universe, stkcvxeUSD3CRV_OLD, convexBoosterAddress),
-    ])
+  const [
+    /*eUSDConvexOld,*/ eUSDConvexNew,
+    mimConvex,
+    threeCryptoConvex,
+    pyUSDCPoolConvex,
+  ] = await Promise.all([
+    setupConvexEdge(universe, stkcvxeUSD3CRV_NEW, convexBoosterAddress),
+    setupConvexEdge(universe, stkcvxMIM3LP3CRV, convexBoosterAddress),
+    setupConvexEdge(universe, stkcvx3Crv, convexBoosterAddress),
+    setupConvexEdge(
+      universe,
+      universe.commonTokens.stkcvxPYUSDUSDC,
+      convexBoosterAddress
+    ),
+
+    // setupConvexEdge(universe, stkcvxeUSD3CRV_OLD, convexBoosterAddress),
+  ])
 
   // universe.defineTokenSourcingRule(
   //   universe.rTokens.hyUSD,
@@ -156,19 +171,16 @@ export const initCurveOnEthereum = async (
   // )
 
   universe.defineTokenSourcingRule(
-    universe.rTokens.hyUSD,
     stkcvxeUSD3CRV_NEW,
     makeStkConvexSourcingRule(eUSDConvexNew.depositAndStakeAction)
   )
 
   universe.defineTokenSourcingRule(
-    universe.rTokens.hyUSD,
     stkcvxMIM3LP3CRV,
     makeStkConvexSourcingRule(mimConvex.depositAndStakeAction)
   )
 
   universe.defineTokenSourcingRule(
-    universe.rTokens.iUSD,
     stkcvx3Crv,
     makeStkConvexSourcingRule(threeCryptoConvex.depositAndStakeAction)
   )
@@ -183,6 +195,30 @@ export const initCurveOnEthereum = async (
       }
       throw new Error('Unsupported trade')
     })
+  )
+
+  universe.defineTokenSourcingRule(
+    universe.commonTokens.stkcvxPYUSDUSDC,
+    async (input, unitAmount) => {
+      const depositAndStake = pyUSDCPoolConvex.depositAndStakeAction
+      if (input === pyUSDCPool.pool) {
+        return BasketTokenSourcingRuleApplication.singleBranch(
+          [unitAmount],
+          [PostTradeAction.fromAction(depositAndStake)]
+        )
+      }
+      const precursor = pyUSDCPool.underlying.includes(input) ? input : USDC
+      return BasketTokenSourcingRuleApplication.singleBranch(
+        [unitAmount.into(precursor)],
+        [
+          PostTradeAction.fromAction(
+            pyUSDCPool.getAddLiquidityAction(input),
+            true // Cause the Zapper to recalculate the inputs of the mints for the next step
+          ),
+          PostTradeAction.fromAction(depositAndStake),
+        ]
+      )
+    }
   )
 
   return {

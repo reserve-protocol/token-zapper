@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as compv3Sol from "./Compv3.sol";
+export * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
 export * as icTokenSol from "./ICToken.sol";
 export * as irTokenZapperSol from "./IRTokenZapper.sol";
 export * as isav3TokenSol from "./ISAV3Token.sol";
@@ -17,6 +18,7 @@ export { IBasketHandler__factory } from "./IBasketHandler__factory";
 export { IBooster__factory } from "./IBooster__factory";
 export { IChainLinkFeedRegistry__factory } from "./IChainLinkFeedRegistry__factory";
 export { IConvexBaseRewardsPool__factory } from "./IConvexBaseRewardsPool__factory";
+export { IConvexStakingWrapper__factory } from "./IConvexStakingWrapper__factory";
 export { IConvexWrapper__factory } from "./IConvexWrapper__factory";
 export { IEACAggregatorProxy__factory } from "./IEACAggregatorProxy__factory";
 export { IMain__factory } from "./IMain__factory";

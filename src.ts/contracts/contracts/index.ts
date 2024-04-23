@@ -3,6 +3,8 @@
 /* eslint-disable */
 import type * as compv3Sol from "./Compv3.sol";
 export type { compv3Sol };
+import type * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
+export type { curveStableSwapNgSol };
 import type * as icTokenSol from "./ICToken.sol";
 export type { icTokenSol };
 import type * as irTokenZapperSol from "./IRTokenZapper.sol";
@@ -27,6 +29,7 @@ export type { IBasketHandler } from "./IBasketHandler";
 export type { IBooster } from "./IBooster";
 export type { IChainLinkFeedRegistry } from "./IChainLinkFeedRegistry";
 export type { IConvexBaseRewardsPool } from "./IConvexBaseRewardsPool";
+export type { IConvexStakingWrapper } from "./IConvexStakingWrapper";
 export type { IConvexWrapper } from "./IConvexWrapper";
 export type { IEACAggregatorProxy } from "./IEACAggregatorProxy";
 export type { IMain } from "./IMain";

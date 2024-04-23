@@ -47,6 +47,7 @@ export const baseConfig = makeConfig(
     curveRouterCall: '0x1A7F7C1b870ad69D19a899B2A3BA6EBEea77033f',
     ethBalanceOf: '0x858b62D160788864c65222d7a3777a19B370Abd8',
     uniV3Router: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
+    curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
   }
 )
 

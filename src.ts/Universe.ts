@@ -64,10 +64,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
   }
 
-  public readonly precursorTokenSourcingSpecialCases = new DefaultMap<
+  public readonly precursorTokenSourcingSpecialCases = new Map<
     Token,
-    Map<Token, SourcingRule>
-  >(() => new Map())
+    SourcingRule
+  >()
   public readonly actions = new DefaultMap<Address, Action[]>(() => [])
   private readonly allActions = new Set<Action>()
 
@@ -127,11 +127,10 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   public defineTokenSourcingRule(
-    rToken: Token,
     precursor: Token,
     rule: SourcingRule
   ) {
-    this.precursorTokenSourcingSpecialCases.get(rToken).set(precursor, rule)
+    this.precursorTokenSourcingSpecialCases.set(precursor, rule)
   }
 
   /**

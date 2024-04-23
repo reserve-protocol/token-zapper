@@ -29,6 +29,7 @@ export const makeConfig = <
     curveRouterCall: string
     ethBalanceOf: string
     uniV3Router: string
+    curveStableSwapNGHelper: string
 
   }
 ) => {

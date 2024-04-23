@@ -598,6 +598,51 @@ export class Searcher<
     userInput: TokenQuantity,
     rToken: Token,
     signerAddress: Address,
+    slippage = 0.0
+  ) {
+    await this.universe.initialized
+    const [mintResults, tradeResults] = await Promise.all([
+      this.findTokenZapViaIssueance(
+        userInput,
+        rToken,
+        signerAddress,
+        slippage
+      ).catch(() => [] as BaseSearcherResult[]),
+      this.findTokenZapViaTrade(
+        userInput,
+        rToken,
+        signerAddress,
+        slippage
+      ).catch(() => [] as BaseSearcherResult[]),
+    ] as const).then(([mintResults, tradeResults]) => {
+      if (mintResults.length === 0 && tradeResults.length === 0) {
+        throw new Error('No results')
+      }
+      return [mintResults, tradeResults] as const
+    })
+
+    const results = await Promise.all(
+      [...mintResults, ...tradeResults].map(async (i) => {
+        return {
+          quote: i,
+          cost: await i.swaps.cost(this.universe),
+          netValue: await i.swaps.netValue(this.universe),
+        }
+      })
+    )
+    console.log(
+      results.map(
+        (i) => `v: ${i.quote.swaps.outputValue} c: ${i.cost.txFeeUsd}`
+      )
+    )
+    results.sort((l, r) => -l.netValue.compare(r.netValue))
+    return results[0]
+  }
+
+  public async findSingleInputToRTokenZapTx(
+    userInput: TokenQuantity,
+    rToken: Token,
+    signerAddress: Address,
     slippage = 0.0,
     toTxArgs: ToTransactionArgs = {}
   ) {

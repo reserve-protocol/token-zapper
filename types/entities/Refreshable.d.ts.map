@@ -1,0 +1,1 @@
+{"version":3,"file":"Refreshable.d.ts","sourceRoot":"","sources":["../../src.ts/entities/Refreshable.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,OAAO,EAAE,MAAM,iBAAiB,CAAA;AAE9C,qBAAa,WAAW;aAIJ,OAAO,EAAE,OAAO;IAEhC,OAAO,CAAC,QAAQ,CAAC,cAAc;IALjC,UAAU,SAAK;gBAGG,OAAO,EAAE,OAAO,EAChC,YAAY,EAAE,MAAM,EACH,cAAc,EAAE,MAAM,OAAO,CAAC,IAAI,CAAC;IAKhD,OAAO,CAAC,KAAK,EAAE,MAAM;CAO5B"}

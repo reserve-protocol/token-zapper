@@ -698,11 +698,16 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
     }
 
     for (const path of this.parts.tradesToOutput) {
-      const input = tokens.get(path.inputs[0].token)!
+      const input = plannerUtils.erc20.balanceOf(
+        this.universe,
+        this.planner,
+        path.steps[0].inputs[0].token,
+        executorAddress
+      )
       for (const step of path.steps) {
         const out = await step.action.plan(
           this.planner,
-          input,
+          [input],
           executorAddress,
           step.inputs
         )

@@ -49,7 +49,7 @@ import { utils } from 'ethers'
 import NodeCache from 'node-cache'
 import { RouterAction } from '../action/RouterAction'
 import { SwapPlan } from '../searcher/Swap'
-const SLIPPAGE = new Percent(50, 10000)
+const SLIPPAGE = new Percent(100, 10000)
 
 export class UniswapRouterAction extends Action {
   get outputSlippage(): bigint {

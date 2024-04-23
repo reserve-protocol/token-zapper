@@ -547,7 +547,7 @@ export abstract class BaseSearcherResult {
       })
       const data = this.encodeCall(options, params)
       const tx = this.encodeTx(data, 300000n)
-      // console.log(printPlan(this.planner, this.universe).join('\n'))
+      console.log(printPlan(this.planner, this.universe).join('\n'))
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
       let dust = this.potentialResidualTokens.map((qty) => qty)

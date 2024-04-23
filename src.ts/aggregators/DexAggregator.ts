@@ -14,7 +14,11 @@ export class DexRouter {
     public readonly name: string,
     private readonly swap_: SwapSignature,
     public readonly dynamicInput: boolean = false
-  ) {}
+  ) {
+    setInterval(() => {
+      this.cache.clear()
+    }, 400)
+  }
 
   public readonly swap: SwapSignature = async (
     src,

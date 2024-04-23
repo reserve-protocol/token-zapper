@@ -1,6 +1,5 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { TransactionRequest } from '@ethersproject/providers'
-import { type PermitTransferFrom } from '@uniswap/permit2-sdk'
 import { constants } from 'ethers'
 import { ParamType, defaultAbiCoder, formatEther } from 'ethers/lib/utils'
 import {
@@ -37,6 +36,7 @@ import { DefaultMap } from '../base/DefaultMap'
 import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory'
 import { Searcher } from './Searcher'
 import { wait } from '../base/controlflow'
+import { ToTransactionArgs } from './ToTransactionArgs'
 
 const simulationUrls: Record<number, string | undefined> = {
   8453: 'https://resbasesimulator.mig2151.workers.dev',
@@ -103,17 +103,6 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
 
   return [out, balances, allApprovals] as const
 }
-type ToTransactionArgs = Partial<{
-  returnDust: boolean
-  maxIssueance?: boolean
-  outputSlippage?: bigint
-  gasLimit?: number
-  permit2: {
-    permit: PermitTransferFrom
-    signature: string
-  }
-}>
-
 export class ThirdPartyIssue extends Error {
   constructor(public readonly msg: string) {
     super(msg)
@@ -494,50 +483,6 @@ export abstract class BaseSearcherResult {
   }
 
   abstract toTransaction(options: ToTransactionArgs): Promise<ZapTransaction>
-
-  public async toTransactionWithRetry(opts: ToTransactionArgs) {
-    let root: BaseSearcherResult = this
-    for (let i = 0; i < 3; i++) {
-      try {
-        // console.log('To transaction')
-        return await root.toTransaction(opts)
-      } catch (e) {
-        if (i == 3 || e instanceof ThirdPartyIssue) {
-          console.log(
-            printPlan(this.planner, this.universe)
-              .map((i) => '  ' + i)
-              .join('\n')
-          )
-          throw e
-        }
-        await wait(300)
-        const [block, gas] = await Promise.all([
-          this.universe.provider.getBlockNumber(),
-          this.universe.provider.getGasPrice().then((i) => i.toBigInt()),
-        ])
-        await this.universe.updateBlockState(block, gas)
-        const toRToken =
-          (this.universe.rTokens as Record<string, Token>)[
-            this.outputToken.symbol
-          ] != null
-        const searcher = this.universe.searcher
-        if (toRToken) {
-          root = await searcher.findSingleInputToRTokenZap(
-            this.userInput,
-            this.outputToken,
-            this.signer
-          )
-        } else {
-          root = await searcher.findRTokenIntoSingleTokenZap(
-            this.userInput,
-            this.outputToken,
-            this.signer
-          )
-        }
-      }
-    }
-    throw new Error('Failed to create transaction')
-  }
 
   async createZapTransaction(options: ToTransactionArgs) {
     try {

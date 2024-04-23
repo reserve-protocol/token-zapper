@@ -15,7 +15,9 @@ import {
   TradeSearcherResult,
 } from './SearcherResult'
 import { SingleSwap, SwapPath, SwapPaths, SwapPlan } from './Swap'
+import { ToTransactionArgs } from './ToTransactionArgs'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
+import { ZapTransaction } from './ZapTransaction'
 
 const whitelist = new Set([
   '0xa0d69e286b938e21cbf7e51d71f6a4c8918f482f',
@@ -596,8 +598,9 @@ export class Searcher<
     userInput: TokenQuantity,
     rToken: Token,
     signerAddress: Address,
-    slippage = 0.0
-  ): Promise<BaseSearcherResult> {
+    slippage = 0.0,
+    toTxArgs: ToTransactionArgs = {}
+  ) {
     await this.universe.initialized
     const [mintResults, tradeResults] = await Promise.all([
       this.findTokenZapViaIssueance(
@@ -605,14 +608,14 @@ export class Searcher<
         rToken,
         signerAddress,
         slippage
-      ).catch(() => []),
+      ).catch(() => [] as BaseSearcherResult[]),
       this.findTokenZapViaTrade(
         userInput,
         rToken,
         signerAddress,
         slippage
-      ).catch(() => []),
-    ]).then(([mintResults, tradeResults]) => {
+      ).catch(() => [] as BaseSearcherResult[]),
+    ] as const).then(([mintResults, tradeResults]) => {
       if (mintResults.length === 0 && tradeResults.length === 0) {
         throw new Error('No results')
       }
@@ -634,8 +637,54 @@ export class Searcher<
       )
     )
     results.sort((l, r) => -l.netValue.compare(r.netValue))
+    const txes: {
+      searchResult: BaseSearcherResult
+      tx: ZapTransaction | null
+      error: any
+    }[] = await Promise.all(
+      results.slice(0, 3).map((searchResult) =>
+        searchResult.quote
+          .toTransaction(toTxArgs)
+          .then((tx) => ({
+            searchResult: searchResult.quote,
+            tx: tx,
+            error: null,
+          }))
+          .catch((error: any) => ({
+            searchResult: searchResult.quote,
+            tx: null,
+            error: error,
+          }))
+      )
+    )
+    if (txes.length === 0) {
+      console.log('No results')
+      throw new Error('No results')
+    }
 
-    return results[0].quote
+    const notFailed = await Promise.all(
+      txes
+        .filter((i) => i.tx != null)
+        .map(async (i) => {
+          return {
+            SearcherResult: i.searchResult,
+            tx: i.tx!,
+            value: await i.tx!.computeValue(),
+          }
+        })
+    )
+
+    if (notFailed.length === 0) {
+      throw new Error(txes[0].error!)
+    }
+
+    notFailed.sort((l, r) => -l.value.netUSD.compare(r.value.netUSD))
+
+    console.log(
+      notFailed.map((i) => `v: ${i.value.sumUSD} c: ${i.value.txFeeUSD}`)
+    )
+
+    return notFailed[0]
   }
 
   private async findSingleInputToRTokenZap_(
@@ -715,7 +764,6 @@ export class Searcher<
     const allowAggregatorSearch =
       this.universe.wrappedTokens.get(output)?.allowAggregatorSearcher ?? true
     if (!allowAggregatorSearch || this.universe.lpTokens.has(output)) {
-      // console.log('External quoter disabled for ' + output.toString())
       return []
     }
     const executorAddress = this.universe.config.addresses.executorAddress

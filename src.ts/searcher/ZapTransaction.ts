@@ -35,6 +35,29 @@ export class ZapTransaction {
     return gasPrice * this.gasEstimate
   }
 
+  public async computeValue() {
+    const outputPrices = this.output.map(async (o) => {
+      return (await this.universe.fairPrice(o)) ?? this.universe.usd.zero
+    })
+    const sumUSD = (await Promise.all(outputPrices)).reduce(
+      (a, b) => a.add(b),
+      this.universe.usd.zero
+    )
+    const txFee = this.universe.nativeToken.from(
+      this.feeEstimate(this.universe.gasPrice)
+    )
+    const txFeeUSD =
+      (await this.universe.fairPrice(txFee)) ?? this.universe.usd.zero
+
+    return {
+      tx: this,
+      sumUSD,
+      txFee,
+      txFeeUSD,
+      netUSD: sumUSD.sub(txFeeUSD),
+    }
+  }
+
   toString() {
     return `ZapTransaction(input:${this.input.formatWithSymbol()},outputs:[${this.output
       .map((i) => i.formatWithSymbol())

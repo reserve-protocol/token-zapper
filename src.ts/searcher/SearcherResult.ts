@@ -237,15 +237,15 @@ export abstract class BaseSearcherResult {
       )
     }
 
-    // console.log(
-    //   JSON.stringify({
-    //     data,
-    //     value: value.toString(),
-    //     address: this.universe.zapperAddress.address,
-    //     from: this.signer.address,
-    //     block: this.blockNumber,
-    //   })
-    // )
+    console.log(
+      JSON.stringify({
+        data,
+        value: value.toString(),
+        address: this.universe.zapperAddress.address,
+        from: this.signer.address,
+        block: this.blockNumber,
+      })
+    )
     throw new Error('Failed to simulate')
   }
 
@@ -296,6 +296,7 @@ export abstract class BaseSearcherResult {
       )
         .json()
         .then((a: { data: string; error?: string }) => {
+          // console.log(a)
           if (a.error != null) {
             throw new Error(a.error)
           }
@@ -498,7 +499,7 @@ export abstract class BaseSearcherResult {
     let root: BaseSearcherResult = this
     for (let i = 0; i < 3; i++) {
       try {
-        console.log('To transaction')
+        // console.log('To transaction')
         return await root.toTransaction(opts)
       } catch (e) {
         if (i == 3 || e instanceof ThirdPartyIssue) {

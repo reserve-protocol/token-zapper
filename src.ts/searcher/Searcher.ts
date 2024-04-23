@@ -46,7 +46,7 @@ export const findPrecursorTokenSet = async (
   unitBasket: TokenQuantity[],
   searcher: Searcher<UniverseWithERC20GasTokenDefined>
 ) => {
-  const specialRules = universe.precursorTokenSourcingSpecialCases.get(rToken)
+  const specialRules = universe.precursorTokenSourcingSpecialCases
   const basketTokenApplications: BasketTokenSourcingRuleApplication[] = []
 
   const recourseOn = async (

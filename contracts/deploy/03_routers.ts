@@ -7,6 +7,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
   })
   console.log('uniV3RouterCall deployed to:', uniV3RouterCall.address)
+
+  const CurveStableSwapNGHelper = await hre.deployments.deploy(
+    'CurveStableSwapNGHelper',
+    {
+      from: deployer,
+    }
+  )
+  console.log(
+    'CurveStableSwapNGHelper deployed to:',
+    CurveStableSwapNGHelper.address
+  )
 }
-func.tags = ["routers"]
+func.tags = ['routers']
 export default func

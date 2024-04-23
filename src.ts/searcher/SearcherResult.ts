@@ -226,18 +226,26 @@ export abstract class BaseSearcherResult {
         console.error('Stargate staking contract out of funds.. Aborting')
         throw new ThirdPartyIssue('Stargate out of funds')
       }
-      console.log(e)
+
+      console.log(
+        'error:',
+        e.message,
+        'Failing program:',
+        printPlan(this.planner, this.universe)
+          .map((i) => '  ' + i)
+          .join('\n')
+      )
     }
 
-    console.log(
-      JSON.stringify({
-        data,
-        value: value.toString(),
-        address: this.universe.zapperAddress.address,
-        from: this.signer.address,
-        block: this.blockNumber,
-      })
-    )
+    // console.log(
+    //   JSON.stringify({
+    //     data,
+    //     value: value.toString(),
+    //     address: this.universe.zapperAddress.address,
+    //     from: this.signer.address,
+    //     block: this.blockNumber,
+    //   })
+    // )
     throw new Error('Failed to simulate')
   }
 
@@ -490,7 +498,8 @@ export abstract class BaseSearcherResult {
     let root: BaseSearcherResult = this
     for (let i = 0; i < 3; i++) {
       try {
-        return root.toTransaction(opts)
+        console.log('To transaction')
+        return await root.toTransaction(opts)
       } catch (e) {
         if (i == 3 || e instanceof ThirdPartyIssue) {
           console.log(
@@ -500,7 +509,7 @@ export abstract class BaseSearcherResult {
           )
           throw e
         }
-        await wait(50)
+        await wait(300)
         const [block, gas] = await Promise.all([
           this.universe.provider.getBlockNumber(),
           this.universe.provider.getGasPrice().then((i) => i.toBigInt()),
@@ -510,7 +519,7 @@ export abstract class BaseSearcherResult {
           (this.universe.rTokens as Record<string, Token>)[
             this.outputToken.symbol
           ] != null
-        const searcher = new Searcher(this.universe)
+        const searcher = this.universe.searcher
         if (toRToken) {
           root = await searcher.findSingleInputToRTokenZap(
             this.userInput,
@@ -537,7 +546,7 @@ export abstract class BaseSearcherResult {
       })
       const data = this.encodeCall(options, params)
       const tx = this.encodeTx(data, 300000n)
-      console.log(printPlan(this.planner, this.universe).join('\n'))
+      // console.log(printPlan(this.planner, this.universe).join('\n'))
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
       let dust = this.potentialResidualTokens.map((qty) => qty)

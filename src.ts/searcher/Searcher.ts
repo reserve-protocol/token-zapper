@@ -117,9 +117,9 @@ export class Searcher<
       this
     )
     // console.log(precursorTokens.describe().join('\n'))
-    console.log(
-      'precursor tokens: ' + precursorTokens.precursorToTradeFor.join(', ')
-    )
+    // console.log(
+    //   'precursor tokens: ' + precursorTokens.precursorToTradeFor.join(', ')
+    // )
 
     /**
      * PHASE 2: Trade inputQuantity into precursor set
@@ -514,16 +514,13 @@ export class Searcher<
     slippage = 0.0
   ): Promise<BaseSearcherResult[]> {
     await this.universe.initialized
-    const out = this.findSingleInputToRTokenZap_(
+    const out = await this.findSingleInputToRTokenZap_(
       userInput,
       rToken,
       signerAddress,
       slippage
-    ).then((i) => [i])
-
-    out.catch(console.error)
-
-    return out
+    )
+    return [out]
   }
 
   async findTokenZapViaTrade(
@@ -810,7 +807,6 @@ export class Searcher<
   ): Promise<SwapPath[]> {
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {
-      console.log('Special case for ' + output.toString())
       const out = await tradeSpecialCase(input, destination)
       if (out != null) {
         return [out]

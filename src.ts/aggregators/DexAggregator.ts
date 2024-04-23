@@ -1,6 +1,6 @@
 import { SwapPath } from '../searcher/Swap'
 import { type SwapSignature } from './SwapSignature'
-const TIMEOUT = 4000
+const TIMEOUT = 350
 export class DexRouter {
   private cache: Map<
     string,
@@ -23,7 +23,7 @@ export class DexRouter {
     output,
     slippage
   ) => {
-    const start = Date.now()
+    // const start = Date.now()
     const key = `${input.amount}.${input.token.address.address}.${output.address.address}`
     if (this.cache.has(key)) {
       const previous = (await this.cache.get(key))!
@@ -38,12 +38,12 @@ export class DexRouter {
       key,
       this.swap_(src, dst, input, output, slippage)
         .then((path) => {
-          const duration = Date.now() - start
-          console.log(
-            `${this.name} ${input} -> ${path.outputs.join(
-              ', '
-            )}: (${duration}ms)`
-          )
+          // const duration = Date.now() - start
+          // console.log(
+          //   `${this.name} ${input} -> ${path.outputs.join(
+          //     ', '
+          //   )}: (${duration}ms)`
+          // )
           return {
             path,
             timestamp: Date.now(),

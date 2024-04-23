@@ -27,11 +27,11 @@ export interface IStaticAV3TokenLMInterface extends utils.Interface {
   functions: {
     "deposit(uint256,address,uint16,bool)": FunctionFragment;
     "rate()": FunctionFragment;
-    "withdraw(uint256,address,address)": FunctionFragment;
+    "redeem(uint256,address,address,bool)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "deposit" | "rate" | "withdraw"
+    nameOrSignatureOrTopic: "deposit" | "rate" | "redeem"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -45,17 +45,18 @@ export interface IStaticAV3TokenLMInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "rate", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "withdraw",
+    functionFragment: "redeem",
     values: [
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<string>,
-      PromiseOrValue<string>
+      PromiseOrValue<string>,
+      PromiseOrValue<boolean>
     ]
   ): string;
 
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "rate", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
 
   events: {};
 }
@@ -97,10 +98,11 @@ export interface IStaticAV3TokenLM extends BaseContract {
 
     rate(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    withdraw(
-      assets: PromiseOrValue<BigNumberish>,
+    redeem(
+      shares: PromiseOrValue<BigNumberish>,
       receiver: PromiseOrValue<string>,
       owner: PromiseOrValue<string>,
+      withdrawFromAave: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -115,10 +117,11 @@ export interface IStaticAV3TokenLM extends BaseContract {
 
   rate(overrides?: CallOverrides): Promise<BigNumber>;
 
-  withdraw(
-    assets: PromiseOrValue<BigNumberish>,
+  redeem(
+    shares: PromiseOrValue<BigNumberish>,
     receiver: PromiseOrValue<string>,
     owner: PromiseOrValue<string>,
+    withdrawFromAave: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -133,10 +136,11 @@ export interface IStaticAV3TokenLM extends BaseContract {
 
     rate(overrides?: CallOverrides): Promise<BigNumber>;
 
-    withdraw(
-      assets: PromiseOrValue<BigNumberish>,
+    redeem(
+      shares: PromiseOrValue<BigNumberish>,
       receiver: PromiseOrValue<string>,
       owner: PromiseOrValue<string>,
+      withdrawFromAave: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
@@ -154,10 +158,11 @@ export interface IStaticAV3TokenLM extends BaseContract {
 
     rate(overrides?: CallOverrides): Promise<BigNumber>;
 
-    withdraw(
-      assets: PromiseOrValue<BigNumberish>,
+    redeem(
+      shares: PromiseOrValue<BigNumberish>,
       receiver: PromiseOrValue<string>,
       owner: PromiseOrValue<string>,
+      withdrawFromAave: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -173,10 +178,11 @@ export interface IStaticAV3TokenLM extends BaseContract {
 
     rate(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    withdraw(
-      assets: PromiseOrValue<BigNumberish>,
+    redeem(
+      shares: PromiseOrValue<BigNumberish>,
       receiver: PromiseOrValue<string>,
       owner: PromiseOrValue<string>,
+      withdrawFromAave: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

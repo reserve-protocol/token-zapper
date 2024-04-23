@@ -3,7 +3,7 @@ import { Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { IConvexWrapper__factory } from '../contracts/factories/contracts/IConvexWrapper__factory'
 import { IBooster__factory } from '../contracts/factories/contracts/IBooster__factory'
@@ -45,27 +45,10 @@ export class ConvexDepositAndStake extends Action {
     return `ConvexDepositAndStake(${this.convexPool})`
   }
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountIn.into(this.output[0])]
+    return [amountIn.into(this.outputToken[0])]
   }
   gasEstimate(): bigint {
     return 250000n
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        wrapperInterface.encodeFunctionData('deposit', [
-          amountsIn.amount,
-          destination.address,
-        ])
-      ),
-      this.convexPool.stakedConvexDepositToken.address,
-      0n,
-      this.gasEstimate(),
-      `Deposit ${amountsIn} on Convex and stake on ${this.convexPool.rewardsAddress}`
-    )
   }
   constructor(readonly universe: Universe, readonly convexPool: ConvexPool) {
     super(
@@ -103,23 +86,10 @@ export class ConvexUnstakeAndWithdraw extends Action {
     return `ConvexUnstakeAndWithdraw(${this.convexPool})`
   }
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountIn.into(this.output[0])]
+    return [amountIn.into(this.outputToken[0])]
   }
   gasEstimate(): bigint {
     return 250000n
-  }
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        wrapperInterface.encodeFunctionData('withdrawAndUnwrap', [
-          amountsIn.amount,
-        ])
-      ),
-      this.convexPool.stakedConvexDepositToken.address,
-      0n,
-      this.gasEstimate(),
-      `Unstake ${amountsIn} from rewards pool (${this.convexPool.rewardsAddress}), and withdraw from Convex returning ${this.output[0]} to caller`
-    )
   }
   constructor(readonly universe: Universe, readonly convexPool: ConvexPool) {
     super(

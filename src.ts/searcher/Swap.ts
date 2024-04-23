@@ -230,7 +230,7 @@ export class SwapPlan {
   constructor(readonly universe: Universe, public readonly steps: Action[]) {}
 
   get inputs() {
-    return this.steps[0].input
+    return this.steps[0].inputToken
   }
 
   public async quote(
@@ -244,10 +244,10 @@ export class SwapPlan {
     const swaps: SingleSwap[] = []
 
     for (const step of this.steps) {
-      if (step.input.length !== legAmount.length) {
+      if (step.inputToken.length !== legAmount.length) {
         throw new Error(
           'Invalid input, input count does not match Action input length: ' +
-            step.input.join(', ') +
+            step.inputToken.join(', ') +
             ' vs ' +
             legAmount.join(', ') +
             ' ' +

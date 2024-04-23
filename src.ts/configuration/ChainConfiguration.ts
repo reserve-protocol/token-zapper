@@ -28,6 +28,7 @@ export const makeConfig = <
     balanceOf: string
     curveRouterCall: string
     ethBalanceOf: string
+    uniV3Router: string
 
   }
 ) => {

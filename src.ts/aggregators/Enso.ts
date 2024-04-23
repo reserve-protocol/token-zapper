@@ -7,11 +7,11 @@ import {
   InteractionConvention,
 } from '../action/Action'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+
 import { EnsoRouter__factory } from '../contracts/factories/contracts/EnsoRouter__factory'
 import { SwapPlan } from '../searcher/Swap'
 import { FunctionCall, Planner, Value } from '../tx-gen/Planner'
-import { DexAggregator } from './DexAggregator'
+import { DexRouter } from './DexAggregator'
 import { IWrappedNative__factory } from '../contracts/factories/contracts/IWrappedNative__factory'
 import { wait } from '../base/controlflow'
 
@@ -42,6 +42,10 @@ const encodeToken = (universe: Universe, token: Token) => {
   }
   return token.address.address.toLowerCase()
 }
+
+const specialCasesLongTimeout = new Set([
+  '0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f',
+])
 const getEnsoQuote_ = async (
   slippage: number,
   universe: Universe,
@@ -56,9 +60,14 @@ const getEnsoQuote_ = async (
   const GET_QUOTE_DATA = `${API_ROOT}?chainId=${universe.chainId}&slippage=${slippage}&fromAddress=${execAddr}&routingStrategy=router&priceImpact=false&spender=${execAddr}`
   const reqUrl = `${GET_QUOTE_DATA}&receiver=${execAddr}&amountIn=${quantityIn.amount.toString()}&tokenIn=${inputTokenStr}&tokenOut=${outputTokenStr}`
 
+  let timeout = 2000
+  if (specialCasesLongTimeout.has(inputTokenStr)) {
+    timeout = 6000
+  }
   const quote: EnsoQuote = await (
     await fetch(reqUrl, {
       method: 'GET',
+      signal: AbortSignal.timeout(timeout),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -171,7 +180,7 @@ class EnsoAction extends Action {
     const inputV = input ?? predicted[0].amount
     if (
       this.request.tokenIn === ENSO_GAS_TOKEN &&
-      this.input[0] === this.universe.wrappedNativeToken
+      this.inputToken[0] === this.universe.wrappedNativeToken
     ) {
       const wethlib = this.gen.Contract.createContract(
         IWrappedNative__factory.connect(
@@ -211,7 +220,7 @@ class EnsoAction extends Action {
     )
     if (
       this.request.tokenOut === ENSO_GAS_TOKEN &&
-      this.output[0] === this.universe.wrappedNativeToken
+      this.outputToken[0] === this.universe.wrappedNativeToken
     ) {
       console.log('Adding WETH deposit for out')
       const wethlib = this.gen.Contract.createContract(
@@ -273,10 +282,6 @@ class EnsoAction extends Action {
   gasEstimate(): bigint {
     return BigInt(this.request.gas)
   }
-  async encode(inputs: TokenQuantity[], __: Address): Promise<ContractCall> {
-    // console.log('Encoding enso')
-    throw new Error('Method not implemented.')
-  }
 }
 
 const API_ROOT =
@@ -287,7 +292,7 @@ export const createEnso = (
   slippage: number,
   retries = 2
 ) => {
-  return new DexAggregator(
+  return new DexRouter(
     aggregatorName,
     async (_, destination, input, output, __) => {
       const req = await getEnsoQuote(
@@ -307,6 +312,7 @@ export const createEnso = (
           slippage
         ),
       ]).quote([input], destination)
-    }
+    },
+    true
   )
 }

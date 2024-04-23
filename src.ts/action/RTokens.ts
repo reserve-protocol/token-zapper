@@ -1,22 +1,19 @@
+import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { numberOfUnits, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
-import { type Universe } from '../Universe'
-import { parseHexStringIntoBuffer } from '../base/utils'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
-import { ContractCall } from '../base/ContractCall'
-import { Approval } from '../base/Approval'
-import { IBasket } from '../entities/TokenBasket'
-import { IRToken__factory } from '../contracts'
-import { Planner, Value } from '../tx-gen/Planner'
 
-const rTokenIFace = IRToken__factory.createInterface()
+import { Approval } from '../base/Approval'
+import { IRToken__factory } from '../contracts'
+import { IBasket } from '../entities/TokenBasket'
+import { Planner, Value } from '../tx-gen/Planner'
 
 export class MintRTokenAction extends Action {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
       IRToken__factory.connect(
-        this.input[0].address.address,
+        this.inputToken[0].address.address,
         this.universe.provider
       )
     )
@@ -32,7 +29,7 @@ export class MintRTokenAction extends Action {
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     await this.universe.refresh(this.address)
-    if (amountsIn.length !== this.input.length) {
+    if (amountsIn.length !== this.inputToken.length) {
       throw new Error('Invalid inputs for RToken mint')
     }
     const unitsRequested = numberOfUnits(amountsIn, this.basket.unitBasket)
@@ -45,33 +42,6 @@ export class MintRTokenAction extends Action {
       outputs[0].into(qty.token).mul(qty)
     )
     balances.exchange(inputsConsumed, outputs)
-  }
-
-  async encode(
-    amountsIn: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    const units = (await this.quote(amountsIn))[0]
-    return this.encodeIssueTo(amountsIn, units, destination)
-  }
-
-  async encodeIssueTo(
-    amountsIn: TokenQuantity[],
-    units: TokenQuantity,
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        rTokenIFace.encodeFunctionData('issueTo', [
-          destination.address,
-          units.amount,
-        ])
-      ),
-      this.basket.rToken.address,
-      0n,
-      this.gasEstimate(),
-      `Issue RToken(${this.basket.rToken},input:${amountsIn},issueAmount:${units},destination: ${destination})`
-    )
   }
 
   constructor(readonly universe: Universe, public readonly basket: IBasket) {
@@ -99,17 +69,27 @@ export class BurnRTokenAction extends Action {
   get outputSlippage() {
     return 300000n
   }
-  async plan(planner: Planner, inputs: Value[], destination: Address) {
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address,
+    predicted: TokenQuantity[]
+  ) {
     const lib = this.gen.Contract.createContract(
       IRToken__factory.connect(
-        this.input[0].address.address,
+        this.inputToken[0].address.address,
         this.universe.provider
       )
     )
 
-    planner.add(lib.redeem(inputs[0]))
+    planner.add(
+      lib.redeem(inputs[0]),
+      `RToken burn: ${predicted.join(', ')} -> ${(
+        await this.quote(predicted)
+      ).join(', ')}`
+    )
 
-    return this.output.map(token =>
+    return this.outputToken.map((token) =>
       this.genUtils.erc20.balanceOf(
         this.universe,
         planner,
@@ -120,23 +100,6 @@ export class BurnRTokenAction extends Action {
   }
   gasEstimate() {
     return BigInt(600000n)
-  }
-  async encode(
-    [quantity]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    const nonce = this.basketHandler.basketNonce
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        rTokenIFace.encodeFunctionData('redeem', [quantity.amount])
-      ),
-      this.basketHandler.rToken.address,
-      0n,
-      this.gasEstimate(),
-      `Burn RToken(${this.output.join(
-        ','
-      )},input:${quantity},destination: ${destination})`
-    )
   }
 
   async quote([quantity]: TokenQuantity[]): Promise<TokenQuantity[]> {

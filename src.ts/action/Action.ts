@@ -2,7 +2,6 @@ import { Address } from '../base/Address'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Approval } from '../base/Approval'
-import { type ContractCall } from '../base/ContractCall'
 import * as gen from '../tx-gen/Planner'
 import { Universe } from '..'
 import { BalanceOf__factory, EthBalance__factory } from '../contracts'
@@ -88,8 +87,8 @@ export abstract class Action {
 
   constructor(
     public readonly address: Address,
-    public readonly input: readonly Token[],
-    public readonly output: readonly Token[],
+    public readonly inputToken: readonly Token[],
+    public readonly outputToken: readonly Token[],
     public readonly interactionConvention: InteractionConvention,
     public readonly proceedsOptions: DestinationOptions,
     public readonly approvals: readonly Approval[]

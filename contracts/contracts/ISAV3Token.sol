@@ -8,10 +8,13 @@ interface IStaticAV3TokenLM {
         uint16 referralCode,
         bool fromUnderlying
     ) external returns (uint256);
-    function withdraw(
-        uint256 assets,
+
+    function redeem(
+        uint256 shares,
         address receiver,
-        address owner
-    ) external virtual returns (uint256);
+        address owner,
+        bool withdrawFromAave
+    ) external returns (uint256);
+
     function rate() external view returns (uint256);
 }

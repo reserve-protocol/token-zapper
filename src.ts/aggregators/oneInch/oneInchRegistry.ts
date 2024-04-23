@@ -8,8 +8,8 @@ import {
 import { type Token, type TokenQuantity } from '../../entities/Token'
 import { SwapPath, SwapPlan } from '../../searcher/Swap'
 import { type Universe } from '../../Universe'
-import { DexAggregator } from '../DexAggregator'
-export { DexAggregator } from '../DexAggregator'
+import { DexRouter } from '../DexAggregator'
+export { DexRouter as DexAggregator } from '../DexAggregator'
 import {
   Api,
   type HttpResponse,
@@ -162,7 +162,7 @@ export const createOneInchDexAggregator = (
     }
     dequeing = false
   }
-  return new DexAggregator(
+  return new DexRouter(
     aggregatorName,
     async (user, destination, input, output, slippage) => {
       const out = new Promise<SwapPath>((resolve, reject) => {

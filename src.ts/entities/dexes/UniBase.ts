@@ -9,8 +9,8 @@ import { type SwapDirection } from './TwoTokenPoolTypes'
 
 export abstract class UniBase extends Action {
   public readonly zeroForOne: boolean
-  public readonly outputToken: Token
-  public readonly inputToken: Token
+  public readonly output: Token
+  public readonly input: Token
   constructor(
     basePool: {
       address: Address
@@ -31,7 +31,7 @@ export abstract class UniBase extends Action {
       []
     )
     this.zeroForOne = direction === '0->1'
-    this.outputToken = this.zeroForOne ? basePool.token1 : basePool.token0
-    this.inputToken = this.zeroForOne ? basePool.token0 : basePool.token1
+    this.output = this.zeroForOne ? basePool.token1 : basePool.token0
+    this.input = this.zeroForOne ? basePool.token0 : basePool.token1
   }
 }

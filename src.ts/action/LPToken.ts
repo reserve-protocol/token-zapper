@@ -1,6 +1,5 @@
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { type ContractCall } from '../base/ContractCall'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
@@ -37,9 +36,9 @@ export class LPTokenMint extends Action {
     destination: Address
   ): Promise<Value[]> {
     throw new Error(
-      `Method not implemented. For ${this.input.join(
+      `Method not implemented. For ${this.inputToken.join(
         ', '
-      )} -> ${this.output.join(', ')}`
+      )} -> ${this.outputToken.join(', ')}`
     )
   }
   toString() {
@@ -51,13 +50,7 @@ export class LPTokenMint extends Action {
   gasEstimate(): bigint {
     return 200_000n
   }
-  encode(
-    amountsIn: TokenQuantity[],
-    destination: Address,
-    bytes?: Buffer | undefined
-  ): Promise<ContractCall> {
-    throw new Error('Method not implemented.')
-  }
+  
   constructor(public readonly lpToken: LPToken) {
     super(
       lpToken.token.address,
@@ -81,9 +74,9 @@ export class LPTokenBurn extends Action {
       return await this.lpToken.planBurn(planner, inputs, destination)
     }
     throw new Error(
-      `Method not implemented. For ${this.input.join(
+      `Method not implemented. For ${this.inputToken.join(
         ', '
-      )} -> ${this.output.join(', ')}`
+      )} -> ${this.outputToken.join(', ')}`
     )
   }
   toString() {
@@ -95,13 +88,7 @@ export class LPTokenBurn extends Action {
   gasEstimate(): bigint {
     return 200_000n
   }
-  encode(
-    amountsIn: TokenQuantity[],
-    destination: Address,
-    bytes?: Buffer | undefined
-  ): Promise<ContractCall> {
-    throw new Error('Method not implemented.')
-  }
+
   constructor(public readonly lpToken: LPToken) {
     super(
       lpToken.token.address,

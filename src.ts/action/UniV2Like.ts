@@ -1,7 +1,7 @@
 import { type Address } from '../base/Address'
 import { type TokenQuantity } from '../entities/Token'
 import { DestinationOptions, InteractionConvention } from './Action'
-import { ContractCall } from '../base/ContractCall'
+
 import { type SwapDirection } from '../entities/dexes/TwoTokenPoolTypes'
 import { type V2Pool } from '../entities/dexes/V2LikePool'
 import { UniBase } from '../entities/dexes/UniBase'
@@ -20,32 +20,6 @@ export class UniV2Like extends UniBase {
   gasEstimate() {
     return BigInt(110000n)
   }
-  async encode(
-    amountsIn: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    const amountOut = await this.pool.swapFn(amountsIn[0], this)
-    const [amount0, amount1] =
-      amountsIn[0].token === this.pool.token0
-        ? [amountsIn[0], amountOut]
-        : [amountOut, amountsIn[0]]
-
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        iface.encodeFunctionData('swap', [
-          amount0.amount,
-          amount1.amount,
-          destination.address,
-          Buffer.alloc(0),
-        ])
-      ),
-      this.pool.address,
-      0n,
-      this.gasEstimate(),
-      'V2Swap ' + this.pool.name
-    )
-  }
-
   /**
    * @node V2Actions can quote in both directions!
    * @returns
@@ -68,8 +42,8 @@ export class UniV2Like extends UniBase {
   }
 
   toString(): string {
-    return `UniV2Like(${this.inputToken.symbol.toString()}.${
+    return `UniV2Like(${this.input.symbol.toString()}.${
       this.address.address
-    }.${this.outputToken.symbol.toString()})`
+    }.${this.output.symbol.toString()})`
   }
 }

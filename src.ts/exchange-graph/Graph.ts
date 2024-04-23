@@ -6,7 +6,7 @@ export class Vertex {
   private readonly _outgoingEdges = new DefaultMap<Token, Action[]>(() => [])
   constructor(public readonly token: Token) {}
   public addOutgoing(edge: Action) {
-    edge.output.forEach((output) => this._outgoingEdges.get(output).push(edge))
+    edge.outputToken.forEach((output) => this._outgoingEdges.get(output).push(edge))
   }
 
   get outgoingEdges(): Map<Token, Action[]> {
@@ -35,12 +35,12 @@ export class Graph {
   }
 
   addEdge(edge: Action) {
-    edge.input.forEach((e) => this.addVertex(e).addOutgoing(edge))
-    edge.output.forEach((e) => this.addVertex(e))
+    edge.inputToken.forEach((e) => this.addVertex(e).addOutgoing(edge))
+    edge.outputToken.forEach((e) => this.addVertex(e))
 
-    edge.input.forEach((input) => {
+    edge.inputToken.forEach((input) => {
       const subGraph = this.graph.get(input)
-      edge.output.forEach((output) => {
+      edge.outputToken.forEach((output) => {
         subGraph.get(output).push(edge)
       })
     })

@@ -116,7 +116,7 @@ export const initCurveOnEthereum = async (
   const makeStkConvexSourcingRule =
     (depositAndStake: Action): SourcingRule =>
     async (input, unitAmount) => {
-      const lpTokenQty = unitAmount.into(depositAndStake.input[0])
+      const lpTokenQty = unitAmount.into(depositAndStake.inputToken[0])
       if (stables.has(input)) {
         return BasketTokenSourcingRuleApplication.singleBranch(
           [lpTokenQty],
@@ -173,7 +173,7 @@ export const initCurveOnEthereum = async (
     makeStkConvexSourcingRule(threeCryptoConvex.depositAndStakeAction)
   )
 
-  const whitelistedRouterOutputs = new Set([...stables, ...Object.values(universe.rTokens), steth])
+  const whitelistedRouterOutputs = new Set(stables)
   universe.dexAggregators.push(
     new DexAggregator('Curve', async (_, destination, input, output, __) => {
       if (stables.has(input.token) && whitelistedRouterOutputs.has(output)) {

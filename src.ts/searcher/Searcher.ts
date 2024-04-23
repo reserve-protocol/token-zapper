@@ -1,5 +1,6 @@
 import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
+import { wait } from '../base/controlflow'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { bfs } from '../exchange-graph/BFS'
@@ -22,6 +23,7 @@ const whitelist = new Set([
   '0xacdf0dba4b9839b96221a8487e9ca660a48212be',
   '0xcc7ff230365bd730ee4b352cc2492cedac49383e',
 ])
+
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
  * precursor set, in which the while basket can be derived via mints.
@@ -115,9 +117,9 @@ export class Searcher<
       this
     )
     // console.log(precursorTokens.describe().join('\n'))
-    console.log(
-      'precursor tokens: ' + precursorTokens.precursorToTradeFor.join(', ')
-    )
+    // console.log(
+    //   'precursor tokens: ' + precursorTokens.precursorToTradeFor.join(', ')
+    // )
 
     /**
      * PHASE 2: Trade inputQuantity into precursor set
@@ -195,7 +197,8 @@ export class Searcher<
           output,
           this.universe.config.addresses.executorAddress,
           slippage,
-          1
+          1,
+          false
         )
 
         const trade = swaps[0]
@@ -453,7 +456,9 @@ export class Searcher<
             qty,
             outputToken,
             signerAddress,
-            slippage
+            slippage,
+            1,
+            true
           )
           if (potentialSwaps.length === 0) {
             throw Error(
@@ -509,16 +514,13 @@ export class Searcher<
     slippage = 0.0
   ): Promise<BaseSearcherResult[]> {
     await this.universe.initialized
-    const out = this.findSingleInputToRTokenZap_(
+    const out = await this.findSingleInputToRTokenZap_(
       userInput,
       rToken,
       signerAddress,
       slippage
-    ).then((i) => [i])
-
-    out.catch(console.error)
-
-    return out
+    )
+    return [out]
   }
 
   async findTokenZapViaTrade(
@@ -547,7 +549,8 @@ export class Searcher<
       inputTokenQuantity,
       rToken,
       signerAddress,
-      slippage
+      slippage,
+      false
     ).catch(() => [])
 
     const inputValue = await this.universe.fairPrice(inputTokenQuantity)
@@ -672,7 +675,7 @@ export class Searcher<
     const rTokenMint = await new SwapPlan(this.universe, [
       rTokenActions.mint,
     ]).quote(
-      mintAction.input.map((token) => tradingBalances.get(token)),
+      mintAction.inputToken.map((token) => tradingBalances.get(token)),
       signerAddress
     )
     await rTokenMint.exchange(tradingBalances)
@@ -706,7 +709,8 @@ export class Searcher<
     input: TokenQuantity,
     output: Token,
     destination: Address,
-    slippage: number
+    slippage: number,
+    dynamicInput: boolean
   ): Promise<SwapPath[]> {
     const allowAggregatorSearch =
       this.universe.wrappedTokens.get(output)?.allowAggregatorSearcher ?? true
@@ -715,25 +719,24 @@ export class Searcher<
       return []
     }
     const executorAddress = this.universe.config.addresses.executorAddress
-    const out = await Promise.all(
-      this.universe.dexAggregators.map(async (router) => {
-        try {
-          const out = await router.swap(
-            executorAddress,
-            destination,
-            input,
-            output,
-            slippage
-          )
-
-          return out
-        } catch (e) {
-          return null!
-        }
-      })
+    const out: SwapPath[] = []
+    let aggregators = this.universe.dexAggregators
+    if (dynamicInput) {
+      aggregators = aggregators.filter((i) => i.dynamicInput)
+    }
+    if (aggregators.length === 0) {
+      console.log('No aggregators available')
+      return []
+    }
+    await Promise.all(
+      aggregators.map((router) =>
+        router
+          .swap(executorAddress, destination, input, output, slippage)
+          .then((i) => out.push(i))
+          .catch(() => null)
+      )
     )
-
-    return out.filter((i) => i != null)
+    return out
   }
 
   async internalQuoter(
@@ -741,7 +744,7 @@ export class Searcher<
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 4
+    maxHops: number = 2
   ): Promise<SwapPath[]> {
     const bfsResult = bfs(
       this.universe,
@@ -758,18 +761,18 @@ export class Searcher<
         if (plan.steps.length > maxHops) {
           return false
         }
-        if (
-          new Set(plan.steps.map((i) => i.constructor.name)).size !==
-          plan.steps.length
-        ) {
-          return false
-        }
-
         if (plan.inputs.length !== 1) {
           return false
         }
         if (
-          plan.steps.some((i) => i.input.length !== 1 || i.output.length !== 1)
+          plan.steps.some(
+            (i) => i.inputToken.length !== 1 || i.outputToken.length !== 1
+          )
+        ) {
+          return false
+        }
+        if (
+          new Set(plan.steps.map((i) => i.address)).size !== plan.steps.length
         ) {
           return false
         }
@@ -783,6 +786,7 @@ export class Searcher<
         try {
           allPlans.push(await plan.quote([input], destination))
         } catch (e) {
+          console.log(e)
           // console.log(plan.toString())
           // console.log(e)
         }
@@ -798,7 +802,8 @@ export class Searcher<
     output: Token,
     destination: Address,
     slippage: number = 0.0,
-    maxHops: number = 4
+    maxHops: number = 2,
+    dynamicInput: boolean = false
   ): Promise<SwapPath[]> {
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {
@@ -809,7 +814,7 @@ export class Searcher<
     }
     const [quotesInternal, quotesExternal] = await Promise.all([
       this.internalQuoter(input, output, destination, slippage, maxHops),
-      this.externalQuoters(input, output, destination, slippage),
+      this.externalQuoters(input, output, destination, slippage, dynamicInput),
     ])
     const quotes = await Promise.all(
       [...quotesInternal, ...quotesExternal].map(async (q) => {
@@ -821,20 +826,20 @@ export class Searcher<
       })
     )
     quotes.sort((l, r) => -l.netValue.compare(r.netValue))
-    console.log('Quotes for ' + input.toString() + ' -> ' + output.toString())
-    console.log(
-      quotes
-        .map((i) => {
-          let out = ' - ' + i.quote.toString() + '\n'
-          out += '   output: ' + i.quote.outputValue + '\n'
-          out += '   cost: -' + i.cost.txFee.toString() + '\n'
-          out += '   cost: -' + i.cost.txFeeUsd.toString() + '\n'
-          out += '   net: ' + i.netValue + '\n'
-          return out
-        })
-        .join('\n')
-    )
-    console.log('')
+    // console.log('Quotes for ' + input.toString() + ' -> ' + output.toString())
+    // console.log(
+    //   quotes
+    //     .map((i) => {
+    //       let out = ' - ' + i.quote.toString() + '\n'
+    //       out += '   output: ' + i.quote.outputValue + '\n'
+    //       out += '   cost: -' + i.cost.txFee.toString() + '\n'
+    //       out += '   cost: -' + i.cost.txFeeUsd.toString() + '\n'
+    //       out += '   net: ' + i.netValue + '\n'
+    //       return out
+    //     })
+    //     .join('\n')
+    // )
+    // console.log('')
     return quotes.map((i) => i.quote)
   }
 }

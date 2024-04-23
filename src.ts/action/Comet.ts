@@ -1,20 +1,17 @@
 import { type Universe } from '../Universe'
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
-import { parseHexStringIntoBuffer } from '../base/utils'
 import { Comet__factory } from '../contracts/factories/contracts/Compv3.sol/Comet__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-const iCometInterface = Comet__factory.createInterface()
-
 export class MintCometAction extends Action {
   async plan(
     planner: Planner,
     inputs: Value[],
-    destination: Address
+    destination: Address,
+    predicted: TokenQuantity[]
   ): Promise<Value[]> {
     const lib = this.gen.Contract.createContract(
       Comet__factory.connect(
@@ -22,31 +19,20 @@ export class MintCometAction extends Action {
         this.universe.provider
       )
     )
-    planner.add(lib.supply(this.baseToken.address.address, inputs[0]))
+    planner.add(
+      lib.supply(this.baseToken.address.address, inputs[0]),
+      `Comet mint: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
+    )
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       destination
     )
     return [out!]
   }
   gasEstimate() {
     return BigInt(110000n)
-  }
-  async encode([amountsIn]: TokenQuantity[]): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        iCometInterface.encodeFunctionData('supply', [
-          this.baseToken.address.address,
-          amountsIn.amount,
-        ])
-      ),
-      this.receiptToken.address,
-      0n,
-      this.gasEstimate(),
-      'CompoundV3 mint ' + this.receiptToken.symbol
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -76,7 +62,8 @@ export class BurnCometAction extends Action {
   async plan(
     planner: Planner,
     inputs: Value[],
-    destination: Address
+    destination: Address,
+    predicted: TokenQuantity[]
   ): Promise<Value[]> {
     const lib = this.gen.Contract.createContract(
       Comet__factory.connect(
@@ -89,37 +76,19 @@ export class BurnCometAction extends Action {
         destination.address,
         this.baseToken.address.address,
         inputs[0]
-      )
+      ),
+      `Comet burn: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
     )
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       destination
     )
     return [out!]
   }
   gasEstimate() {
     return BigInt(110000n)
-  }
-
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    dest: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        iCometInterface.encodeFunctionData('withdrawTo', [
-          dest.address,
-          this.baseToken.address.address,
-          amountsIn.amount,
-        ])
-      ),
-      this.receiptToken.address,
-      0n,
-      this.gasEstimate(),
-      'CompoundV3 burn ' + this.receiptToken.symbol
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

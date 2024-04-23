@@ -82,6 +82,10 @@ export type { ICurveRouter } from "./contracts/weiroll-helpers/CurveRouterCall.s
 export { ICurveRouter__factory } from "./factories/contracts/weiroll-helpers/CurveRouterCall.sol/ICurveRouter__factory";
 export type { EthBalance } from "./contracts/weiroll-helpers/EthBalance";
 export { EthBalance__factory } from "./factories/contracts/weiroll-helpers/EthBalance__factory";
+export type { ISwapRouter } from "./contracts/weiroll-helpers/UniV3RouterCall.sol/ISwapRouter";
+export { ISwapRouter__factory } from "./factories/contracts/weiroll-helpers/UniV3RouterCall.sol/ISwapRouter__factory";
+export type { UniV3RouterCall } from "./contracts/weiroll-helpers/UniV3RouterCall.sol/UniV3RouterCall";
+export { UniV3RouterCall__factory } from "./factories/contracts/weiroll-helpers/UniV3RouterCall.sol/UniV3RouterCall__factory";
 export type { VM } from "./contracts/weiroll/VM";
 export { VM__factory } from "./factories/contracts/weiroll/VM__factory";
 export type { WrapperCompV3 } from "./contracts/WrapperCompV3";

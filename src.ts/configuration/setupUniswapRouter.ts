@@ -1,71 +1,161 @@
-import { GAS_TOKEN_ADDRESS } from '../base/constants'
-import { type EthereumUniverse } from './ethereum'
-import {
-  AlphaRouter,
-  CurrencyAmount,
-  SwapRoute,
-  SwapType,
-  routeAmountsToString,
-  routeToString,
-} from '@uniswap/smart-order-router'
-import { DexAggregator } from '../aggregators/DexAggregator'
-import { Token, TokenQuantity } from '../entities/Token'
+import { Protocol } from '@uniswap/router-sdk'
 import {
   Currency,
-  Token as UniToken,
   Ether,
-  TradeType,
   Percent,
+  SWAP_ROUTER_02_ADDRESSES,
+  TradeType,
+  Token as UniToken,
 } from '@uniswap/sdk-core'
+import { Trade as V3Trade, encodeRouteToPath, toHex } from '@uniswap/v3-sdk'
+
+import DEFAULT_TOKEN_LIST from '@uniswap/default-token-list'
+import {
+  CachingTokenListProvider,
+  CachingTokenProviderWithFallback,
+  CachingV2PoolProvider,
+  CachingV3PoolProvider,
+  CurrencyAmount,
+  GasPrice,
+  LegacyRouter,
+  NodeJSCache,
+  OnChainQuoteProvider,
+  SwapRoute,
+  SwapType,
+  TokenPropertiesProvider,
+  TokenProvider,
+  UniswapMulticallProvider,
+  V2PoolProvider,
+  V3PoolProvider,
+  V3Route,
+} from '@uniswap/smart-order-router'
+import { Universe } from '../Universe'
 import {
   Action,
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
-import { Planner, Value } from '../tx-gen/Planner'
-import { ZapperExecutor__factory } from '../contracts'
+import { DexRouter } from '../aggregators/DexAggregator'
 import { Address } from '../base/Address'
-import { Universe } from '../Universe'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+import { GAS_TOKEN_ADDRESS } from '../base/constants'
+import { UniV3RouterCall__factory } from '../contracts'
+import { Token, TokenQuantity } from '../entities/Token'
+import { Planner, Value } from '../tx-gen/Planner'
+
+import { PortionProvider } from '@uniswap/smart-order-router/build/main/providers/portion-provider'
+import { OnChainTokenFeeFetcher } from '@uniswap/smart-order-router/build/main/providers/token-fee-fetcher'
+import { utils } from 'ethers'
+import NodeCache from 'node-cache'
+import { RouterAction } from '../action/RouterAction'
 import { SwapPlan } from '../searcher/Swap'
+const SLIPPAGE = new Percent(50, 10000)
 
 export class UniswapRouterAction extends Action {
-  encode(
-    amountsIn: TokenQuantity[],
-    destination: Address,
-    bytes?: Buffer | undefined
-  ): Promise<ContractCall> {
-    throw new Error('Deprecated')
+  get outputSlippage(): bigint {
+    return 3000000n
   }
-  async plan(
+  async planV3Trade(
     planner: Planner,
-    _: Value[],
-    destination: Address
-  ): Promise<Value[]> {
-    const zapperLib = this.gen.Contract.createContract(
-      ZapperExecutor__factory.connect(
-        this.universe.config.addresses.executorAddress.address,
+    trade: V3Trade<Currency, Currency, TradeType>,
+    input: Value
+  ): Promise<Value> {
+    if (trade.tradeType !== TradeType.EXACT_INPUT) {
+      throw new Error('Not implemented')
+    }
+
+    const v3CalLRouterLib = this.gen.Contract.createLibrary(
+      UniV3RouterCall__factory.connect(
+        this.universe.config.addresses.uniV3Router.address,
         this.universe.provider
       )
     )
-    planner.add(
-      zapperLib.rawCall(
-        this.route.methodParameters!.to,
-        this.route.methodParameters!.value,
-        this.route.methodParameters!.calldata
-      ),
-      `UniswapSmartRouter ${this.inputQty} => ${this.outputQty}`
-    )
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.output[0],
-      destination,
-      'UniswapRouter,after swap',
-      `bal_${this.output[0].symbol}_after`
-    )
-    return [out!]
+    const minOut = this.outputQty.amount
+    for (const { route } of trade.swaps) {
+      const singleHop = route.pools.length === 1
+      if (singleHop) {
+        const exactInputSingleParams = {
+          tokenIn: this.inputToken[0].address.address,
+          tokenOut: this.outputToken[0].address.address,
+          fee: route.pools[0].fee,
+          recipient: this.universe.execAddress.address,
+          amountIn: 0,
+          amountOutMinimum: minOut,
+          sqrtPriceLimitX96: 0,
+        }
+
+        const encoded = utils.defaultAbiCoder.encode(
+          [
+            'address',
+            'address',
+            'uint24',
+            'address',
+            'uint256',
+            'uint256',
+            'uint160',
+          ],
+          [
+            exactInputSingleParams.tokenIn,
+            exactInputSingleParams.tokenOut,
+            exactInputSingleParams.fee,
+            exactInputSingleParams.recipient,
+            0,
+            0,
+            exactInputSingleParams.sqrtPriceLimitX96,
+          ]
+        )
+
+        return planner.add(
+          v3CalLRouterLib.exactInputSingle(
+            input,
+            exactInputSingleParams.amountOutMinimum,
+            this.route.methodParameters!.to,
+            encoded
+          ),
+          `UniV3.exactInputSingle(${route.input.symbol} => ${route.output.symbol})`
+        )!
+      } else {
+        const path = encodeRouteToPath(route, false)
+        return planner.add(
+          v3CalLRouterLib.exactInput(
+            input,
+            minOut,
+            this.route.methodParameters!.to,
+            this.universe.execAddress.address,
+            toHex(path)
+          ),
+          `UniV3.exactInput(${route.input.symbol} => ${route.output.symbol})`
+        )!
+      }
+    }
+    throw new Error('Not implemented')
+  }
+  async plan(
+    planner: Planner,
+    [input]: Value[],
+    destination: Address
+  ): Promise<Value[]> {
+    for (const { route, inputAmount, outputAmount } of this.route.trade.swaps) {
+      if (route.protocol === Protocol.V3) {
+        const v3Route: V3Route = route as unknown as V3Route
+        input = await this.planV3Trade(
+          planner,
+          V3Trade.createUncheckedTrade({
+            route: v3Route,
+            inputAmount: inputAmount,
+            outputAmount: outputAmount,
+            tradeType: TradeType.EXACT_INPUT,
+          }),
+          input
+        )
+      } else {
+        throw new Error('Not implemented')
+      }
+    }
+    if (input == null) {
+      throw new Error('Failed to plan')
+    }
+    return [input]
   }
   constructor(
     public readonly route: SwapRoute,
@@ -113,36 +203,117 @@ const tokenQtyToCurrencyAmt = (
   return CurrencyAmount.fromRawAmount(uniToken, qty.amount.toString())
 }
 export const setupUniswapRouter = async (universe: Universe) => {
-  const router = new AlphaRouter({
+  const tokenCache = new NodeJSCache<UniToken>(
+    new NodeCache({ stdTTL: 3600, useClones: false })
+  )
+
+  const multicall = new UniswapMulticallProvider(
+    universe.chainId,
+    universe.provider,
+    25000000
+  )
+  const tokenProviderOnChain = new TokenProvider(universe.chainId, multicall)
+  const cachingTokenProvider = new CachingTokenProviderWithFallback(
+    universe.chainId,
+    tokenCache,
+    await CachingTokenListProvider.fromTokenList(
+      universe.chainId,
+      DEFAULT_TOKEN_LIST,
+      tokenCache
+    ),
+    tokenProviderOnChain
+  )
+  const gasPriceCache = new NodeJSCache<GasPrice>(
+    new NodeCache({ stdTTL: 15, useClones: true })
+  )
+
+  const v3PoolProvider = new CachingV3PoolProvider(
+    universe.chainId,
+    new V3PoolProvider(universe.chainId, multicall),
+    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
+  )
+  const tokenFeeFetcher = new OnChainTokenFeeFetcher(
+    universe.chainId,
+    universe.provider
+  )
+  const tokenPropertiesProvider = new TokenPropertiesProvider(
+    universe.chainId,
+    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false })),
+    tokenFeeFetcher
+  )
+  const portionProvider = new PortionProvider()
+  const v2PoolProvider = new CachingV2PoolProvider(
+    universe.chainId,
+    new V2PoolProvider(universe.chainId, multicall, tokenPropertiesProvider),
+    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
+  )
+
+  const router = new LegacyRouter({
     chainId: universe.chainId,
-    provider: universe.provider,
+    multicall2Provider: multicall,
+    poolProvider: v3PoolProvider,
+    quoteProvider: new OnChainQuoteProvider(
+      universe.chainId,
+      universe.provider,
+      multicall
+    ),
+    tokenProvider: cachingTokenProvider,
   })
 
-  universe.dexAggregators.push(
-    new DexAggregator('uniswap', async (src, dst, input, output, slippage) => {
+  /*new AlphaRouter({
+    chainId: universe.chainId,
+    provider: universe.provider,
+    gasPriceProvider: new CachingGasStationProvider(
+      universe.chainId,
+      new OnChainGasPriceProvider(
+        universe.chainId,
+        new EIP1559GasPriceProvider(universe.provider),
+        new LegacyGasPriceProvider(universe.provider)
+      ),
+      gasPriceCache
+    ),
+    multicall2Provider: multicall,
+    portionProvider,
+    v2PoolProvider: v2PoolProvider,
+    v3PoolProvider: v3PoolProvider,
+    tokenPropertiesProvider,
+    tokenProvider: cachingTokenProvider,
+  })*/
+
+  const out = new DexRouter(
+    'uniswap',
+    async (src, dst, input, output, slippage) => {
       const inp = tokenQtyToCurrencyAmt(universe, input)
       const outp = ourTokenToUni(universe, output)
 
       const route = await router.route(inp, outp, TradeType.EXACT_INPUT, {
-        recipient: dst.address,
-        slippageTolerance: new Percent(50, 10000),
+        recipient: universe.execAddress.address,
+        slippageTolerance: SLIPPAGE,
         deadline: Math.floor(Date.now() / 1000 + 1800),
         type: SwapType.SWAP_ROUTER_02,
       })
       if (route == null || route.methodParameters == null) {
         throw new Error('Failed to find route')
       }
-      const outputAmt = output.fromBigInt(
-        BigInt(route.trade.outputAmount.quotient.toString())
+      const outputAmt = output.from(
+        BigInt(route.trade.minimumAmountOut(SLIPPAGE).quotient.toString())
       )
-
-      // console.log(
-      //   `Uniswap: ${input} -> ${outputAmt} via ${routeAmountsToString(route.route)}`
-      // )
 
       return await new SwapPlan(universe, [
         new UniswapRouterAction(route, input, outputAmt, universe),
-      ]).quote([input], dst)
-    })
+      ]).quote([input], universe.execAddress)
+    },
+    true
   )
+  universe.dexAggregators.push(out)
+  const routerAddr = Address.from(SWAP_ROUTER_02_ADDRESSES(universe.chainId))
+  return {
+    dex: out,
+    addTradeAction: (inputToken: Token, outputToken: Token) => {
+      universe.addAction(
+        new RouterAction(out, universe, routerAddr, inputToken, outputToken),
+        routerAddr
+      )
+    },
+  }
 }

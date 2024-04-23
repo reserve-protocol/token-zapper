@@ -226,18 +226,26 @@ export abstract class BaseSearcherResult {
         console.error('Stargate staking contract out of funds.. Aborting')
         throw new ThirdPartyIssue('Stargate out of funds')
       }
-      console.log(e)
+
+      console.log(
+        'error:',
+        e.message,
+        'Failing program:',
+        printPlan(this.planner, this.universe)
+          .map((i) => '  ' + i)
+          .join('\n')
+      )
     }
 
-    console.log(
-      JSON.stringify({
-        data,
-        value: value.toString(),
-        address: this.universe.zapperAddress.address,
-        from: this.signer.address,
-        block: this.blockNumber
-      })
-    )
+    // console.log(
+    //   JSON.stringify({
+    //     data,
+    //     value: value.toString(),
+    //     address: this.universe.zapperAddress.address,
+    //     from: this.signer.address,
+    //     block: this.blockNumber,
+    //   })
+    // )
     throw new Error('Failed to simulate')
   }
 
@@ -490,7 +498,8 @@ export abstract class BaseSearcherResult {
     let root: BaseSearcherResult = this
     for (let i = 0; i < 3; i++) {
       try {
-        return root.toTransaction(opts)
+        console.log('To transaction')
+        return await root.toTransaction(opts)
       } catch (e) {
         if (i == 3 || e instanceof ThirdPartyIssue) {
           console.log(
@@ -500,7 +509,7 @@ export abstract class BaseSearcherResult {
           )
           throw e
         }
-        await wait(50)
+        await wait(300)
         const [block, gas] = await Promise.all([
           this.universe.provider.getBlockNumber(),
           this.universe.provider.getGasPrice().then((i) => i.toBigInt()),
@@ -510,7 +519,7 @@ export abstract class BaseSearcherResult {
           (this.universe.rTokens as Record<string, Token>)[
             this.outputToken.symbol
           ] != null
-        const searcher = new Searcher(this.universe)
+        const searcher = this.universe.searcher
         if (toRToken) {
           root = await searcher.findSingleInputToRTokenZap(
             this.userInput,
@@ -537,8 +546,7 @@ export abstract class BaseSearcherResult {
       })
       const data = this.encodeCall(options, params)
       const tx = this.encodeTx(data, 300000n)
-      console.log(printPlan(this.planner, this.universe).join('\n'))
-
+      // console.log(printPlan(this.planner, this.universe).join('\n'))
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
       let dust = this.potentialResidualTokens.map((qty) => qty)
@@ -617,21 +625,21 @@ export class TradeSearcherResult extends BaseSearcherResult {
 
     for (const step of this.swaps.swapPaths[0].steps) {
       await step.action.plan(this.planner, [], this.signer, [this.userInput])
-      if (step.action.proceedsOptions === DestinationOptions.Callee) {
-        const out = plannerUtils.erc20.balanceOf(
-          this.universe,
-          this.planner,
-          step.outputs[0].token,
-          this.universe.config.addresses.executorAddress
-        )
-        plannerUtils.planForwardERC20(
-          this.universe,
-          this.planner,
-          step.outputs[0].token,
-          out,
-          this.signer
-        )
-      }
+    }
+    for (const token of this.potentialResidualTokens) {
+      const out = plannerUtils.erc20.balanceOf(
+        this.universe,
+        this.planner,
+        token,
+        this.universe.config.addresses.executorAddress
+      )
+      plannerUtils.planForwardERC20(
+        this.universe,
+        this.planner,
+        token,
+        out,
+        this.signer
+      )
     }
 
     return this.createZapTransaction(options)
@@ -673,10 +681,10 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
 
     for (
       let i = 0;
-      i < this.parts.rtokenRedemption.steps[0].action.output.length;
+      i < this.parts.rtokenRedemption.steps[0].action.outputToken.length;
       i++
     ) {
-      tokens.set(this.parts.rtokenRedemption.steps[0].action.output[i], [
+      tokens.set(this.parts.rtokenRedemption.steps[0].action.outputToken[i], [
         outputs[i],
       ])
     }
@@ -684,7 +692,7 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
     const tradeOutputs = new Map<Token, Value>()
     for (const unwrapBasketTokenPath of this.parts.tokenBasketUnwrap) {
       for (const step of unwrapBasketTokenPath.steps) {
-        let input = tokens.get(step.action.input[0])
+        let input = tokens.get(step.action.inputToken[0])
         if (input == null) {
           throw new Error('MISSING INPUT')
         }
@@ -699,25 +707,28 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
     }
 
     for (const path of this.parts.tradesToOutput) {
-      const input = tokens.get(path.inputs[0].token)!
+      const input = plannerUtils.erc20.balanceOf(
+        this.universe,
+        this.planner,
+        path.steps[0].inputs[0].token,
+        executorAddress
+      )
       for (const step of path.steps) {
         const out = await step.action.plan(
           this.planner,
-          input,
+          [input],
           executorAddress,
           step.inputs
         )
         tradeOutputs.set(step.outputs[0].token, out[0])
       }
     }
-    const out = tradeOutputs.has(this.outputToken)
-      ? tradeOutputs.get(this.outputToken)!
-      : plannerUtils.erc20.balanceOf(
-          this.universe,
-          this.planner,
-          this.outputToken,
-          executorAddress
-        )
+    const out = plannerUtils.erc20.balanceOf(
+      this.universe,
+      this.planner,
+      this.outputToken,
+      executorAddress
+    )
     plannerUtils.planForwardERC20(
       this.universe,
       this.planner,
@@ -786,8 +797,8 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
         if (output.length === 0) {
           throw new Error("Unexpected: Didn't get an output")
         }
-        for (let i = 0; i < step.action.output.length; i++) {
-          trades.set(step.action.output[i], output[i])
+        for (let i = 0; i < step.action.outputToken.length; i++) {
+          trades.set(step.action.outputToken[i], output[i])
         }
       }
     }

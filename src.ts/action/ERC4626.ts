@@ -1,7 +1,7 @@
 import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { ContractCall } from '../base/ContractCall'
+
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { IERC4626__factory } from '../contracts/factories/contracts/IERC4626__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
@@ -35,23 +35,6 @@ export class ERC4626DepositAction extends Action {
   }
   gasEstimate() {
     return BigInt(200000n)
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        vaultInterface.encodeFunctionData('deposit', [
-          amountsIn.amount,
-          destination.address,
-        ])
-      ),
-      this.shareToken.address,
-      0n,
-      this.gasEstimate(),
-      `Deposit ${amountsIn} into ERC4626(${this.shareToken.address}) vault`
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -98,25 +81,7 @@ export class ERC4626WithdrawAction extends Action {
   gasEstimate() {
     return BigInt(200000n)
   }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        vaultInterface.encodeFunctionData('redeem', [
-          amountsIn.amount,
-          destination.address,
-          this.universe.config.addresses.executorAddress.address,
-        ])
-      ),
-      this.shareToken.address,
-      0n,
-      this.gasEstimate(),
-      `Withdraw ${amountsIn} from ERC4626(${this.shareToken.address}) vault`
-    )
-  }
-
+  
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [
       this.underlying.from(

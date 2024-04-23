@@ -1,6 +1,6 @@
 import { Address } from '../../src.ts/base/Address'
 import { V2Pool } from '../../src.ts/entities/dexes/V2LikePool'
-import {createForTest} from '../../src.ts/configuration/testEnvironment'
+import { createForTest } from '../../src.ts/configuration/testEnvironment'
 
 describe('dexes/v2', () => {
   it('standard impl', async () => {
@@ -23,16 +23,16 @@ describe('dexes/v2', () => {
 
     const swap01 = await pool.swapFn(WETH.fromDecimal('1'), {
       pool,
-      inputToken: WETH,
-      outputToken: USDT,
+      input: WETH,
+      output: USDT,
       direction: '0->1',
     })
     expect(swap01.formatWithSymbol()).toBe('1739.965095 USDT')
 
     const swap10 = await pool.swapFn(USDT.fromDecimal('1000'), {
       pool,
-      inputToken: USDT,
-      outputToken: WETH,
+      input: USDT,
+      output: WETH,
       direction: '1->0',
     })
 
@@ -40,16 +40,16 @@ describe('dexes/v2', () => {
 
     const buy01 = await pool.swapFn(USDT.fromDecimal('1000'), {
       pool,
-      inputToken: WETH,
-      outputToken: USDT,
+      input: WETH,
+      output: USDT,
       direction: '0->1',
     })
     expect(buy01.formatWithSymbol()).toBe('0.569891492659797575 WETH')
 
     const buy10 = await pool.swapFn(WETH.fromDecimal('1'), {
       pool,
-      inputToken: USDT,
-      outputToken: WETH,
+      input: USDT,
+      output: WETH,
       direction: '1->0',
     })
     expect(buy10.formatWithSymbol()).toBe('1821.791907 USDT')

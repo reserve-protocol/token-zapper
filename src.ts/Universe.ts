@@ -236,7 +236,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     burn: Action,
     allowAggregatorSearcher = false
   ) {
-    const output = mint.output[0]
+    const output = mint.outputToken[0]
     this.addAction(mint, output.address)
     this.addAction(burn, output.address)
     const out = {

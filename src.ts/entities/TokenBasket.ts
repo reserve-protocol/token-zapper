@@ -17,7 +17,9 @@ export interface IBasket {
 }
 
 export class TokenBasket implements IBasket {
-  private readonly basketHandler: ReturnType<typeof IBasketHandler__factory.connect>
+  private readonly basketHandler: ReturnType<
+    typeof IBasketHandler__factory.connect
+  >
   private readonly lens: ReturnType<typeof RTokenLens__factory.connect>
 
   public issueRate = 10n ** 18n
@@ -35,7 +37,6 @@ export class TokenBasket implements IBasket {
     public readonly rToken: Token,
     public readonly assetRegistry: Address,
     public readonly version: string
-
   ) {
     this.basketHandler = IBasketHandler__factory.connect(
       basketHandlerAddress.address,
@@ -49,28 +50,22 @@ export class TokenBasket implements IBasket {
 
   async update() {
     const [unit, nonce] = await Promise.all([
-      this.redeem(
-        this.rToken.one
-      ),
-      this.basketHandler.nonce()
+      this.redeem(this.rToken.one),
+      this.basketHandler.nonce(),
     ])
     this.basketNonce = nonce
     this.unitBasket = unit
   }
 
   async redeem(quantity: TokenQuantity) {
-    const {
-      quantities,
-      erc20s
-    } = await this.lens.callStatic.redeem(
-      this.assetRegistry.address,
-      this.basketHandlerAddress.address,
-      this.rToken.address.address,
-      quantity.amount
-    ).catch(() => this.basketHandler.quote(
-      quantity.amount,
-      2
-    ))
+    const { quantities, erc20s } = await this.lens.callStatic
+      .redeem(
+        this.assetRegistry.address,
+        this.basketHandlerAddress.address,
+        this.rToken.address.address,
+        quantity.amount
+      )
+      .catch(() => this.basketHandler.quote(quantity.amount, 2))
 
     return await Promise.all(
       quantities.map(async (q, i) => {

@@ -1,4 +1,4 @@
-import { DexAggregator } from './DexAggregator'
+import { DexRouter } from './DexAggregator'
 import { SwapPlan } from '../searcher/Swap'
 import { Universe } from '../Universe'
 import { Address, Token, TokenQuantity } from '..'
@@ -7,7 +7,7 @@ import {
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
-import { ContractCall } from '../base/ContractCall'
+
 import { Approval } from '../base/Approval'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Planner, Value } from '../tx-gen/Planner'
@@ -114,10 +114,10 @@ class KyberAction extends Action {
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       destination,
       'kyberswap,after swap',
-      `bal_${this.output[0].symbol}_after`
+      `bal_${this.outputToken[0].symbol}_after`
     )
     return [out!]
   }
@@ -143,7 +143,7 @@ class KyberAction extends Action {
 
     const amount = BigInt(this.request.swap.data.amountOut)
     const minOut = amount - (amount / 10000n) * BigInt(this.slippage)
-    const out = this.output[0].from(minOut)
+    const out = this.outputToken[0].from(minOut)
     this.outputQuantity = [out]
   }
   toString() {
@@ -154,17 +154,6 @@ class KyberAction extends Action {
   }
   gasEstimate(): bigint {
     return BigInt(this.request.req.data.routeSummary.gas)
-  }
-  async encode(inputs: TokenQuantity[], __: Address): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(this.request.swap.data.data),
-      Address.from(this.request.req.data.routerAddress),
-      0n,
-      this.gasEstimate(),
-      `Kyberswap(${this.address}) (${inputs.join(',')}) -> (${
-        this.outputQuantity
-      })`
-    )
   }
 }
 
@@ -188,6 +177,7 @@ export const createKyberswap = (
     const url = `${GET_ROUTE_SWAP}?source=register&amountIn=${quantityIn.amount}&tokenIn=${quantityIn.token.address.address}&tokenOut=${tokenOut.address.address}`
     return fetch(url, {
       method: 'GET',
+      signal: AbortSignal.timeout(1000),
       headers: {
         'x-client-id': 'register',
       },
@@ -196,6 +186,7 @@ export const createKyberswap = (
   const fetchSwap = async (req: GetRoute, recipient: Address) => {
     return fetch(`${POST_GET_SWAP}?source=register`, {
       method: 'POST',
+      signal: AbortSignal.timeout(1000),
       body: JSON.stringify({
         ...req.data,
         sender: universe.config.addresses.executorAddress.address,
@@ -227,13 +218,14 @@ export const createKyberswap = (
     }
   }
 
-  return new DexAggregator(
+  return new DexRouter(
     aggregatorName,
     async (_, destination, input, output, __) => {
       const req = await getQuoteAndSwap(input, output, destination)
       return await new SwapPlan(universe, [
         new KyberAction(req, universe, slippage),
       ]).quote([input], destination)
-    }
+    },
+    false
   )
 }

@@ -2,7 +2,7 @@ import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { InteractionConvention, DestinationOptions, Action } from './Action'
-import { ContractCall } from '../base/ContractCall'
+
 import { Approval } from '../base/Approval'
 import { Address } from '../base/Address'
 import { IStargateRewardableWrapper__factory } from '../contracts/factories/contracts/IStargadeWrapper.sol/IStargateRewardableWrapper__factory'
@@ -25,23 +25,6 @@ export class StargateWrapperDepositAction extends Action {
   }
   gasEstimate() {
     return BigInt(200000n)
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        vaultInterface.encodeFunctionData('deposit', [
-          amountsIn.amount,
-          destination.address,
-        ])
-      ),
-      this.stargateToken.address,
-      0n,
-      this.gasEstimate(),
-      `Deposit ${amountsIn} into Stargate(${this.stargateToken.address}) vault receiving ${amountsIn.into(this.stargateToken)}`
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -86,28 +69,11 @@ export class StargateWrapperWithdrawAction extends Action {
     const out = this.genUtils.erc20.balanceOf(
       this.universe,
       planner,
-      this.output[0],
+      this.outputToken[0],
       destination
     )
 
     return [out!]
-  }
-  async encode(
-    [amountsIn]: TokenQuantity[],
-    destination: Address
-  ): Promise<ContractCall> {
-    return new ContractCall(
-      parseHexStringIntoBuffer(
-        vaultInterface.encodeFunctionData('withdraw', [
-          amountsIn.amount,
-          destination.address
-        ])
-      ),
-      this.stargateToken.address,
-      0n,
-      this.gasEstimate(),
-      `Withdraw ${amountsIn} from ERC4626(${this.stargateToken.address}) vault`
-    )
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

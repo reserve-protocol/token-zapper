@@ -10,7 +10,7 @@ import { IBasket } from '../entities/TokenBasket'
 import { JsonTokenEntry, loadTokens } from './loadTokens'
 import { ETHToRETH, RETHToETH } from '../action/REth'
 import { constants, ethers } from 'ethers'
-import { ContractCall } from '../base/ContractCall'
+
 import { BurnWStETH, MintWStETH } from '../action/WStEth'
 import { BurnStETH, MintStETH } from '../action/StEth'
 import { makeConfig } from './ChainConfiguration'
@@ -62,7 +62,8 @@ export const testConfig = makeConfig(
     rtokenLens: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
     balanceOf: "0x0000000000000000000000000000000000000000",
     curveRouterCall: "0x0000000000000000000000000000000000000000",
-    ethBalanceOf: "0x0000000000000000000000000000000000000000"
+    ethBalanceOf: "0x0000000000000000000000000000000000000000",
+    uniV3Router: "0x0000000000000000000000000000000000000000"
   },
 )
 type BaseTestConfigType = typeof testConfig
@@ -209,24 +210,12 @@ const initialize = async (universe: TestUniverse) => {
       return {
         portions: mockPortions,
         amountOut: qtyETH.mul(ETHToRETHRate).into(reth),
-        contractCall: new ContractCall(
-          Buffer.alloc(0),
-          rethRouterAddress,
-          qtyETH.amount,
-          0n
-        ),
       }
     },
     async optimiseFromREth(qtyRETH: TokenQuantity) {
       return {
         portions: mockPortions,
         amountOut: qtyRETH.mul(rETHToETHRate).into(universe.nativeToken),
-        contractCall: new ContractCall(
-          Buffer.alloc(0),
-          rethRouterAddress,
-          0n,
-          0n
-        ),
       }
     },
   }

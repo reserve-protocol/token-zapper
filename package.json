@@ -4,7 +4,7 @@
     "access": "public",
     "tag": "latest"
   },
-  "version": "3.1.16",
+  "version": "3.3.7",
   "description": "A library to help convert tokens into RTokens",
   "keywords": [],
   "module": "./lib.esm/index.js",
@@ -154,7 +154,6 @@
     "@nomicfoundation/hardhat-verify": "^1.1.1",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@openzeppelin/contracts": "^4.8.2",
-    "@rollup/plugin-node-resolve": "13.3.0",
     "@typechain/ethers-v5": "^10.2.0",
     "@typechain/hardhat": "^6.1.5",
     "@types/jest": "^29.5.0",
@@ -185,13 +184,17 @@
   "dependencies": {
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/providers": "^5.7.2",
+    "@uniswap/default-token-list": "^11.18.0",
     "@uniswap/permit2-sdk": "^1.2.0",
+    "@uniswap/router-sdk": "^1.9.0",
     "@uniswap/sdk-core": "^4.2.0",
     "@uniswap/smart-order-router": "^3.28.5",
+    "@uniswap/v3-sdk": "^3.11.0",
     "bignumber.js": "^9.1.1",
     "ethers": "^5.7.2",
     "hardhat-deploy-ethers": "^0.3.0-beta.13",
     "memoizee": "^0.4.15",
+    "node-cache": "^5.1.2",
     "paraswap": "^5.2.0",
     "paraswap-core": "^1.0.2"
   }

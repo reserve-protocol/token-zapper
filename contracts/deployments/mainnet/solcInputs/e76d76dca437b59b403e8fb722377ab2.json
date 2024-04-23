@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/weiroll-helpers/UniV3RouterCall.sol": {
+      "content": "// SPDX-License-Identifier: BlueOak-1.0.0\npragma solidity 0.8.17;\n\ninterface ISwapRouter {\n    struct ExactInputSingleParams {\n        address tokenIn;\n        address tokenOut;\n        uint24 fee;\n        address recipient;\n        uint256 amountIn;\n        uint256 amountOutMinimum;\n        uint160 sqrtPriceLimitX96;\n    }\n\n    /// @notice Swaps `amountIn` of one token for as much as possible of another token\n    /// @dev Setting `amountIn` to 0 will cause the contract to look up its own balance,\n    /// and swap the entire amount, enabling contracts to send tokens before calling this function.\n    /// @param params The parameters necessary for the swap, encoded as `ExactInputSingleParams` in calldata\n    /// @return amountOut The amount of the received token\n    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);\n\n    struct ExactInputParams {\n        bytes path;\n        address recipient;\n        uint256 amountIn;\n        uint256 amountOutMinimum;\n    }\n\n    /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path\n    /// @dev Setting `amountIn` to 0 will cause the contract to look up its own balance,\n    /// and swap the entire amount, enabling contracts to send tokens before calling this function.\n    /// @param params The parameters necessary for the multi-hop swap, encoded as `ExactInputParams` in calldata\n    /// @return amountOut The amount of the received token\n    function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);\n}\ncontract UniV3RouterCall {\n    function exactInputSingle(\n        uint256 amountIn,\n        uint256 _expected,\n        address router,\n        bytes calldata encodedRouterCall\n    ) external returns (uint256) {\n        (ISwapRouter.ExactInputSingleParams memory decodedCall) = abi.decode(\n            encodedRouterCall,\n            (ISwapRouter.ExactInputSingleParams)\n        );\n        decodedCall.amountIn = amountIn;\n        decodedCall.amountOutMinimum = _expected;\n        return ISwapRouter(router).exactInputSingle(decodedCall);\n    }\n\n    function exactInput(\n        uint256 amountIn,\n        uint256 _expected,\n        address router,\n        bytes calldata encodedRouterCall\n    ) external returns (uint256) {\n        (ISwapRouter.ExactInputParams memory decodedCall) = abi.decode(\n            encodedRouterCall,\n            (ISwapRouter.ExactInputParams)\n        );\n        decodedCall.amountIn = amountIn;\n        decodedCall.amountOutMinimum = _expected;\n        return ISwapRouter(router).exactInput(decodedCall);\n    }\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

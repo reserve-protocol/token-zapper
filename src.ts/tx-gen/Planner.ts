@@ -1021,7 +1021,9 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
     }
     const comment = plan.comments[i]
     if (comment != null) {
-      out.push('// ' + comment)
+      out.push(`cmd ${i}: // ${comment}`)
+    } else {
+      out.push(`cmd ${i}:`)
     }
 
     const addr = formatAddress(step.call.contract.address, universe)
@@ -1054,7 +1056,7 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
     const finalStr =
       retVal == null
         ? formatted + ';'
-        : `let ${retVal.name}: ${retVal.param.type} = ${formatted};`
+        : `${retVal.name}: ${retVal.param.type} = ${formatted};`
     out.push(...finalStr.split('\n'))
 
     out.push('')

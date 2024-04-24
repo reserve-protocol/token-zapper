@@ -41,15 +41,16 @@ import { Approval } from '../base/Approval'
 import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { UniV3RouterCall__factory } from '../contracts'
 import { Token, TokenQuantity } from '../entities/Token'
-import { Planner, Value } from '../tx-gen/Planner'
+import { LiteralValue, Planner, Value, encodeArg } from '../tx-gen/Planner'
 
 import { PortionProvider } from '@uniswap/smart-order-router/build/main/providers/portion-provider'
 import { OnChainTokenFeeFetcher } from '@uniswap/smart-order-router/build/main/providers/token-fee-fetcher'
 import { utils } from 'ethers'
 import NodeCache from 'node-cache'
 import { RouterAction } from '../action/RouterAction'
-import { SwapPlan } from '../searcher/Swap'
-const SLIPPAGE = new Percent(100, 10000)
+import { SwapPath, SwapPlan } from '../searcher/Swap'
+import { ParamType } from '@ethersproject/abi'
+const SLIPPAGE = new Percent(25, 10000)
 
 export class UniswapRouterAction extends Action {
   get outputSlippage(): bigint {
@@ -133,12 +134,14 @@ export class UniswapRouterAction extends Action {
   async plan(
     planner: Planner,
     [input]: Value[],
-    destination: Address
+    destination: Address,
+    [staticInput]: TokenQuantity[]
   ): Promise<Value[]> {
+    let inp = input ?? encodeArg(staticInput.amount, ParamType.from('uint256'))
     for (const { route, inputAmount, outputAmount } of this.route.trade.swaps) {
       if (route.protocol === Protocol.V3) {
         const v3Route: V3Route = route as unknown as V3Route
-        input = await this.planV3Trade(
+        inp = await this.planV3Trade(
           planner,
           V3Trade.createUncheckedTrade({
             route: v3Route,
@@ -146,16 +149,16 @@ export class UniswapRouterAction extends Action {
             outputAmount: outputAmount,
             tradeType: TradeType.EXACT_INPUT,
           }),
-          input
+          inp
         )
       } else {
         throw new Error('Not implemented')
       }
     }
-    if (input == null) {
+    if (inp == null) {
       throw new Error('Failed to plan')
     }
-    return [input]
+    return [inp]
   }
   constructor(
     public readonly route: SwapRoute,
@@ -179,7 +182,8 @@ export class UniswapRouterAction extends Action {
     return [this.outputQty]
   }
   gasEstimate(): bigint {
-    return this.route.estimatedGasUsed.toBigInt()
+    const out = this.route.estimatedGasUsed.toBigInt()
+    return out === 0n ? 300000n : out
   }
 }
 
@@ -251,6 +255,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
   const router = new LegacyRouter({
     chainId: universe.chainId,
     multicall2Provider: multicall,
+
     poolProvider: v3PoolProvider,
     quoteProvider: new OnChainQuoteProvider(
       universe.chainId,
@@ -283,6 +288,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
   const out = new DexRouter(
     'uniswap',
     async (src, dst, input, output, slippage) => {
+      let outPath: SwapPath | null = null
       const inp = tokenQtyToCurrencyAmt(universe, input)
       const outp = ourTokenToUni(universe, output)
 
@@ -295,9 +301,10 @@ export const setupUniswapRouter = async (universe: Universe) => {
       if (route == null || route.methodParameters == null) {
         throw new Error('Failed to find route')
       }
-      const outputAmt = output.from(
-        BigInt(route.trade.minimumAmountOut(SLIPPAGE).quotient.toString())
+      const outamt = BigInt(
+        route.trade.minimumAmountOut(SLIPPAGE).quotient.toString()
       )
+      const outputAmt = output.from(outamt)
 
       return await new SwapPlan(universe, [
         new UniswapRouterAction(route, input, outputAmt, universe),

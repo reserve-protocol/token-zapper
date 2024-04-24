@@ -1,7 +1,8 @@
 import { type Address } from '../base/Address'
 
-import { parseUnits, formatUnits } from "@ethersproject/units";
-import { type BigNumber } from "@ethersproject/bignumber";
+import { parseUnits, formatUnits } from '@ethersproject/units'
+import { type BigNumber } from '@ethersproject/bignumber'
+import { type BaseUniverse } from '../configuration/base'
 /**
  * A class representing a token.
  * @property {Address} address - The address of the token.
@@ -32,7 +33,7 @@ export class Token {
     public readonly symbol: string,
     public readonly name: string,
     public readonly decimals: number,
-    public readonly scale: bigint,
+    public readonly scale: bigint
   ) {
     this.zero = this.fromBigInt(0n)
     this.one = this.fromBigInt(scale)
@@ -209,9 +210,7 @@ export class TokenQuantity {
 
   public formatWithSymbol(): string {
     return (
-      formatUnits(this.amount, this.token.decimals) +
-      ' ' +
-      this.token.symbol
+      formatUnits(this.amount, this.token.decimals) + ' ' + this.token.symbol
     )
   }
 
@@ -258,3 +257,36 @@ export const numberOfUnits = (
   return smallest
 }
 
+export class PricedTokenQuantity {
+  constructor(
+    public readonly quantity: TokenQuantity,
+    private innerPrice: TokenQuantity | null
+  ) {}
+
+  public async update(universe: BaseUniverse) {
+    this.innerPrice = await universe.fairPrice(this.quantity)
+  }
+
+  public get price() {
+    return this.innerPrice ?? this.quantity.token.zero
+  }
+
+  public get isValid() {
+    return this.innerPrice != null
+  }
+
+  public static async make(universe: BaseUniverse, quantity: TokenQuantity) {
+    const valueUSD = (await universe.fairPrice(quantity)) ?? universe.usd.zero
+    return new PricedTokenQuantity(quantity, valueUSD)
+  }
+
+  [Symbol.toPrimitive](): string {
+    return this.toString()
+  }
+
+  readonly [Symbol.toStringTag] = 'PricedTokenQuantity'
+
+  toString() {
+    return `${this.quantity} (${this.price})`
+  }
+}

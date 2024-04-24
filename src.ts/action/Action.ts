@@ -85,8 +85,12 @@ export abstract class Action {
   protected readonly gen = gen
   protected readonly genUtils = plannerUtils
 
+  get address() {
+    return this.address_
+  }
+
   constructor(
-    public readonly address: Address,
+    private address_: Address,
     public readonly inputToken: readonly Token[],
     public readonly outputToken: readonly Token[],
     public readonly interactionConvention: InteractionConvention,

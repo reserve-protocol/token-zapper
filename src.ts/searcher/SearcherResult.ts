@@ -20,7 +20,11 @@ import {
   ZapERC20ParamsStruct,
   ZapperOutputStructOutput,
 } from '../contracts/contracts/Zapper.sol/Zapper'
-import { type Token, type TokenQuantity } from '../entities/Token'
+import {
+  PricedTokenQuantity,
+  type Token,
+  type TokenQuantity,
+} from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { SwapPath, SwapPaths, type SingleSwap } from '../searcher/Swap'
 import {
@@ -31,7 +35,7 @@ import {
   printPlan,
 } from '../tx-gen/Planner'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
-import { ZapTransaction } from './ZapTransaction'
+import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { DefaultMap } from '../base/DefaultMap'
 import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory'
 import { Searcher } from './Searcher'
@@ -492,7 +496,7 @@ export abstract class BaseSearcherResult {
       })
       const data = this.encodeCall(options, params)
       const tx = this.encodeTx(data, 300000n)
-      console.log(printPlan(this.planner, this.universe).join('\n'))
+      // console.log(printPlan(this.planner, this.universe).join('\n'))
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
       let dust = this.potentialResidualTokens.map((qty) => qty)
@@ -515,44 +519,45 @@ export abstract class BaseSearcherResult {
       }
 
       const finalParams = this.encodePayload(result.output, options)
-
-      const updatedOutputs = [
-        this.outputToken.from(BigNumber.from(finalParams.amountOut)),
-        ...result.simulatedOutputs.filter((i) => i.token !== this.outputToken),
-      ]
-      const values = await Promise.all(
-        updatedOutputs.map(
-          async (i) => [await this.universe.fairPrice(i), i] as const
-        )
+      const outputTokenQty = this.outputToken.from(
+        BigNumber.from(finalParams.amountOut)
       )
-
-      const outputValue = values.reduce(
-        (a, b) => a.add(b[0] ?? this.universe.usd.zero),
-        this.universe.usd.zero
+      const dustOutputQtys = result.simulatedOutputs.filter(
+        (i) => i.token !== this.outputToken
       )
+      const gasEstimate = result.gasUsed + result.gasUsed / 12n
+      if (gasEstimate === 0n) {
+        throw new Error('Failed to estimate gas')
+      }
+      const stats = await ZapTxStats.create(this.universe, {
+        gasUnits: gasEstimate,
+        input: this.userInput,
+        output: outputTokenQty,
+        dust: dustOutputQtys,
+      })
 
       this.swaps = new SwapPaths(
         this.swaps.universe,
         this.swaps.inputs,
         this.swaps.swapPaths,
-        updatedOutputs,
-        outputValue,
+        stats.outputs.map((i) => i.quantity),
+        stats.valueUSD,
         this.swaps.destination
       )
-      const estimate = result.gasUsed + result.gasUsed / 10n
+
       const finalTx = this.encodeTx(
         this.encodeCall(options, finalParams),
-        estimate
+        gasEstimate
       )
 
-      return new ZapTransaction(
-        this.universe,
-        finalParams,
-        finalTx,
-        estimate,
-        this.swaps.inputs[0],
-        this.swaps.outputs,
-        this.planner
+      return ZapTransaction.create(
+        this,
+        this.planner,
+        {
+          params: finalParams,
+          tx: finalTx,
+        },
+        stats
       )
     } catch (e: any) {
       if (e instanceof ThirdPartyIssue) {

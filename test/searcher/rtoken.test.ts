@@ -2,7 +2,7 @@ import { Address } from '../../src.ts/base/Address'
 import { IBasket } from '../../src.ts/entities/TokenBasket'
 import { Universe } from '../../src.ts/Universe'
 import { Searcher } from '../../src.ts/searcher/Searcher'
-import {createForTest} from '../../src.ts/configuration/testEnvironment'
+import { createForTest } from '../../src.ts/configuration/testEnvironment'
 import { fixture, createV2Pool } from './univ2.test'
 import { BurnRTokenAction, MintRTokenAction } from '../../src.ts/action/RTokens'
 import { Token, TokenQuantity } from '../../src.ts/entities/Token'
@@ -29,8 +29,10 @@ const createRToken = (
     rToken,
     basketNonce: 0,
     async redeem(baskets) {
-      return quantities.map((i) => i.scalarMul(baskets.amount).scalarDiv(rToken.scale))
-    }
+      return quantities.map((i) =>
+        i.scalarMul(baskets.amount).scalarDiv(rToken.scale)
+      )
+    },
   }
 
   universe.defineMintable(
@@ -46,11 +48,13 @@ describe('searcher/rtokenzaps', () => {
 
     const searcher = new Searcher(universe)
 
-    const result = await searcher.findSingleInputToRTokenZap(
-      universe.nativeToken.fromDecimal('1.0'),
-      universe.rTokens['ETH+']!,
-      Address.ZERO
-    )
+    const result = await searcher
+      .findSingleInputToRTokenZap(
+        universe.nativeToken.fromDecimal('1.0'),
+        universe.rTokens['ETH+']!,
+        Address.ZERO
+      )
+      .then((i) => i!.quote)
     expect(
       result.swaps.outputs
         .find((i) => i.token === universe.rTokens['ETH+']!)
@@ -68,11 +72,9 @@ describe('searcher/rtokenzaps', () => {
     const eUSD = (await universe.getToken(
       Address.fromHexString('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F')
     ))!
-    const result = await searcher.findSingleInputToRTokenZap(
-      USDT.fromDecimal('10.0'),
-      eUSD,
-      Address.ZERO
-    )
+    const result = await searcher
+      .findTokenZapViaIssueance(USDT.fromDecimal('10.0'), eUSD, Address.ZERO)
+      .then((i) => i[0])
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
     ).toBe('9.99964 eUSD')
@@ -85,11 +87,9 @@ describe('searcher/rtokenzaps', () => {
     const eUSD = (await universe.getToken(
       Address.fromHexString('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F')
     ))!
-    const result = await searcher.findSingleInputToRTokenZap(
-      WETH.fromDecimal('0.1'),
-      eUSD,
-      Address.ZERO
-    )
+    const result = await searcher
+      .findSingleInputToRTokenZap(WETH.fromDecimal('0.1'), eUSD, Address.ZERO)
+      .then((i) => i.quote)
 
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
@@ -105,11 +105,13 @@ describe('searcher/rtokenzaps', () => {
     const eUSD = (await universe.getToken(
       Address.fromHexString('0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F')
     ))!
-    const result = await searcher.findSingleInputToRTokenZap(
-      CToken.fromDecimal('1000.0'),
-      eUSD,
-      Address.ZERO
-    )
+    const result = await searcher
+      .findSingleInputToRTokenZap(
+        CToken.fromDecimal('1000.0'),
+        eUSD,
+        Address.ZERO
+      )
+      .then((i) => i!.quote)
     expect(
       result.swaps.outputs.find((i) => i.token === eUSD)?.formatWithSymbol()
     ).toBe('22.234444 eUSD')
@@ -140,11 +142,13 @@ describe('searcher/rtokenzaps', () => {
 
     const searcher = new Searcher(universe)
 
-    const result = await searcher.findSingleInputToRTokenZap(
-      universe.commonTokens.WETH.fromDecimal('0.1'),
-      oldEUSD,
-      Address.ZERO
-    )
+    const result = await searcher
+      .findSingleInputToRTokenZap(
+        universe.commonTokens.WETH.fromDecimal('0.1'),
+        oldEUSD,
+        Address.ZERO
+      )
+      .then((i) => i!.quote)
     expect(
       result.swaps.outputs.find((i) => i.token === oldEUSD)?.formatWithSymbol()
     ).toBe('171.89628802 oldEUSD')
@@ -158,11 +162,13 @@ describe('searcher/rtokenzaps', () => {
     const quantities = [eUSD.fromDecimal('1.0')]
     const eUSDSquared = createRToken(universe, 'eUSD^2', quantities)
     const searcher = new Searcher(universe)
-    const result = await searcher.findSingleInputToRTokenZap(
-      universe.commonTokens.USDT!.fromDecimal('10.0'),
-      eUSDSquared,
-      Address.ZERO
-    )
+    const result = await searcher
+      .findSingleInputToRTokenZap(
+        universe.commonTokens.USDT!.fromDecimal('10.0'),
+        eUSDSquared,
+        Address.ZERO
+      )
+      .then((i) => i!.quote)
 
     expect(
       result.swaps.outputs
@@ -182,11 +188,13 @@ describe('searcher/rtokenzaps', () => {
     ]
     const eUSDSquared = createRToken(universe, 'eUSD^3', quantities)
     const searcher = new Searcher(universe)
-    const result = await searcher.findSingleInputToRTokenZap(
-      universe.commonTokens.USDT!.fromDecimal('10.0'),
-      eUSDSquared,
-      Address.ZERO
-    )
+    const result = await searcher
+      .findSingleInputToRTokenZap(
+        universe.commonTokens.USDT!.fromDecimal('10.0'),
+        eUSDSquared,
+        Address.ZERO
+      )
+      .then((i) => i!.quote)
 
     expect(
       result.swaps.outputs
@@ -221,9 +229,13 @@ describe('searcher/rtokenzaps', () => {
       [universe.commonTokens.WETH, universe.usd.fromDecimal('1750')],
     ])
     universe.oracles.push(
-      new PriceOracle('Test 2', async (token) => {
-        return prices.get(token) ?? null
-      }, () => universe.currentBlock)
+      new PriceOracle(
+        'Test 2',
+        async (token) => {
+          return prices.get(token) ?? null
+        },
+        () => universe.currentBlock
+      )
     )
 
     createV2Pool(
@@ -236,11 +248,13 @@ describe('searcher/rtokenzaps', () => {
 
     const searcher = new Searcher(universe)
 
-    const result = await searcher.findSingleInputToRTokenZap(
-      universe.commonTokens.WETH.fromDecimal('0.1'),
-      oldEUSD,
-      Address.ZERO
-    )
+    const result = await searcher
+      .findSingleInputToRTokenZap(
+        universe.commonTokens.WETH.fromDecimal('0.1'),
+        oldEUSD,
+        Address.ZERO
+      )
+      .then((i) => i!.quote)
     expect(
       result.swaps.outputs.find((i) => i.token === oldEUSD)?.formatWithSymbol()
     ).toBe('183.46519608 oldEUSD')
@@ -268,18 +282,24 @@ describe('searcher/rtokenzaps', () => {
       [universe.commonTokens.WETH, universe.usd.fromDecimal('1750')],
     ])
     universe.oracles.push(
-      new PriceOracle('Test 3', async (token) => {
-        return prices.get(token) ?? null
-      }, () => universe.currentBlock)
+      new PriceOracle(
+        'Test 3',
+        async (token) => {
+          return prices.get(token) ?? null
+        },
+        () => universe.currentBlock
+      )
     )
 
     const searcher = new Searcher(universe)
 
-    const result = await searcher.findSingleInputToRTokenZap(
-      universe.commonTokens.WETH.fromDecimal('0.1'),
-      rToken,
-      Address.ZERO
-    )
+    const result = await searcher
+      .findSingleInputToRTokenZap(
+        universe.commonTokens.WETH.fromDecimal('0.1'),
+        rToken,
+        Address.ZERO
+      )
+      .then((i) => i!.quote)
 
     expect((await universe.fairPrice(rToken.one))!.formatWithSymbol()).toBe(
       '0.9875 USD'

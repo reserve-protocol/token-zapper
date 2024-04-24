@@ -33,11 +33,16 @@ class MultiChoicePath implements SwapPath {
   constructor(
     public readonly universe: UniverseWithERC20GasTokenDefined,
     public readonly paths: SwapPath[]
-  ) {}
+  ) {
+    if (this.paths.length === 0) {
+      throw new Error('No paths provided')
+    }
+  }
 
   increment() {
     this.index = (this.index + 1) % this.paths.length
   }
+
   public readonly type = 'MultipleSwaps'
   get proceedsOptions(): DestinationOptions {
     return this.path.proceedsOptions
@@ -66,7 +71,10 @@ class MultiChoicePath implements SwapPath {
     return this.path.gasUnits
   }
   get path() {
-    return this.paths[this.index]
+    if (this.paths.length === 1) {
+      return this.paths[0]
+    }
+    return this.paths[this.index % this.paths.length]
   }
 
   get inputs(): TokenQuantity[] {
@@ -384,28 +392,24 @@ export class Searcher<
       }
     }
 
-    let permId = 0
     const tradesWithOptions = multiTrades.filter((i) => i.paths.length > 1)
     const nextPermutation = () => {
-      permId++
-      for (let i = 0; i < tradesWithOptions.length; i++) {
-        const idx = (permId >> (i * 3)) & 0b111
-        tradesWithOptions[i].index = idx
-      }
+      const randTrade =
+        tradesWithOptions[Math.floor(Math.random() * tradesWithOptions.length)]
+      randTrade.increment()
     }
-
-    const totalVariants = multiTrades
-      .map((i) => i.paths.length)
-      .reduce((l, r) => l * r, 1)
-
-    for (let i = 0; i < totalVariants; i++) {
-      const variant = i.toString(2).padStart(multiTrades.length, '0')
-      for (let j = 0; j < variant.length; j++) {
-        multiTrades[j].index = parseInt(variant[j])
+    if (tradesWithOptions.length === 0) {
+      yield await generatePermutation()
+    } else {
+      for (let i = 0; i < 5; i++) {
+        try {
+          yield await generatePermutation()
+          nextPermutation()
+        } catch (e) {
+          console.log(e)
+          continue
+        }
       }
-      const perm = await generatePermutation()
-      yield perm
-      nextPermutation()
     }
   }
 
@@ -923,7 +927,6 @@ export class Searcher<
       aggregators = aggregators.filter((i) => i.dynamicInput)
     }
     if (aggregators.length === 0) {
-      console.log('No aggregators available')
       return []
     }
     await Promise.all(

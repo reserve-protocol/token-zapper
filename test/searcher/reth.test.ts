@@ -1,6 +1,6 @@
 import { Address } from '../../src.ts/base/Address'
 import { Searcher } from '../../src.ts/searcher/Searcher'
-import {createForTest} from '../../src.ts/configuration/testEnvironment'
+import { createForTest } from '../../src.ts/configuration/testEnvironment'
 
 describe('searcher/reth', () => {
   it('It can correct handle reth', async () => {
@@ -13,29 +13,27 @@ describe('searcher/reth', () => {
 
     const searcher = new Searcher(universe)
 
-    const resultEthToRETH = await searcher.findSingleInputTokenSwap(
-      ETH.from('10.0'),
-      RETH,
-      Address.ZERO
-    )
+    const resultEthToRETH = await searcher
+      .findSingleInputTokenSwap(ETH.from('10.0'), RETH, Address.ZERO)
+      .then((i) => i!.paths)
     expect(resultEthToRETH.at(-1)!.outputs[0].formatWithSymbol()).toBe(
       '9.35567468447987126 rETH'
     )
 
-    const resultWETHToRETH = await searcher.findSingleInputTokenSwap(
-      WETH.from('10.0'),
-      RETH,
-      Address.ZERO
-    )
+    const resultWETHToRETH = await searcher
+      .findSingleInputTokenSwap(WETH.from('10.0'), RETH, Address.ZERO)
+      .then((i) => i!.paths)
     expect(resultWETHToRETH.at(-1)!.outputs[0].formatWithSymbol()).toBe(
       '9.35567468447987126 rETH'
     )
 
-    const resultRETHToWETH = await searcher.findSingleInputTokenSwap(
-      RETH.from('9.35567468447987126'),
-      WETH,
-      Address.ZERO
-    )
+    const resultRETHToWETH = await searcher
+      .findSingleInputTokenSwap(
+        RETH.from('9.35567468447987126'),
+        WETH,
+        Address.ZERO
+      )
+      .then((i) => i!.paths)
     expect(resultRETHToWETH.at(-1)!.outputs[0].formatWithSymbol()).toBe(
       '9.999999999999999993 WETH'
     )

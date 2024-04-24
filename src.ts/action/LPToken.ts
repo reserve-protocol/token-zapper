@@ -2,11 +2,16 @@ import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
-import { Action, DestinationOptions, InteractionConvention } from './Action'
+import {
+  Action,
+  BaseAction,
+  DestinationOptions,
+  InteractionConvention,
+} from './Action'
 
 export class LPToken {
-  public readonly mintAction: Action
-  public readonly burnAction: Action
+  public readonly mintAction: BaseAction
+  public readonly burnAction: BaseAction
   constructor(
     public readonly token: Token,
     public readonly poolTokens: Token[],
@@ -29,7 +34,7 @@ export class LPToken {
   }
 }
 
-export class LPTokenMint extends Action {
+export class LPTokenMint extends Action('LPPlaceholder') {
   async plan(
     planner: Planner,
     inputs: Value[],
@@ -50,7 +55,7 @@ export class LPTokenMint extends Action {
   gasEstimate(): bigint {
     return 200_000n
   }
-  
+
   constructor(public readonly lpToken: LPToken) {
     super(
       lpToken.token.address,
@@ -64,7 +69,7 @@ export class LPTokenMint extends Action {
     )
   }
 }
-export class LPTokenBurn extends Action {
+export class LPTokenBurn extends Action('LPPlaceholder') {
   async plan(
     planner: Planner,
     inputs: Value[],

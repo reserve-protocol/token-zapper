@@ -1,4 +1,4 @@
-import { type Action } from '../action/Action'
+import { type BaseAction as Action } from '../action/Action'
 import { Token } from '../entities/Token'
 import { DefaultMap } from '../base/DefaultMap'
 

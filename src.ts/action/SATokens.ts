@@ -18,7 +18,7 @@ function rayDiv(a: bigint, b: bigint): bigint {
   return (halfB + a * ray) / b
 }
 const saTokenInterface = IStaticATokenLM__factory.createInterface()
-export class MintSATokensAction extends Action {
+export class MintSATokensAction extends Action("AaveV2") {
   get outputSlippage() {
     return 3000000n
   }
@@ -69,7 +69,7 @@ export class MintSATokensAction extends Action {
     return `SATokenMint(${this.saToken.toString()})`
   }
 }
-export class BurnSATokensAction extends Action {
+export class BurnSATokensAction extends Action("AaveV2") {
   get outputSlippage() {
     return 3000000n
   }

@@ -86,7 +86,7 @@ export class ZapTxStats {
     }
   ) {
     const [inputValue, ...outputsValue] = await Promise.all(
-      [input.input, input.output, ...input.dust].map(async (i) =>
+      [input.input, input.output, ...input.dust].map((i) =>
         universe.priceQty(i)
       )
     )

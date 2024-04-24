@@ -3,10 +3,10 @@ import { TransactionRequest } from '@ethersproject/providers'
 import { constants } from 'ethers'
 import { ParamType, defaultAbiCoder, formatEther } from 'ethers/lib/utils'
 import {
+  BaseAction,
   DestinationOptions,
   InteractionConvention,
   plannerUtils,
-  type Action,
 } from '../action/Action'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
@@ -58,7 +58,7 @@ interface SimulateParams {
 class Step {
   constructor(
     readonly inputs: TokenQuantity[],
-    readonly action: Action,
+    readonly action: BaseAction,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
   ) {}
@@ -121,6 +121,10 @@ export abstract class BaseSearcherResult {
   public readonly inputToken: Token
   public readonly inputIsNative: boolean
 
+  toId() {
+    return this.describe().join('\n')
+  }
+
   constructor(
     readonly universe: UniverseWithERC20GasTokenDefined,
     readonly userInput: TokenQuantity,
@@ -171,14 +175,16 @@ export abstract class BaseSearcherResult {
 
   public async valueOfDust() {
     let sum = this.universe.usd.zero
-    for (const out of this.swaps.outputs) {
-      if (out.token === this.outputToken) {
-        continue
-      }
-      const price =
-        (await this.universe.fairPrice(out)) ?? this.universe.usd.zero
-      sum = sum.add(price)
-    }
+    await Promise.all(
+      this.swaps.outputs.map(async (out) => {
+        if (out.token === this.outputToken) {
+          return
+        }
+        const price =
+          (await this.universe.fairPrice(out)) ?? this.universe.usd.zero
+        sum = sum.add(price)
+      })
+    )
     return sum
   }
 
@@ -197,7 +203,7 @@ export abstract class BaseSearcherResult {
         return zapperInterface.decodeFunctionResult('zapERC20', resp)
           .out as ZapperOutputStructOutput
       } catch (e) {
-        console.log(resp)
+        // console.log(resp)
       }
       if (resp.startsWith('0x08c379a0')) {
         const data = resp.slice(138)
@@ -331,16 +337,18 @@ export abstract class BaseSearcherResult {
       .map((qty, index) => this.potentialResidualTokens[index].from(qty))
       .filter((i) => i.token !== this.outputToken && i.amount !== 0n)
 
-    const dustValues = await Promise.all(
-      dustQuantities.map(
-        async (i) => [await this.universe.fairPrice(i), i] as const
-      )
-    )
     const amount = zapperResult.amountOut.toBigInt()
     const rounding = 10n ** BigInt(this.outputToken.decimals / 2)
+
     const outputTokenOutput = this.outputToken.from(
       (amount / rounding) * rounding
     )
+    const [valueOfOut, ...dustValues] = await Promise.all([
+      this.universe.fairPrice(outputTokenOutput),
+      ...dustQuantities.map(
+        async (i) => [await this.universe.fairPrice(i), i] as const
+      ),
+    ])
 
     let valueOfDust = this.universe.usd.zero
     for (const [usdValue] of dustValues) {
@@ -352,9 +360,7 @@ export abstract class BaseSearcherResult {
     }
 
     const simulatedOutputs = [...dustQuantities, outputTokenOutput]
-    const totalValue =
-      (await this.universe.fairPrice(outputTokenOutput))?.add(valueOfDust) ??
-      valueOfDust
+    const totalValue = valueOfOut?.add(valueOfDust) ?? valueOfDust
 
     const gasUsed = zapperResult.gasUsed.toBigInt()
     return {
@@ -712,6 +718,7 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
   ) {
     super(universe, userInput, parts.full, signer, outputToken)
   }
+
   async toTransaction(
     options: ToTransactionArgs = {}
   ): Promise<ZapTransaction> {
@@ -783,7 +790,6 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
         let actionInput = trades.get(inputToken)
         if (actionInput == null) {
           throw new Error('NO INPUT')
-          continue
         }
         const total = totalUsedInMinting.get(inputToken)
         if (total.amount !== step.inputs[0].amount) {

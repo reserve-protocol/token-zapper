@@ -2,7 +2,6 @@ import { formatEther } from 'ethers/lib/utils'
 import { type Universe } from '../Universe'
 import { type Address } from '../base/Address'
 
-import { parseHexStringIntoBuffer } from '../base/utils'
 import { ZapperExecutor__factory } from '../contracts'
 import { IRETHRouter } from '../contracts/contracts/IRETHRouter'
 import { IRETHRouter__factory } from '../contracts/factories/contracts/IRETHRouter__factory'
@@ -81,7 +80,7 @@ type IRouter = Pick<
 
 const ONE = 10n ** 18n
 
-export class ETHToRETH extends Action {
+export class ETHToRETH extends Action("Rocketpool") {
   async plan(
     planner: Planner,
     [input]: Value[],
@@ -163,7 +162,7 @@ export class ETHToRETH extends Action {
   }
 }
 
-export class RETHToETH extends Action {
+export class RETHToETH extends Action("Rocketpool") {
   async plan(
     planner: Planner,
     [input]: Value[],

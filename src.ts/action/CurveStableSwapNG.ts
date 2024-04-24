@@ -65,7 +65,7 @@ export class CurveStableSwapNGPool {
   }
 }
 
-export class CurveStableSwapNGAddLiquidity extends Action {
+export class CurveStableSwapNGAddLiquidity extends Action('CurveStableSwapNG') {
   get outputSlippage() {
     return 300000n
   }
@@ -134,7 +134,9 @@ export class CurveStableSwapNGAddLiquidity extends Action {
   }
 }
 
-export class CurveStableSwapNGRemoveLiquidity extends Action {
+export class CurveStableSwapNGRemoveLiquidity extends Action(
+  'CurveStableSwapNG'
+) {
   get outputSlippage() {
     return 300000n
   }

@@ -165,7 +165,7 @@ export const fetchQuote = async (
   return json as Quote
 }
 
-class DefillamaAction extends Action {
+class DefillamaAction extends Action('Defillama') {
   async plan(planner: Planner): Promise<Value[]> {
     const zapperLib = this.gen.Contract.createContract(
       ZapperExecutor__factory.connect(
@@ -195,7 +195,7 @@ class DefillamaAction extends Action {
     output: Token,
     public readonly universe: Universe,
     public readonly slippage: number,
-    public readonly protocol: PROTOCOLS
+    public readonly externalProtocol: PROTOCOLS
   ) {
     super(
       Address.from(request.tokenApprovalAddress),
@@ -217,7 +217,7 @@ class DefillamaAction extends Action {
     this.outputQuantity = [out]
   }
   toString(): string {
-    return `DefiLama[${this.protocol}](${this.quantityIn} => ${this.outputQuantity}})`
+    return `DefiLama[${this.externalProtocol}](${this.quantityIn} => ${this.outputQuantity}})`
   }
   async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
     return this.outputQuantity

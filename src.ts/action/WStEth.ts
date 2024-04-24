@@ -1,7 +1,6 @@
 import { type Universe } from '../Universe'
 import { Approval } from '../base/Approval'
 
-import { parseHexStringIntoBuffer } from '../base/utils'
 import { ZapperExecutor__factory } from '../contracts'
 import { type IWStETH } from '../contracts/contracts/IWStETH'
 import { IWStETH__factory } from '../contracts/factories/contracts/IWStETH__factory'
@@ -10,7 +9,6 @@ import { type Token, type TokenQuantity } from '../entities/Token'
 import * as gen from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-const wstETHInterface = IWStETH__factory.createInterface()
 export class WStETHRateProvider {
   get outputSlippage() {
     return 0n
@@ -42,7 +40,7 @@ export class WStETHRateProvider {
   }
 }
 
-export class MintWStETH extends Action {
+export class MintWStETH extends Action('WrappedStETH') {
   get outputSlippage() {
     return 0n
   }
@@ -63,9 +61,7 @@ export class MintWStETH extends Action {
         this.universe.provider
       )
     )
-    const input = planner.add(
-      zapperLib.add(inputs[0], 1n)
-    )
+    const input = planner.add(zapperLib.add(inputs[0], 1n))
     const out = planner.add(wsteth.wrap(input))
     return [out!]
   }
@@ -95,7 +91,7 @@ export class MintWStETH extends Action {
   }
 }
 
-export class BurnWStETH extends Action {
+export class BurnWStETH extends Action('WrappedStETH') {
   get outputSlippage() {
     return 0n
   }

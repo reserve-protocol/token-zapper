@@ -6,7 +6,9 @@ import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-export class MintCometWrapperAction extends Action {
+export class MintCometWrapperAction extends Action(
+  'ReserveWrapper(CompoundV3)'
+) {
   async plan(
     planner: Planner,
     inputs: Value[],
@@ -34,7 +36,7 @@ export class MintCometWrapperAction extends Action {
     return [out!]
   }
   gasEstimate() {
-    return BigInt(110000n)
+    return BigInt(150000n)
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -72,7 +74,9 @@ export class MintCometWrapperAction extends Action {
   }
 }
 
-export class BurnCometWrapperAction extends Action {
+export class BurnCometWrapperAction extends Action(
+  'ReserveWrapper(CompoundV3)'
+) {
   async plan(
     planner: Planner,
     inputs: Value[],
@@ -102,7 +106,7 @@ export class BurnCometWrapperAction extends Action {
     return [out!]
   }
   gasEstimate() {
-    return BigInt(110000n)
+    return BigInt(150000n)
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

@@ -129,7 +129,7 @@ const _getExchangeMultipleArgs = (
   return { _route, _swapParams, _factorySwapAddresses }
 }
 
-export class CurveSwap extends Action {
+export class CurveSwap extends Action("Curve") {
   async plan(
     planner: Planner,
     inputs: Value[],
@@ -179,7 +179,7 @@ export class CurveSwap extends Action {
   }
   private estimate?: bigint
   gasEstimate() {
-    return this.estimate ?? 205000n
+    return this.estimate ?? 300000n
   }
 
   private async _quote(amountsIn: TokenQuantity): Promise<{

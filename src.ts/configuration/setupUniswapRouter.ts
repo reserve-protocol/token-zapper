@@ -52,7 +52,7 @@ import { SwapPath, SwapPlan } from '../searcher/Swap'
 import { ParamType } from '@ethersproject/abi'
 const SLIPPAGE = new Percent(50, 10000)
 
-export class UniswapRouterAction extends Action {
+export class UniswapRouterAction extends Action('Uniswap') {
   get outputSlippage(): bigint {
     return 3000000n
   }
@@ -319,7 +319,13 @@ export const setupUniswapRouter = async (universe: Universe) => {
     dex: out,
     addTradeAction: (inputToken: Token, outputToken: Token) => {
       universe.addAction(
-        new RouterAction(out, universe, routerAddr, inputToken, outputToken),
+        new (RouterAction('Uniswap'))(
+          out,
+          universe,
+          routerAddr,
+          inputToken,
+          outputToken
+        ),
         routerAddr
       )
     },

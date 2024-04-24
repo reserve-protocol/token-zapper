@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 
-import { type Action } from './action/Action'
+import { type BaseAction as Action } from './action/Action'
 import { Address } from './base/Address'
 import { Graph } from './exchange-graph/Graph'
 import {
@@ -342,10 +342,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     rToken: string,
     signerAddress: string
   ) {
-    const inputTokenQty = (await this.getToken(Address.from(tokenIn))).from(
-      amountIn
-    )
-    const outputToken = await this.getToken(Address.from(rToken))
+    const [inputTokenQty, outputToken] = await Promise.all([
+      this.getToken(Address.from(tokenIn)).then((tok) => tok.from(amountIn)),
+      this.getToken(Address.from(rToken)),
+    ])
 
     return this.searcher.findSingleInputToRTokenZap(
       inputTokenQty,
@@ -371,11 +371,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     output: string,
     signerAddress: string
   ) {
-    const inputTokenQty = (await this.getToken(Address.from(rToken))).from(
-      amount
-    )
-    const outputToken = await this.getToken(Address.from(output))
-
+    const [inputTokenQty, outputToken] = await Promise.all([
+      this.getToken(Address.from(rToken)).then((tok) => tok.from(amount)),
+      this.getToken(Address.from(output)),
+    ])
     return this.searcher.findRTokenIntoSingleTokenZap(
       inputTokenQty,
       outputToken,

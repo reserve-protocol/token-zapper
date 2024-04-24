@@ -14,7 +14,7 @@ import { Planner, Value } from '../tx-gen/Planner'
  */
 const vaultInterface = IStargateRewardableWrapper__factory.createInterface()
 
-export class StargateWrapperDepositAction extends Action {
+export class StargateWrapperDepositAction extends Action("ReserveWrapper(Stargate)") {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const wSGToken = this.gen.Contract.createContract(IStargateRewardableWrapper__factory.connect(
       this.stargateToken.address.address,
@@ -55,7 +55,7 @@ export class StargateWrapperDepositAction extends Action {
   }
 }
 
-export class StargateWrapperWithdrawAction extends Action {
+export class StargateWrapperWithdrawAction extends Action("ReserveWrapper(Stargate)") {
   gasEstimate() {
     return BigInt(200000n)
   }

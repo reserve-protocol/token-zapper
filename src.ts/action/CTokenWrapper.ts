@@ -10,7 +10,7 @@ import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 const iCTokenWrapper = CTokenWrapper__factory.createInterface()
 
-export class MintCTokenWrapperAction extends Action {
+export class MintCTokenWrapperAction extends Action("ReserveWrapper(CompoundV2)") {
   async plan(
     planner: Planner,
     inputs: Value[],
@@ -33,7 +33,7 @@ export class MintCTokenWrapperAction extends Action {
     return [out!]
   }
   gasEstimate() {
-    return BigInt(110000n)
+    return BigInt(250000n)
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -60,7 +60,7 @@ export class MintCTokenWrapperAction extends Action {
   }
 }
 
-export class BurnCTokenWrapperAction extends Action {
+export class BurnCTokenWrapperAction extends Action("ReserveWrapper(CompoundV2)") {
   async plan(
     planner: Planner,
     inputs: Value[],
@@ -82,7 +82,7 @@ export class BurnCTokenWrapperAction extends Action {
     return [out!]
   }
   gasEstimate() {
-    return BigInt(110000n)
+    return BigInt(250000n)
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

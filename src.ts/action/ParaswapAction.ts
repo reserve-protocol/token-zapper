@@ -1,14 +1,17 @@
-import { Transaction } from "paraswap";
-import { Address, TokenQuantity, Universe } from "..";
-import { Approval } from "../base/Approval";
-import { parseHexStringIntoBuffer } from "../base/utils";
-import { Action, DestinationOptions, InteractionConvention } from "./Action";
-import { Planner, Value } from "../tx-gen/Planner";
+import { Transaction } from 'paraswap'
+import { Address, TokenQuantity, Universe } from '..'
+import { Approval } from '../base/Approval'
+import { Planner, Value } from '../tx-gen/Planner'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-
-export class ParaswapAction extends Action {
-  plan(planner: Planner, inputs: Value[], destination: Address, predictedInputs: TokenQuantity[]): Promise<Value[]> {
-    throw new Error("Method not implemented.");
+export class ParaswapAction extends Action('Paraswap') {
+  plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address,
+    predictedInputs: TokenQuantity[]
+  ): Promise<Value[]> {
+    throw new Error('Method not implemented.')
   }
   constructor(
     public readonly universe: Universe,

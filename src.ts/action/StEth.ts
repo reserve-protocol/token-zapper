@@ -1,14 +1,11 @@
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
-import { InteractionConvention, DestinationOptions, Action } from './Action'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-import { AddressZero } from '@ethersproject/constants'
-import { parseHexStringIntoBuffer } from '../base/utils'
+import { constants } from 'ethers'
 import { IStETH__factory } from '../contracts/factories/contracts/IStETH__factory'
 import { Planner, Value } from '../tx-gen/Planner'
-import { constants } from 'ethers'
 
-const stETHInterface = IStETH__factory.createInterface()
 export class StETHRateProvider {
   constructor(readonly universe: Universe, readonly steth: Token) {}
 
@@ -20,7 +17,7 @@ export class StETHRateProvider {
   }
 }
 
-export class MintStETH extends Action {
+export class MintStETH extends Action('Lido') {
   async plan(planner: Planner, inputs: Value[]) {
     const wsteth = this.gen.Contract.createContract(
       IStETH__factory.connect(
@@ -66,7 +63,7 @@ export class MintStETH extends Action {
   }
 }
 
-export class BurnStETH extends Action {
+export class BurnStETH extends Action('Lido') {
   gasEstimate() {
     return BigInt(500000n)
   }

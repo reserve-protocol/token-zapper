@@ -12,16 +12,15 @@ export class ZapperOracleAggregator extends PriceOracle {
     )
   }
 
-  private async priceAsset(token: Token) {
-    for (const oracle of this.universe.oracles) {
-      try {
-        const price = await oracle.quote(token)
-        if (price != null) {
-          return price
-        }
-      } catch (e) {}
-    }
-    throw new Error('Unable to price ' + token)
+  private async priceAsset(token: Token): Promise<TokenQuantity> {
+    const promises = this.universe.oracles.map(async (oracle) => {
+      const price = await oracle.quote(token)
+      if (price != null) {
+        return price
+      }
+      throw new Error('Unable to price ' + token)
+    })
+    return await Promise.race(promises)
   }
 }
 

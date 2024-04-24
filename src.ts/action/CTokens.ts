@@ -1,20 +1,15 @@
 import { type Universe } from '../Universe'
 import { Approval } from '../base/Approval'
 
-import { parseHexStringIntoBuffer } from '../base/utils'
-import { BalanceOf__factory } from '../contracts'
 import { CEther__factory } from '../contracts/factories/contracts/ICToken.sol/CEther__factory'
 import { ICToken__factory } from '../contracts/factories/contracts/ICToken.sol/ICToken__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-const iCTokenInterface = ICToken__factory.createInterface()
-const iCEtherInterface = CEther__factory.createInterface()
-
 const ONEFP18 = 10n ** 18n
 
-export class MintCTokenAction extends Action {
+export class MintCTokenAction extends Action('CompoundV2') {
   async plan(planner: Planner, inputs: Value[]): Promise<Value[]> {
     if (this.underlying === this.universe.nativeToken) {
       const lib = this.gen.Contract.createContract(
@@ -91,7 +86,7 @@ export class MintCTokenAction extends Action {
   }
 }
 
-export class BurnCTokenAction extends Action {
+export class BurnCTokenAction extends Action('CompoundV2') {
   get outputSlippage() {
     return 3000000n
   }

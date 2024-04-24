@@ -50,7 +50,7 @@ import NodeCache from 'node-cache'
 import { RouterAction } from '../action/RouterAction'
 import { SwapPath, SwapPlan } from '../searcher/Swap'
 import { ParamType } from '@ethersproject/abi'
-const SLIPPAGE = new Percent(25, 10000)
+const SLIPPAGE = new Percent(50, 10000)
 
 export class UniswapRouterAction extends Action {
   get outputSlippage(): bigint {
@@ -299,6 +299,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
         type: SwapType.SWAP_ROUTER_02,
       })
       if (route == null || route.methodParameters == null) {
+        console.log('Failed to find route for ' + input + ' -> ' + output)
         throw new Error('Failed to find route')
       }
       const outamt = BigInt(

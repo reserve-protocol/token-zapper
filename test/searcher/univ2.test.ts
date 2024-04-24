@@ -46,7 +46,7 @@ describe('searcher/v2-actions', () => {
         universe.commonTokens.WETH!,
         Address.ZERO
       )
-      .then((i) => i!.paths)
+      .then((i) => i?.paths!)
     expect(result[0].outputs[0].formatWithSymbol()).toBe(
       '0.005696493782365597 WETH'
     )
@@ -62,9 +62,9 @@ describe('searcher/v2-actions', () => {
 
     const result = await new Searcher(universe)
       .findSingleInputTokenSwap(qty, cUSDT!, Address.ZERO)
-      .then((i) => i!.paths)
-    expect(result[0].outputs[0].formatWithSymbol()).toBe('784.52107909 cUSDT')
-    expect(result[0].steps.length).toBe(2)
+      .then((i) => i?.path!)
+    expect(result.outputs[0].formatWithSymbol()).toBe('784.52107909 cUSDT')
+    expect(result.steps.length).toBe(2)
   })
 
   it('it can handle a burn + swap', async () => {
@@ -79,10 +79,10 @@ describe('searcher/v2-actions', () => {
         universe.commonTokens.WETH!,
         Address.ZERO
       )
-      .then((i) => i!.paths)
-    expect(result[0].outputs[0].formatWithSymbol()).toBe(
+      .then((i) => i!)
+    expect(result.path.outputs[0].formatWithSymbol()).toBe(
       '0.006333066959642829 WETH'
     )
-    expect(result[0].steps.length).toBe(2)
+    expect(result.path.steps.length).toBe(2)
   })
 })

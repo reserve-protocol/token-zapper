@@ -15,14 +15,14 @@ describe('searcher/reth', () => {
 
     const resultEthToRETH = await searcher
       .findSingleInputTokenSwap(ETH.from('10.0'), RETH, Address.ZERO)
-      .then((i) => i!.paths)
+      .then((i) => i?.paths!)
     expect(resultEthToRETH.at(-1)!.outputs[0].formatWithSymbol()).toBe(
       '9.35567468447987126 rETH'
     )
 
     const resultWETHToRETH = await searcher
       .findSingleInputTokenSwap(WETH.from('10.0'), RETH, Address.ZERO)
-      .then((i) => i!.paths)
+      .then((i) => i?.paths!)
     expect(resultWETHToRETH.at(-1)!.outputs[0].formatWithSymbol()).toBe(
       '9.35567468447987126 rETH'
     )
@@ -33,7 +33,7 @@ describe('searcher/reth', () => {
         WETH,
         Address.ZERO
       )
-      .then((i) => i!.paths)
+      .then((i) => i?.paths!)
     expect(resultRETHToWETH.at(-1)!.outputs[0].formatWithSymbol()).toBe(
       '9.999999999999999993 WETH'
     )

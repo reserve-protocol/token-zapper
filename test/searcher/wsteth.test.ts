@@ -12,7 +12,7 @@ describe('searcher/steth', () => {
     const searcher = new Searcher(universe)
     const path = await searcher
       .findSingleInputTokenSwap(ETH.from('10.0'), wstETH, Address.ZERO)
-      .then((i) => i!.paths)
+      .then((i) => i?.paths!)
     expect(path[0].steps[0].outputs[0].formatWithSymbol()).toBe('10.0 stETH')
     expect(path[0].steps[1].outputs[0].formatWithSymbol()).toBe(
       '8.93700000024782301 wstETH'

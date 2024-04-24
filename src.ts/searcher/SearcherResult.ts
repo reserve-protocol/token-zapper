@@ -220,25 +220,25 @@ export abstract class BaseSearcherResult {
         throw new ThirdPartyIssue('Stargate out of funds')
       }
 
-      console.log(
-        'error:',
-        e.message,
-        'Failing program:',
-        printPlan(this.planner, this.universe)
-          .map((i) => '  ' + i)
-          .join('\n')
-      )
+      // console.log(
+      //   'error:',
+      //   e.message,
+      //   'Failing program:',
+      //   printPlan(this.planner, this.universe)
+      //     .map((i) => '  ' + i)
+      //     .join('\n')
+      // )
     }
 
-    console.log(
-      JSON.stringify({
-        data,
-        value: value.toString(),
-        address: this.universe.zapperAddress.address,
-        from: this.signer.address,
-        block: this.blockNumber,
-      })
-    )
+    // console.log(
+    //   JSON.stringify({
+    //     data,
+    //     value: value.toString(),
+    //     address: this.universe.zapperAddress.address,
+    //     from: this.signer.address,
+    //     block: this.blockNumber,
+    //   })
+    // )
     throw new Error('Failed to simulate')
   }
 

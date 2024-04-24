@@ -21,15 +21,8 @@ import { ToTransactionArgs } from './ToTransactionArgs'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction } from './ZapTransaction'
 
-const whitelist = new Set([
-  '0xa0d69e286b938e21cbf7e51d71f6a4c8918f482f',
-  '0xe72b141df173b999ae7c1adcbf60cc9833ce56a8',
-  '0xacdf0dba4b9839b96221a8487e9ca660a48212be',
-  '0xcc7ff230365bd730ee4b352cc2492cedac49383e',
-])
-
 class MultiChoicePath implements SwapPath {
-  public index: number = 0
+  private index: number = 0
   constructor(
     public readonly universe: UniverseWithERC20GasTokenDefined,
     public readonly paths: SwapPath[]
@@ -38,9 +31,15 @@ class MultiChoicePath implements SwapPath {
       throw new Error('No paths provided')
     }
   }
+  get hasMultipleChoices() {
+    return this.paths.length > 1
+  }
 
   increment() {
-    this.index = (this.index + 1) % this.paths.length
+    this.index += 1
+    if (this.index >= this.paths.length) {
+      this.index = 0
+    }
   }
 
   public readonly type = 'MultipleSwaps'
@@ -74,7 +73,7 @@ class MultiChoicePath implements SwapPath {
     if (this.paths.length === 1) {
       return this.paths[0]
     }
-    return this.paths[this.index % this.paths.length]
+    return this.paths[this.index]
   }
 
   get inputs(): TokenQuantity[] {
@@ -260,7 +259,6 @@ export class Searcher<
       inputPrTrade[0].input = inputPrTrade[0].input.add(leftOver)
     }
 
-    const tokenSetToBasket: SwapPath[] = []
     const balancesBeforeTrading = new TokenAmounts()
     balancesBeforeTrading.add(inputQuantity)
 
@@ -281,7 +279,7 @@ export class Searcher<
           output,
           this.universe.config.addresses.executorAddress,
           slippage,
-          1,
+          2,
           false
         )
         if (trade == null) {
@@ -297,6 +295,7 @@ export class Searcher<
     )
 
     const generatePermutation = async () => {
+      const tokenSetToBasket: SwapPath[] = []
       const tradingBalances = balancesBeforeTrading.clone()
       const tradeInputToTokenSet = multiTrades.map((i) => i.path)
       for (const trade of tradeInputToTokenSet) {
@@ -392,7 +391,7 @@ export class Searcher<
       }
     }
 
-    const tradesWithOptions = multiTrades.filter((i) => i.paths.length > 1)
+    const tradesWithOptions = multiTrades.filter((i) => i.hasMultipleChoices)
     const nextPermutation = () => {
       const randTrade =
         tradesWithOptions[Math.floor(Math.random() * tradesWithOptions.length)]
@@ -645,9 +644,6 @@ export class Searcher<
     signerAddress: Address,
     slippage = 0.0
   ): Promise<TradeSearcherResult[]> {
-    if (!whitelist.has(rToken.address.address.toLowerCase())) {
-      return []
-    }
     await this.universe.initialized
 
     const inputIsNative = userInput.token === this.universe.nativeToken
@@ -665,30 +661,27 @@ export class Searcher<
       inputTokenQuantity,
       rToken,
       signerAddress,
-      slippage,
+      0,
       false
     ).catch(() => [])
 
     const inputValue = await this.universe.fairPrice(inputTokenQuantity)
+    if (inputValue == null) {
+      return []
+    }
     const slippageCheckValue = this.universe.usd.from(10000)
 
     return paths
       .filter(async (path) => {
         if (
-          inputValue == null ||
           slippageCheckValue.gt(inputValue) || // only check slippage if the value is large enough
           path.outputValue.gte(inputValue)
         ) {
           return true
         }
-        const slippage = parseFloat(path.outputValue.div(inputValue).toString())
-        if (slippage < 0.998) {
-          return false
-        }
-
-        return true
+        return parseFloat(path.outputValue.div(inputValue).format()) > 0.999
       })
-      .slice(0, 4)
+      .slice(0, 3)
       .map(
         (path) =>
           new TradeSearcherResult(
@@ -798,7 +791,8 @@ export class Searcher<
             tx: await searchResult.quote.toTransaction(toTxArgs),
             error: null,
           }
-        } catch (error) {
+        } catch (error: any) {
+          // console.log(error.stack)
           return {
             searchResult: searchResult.quote,
             tx: null,
@@ -830,12 +824,12 @@ export class Searcher<
 
     notFailed.sort((l, r) => -l.tx.compare(r.tx))
 
-    console.log(`${notFailed.length} / ${txes.length} passed simulation`)
-    console.log(notFailed.map((i) => '  ' + i.tx.stats).join('\n'))
+    console.log(`${notFailed.length} / ${txes.length} passed simulation:`)
+    console.log(notFailed.map((i, idx) => `${idx}. ${i.tx.stats}`).join('\n'))
 
     return {
       bestZapTx: notFailed[0],
-      alternatives: notFailed.slice(1),
+      alternatives: notFailed.slice(1, notFailed.length),
     }
   }
 

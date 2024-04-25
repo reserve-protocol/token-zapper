@@ -44,7 +44,7 @@ const shuffleArray = <T>(array: T[]): T[] => {
   }
   return array
 }
-const MAX_CONCCURRENCY = 5
+const MAX_CONCCURRENCY = 3
 const ZAP_RESULTS = 5
 class MultiChoicePath implements SwapPath {
   private index: number = 0
@@ -298,9 +298,9 @@ export class Searcher<
     balancesBeforeTrading.add(inputQuantity)
 
     const multiTrades: MultiChoicePath[] = []
+
     await Promise.all(
       inputPrTrade.map(async ({ input, output }) => {
-        const tradingBalances = balancesBeforeTrading.clone()
         if (
           // Skip trade if user input is part of precursor set
           input.token === output
@@ -322,7 +322,7 @@ export class Searcher<
             `Could not find way to swap into precursor token ${input} -> ${output}`
           )
         }
-        if (!tradingBalances.hasBalance(trade.inputs)) {
+        if (!balancesBeforeTrading.hasBalance(trade.inputs)) {
           throw new Error('Insufficient balance for trade')
         }
         multiTrades.push(trade)
@@ -332,11 +332,12 @@ export class Searcher<
     const generatePermutation = async () => {
       const tokenSetToBasket: SwapPath[] = []
       const tradingBalances = balancesBeforeTrading.clone()
+
       const tradeInputToTokenSet = multiTrades.map((i) => i.path)
 
-      await Promise.all(
-        tradeInputToTokenSet.map((i) => i.exchange(tradingBalances))
-      )
+      for (const trade of tradeInputToTokenSet) {
+        await trade.exchange(tradingBalances)
+      }
       /**
        * PHASE 3: Mint basket token set from precursor set
        */
@@ -428,7 +429,8 @@ export class Searcher<
     }
 
     const tradesWithOptions = multiTrades.filter((i) => i.hasMultipleChoices)
-
+    const permCount = tradesWithOptions.reduce((a, b) => a * b.paths.length, 1)
+    console.log(`Permutations: ${permCount}`)
     if (tradesWithOptions.length === 0) {
       yield await generatePermutation()
     } else {
@@ -555,23 +557,25 @@ export class Searcher<
       searchResult: BaseSearcherResult
       tx: ZapTransaction | null
       error: any
-    }[] = await Promise.all(
-      allQuotes.map(async (searchResult) => {
-        try {
-          return {
-            searchResult: searchResult,
-            tx: await searchResult.toTransaction(toTxArgs),
-            error: null,
+    }[] = (
+      await Promise.all(
+        allQuotes.map(async (searchResult) => {
+          try {
+            return {
+              searchResult: searchResult,
+              tx: await searchResult.toTransaction(toTxArgs),
+              error: null,
+            }
+          } catch (error: any) {
+            return {
+              searchResult: searchResult,
+              tx: null,
+              error: error,
+            }
           }
-        } catch (error: any) {
-          return {
-            searchResult: searchResult,
-            tx: null,
-            error: error,
-          }
-        }
-      })
-    )
+        })
+      )
+    ).filter((i) => i != null)
 
     if (txes.length === 0) {
       console.log('No results')
@@ -579,7 +583,21 @@ export class Searcher<
     }
 
     const notFailed = txes
-      .filter((i) => i.error == null && i.tx != null)
+      .filter((i) => {
+        const ok = i.error == null && i.tx != null
+        if (!ok) {
+          return false
+        }
+        if (
+          i.tx &&
+          i.tx!.outputValueUSD.amount / 50n < i.tx!.dustValueUSD.amount
+        ) {
+          // console.log(i.tx.toString())
+          // console.log(i.tx.describe().join("\n"))
+          return false
+        }
+        return true
+      })
       .map((i) => {
         return {
           SearcherResult: i.searchResult,
@@ -588,9 +606,7 @@ export class Searcher<
       })
 
     if (notFailed.length === 0) {
-      console.log(txes[0].error!)
-      console.log(txes[0].error.stack)
-      throw new Error(txes[0].error)
+      throw new Error(txes[0]?.error ?? 'Failed to find a valid tx')
     }
 
     notFailed.sort((l, r) => -l.tx.compare(r.tx))
@@ -881,7 +897,7 @@ export class Searcher<
 
     return paths
       .filter(
-        (path) => parseFloat(path.outputValue.div(inputValue).format()) > 0.99
+        (path) => parseFloat(path.outputValue.div(inputValue).format()) > 0.98
       )
       .slice(0, 4)
       .map(

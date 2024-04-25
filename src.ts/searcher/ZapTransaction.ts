@@ -85,16 +85,15 @@ export class ZapTxStats {
       dust: TokenQuantity[]
     }
   ) {
-    const [inputValue, ...outputsValue] = await Promise.all(
+    const [inputValue, outputValue, ...dustValue] = await Promise.all(
       [input.input, input.output, ...input.dust].map((i) =>
         universe.priceQty(i)
       )
     )
-    const [outputValue, ...dustValue] = outputsValue
 
-    const totalValueUSD = outputsValue.reduce(
+    const totalValueUSD = dustValue.reduce(
       (a, b) => a.add(b.price),
-      universe.usd.zero
+      outputValue.price
     )
 
     return new ZapTxStats(
@@ -103,7 +102,7 @@ export class ZapTxStats {
       inputValue,
       outputValue,
       await DustStats.fromDust(universe, dustValue),
-      outputsValue,
+      [outputValue, ...dustValue],
       totalValueUSD
     )
   }
@@ -186,6 +185,7 @@ export class ZapTransaction {
     return [
       'Transaction {',
       `  zap: ${this.stats},`,
+      `  dust: [${this.stats.dust.dust.join(', ')}],`,
       `  fees: ${this.stats.txFee}`,
       '  program: [',
       ...printPlan(this.planner, this.universe).map((c) => '   ' + c),

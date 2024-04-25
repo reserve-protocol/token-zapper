@@ -112,8 +112,8 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
     return BigInt(200000n) * BigInt(this.path.steps.length)
   }
 
-  async quote([]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [this.path.output]
+  quote([]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return Promise.resolve([this.path.output])
   }
 
   constructor(
@@ -135,7 +135,7 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
     }
   }
   toString(): string {
-    return this.path.toString()
+    return `AerodromeRouterSwap(${this.path.toString()})`
   }
 }
 
@@ -286,16 +286,17 @@ export const setupAerodromeRouter = async (universe: Universe) => {
       }
       const outAmts = (
         await Promise.all(
-          routes.map(async (route) =>
-            routerInst
-              .getAmountsOut(
-                input.amount,
-                route.map((step) => step.intoRouteStruct())
-              )
-              .then((parts) => AerodromePath.from(route, parts))
-              .catch(() => {
-                return null!
-              })
+          routes.map(
+            async (route) =>
+              await routerInst
+                .getAmountsOut(
+                  input.amount,
+                  route.map((step) => step.intoRouteStruct())
+                )
+                .then((parts) => AerodromePath.from(route, parts))
+                .catch(() => {
+                  return null!
+                })
           )
         )
       ).filter((i) => i != null)
@@ -305,9 +306,13 @@ export const setupAerodromeRouter = async (universe: Universe) => {
 
       outAmts.sort((a, b) => b.compare(a))
 
-      return await new SwapPlan(universe, [
-        new AerodromeRouterSwap(universe, outAmts[0]!, routerInst),
-      ]).quote([input], universe.execAddress)
+      const outAction = new AerodromeRouterSwap(
+        universe,
+        outAmts[0]!,
+        routerInst
+      )
+      const plan = new SwapPlan(universe, [outAction])
+      return await plan.quote([input], universe.execAddress)
     },
     true
   )

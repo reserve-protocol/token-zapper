@@ -44,8 +44,8 @@ const shuffleArray = <T>(array: T[]): T[] => {
   }
   return array
 }
-const MAX_CONCCURRENCY = 3
-const ZAP_RESULTS = 5
+const MAX_CONCCURRENCY = 4
+const ZAP_RESULTS = 4
 class MultiChoicePath implements SwapPath {
   private index: number = 0
   constructor(
@@ -430,7 +430,6 @@ export class Searcher<
 
     const tradesWithOptions = multiTrades.filter((i) => i.hasMultipleChoices)
     const permCount = tradesWithOptions.reduce((a, b) => a * b.paths.length, 1)
-    console.log(`Permutations: ${permCount}`)
     if (tradesWithOptions.length === 0) {
       yield await generatePermutation()
     } else {
@@ -1081,12 +1080,18 @@ export class Searcher<
       return []
     }
     await Promise.all(
-      aggregators.map((router) =>
-        router
-          .swap(executorAddress, destination, input, output, slippage)
-          .then((i) => out.push(i))
-          .catch(() => null)
-      )
+      aggregators.map(async (router) => {
+        try {
+          const swap = await router.swap(
+            executorAddress,
+            destination,
+            input,
+            output,
+            slippage
+          )
+          out.push(swap)
+        } catch (e) {}
+      })
     )
     return out
   }

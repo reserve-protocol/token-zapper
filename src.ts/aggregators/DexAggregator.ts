@@ -1,6 +1,5 @@
 import { SwapPath } from '../searcher/Swap'
 import { type SwapSignature } from './SwapSignature'
-const TIMEOUT = 350
 export class DexRouter {
   private cache: Map<
     string,
@@ -17,7 +16,7 @@ export class DexRouter {
   ) {
     setInterval(() => {
       this.cache.clear()
-    }, 400)
+    }, 500)
   }
 
   public readonly swap: SwapSignature = async (
@@ -31,34 +30,22 @@ export class DexRouter {
     const key = `${input.amount}.${input.token.address.address}.${output.address.address}`
     if (this.cache.has(key)) {
       const previous = (await this.cache.get(key))!
-      const delta = Date.now() - previous.timestamp
-      if (delta > TIMEOUT) {
-        this.cache.delete(key)
-      } else {
-        return previous.path
-      }
+      return previous.path
     }
-    this.cache.set(
-      key,
-      this.swap_(src, dst, input, output, slippage)
-        .then((path) => {
-          // const duration = Date.now() - start
-          // console.log(
-          //   `${this.name} ${input} -> ${path.outputs.join(
-          //     ', '
-          //   )}: (${duration}ms)`
-          // )
-          return {
-            path,
-            timestamp: Date.now(),
-          }
-        })
-        .catch((e) => {
-          this.cache.delete(key)
-          throw e
-        })
-    )
-    return this.cache.get(key)!.then((i) => i.path)
+    const out = this.swap_(src, dst, input, output, slippage)
+      .then((path) => {
+        return {
+          path,
+          timestamp: Date.now(),
+        }
+      })
+      .catch((e) => {
+        this.cache.delete(key)
+        throw e
+      })
+    this.cache.set(key, out)
+
+    return (await out).path
   };
 
   [Symbol.toStringTag] = 'DexAggregator'

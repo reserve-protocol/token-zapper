@@ -1,4 +1,4 @@
-import { type Action } from '../action/Action'
+import { type BaseAction as Action } from '../action/Action'
 import { type Token } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { SwapPlan } from '../searcher/Swap'

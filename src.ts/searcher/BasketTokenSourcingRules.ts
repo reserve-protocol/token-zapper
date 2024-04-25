@@ -1,4 +1,4 @@
-import { type Action } from '../action/Action'
+import { type BaseAction as Action } from '../action/Action'
 import { type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 

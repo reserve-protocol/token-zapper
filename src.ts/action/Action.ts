@@ -20,7 +20,7 @@ export enum DestinationOptions {
 }
 
 const useSpecialCaseBalanceOf = new Set<Address>([
-  Address.from("0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9")
+  Address.from('0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9'),
 ])
 
 export const plannerUtils = {
@@ -59,15 +59,29 @@ export const plannerUtils = {
     ): gen.Value {
       if (token == universe.nativeToken) {
         const lib = gen.Contract.createContract(
-          EthBalance__factory.connect(universe.config.addresses.ethBalanceOf.address, universe.provider)
+          EthBalance__factory.connect(
+            universe.config.addresses.ethBalanceOf.address,
+            universe.provider
+          )
         )
-        return planner.add(lib.ethBalance(owner.address), comment, varName??`bal_${token.symbol}`)!
+        return planner.add(
+          lib.ethBalance(owner.address),
+          comment,
+          varName ?? `bal_${token.symbol}`
+        )!
       }
       if (useSpecialCaseBalanceOf.has(token.address)) {
         const lib = gen.Contract.createContract(
-          BalanceOf__factory.connect(universe.config.addresses.balanceOf.address, universe.provider)
+          BalanceOf__factory.connect(
+            universe.config.addresses.balanceOf.address,
+            universe.provider
+          )
         )
-        return planner.add(lib.balanceOf(token.address.address, owner.address), comment, varName??`bal_${token.symbol}`)!
+        return planner.add(
+          lib.balanceOf(token.address.address, owner.address),
+          comment,
+          varName ?? `bal_${token.symbol}`
+        )!
       }
       const erc20 = gen.Contract.createContract(
         IERC20__factory.connect(token.address.address, universe.provider)
@@ -75,35 +89,39 @@ export const plannerUtils = {
       return planner.add(
         erc20.balanceOf(owner.address),
         comment,
-        varName??`bal_${token.symbol}`
+        varName ?? `bal_${token.symbol}`
       )!
     },
   },
 }
 
-export abstract class Action {
-  protected readonly gen = gen
-  protected readonly genUtils = plannerUtils
+export abstract class BaseAction {
+  public readonly gen = gen
+  public readonly genUtils = plannerUtils
+
+  
+  get protocol(): string {
+    return 'Unknown'
+  }
 
   constructor(
     public readonly address: Address,
-    public readonly inputToken: readonly Token[],
-    public readonly outputToken: readonly Token[],
+    public readonly inputToken: Token[],
+    public readonly outputToken: Token[],
     public readonly interactionConvention: InteractionConvention,
     public readonly proceedsOptions: DestinationOptions,
-    public readonly approvals: readonly Approval[]
-  ) { }
+    public readonly approvals: Approval[]
+  ) {}
 
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
-
-  async quoteWithSlippage(
+  public async quoteWithSlippage(
     amountsIn: TokenQuantity[]
   ): Promise<TokenQuantity[]> {
     const outputs = await this.quote(amountsIn)
     return outputs
   }
   abstract gasEstimate(): bigint
-  async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {
+  public async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {
     const outputs = await this.quote(amountsIn)
     balances.exchange(amountsIn, outputs)
   }
@@ -126,11 +144,21 @@ export abstract class Action {
   // TODO: This is sort of a hack for stETH as it's a mintable but not burnable token.
   // But we need the burn Action to calculate the baskets correctly, but we don't want
   // to have the token actually appear in paths.
-  get addToGraph() {
+  public get addToGraph() {
     return true
   }
 
-  get outputSlippage() {
+  public get outputSlippage() {
     return 0n
   }
+}
+
+export const Action = (proto: string) => {
+  abstract class ProtocolAction extends BaseAction {
+    public get protocol() {
+      return proto
+    }
+  }
+
+  return ProtocolAction
 }

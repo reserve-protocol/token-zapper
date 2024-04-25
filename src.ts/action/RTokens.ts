@@ -9,7 +9,7 @@ import { IRToken__factory } from '../contracts'
 import { IBasket } from '../entities/TokenBasket'
 import { Planner, Value } from '../tx-gen/Planner'
 
-export class MintRTokenAction extends Action {
+export class MintRTokenAction extends Action("Reserve") {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
       IRToken__factory.connect(
@@ -65,7 +65,7 @@ export class MintRTokenAction extends Action {
   }
 }
 
-export class BurnRTokenAction extends Action {
+export class BurnRTokenAction extends Action("Reserve") {
   get outputSlippage() {
     return 300000n
   }

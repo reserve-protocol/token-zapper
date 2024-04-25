@@ -1,13 +1,12 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { TransactionRequest } from '@ethersproject/providers'
-import { type PermitTransferFrom } from '@uniswap/permit2-sdk'
 import { constants } from 'ethers'
 import { ParamType, defaultAbiCoder, formatEther } from 'ethers/lib/utils'
 import {
+  BaseAction,
   DestinationOptions,
   InteractionConvention,
   plannerUtils,
-  type Action,
 } from '../action/Action'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
@@ -21,7 +20,11 @@ import {
   ZapERC20ParamsStruct,
   ZapperOutputStructOutput,
 } from '../contracts/contracts/Zapper.sol/Zapper'
-import { type Token, type TokenQuantity } from '../entities/Token'
+import {
+  PricedTokenQuantity,
+  type Token,
+  type TokenQuantity,
+} from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { SwapPath, SwapPaths, type SingleSwap } from '../searcher/Swap'
 import {
@@ -32,11 +35,12 @@ import {
   printPlan,
 } from '../tx-gen/Planner'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
-import { ZapTransaction } from './ZapTransaction'
+import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { DefaultMap } from '../base/DefaultMap'
 import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory'
 import { Searcher } from './Searcher'
 import { wait } from '../base/controlflow'
+import { ToTransactionArgs } from './ToTransactionArgs'
 
 const simulationUrls: Record<number, string | undefined> = {
   8453: 'https://resbasesimulator.mig2151.workers.dev',
@@ -54,7 +58,7 @@ interface SimulateParams {
 class Step {
   constructor(
     readonly inputs: TokenQuantity[],
-    readonly action: Action,
+    readonly action: BaseAction,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
   ) {}
@@ -103,17 +107,6 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
 
   return [out, balances, allApprovals] as const
 }
-type ToTransactionArgs = Partial<{
-  returnDust: boolean
-  maxIssueance?: boolean
-  outputSlippage?: bigint
-  gasLimit?: number
-  permit2: {
-    permit: PermitTransferFrom
-    signature: string
-  }
-}>
-
 export class ThirdPartyIssue extends Error {
   constructor(public readonly msg: string) {
     super(msg)
@@ -127,6 +120,10 @@ export abstract class BaseSearcherResult {
   public readonly allApprovals: Approval[]
   public readonly inputToken: Token
   public readonly inputIsNative: boolean
+
+  toId() {
+    return this.describe().join('\n')
+  }
 
   constructor(
     readonly universe: UniverseWithERC20GasTokenDefined,
@@ -178,14 +175,16 @@ export abstract class BaseSearcherResult {
 
   public async valueOfDust() {
     let sum = this.universe.usd.zero
-    for (const out of this.swaps.outputs) {
-      if (out.token === this.outputToken) {
-        continue
-      }
-      const price =
-        (await this.universe.fairPrice(out)) ?? this.universe.usd.zero
-      sum = sum.add(price)
-    }
+    await Promise.all(
+      this.swaps.outputs.map(async (out) => {
+        if (out.token === this.outputToken) {
+          return
+        }
+        const price =
+          (await this.universe.fairPrice(out)) ?? this.universe.usd.zero
+        sum = sum.add(price)
+      })
+    )
     return sum
   }
 
@@ -204,7 +203,7 @@ export abstract class BaseSearcherResult {
         return zapperInterface.decodeFunctionResult('zapERC20', resp)
           .out as ZapperOutputStructOutput
       } catch (e) {
-        console.log(resp)
+        // console.log(resp)
       }
       if (resp.startsWith('0x08c379a0')) {
         const data = resp.slice(138)
@@ -227,25 +226,25 @@ export abstract class BaseSearcherResult {
         throw new ThirdPartyIssue('Stargate out of funds')
       }
 
-      console.log(
-        'error:',
-        e.message,
-        'Failing program:',
-        printPlan(this.planner, this.universe)
-          .map((i) => '  ' + i)
-          .join('\n')
-      )
+      // console.log(
+      //   'error:',
+      //   e.message,
+      //   'Failing program:',
+      //   printPlan(this.planner, this.universe)
+      //     .map((i) => '  ' + i)
+      //     .join('\n')
+      // )
     }
 
-    console.log(
-      JSON.stringify({
-        data,
-        value: value.toString(),
-        address: this.universe.zapperAddress.address,
-        from: this.signer.address,
-        block: this.blockNumber,
-      })
-    )
+    // console.log(
+    //   JSON.stringify({
+    //     data,
+    //     value: value.toString(),
+    //     address: this.universe.zapperAddress.address,
+    //     from: this.signer.address,
+    //     block: this.blockNumber,
+    //   })
+    // )
     throw new Error('Failed to simulate')
   }
 
@@ -338,16 +337,18 @@ export abstract class BaseSearcherResult {
       .map((qty, index) => this.potentialResidualTokens[index].from(qty))
       .filter((i) => i.token !== this.outputToken && i.amount !== 0n)
 
-    const dustValues = await Promise.all(
-      dustQuantities.map(
-        async (i) => [await this.universe.fairPrice(i), i] as const
-      )
-    )
     const amount = zapperResult.amountOut.toBigInt()
     const rounding = 10n ** BigInt(this.outputToken.decimals / 2)
+
     const outputTokenOutput = this.outputToken.from(
       (amount / rounding) * rounding
     )
+    const [valueOfOut, ...dustValues] = await Promise.all([
+      this.universe.fairPrice(outputTokenOutput),
+      ...dustQuantities.map(
+        async (i) => [await this.universe.fairPrice(i), i] as const
+      ),
+    ])
 
     let valueOfDust = this.universe.usd.zero
     for (const [usdValue] of dustValues) {
@@ -359,9 +360,7 @@ export abstract class BaseSearcherResult {
     }
 
     const simulatedOutputs = [...dustQuantities, outputTokenOutput]
-    const totalValue =
-      (await this.universe.fairPrice(outputTokenOutput))?.add(valueOfDust) ??
-      valueOfDust
+    const totalValue = valueOfOut?.add(valueOfDust) ?? valueOfDust
 
     const gasUsed = zapperResult.gasUsed.toBigInt()
     return {
@@ -495,50 +494,6 @@ export abstract class BaseSearcherResult {
 
   abstract toTransaction(options: ToTransactionArgs): Promise<ZapTransaction>
 
-  public async toTransactionWithRetry(opts: ToTransactionArgs) {
-    let root: BaseSearcherResult = this
-    for (let i = 0; i < 3; i++) {
-      try {
-        // console.log('To transaction')
-        return await root.toTransaction(opts)
-      } catch (e) {
-        if (i == 3 || e instanceof ThirdPartyIssue) {
-          console.log(
-            printPlan(this.planner, this.universe)
-              .map((i) => '  ' + i)
-              .join('\n')
-          )
-          throw e
-        }
-        await wait(300)
-        const [block, gas] = await Promise.all([
-          this.universe.provider.getBlockNumber(),
-          this.universe.provider.getGasPrice().then((i) => i.toBigInt()),
-        ])
-        await this.universe.updateBlockState(block, gas)
-        const toRToken =
-          (this.universe.rTokens as Record<string, Token>)[
-            this.outputToken.symbol
-          ] != null
-        const searcher = this.universe.searcher
-        if (toRToken) {
-          root = await searcher.findSingleInputToRTokenZap(
-            this.userInput,
-            this.outputToken,
-            this.signer
-          )
-        } else {
-          root = await searcher.findRTokenIntoSingleTokenZap(
-            this.userInput,
-            this.outputToken,
-            this.signer
-          )
-        }
-      }
-    }
-    throw new Error('Failed to create transaction')
-  }
-
   async createZapTransaction(options: ToTransactionArgs) {
     try {
       const params = this.encodePayload(this.swaps.outputs[0].token.from(1n), {
@@ -570,44 +525,45 @@ export abstract class BaseSearcherResult {
       }
 
       const finalParams = this.encodePayload(result.output, options)
-
-      const updatedOutputs = [
-        this.outputToken.from(BigNumber.from(finalParams.amountOut)),
-        ...result.simulatedOutputs.filter((i) => i.token !== this.outputToken),
-      ]
-      const values = await Promise.all(
-        updatedOutputs.map(
-          async (i) => [await this.universe.fairPrice(i), i] as const
-        )
+      const outputTokenQty = this.outputToken.from(
+        BigNumber.from(finalParams.amountOut)
       )
-
-      const outputValue = values.reduce(
-        (a, b) => a.add(b[0] ?? this.universe.usd.zero),
-        this.universe.usd.zero
+      const dustOutputQtys = result.simulatedOutputs.filter(
+        (i) => i.token !== this.outputToken
       )
+      const gasEstimate = result.gasUsed + result.gasUsed / 12n
+      if (gasEstimate === 0n) {
+        throw new Error('Failed to estimate gas')
+      }
+      const stats = await ZapTxStats.create(this.universe, {
+        gasUnits: gasEstimate,
+        input: this.userInput,
+        output: outputTokenQty,
+        dust: dustOutputQtys,
+      })
 
       this.swaps = new SwapPaths(
         this.swaps.universe,
         this.swaps.inputs,
         this.swaps.swapPaths,
-        updatedOutputs,
-        outputValue,
+        stats.outputs.map((i) => i.quantity),
+        stats.valueUSD,
         this.swaps.destination
       )
-      const estimate = result.gasUsed + result.gasUsed / 10n
+
       const finalTx = this.encodeTx(
         this.encodeCall(options, finalParams),
-        estimate
+        gasEstimate
       )
 
-      return new ZapTransaction(
-        this.universe,
-        finalParams,
-        finalTx,
-        estimate,
-        this.swaps.inputs[0],
-        this.swaps.outputs,
-        this.planner
+      return ZapTransaction.create(
+        this,
+        this.planner,
+        {
+          params: finalParams,
+          tx: finalTx,
+        },
+        stats
       )
     } catch (e: any) {
       if (e instanceof ThirdPartyIssue) {
@@ -762,6 +718,7 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
   ) {
     super(universe, userInput, parts.full, signer, outputToken)
   }
+
   async toTransaction(
     options: ToTransactionArgs = {}
   ): Promise<ZapTransaction> {
@@ -833,7 +790,6 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
         let actionInput = trades.get(inputToken)
         if (actionInput == null) {
           throw new Error('NO INPUT')
-          continue
         }
         const total = totalUsedInMinting.get(inputToken)
         if (total.amount !== step.inputs[0].amount) {

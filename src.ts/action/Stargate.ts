@@ -14,7 +14,7 @@ import { Planner, Value } from '../tx-gen/Planner'
  */
 const routerInterface = IStargateRouter__factory.createInterface()
 
-export class StargateDepositAction extends Action {
+export class StargateDepositAction extends Action("Stargate") {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
       IStargateRouter__factory.connect(
@@ -67,7 +67,7 @@ export class StargateDepositAction extends Action {
   }
 }
 
-export class StargateWithdrawAction extends Action {
+export class StargateWithdrawAction extends Action("Stargate") {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
       IStargateRouter__factory.connect(

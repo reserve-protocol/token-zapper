@@ -1,19 +1,18 @@
-import { Address } from '../base/Address'
-import { Token, TokenQuantity } from '../entities/Token'
 import { Universe } from '../Universe'
 import {
   Action,
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
+import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
+import { Token, TokenQuantity } from '../entities/Token'
 
 import { EnsoRouter__factory } from '../contracts/factories/contracts/EnsoRouter__factory'
+import { IWrappedNative__factory } from '../contracts/factories/contracts/IWrappedNative__factory'
 import { SwapPlan } from '../searcher/Swap'
 import { FunctionCall, Planner, Value } from '../tx-gen/Planner'
 import { DexRouter } from './DexAggregator'
-import { IWrappedNative__factory } from '../contracts/factories/contracts/IWrappedNative__factory'
-import { wait } from '../base/controlflow'
 
 export interface EnsoQuote {
   gas: string
@@ -166,7 +165,7 @@ const getEnsoQuote = async (
 }
 type ParsedQuote = Awaited<ReturnType<typeof getEnsoQuote>>
 
-class EnsoAction extends Action {
+class EnsoAction extends Action('Enso') {
   async plan(
     planner: Planner,
     [input]: Value[],

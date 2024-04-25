@@ -4,7 +4,6 @@ import { Address } from '../base/Address'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Approval } from '../base/Approval'
 
-import { parseHexStringIntoBuffer } from '../base/utils'
 import { IConvexWrapper__factory } from '../contracts/factories/contracts/IConvexWrapper__factory'
 import { IBooster__factory } from '../contracts/factories/contracts/IBooster__factory'
 import { Planner, Value } from '../tx-gen/Planner'
@@ -26,7 +25,7 @@ class ConvexPool {
 
 const wrapperInterface = IConvexWrapper__factory.createInterface()
 
-export class ConvexDepositAndStake extends Action {
+export class ConvexDepositAndStake extends Action('Convex') {
   async plan(
     planner: Planner,
     inputs: Value[],
@@ -67,7 +66,7 @@ export class ConvexDepositAndStake extends Action {
   }
 }
 
-export class ConvexUnstakeAndWithdraw extends Action {
+export class ConvexUnstakeAndWithdraw extends Action('Convex') {
   async plan(
     planner: Planner,
     inputs: Value[],

@@ -1,7 +1,7 @@
 import { type Provider } from '@ethersproject/abstract-provider';
 
 import { type Universe } from '../Universe';
-import { type Action } from '../action/Action';
+import { type BaseAction as Action } from '../action/Action';
 import { type Token } from '../entities/Token';
 
 /**

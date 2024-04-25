@@ -7,7 +7,7 @@ import {
 } from '../../action/Action'
 import { type SwapDirection } from './TwoTokenPoolTypes'
 
-export abstract class UniBase extends Action {
+export abstract class UniBase extends Action('UniV2-Like') {
   public readonly zeroForOne: boolean
   public readonly output: Token
   public readonly input: Token

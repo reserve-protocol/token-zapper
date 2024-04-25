@@ -1,17 +1,16 @@
-import { DexRouter } from './DexAggregator'
-import { SwapPlan } from '../searcher/Swap'
-import { Universe } from '../Universe'
 import { Address, Token, TokenQuantity } from '..'
+import { Universe } from '../Universe'
 import {
   Action,
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
+import { SwapPlan } from '../searcher/Swap'
+import { DexRouter } from './DexAggregator'
 
 import { Approval } from '../base/Approval'
-import { parseHexStringIntoBuffer } from '../base/utils'
-import { Planner, Value } from '../tx-gen/Planner'
 import { ZapperExecutor__factory } from '../contracts'
+import { Planner, Value } from '../tx-gen/Planner'
 
 export interface GetRoute {
   code: number
@@ -84,7 +83,7 @@ const idToSlug: Record<number, string> = {
   8453: 'base',
 }
 
-class KyberAction extends Action {
+class KyberAction extends Action('Kyberswap') {
   async plan(
     planner: Planner,
     _: Value[],

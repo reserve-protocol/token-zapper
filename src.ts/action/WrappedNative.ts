@@ -9,7 +9,7 @@ import { Address } from '..'
 
 const iWrappedNativeIFace = IWrappedNative__factory.createInterface()
 
-export class DepositAction extends Action {
+export class DepositAction extends Action("WETH") {
   
   gasEstimate(): bigint {
     return 25000n
@@ -43,7 +43,7 @@ export class DepositAction extends Action {
   }
 }
 
-export class WithdrawAction extends Action {
+export class WithdrawAction extends Action("WETH") {
   gasEstimate(): bigint {
     return 25000n
   }

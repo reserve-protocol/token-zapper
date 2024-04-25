@@ -1,23 +1,23 @@
-import { type Action } from '../action/Action'
+import { BaseAction } from '../action/Action'
 import { setupConvexEdges as setupConvexEdge } from '../action/Convex'
 
 import { loadCurve } from '../action/Curve'
 import { Address } from '../base/Address'
 import { Token } from '../entities/Token'
-import { SwapPlan } from '../searcher/Swap'
 import {
   BasketTokenSourcingRuleApplication,
   PostTradeAction,
 } from '../searcher/BasketTokenSourcingRules'
+import { SwapPlan } from '../searcher/Swap'
 
-import { type SourcingRule } from '../searcher/SourcingRule'
-import { type EthereumUniverse } from './ethereum'
 import { DexAggregator } from '..'
 import { setupCurveStableSwapNGPool } from '../action/CurveStableSwapNG'
+import { type SourcingRule } from '../searcher/SourcingRule'
+import { type EthereumUniverse } from './ethereum'
 
 export {
   BasketTokenSourcingRuleApplication,
-  PostTradeAction,
+  PostTradeAction
 } from '../searcher/BasketTokenSourcingRules'
 
 export interface IRouteStep {
@@ -115,7 +115,7 @@ export const initCurveOnEthereum = async (
   // Otherwise we try to trade the user input token into USDC first. It should ideally
   // reduce the number of trades needed to perform the zap.
   const makeStkConvexSourcingRule =
-    (depositAndStake: Action): SourcingRule =>
+    (depositAndStake: BaseAction): SourcingRule =>
     async (input, unitAmount) => {
       const lpTokenQty = unitAmount.into(depositAndStake.inputToken[0])
       if (stables.has(input)) {

@@ -3,23 +3,22 @@ import {
   CHAINLINK_BTC_TOKEN_ADDRESS,
   GAS_TOKEN_ADDRESS,
 } from '../base/constants'
-import { setupCompoundLike } from './setupCompound'
-import { setupSAToken } from './setupSAToken'
-import { setupLido } from './setupLido'
-import { setupRETH } from './setupRETH'
-import { setupERC4626 } from './setupERC4626'
-import { setupCompoundV3 } from './setupCompoundV3'
-import { setupChainLink as setupChainLinkRegistry } from './setupChainLink'
-import { setupWrappedGasToken } from './setupWrappedGasToken'
-import { initCurveOnEthereum } from './setupCurveOnEthereum'
-import { loadEthereumTokenList } from './setupEthereumTokenList'
-import { loadRTokens } from './setupRTokens'
-import { type EthereumUniverse, PROTOCOL_CONFIGS } from './ethereum'
 import { convertWrapperTokenAddressesIntoWrapperTokenPairs } from './convertWrapperTokenAddressesIntoWrapperTokenPairs'
 import wrappedToUnderlyingMapping from './data/ethereum/underlying.json'
+import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
+import { setupChainLink as setupChainLinkRegistry } from './setupChainLink'
+import { setupCompoundLike } from './setupCompound'
+import { setupCompoundV3 } from './setupCompoundV3'
+import { initCurveOnEthereum } from './setupCurveOnEthereum'
+import { setupERC4626 } from './setupERC4626'
+import { loadEthereumTokenList } from './setupEthereumTokenList'
+import { setupLido } from './setupLido'
+import { setupRETH } from './setupRETH'
+import { loadRTokens } from './setupRTokens'
+import { setupSAToken } from './setupSAToken'
 import { setupSAV3Token } from './setupSAV3Tokens'
 import { setupUniswapRouter } from './setupUniswapRouter'
-import { RouterAction } from '../action/RouterAction'
+import { setupWrappedGasToken } from './setupWrappedGasToken'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
@@ -151,10 +150,10 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     PROTOCOL_CONFIGS.lido.wsteth
   )
 
-  await setupERC4626(
-    universe,
-    PROTOCOL_CONFIGS.erc4626,
-    wrappedToUnderlyingMapping
+  await Promise.all(
+    PROTOCOL_CONFIGS.erc4626.map(([addr, proto]) =>
+      setupERC4626(universe, [addr], proto)
+    )
   )
 
   // Set up RTokens defined in the config

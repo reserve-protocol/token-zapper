@@ -1,7 +1,7 @@
 import {
   type DestinationOptions,
   type InteractionConvention,
-  type Action,
+  type BaseAction,
 } from '../action/Action'
 import { type Address } from '../base/Address'
 import { type TokenQuantity } from '../entities/Token'
@@ -15,7 +15,7 @@ export class SingleSwap {
   public readonly type = 'SingleSwap'
   constructor(
     public readonly inputs: TokenQuantity[],
-    public readonly action: Action,
+    public readonly action: BaseAction,
     public readonly outputs: TokenQuantity[]
   ) {}
 
@@ -66,6 +66,17 @@ export class SwapPath {
 
   get address(): Address {
     return this.steps.at(0)!.address
+  }
+
+  intoSwapPaths(universe: Universe): SwapPaths {
+    return new SwapPaths(
+      universe,
+      this.inputs,
+      [this],
+      this.outputs,
+      this.outputValue,
+      this.destination
+    )
   }
 
   constructor(
@@ -160,6 +171,30 @@ export class SwapPaths {
     public readonly destination: Address
   ) {}
 
+  public static fromPaths(universe: Universe, paths: SwapPath[]) {
+    if (paths.length === 0) {
+      throw new Error('Invalid SwapPaths, no paths')
+    }
+    const inputs = TokenAmounts.fromQuantities(
+      paths.map((i) => i.inputs).flat()
+    )
+    const outputs = TokenAmounts.fromQuantities(
+      paths.map((i) => i.outputs).flat()
+    )
+    const outputValue = paths
+      .map((i) => i.outputValue)
+      .reduce((l, r) => l.add(r))
+    const destination = paths.at(-1)!.destination
+    return new SwapPaths(
+      universe,
+      inputs.toTokenQuantities(),
+      paths,
+      outputs.toTokenQuantities(),
+      outputValue,
+      destination
+    )
+  }
+
   async exchange(tokenAmounts: TokenAmounts) {
     tokenAmounts.exchange(this.inputs, this.outputs)
   }
@@ -227,7 +262,10 @@ export class SwapPaths {
  * and can be used to generate an actual transaction.
  * */
 export class SwapPlan {
-  constructor(readonly universe: Universe, public readonly steps: Action[]) {}
+  constructor(
+    readonly universe: Universe,
+    public readonly steps: BaseAction[]
+  ) {}
 
   get inputs() {
     return this.steps[0].inputToken
@@ -262,11 +300,8 @@ export class SwapPlan {
 
     const value = (
       await Promise.all(
-        legAmount.map(
-          async (i) =>
-            await this.universe
-              .fairPrice(i)
-              .then((i) => i ?? this.universe.usd.zero)
+        legAmount.map((i) =>
+          this.universe.fairPrice(i).then((i) => i ?? this.universe.usd.zero)
         )
       )
     ).reduce((l, r) => l.add(r))

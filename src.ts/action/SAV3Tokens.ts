@@ -15,7 +15,7 @@ function rayDiv(a: bigint, b: bigint): bigint {
   const halfB = b / 2n
   return (halfB + a * ray) / b
 }
-export class MintSAV3TokensAction extends Action {
+export class MintSAV3TokensAction extends Action("AaveV3") {
   get outputSlippage() {
     return 3000000n
   }
@@ -73,7 +73,7 @@ export class MintSAV3TokensAction extends Action {
     return `SAV3TokenMint(${this.saToken.toString()})`
   }
 }
-export class BurnSAV3TokensAction extends Action {
+export class BurnSAV3TokensAction extends Action("AaveV3") {
   private inst: IStaticAV3TokenLM__factory
   get outputSlippage() {
     return 3000000n

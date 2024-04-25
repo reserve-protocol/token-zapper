@@ -15,7 +15,7 @@ export class PriceOracle extends Cached<Token, TokenQuantity> {
           }
           return v
         }),
-      20,
+      2,
       getCurrentBlock
     )
   }

@@ -44,8 +44,8 @@ const shuffleArray = <T>(array: T[]): T[] => {
   }
   return array
 }
-const MAX_CONCCURRENCY = 4
-const ZAP_RESULTS = 8
+const MAX_CONCCURRENCY = 5
+const ZAP_RESULTS = 5
 class MultiChoicePath implements SwapPath {
   private index: number = 0
   constructor(

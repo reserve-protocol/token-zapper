@@ -44,8 +44,8 @@ const shuffleArray = <T>(array: T[]): T[] => {
   }
   return array
 }
-const MAX_CONCCURRENCY = 5
-const ZAP_RESULTS = 5
+const MAX_CONCCURRENCY = 4
+const ZAP_RESULTS = 8
 class MultiChoicePath implements SwapPath {
   private index: number = 0
   constructor(
@@ -1148,54 +1148,39 @@ export class Searcher<
         return new MultiChoicePath(this.universe, [out])
       }
     }
-    for (let i = 0; i < 2; i++) {
-      const [quotesInternal, quotesExternal] = await Promise.all([
-        this.internalQuoter(
-          input,
-          output,
-          destination,
-          slippage,
-          maxHops
-        ).catch(() => []),
-        this.externalQuoters(
-          input,
-          output,
-          destination,
-          slippage,
-          dynamicInput
-        ),
-      ])
-      const quotes = (
-        await Promise.all(
-          [...quotesInternal, ...quotesExternal].map(async (q) => {
-            try {
-              const [cost, netValue] = await Promise.all([
-                q.cost(this.universe),
-                q.netValue(this.universe),
-              ])
-              return {
-                quote: q,
-                cost: cost,
-                netValue: netValue,
-              }
-            } catch (e) {
-              console.log(e)
-              return null!
+    const [quotesInternal, quotesExternal] = await Promise.all([
+      this.internalQuoter(input, output, destination, slippage, maxHops).catch(
+        () => []
+      ),
+      this.externalQuoters(input, output, destination, slippage, dynamicInput),
+    ])
+    const quotes = (
+      await Promise.all(
+        [...quotesInternal, ...quotesExternal].map(async (q) => {
+          try {
+            const [cost, netValue] = await Promise.all([
+              q.cost(this.universe),
+              q.netValue(this.universe),
+            ])
+            return {
+              quote: q,
+              cost: cost,
+              netValue: netValue,
             }
-          })
-        )
-      ).filter((i) => i != null)
-      if (quotes.length === 0) {
-        await wait(100)
-        continue
-      }
-      quotes.sort((l, r) => -l.netValue.compare(r.netValue))
-      return new MultiChoicePath(
-        this.universe,
-        quotes.map((i) => i.quote)
+          } catch (e) {
+            console.log(e)
+            return null!
+          }
+        })
       )
+    ).filter((i) => i != null)
+    if (quotes.length === 0) {
+      throw new Error('No quotes found')
     }
-    console.log('No quotes found for ' + input + ' -> ' + output)
-    return null
+    quotes.sort((l, r) => -l.netValue.compare(r.netValue))
+    return new MultiChoicePath(
+      this.universe,
+      quotes.map((i) => i.quote)
+    )
   }
 }

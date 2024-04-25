@@ -226,14 +226,14 @@ export abstract class BaseSearcherResult {
         throw new ThirdPartyIssue('Stargate out of funds')
       }
 
-      // console.log(
-      //   'error:',
-      //   e.message,
-      //   'Failing program:',
-      //   printPlan(this.planner, this.universe)
-      //     .map((i) => '  ' + i)
-      //     .join('\n')
-      // )
+      console.log(
+        'error:',
+        e.message,
+        'Failing program:',
+        printPlan(this.planner, this.universe)
+          .map((i) => '  ' + i)
+          .join('\n')
+      )
     }
 
     // console.log(

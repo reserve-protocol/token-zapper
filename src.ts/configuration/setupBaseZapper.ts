@@ -12,6 +12,7 @@ import { setupSAV3Token } from './setupSAV3Tokens'
 import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
 import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
 import { setupUniswapRouter } from './setupUniswapRouter'
+import { setupAerodromeRouter } from './setupAerodromeRouter'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   await loadBaseTokenList(universe)
@@ -125,6 +126,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   await loadRTokens(universe)
 
   await setupUniswapRouter(universe)
+  await setupAerodromeRouter(universe)
 
   return {
     curve: null,

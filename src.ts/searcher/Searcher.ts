@@ -2,6 +2,7 @@ import { Universe } from '..'
 import { DestinationOptions, InteractionConvention } from '../action/Action'
 import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
+import { wait } from '../base/controlflow'
 import { Config } from '../configuration/ChainConfiguration'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
@@ -734,12 +735,12 @@ export class Searcher<
               'Failed to find trade for: ' +
                 qty +
                 '(' +
-                qty.token.address +
+                qty.token +
                 ')' +
                 ' -> ' +
                 outputToken +
                 '(' +
-                output.address +
+                output +
                 ')'
             )
           }
@@ -877,18 +878,11 @@ export class Searcher<
     if (inputValue == null) {
       return []
     }
-    const slippageCheckValue = this.universe.usd.from(10000)
 
     return paths
-      .filter(async (path) => {
-        if (
-          slippageCheckValue.gt(inputValue) || // only check slippage if the value is large enough
-          path.outputValue.gte(inputValue)
-        ) {
-          return true
-        }
-        return parseFloat(path.outputValue.div(inputValue).format()) > 0.999
-      })
+      .filter(
+        (path) => parseFloat(path.outputValue.div(inputValue).format()) > 0.99
+      )
       .slice(0, 4)
       .map(
         (path) =>
@@ -1057,6 +1051,7 @@ export class Searcher<
     const allowAggregatorSearch =
       this.universe.wrappedTokens.get(output)?.allowAggregatorSearcher ?? true
     if (!allowAggregatorSearch || this.universe.lpTokens.has(output)) {
+      console.log('Skipping external quoters - ' + output.toString())
       return []
     }
     const executorAddress = this.universe.config.addresses.executorAddress
@@ -1066,6 +1061,7 @@ export class Searcher<
       aggregators = aggregators.filter((i) => i.dynamicInput)
     }
     if (aggregators.length === 0) {
+      console.log('No aggregators')
       return []
     }
     await Promise.all(
@@ -1152,26 +1148,54 @@ export class Searcher<
         return new MultiChoicePath(this.universe, [out])
       }
     }
-    const [quotesInternal, quotesExternal] = await Promise.all([
-      this.internalQuoter(input, output, destination, slippage, maxHops),
-      this.externalQuoters(input, output, destination, slippage, dynamicInput),
-    ])
-    const quotes = await Promise.all(
-      [...quotesInternal, ...quotesExternal].map(async (q) => {
-        return {
-          quote: q,
-          cost: await q.cost(this.universe),
-          netValue: await q.netValue(this.universe),
-        }
-      })
-    )
-    if (quotes.length === 0) {
-      return null
+    for (let i = 0; i < 2; i++) {
+      const [quotesInternal, quotesExternal] = await Promise.all([
+        this.internalQuoter(
+          input,
+          output,
+          destination,
+          slippage,
+          maxHops
+        ).catch(() => []),
+        this.externalQuoters(
+          input,
+          output,
+          destination,
+          slippage,
+          dynamicInput
+        ),
+      ])
+      const quotes = (
+        await Promise.all(
+          [...quotesInternal, ...quotesExternal].map(async (q) => {
+            try {
+              const [cost, netValue] = await Promise.all([
+                q.cost(this.universe),
+                q.netValue(this.universe),
+              ])
+              return {
+                quote: q,
+                cost: cost,
+                netValue: netValue,
+              }
+            } catch (e) {
+              console.log(e)
+              return null!
+            }
+          })
+        )
+      ).filter((i) => i != null)
+      if (quotes.length === 0) {
+        await wait(100)
+        continue
+      }
+      quotes.sort((l, r) => -l.netValue.compare(r.netValue))
+      return new MultiChoicePath(
+        this.universe,
+        quotes.map((i) => i.quote)
+      )
     }
-    quotes.sort((l, r) => -l.netValue.compare(r.netValue))
-    return new MultiChoicePath(
-      this.universe,
-      quotes.map((i) => i.quote)
-    )
+    console.log('No quotes found for ' + input + ' -> ' + output)
+    return null
   }
 }

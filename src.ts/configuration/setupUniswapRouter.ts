@@ -299,7 +299,6 @@ export const setupUniswapRouter = async (universe: Universe) => {
         type: SwapType.SWAP_ROUTER_02,
       })
       if (route == null || route.methodParameters == null) {
-        console.log('Failed to find route for ' + input + ' -> ' + output)
         throw new Error('Failed to find route')
       }
       const outamt = BigInt(

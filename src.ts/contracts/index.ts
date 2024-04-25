@@ -14,6 +14,10 @@ export type { IERC20Metadata } from "./@openzeppelin/contracts/token/ERC20/exten
 export { IERC20Metadata__factory } from "./factories/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata__factory";
 export type { IERC20 } from "./@openzeppelin/contracts/token/ERC20/IERC20";
 export { IERC20__factory } from "./factories/@openzeppelin/contracts/token/ERC20/IERC20__factory";
+export type { IAerodromeRouter } from "./contracts/Aerodrome.sol/IAerodromeRouter";
+export { IAerodromeRouter__factory } from "./factories/contracts/Aerodrome.sol/IAerodromeRouter__factory";
+export type { IAerodromeSugar } from "./contracts/Aerodrome.sol/IAerodromeSugar";
+export { IAerodromeSugar__factory } from "./factories/contracts/Aerodrome.sol/IAerodromeSugar__factory";
 export type { Comet } from "./contracts/Compv3.sol/Comet";
 export { Comet__factory } from "./factories/contracts/Compv3.sol/Comet__factory";
 export type { WrappedComet } from "./contracts/Compv3.sol/WrappedComet";

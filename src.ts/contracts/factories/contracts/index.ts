@@ -4,6 +4,7 @@
 export * as aerodromeSol from "./Aerodrome.sol";
 export * as compv3Sol from "./Compv3.sol";
 export * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
+export * as iAavePoolSol from "./IAavePool.sol";
 export * as icTokenSol from "./ICToken.sol";
 export * as irTokenZapperSol from "./IRTokenZapper.sol";
 export * as isav3TokenSol from "./ISAV3Token.sol";

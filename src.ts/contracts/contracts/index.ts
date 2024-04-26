@@ -7,6 +7,8 @@ import type * as compv3Sol from "./Compv3.sol";
 export type { compv3Sol };
 import type * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
 export type { curveStableSwapNgSol };
+import type * as iAavePoolSol from "./IAavePool.sol";
+export type { iAavePoolSol };
 import type * as icTokenSol from "./ICToken.sol";
 export type { icTokenSol };
 import type * as irTokenZapperSol from "./IRTokenZapper.sol";

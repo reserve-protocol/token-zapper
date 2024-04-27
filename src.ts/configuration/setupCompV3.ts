@@ -204,7 +204,7 @@ class BurnCometWrapperAction extends BaseCometAction {
   }
 }
 class CometAssetInfo {
-  private constructor(
+  public constructor(
     readonly offset: number,
     readonly asset: Token,
     readonly priceFeed: Address,
@@ -257,7 +257,7 @@ class CometWrapper {
   get cometToken() {
     return this.comet.comet
   }
-  private constructor(
+  public constructor(
     public readonly cometWrapperInst: ICusdcV3Wrapper,
     public readonly comet: Comet,
     public readonly wrapperToken: Token
@@ -294,7 +294,7 @@ class Comet {
   }
   public readonly mintAction
   public readonly burnAction
-  private constructor(
+  public constructor(
     public readonly cometLibrary: Contract,
     readonly compound: CompoundV3,
     readonly comet: Token,
@@ -337,16 +337,15 @@ class Comet {
   }
 }
 class CompoundV3 {
-  private readonly comets: Comet[] = []
-  private readonly cometWrappers: CometWrapper[] = []
-  private readonly cometByBaseToken: Map<Token, Comet> = new Map()
-  private readonly cometByPoolToken: Map<Token, Comet> = new Map()
-  private readonly cometWrapperByWrapperToken: Map<Token, CometWrapper> =
+  public readonly comets: Comet[] = []
+  public readonly cometWrappers: CometWrapper[] = []
+  public readonly cometByBaseToken: Map<Token, Comet> = new Map()
+  public readonly cometByPoolToken: Map<Token, Comet> = new Map()
+  public readonly cometWrapperByWrapperToken: Map<Token, CometWrapper> =
     new Map()
-  private readonly cometWrapperByCometToken: Map<Token, CometWrapper> =
-    new Map()
+  public readonly cometWrapperByCometToken: Map<Token, CometWrapper> = new Map()
 
-  private constructor(readonly universe: Universe) {}
+  public constructor(readonly universe: Universe) {}
 
   async getComet(poolToken: Token) {
     if (this.cometByPoolToken.has(poolToken)) {

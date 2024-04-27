@@ -50,7 +50,8 @@ export const testConfig = makeConfig(
     ethBalanceOf: '0x0000000000000000000000000000000000000000',
     uniV3Router: '0x0000000000000000000000000000000000000000',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
-  }
+  },
+  0.25
 )
 type BaseTestConfigType = typeof testConfig
 

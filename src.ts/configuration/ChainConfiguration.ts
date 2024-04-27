@@ -22,7 +22,8 @@ export const makeConfig = <
   const ChainId extends number,
   const NativeToken extends NativeTokenDefinition<string, string>,
   const CommonTokens extends Record<string, string>,
-  const RTokens extends Record<string, string>
+  const RTokens extends Record<string, string>,
+  const Blocktime extends number
 >(
   chainId: ChainId,
   nativeToken: NativeToken,
@@ -41,7 +42,8 @@ export const makeConfig = <
     ethBalanceOf: string
     uniV3Router: string
     curveStableSwapNGHelper: string
-  }
+  },
+  blocktime: Blocktime
 ) => {
   return {
     chainId,
@@ -64,8 +66,11 @@ export type Config<
     string
   > = NativeTokenDefinition<string, string>,
   CommonTokens extends Record<string, string> = {},
-  RTokens extends Record<string, string> = Record<string, string>
-> = ReturnType<typeof makeConfig<ChainId, NativeToken, CommonTokens, RTokens>>
+  RTokens extends Record<string, string> = Record<string, string>,
+  Blocktime extends number = number
+> = ReturnType<
+  typeof makeConfig<ChainId, NativeToken, CommonTokens, RTokens, Blocktime>
+>
 
 export type ConfigWithToken<K extends { [KK in string]: string }> = Config<
   number,

@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { TransactionRequest } from '@ethersproject/providers'
-import { constants } from 'ethers'
+import { constants, ethers } from 'ethers'
 import { ParamType, defaultAbiCoder, formatEther } from 'ethers/lib/utils'
 import {
   BaseAction,
@@ -21,28 +21,16 @@ import {
   ZapERC20ParamsStruct,
   ZapperOutputStructOutput,
 } from '../contracts/contracts/Zapper.sol/Zapper'
-import {
-  PricedTokenQuantity,
-  type Token,
-  type TokenQuantity,
-} from '../entities/Token'
+import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { SwapPath, SwapPaths, type SingleSwap } from '../searcher/Swap'
-import {
-  Contract,
-  LiteralValue,
-  Planner,
-  Value,
-  printPlan,
-} from '../tx-gen/Planner'
+import { Contract, LiteralValue, Planner, Value } from '../tx-gen/Planner'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { DefaultMap } from '../base/DefaultMap'
-import { Searcher } from './Searcher'
-import { wait } from '../base/controlflow'
 import { ToTransactionArgs } from './ToTransactionArgs'
 
-const simulationUrls: Record<number, string | undefined> = {
+export const simulationUrls: Record<number, string | undefined> = {
   8453: 'https://resbasesimulator.mig2151.workers.dev',
   1: 'https://worker-frosty-pine-5440.mig2151.workers.dev',
 }
@@ -190,15 +178,20 @@ export abstract class BaseSearcherResult {
 
   async simulateNoNode({ data, value }: SimulateParams) {
     try {
-      const resp = await this.universe.provider.call(
+      const resp = await this.universe.provider.send('eth_call', [
         {
           data,
           from: this.signer.address,
           to: this.universe.config.addresses.zapperAddress.address,
           value,
         },
-        'latest'
-      )
+        'latest',
+        {
+          [this.signer.address]: {
+            balance: ethers.utils.parseEther('10000').toHexString(),
+          },
+        },
+      ])
       try {
         return zapperInterface.decodeFunctionResult('zapERC20', resp)
           .out as ZapperOutputStructOutput

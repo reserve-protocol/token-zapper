@@ -9,12 +9,12 @@ const reserveAddresses = getAddressesForChain(chainId)
 
 export const COMMON_TOKENS = {
   RSR: reserveAddresses.RSR_ADDRESS,
-  CRV: reserveAddresses.CRV_ADDRESS,
-  CVX: reserveAddresses.CVX_ADDRESS,
+  // CRV: reserveAddresses.CRV_ADDRESS,
+  // CVX: reserveAddresses.CVX_ADDRESS,
   eUSD: reserveAddresses.EUSD_ADDRESS,
   'ETH+': reserveAddresses.ETHPLUS_ADDRESS,
   RGUSD: reserveAddresses.RGUSD_ADDRESS,
-  STG: reserveAddresses.STG_ADDRESS,
+  // STG: reserveAddresses.STG_ADDRESS,
 
   ARB: '0x912ce59144191c1204e64559fe8253a0e49e6548',
 
@@ -28,7 +28,7 @@ export const COMMON_TOKENS = {
   USDT: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
   WBTC: '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f',
   FRAX: '0x17fc002b466eec40dae837fc4be5c67993ddbd6f',
-  COMP: reserveAddresses.COMP_ADDRESS,
+  // COMP: reserveAddresses.COMP_ADDRESS,
 } as const
 
 export const RTOKENS = {
@@ -47,15 +47,16 @@ export const arbiConfig = makeConfig(
     facadeAddress: reserveAddresses.FACADE_ADDRESS,
     wrappedNative: COMMON_TOKENS.WETH,
 
-    zapperAddress: ethers.constants.AddressZero,
-    executorAddress: ethers.constants.AddressZero,
-    rtokenLens: ethers.constants.AddressZero,
-    balanceOf: ethers.constants.AddressZero,
-    curveRouterCall: ethers.constants.AddressZero,
-    ethBalanceOf: ethers.constants.AddressZero,
-    uniV3Router: ethers.constants.AddressZero,
-    curveStableSwapNGHelper: ethers.constants.AddressZero,
-  } as const
+    zapperAddress: '0x39Eb11db86140d5bd0Cc24d411d833e53b0ACAf8',
+    executorAddress: '0x59B56F9e965445f007bCc73960F6d0D034562c3e',
+    rtokenLens: '0xe49aA049DA204E6dFF4A5AcdbD3935ec782F541f',
+    balanceOf: '0xe18a821ea1f1796A0797CEa01A3f86ebEab0f9B6',
+    curveRouterCall: '0x8cE5ee761fF619c889F007CB4D708178E87C11D8',
+    ethBalanceOf: '0x0326bF8E7efEBAe81898d366c1491D196d143a4C',
+    uniV3Router: '0x922eDac4D5c6702192473ec77a294edD834Fb2af',
+    curveStableSwapNGHelper: '0x323EB0B5e2a59d5565E59CBEb965f00298d3A2a1',
+  } as const,
+  0.25
 )
 
 export const PROTOCOL_CONFIGS = {
@@ -69,12 +70,12 @@ export const PROTOCOL_CONFIGS = {
         [COMMON_TOKENS.RSR]: '0xcfF9349ec6d027f20fC9360117fef4a1Ad38B488',
         [BTC_TOKEN_ADDRESS]: '0xd0C7101eACbB49F3deCcCc166d238410D6D46d57',
         [COMMON_TOKENS.cbETH]: '0xa668682974E3f121185a3cD94f00322beC674275',
-        [COMMON_TOKENS.COMP]: '0xe7C53FFd03Eb6ceF7d208bC4C13446c76d1E5884',
-        [COMMON_TOKENS.CRV]: '0xaebDA2c976cfd1eE1977Eac079B4382acb849325',
+        // [COMMON_TOKENS.COMP]: '0xe7C53FFd03Eb6ceF7d208bC4C13446c76d1E5884',
+        // [COMMON_TOKENS.CRV]: '0xaebDA2c976cfd1eE1977Eac079B4382acb849325',
         [COMMON_TOKENS.WETH]: '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612',
         [GAS_TOKEN_ADDRESS]: '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612',
         [COMMON_TOKENS.FRAX]: '0x0809E3d38d1B4214958faf06D8b1B1a2b73f2ab8',
-        [COMMON_TOKENS.STG]: '0xe74d69E233faB0d8F48921f2D93aDfDe44cEb3B7',
+        // [COMMON_TOKENS.STG]: '0xe74d69E233faB0d8F48921f2D93aDfDe44cEb3B7',
       },
       ETH: {
         [COMMON_TOKENS.reth]: '0xD6aB2298946840262FcC278fF31516D39fF611eF',

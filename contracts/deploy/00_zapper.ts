@@ -16,6 +16,10 @@ const networks: Record<number, {
     31337: {
         weth: "0x4200000000000000000000000000000000000006",
         permit2: "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+    },
+    42161: {
+        weth: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+        permit2: "0x000000000022D473030F116dDEE9F6B43aC78BA3"
     }
 }
 

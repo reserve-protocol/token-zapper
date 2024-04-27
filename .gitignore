@@ -3,4 +3,5 @@ node_modules/
 dist/*.gz
 src.ts/testRun.ts
 src.ts/testRunBase.ts
+src.ts/testRunArbi.ts
 .env

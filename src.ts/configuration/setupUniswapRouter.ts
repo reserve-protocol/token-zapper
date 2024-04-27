@@ -227,30 +227,30 @@ export const setupUniswapRouter = async (universe: Universe) => {
     ),
     tokenProviderOnChain
   )
-  const gasPriceCache = new NodeJSCache<GasPrice>(
-    new NodeCache({ stdTTL: 15, useClones: true })
-  )
+  // const gasPriceCache = new NodeJSCache<GasPrice>(
+  //   new NodeCache({ stdTTL: 15, useClones: true })
+  // )
 
   const v3PoolProvider = new CachingV3PoolProvider(
     universe.chainId,
     new V3PoolProvider(universe.chainId, multicall),
     new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
   )
-  const tokenFeeFetcher = new OnChainTokenFeeFetcher(
-    universe.chainId,
-    universe.provider
-  )
-  const tokenPropertiesProvider = new TokenPropertiesProvider(
-    universe.chainId,
-    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false })),
-    tokenFeeFetcher
-  )
-  const portionProvider = new PortionProvider()
-  const v2PoolProvider = new CachingV2PoolProvider(
-    universe.chainId,
-    new V2PoolProvider(universe.chainId, multicall, tokenPropertiesProvider),
-    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
-  )
+  // const tokenFeeFetcher = new OnChainTokenFeeFetcher(
+  //   universe.chainId,
+  //   universe.provider
+  // )
+  // const tokenPropertiesProvider = new TokenPropertiesProvider(
+  //   universe.chainId,
+  //   new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false })),
+  //   tokenFeeFetcher
+  // )
+  // const portionProvider = new PortionProvider()
+  // const v2PoolProvider = new CachingV2PoolProvider(
+  //   universe.chainId,
+  //   new V2PoolProvider(universe.chainId, multicall, tokenPropertiesProvider),
+  //   new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
+  // )
 
   const router = new LegacyRouter({
     chainId: universe.chainId,

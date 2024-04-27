@@ -42,7 +42,6 @@ export const initCurveOnEthereum = async (
   const DAI = universe.commonTokens.DAI
   const USDC = universe.commonTokens.USDC
   const pyUSD = universe.commonTokens.pyUSD
-  const steth = universe.commonTokens.steth
 
   const curveApi = await loadCurve(
     universe,

@@ -120,7 +120,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       )
     ),
   ])
-  await setupCompoundV3(universe, {
+  const compV3 = await setupCompoundV3(universe, {
     comets,
     cTokenWrappers,
   })
@@ -168,7 +168,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   ).catch((e) => {
     console.log('Failed to intialize curve')
     console.log(e)
-    return null as any
+    return null
   })
 
   const aaveV3 = await setupAaveV3(
@@ -204,6 +204,8 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   return {
     aaveV3,
+    compV3,
+    uni,
     curve,
   }
 }

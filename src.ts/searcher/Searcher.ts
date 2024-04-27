@@ -1,4 +1,5 @@
 import { Universe } from '..'
+
 import { DestinationOptions, InteractionConvention } from '../action/Action'
 import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
@@ -240,10 +241,10 @@ export class Searcher<
       basketUnit,
       this
     )
-    // console.log(precursorTokens.describe().join('\n'))
-    // console.log(
-    //   'precursor tokens: ' + precursorTokens.precursorToTradeFor.join(', ')
-    // )
+    console.log(precursorTokens.describe().join('\n'))
+    console.log(
+      'precursor tokens: ' + precursorTokens.precursorToTradeFor.join(', ')
+    )
 
     /**
      * PHASE 2: Trade inputQuantity into precursor set

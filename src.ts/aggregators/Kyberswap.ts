@@ -11,6 +11,7 @@ import { DexRouter } from './DexAggregator'
 import { Approval } from '../base/Approval'
 import { ZapperExecutor__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
+import { ChainIds } from '../configuration/ReserveAddresses'
 
 export interface GetRoute {
   code: number
@@ -79,8 +80,9 @@ export interface KyberswapAggregatorResult {
 }
 
 const idToSlug: Record<number, string> = {
-  1: 'ethereum',
-  8453: 'base',
+  [ChainIds.Mainnet]: 'ethereum',
+  [ChainIds.Base]: 'base',
+  [ChainIds.Arbitrum]: 'arbitrum',
 }
 
 class KyberAction extends Action('Kyberswap') {

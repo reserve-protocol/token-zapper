@@ -96,7 +96,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     comets,
     cTokenWrappers,
   })
-  console.log(compV3.toString())
 
   const aaveV3 = await setupAaveV3(
     universe,
@@ -107,7 +106,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
       )
     )
   )
-  console.log(aaveV3.toString())
 
   // Set up stargate
   await setupStargate(
@@ -121,10 +119,13 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   // Set up RTokens defined in the config
   await loadRTokens(universe)
 
-  await setupUniswapRouter(universe)
+  const uniV3 = await setupUniswapRouter(universe)
   await setupAerodromeRouter(universe)
 
   return {
+    uni: uniV3,
     curve: null,
+    compV3,
+    aaveV3,
   }
 }

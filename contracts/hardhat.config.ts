@@ -4,7 +4,7 @@ import '@nomiclabs/hardhat-ethers'
 import '@nomicfoundation/hardhat-verify'
 import 'hardhat-deploy'
 import 'hardhat-deploy-ethers'
-import * as dotenv from "dotenv"
+import * as dotenv from 'dotenv'
 
 const conf = dotenv.config()
 
@@ -14,7 +14,7 @@ const config: HardhatUserConfig = {
     target: 'ethers-v5',
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
   networks: {
     local: {
@@ -22,21 +22,21 @@ const config: HardhatUserConfig = {
     },
     mainnet: {
       url: process.env.PROVIDER!,
-      accounts: [
-        process.env.PRIVATE_KEY_DEPLOYER!
-      ],
+      accounts: [process.env.PRIVATE_KEY_DEPLOYER!],
+    },
+    arbi: {
+      url: process.env.PROVIDER_ARBI!,
+      accounts: [process.env.PRIVATE_KEY_DEPLOYER!],
     },
     base: {
-      url: "https://mainnet.base.org",
-      accounts: [
-        process.env.PRIVATE_KEY_DEPLOYER!
-      ],
-    }
+      url: process.env.PROVIDER_BASE!,
+      accounts: [process.env.PRIVATE_KEY_DEPLOYER!],
+    },
   },
   namedAccounts: {
     deployer: {
       default: 0,
-      1: "0xF2d98377d80DADf725bFb97E91357F1d81384De2"
+      1: '0xF2d98377d80DADf725bFb97E91357F1d81384De2',
     },
   },
   solidity: {

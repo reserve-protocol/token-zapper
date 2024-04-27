@@ -1,4 +1,3 @@
-import { ethers } from 'ethers'
 import { type Universe } from '../Universe'
 import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { makeConfig } from './ChainConfiguration'
@@ -39,7 +38,8 @@ export const baseConfig = makeConfig(
     ethBalanceOf: '0x858b62D160788864c65222d7a3777a19B370Abd8',
     uniV3Router: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
-  }
+  },
+  2
 )
 
 export const PROTOCOL_CONFIGS = {

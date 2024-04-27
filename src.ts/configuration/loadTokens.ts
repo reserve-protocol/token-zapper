@@ -1,6 +1,7 @@
 import { type Config } from './ChainConfiguration'
 import { Address } from '../base/Address'
 import { type Universe } from '../Universe'
+import { Token } from 'paraswap'
 
 export interface JsonTokenEntry {
   address: string
@@ -31,18 +32,39 @@ export const loadTokens = async (
       token.decimals
     )
   }
+  const commenTokenMap = universe.config.addresses.commonTokens
+  const rTokenMap = universe.config.addresses.rTokens
 
-  await Promise.all(
-    Object.keys(universe.config.addresses.commonTokens)
-      .map(async (key) => {
-        const addr = universe.config.addresses.commonTokens[key]
-        universe.commonTokens[key] = await universe.getToken(addr)
+  const [commenToks, rTokens] = await Promise.all([
+    Promise.all(
+      Object.keys(commenTokenMap).map(async (key) => {
+        const addr = commenTokenMap[key]
+        return [key, await universe.getToken(addr).catch(() => null)] as const
       })
-      .concat(
-        Object.keys(universe.config.addresses.rTokens).map(async (key) => {
-          const addr = universe.config.addresses.rTokens[key]
-          universe.rTokens[key] = await universe.getToken(addr)
-        })
+    ),
+    Promise.all(
+      Object.keys(rTokenMap).map(async (key) => {
+        const addr = rTokenMap[key]
+        return [key, await universe.getToken(addr).catch(() => null)] as const
+      })
+    ),
+  ])
+  for (const [key, token] of commenToks) {
+    if (token == null) {
+      console.warn(
+        `Failed to load token ${key} at address ${universe.config.addresses.commonTokens[key]}`
       )
-  )
+      continue
+    }
+    universe.commonTokens[key as any] = token
+  }
+  for (const [key, token] of rTokens) {
+    if (token == null) {
+      console.warn(
+        `Failed to load token ${key} at address ${universe.config.addresses.commonTokens[key]}`
+      )
+      continue
+    }
+    universe.rTokens[key as any] = token
+  }
 }

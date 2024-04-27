@@ -1,24 +1,14 @@
+import { type Universe } from '../Universe'
 import { type Address } from '../base/Address'
 import { type Token, type TokenQuantity } from '../entities/Token'
-import { type Universe } from '../Universe'
-import { parseHexStringIntoBuffer } from '../base/utils'
-import { DestinationOptions, Action, InteractionConvention } from './Action'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 import { Approval } from '../base/Approval'
 import { IStaticATokenLM__factory } from '../contracts/factories/contracts/ISAtoken.sol/IStaticATokenLM__factory'
 import { Planner, Value } from '../tx-gen/Planner'
+import { rayDiv, rayMul } from './aaveMath'
 
-const ray = 10n ** 27n
-const halfRay = ray / 2n
-const rayMul = (a: bigint, b: bigint) => {
-  return (halfRay + a * b) / ray
-}
-function rayDiv(a: bigint, b: bigint): bigint {
-  const halfB = b / 2n
-  return (halfB + a * ray) / b
-}
-const saTokenInterface = IStaticATokenLM__factory.createInterface()
-export class MintSATokensAction extends Action("AaveV2") {
+export class MintSATokensAction extends Action('AaveV2') {
   get outputSlippage() {
     return 3000000n
   }
@@ -69,7 +59,7 @@ export class MintSATokensAction extends Action("AaveV2") {
     return `SATokenMint(${this.saToken.toString()})`
   }
 }
-export class BurnSATokensAction extends Action("AaveV2") {
+export class BurnSATokensAction extends Action('AaveV2') {
   get outputSlippage() {
     return 3000000n
   }

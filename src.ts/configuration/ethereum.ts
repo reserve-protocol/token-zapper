@@ -63,42 +63,14 @@ export const COMMON_TOKENS = {
 } as const
 
 export const RTOKENS = {
-  eUSD: {
-    main: '0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a',
-    erc20: '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F',
-  },
-  'ETH+': {
-    main: '0xb6A7d481719E97e142114e905E86a39a2Fa0dfD2',
-    erc20: '0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8',
-  },
-  hyUSD: {
-    main: '0x2cabaa8010b3fbbDEeBe4a2D0fEffC2ed155bf37',
-    erc20: '0xaCdf0DBA4B9839b96221a8487e9ca660a48212be',
-  },
-  RSD: {
-    main: '0xa410AA8304CcBD53F88B4a5d05bD8fa048F42478',
-    erc20: '0xF2098092a5b9D25A3cC7ddc76A0553c9922eEA9E',
-  },
-  iUSD: {
-    main: '0x555143D2E6653c80a399f77c612D33D5Bf67F331',
-    erc20: '0x9b451BEB49a03586e6995E5A93b9c745D068581e',
-  },
-  'USDC+': {
-    main: '0xeC11Cf537497141aC820615F4f399be4a1638Af6',
-    erc20: '0xFc0B1EEf20e4c68B3DCF36c4537Cfa7Ce46CA70b',
-  },
-  USD3: {
-    erc20: '0x0d86883faf4ffd7aeb116390af37746f45b6f378',
-    main: '0x81117e3e98910C3dCF956b5Fc97a7212E047AcF4',
-  },
-  rgUSD: {
-    erc20: '0x78da5799cf427fee11e9996982f4150ece7a99a7',
-    main: '0xB436459251b144e6CfEDa33f8b814fFF450053B2',
-  },
-  TEST_WHALE: {
-    erc20: '0xb2bf7f9f1e32ad495a543cd428975259b159f74f',
-    main: '0x10fCE0eA9cF0BDdD91103c50b8902e1fE2034442',
-  },
+  eUSD: '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F',
+  'ETH+': '0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8',
+  hyUSD: '0xaCdf0DBA4B9839b96221a8487e9ca660a48212be',
+  RSD: '0xF2098092a5b9D25A3cC7ddc76A0553c9922eEA9E',
+  iUSD: '0x9b451BEB49a03586e6995E5A93b9c745D068581e',
+  'USDC+': '0xFc0B1EEf20e4c68B3DCF36c4537Cfa7Ce46CA70b',
+  USD3: '0x0d86883faf4ffd7aeb116390af37746f45b6f378',
+  rgUSD: '0x78da5799cf427fee11e9996982f4150ece7a99a7',
 } as const
 
 export const ethereumConfig = makeConfig(
@@ -202,31 +174,33 @@ export const PROTOCOL_CONFIGS = {
     booster: '0xF403C135812408BFbE8713b5A23a04b3D48AAE31',
   },
   erc4626: [
-    ['0x83F20F44975D03b1b09e64809B757c47f942BEeA', "sdai"],
-    ['0xaA91d24c2F7DBb6487f61869cD8cd8aFd5c5Cab2', "morpho"],
-    ['0x7f7B77e49d5b30445f222764a794AFE14af062eB', "morpho"],
-    ['0xE2b16e14dB6216e33082D5A8Be1Ef01DF7511bBb', "morpho"],
-    ['0x291ed25eB61fcc074156eE79c5Da87e5DA94198F', "morpho"],
-    ['0x97F9d5ed17A0C99B279887caD5254d15fb1B619B', "morpho"],
+    ['0x83F20F44975D03b1b09e64809B757c47f942BEeA', 'sdai'],
+    ['0xaA91d24c2F7DBb6487f61869cD8cd8aFd5c5Cab2', 'morpho'],
+    ['0x7f7B77e49d5b30445f222764a794AFE14af062eB', 'morpho'],
+    ['0xE2b16e14dB6216e33082D5A8Be1Ef01DF7511bBb', 'morpho'],
+    ['0x291ed25eB61fcc074156eE79c5Da87e5DA94198F', 'morpho'],
+    ['0x97F9d5ed17A0C99B279887caD5254d15fb1B619B', 'morpho'],
   ],
 
-  aavev3: {
-    tokenWrappers: [
+  aaveV3: {
+    pool: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2',
+    controller: '0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb',
+    wrappers: [
       '0x093cB4f405924a0C468b43209d5E466F1dd0aC7d',
       '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b',
     ],
   },
-  compoundV3: {
-    markets: [
-      {
-        baseToken: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
-        receiptToken: '0xc3d688B66703497DAA19211EEdff47f25384cdc3', // cUSDCv3
-        vaults: [
-          '0x7e1e077b289c0153b5ceAD9F264d66215341c9Ab', // Reserve wrapped cUSDCV3
-          '0x093c07787920eB34A0A0c7a09823510725Aee4Af',
-          '0xfbd1a538f5707c0d67a16ca4e3fc711b80bd931a',
-        ],
-      },
+  compV3: {
+    comets: [
+      '0xc3d688B66703497DAA19211EEdff47f25384cdc3', // "USDC"
+      '0xA17581A9E3356d9A858b789D68B4d866e593aE94', // WETH
+    ],
+    wrappers: [
+      // wrapped cUSDCV3
+      '0x7e1e077b289c0153b5ceAD9F264d66215341c9Ab',
+      '0x093c07787920eB34A0A0c7a09823510725Aee4Af',
+      '0xfbd1a538f5707c0d67a16ca4e3fc711b80bd931a', // <- latest
+      // ^ wrapped cUSDCV3
     ],
   },
 }

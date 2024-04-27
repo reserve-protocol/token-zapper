@@ -13,18 +13,9 @@ export const COMMON_TOKENS = {
 } as const
 
 export const RTOKENS = {
-  hyUSD: {
-    main: '0xA582985c68ED30a052Ff0b07D74931140bd5a00F',
-    erc20: '0xCc7FF230365bD730eE4B352cC2492CEdAC49383e',
-  },
-  bsd: {
-    main: '0x5f835eA13721B11A7543C8f9C94aA840c1f2Da52',
-    erc20: '0xcb327b99ff831bf8223cced12b1338ff3aa322ff',
-  },
-  iUSD: {
-    erc20: '0xfE0D6D83033e313691E96909d2188C150b834285',
-    main: '0x520b2781C96d0Bd130c9b50930965779Eb572A40',
-  },
+  hyUSD: '0xCc7FF230365bD730eE4B352cC2492CEdAC49383e',
+  bsd: '0xcb327b99ff831bf8223cced12b1338ff3aa322ff',
+  iUSD: '0xfE0D6D83033e313691E96909d2188C150b834285',
 } as const
 
 export const baseConfig = makeConfig(
@@ -74,33 +65,30 @@ export const PROTOCOL_CONFIGS = {
       '0xB88BAc61a4Ca37C43a3725912B1f472c9A5bc061', // wsteth / ETH
     // "": "0xf397bf97280b488ca19ee3093e81c0a77f02e9a5", // rETH / ETH
   },
-  aave: {
-    tokenWrappers: [
+  aaveV3: {
+    pool: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5',
+    wrappers: [
       '0x308447562442Cc43978f8274fA722C9C14BafF8b',
       '0x184460704886f9F2A7F3A0c2887680867954dC6E',
+    ],
+  },
+  compV3: {
+    comets: [
+      '0xb125E6687d4313864e53df431d5425969c15Eb2F',
+      '0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf',
+
+      '0x46e6b214b524310239732D51387075E0e70970bf', // WETH
+    ],
+    wrappers: [
+      '0xbC0033679AEf41Fb9FeB553Fdf55a8Bb2fC5B29e',
+      '0xa8d818C719c1034E731Feba2088F4F011D44ACB3',
+      '0xa694f7177c6c839c951c74c797283b35d0a486c8',
     ],
   },
   stargate: {
     router: '0x45f1A95A4D3f3836523F5c83673c797f4d4d263B',
     wrappers: ['0x073F98792ef4c00bB5f11B1F64f13cB25Cde0d8D'],
     tokens: ['0x4c80E24119CFB836cdF0a6b53dc23F04F7e652CA'],
-  },
-  compoundV3: {
-    markets: [
-      {
-        baseToken: '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca', // USDC
-        receiptToken: '0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf', // cUSDCv3
-        vaults: [
-          '0xbC0033679AEf41Fb9FeB553Fdf55a8Bb2fC5B29e', // Reserve wrapped cUSDCV3
-          '0xa8d818C719c1034E731Feba2088F4F011D44ACB3',
-        ],
-      },
-      {
-        baseToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
-        receiptToken: '0xb125E6687d4313864e53df431d5425969c15Eb2F', // cUSDCv3
-        vaults: ['0xa694f7177c6c839c951c74c797283b35d0a486c8'],
-      },
-    ],
   },
 }
 

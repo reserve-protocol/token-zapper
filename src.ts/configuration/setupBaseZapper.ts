@@ -1,18 +1,18 @@
 import { Address } from '../base/Address'
 import { type Token } from '../entities/Token'
 import { PROTOCOL_CONFIGS, type BaseUniverse } from './base'
-import { convertWrapperTokenAddressesIntoWrapperTokenPairs } from './convertWrapperTokenAddressesIntoWrapperTokenPairs'
 import { loadBaseTokenList } from './loadBaseTokenList'
-import { setupCompoundV3 } from './setupCompoundV3'
 import { loadRTokens } from './setupRTokens'
+import { setupStargate } from './setupStargate'
 import { setupStargateWrapper } from './setupStargateWrapper'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
-import { setupStargate } from './setupStargate'
-import { setupSAV3Token } from './setupSAV3Tokens'
-import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
+
 import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
-import { setupUniswapRouter } from './setupUniswapRouter'
+import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
+import { setupAaveV3 } from './setupAaveV3'
 import { setupAerodromeRouter } from './setupAerodromeRouter'
+import { setupCompoundV3 } from './setupCompV3'
+import { setupUniswapRouter } from './setupUniswapRouter'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   await loadBaseTokenList(universe)
@@ -80,38 +80,34 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   await setupWrappedGasToken(universe)
 
   // Load compound v3
-  const compoundV3Markets = await Promise.all(
-    PROTOCOL_CONFIGS.compoundV3.markets.map(async (a) => {
-      return {
-        baseToken: await universe.getToken(Address.from(a.baseToken)),
-        receiptToken: await universe.getToken(Address.from(a.receiptToken)),
-        vaults: await Promise.all(
-          a.vaults.map((vault) => universe.getToken(Address.from(vault)))
-        ),
-      }
-    })
-  )
+  const [comets, cTokenWrappers] = await Promise.all([
+    Promise.all(
+      PROTOCOL_CONFIGS.compV3.comets.map((a) =>
+        universe.getToken(Address.from(a))
+      )
+    ),
+    Promise.all(
+      PROTOCOL_CONFIGS.compV3.wrappers.map((a) =>
+        universe.getToken(Address.from(a))
+      )
+    ),
+  ])
+  const compV3 = await setupCompoundV3(universe, {
+    comets,
+    cTokenWrappers,
+  })
+  console.log(compV3.toString())
 
-  await setupCompoundV3(universe, compoundV3Markets)
-
-  const aaveWrapperToUnderlying = {
-    '0x308447562442Cc43978f8274fA722C9C14BafF8b':
-      '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA',
-    '0x184460704886f9F2A7F3A0c2887680867954dC6E':
-      '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  }
-
-  // Set up AAVEV3
-  const saTokens = await convertWrapperTokenAddressesIntoWrapperTokenPairs(
+  const aaveV3 = await setupAaveV3(
     universe,
-    PROTOCOL_CONFIGS.aave.tokenWrappers,
-    aaveWrapperToUnderlying
-  )
-  await Promise.all(
-    saTokens.map(({ underlying, wrappedToken }) =>
-      setupSAV3Token(universe, wrappedToken, underlying)
+    Address.from(PROTOCOL_CONFIGS.aaveV3.pool),
+    await Promise.all(
+      PROTOCOL_CONFIGS.aaveV3.wrappers.map((a) =>
+        universe.getToken(Address.from(a))
+      )
     )
   )
+  console.log(aaveV3.toString())
 
   // Set up stargate
   await setupStargate(

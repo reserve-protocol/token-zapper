@@ -1,7 +1,7 @@
 import { type Universe } from '../Universe'
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { IStaticAV3TokenLM__factory } from '../contracts/factories/contracts/ISAV3Token.sol/IStaticAV3TokenLM__factory'
+import { IStaticATokenV3LM__factory } from '../contracts/factories/contracts/AaveV3.sol/IStaticATokenV3LM__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
@@ -15,7 +15,7 @@ function rayDiv(a: bigint, b: bigint): bigint {
   const halfB = b / 2n
   return (halfB + a * ray) / b
 }
-export class MintSAV3TokensAction extends Action("AaveV3") {
+export class MintSAV3TokensAction extends Action('AaveV3') {
   get outputSlippage() {
     return 3000000n
   }
@@ -26,7 +26,7 @@ export class MintSAV3TokensAction extends Action("AaveV3") {
     predicted: TokenQuantity[]
   ) {
     const lib = this.gen.Contract.createContract(
-      IStaticAV3TokenLM__factory.connect(
+      IStaticATokenV3LM__factory.connect(
         this.outputToken[0].address.address,
         this.universe.provider
       )
@@ -73,8 +73,8 @@ export class MintSAV3TokensAction extends Action("AaveV3") {
     return `SAV3TokenMint(${this.saToken.toString()})`
   }
 }
-export class BurnSAV3TokensAction extends Action("AaveV3") {
-  private inst: IStaticAV3TokenLM__factory
+export class BurnSAV3TokensAction extends Action('AaveV3') {
+  private inst: IStaticATokenV3LM__factory
   get outputSlippage() {
     return 3000000n
   }
@@ -85,7 +85,7 @@ export class BurnSAV3TokensAction extends Action("AaveV3") {
     predicted: TokenQuantity[]
   ) {
     const lib = this.gen.Contract.createContract(
-      IStaticAV3TokenLM__factory.connect(
+      IStaticATokenV3LM__factory.connect(
         this.inputToken[0].address.address,
         this.universe.provider
       )
@@ -112,7 +112,7 @@ export class BurnSAV3TokensAction extends Action("AaveV3") {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    IStaticAV3TokenLM__factory.connect(
+    IStaticATokenV3LM__factory.connect(
       this.inputToken[0].address.address,
       this.universe.provider
     )
@@ -138,7 +138,7 @@ export class BurnSAV3TokensAction extends Action("AaveV3") {
       DestinationOptions.Recipient,
       []
     )
-    this.inst = IStaticAV3TokenLM__factory.connect(
+    this.inst = IStaticATokenV3LM__factory.connect(
       saToken.address.address,
       universe.provider
     )

@@ -30,42 +30,27 @@ export const testConfig = makeConfig(
     DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
     WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-    ERC20GAS: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+    ERC20GAS: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
   },
   {
-    eUSD: {
-      main: '0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a',
-      erc20: "0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F"
-    },
-    'ETH+': {
-      main: '0xb6A7d481719E97e142114e905E86a39a2Fa0dfD2',
-      erc20: "0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8"
-    },
-    hyUSD: {
-      main: '0x2cabaa8010b3fbbDEeBe4a2D0fEffC2ed155bf37',
-      erc20: "0xaCdf0DBA4B9839b96221a8487e9ca660a48212be"
-    },
-    RSD: {
-      main: '0xa410AA8304CcBD53F88B4a5d05bD8fa048F42478',
-      erc20: "0xF2098092a5b9D25A3cC7ddc76A0553c9922eEA9E"
-    },
-    iUSD: {
-      main: '0x555143D2E6653c80a399f77c612D33D5Bf67F331',
-      erc20: "0x9b451BEB49a03586e6995E5A93b9c745D068581e"
-    },
+    eUSD: '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F',
+    'ETH+': '0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8',
+    hyUSD: '0xaCdf0DBA4B9839b96221a8487e9ca660a48212be',
+    RSD: '0xF2098092a5b9D25A3cC7ddc76A0553c9922eEA9E',
+    iUSD: '0x9b451BEB49a03586e6995E5A93b9c745D068581e',
   },
   {
-    facadeAddress: "0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C",
+    facadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
     zapperAddress: '0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b',
     executorAddress: '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11',
-    wrappedNative: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    rtokenLens: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    balanceOf: "0x0000000000000000000000000000000000000000",
-    curveRouterCall: "0x0000000000000000000000000000000000000000",
-    ethBalanceOf: "0x0000000000000000000000000000000000000000",
-    uniV3Router: "0x0000000000000000000000000000000000000000",
+    wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    rtokenLens: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    balanceOf: '0x0000000000000000000000000000000000000000',
+    curveRouterCall: '0x0000000000000000000000000000000000000000',
+    ethBalanceOf: '0x0000000000000000000000000000000000000000',
+    uniV3Router: '0x0000000000000000000000000000000000000000',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
-  },
+  }
 )
 type BaseTestConfigType = typeof testConfig
 
@@ -81,10 +66,12 @@ const defineRToken = (
     unitBasket: basket,
     rToken: rToken,
     basketNonce: 0,
-    version: "3.1.0",
+    version: '3.1.0',
     async redeem(baskets) {
-      return basket.map((i) => i.scalarMul(baskets.amount).scalarDiv(rToken.scale))
-    }
+      return basket.map((i) =>
+        i.scalarMul(baskets.amount).scalarDiv(rToken.scale)
+      )
+    },
   }
   universe.defineMintable(
     new MintRTokenAction(universe, basketHandler),
@@ -132,13 +119,12 @@ const initialize = async (universe: TestUniverse) => {
     18
   )
 
-
   const USDT = universe.commonTokens.USDT
   const USDC = universe.commonTokens.USDC
   const DAI = universe.commonTokens.DAI
   const WBTC = universe.commonTokens.WBTC
   const WETH = universe.commonTokens.WETH
-  
+
   universe.defineMintable(
     new DepositAction(universe, WETH),
     new WithdrawAction(universe, WETH)
@@ -282,24 +268,23 @@ const initialize = async (universe: TestUniverse) => {
     [reth, universe.usd.fromDecimal('1920')],
     [wstETH, universe.usd.fromDecimal('1900')],
     [WBTC, universe.usd.fromDecimal('29000')],
-    [DAI, universe.usd.from("0.999")],
-    [USDC, universe.usd.from("1.001")],
-    [universe.nativeToken, universe.usd.from("1750")],
+    [DAI, universe.usd.from('0.999')],
+    [USDC, universe.usd.from('1.001')],
+    [universe.nativeToken, universe.usd.from('1750')],
   ])
-  const oracle = new PriceOracle('Test', async (token) => {
-    return prices.get(token) ?? null
-  }, () => universe.currentBlock)
-  universe.oracles.push(
-    oracle
+  const oracle = new PriceOracle(
+    'Test',
+    async (token) => {
+      return prices.get(token) ?? null
+    },
+    () => universe.currentBlock
   )
+  universe.oracles.push(oracle)
   universe.oracle = new ZapperTokenQuantityPrice(universe)
 }
 
-
-
 export class MockApprovalsStore extends ApprovalsStore {
-  constructor(
-  ) {
+  constructor() {
     super(null as any)
   }
   async needsApproval(
@@ -315,17 +300,12 @@ export class MockApprovalsStore extends ApprovalsStore {
 export const createForTest = async <const Conf extends BaseTestConfigType>(
   c = testConfig as Conf
 ) => {
-  const universe = await Universe.createWithConfig(
-    null as any,
-    c,
-    initialize,
-    {
-      approvalsStore: new MockApprovalsStore(),
-      tokenLoader: async (_: Address) => {
-        throw new Error('Not implemented')
-      },
-    }
-  )
+  const universe = await Universe.createWithConfig(null as any, c, initialize, {
+    approvalsStore: new MockApprovalsStore(),
+    tokenLoader: async (_: Address) => {
+      throw new Error('Not implemented')
+    },
+  })
 
   await universe.initialized
 

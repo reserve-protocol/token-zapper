@@ -6,17 +6,17 @@ import {
 import { convertWrapperTokenAddressesIntoWrapperTokenPairs } from './convertWrapperTokenAddressesIntoWrapperTokenPairs'
 import wrappedToUnderlyingMapping from './data/ethereum/underlying.json'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
+import { setupAaveV3 } from './setupAaveV3'
 import { setupChainLink as setupChainLinkRegistry } from './setupChainLink'
 import { setupCompoundLike } from './setupCompound'
-import { setupCompoundV3 } from './setupCompoundV3'
 import { initCurveOnEthereum } from './setupCurveOnEthereum'
 import { setupERC4626 } from './setupERC4626'
 import { loadEthereumTokenList } from './setupEthereumTokenList'
 import { setupLido } from './setupLido'
 import { setupRETH } from './setupRETH'
 import { loadRTokens } from './setupRTokens'
+import { setupCompoundV3 } from './setupCompV3'
 import { setupSAToken } from './setupSAToken'
-import { setupSAV3Token } from './setupSAV3Tokens'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
@@ -108,19 +108,22 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
 
   // Load compound v3
-  const compoundV3Markets = await Promise.all(
-    PROTOCOL_CONFIGS.compoundV3.markets.map(async (a) => {
-      return {
-        baseToken: await universe.getToken(Address.from(a.baseToken)),
-        receiptToken: await universe.getToken(Address.from(a.receiptToken)),
-        vaults: await Promise.all(
-          a.vaults.map((vault) => universe.getToken(Address.from(vault)))
-        ),
-      }
-    })
-  )
-
-  await setupCompoundV3(universe, compoundV3Markets)
+  const [comets, cTokenWrappers] = await Promise.all([
+    Promise.all(
+      PROTOCOL_CONFIGS.compV3.comets.map((a) =>
+        universe.getToken(Address.from(a))
+      )
+    ),
+    Promise.all(
+      PROTOCOL_CONFIGS.compV3.wrappers.map((a) =>
+        universe.getToken(Address.from(a))
+      )
+    ),
+  ])
+  await setupCompoundV3(universe, {
+    comets,
+    cTokenWrappers,
+  })
 
   // Set up AAVEV2
   const saTokens = await convertWrapperTokenAddressesIntoWrapperTokenPairs(
@@ -168,20 +171,13 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     return null as any
   })
 
-  const aaveWrapperToUnderlying = {
-    '0x093cB4f405924a0C468b43209d5E466F1dd0aC7d':
-      '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b':
-      '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
-  }
-  const saV3Tokens = await convertWrapperTokenAddressesIntoWrapperTokenPairs(
+  const aaveV3 = await setupAaveV3(
     universe,
-    PROTOCOL_CONFIGS.aavev3.tokenWrappers,
-    aaveWrapperToUnderlying
-  )
-  await Promise.all(
-    saV3Tokens.map(({ underlying, wrappedToken }) =>
-      setupSAV3Token(universe, wrappedToken, underlying)
+    Address.from(PROTOCOL_CONFIGS.aaveV3.pool),
+    await Promise.all(
+      PROTOCOL_CONFIGS.aaveV3.wrappers.map((a) =>
+        universe.getToken(Address.from(a))
+      )
     )
   )
 
@@ -207,6 +203,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   // }
 
   return {
+    aaveV3,
     curve,
   }
 }

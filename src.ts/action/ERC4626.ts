@@ -2,13 +2,10 @@ import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 
-import { parseHexStringIntoBuffer } from '../base/utils'
-import { IERC4626__factory } from '../contracts/factories/contracts/IERC4626__factory'
+import { IERC4626__factory } from '../contracts/factories/@openzeppelin/contracts/interfaces/IERC4626__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
-import { Action, DestinationOptions, InteractionConvention } from './Action'
 import { Planner, Value } from '../tx-gen/Planner'
-
-const vaultInterface = IERC4626__factory.createInterface()
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 export class ERC4626TokenVault {
   constructor(

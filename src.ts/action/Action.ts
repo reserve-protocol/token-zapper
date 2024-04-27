@@ -4,8 +4,11 @@ import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Approval } from '../base/Approval'
 import * as gen from '../tx-gen/Planner'
 import { Universe } from '..'
-import { BalanceOf__factory, EthBalance__factory } from '../contracts'
-import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory'
+import {
+  BalanceOf__factory,
+  EthBalance__factory,
+  IERC20__factory,
+} from '../contracts'
 
 export enum InteractionConvention {
   PayBeforeCall,
@@ -17,6 +20,12 @@ export enum InteractionConvention {
 export enum DestinationOptions {
   Recipient,
   Callee,
+}
+
+export enum EdgeType {
+  MINT,
+  BURN,
+  SWAP,
 }
 
 const useSpecialCaseBalanceOf = new Set<Address>([
@@ -99,7 +108,6 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
-  
   get protocol(): string {
     return 'Unknown'
   }
@@ -124,6 +132,20 @@ export abstract class BaseAction {
   public async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {
     const outputs = await this.quote(amountsIn)
     balances.exchange(amountsIn, outputs)
+  }
+
+  generateOutputTokenBalance(
+    universe: Universe,
+    planner: gen.Planner,
+    comment?: string
+  ) {
+    return plannerUtils.erc20.balanceOf(
+      universe,
+      planner,
+      this.outputToken[0],
+      universe.execAddress,
+      comment
+    )
   }
 
   abstract plan(

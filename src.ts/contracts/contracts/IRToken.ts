@@ -36,6 +36,7 @@ export interface IRTokenInterface extends utils.Interface {
     "decimals()": FunctionFragment;
     "issue(uint256)": FunctionFragment;
     "issueTo(address,uint256)": FunctionFragment;
+    "main()": FunctionFragment;
     "mint(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "redeem(uint256)": FunctionFragment;
@@ -56,6 +57,7 @@ export interface IRTokenInterface extends utils.Interface {
       | "decimals"
       | "issue"
       | "issueTo"
+      | "main"
       | "mint"
       | "name"
       | "redeem"
@@ -92,6 +94,7 @@ export interface IRTokenInterface extends utils.Interface {
     functionFragment: "issueTo",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(functionFragment: "main", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "mint",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
@@ -134,6 +137,7 @@ export interface IRTokenInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "issue", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "issueTo", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "main", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
@@ -242,6 +246,8 @@ export interface IRToken extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    main(overrides?: CallOverrides): Promise<[string]>;
+
     mint(
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
@@ -313,6 +319,8 @@ export interface IRToken extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  main(overrides?: CallOverrides): Promise<string>;
+
   mint(
     recipient: PromiseOrValue<string>,
     amount: PromiseOrValue<BigNumberish>,
@@ -383,6 +391,8 @@ export interface IRToken extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    main(overrides?: CallOverrides): Promise<string>;
 
     mint(
       recipient: PromiseOrValue<string>,
@@ -480,6 +490,8 @@ export interface IRToken extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    main(overrides?: CallOverrides): Promise<BigNumber>;
+
     mint(
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
@@ -551,6 +563,8 @@ export interface IRToken extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    main(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     mint(
       recipient: PromiseOrValue<string>,

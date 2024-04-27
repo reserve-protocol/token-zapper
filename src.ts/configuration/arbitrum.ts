@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { type Universe } from '../Universe'
-import { GAS_TOKEN_ADDRESS } from '../base/constants'
+import { BTC_TOKEN_ADDRESS, GAS_TOKEN_ADDRESS } from '../base/constants'
 import { makeConfig } from './ChainConfiguration'
 import { ChainIds, getAddressesForChain } from './ReserveAddresses'
 
@@ -12,7 +12,7 @@ export const COMMON_TOKENS = {
   CRV: reserveAddresses.CRV_ADDRESS,
   CVX: reserveAddresses.CVX_ADDRESS,
   eUSD: reserveAddresses.EUSD_ADDRESS,
-  ['ETH+']: reserveAddresses.ETHPLUS_ADDRESS,
+  'ETH+': reserveAddresses.ETHPLUS_ADDRESS,
   RGUSD: reserveAddresses.RGUSD_ADDRESS,
   STG: reserveAddresses.STG_ADDRESS,
 
@@ -28,17 +28,19 @@ export const COMMON_TOKENS = {
   USDT: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
   WBTC: '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f',
   FRAX: '0x17fc002b466eec40dae837fc4be5c67993ddbd6f',
-  COMP: '0x354A6dA3fcde098F8389cad84b0182725c6C91dE',
+  COMP: reserveAddresses.COMP_ADDRESS,
 } as const
 
-export const RTOKENS = {}
-export const baseConfig = makeConfig(
+export const RTOKENS = {
+  ATDU: '0xc9ea31a6f85578b0a8dffa761b20494a95d12103',
+}
+export const arbiConfig = makeConfig(
   ChainIds.Arbitrum,
   {
     symbol: 'ETH',
     decimals: 18,
     name: 'Ether',
-  },
+  } as const,
   COMMON_TOKENS,
   RTOKENS,
   {
@@ -53,49 +55,50 @@ export const baseConfig = makeConfig(
     ethBalanceOf: ethers.constants.AddressZero,
     uniV3Router: ethers.constants.AddressZero,
     curveStableSwapNGHelper: ethers.constants.AddressZero,
-  }
+  } as const
 )
 
-
-
-
-
 export const PROTOCOL_CONFIGS = {
-  usdPriceOracles: {
-    [COMMON_TOKENS.ARB]: '0xb2A824043730FE05F3DA2efaFa1CBbe83fa548D6',
-    [COMMON_TOKENS.COMP]: '0xe7C53FFd03Eb6ceF7d208bC4C13446c76d1E5884',
-    [COMMON_TOKENS.DAI]: '0xc5C8E77B397E531B8EC06BFb0048328B30E9eCfB',
-    [COMMON_TOKENS.USDC]: '0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3',
-    [COMMON_TOKENS.USDT]: '0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7',
-    [COMMON_TOKENS.RSR]: '0xcfF9349ec6d027f20fC9360117fef4a1Ad38B488',
-  },
-  ethPriceOracles: {
-    '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22':
-      '0x806b4ac04501c29769051e42783cf04dce41440b', // cbETH / ETH
-    '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452':
-      '0xB88BAc61a4Ca37C43a3725912B1f472c9A5bc061', // wsteth / ETH
-    // "": "0xf397bf97280b488ca19ee3093e81c0a77f02e9a5", // rETH / ETH
-  },
-  aave: {
-  },
-  compoundV3: {
-    markets: [
-      {
-        baseToken: '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca', // USDC
-        receiptToken: '0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf', // cUSDCv3
-        vaults: [
-          '0xbC0033679AEf41Fb9FeB553Fdf55a8Bb2fC5B29e', // Reserve wrapped cUSDCV3
-          '0xa8d818C719c1034E731Feba2088F4F011D44ACB3',
-        ],
+  ...({
+    oracles: {
+      USD: {
+        [COMMON_TOKENS.ARB]: '0xb2A824043730FE05F3DA2efaFa1CBbe83fa548D6',
+        [COMMON_TOKENS.DAI]: '0xc5C8E77B397E531B8EC06BFb0048328B30E9eCfB',
+        [COMMON_TOKENS.USDC]: '0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3',
+        [COMMON_TOKENS.USDT]: '0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7',
+        [COMMON_TOKENS.RSR]: '0xcfF9349ec6d027f20fC9360117fef4a1Ad38B488',
+        [BTC_TOKEN_ADDRESS]: '0xd0C7101eACbB49F3deCcCc166d238410D6D46d57',
+        [COMMON_TOKENS.cbETH]: '0xa668682974E3f121185a3cD94f00322beC674275',
+        [COMMON_TOKENS.COMP]: '0xe7C53FFd03Eb6ceF7d208bC4C13446c76d1E5884',
+        [COMMON_TOKENS.CRV]: '0xaebDA2c976cfd1eE1977Eac079B4382acb849325',
+        [COMMON_TOKENS.WETH]: '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612',
+        [GAS_TOKEN_ADDRESS]: '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612',
+        [COMMON_TOKENS.FRAX]: '0x0809E3d38d1B4214958faf06D8b1B1a2b73f2ab8',
+        [COMMON_TOKENS.STG]: '0xe74d69E233faB0d8F48921f2D93aDfDe44cEb3B7',
       },
-      {
-        baseToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
-        receiptToken: '0xb125E6687d4313864e53df431d5425969c15Eb2F', // cUSDCv3
-        vaults: ['0xa694f7177c6c839c951c74c797283b35d0a486c8'],
+      ETH: {
+        [COMMON_TOKENS.reth]: '0xD6aB2298946840262FcC278fF31516D39fF611eF',
+        [COMMON_TOKENS.wstETH]: '0xb523AE262D20A936BC152e6023996e46FDC2A95D',
       },
-    ],
-  },
-}
+      BTC: {
+        [COMMON_TOKENS.WBTC]: '0x6ce185860a4963106506C203335A2910413708e9',
+      },
+    },
+    aaveV3: {
+      pool: '0x794a61358D6845594F94dc1DB02A252b5b4814aD',
+      wrappers: [] as string[],
+    },
+    compV3: {
+      comets: [
+        '0xA5EDBDD9646f8dFF606d7448e414884C7d905dCA', // USDC.e
+        '0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf', // USDC
+      ],
+      wrappers: [
+        '0xd54804250e9c561aea9dee34e9cf2342f767acc5', // (wcUSDCv3)
+      ],
+    },
+  } as const),
+} as const
 
-export type BaseConfigType = typeof baseConfig
-export type BaseUniverse = Universe<BaseConfigType>
+export type ArbitrumConfigType = typeof arbiConfig
+export type ArbitrumUniverse = Universe<ArbitrumConfigType>

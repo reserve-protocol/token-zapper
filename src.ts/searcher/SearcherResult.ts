@@ -13,6 +13,7 @@ import { Approval } from '../base/Approval'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import {
   EthBalance__factory,
+  IERC20__factory,
   ZapperExecutor__factory,
   Zapper__factory,
 } from '../contracts'
@@ -37,7 +38,6 @@ import {
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { DefaultMap } from '../base/DefaultMap'
-import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory'
 import { Searcher } from './Searcher'
 import { wait } from '../base/controlflow'
 import { ToTransactionArgs } from './ToTransactionArgs'

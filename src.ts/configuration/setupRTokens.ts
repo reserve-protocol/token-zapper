@@ -1,31 +1,39 @@
-import { type Universe } from '../Universe';
-import { MintRTokenAction, BurnRTokenAction } from '../action/RTokens';
-import { Address } from '../base/Address';
-import { IRToken__factory } from '../contracts';
-import { IMain__factory } from '../contracts/factories/contracts/IMain__factory';
-import { TokenBasket } from '../entities/TokenBasket';
+import { type Universe } from '../Universe'
+import { MintRTokenAction, BurnRTokenAction } from '../action/RTokens'
+import { Address } from '../base/Address'
+import { IRToken__factory } from '../contracts'
+import { IMain__factory } from '../contracts/factories/contracts/IMain__factory'
+import { TokenBasket } from '../entities/TokenBasket'
 
-export const loadRToken = async (universe: Universe, rTokenAddress: Address, mainAddr: Address) => {
+export const loadRToken = async (
+  universe: Universe,
+  rTokenAddress: Address
+) => {
+  const rtokenMain = IRToken__factory.connect(
+    rTokenAddress.address,
+    universe.provider
+  )
+  const mainAddr = Address.from(await rtokenMain.main())
   const mainInst = IMain__factory.connect(mainAddr.address, universe.provider)
-  const [
-    basketHandlerAddress,
-    assetRegistryAddress,
-  ] = await Promise.all([
+  const [basketHandlerAddress, assetRegistryAddress] = await Promise.all([
     mainInst.basketHandler(),
     mainInst.assetRegistry(),
   ])
 
   const token = await universe.getToken(rTokenAddress)
 
-  const rtoken = IRToken__factory.connect(rTokenAddress.address, universe.provider)
+  const rtoken = IRToken__factory.connect(
+    rTokenAddress.address,
+    universe.provider
+  )
   const basketHandler = new TokenBasket(
     universe,
     Address.from(basketHandlerAddress),
     token,
     Address.from(assetRegistryAddress),
     await rtoken.version()
-  );
-  (universe.rTokens as any)[token.symbol] = token
+  )
+  ;(universe.rTokens as any)[token.symbol] = token
   await basketHandler.update()
   universe.createRefreshableEntity(basketHandler.basketHandlerAddress, () =>
     basketHandler.update()
@@ -37,8 +45,10 @@ export const loadRToken = async (universe: Universe, rTokenAddress: Address, mai
   )
 }
 
-export const loadRTokens = (universe: Universe) => Promise.all(Object.entries(universe.config.addresses.rTokenDeployments).map(
-  async ([key, mainAddr]) => {
-    const rTokenAddress = universe.config.addresses.rTokens[key]
-    await loadRToken(universe, rTokenAddress, mainAddr)
-  }));
+export const loadRTokens = (universe: Universe) =>
+  Promise.all(
+    Object.keys(universe.config.addresses.rTokens).map(async (key) => {
+      const rTokenAddress = universe.config.addresses.rTokens[key]
+      await loadRToken(universe, rTokenAddress)
+    })
+  )

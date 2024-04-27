@@ -24,22 +24,13 @@ import {
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { SwapPath, SwapPaths, type SingleSwap } from '../searcher/Swap'
-import {
-  Contract,
-  LiteralValue,
-  Planner,
-  Value,
-  printPlan,
-} from '../tx-gen/Planner'
+import { Contract, LiteralValue, Planner, Value } from '../tx-gen/Planner'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { DefaultMap } from '../base/DefaultMap'
 import { ToTransactionArgs } from './ToTransactionArgs'
+import { simulationUrls } from '../base/constants'
 
-export const simulationUrls: Record<number, string | undefined> = {
-  8453: 'https://resbasesimulator.mig2151.workers.dev',
-  1: 'https://worker-frosty-pine-5440.mig2151.workers.dev',
-}
 const zapperInterface = Zapper__factory.createInterface()
 interface SimulateParams {
   data: string

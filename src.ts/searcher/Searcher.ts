@@ -3,7 +3,7 @@ import { Universe } from '..'
 import { DestinationOptions, InteractionConvention } from '../action/Action'
 import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
-import { wait } from '../base/controlflow'
+import { simulationUrls } from '../base/constants'
 import { Config } from '../configuration/ChainConfiguration'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
@@ -523,6 +523,16 @@ export class Searcher<
       this.universe.config.addresses.executorAddress
     )
   }
+  get hasExtendedSimulationSupport() {
+    return simulationUrls[this.universe.config.chainId] != null
+  }
+  private checkIfSimulationSupported() {
+    if (!this.hasExtendedSimulationSupport) {
+      throw new Error(
+        `Zapper does not support simulation on chain ${this.universe.config.chainId}, please use 'findSingleInputToRTokenZap' for partial support`
+      )
+    }
+  }
   async findRTokenIntoSingleTokenZapTx(
     rTokenQuantity: TokenQuantity,
     output: Token,
@@ -531,6 +541,7 @@ export class Searcher<
     toTxArgs: ToTransactionArgs = {}
   ) {
     await this.universe.initialized
+    this.checkIfSimulationSupported()
     const [mintResults, tradeResults] = await Promise.all([
       this.findRTokenIntoSingleTokenZapViaRedeem(
         rTokenQuantity,
@@ -562,14 +573,14 @@ export class Searcher<
         allQuotes.map(async (searchResult) => {
           try {
             return {
-              searchResult: searchResult,
+              searchResult,
               tx: await searchResult.toTransaction(toTxArgs),
               error: null,
             }
           } catch (error: any) {
             console.log(error)
             return {
-              searchResult: searchResult,
+              searchResult,
               tx: null,
               error: error,
             }
@@ -968,6 +979,7 @@ export class Searcher<
     toTxArgs: ToTransactionArgs = {}
   ) {
     await this.universe.initialized
+    this.checkIfSimulationSupported()
     const [mintResults, tradeResults] = await Promise.all([
       this.findTokenZapViaIssueance(
         userInput,

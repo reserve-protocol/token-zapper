@@ -152,7 +152,7 @@ class AaveReserve {
   }
 
   toString() {
-    return `AaveReserve(${this.reserveToken.toString()},${this.aToken.toString()})`
+    return `AaveReserve(${this.reserveToken},${this.aToken})`
   }
 }
 class AaveV3 {
@@ -193,7 +193,8 @@ class AaveV3 {
     )
     this.reserves.push(reserve)
     this.tokenToReserve.set(reserve.aToken, reserve)
-    this.universe.defineMintable(reserve.supply, reserve.withdraw)
+    this.universe.addAction(reserve.supply)
+    this.universe.addAction(reserve.withdraw)
     return reserve
   }
 

@@ -567,6 +567,7 @@ export class Searcher<
               error: null,
             }
           } catch (error: any) {
+            console.log(error)
             return {
               searchResult: searchResult,
               tx: null,
@@ -873,6 +874,7 @@ export class Searcher<
     let inputTokenQuantity = userInput
     if (inputIsNative) {
       if (this.universe.commonTokens.ERC20GAS == null) {
+        console.log('No wrapped native token. (Like WETH) has been defined.')
         throw new Error(
           'No wrapped native token. (Like WETH) has been defined. Cannot execute search'
         )
@@ -999,6 +1001,7 @@ export class Searcher<
     let inputTokenQuantity = userInput
     if (inputIsNative) {
       if (this.universe.commonTokens.ERC20GAS == null) {
+        console.log('No wrapped native token. (Like WETH) has been defined.')
         throw new Error(
           'No wrapped native token. (Like WETH) has been defined. Cannot execute search'
         )
@@ -1007,6 +1010,7 @@ export class Searcher<
     }
     const rTokenActions = this.universe.wrappedTokens.get(rToken)
     if (rTokenActions == null) {
+      console.log('RToken has no mint/burn actions')
       throw new Error('RToken has no mint/burn actions')
     }
 

@@ -24,7 +24,13 @@ import {
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { SwapPath, SwapPaths, type SingleSwap } from '../searcher/Swap'
-import { Contract, LiteralValue, Planner, Value } from '../tx-gen/Planner'
+import {
+  Contract,
+  LiteralValue,
+  Planner,
+  Value,
+  printPlan,
+} from '../tx-gen/Planner'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { DefaultMap } from '../base/DefaultMap'
@@ -183,12 +189,13 @@ export abstract class BaseSearcherResult {
           data,
           from: this.signer.address,
           to: this.universe.config.addresses.zapperAddress.address,
-          value,
+          value: '0x' + value.toString(16),
         },
         'latest',
         {
           [this.signer.address]: {
-            balance: ethers.utils.parseEther('10000').toHexString(),
+            balance:
+              '0x' + ethers.utils.parseEther('10000').toBigInt().toString(16),
           },
         },
       ])
@@ -196,6 +203,20 @@ export abstract class BaseSearcherResult {
         return zapperInterface.decodeFunctionResult('zapERC20', resp)
           .out as ZapperOutputStructOutput
       } catch (e) {
+        // console.log(
+        //   {
+        //     data,
+        //     from: this.signer.address,
+        //     to: this.universe.config.addresses.zapperAddress.address,
+        //     value: value.toString(16),
+        //   },
+        //   'latest',
+        //   {
+        //     [this.signer.address]: {
+        //       balance: ethers.utils.parseEther('10000').toHexString(),
+        //     },
+        //   }
+        // )
         // console.log(resp)
       }
       if (resp.startsWith('0x08c379a0')) {
@@ -214,6 +235,7 @@ export abstract class BaseSearcherResult {
       }
       throw new Error('Unknonw error: ' + resp)
     } catch (e: any) {
+      // console.log(e)
       if (e.message.includes('LPStakingTime')) {
         console.error('Stargate staking contract out of funds.. Aborting')
         throw new ThirdPartyIssue('Stargate out of funds')

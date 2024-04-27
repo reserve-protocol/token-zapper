@@ -87,7 +87,10 @@ export const PROTOCOL_CONFIGS = {
     },
     aaveV3: {
       pool: '0x794a61358D6845594F94dc1DB02A252b5b4814aD',
-      wrappers: [] as string[],
+      wrappers: [
+        "0x030cDeCBDcA6A34e8De3f49d1798d5f70E3a3414",
+        "0xffef97179f58a582dEf73e6d2e4BcD2BDC8ca128"
+      ]
     },
     compV3: {
       comets: [

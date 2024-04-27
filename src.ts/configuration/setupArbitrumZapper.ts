@@ -6,6 +6,7 @@ import { ArbitrumUniverse, PROTOCOL_CONFIGS } from './arbitrum'
 import { loadArbitrumTokenList } from './loadArbitrumTokenList'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupCompoundV3 } from './setupCompV3'
+import { loadRTokens } from './setupRTokens'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
@@ -107,10 +108,14 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
     cTokenWrappers,
   })
 
-  console.log('Setting up Compound V3')
-  await setupUniswapRouter(universe)
+  console.log('Loading rTokens')
+  await loadRTokens(universe)
+
+  console.log('Setting up uniswapV3 router')
+  const uni = await setupUniswapRouter(universe)
 
   return {
+    uni,
     compV3,
     aaveV3,
   }

@@ -17,7 +17,7 @@ import { type EthereumUniverse } from './ethereum'
 
 export {
   BasketTokenSourcingRuleApplication,
-  PostTradeAction
+  PostTradeAction,
 } from '../searcher/BasketTokenSourcingRules'
 
 export interface IRouteStep {

@@ -755,7 +755,7 @@ export class Searcher<
             outputToken,
             signerAddress,
             slippage,
-            2,
+            1,
             true
           )
           if (potentialSwaps == null) {

@@ -24,7 +24,13 @@ import {
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { SwapPath, SwapPaths, type SingleSwap } from '../searcher/Swap'
-import { Contract, LiteralValue, Planner, Value } from '../tx-gen/Planner'
+import {
+  Contract,
+  LiteralValue,
+  Planner,
+  Value,
+  printPlan,
+} from '../tx-gen/Planner'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { DefaultMap } from '../base/DefaultMap'
@@ -232,14 +238,14 @@ export abstract class BaseSearcherResult {
         throw new ThirdPartyIssue('Stargate out of funds')
       }
 
-      // console.log(
-      //   'error:',
-      //   e.message,
-      //   'Failing program:',
-      //   printPlan(this.planner, this.universe)
-      //     .map((i) => '  ' + i)
-      //     .join('\n')
-      // )
+      console.log(
+        'error:',
+        e.message,
+        'Failing program:',
+        printPlan(this.planner, this.universe)
+          .map((i) => '  ' + i)
+          .join('\n')
+      )
     }
 
     // console.log(

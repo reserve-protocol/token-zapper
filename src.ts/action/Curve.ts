@@ -164,7 +164,7 @@ export class CurveSwap extends Action('Curve') {
     planner.add(
       curveRouterCallLib.exchange(
         inputs[0] ?? amountsIn.amount,
-        minOut.amount - minOut.amount / 1000n,
+        minOut.amount - minOut.amount / 100n,
         routerContract.address,
         payload
       ),

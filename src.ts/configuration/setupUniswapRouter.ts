@@ -71,7 +71,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
         this.universe.provider
       )
     )
-    const minOut = this.outputQty.amount - this.outputQty.amount / 1000n
+    const minOut = this.outputQty.amount - this.outputQty.amount / 100n
     for (const { route } of trade.swaps) {
       const singleHop = route.pools.length === 1
       if (singleHop) {

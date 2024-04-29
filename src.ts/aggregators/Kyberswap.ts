@@ -178,7 +178,7 @@ export const createKyberswap = (
     const url = `${GET_ROUTE_SWAP}?source=register&amountIn=${quantityIn.amount}&tokenIn=${quantityIn.token.address.address}&tokenOut=${tokenOut.address.address}`
     return fetch(url, {
       method: 'GET',
-      signal: AbortSignal.timeout(1000),
+      signal: AbortSignal.timeout(2000),
       headers: {
         'x-client-id': 'register',
       },
@@ -187,7 +187,7 @@ export const createKyberswap = (
   const fetchSwap = async (req: GetRoute, recipient: Address) => {
     return fetch(`${POST_GET_SWAP}?source=register`, {
       method: 'POST',
-      signal: AbortSignal.timeout(1000),
+      signal: AbortSignal.timeout(2000),
       body: JSON.stringify({
         ...req.data,
         sender: universe.config.addresses.executorAddress.address,

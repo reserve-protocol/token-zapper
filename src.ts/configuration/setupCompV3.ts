@@ -159,8 +159,7 @@ class BurnCometAction extends BaseCometAction {
     predicted: TokenQuantity
   ) {
     planner.add(
-      this.comet.cometLibrary.withdrawTo(
-        destination.address,
+      this.comet.cometLibrary.withdraw(
         this.comet.borrowToken.address.address,
         input ?? predicted.amount
       )
@@ -169,7 +168,7 @@ class BurnCometAction extends BaseCometAction {
 }
 class BurnCometWrapperAction extends BaseCometAction {
   constructor(public readonly cometWrapper: CometWrapper) {
-    super(cometWrapper.comet, 'withdrawTo', {
+    super(cometWrapper.comet, 'withdraw', {
       inputToken: [cometWrapper.wrapperToken],
       outputToken: [cometWrapper.cometToken],
       interaction: InteractionConvention.None,

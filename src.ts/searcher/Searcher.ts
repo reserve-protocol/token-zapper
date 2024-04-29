@@ -568,26 +568,23 @@ export class Searcher<
       searchResult: BaseSearcherResult
       tx: ZapTransaction | null
       error: any
-    }[] = (
-      await Promise.all(
-        allQuotes.map(async (searchResult) => {
-          try {
-            return {
-              searchResult,
-              tx: await searchResult.toTransaction(toTxArgs),
-              error: null,
-            }
-          } catch (error: any) {
-            console.log(error)
-            return {
-              searchResult,
-              tx: null,
-              error: error,
-            }
+    }[] = await Promise.all(
+      allQuotes.map(async (searchResult) => {
+        try {
+          return {
+            searchResult,
+            tx: await searchResult.toTransaction(toTxArgs),
+            error: null,
           }
-        })
-      )
-    ).filter((i) => i != null)
+        } catch (error: any) {
+          return {
+            searchResult,
+            tx: null,
+            error: error,
+          }
+        }
+      })
+    )
 
     if (txes.length === 0) {
       console.log('No results')
@@ -596,16 +593,15 @@ export class Searcher<
 
     const notFailed = txes
       .filter((i) => {
-        const ok = i.error == null && i.tx != null
-        if (!ok) {
+        if (i.error != null || i.tx == null) {
           return false
         }
         if (
           i.tx &&
-          i.tx!.outputValueUSD.amount / 50n < i.tx!.dustValueUSD.amount
+          i.tx!.outputValueUSD.amount / 20n < i.tx!.dustValueUSD.amount
         ) {
           // console.log(i.tx.toString())
-          // console.log(i.tx.describe().join("\n"))
+          console.log(i.tx.describe().join("\n"))
           return false
         }
         return true

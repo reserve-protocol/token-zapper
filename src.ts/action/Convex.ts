@@ -79,7 +79,14 @@ export class ConvexUnstakeAndWithdraw extends Action('Convex') {
       )
     )
     planner.add(lib.withdrawAndUnwrap(inputs[0]))
-    return [inputs[0]]
+
+    const out = this.genUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      this.outputToken[0],
+      this.universe.config.addresses.executorAddress
+    )
+    return [out!]
   }
   toString(): string {
     return `ConvexUnstakeAndWithdraw(${this.convexPool})`

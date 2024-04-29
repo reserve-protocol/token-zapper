@@ -32,7 +32,7 @@ export const COMMON_TOKENS = {
 } as const
 
 export const RTOKENS = {
-  ATDU: '0xc9ea31a6f85578b0a8dffa761b20494a95d12103',
+  TEST_RTOKEN: '0xdf31be6c973bfa7d02f57294beb53eadfe946c9b',
 }
 export const arbiConfig = makeConfig(
   ChainIds.Arbitrum,

@@ -1,3 +1,5 @@
+import { ChainIds } from '../configuration/ReserveAddresses'
+
 /**
  * Internally  we use Uniswap v3's fee scale.
  */
@@ -14,6 +16,7 @@ export const CHAINLINK_BTC_TOKEN_ADDRESS =
 export const USD_ADDRESS = '0x0000000000000000000000000000000000000348'
 
 export const simulationUrls: Record<number, string | undefined> = {
-  8453: 'https://resbasesimulator.mig2151.workers.dev',
-  1: 'https://worker-frosty-pine-5440.mig2151.workers.dev',
+  [ChainIds.Base]: 'https://resbasesimulator.mig2151.workers.dev',
+  [ChainIds.Arbitrum]: 'https://arbisimulator.mig2151.workers.dev/',
+  [ChainIds.Mainnet]: 'https://worker-frosty-pine-5440.mig2151.workers.dev',
 }

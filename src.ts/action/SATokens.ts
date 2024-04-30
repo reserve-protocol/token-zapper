@@ -24,7 +24,7 @@ export class MintSATokensAction extends Action('AaveV2') {
         this.universe.provider
       )
     )
-    const out = planner.add(
+    planner.add(
       lib.deposit(
         this.universe.execAddress.address,
         input ?? predicted.amount,
@@ -34,7 +34,7 @@ export class MintSATokensAction extends Action('AaveV2') {
       undefined,
       `bal_${this.outputToken[0].symbol}`
     )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(300000n)
@@ -85,16 +85,14 @@ export class BurnSATokensAction extends Action('AaveV2') {
         this.universe.provider
       )
     )
-    const out = planner.add(
+    planner.add(
       lib.withdraw(
         this.universe.execAddress.address,
         input ?? predicted.amount,
         true
-      ),
-      undefined,
-      `bal_${this.outputToken[0].symbol}`
+      )
     )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(300000n)

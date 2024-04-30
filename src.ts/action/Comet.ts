@@ -93,7 +93,7 @@ export class BurnCometAction extends Action('CompoundV3') {
       [receiptToken],
       [baseToken],
       InteractionConvention.None,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

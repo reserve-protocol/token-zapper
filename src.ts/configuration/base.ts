@@ -1,3 +1,4 @@
+import { ethers } from 'ethers'
 import { type Universe } from '../Universe'
 import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { makeConfig } from './ChainConfiguration'
@@ -27,7 +28,7 @@ export const baseConfig = makeConfig(
   COMMON_TOKENS,
   RTOKENS,
   {
-    facadeAddress: '0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF',
+    facadeAddress: ethers.constants.AddressZero,
     oldFacadeAddress: '0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF',
     zapperAddress: '0xe811b62AB97d9370cE2e25F9ceBC904522b81FE1',
     executorAddress: '0xA4b275feAf3A1450fc57270Ed863923261aBFD05',
@@ -44,10 +45,10 @@ export const baseConfig = makeConfig(
     blocktime: 2000,
     blockGasLimit: 60000000n,
     requoteTolerance: 1,
-    routerDeadline: 4000,
-    searcherMaxRoutesToProduce: 4,
-    searchConcurrency: 4,
-    defaultInternalTradeSlippage: 30n,
+    routerDeadline: 3000,
+    searcherMaxRoutesToProduce: 3,
+    searchConcurrency: 3,
+    defaultInternalTradeSlippage: 25n,
   }
 )
 

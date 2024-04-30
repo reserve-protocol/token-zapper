@@ -58,7 +58,7 @@ export class MintSAV3TokensAction extends Action('AaveV3') {
       [underlying],
       [saToken],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       [new Approval(underlying, saToken.address)]
     )
   }
@@ -122,7 +122,7 @@ export class BurnSAV3TokensAction extends Action('AaveV3') {
       [saToken],
       [underlying],
       InteractionConvention.None,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

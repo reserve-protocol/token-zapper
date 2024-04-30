@@ -55,7 +55,7 @@ export class ConvexDepositAndStake extends Action('Convex') {
       [convexPool.curveLPToken],
       [convexPool.stakedConvexDepositToken],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       [
         new Approval(
           convexPool.curveLPToken,

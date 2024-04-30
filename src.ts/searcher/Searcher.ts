@@ -581,7 +581,7 @@ export class Searcher<
     allQuotes: BaseSearcherResult[],
     toTxArgs: ToTransactionArgs
   ) {
-    console.log('Testing', allQuotes.length)
+    // console.log('Testing', allQuotes.length)
     const hasSeen = new Set<string>()
     allQuotes = allQuotes.filter((i) => {
       const k = i.describe().join(';')
@@ -616,7 +616,7 @@ export class Searcher<
     }
     quotes.sort((l, r) => -l.netValue.compare(r.netValue))
     quotes = quotes.slice(0, this.maxResults)
-    console.log(`Searcher found ${quotes.length} potential zap paths`)
+    // console.log(`Searcher found ${quotes.length} potential zap paths`)
 
     const txes: {
       searchResult: BaseSearcherResult
@@ -679,9 +679,9 @@ export class Searcher<
     notFailed.sort((l, r) => -l.tx.compare(r.tx))
 
     console.log(`${notFailed.length} / ${txes.length} passed simulation:`)
-    console.log(
-      notFailed.map((i, idx) => `   ${idx}. ${i.tx.stats}`).join('\n')
-    )
+    // console.log(
+    //   notFailed.map((i, idx) => `   ${idx}. ${i.tx.stats}`).join('\n')
+    // )
 
     return {
       failed,
@@ -810,7 +810,7 @@ export class Searcher<
             outputToken,
             signerAddress,
             slippage,
-            2,
+            1,
             true
           )
           if (potentialSwaps == null) {
@@ -920,6 +920,7 @@ export class Searcher<
       signerAddress,
       slippage
     )) {
+      // console.log(zap.describe().join('\n'))
       outputs.push(zap)
       if (outputs.length >= this.maxResults) {
         break
@@ -1123,7 +1124,7 @@ export class Searcher<
           rToken
         )
       } catch (e) {
-        // console.log(e)
+        console.log(e)
       }
     }
   }
@@ -1137,8 +1138,18 @@ export class Searcher<
     onResult?: (path: SwapPath) => void
   ) {
     const out: SwapPath[] = []
+    const abort = new AbortController()
+    const start = Date.now()
+
+    setTimeout(() => {
+      if (out.length <= 1) {
+        return
+      }
+      abort.abort('Timeout')
+    }, this.config.routerDeadline)
+
     await this.externalQuoters_(
-      AbortSignal.timeout(this.config.routerDeadline),
+      abort.signal,
       input,
       output,
       destination,
@@ -1146,10 +1157,14 @@ export class Searcher<
       slippage,
       (path) => {
         out.push(path)
+        if (Date.now() - start > this.config.routerDeadline) {
+          abort.abort('Timeout')
+        }
       }
     ).catch((e) => {
       console.log(e)
     })
+
     return out
   }
   async externalQuoters_(

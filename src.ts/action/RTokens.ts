@@ -19,6 +19,7 @@ import {
   RTokenLens__factory,
 } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
+import { ethers } from 'ethers'
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction
@@ -149,7 +150,7 @@ export class MintRTokenAction extends ReserveRTokenBase {
         this.universe.execAddress.address
       )
     )
-    return [this.generateOutputTokenBalance(this.universe, planner)]
+    return this.outputBalanceOf(this.universe, planner)
   }
   get universe() {
     return this.rTokenDeployment.universe
@@ -161,14 +162,27 @@ export class MintRTokenAction extends ReserveRTokenBase {
     return 1n
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const out = await this.rTokenDeployment.contracts.facade.callStatic
-      .maxIssuableByAmounts(
-        this.address.address,
-        amountsIn.map((i) => i.amount)
-      )
-      .then((amt) => this.rTokenDeployment.rToken.from(amt))
+    if (this.universe.config.addresses.facadeAddress !== Address.ZERO) {
+      const out = await this.rTokenDeployment.contracts.facade.callStatic
+        .maxIssuableByAmounts(
+          this.address.address,
+          amountsIn.map((i) => i.amount)
+        )
+        .then((amt) => this.rTokenDeployment.rToken.from(amt))
 
-    return [out]
+      return [out]
+    } else {
+      const unit = await this.rTokenDeployment.unitBasket()
+      let out = this.outputToken[0].zero
+      unit.map((unit, index) => {
+        const thisOut = amountsIn[index].div(unit).into(this.outputToken[0])
+        if (thisOut.gt(out)) {
+          out = thisOut
+        }
+      })
+
+      return [out]
+    }
   }
   get basket() {
     return this.rTokenDeployment.basket
@@ -199,7 +213,7 @@ export class BurnRTokenAction extends ReserveRTokenBase {
       this.rTokenDeployment.contracts.rToken
     )
     planner.add(rtokenContract.redeem(input ?? predictedInput.amount))
-    return [this.generateOutputTokenBalance(this.universe, planner)]
+    return this.outputBalanceOf(this.universe, planner)
   }
   get universe() {
     return this.rTokenDeployment.universe

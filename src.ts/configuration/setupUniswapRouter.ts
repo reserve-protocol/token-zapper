@@ -168,7 +168,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
     if (inp == null) {
       throw new Error('Failed to plan')
     }
-    return [this.generateOutputTokenBalance(this.universe, planner)]
+    return this.outputBalanceOf(this.universe, planner)
   }
   public createdBlock: number
   constructor(
@@ -201,12 +201,12 @@ export class UniswapRouterAction extends Action('Uniswap') {
     return `Uniswap(${this.inputQty} => ${this.outputQty})`
   }
   async quote([input]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    if (
-      Math.abs(this.createdBlock - this.universe.currentBlock) >
-      this.universe.config.requoteTolerance
-    ) {
-      this.currentQuote = await this.reQuote(input)
-    }
+    // if (
+    //   Math.abs(this.createdBlock - this.universe.currentBlock) >
+    //   this.universe.config.requoteTolerance
+    // ) {
+    //   this.currentQuote = await this.reQuote(input)
+    // }
     return [this.outputQty]
   }
   get route() {

@@ -14,7 +14,8 @@ export class REthRouter {
   public readonly routerInstance: IRETHRouter
   public readonly mintViaWETH: WETHToRETH
   public readonly mintViaETH: ETHToRETH
-  public readonly burn: RETHToWETH
+  public readonly burnToWETH: RETHToWETH
+  public readonly burnToETH: RETHToETH
   constructor(
     private readonly universe: Universe,
     public readonly reth: Token,
@@ -27,7 +28,8 @@ export class REthRouter {
 
     this.mintViaWETH = new WETHToRETH(this.universe, this)
     this.mintViaETH = new ETHToRETH(this.universe, this)
-    this.burn = new RETHToWETH(this.universe, this)
+    this.burnToWETH = new RETHToWETH(this.universe, this)
+    this.burnToETH = new RETHToETH(this.universe, this)
   }
 
   public gasEstimate(): bigint {
@@ -100,53 +102,59 @@ export class ETHToRETH extends RocketPoolBase {
   }
   async plan(
     planner: Planner,
-    [input]: Value[],
+    [input_]: Value[],
     _: Address,
     [inputPrecomputed]: TokenQuantity[]
   ): Promise<Value[]> {
-    // We want to avoid running the optimiseToREth on-chain.
-    // So rather we precompute it during searching and convert the split into two fractions
-    const {
-      params: [p0, p1, aout, , qty],
-    } = await this.router.optimiseToREth(inputPrecomputed)
+    try {
+      const input = input_ ?? inputPrecomputed.amount
+      // We want to avoid running the optimiseToREth on-chain.
+      // So rather we precompute it during searching and convert the split into two fractions
+      const {
+        params: [p0, p1, aout, , qty],
+      } = await this.router.optimiseToREth(inputPrecomputed)
 
-    const f0 = (p0.toBigInt() * ONE) / qty
-    const f1 = (p1.toBigInt() * ONE) / qty
+      const f0 = (p0.toBigInt() * ONE) / qty
+      const f1 = (p1.toBigInt() * ONE) / qty
 
-    const routerLib = this.gen.Contract.createContract(
-      this.router.routerInstance
-    )
-    const zapperLib = this.gen.Contract.createContract(
-      ZapperExecutor__factory.connect(
-        this.universe.config.addresses.zapperAddress.address,
-        this.universe.provider
+      const routerLib = this.gen.Contract.createContract(
+        this.router.routerInstance
       )
-    )
-    if (f0 !== 0n && f1 !== 0n) {
-      // Using a helper library we
-      const input0 = planner.add(
-        zapperLib.fpMul(f0, input, ONE),
-        `input * ${formatEther(f0)}`,
-        'frac0'
+      const zapperLib = this.gen.Contract.createContract(
+        ZapperExecutor__factory.connect(
+          this.universe.config.addresses.zapperAddress.address,
+          this.universe.provider
+        )
       )
-      const input1 = planner.add(
-        zapperLib.fpMul(f1, input, ONE),
-        `input * ${formatEther(f1)}`,
-        'frac1'
-      )
-      planner.add(
-        routerLib.swapTo(input0, input1, aout, aout).withValue(input),
-        'RocketPool: ETH -> RETH'
-      )
-    } else {
-      planner.add(
-        routerLib
-          .swapTo(f0 !== 0n ? input : 0, f1 !== 0n ? input : 0, aout, aout)
-          .withValue(input),
-        'RocketPool: ETH -> RETH'
-      )
+      if (f0 !== 0n && f1 !== 0n) {
+        // Using a helper library we
+        const input0 = planner.add(
+          zapperLib.fpMul(f0, input, ONE),
+          `input * ${formatEther(f0)}`,
+          'frac0'
+        )
+        const input1 = planner.add(
+          zapperLib.fpMul(f1, input, ONE),
+          `input * ${formatEther(f1)}`,
+          'frac1'
+        )
+        planner.add(
+          routerLib.swapTo(input0, input1, aout, aout).withValue(input),
+          'RocketPool: ETH -> RETH'
+        )
+      } else {
+        planner.add(
+          routerLib
+            .swapTo(f0 !== 0n ? input : 0, f1 !== 0n ? input : 0, aout, aout)
+            .withValue(input),
+          'RocketPool: ETH -> RETH'
+        )
+      }
+      return this.outputBalanceOf(this.universe, planner)
+    } catch (e: any) {
+      console.log(e.stack)
+      throw e
     }
-    return this.outputBalanceOf(this.universe, planner)
   }
 
   gasEstimate(): bigint {
@@ -190,6 +198,7 @@ export class WETHToRETH extends RocketPoolBase {
     const {
       params: [p0, p1, aout, , qty],
     } = await this.router.optimiseToREth(inputPrecomputed)
+    const inp = input ?? inputPrecomputed.amount
 
     const f0 = (p0.toBigInt() * ONE) / qty
     const f1 = (p1.toBigInt() * ONE) / qty
@@ -209,29 +218,29 @@ export class WETHToRETH extends RocketPoolBase {
         this.universe.provider
       )
     )
-    planner.add(wethlib.withdraw(input), 'RocketPool: WETH -> ETH')
+    planner.add(wethlib.withdraw(inp), 'RocketPool: WETH -> ETH')
 
     if (f0 !== 0n && f1 !== 0n) {
       // Using a helper library we
       const input0 = planner.add(
-        zapperLib.fpMul(f0, input, ONE),
+        zapperLib.fpMul(f0, inp, ONE),
         `input * ${formatEther(f0)}`,
         'frac0'
       )
       const input1 = planner.add(
-        zapperLib.fpMul(f1, input, ONE),
+        zapperLib.fpMul(f1, inp, ONE),
         `input * ${formatEther(f1)}`,
         'frac1'
       )
       planner.add(
-        routerLib.swapTo(input0, input1, aout, aout).withValue(input),
+        routerLib.swapTo(input0, input1, aout, aout).withValue(inp),
         'RocketPool: ETH -> RETH'
       )
     } else {
       planner.add(
         routerLib
-          .swapTo(f0 !== 0n ? input : 0, f1 !== 0n ? input : 0, aout, aout)
-          .withValue(input),
+          .swapTo(f0 !== 0n ? inp : 0, f1 !== 0n ? inp : 0, aout, aout)
+          .withValue(inp),
         'RocketPool: ETH -> RETH'
       )
     }
@@ -270,10 +279,11 @@ export class RETHToWETH extends RocketPoolBase {
   }
   async plan(
     planner: Planner,
-    [input]: Value[],
+    [input_]: Value[],
     _: Address,
     [inputPrecomputed]: TokenQuantity[]
   ): Promise<Value[]> {
+    const input = input_ ?? inputPrecomputed.amount
     const zapperLib = this.gen.Contract.createContract(
       ZapperExecutor__factory.connect(
         this.universe.config.addresses.zapperAddress.address,
@@ -307,7 +317,7 @@ export class RETHToWETH extends RocketPoolBase {
     planner.add(
       routerLib.swapFrom(input0, input1, aout, aout),
       'RocketPool: RETH -> ETH'
-    )!
+    )
 
     const outBalanace = this.genUtils.erc20.balanceOf(
       this.universe,
@@ -326,7 +336,7 @@ export class RETHToWETH extends RocketPoolBase {
       'RocketPool: ETH -> WETH'
     )
 
-    return [outBalanace]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate(): bigint {
     return this.router.gasEstimate()
@@ -344,6 +354,79 @@ export class RETHToWETH extends RocketPoolBase {
       router.reth.address,
       [router.reth],
       [universe.wrappedNativeToken],
+      InteractionConvention.ApprovalRequired,
+      DestinationOptions.Callee,
+      [new Approval(router.reth, Address.from(router.routerInstance.address))]
+    )
+  }
+}
+
+export class RETHToETH extends RocketPoolBase {
+  get action(): string {
+    return 'swapFrom'
+  }
+  public get outputSlippage(): bigint {
+    return this.universe.config.defaultInternalTradeSlippage
+  }
+  async plan(
+    planner: Planner,
+    [input_]: Value[],
+    _: Address,
+    [inputPrecomputed]: TokenQuantity[]
+  ): Promise<Value[]> {
+    const input = input_ ?? inputPrecomputed.amount
+    const zapperLib = this.gen.Contract.createContract(
+      ZapperExecutor__factory.connect(
+        this.universe.config.addresses.zapperAddress.address,
+        this.universe.provider
+      )
+    )
+    // We want to avoid running the optimiseToREth on-chain.
+    // So rather we precompute it during searching and convert the split into two fractions
+    const {
+      params: [p0, p1, aout, , qty],
+    } = await this.router.optimiseFromREth(inputPrecomputed)
+    const f0 = (p0.toBigInt() * ONE) / qty
+    const f1 = (p1.toBigInt() * ONE) / qty
+
+    const routerLib = this.gen.Contract.createContract(
+      this.router.routerInstance
+    )
+
+    // Using a helper library we
+    const input0 = planner.add(
+      zapperLib.fpMul(f0, input, ONE),
+      `input * ${formatEther(f0)}`,
+      'frac0'
+    )
+    const input1 = planner.add(
+      zapperLib.fpMul(f1, input, ONE),
+      `input * ${formatEther(f1)}`,
+      'frac1'
+    )
+
+    planner.add(
+      routerLib.swapFrom(input0, input1, aout, aout),
+      'RocketPool: RETH -> ETH'
+    )
+    return this.outputBalanceOf(this.universe, planner)
+  }
+  gasEstimate(): bigint {
+    return this.router.gasEstimate()
+  }
+
+  async quote([ethQty]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return [(await this.router.optimiseFromREth(ethQty)).amountOut]
+  }
+
+  constructor(
+    public readonly universe: Universe,
+    public readonly router: IRouter
+  ) {
+    super(
+      router.reth.address,
+      [router.reth],
+      [universe.nativeToken],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
       [new Approval(router.reth, Address.from(router.routerInstance.address))]

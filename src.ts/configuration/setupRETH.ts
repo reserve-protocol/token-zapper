@@ -40,14 +40,20 @@ export const setupRETH = async (
     new DexRouter(
       'RocketpoolRouter:swapFrom',
       async (____, _, dest, input, output) => {
-        return await new SwapPlan(universe, [rethRouter.burn]).quote(
+        if (output == universe.wrappedNativeToken) {
+          return await new SwapPlan(universe, [rethRouter.burnToWETH]).quote(
+            [input],
+            dest
+          )
+        }
+        return await new SwapPlan(universe, [rethRouter.burnToETH]).quote(
           [input],
           dest
         )
       },
       true,
       new Set([reth]),
-      new Set([universe.wrappedNativeToken])
+      new Set([universe.wrappedNativeToken, universe.nativeToken])
     )
   )
 }

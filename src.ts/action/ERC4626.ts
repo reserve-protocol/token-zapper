@@ -121,7 +121,7 @@ export const ERC4626WithdrawAction = (proto: string) =>
         [shareToken],
         [underlying],
         InteractionConvention.None,
-        DestinationOptions.Recipient,
+        DestinationOptions.Callee,
         []
       )
     }

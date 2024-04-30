@@ -55,13 +55,7 @@ class AaveV3ActionSupply extends BaseAaveAction {
         predictedInputs
       )}`
     )
-    return [
-      this.generateOutputTokenBalance(
-        this.universe,
-        planner,
-        `bal_${this.outputToken[0].symbol}`
-      ),
-    ]
+    return this.outputBalanceOf(this.universe, planner)
   }
   constructor(
     readonly universe: Universe,
@@ -105,13 +99,7 @@ class AaveV3ActionWithdraw extends BaseAaveAction {
         predictedInputs
       )}`
     )
-    return [
-      this.generateOutputTokenBalance(
-        this.universe,
-        planner,
-        `bal_${this.outputToken[0].symbol}`
-      ),
-    ]
+    return this.outputBalanceOf(this.universe, planner)
   }
   constructor(
     readonly universe: Universe,

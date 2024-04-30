@@ -223,23 +223,23 @@ class EnsoAction extends Action('Enso') {
     return `Enso(${this.inputQty} => ${this.outputQty})`
   }
 
-  async quote([input]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    if (
-      Math.abs(this.lastQuoteBlock - this.universe.currentBlock) >
-      this.universe.config.requoteTolerance
-    ) {
-      try {
-        this.request = await getEnsoQuote(
-          AbortSignal.timeout(2000),
-          this.universe,
-          input,
-          this.outputQty.token,
-          this.address,
-          this.slippage,
-          1
-        )
-      } catch (e) {}
-    }
+  async quote([_]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    // if (
+    //   Math.abs(this.lastQuoteBlock - this.universe.currentBlock) >
+    //   this.universe.config.requoteTolerance
+    // ) {
+    //   try {
+    //     this.request = await getEnsoQuote(
+    //       AbortSignal.timeout(2000),
+    //       this.universe,
+    //       input,
+    //       this.outputQty.token,
+    //       this.address,
+    //       this.slippage,
+    //       1
+    //     )
+    //   } catch (e) {}
+    // }
     return [this.outputQty]
   }
 

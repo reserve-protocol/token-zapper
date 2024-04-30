@@ -88,7 +88,7 @@ export class BurnCTokenWrapperAction extends Action("ReserveWrapper(CompoundV2)"
       [receiptToken],
       [baseToken],
       InteractionConvention.None,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

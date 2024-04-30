@@ -119,7 +119,7 @@ export class BurnCometWrapperAction extends Action(
       [receiptToken],
       [baseToken],
       InteractionConvention.None,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

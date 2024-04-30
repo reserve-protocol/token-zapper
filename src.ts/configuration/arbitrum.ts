@@ -57,10 +57,10 @@ export const arbiConfig = makeConfig(
     blocktime: 250,
     blockGasLimit: 1125899906842624n,
     requoteTolerance: 1,
-    routerDeadline: 4000,
-    searcherMaxRoutesToProduce: 2,
-    searchConcurrency: 2,
-    defaultInternalTradeSlippage: 30n,
+    routerDeadline: 3000,
+    searcherMaxRoutesToProduce: 3,
+    searchConcurrency: 3,
+    defaultInternalTradeSlippage: 25n,
   }
 )
 

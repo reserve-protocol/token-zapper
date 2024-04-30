@@ -147,20 +147,6 @@ export abstract class BaseAction {
     balances.exchange(amountsIn, outputs)
   }
 
-  generateOutputTokenBalance(
-    universe: Universe,
-    planner: gen.Planner,
-    comment?: string
-  ) {
-    return plannerUtils.erc20.balanceOf(
-      universe,
-      planner,
-      this.outputToken[0],
-      universe.execAddress,
-      comment
-    )
-  }
-
   abstract plan(
     planner: gen.Planner,
     // Actual abstract inputs

@@ -40,18 +40,28 @@ export const testConfig = makeConfig(
     iUSD: '0x9b451BEB49a03586e6995E5A93b9c745D068581e',
   },
   {
-    facadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
-    zapperAddress: '0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b',
-    executorAddress: '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11',
+    facadeAddress: '0x2C7ca56342177343A2954C250702Fd464f4d0613',
+    oldFacadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
+    zapperAddress: '0xcc2b9b55952718b210660b56ca12eb88694dc60f',
+    executorAddress: '0x675D37489A7A64c051D0204e5c72a469f6558a47',
     wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-    rtokenLens: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-    balanceOf: '0x0000000000000000000000000000000000000000',
-    curveRouterCall: '0x0000000000000000000000000000000000000000',
-    ethBalanceOf: '0x0000000000000000000000000000000000000000',
-    uniV3Router: '0x0000000000000000000000000000000000000000',
+    rtokenLens: '0xE787491314A3Da6412Ac4DeEB39c0F8EfdE1b53C',
+
+    balanceOf: '0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D',
+    curveRouterCall: '0xA18ad6dCb6B217A4c3810f865f5eEf45570024dc',
+    ethBalanceOf: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
+    uniV3Router: '0x32F59e2881e1DC9a808DE8C37545FE33F2B617A9',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
   },
-  0.25
+  {
+    blocktime: 12000,
+    blockGasLimit: 30000000n,
+    requoteTolerance: 1,
+    routerDeadline: 4000,
+    searcherMaxRoutesToProduce: 4,
+    searchConcurrency: 4,
+    defaultInternalTradeSlippage: 30n,
+  }
 )
 type BaseTestConfigType = typeof testConfig
 

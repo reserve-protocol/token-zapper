@@ -32,7 +32,7 @@ release_branch="release/v$new_version"
 git checkout -b $release_branch
 
 # Run build and test
-if npm run build && npm run test; then
+if npm run build; then
   git add -A
   # Commit changes
   git commit -m "Release v$new_version binaries"

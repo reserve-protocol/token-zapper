@@ -12,7 +12,12 @@ export class MintSATokensAction extends Action('AaveV2') {
   get outputSlippage() {
     return 1n
   }
-  async plan(planner: Planner, inputs: Value[], destination: Address) {
+  async plan(
+    planner: Planner,
+    [input]: Value[],
+    _: Address,
+    [predicted]: TokenQuantity[]
+  ) {
     const lib = this.gen.Contract.createContract(
       IStaticATokenLM__factory.connect(
         this.saToken.address.address,
@@ -20,7 +25,12 @@ export class MintSATokensAction extends Action('AaveV2') {
       )
     )
     const out = planner.add(
-      lib.deposit(destination.address, inputs[0], 0, true),
+      lib.deposit(
+        this.universe.execAddress.address,
+        input ?? predicted.amount,
+        0,
+        true
+      ),
       undefined,
       `bal_${this.outputToken[0].symbol}`
     )
@@ -50,7 +60,7 @@ export class MintSATokensAction extends Action('AaveV2') {
       [underlying],
       [saToken],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       [new Approval(underlying, saToken.address)]
     )
   }
@@ -63,7 +73,12 @@ export class BurnSATokensAction extends Action('AaveV2') {
   get outputSlippage() {
     return 1n
   }
-  async plan(planner: Planner, inputs: Value[], destination: Address) {
+  async plan(
+    planner: Planner,
+    [input]: Value[],
+    _: Address,
+    [predicted]: TokenQuantity[]
+  ) {
     const lib = this.gen.Contract.createContract(
       IStaticATokenLM__factory.connect(
         this.saToken.address.address,
@@ -71,7 +86,11 @@ export class BurnSATokensAction extends Action('AaveV2') {
       )
     )
     const out = planner.add(
-      lib.withdraw(destination.address, inputs[0], true),
+      lib.withdraw(
+        this.universe.execAddress.address,
+        input ?? predicted.amount,
+        true
+      ),
       undefined,
       `bal_${this.outputToken[0].symbol}`
     )
@@ -101,7 +120,7 @@ export class BurnSATokensAction extends Action('AaveV2') {
       [saToken],
       [underlying],
       InteractionConvention.None,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

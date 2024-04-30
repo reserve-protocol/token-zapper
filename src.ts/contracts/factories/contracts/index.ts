@@ -6,7 +6,6 @@ export * as aerodromeSol from "./Aerodrome.sol";
 export * as compoundV3Sol from "./CompoundV3.sol";
 export * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
 export * as icTokenSol from "./ICToken.sol";
-export * as iFacadeSol from "./IFacade.sol";
 export * as irTokenZapperSol from "./IRTokenZapper.sol";
 export * as isAtokenSol from "./ISAtoken.sol";
 export * as iStargadeWrapperSol from "./IStargadeWrapper.sol";
@@ -23,6 +22,7 @@ export { IConvexBaseRewardsPool__factory } from "./IConvexBaseRewardsPool__facto
 export { IConvexStakingWrapper__factory } from "./IConvexStakingWrapper__factory";
 export { IConvexWrapper__factory } from "./IConvexWrapper__factory";
 export { IEACAggregatorProxy__factory } from "./IEACAggregatorProxy__factory";
+export { IFacade__factory } from "./IFacade__factory";
 export { IMain__factory } from "./IMain__factory";
 export { IPermit2__factory } from "./IPermit2__factory";
 export { IRETHRouter__factory } from "./IRETHRouter__factory";

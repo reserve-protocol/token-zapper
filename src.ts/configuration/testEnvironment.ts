@@ -1,21 +1,19 @@
-import { DepositAction, WithdrawAction } from '../action/WrappedNative'
-import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens'
-import { BurnRTokenAction, MintRTokenAction } from '../action/RTokens'
-import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens'
-import { Address } from '../base/Address'
 import { Universe } from '../Universe'
-import { PriceOracle } from '../oracles/PriceOracle'
+import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens'
+import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens'
+import { DepositAction, WithdrawAction } from '../action/WrappedNative'
+import { Address } from '../base/Address'
 import { Token, TokenQuantity } from '../entities/Token'
-import { IBasket } from '../entities/TokenBasket'
-import { JsonTokenEntry, loadTokens } from './loadTokens'
-import { WETHToRETH, RETHToWETH } from '../action/REth'
+// import { IBasket } from '../entities/TokenBasket'
 import { constants, ethers } from 'ethers'
+import { RETHToWETH, WETHToRETH } from '../action/REth'
+import { JsonTokenEntry, loadTokens } from './loadTokens'
 
-import { BurnWStETH, MintWStETH } from '../action/WStEth'
 import { BurnStETH, MintStETH } from '../action/StEth'
-import { makeConfig } from './ChainConfiguration'
+import { BurnWStETH, MintWStETH } from '../action/WStEth'
 import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
 import { ApprovalsStore } from '../searcher/ApprovalsStore'
+import { makeConfig } from './ChainConfiguration'
 
 export const testConfig = makeConfig(
   1,
@@ -72,22 +70,22 @@ const defineRToken = (
   rToken: Token,
   basket: TokenQuantity[]
 ) => {
-  const basketHandler: IBasket = {
-    basketTokens: basket.map((i) => i.token),
-    unitBasket: basket,
-    rToken: rToken,
-    basketNonce: 0,
-    version: '3.1.0',
-    async redeem(baskets) {
-      return basket.map((i) =>
-        i.scalarMul(baskets.amount).scalarDiv(rToken.scale)
-      )
-    },
-  }
-  universe.defineMintable(
-    new MintRTokenAction(universe, basketHandler),
-    new BurnRTokenAction(universe, basketHandler)
-  )
+  // const basketHandler: IBasket = {
+  //   basketTokens: basket.map((i) => i.token),
+  //   unitBasket: basket,
+  //   rToken: rToken,
+  //   basketNonce: 0,
+  //   version: '3.1.0',
+  //   async redeem(baskets) {
+  //     return basket.map((i) =>
+  //       i.scalarMul(baskets.amount).scalarDiv(rToken.scale)
+  //     )
+  //   },
+  // }
+  // universe.defineMintable(
+  //   new MintRTokenAction(universe, basketHandler),
+  //   new BurnRTokenAction(universe, basketHandler)
+  // )
   universe.rTokens[rToken.symbol] = rToken
 }
 
@@ -283,14 +281,14 @@ const initialize = async (universe: TestUniverse) => {
     [USDC, universe.usd.from('1.001')],
     [universe.nativeToken, universe.usd.from('1750')],
   ])
-  const oracle = new PriceOracle(
-    'Test',
-    async (token) => {
-      return prices.get(token) ?? null
-    },
-    () => universe.currentBlock
-  )
-  universe.oracles.push(oracle)
+  // const oracle = new PriceOracle(
+  //   'Test',
+  //   async (token) => {
+  //     return prices.get(token) ?? null
+  //   },
+  //   () => universe.currentBlock
+  // )
+  // universe.oracles.push(oracle)
   universe.oracle = new ZapperTokenQuantityPrice(universe)
 }
 

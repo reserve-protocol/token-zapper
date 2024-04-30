@@ -1,4 +1,3 @@
-import { ethers } from 'ethers'
 import { type Universe } from '../Universe'
 import { BTC_TOKEN_ADDRESS, GAS_TOKEN_ADDRESS } from '../base/constants'
 import { makeConfig } from './ChainConfiguration'
@@ -9,12 +8,9 @@ const reserveAddresses = getAddressesForChain(chainId)
 
 export const COMMON_TOKENS = {
   RSR: reserveAddresses.RSR_ADDRESS,
-  // CRV: reserveAddresses.CRV_ADDRESS,
-  // CVX: reserveAddresses.CVX_ADDRESS,
   eUSD: reserveAddresses.EUSD_ADDRESS,
   'ETH+': reserveAddresses.ETHPLUS_ADDRESS,
   RGUSD: reserveAddresses.RGUSD_ADDRESS,
-  // STG: reserveAddresses.STG_ADDRESS,
 
   ARB: '0x912ce59144191c1204e64559fe8253a0e49e6548',
 
@@ -32,7 +28,7 @@ export const COMMON_TOKENS = {
 } as const
 
 export const RTOKENS = {
-  TEST_RTOKEN: '0xdf31be6c973bfa7d02f57294beb53eadfe946c9b',
+  KNOX: '0x0bbf664d46becc28593368c97236faa0fb397595',
 }
 export const arbiConfig = makeConfig(
   ChainIds.Arbitrum,
@@ -45,6 +41,7 @@ export const arbiConfig = makeConfig(
   RTOKENS,
   {
     facadeAddress: reserveAddresses.FACADE_ADDRESS,
+    oldFacadeAddress: reserveAddresses.FACADE_ADDRESS,
     wrappedNative: COMMON_TOKENS.WETH,
 
     zapperAddress: '0x39Eb11db86140d5bd0Cc24d411d833e53b0ACAf8',
@@ -56,7 +53,15 @@ export const arbiConfig = makeConfig(
     uniV3Router: '0x922eDac4D5c6702192473ec77a294edD834Fb2af',
     curveStableSwapNGHelper: '0x323EB0B5e2a59d5565E59CBEb965f00298d3A2a1',
   } as const,
-  0.25
+  {
+    blocktime: 250,
+    blockGasLimit: 1125899906842624n,
+    requoteTolerance: 1,
+    routerDeadline: 4000,
+    searcherMaxRoutesToProduce: 2,
+    searchConcurrency: 2,
+    defaultInternalTradeSlippage: 30n,
+  }
 )
 
 export const PROTOCOL_CONFIGS = {
@@ -88,9 +93,9 @@ export const PROTOCOL_CONFIGS = {
     aaveV3: {
       pool: '0x794a61358D6845594F94dc1DB02A252b5b4814aD',
       wrappers: [
-        "0x030cDeCBDcA6A34e8De3f49d1798d5f70E3a3414",
-        "0xffef97179f58a582dEf73e6d2e4BcD2BDC8ca128"
-      ]
+        '0x030cDeCBDcA6A34e8De3f49d1798d5f70E3a3414',
+        '0xffef97179f58a582dEf73e6d2e4BcD2BDC8ca128',
+      ],
     },
     compV3: {
       comets: [

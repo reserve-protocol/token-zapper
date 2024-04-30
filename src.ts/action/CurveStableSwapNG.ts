@@ -67,7 +67,7 @@ export class CurveStableSwapNGPool {
 
 export class CurveStableSwapNGAddLiquidity extends Action('CurveStableSwapNG') {
   get outputSlippage() {
-    return 300000n
+    return 1n
   }
   gasEstimate() {
     return BigInt(300000n)
@@ -138,7 +138,7 @@ export class CurveStableSwapNGRemoveLiquidity extends Action(
   'CurveStableSwapNG'
 ) {
   get outputSlippage() {
-    return 300000n
+    return 1n
   }
   gasEstimate() {
     return BigInt(300000n)

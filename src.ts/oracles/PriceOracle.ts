@@ -3,6 +3,7 @@ import { type Token, type TokenQuantity } from '../entities/Token'
 
 export class PriceOracle extends Cached<Token, TokenQuantity> {
   constructor(
+    ltvBlocks: number,
     public readonly name: string,
     fetchPrice: (token: Token) => Promise<TokenQuantity | null>,
     getCurrentBlock: () => number
@@ -15,7 +16,7 @@ export class PriceOracle extends Cached<Token, TokenQuantity> {
           }
           return v
         }),
-      2,
+      ltvBlocks,
       getCurrentBlock
     )
   }

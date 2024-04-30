@@ -14,7 +14,7 @@ export const CHAINLINK_BTC_TOKEN_ADDRESS =
 // It is a stand-in for USD. Address matches chainlink's designation. Which is based
 // on some ISO standard.
 export const USD_ADDRESS = '0x0000000000000000000000000000000000000348'
-
+export const TRADE_SLIPPAGE_DENOMINATOR = 10000n
 export const simulationUrls: Record<number, string | undefined> = {
   [ChainIds.Base]: 'https://resbasesimulator.mig2151.workers.dev',
   [ChainIds.Arbitrum]: 'https://arbisimulator.mig2151.workers.dev/',

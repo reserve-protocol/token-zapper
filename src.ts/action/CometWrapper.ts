@@ -27,13 +27,7 @@ export class MintCometWrapperAction extends Action(
         predicted
       )}`
     )
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(150000n)
@@ -70,7 +64,7 @@ export class MintCometWrapperAction extends Action(
   }
 
   get outputSlippage() {
-    return 1000000n
+    return 1n
   }
 }
 
@@ -97,13 +91,7 @@ export class BurnCometWrapperAction extends Action(
       )}`
     )
 
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(150000n)
@@ -139,6 +127,6 @@ export class BurnCometWrapperAction extends Action(
     return `CompoundV3Burn(${this.receiptToken.toString()})`
   }
   get outputSlippage() {
-    return 1500000n
+    return 1n
   }
 }

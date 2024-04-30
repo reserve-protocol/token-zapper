@@ -27,13 +27,7 @@ export class MintStETH extends Action('Lido') {
     )
 
     planner.add(wsteth.submit(constants.AddressZero).withValue(inputs[0]))
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      this.universe.config.addresses.executorAddress
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(200000n)

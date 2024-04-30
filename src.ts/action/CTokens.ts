@@ -1,4 +1,5 @@
 import { type Universe } from '../Universe'
+import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 
 import { CEther__factory } from '../contracts/factories/contracts/ICToken.sol/CEther__factory'
@@ -10,7 +11,12 @@ import { Action, DestinationOptions, InteractionConvention } from './Action'
 const ONEFP18 = 10n ** 18n
 
 export class MintCTokenAction extends Action('CompoundV2') {
-  async plan(planner: Planner, inputs: Value[]): Promise<Value[]> {
+  async plan(
+    planner: Planner,
+    [input]: Value[],
+    _: Address,
+    [inputPredicted]: TokenQuantity[]
+  ): Promise<Value[]> {
     if (this.underlying === this.universe.nativeToken) {
       const lib = this.gen.Contract.createContract(
         CEther__factory.connect(
@@ -18,15 +24,8 @@ export class MintCTokenAction extends Action('CompoundV2') {
           this.universe.provider
         )
       )
-      planner.add(lib.mint().withValue(inputs[0]))
-      return [
-        this.genUtils.erc20.balanceOf(
-          this.universe,
-          planner,
-          this.outputToken[0],
-          this.universe.config.addresses.executorAddress
-        ),
-      ]
+      planner.add(lib.mint().withValue(input ?? inputPredicted.amount))
+      return this.outputBalanceOf(this.universe, planner)
     }
     const lib = this.gen.Contract.createContract(
       ICToken__factory.connect(
@@ -34,16 +33,9 @@ export class MintCTokenAction extends Action('CompoundV2') {
         this.universe.provider
       )
     )
-    planner.add(lib.mint(inputs[0]))
+    planner.add(lib.mint(input ?? inputPredicted.amount))
 
-    return [
-      this.genUtils.erc20.balanceOf(
-        this.universe,
-        planner,
-        this.outputToken[0],
-        this.universe.config.addresses.executorAddress
-      ),
-    ]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(175000n)
@@ -56,12 +48,11 @@ export class MintCTokenAction extends Action('CompoundV2') {
       (amountsIn.amount * this.rateScale) /
       this.rate.value /
       this.underlying.scale
-    // out = out - out / 3_000_000n;
     return [this.cToken.fromBigInt(out)]
   }
 
   get outputSlippage() {
-    return 3000000n
+    return 3n
   }
 
   constructor(
@@ -74,9 +65,13 @@ export class MintCTokenAction extends Action('CompoundV2') {
       cToken.address,
       [underlying],
       [cToken],
-      InteractionConvention.ApprovalRequired,
+      underlying === universe.nativeToken
+        ? InteractionConvention.None
+        : InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      [new Approval(underlying, cToken.address)]
+      underlying === universe.nativeToken
+        ? []
+        : [new Approval(underlying, cToken.address)]
     )
     this.rateScale = ONEFP18 * underlying.scale
   }
@@ -88,24 +83,22 @@ export class MintCTokenAction extends Action('CompoundV2') {
 
 export class BurnCTokenAction extends Action('CompoundV2') {
   get outputSlippage() {
-    return 3000000n
+    return 3n
   }
-  async plan(planner: Planner, inputs: Value[]): Promise<Value[]> {
+  async plan(
+    planner: Planner,
+    [input]: Value[],
+    dest: Address,
+    [inputPredicted]: TokenQuantity[]
+  ): Promise<Value[]> {
     const lib = this.gen.Contract.createContract(
       ICToken__factory.connect(
         this.cToken.address.address,
         this.universe.provider
       )
     )
-    planner.add(lib.redeem(inputs[0]))
-    return [
-      this.genUtils.erc20.balanceOf(
-        this.universe,
-        planner,
-        this.outputToken[0],
-        this.universe.config.addresses.executorAddress
-      ),
-    ]
+    planner.add(lib.redeem(input ?? inputPredicted.amount))
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(175000n)
@@ -132,7 +125,7 @@ export class BurnCTokenAction extends Action('CompoundV2') {
       [cToken],
       [underlying],
       InteractionConvention.None,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
     this.rateScale = ONEFP18 * underlying.scale

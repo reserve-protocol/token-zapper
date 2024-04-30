@@ -108,6 +108,19 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
+  outputBalanceOf(universe: Universe, planner: gen.Planner) {
+    return this.outputToken.map((token) =>
+      this.genUtils.erc20.balanceOf(
+        universe,
+        planner,
+        token,
+        universe.execAddress,
+        undefined,
+        `bal_${token.symbol}`
+      )
+    )
+  }
+
   get protocol(): string {
     return 'Unknown'
   }

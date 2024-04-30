@@ -21,7 +21,7 @@ export class ERC4626TokenVault {
 export const ERC4626DepositAction = (proto: string) =>
   class ERC4626DepositAction extends Action(proto) {
     get outputSlippage() {
-      return 3000000n
+      return this.slippage
     }
     async plan(
       planner: Planner,
@@ -54,7 +54,8 @@ export const ERC4626DepositAction = (proto: string) =>
     constructor(
       readonly universe: Universe,
       readonly underlying: Token,
-      readonly shareToken: Token
+      readonly shareToken: Token,
+      readonly slippage: bigint
     ) {
       super(
         shareToken.address,
@@ -76,7 +77,8 @@ export const ERC4626WithdrawAction = (proto: string) =>
     async plan(
       planner: Planner,
       inputs: Value[],
-      destination: Address
+      destination: Address,
+      predicted: TokenQuantity[]
     ): Promise<Value[]> {
       const lib = this.gen.Contract.createContract(
         IERC4626__factory.connect(
@@ -84,14 +86,14 @@ export const ERC4626WithdrawAction = (proto: string) =>
           this.universe.provider
         )
       )
-      const out = planner.add(
+      planner.add(
         lib.redeem(
-          inputs[0],
+          inputs[0] ?? predicted[0].amount,
           destination.address,
           this.universe.config.addresses.executorAddress.address
         )
       )
-      return [out!]
+      return this.outputBalanceOf(this.universe, planner)
     }
     gasEstimate() {
       return BigInt(200000n)
@@ -111,7 +113,8 @@ export const ERC4626WithdrawAction = (proto: string) =>
     constructor(
       readonly universe: Universe,
       readonly underlying: Token,
-      readonly shareToken: Token
+      readonly shareToken: Token,
+      readonly slippage: bigint
     ) {
       super(
         shareToken.address,
@@ -127,6 +130,6 @@ export const ERC4626WithdrawAction = (proto: string) =>
     }
 
     get outputSliptepage() {
-      return 3000000n
+      return this.slippage
     }
   }

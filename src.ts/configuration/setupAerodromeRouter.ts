@@ -79,7 +79,7 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
   async plan(
     planner: Planner,
     inputs: Value[],
-    destination: Address,
+    _: Address,
     predicted: TokenQuantity[]
   ): Promise<Value[]> {
     const lib = this.gen.Contract.createContract(
@@ -88,10 +88,12 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
         this.universe.provider
       )
     )
+
+    const [minOut] = await this.quoteWithSlippage(predicted)
     planner.add(
       lib.swapExactTokensForTokens(
         inputs[0] ?? predicted[0].amount,
-        this.path.output.amount,
+        minOut.amount,
         this.path.steps.map((step) => step.step.intoRouteStruct()),
         this.universe.execAddress.address,
         Date.now() + 1000 * 60 * 10
@@ -99,27 +101,25 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
       'Aerodrome.swapExactTokensForTokens(' + this.path.toString() + ')'
     )!
 
-    return [
-      this.genUtils.erc20.balanceOf(
-        this.universe,
-        planner,
-        this.path.output.token,
-        this.universe.execAddress
-      ),
-    ]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(200000n) * BigInt(this.path.steps.length)
   }
 
-  quote([]: TokenQuantity[]): Promise<TokenQuantity[]> {
+  async quote([]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return Promise.resolve([this.path.output])
+  }
+
+  get outputSlippage() {
+    return this.quoteSlippage
   }
 
   constructor(
     readonly universe: Universe,
     readonly path: AerodromePath,
-    readonly router: IAerodromeRouter
+    readonly router: IAerodromeRouter,
+    readonly quoteSlippage: bigint
   ) {
     super(
       universe.execAddress,
@@ -279,7 +279,7 @@ export const setupAerodromeRouter = async (universe: Universe) => {
 
   const out = new DexRouter(
     'aerodrome',
-    async (src, dst, input, output, slippage) => {
+    async (abort, src, dst, input, output, slippage) => {
       const routes = findRoutes(input.token, output)
       if (routes.length === 0) {
         throw new Error('No route found')
@@ -309,7 +309,8 @@ export const setupAerodromeRouter = async (universe: Universe) => {
       const outAction = new AerodromeRouterSwap(
         universe,
         outAmts[0]!,
-        routerInst
+        routerInst,
+        BigInt(slippage)
       )
       const plan = new SwapPlan(universe, [outAction])
       return await plan.quote([input], universe.execAddress)
@@ -326,7 +327,8 @@ export const setupAerodromeRouter = async (universe: Universe) => {
           universe,
           routerAddr,
           inputToken,
-          outputToken
+          outputToken,
+          universe.config.defaultInternalTradeSlippage
         ),
         routerAddr
       )

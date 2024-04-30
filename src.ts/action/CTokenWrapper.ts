@@ -24,13 +24,7 @@ export class MintCTokenWrapperAction extends Action("ReserveWrapper(CompoundV2)"
     )
     const dep = lib.deposit(inputs[0], destination.address)
     planner.add(dep)
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(250000n)
@@ -73,13 +67,7 @@ export class BurnCTokenWrapperAction extends Action("ReserveWrapper(CompoundV2)"
       )
     )
     planner.add(lib.withdraw(inputs[0], destination.address))!
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(250000n)

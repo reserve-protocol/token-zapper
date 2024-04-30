@@ -28,9 +28,10 @@ export const makeConfig = <
   chainId: ChainId,
   nativeToken: NativeToken,
   commonTokens: CommonTokens,
-  rTokenDeployments: RTokens,
+  rTokens: RTokens,
   addresses: {
     facadeAddress: string
+    oldFacadeAddress: string
     executorAddress: string
     zapperAddress: string
     wrappedNative: string
@@ -43,7 +44,15 @@ export const makeConfig = <
     uniV3Router: string
     curveStableSwapNGHelper: string
   },
-  blocktime: Blocktime
+  options: {
+    blocktime: Blocktime,
+    blockGasLimit: bigint,
+    requoteTolerance: number, // Number of blocks to tolerate before quotes need to be requoted
+    routerDeadline: number,
+    searcherMaxRoutesToProduce: number,
+    searchConcurrency: number,
+    defaultInternalTradeSlippage: bigint
+  }
 ) => {
   return {
     chainId,
@@ -53,10 +62,11 @@ export const makeConfig = <
       commonTokens: convertAddressObject(commonTokens),
       rTokens: convertAddressObject(
         Object.fromEntries(
-          Object.entries(rTokenDeployments).map((i) => [i[0], i[1]])
+          Object.entries(rTokens).map((i) => [i[0], i[1]])
         ) as { [K in keyof RTokens]: string }
       ),
     },
+    ...options
   } as const
 }
 export type Config<

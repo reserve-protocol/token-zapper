@@ -61,13 +61,7 @@ export abstract class BaseCometAction extends Action('CompV3') {
     [predicted]: TokenQuantity[]
   ): Promise<Value[]> {
     this.planAction(planner, destination, input, predicted)
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   abstract planAction(
     planner: Planner,

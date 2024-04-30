@@ -66,14 +66,7 @@ export class StargateWrapperWithdrawAction extends Action("ReserveWrapper(Starga
     ))
     planner.add(wSGToken.withdraw(inputs[0], destination.address))
 
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination
-    )
-
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

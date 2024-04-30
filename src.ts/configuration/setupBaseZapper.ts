@@ -21,6 +21,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
 
   const registry: OffchainOracleRegistry = new OffchainOracleRegistry(
+    universe.config.requoteTolerance,
     'BaseOracles',
     async (token: Token) => {
       if (token === wsteth) {

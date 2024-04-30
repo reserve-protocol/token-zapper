@@ -11,6 +11,8 @@ import type * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
 export type { curveStableSwapNgSol };
 import type * as icTokenSol from "./ICToken.sol";
 export type { icTokenSol };
+import type * as iFacadeSol from "./IFacade.sol";
+export type { iFacadeSol };
 import type * as irTokenZapperSol from "./IRTokenZapper.sol";
 export type { irTokenZapperSol };
 import type * as isAtokenSol from "./ISAtoken.sol";

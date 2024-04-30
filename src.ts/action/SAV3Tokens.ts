@@ -17,7 +17,7 @@ function rayDiv(a: bigint, b: bigint): bigint {
 }
 export class MintSAV3TokensAction extends Action('AaveV3') {
   get outputSlippage() {
-    return 3000000n
+    return 1n
   }
   async plan(
     planner: Planner,
@@ -35,13 +35,7 @@ export class MintSAV3TokensAction extends Action('AaveV3') {
       lib.deposit(inputs[0], destination.address, 0, true),
       `AaveV3 mint: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
     )
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(300000n)
@@ -74,9 +68,8 @@ export class MintSAV3TokensAction extends Action('AaveV3') {
   }
 }
 export class BurnSAV3TokensAction extends Action('AaveV3') {
-  private inst: IStaticATokenV3LM__factory
   get outputSlippage() {
-    return 3000000n
+    return 1n
   }
   async plan(
     planner: Planner,
@@ -99,13 +92,7 @@ export class BurnSAV3TokensAction extends Action('AaveV3') {
       ),
       `AaveV3 burn: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
     )
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(300000n)
@@ -137,10 +124,6 @@ export class BurnSAV3TokensAction extends Action('AaveV3') {
       InteractionConvention.None,
       DestinationOptions.Recipient,
       []
-    )
-    this.inst = IStaticATokenV3LM__factory.connect(
-      saToken.address.address,
-      universe.provider
     )
   }
 

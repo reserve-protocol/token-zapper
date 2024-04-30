@@ -8,6 +8,9 @@ import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 export const RouterAction = (protocol: string) =>
   class RouterAction extends Action(protocol) {
+    public get outputSlippage(): bigint {
+      return this.slippage
+    }
     async plan(
       planner: Planner,
       inputs: Value[],
@@ -28,11 +31,12 @@ export const RouterAction = (protocol: string) =>
 
     async innerQuote(input: TokenQuantity[]) {
       return await this.dex.swap(
+        AbortSignal.timeout(2000),
         this.universe.execAddress,
         this.universe.execAddress,
         input[0],
         this.outputToken[0],
-        0
+        0n
       )
     }
 
@@ -46,7 +50,8 @@ export const RouterAction = (protocol: string) =>
       readonly universe: Universe,
       readonly router: Address,
       inputToken: Token,
-      outputToken: Token
+      outputToken: Token,
+      public readonly slippage: bigint
     ) {
       super(
         universe.execAddress,

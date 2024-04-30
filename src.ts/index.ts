@@ -40,11 +40,6 @@ export { loadRToken } from './configuration/setupRTokens'
 
 export { createKyberswap } from './aggregators/Kyberswap'
 export { createEnso } from './aggregators/Enso'
-export { createDefillama } from './aggregators/DefiLlama'
-export {
-  DexAggregator,
-  createOneInchDexAggregator,
-} from './aggregators/oneInch/oneInchRegistry'
 
 const CHAIN_ID_TO_CONFIG = {
   [ChainIds.Mainnet]: {

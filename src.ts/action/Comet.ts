@@ -23,13 +23,7 @@ export class MintCometAction extends Action('CompoundV3') {
       lib.supply(this.baseToken.address.address, inputs[0]),
       `Comet mint: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
     )
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(150000n)
@@ -79,13 +73,7 @@ export class BurnCometAction extends Action('CompoundV3') {
       ),
       `Comet burn: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
     )
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(150000n)

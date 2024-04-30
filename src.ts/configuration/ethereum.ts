@@ -83,7 +83,8 @@ export const ethereumConfig = makeConfig(
   COMMON_TOKENS,
   RTOKENS,
   {
-    facadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
+    facadeAddress: '0x2C7ca56342177343A2954C250702Fd464f4d0613',
+    oldFacadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
     zapperAddress: '0xcc2b9b55952718b210660b56ca12eb88694dc60f',
     executorAddress: '0x675D37489A7A64c051D0204e5c72a469f6558a47',
     wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
@@ -95,7 +96,15 @@ export const ethereumConfig = makeConfig(
     uniV3Router: '0x32F59e2881e1DC9a808DE8C37545FE33F2B617A9',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
   },
-  12
+  {
+    blocktime: 12000,
+    blockGasLimit: 30000000n,
+    requoteTolerance: 1,
+    routerDeadline: 4000,
+    searcherMaxRoutesToProduce: 4,
+    searchConcurrency: 4,
+    defaultInternalTradeSlippage: 30n,
+  }
 )
 
 export const PROTOCOL_CONFIGS = {

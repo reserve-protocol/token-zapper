@@ -67,10 +67,14 @@ export class ConvexDepositAndStake extends Action('Convex') {
 }
 
 export class ConvexUnstakeAndWithdraw extends Action('Convex') {
+  public get outputSlippage(): bigint {
+    return 0n
+  }
   async plan(
     planner: Planner,
-    inputs: Value[],
-    destination: Address
+    [input]: Value[],
+    _: Address,
+    [predicted]: TokenQuantity[]
   ): Promise<Value[]> {
     const lib = this.gen.Contract.createContract(
       IConvexWrapper__factory.connect(
@@ -78,15 +82,9 @@ export class ConvexUnstakeAndWithdraw extends Action('Convex') {
         this.universe.provider
       )
     )
-    planner.add(lib.withdrawAndUnwrap(inputs[0]))
+    planner.add(lib.withdrawAndUnwrap(input ?? predicted.amount))
 
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      this.universe.config.addresses.executorAddress
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   toString(): string {
     return `ConvexUnstakeAndWithdraw(${this.convexPool})`
@@ -103,7 +101,7 @@ export class ConvexUnstakeAndWithdraw extends Action('Convex') {
       [convexPool.stakedConvexDepositToken],
       [convexPool.curveLPToken],
       InteractionConvention.None,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

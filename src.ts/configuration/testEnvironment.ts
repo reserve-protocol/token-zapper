@@ -8,7 +8,7 @@ import { PriceOracle } from '../oracles/PriceOracle'
 import { Token, TokenQuantity } from '../entities/Token'
 import { IBasket } from '../entities/TokenBasket'
 import { JsonTokenEntry, loadTokens } from './loadTokens'
-import { ETHToRETH, RETHToETH } from '../action/REth'
+import { WETHToRETH, RETHToWETH } from '../action/REth'
 import { constants, ethers } from 'ethers'
 
 import { BurnWStETH, MintWStETH } from '../action/WStEth'
@@ -208,8 +208,8 @@ const initialize = async (universe: TestUniverse) => {
     },
   }
 
-  const ethToREth = new ETHToRETH(universe, rethRouter as any)
-  const rEthtoEth = new RETHToETH(universe, rethRouter as any)
+  const ethToREth = new WETHToRETH(universe, rethRouter as any)
+  const rEthtoEth = new RETHToWETH(universe, rethRouter as any)
 
   universe.defineMintable(ethToREth, rEthtoEth)
 

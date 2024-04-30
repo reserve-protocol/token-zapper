@@ -6,6 +6,7 @@ export * as aerodromeSol from "./Aerodrome.sol";
 export * as compoundV3Sol from "./CompoundV3.sol";
 export * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
 export * as icTokenSol from "./ICToken.sol";
+export * as iFacadeSol from "./IFacade.sol";
 export * as irTokenZapperSol from "./IRTokenZapper.sol";
 export * as isAtokenSol from "./ISAtoken.sol";
 export * as iStargadeWrapperSol from "./IStargadeWrapper.sol";

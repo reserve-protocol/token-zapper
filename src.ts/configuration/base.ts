@@ -28,6 +28,7 @@ export const baseConfig = makeConfig(
   RTOKENS,
   {
     facadeAddress: '0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF',
+    oldFacadeAddress: '0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF',
     zapperAddress: '0xe811b62AB97d9370cE2e25F9ceBC904522b81FE1',
     executorAddress: '0xA4b275feAf3A1450fc57270Ed863923261aBFD05',
     wrappedNative: '0x4200000000000000000000000000000000000006',
@@ -39,7 +40,15 @@ export const baseConfig = makeConfig(
     uniV3Router: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
   },
-  2
+  {
+    blocktime: 2000,
+    blockGasLimit: 60000000n,
+    requoteTolerance: 1,
+    routerDeadline: 4000,
+    searcherMaxRoutesToProduce: 4,
+    searchConcurrency: 4,
+    defaultInternalTradeSlippage: 30n,
+  }
 )
 
 export const PROTOCOL_CONFIGS = {

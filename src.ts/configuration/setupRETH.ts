@@ -1,5 +1,5 @@
-import { DexAggregator } from '..'
-import { ETHToRETH, RETHToETH, REthRouter } from '../action/REth'
+import { REthRouter } from '../action/REth'
+import { DexRouter } from '../aggregators/DexAggregator'
 import { Address } from '../base/Address'
 import { SwapPlan } from '../searcher/Swap'
 import { type EthereumUniverse } from './ethereum'
@@ -16,18 +16,38 @@ export const setupRETH = async (
     Address.from(rethRouterAddress)
   )
 
-  const ethToREth = new ETHToRETH(universe, rethRouter)
-  const rEthtoEth = new RETHToETH(universe, rethRouter)
-
   universe.dexAggregators.push(
-    new DexAggregator('reth', async (_, dest, input, output, __) => {
-      if (input.token === universe.nativeToken && output === reth) {
-        return await new SwapPlan(universe, [ethToREth]).quote([input], dest)
-      }
-      if (input.token === reth && output === universe.nativeToken) {
-        return await new SwapPlan(universe, [rEthtoEth]).quote([input], dest)
-      }
-      throw new Error('Unsupported trade')
-    })
+    new DexRouter(
+      'RocketpoolRouter:swapTo',
+      async (abort, payer, dest, input) => {
+        if (input.token == universe.wrappedNativeToken) {
+          return await new SwapPlan(universe, [rethRouter.mintViaWETH]).quote(
+            [input],
+            dest
+          )
+        }
+        return await new SwapPlan(universe, [rethRouter.mintViaETH]).quote(
+          [input],
+          dest
+        )
+      },
+      true,
+      new Set([universe.wrappedNativeToken, universe.nativeToken]),
+      new Set([reth])
+    )
+  )
+  universe.dexAggregators.push(
+    new DexRouter(
+      'RocketpoolRouter:swapFrom',
+      async (____, _, dest, input, output) => {
+        return await new SwapPlan(universe, [rethRouter.burn]).quote(
+          [input],
+          dest
+        )
+      },
+      true,
+      new Set([reth]),
+      new Set([universe.wrappedNativeToken])
+    )
   )
 }

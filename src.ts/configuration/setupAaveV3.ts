@@ -29,7 +29,7 @@ const BaseAaveAction = Action('AAVEV3')
 
 class AaveV3ActionSupply extends BaseAaveAction {
   get outputSlippage() {
-    return 3000000n
+    return 1n
   }
   quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     return Promise.resolve([this.outputToken[0].from(amountsIn[0].amount)])
@@ -79,7 +79,7 @@ class AaveV3ActionSupply extends BaseAaveAction {
 }
 class AaveV3ActionWithdraw extends BaseAaveAction {
   get outputSlippage() {
-    return 3000000n
+    return 1n
   }
   gasEstimate(): bigint {
     return BigInt(300000n)

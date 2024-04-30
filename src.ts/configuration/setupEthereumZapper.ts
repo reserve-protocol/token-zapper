@@ -155,7 +155,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   await Promise.all(
     PROTOCOL_CONFIGS.erc4626.map(([addr, proto]) =>
-      setupERC4626(universe, [addr], proto)
+      setupERC4626(universe, [addr], proto, 30000000n)
     )
   )
 
@@ -164,7 +164,8 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   const curve = await initCurveOnEthereum(
     universe,
-    PROTOCOL_CONFIGS.convex.booster
+    PROTOCOL_CONFIGS.convex.booster,
+    10n
   ).catch((e) => {
     console.log('Failed to intialize curve')
     console.log(e)

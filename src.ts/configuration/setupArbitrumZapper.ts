@@ -11,15 +11,16 @@ import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
 export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
-  console.log('Loading tokens')
+  // console.log('Loading tokens')
   await loadArbitrumTokenList(universe)
 
-  console.log('Setting up wrapped gas token')
+  // console.log('Setting up wrapped gas token')
   await setupWrappedGasToken(universe)
 
-  console.log('Setting up oracles')
+  // console.log('Setting up oracles')
   const wsteth = universe.commonTokens.wstETH
   const registry: OffchainOracleRegistry = new OffchainOracleRegistry(
+    universe.config.requoteTolerance,
     'ArbiOracles',
     async (token: Token) => {
       if (token === wsteth) {
@@ -54,7 +55,7 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
     () => universe.currentBlock,
     universe.provider
   )
-  console.log('ASSET -> USD oracles')
+  // console.log('ASSET -> USD oracles')
   Object.entries(PROTOCOL_CONFIGS.oracles.USD).map(
     ([tokenAddress, oracleAddress]) => {
       registry.register(
@@ -64,7 +65,7 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
       )
     }
   )
-  console.log('ASSET -> ETH oracles')
+  // console.log('ASSET -> ETH oracles')
   Object.entries(PROTOCOL_CONFIGS.oracles.ETH).map(
     ([tokenAddress, oracleAddress]) => {
       registry.register(
@@ -77,7 +78,7 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
 
   universe.oracles.push(registry)
   universe.oracle = new ZapperTokenQuantityPrice(universe)
-  console.log('Setting up AAVEV3')
+  // console.log('Setting up AAVEV3')
   const aaveV3 = await setupAaveV3(
     universe,
     Address.from(PROTOCOL_CONFIGS.aaveV3.pool),
@@ -88,7 +89,7 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
     )
   )
 
-  console.log('Loading Compound V3 tokens')
+  // console.log('Loading Compound V3 tokens')
   const [comets, cTokenWrappers] = await Promise.all([
     Promise.all(
       PROTOCOL_CONFIGS.compV3.comets.map(
@@ -102,16 +103,16 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
     ),
   ])
 
-  console.log('Setting up Compound V3')
+  // console.log('Setting up Compound V3')
   const compV3 = await setupCompoundV3(universe, {
     comets,
     cTokenWrappers,
   })
 
-  console.log('Loading rTokens')
+  // console.log('Loading rTokens')
   await loadRTokens(universe)
 
-  console.log('Setting up uniswapV3 router')
+  // console.log('Setting up uniswapV3 router')
   const uni = await setupUniswapRouter(universe)
 
   return {

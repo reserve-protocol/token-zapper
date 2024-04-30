@@ -1,3 +1,4 @@
+import { Config } from '../configuration/ChainConfiguration'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { PriceOracle } from './PriceOracle'
@@ -20,10 +21,9 @@ export class LPTokenPriceOracle extends PriceOracle {
       return acc.add(t)
     }, this.universe.usd.zero)
   }
-  constructor(
-    readonly universe: Universe<any>,
-  ) {
+  constructor(readonly universe: Universe<Config>) {
     super(
+      universe.config.requoteTolerance,
       'ChainLink',
       (t) => this.quoteTok(t),
       () => universe.currentBlock

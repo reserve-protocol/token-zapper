@@ -6,7 +6,8 @@ import { IERC4626__factory } from '../contracts/factories/@openzeppelin/contract
 export const setupERC4626 = async (
   universe: Universe,
   vaultAddr: string[],
-  protocol: string
+  protocol: string,
+  slippage: bigint
 ) => {
   const tokens = await Promise.all(
     vaultAddr.map(async (addr) => {
@@ -23,8 +24,18 @@ export const setupERC4626 = async (
   )
   for (const { wrappedToken, underlying } of tokens) {
     universe.defineMintable(
-      new (ERC4626DepositAction(protocol))(universe, underlying, wrappedToken),
-      new (ERC4626WithdrawAction(protocol))(universe, underlying, wrappedToken),
+      new (ERC4626DepositAction(protocol))(
+        universe,
+        underlying,
+        wrappedToken,
+        slippage
+      ),
+      new (ERC4626WithdrawAction(protocol))(
+        universe,
+        underlying,
+        wrappedToken,
+        slippage
+      ),
       false
     )
   }

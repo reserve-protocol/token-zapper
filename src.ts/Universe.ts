@@ -1,30 +1,30 @@
 import { ethers } from 'ethers'
 
 import { type BaseAction as Action } from './action/Action'
+import { LPToken } from './action/LPToken'
 import { Address } from './base/Address'
-import { Graph } from './exchange-graph/Graph'
+import { DefaultMap } from './base/DefaultMap'
+import { type Config } from './configuration/ChainConfiguration'
+import { Refreshable } from './entities/Refreshable'
 import {
   PricedTokenQuantity,
   Token,
   type TokenQuantity,
 } from './entities/Token'
 import { TokenLoader, makeTokenLoader } from './entities/makeTokenLoader'
-import { type Config } from './configuration/ChainConfiguration'
-import { DefaultMap } from './base/DefaultMap'
-import { type PriceOracle } from './oracles/PriceOracle'
+import { Graph } from './exchange-graph/Graph'
 import { LPTokenPriceOracle } from './oracles/LPTokenPriceOracle'
-import { Refreshable } from './entities/Refreshable'
+import { type PriceOracle } from './oracles/PriceOracle'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
-import { LPToken } from './action/LPToken'
 import { SourcingRule } from './searcher/SourcingRule'
 
-import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
-import { SwapPath } from './searcher/Swap'
-import { MintRTokenAction } from './action/RTokens'
-import { Searcher } from './searcher/Searcher'
-import { findPrecursorTokenSet } from './searcher/Searcher'
 import EventEmitter from 'events'
-import { DexAggregator } from '.'
+import { DexRouter } from './aggregators/DexAggregator'
+import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
+import { ZapperExecutor__factory } from './contracts'
+import { Searcher } from './searcher/Searcher'
+import { SwapPath } from './searcher/Swap'
+import { Contract } from './tx-gen/Planner'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -100,7 +100,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   >()
   public readonly oracles: PriceOracle[] = []
 
-  public readonly dexAggregators: DexAggregator[] = []
+  public readonly dexAggregators: DexRouter[] = []
 
   // Sentinel token used for pricing things
   public readonly rTokens = {} as TokenList<
@@ -229,6 +229,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     // )
   }
 
+  public weirollZapperExec
+
   get execAddress() {
     return this.config.addresses.executorAddress
   }
@@ -276,11 +278,18 @@ export class Universe<const UniverseConf extends Config = Config> {
       'Wrapped ' + nativeToken.name,
       nativeToken.decimals
     )
+
+    this.weirollZapperExec = Contract.createContract(
+      ZapperExecutor__factory.connect(this.execAddress.address, this.provider)
+    )
   }
 
   public async updateBlockState(block: number, gasPrice: bigint) {
     if (block <= this.blockState.currentBlock) {
       return
+    }
+    for (const router of this.dexAggregators) {
+      router.onBlock(block)
     }
     this.blockState.currentBlock = block
     this.blockState.gasPrice = gasPrice
@@ -350,7 +359,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this.searcher.findSingleInputToRTokenZap(
       inputTokenQty,
       outputToken,
-      Address.from(signerAddress)
+      Address.from(signerAddress),
+      this.config.defaultInternalTradeSlippage
     )
   }
 
@@ -361,7 +371,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this.searcher.findSingleInputToRTokenZap(
       inputTokenQty,
       outputToken,
-      Address.from(signerAddress)
+      Address.from(signerAddress),
+      this.config.defaultInternalTradeSlippage
     )
   }
 
@@ -378,7 +389,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this.searcher.findRTokenIntoSingleTokenZap(
       inputTokenQty,
       outputToken,
-      Address.from(signerAddress)
+      Address.from(signerAddress),
+      this.config.defaultInternalTradeSlippage
     )
   }
 }

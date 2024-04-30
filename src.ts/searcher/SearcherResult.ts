@@ -238,14 +238,14 @@ export abstract class BaseSearcherResult {
         throw new ThirdPartyIssue('Stargate out of funds')
       }
 
-      console.log(
-        'error:',
-        e.message,
-        'Failing program:',
-        printPlan(this.planner, this.universe)
-          .map((i) => '  ' + i)
-          .join('\n')
-      )
+      // console.log(
+      //   // 'error:',
+      //   // e.message,
+      //   'Failing program:',
+      //   printPlan(this.planner, this.universe)
+      //     .map((i) => '  ' + i)
+      //     .join('\n')
+      // )
     }
 
     // console.log(
@@ -386,7 +386,9 @@ export abstract class BaseSearcherResult {
         simulatedOutputs.map((i) => {
           if (i.token === this.outputToken) {
             const slippage =
-              outputTokenOutput.amount / (options.outputSlippage ?? 250_000n)
+              outputTokenOutput.amount -
+              ((options.outputSlippage ?? 0n) * outputTokenOutput.amount) /
+                10000n
             return i.token.from(
               outputTokenOutput.amount - (slippage === 0n ? 1n : slippage)
             )
@@ -578,6 +580,7 @@ export abstract class BaseSearcherResult {
         stats
       )
     } catch (e: any) {
+      // console.log(`${this.userInput} -> ${this.outputToken}`)
       if (e instanceof ThirdPartyIssue) {
         throw e
       }
@@ -590,10 +593,18 @@ export class TradeSearcherResult extends BaseSearcherResult {
   async toTransaction(
     options: ToTransactionArgs = {}
   ): Promise<ZapTransaction> {
-    await this.setupApprovals()
+    await this.setupApprovals().catch((a) => {
+      console.log('approvals failed')
+      throw a
+    })
 
     for (const step of this.swaps.swapPaths[0].steps) {
-      await step.action.plan(this.planner, [], this.signer, [this.userInput])
+      await step.action
+        .plan(this.planner, [], this.signer, [this.userInput])
+        .catch((a) => {
+          console.log(`${step.action.toString()}.plan failed`)
+          throw a
+        })
     }
     for (const token of this.potentialResidualTokens) {
       const out = plannerUtils.erc20.balanceOf(
@@ -636,17 +647,24 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
     await this.setupApprovals()
 
     const tokens = new Map<Token, Value[]>()
-    const outputs = await this.parts.rtokenRedemption.steps[0].action.plan(
-      this.planner,
-      [
-        new LiteralValue(
-          ParamType.fromString('uint256'),
-          defaultAbiCoder.encode(['uint256'], [this.userInput.amount])
-        ),
-      ],
-      this.universe.config.addresses.executorAddress,
-      [this.userInput]
-    )
+    const outputs = await this.parts.rtokenRedemption.steps[0].action
+      .plan(
+        this.planner,
+        [
+          new LiteralValue(
+            ParamType.fromString('uint256'),
+            defaultAbiCoder.encode(['uint256'], [this.userInput.amount])
+          ),
+        ],
+        this.universe.config.addresses.executorAddress,
+        [this.userInput]
+      )
+      .catch((a) => {
+        console.log(
+          `${this.parts.rtokenRedemption.steps[0].action.toString()}.plan failed`
+        )
+        throw a
+      })
 
     for (
       let i = 0;
@@ -665,12 +683,12 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
         if (input == null) {
           throw new Error('MISSING INPUT')
         }
-        const size = await step.action.plan(
-          this.planner,
-          input,
-          executorAddress,
-          step.inputs
-        )
+        const size = await step.action
+          .plan(this.planner, input, executorAddress, step.inputs)
+          .catch((a) => {
+            console.log(`${step.action.toString()}.plan failed`)
+            throw a
+          })
         tokens.set(step.outputs[0].token, size)
       }
     }
@@ -683,12 +701,12 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
         executorAddress
       )
       for (const step of path.steps) {
-        const out = await step.action.plan(
-          this.planner,
-          [input],
-          executorAddress,
-          step.inputs
-        )
+        const out = await step.action
+          .plan(this.planner, [input], executorAddress, step.inputs)
+          .catch((a) => {
+            console.log(`${step.action.toString()}.plan failed`)
+            throw a
+          })
         tradeOutputs.set(step.outputs[0].token, out[0])
       }
     }
@@ -758,12 +776,18 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
           ParamType.fromString('uint256'),
           defaultAbiCoder.encode(['uint256'], [step.inputs[0].amount])
         )
-        const output = await step.action.plan(
-          this.planner,
-          [inputsVal],
-          this.universe.config.addresses.executorAddress,
-          step.inputs
-        )
+        const output = await step.action
+          .plan(
+            this.planner,
+            [inputsVal],
+            this.universe.config.addresses.executorAddress,
+            step.inputs
+          )
+          .catch((a) => {
+            console.log(`${step.action.toString()}.plan failed`)
+            throw a
+          })
+
         if (output.length === 0) {
           throw new Error("Unexpected: Didn't get an output")
         }
@@ -833,12 +857,17 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
           }
         }
 
-        const result = await step.action.plan(
-          this.planner,
-          [actionInput],
-          this.universe.config.addresses.executorAddress,
-          step.inputs
-        )
+        const result = await step.action
+          .plan(
+            this.planner,
+            [actionInput],
+            this.universe.config.addresses.executorAddress,
+            step.inputs
+          )
+          .catch((a) => {
+            console.log(`${step.action.toString()}.plan failed`)
+            throw a
+          })
         for (let i = 0; i < step.outputs.length; i++) {
           trades.set(step.outputs[i].token, result[i])
         }
@@ -846,8 +875,8 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
     }
 
     this.planner.add(
-      zapperLib.mintMaxRToken(
-        this.universe.config.addresses.facadeAddress.address,
+      this.universe.weirollZapperExec.mintMaxRToken(
+        this.universe.config.addresses.oldFacadeAddress.address,
         this.outputToken.address.address,
         this.signer.address
       ),

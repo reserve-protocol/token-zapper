@@ -10,7 +10,7 @@ import { rayDiv, rayMul } from './aaveMath'
 
 export class MintSATokensAction extends Action('AaveV2') {
   get outputSlippage() {
-    return 3000000n
+    return 1n
   }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
@@ -61,7 +61,7 @@ export class MintSATokensAction extends Action('AaveV2') {
 }
 export class BurnSATokensAction extends Action('AaveV2') {
   get outputSlippage() {
-    return 3000000n
+    return 1n
   }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(

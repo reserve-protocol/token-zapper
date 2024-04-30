@@ -73,10 +73,12 @@ export interface SwapResult {
 }
 
 export interface KyberswapAggregatorResult {
+  block: number
   req: GetRoute
   quantityIn: TokenQuantity
   output: Token
   swap: SwapResult
+  slippage: bigint
 }
 
 const idToSlug: Record<number, string> = {
@@ -85,48 +87,116 @@ const idToSlug: Record<number, string> = {
   [ChainIds.Arbitrum]: 'arbitrum',
 }
 
+const fetchRoute = async (
+  abort: AbortSignal,
+  universe: Universe,
+  quantityIn: TokenQuantity,
+  tokenOut: Token
+) => {
+  const GET_ROUTE_SWAP = `https://aggregator-api.kyberswap.com/${
+    idToSlug[universe.chainId]
+  }/api/v1/routes`
+  const url = `${GET_ROUTE_SWAP}?source=register&amountIn=${quantityIn.amount}&tokenIn=${quantityIn.token.address.address}&tokenOut=${tokenOut.address.address}`
+  return fetch(url, {
+    method: 'GET',
+    signal: abort,
+    headers: {
+      'x-client-id': 'register',
+    },
+  }).then((res) => res.json()) as Promise<GetRoute>
+}
+const fetchSwap = async (
+  abort: AbortSignal,
+  universe: Universe,
+  req: GetRoute,
+  recipient: Address
+) => {
+  const POST_GET_SWAP = `https://aggregator-api.kyberswap.com/${
+    idToSlug[universe.chainId]
+  }/api/v1/route/build`
+
+  return fetch(`${POST_GET_SWAP}?source=register`, {
+    method: 'POST',
+    signal: abort,
+    body: JSON.stringify({
+      ...req.data,
+      sender: universe.execAddress.address,
+      recipient: recipient.address,
+      skipSimulateTx: true,
+      slippageTolerance: Number(universe.config.defaultInternalTradeSlippage),
+      source: 'register',
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+      'x-client-id': 'register',
+    },
+  }).then((res) => res.json() as Promise<SwapResult>)
+}
+
+const getQuoteAndSwap = async (
+  abort: AbortSignal,
+  universe: Universe,
+  quantityIn: TokenQuantity,
+  tokenOut: Token,
+  recipient: Address,
+  slippage: bigint
+): Promise<KyberswapAggregatorResult> => {
+  const req = await fetchRoute(abort, universe, quantityIn, tokenOut)
+  const swap = await fetchSwap(abort, universe, req, recipient)
+
+  return {
+    block: universe.currentBlock,
+    quantityIn,
+    output: tokenOut,
+    swap,
+    req,
+    slippage,
+  }
+}
+
 class KyberAction extends Action('Kyberswap') {
+  get outputSlippage() {
+    return BigInt(this.request.slippage)
+  }
   async plan(
     planner: Planner,
     _: Value[],
-    destination: Address
+    __: Address,
+    predicted: TokenQuantity[]
   ): Promise<Value[]> {
-    const zapperLib = this.gen.Contract.createContract(
-      ZapperExecutor__factory.connect(
-        this.universe.config.addresses.executorAddress.address,
-        this.universe.provider
+    try {
+      const zapperLib = this.gen.Contract.createContract(
+        ZapperExecutor__factory.connect(
+          this.universe.config.addresses.executorAddress.address,
+          this.universe.provider
+        )
       )
-    )
-    planner.add(
-      zapperLib.rawCall(
-        this.request.req.data.routerAddress,
-        0,
-        this.request.swap.data.data
-      ),
-      `kyberswap,router=${this.request.swap.data.routerAddress},swap=${
-        this.request.quantityIn
-      } -> ${
-        this.outputQuantity
-      },route=${this.request.req.data.routeSummary.route
-        .flat()
-        .map((i) => `(${i.poolType})`)
-        .join(' -> ')},destination=${destination}`
-    )
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      destination,
-      'kyberswap,after swap',
-      `bal_${this.outputToken[0].symbol}_after`
-    )
-    return [out!]
+      const minOut = await this.quoteWithSlippage(predicted)
+      planner.add(
+        zapperLib.rawCall(
+          this.request.req.data.routerAddress,
+          0,
+          this.request.swap.data.data
+        ),
+
+        `kyberswap,router=${
+          this.request.swap.data.routerAddress
+        },swap=${predicted.join(', ')} -> ${minOut.join(
+          ', '
+        )},route=${this.request.req.data.routeSummary.route
+          .flat()
+          .map((i) => `(${i.poolType})`)
+          .join(' -> ')}`
+      )
+      return this.outputBalanceOf(this.universe, planner)
+    } catch (e: any) {
+      console.log(e.stack)
+      throw e
+    }
   }
-  public outputQuantity: TokenQuantity[] = []
   constructor(
     public readonly request: KyberswapAggregatorResult,
-    public readonly universe: Universe,
-    public readonly slippage: number
+    public readonly universe: Universe
   ) {
     super(
       Address.from(request.req.data.routerAddress),
@@ -141,90 +211,41 @@ class KyberAction extends Action('Kyberswap') {
         ),
       ]
     )
-
-    const amount = BigInt(this.request.swap.data.amountOut)
-    const minOut = amount - (amount / 10000n) * BigInt(this.slippage)
-    const out = this.outputToken[0].from(minOut)
-    this.outputQuantity = [out]
   }
   toString() {
     return `Kyberswap(${this.request.quantityIn} => ${this.request.output})`
   }
   async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return this.outputQuantity
+    return [
+      this.request.output.from(this.request.req.data.routeSummary.amountOut),
+    ]
   }
   gasEstimate(): bigint {
     return BigInt(this.request.req.data.routeSummary.gas)
   }
 }
 
-export const createKyberswap = (
-  aggregatorName: string,
-  universe: Universe,
-  slippage: number
-) => {
+export const createKyberswap = (aggregatorName: string, universe: Universe) => {
   if (idToSlug[universe.chainId] == null) {
     throw new Error('Kyberswap: Unsupported chain')
   }
 
-  const GET_ROUTE_SWAP = `https://aggregator-api.kyberswap.com/${
-    idToSlug[universe.chainId]
-  }/api/v1/routes`
-  const POST_GET_SWAP = `https://aggregator-api.kyberswap.com/${
-    idToSlug[universe.chainId]
-  }/api/v1/route/build`
-
-  const fetchRoute = async (quantityIn: TokenQuantity, tokenOut: Token) => {
-    const url = `${GET_ROUTE_SWAP}?source=register&amountIn=${quantityIn.amount}&tokenIn=${quantityIn.token.address.address}&tokenOut=${tokenOut.address.address}`
-    return fetch(url, {
-      method: 'GET',
-      signal: AbortSignal.timeout(2000),
-      headers: {
-        'x-client-id': 'register',
-      },
-    }).then((res) => res.json()) as Promise<GetRoute>
-  }
-  const fetchSwap = async (req: GetRoute, recipient: Address) => {
-    return fetch(`${POST_GET_SWAP}?source=register`, {
-      method: 'POST',
-      signal: AbortSignal.timeout(2000),
-      body: JSON.stringify({
-        ...req.data,
-        sender: universe.config.addresses.executorAddress.address,
-        recipient: recipient.address,
-        skipSimulateTx: true,
-        slippageTolerance: slippage,
-        source: 'register',
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'x-client-id': 'register',
-      },
-    }).then((res) => res.json() as Promise<SwapResult>)
-  }
-
-  const getQuoteAndSwap = async (
-    quantityIn: TokenQuantity,
-    tokenOut: Token,
-    recipient: Address
-  ): Promise<KyberswapAggregatorResult> => {
-    const req = await fetchRoute(quantityIn, tokenOut)
-    const swap = await fetchSwap(req, recipient)
-
-    return {
-      quantityIn,
-      output: tokenOut,
-      swap,
-      req,
-    }
-  }
-
   return new DexRouter(
     aggregatorName,
-    async (_, destination, input, output, __) => {
-      const req = await getQuoteAndSwap(input, output, destination)
+    async (abort, _, destination, input, output, slippage) => {
+      const req = await getQuoteAndSwap(
+        abort,
+        universe,
+        input,
+        output,
+        destination,
+        slippage
+      )
+      if (req?.swap?.data?.data == null) {
+        throw new Error('Failed')
+      }
       return await new SwapPlan(universe, [
-        new KyberAction(req, universe, slippage),
+        new KyberAction(req, universe),
       ]).quote([input], destination)
     },
     false

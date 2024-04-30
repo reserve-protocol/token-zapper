@@ -130,7 +130,9 @@ const _getExchangeMultipleArgs = (
 }
 
 export class CurveSwap extends Action('Curve') {
-  
+  get outputSlippage() {
+    return this.slippage
+  }
   async plan(
     planner: Planner,
     inputs: Value[],
@@ -159,12 +161,11 @@ export class CurveSwap extends Action('Curve') {
         [_route, _swapParams, _factorySwapAddresses]
       )
     )
-    // console.log(output.route)
 
     planner.add(
       curveRouterCallLib.exchange(
         inputs[0] ?? amountsIn.amount,
-        minOut.amount - minOut.amount / 100n,
+        minOut.amount - minOut.amount / this.slippage,
         routerContract.address,
         payload
       ),
@@ -172,13 +173,7 @@ export class CurveSwap extends Action('Curve') {
       `amt_${this.outputToken[0].symbol}`
     )
 
-    const out = this.genUtils.erc20.balanceOf(
-      this.universe,
-      planner,
-      this.outputToken[0],
-      this.universe.config.addresses.executorAddress
-    )
-    return [out!]
+    return this.outputBalanceOf(this.universe, planner)
   }
   private estimate?: bigint
   gasEstimate() {
@@ -197,79 +192,39 @@ export class CurveSwap extends Action('Curve') {
     const contract =
       curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
         .contract
-    if (key in this.predefinedRoutes) {
-      const route = await this.predefinedRoutes[key]
 
+    try {
+      const out = await curve.router.getBestRouteAndOutput(
+        amountsIn.token.address.address,
+        this.outputToken[0].address.address,
+        amountsIn.format()
+      )
       const { _route, _swapParams, _factorySwapAddresses } =
-        _getExchangeMultipleArgs(route)
+        _getExchangeMultipleArgs(out.route)
+      const gasEstimate: ethers.BigNumber =
+        await contract.estimateGas.get_exchange_multiple_amount(
+          _route,
+          _swapParams,
+          amountsIn.amount,
+          _factorySwapAddresses,
+          curveInner.constantOptions
+        )
 
-      const [out, gasEstimate]: [ethers.BigNumber, ethers.BigNumber] =
-        await Promise.all([
-          contract.get_exchange_multiple_amount(
-            _route,
-            _swapParams,
-            amountsIn.amount,
-            _factorySwapAddresses,
-            curveInner.constantOptions
-          ),
-          contract.estimateGas.get_exchange_multiple_amount(
-            _route,
-            _swapParams,
-            amountsIn.amount,
-            _factorySwapAddresses,
-            curveInner.constantOptions
-          ),
-        ])
       this.estimate = gasEstimate.toBigInt()
-
-      const output = formatUnits(
-        out.sub(out.div(600n)),
+      const outParsed = parseUnits(
+        parseFloat(out.output).toFixed(this.outputToken[0].decimals),
         this.outputToken[0].decimals
       )
-      return {
-        output,
-        route,
-      }
+
+      out.output = formatUnits(
+        outParsed.sub(outParsed.div(600n)),
+        this.outputToken[0].decimals
+      )
+
+      return out
+    } catch (e) {
+      throw e
     }
-    const task = (async () => {
-      try {
-        const out = await curve.router.getBestRouteAndOutput(
-          amountsIn.token.address.address,
-          this.outputToken[0].address.address,
-          amountsIn.format()
-        )
-        // if (!out.route.every((i) => whiteList.has(i.poolAddress))) {
-        //   throw new Error('Route not in whitelist')
-        // }
-        const { _route, _swapParams, _factorySwapAddresses } =
-          _getExchangeMultipleArgs(out.route)
-        const gasEstimate: ethers.BigNumber =
-          await contract.estimateGas.get_exchange_multiple_amount(
-            _route,
-            _swapParams,
-            amountsIn.amount,
-            _factorySwapAddresses,
-            curveInner.constantOptions
-          )
-
-        this.estimate = gasEstimate.toBigInt()
-        const outParsed = parseUnits(
-          parseFloat(out.output).toFixed(this.outputToken[0].decimals),
-          this.outputToken[0].decimals
-        )
-
-        out.output = formatUnits(
-          outParsed.sub(outParsed.div(600n)),
-          this.outputToken[0].decimals
-        )
-
-        return out
-      } catch (e) {
-        throw e
-      }
-    })()
-    // this.predefinedRoutes[key] = task.then((out) => out.route)
-    return await task
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -284,7 +239,7 @@ export class CurveSwap extends Action('Curve') {
     public readonly pool: CurvePool,
     public readonly tokenIn: Token,
     public readonly tokenOut: Token,
-    private readonly predefinedRoutes: Record<string, Promise<IRoute>>
+    public readonly slippage: bigint
   ) {
     super(
       pool.address,
@@ -306,17 +261,7 @@ export class CurveSwap extends Action('Curve') {
   }
 }
 
-export const loadCurve = async (
-  universe: Universe,
-  predefinedRoutes_: Record<string, IRoute>
-) => {
-  const predefinedRoutes = Object.fromEntries(
-    Object.entries(predefinedRoutes_).map(([key, route]) => [
-      key,
-      Promise.resolve(route),
-    ])
-  )
-
+export const loadCurve = async (universe: Universe) => {
   const curvesEdges = new DefaultMap<Token, Map<Token, CurveSwap>>(
     () => new Map()
   )
@@ -335,21 +280,15 @@ export const loadCurve = async (
   const defineCurveEdge = (
     pool: CurvePool,
     tokenIn: Token,
-    tokenOut: Token
+    tokenOut: Token,
+    slippage: bigint
   ) => {
     const edges = curvesEdges.get(tokenIn)
     if (edges.has(tokenOut)) {
       return edges.get(tokenOut)!
     }
-    const swap = new CurveSwap(
-      universe,
-      pool,
-      tokenIn,
-      tokenOut,
-      predefinedRoutes
-    )
+    const swap = new CurveSwap(universe, pool, tokenIn, tokenOut, slippage)
     edges.set(tokenOut, swap)
-    universe.addAction(swap)
 
     return swap
   }
@@ -521,8 +460,6 @@ export const loadCurve = async (
           ) {
             continue
           }
-          defineCurveEdge(pool, aToken, bToken)
-          defineCurveEdge(pool, bToken, aToken)
         }
       }
       for (
@@ -543,8 +480,6 @@ export const loadCurve = async (
           ) {
             continue
           }
-          defineCurveEdge(pool, aToken, bToken)
-          defineCurveEdge(pool, bToken, aToken)
         }
       }
     }
@@ -563,8 +498,8 @@ export const loadCurve = async (
       }
       await addLpToken(universe, pool)
     },
-    createRouterEdge: (tokenA: Token, tokenB: Token) => {
-      return defineCurveEdge(router, tokenA, tokenB)
+    createRouterEdge: (tokenA: Token, tokenB: Token, slippage: bigint) => {
+      return defineCurveEdge(router, tokenA, tokenB, slippage)
     },
   }
 }

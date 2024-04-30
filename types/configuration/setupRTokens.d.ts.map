@@ -1,0 +1,1 @@
+{"version":3,"file":"setupRTokens.d.ts","sourceRoot":"","sources":["../../src.ts/configuration/setupRTokens.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,QAAQ,EAAE,MAAM,aAAa,CAAA;AAC3C,OAAO,EAAE,gBAAgB,EAAE,MAAM,mBAAmB,CAAA;AACpD,OAAO,EAAE,OAAO,EAAE,MAAM,iBAAiB,CAAA;AAEzC,eAAO,MAAM,UAAU,aACX,QAAQ,iBACH,OAAO,8BAOvB,CAAA;AAED,eAAO,MAAM,WAAW,aAAc,QAAQ,oBAM3C,CAAA"}

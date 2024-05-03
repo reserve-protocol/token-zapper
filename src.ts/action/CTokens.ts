@@ -52,7 +52,7 @@ export class MintCTokenAction extends Action('CompoundV2') {
   }
 
   get outputSlippage() {
-    return 3n
+    return 30n
   }
 
   constructor(
@@ -83,7 +83,7 @@ export class MintCTokenAction extends Action('CompoundV2') {
 
 export class BurnCTokenAction extends Action('CompoundV2') {
   get outputSlippage() {
-    return 3n
+    return 30n
   }
   async plan(
     planner: Planner,

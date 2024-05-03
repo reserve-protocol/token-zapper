@@ -79,6 +79,7 @@ export interface KyberswapAggregatorResult {
   output: Token
   swap: SwapResult
   slippage: bigint
+  addresesInUse: Set<Address>
 }
 
 const idToSlug: Record<number, string> = {
@@ -109,7 +110,8 @@ const fetchSwap = async (
   abort: AbortSignal,
   universe: Universe,
   req: GetRoute,
-  recipient: Address
+  recipient: Address,
+  slippage: bigint
 ) => {
   const POST_GET_SWAP = `https://aggregator-api.kyberswap.com/${
     idToSlug[universe.chainId]
@@ -123,7 +125,7 @@ const fetchSwap = async (
       sender: universe.execAddress.address,
       recipient: recipient.address,
       skipSimulateTx: true,
-      slippageTolerance: Number(universe.config.defaultInternalTradeSlippage),
+      slippageTolerance: Number(slippage) / 10,
       source: 'register',
     }),
     headers: {
@@ -138,11 +140,12 @@ const getQuoteAndSwap = async (
   universe: Universe,
   quantityIn: TokenQuantity,
   tokenOut: Token,
-  recipient: Address,
+  _: Address,
   slippage: bigint
 ): Promise<KyberswapAggregatorResult> => {
+  const dest = universe.execAddress
   const req = await fetchRoute(abort, universe, quantityIn, tokenOut)
-  const swap = await fetchSwap(abort, universe, req, recipient)
+  const swap = await fetchSwap(abort, universe, req, dest, slippage)
 
   return {
     block: universe.currentBlock,
@@ -150,13 +153,25 @@ const getQuoteAndSwap = async (
     output: tokenOut,
     swap,
     req,
+    addresesInUse: new Set(
+      req.data.routeSummary.route
+        .map((i) => i.map((ii) => Address.from(ii.pool)))
+        .flat()
+        .filter((i) => universe.tokens.has(i))
+    ),
     slippage,
   }
 }
 
 class KyberAction extends Action('Kyberswap') {
+  public get oneUsePrZap() {
+    return true
+  }
+  public get addressesInUse() {
+    return this.request.addresesInUse
+  }
   get outputSlippage() {
-    return BigInt(this.request.slippage)
+    return 100n
   }
   async plan(
     planner: Planner,
@@ -212,13 +227,16 @@ class KyberAction extends Action('Kyberswap') {
       ]
     )
   }
+  get outputQty() {
+    return this.request.output.from(
+      BigInt(this.request.req.data.routeSummary.amountOut)
+    )
+  }
   toString() {
-    return `Kyberswap(${this.request.quantityIn} => ${this.request.output})`
+    return `Kyberswap(${this.request.quantityIn} => ${this.outputQty})`
   }
   async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.request.output.from(this.request.req.data.routeSummary.amountOut),
-    ]
+    return [this.outputQty]
   }
   gasEstimate(): bigint {
     return BigInt(this.request.req.data.routeSummary.gas)
@@ -244,6 +262,7 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
       if (req?.swap?.data?.data == null) {
         throw new Error('Failed')
       }
+      // console.log(JSON.stringify(req.req.data, null, 2))
       return await new SwapPlan(universe, [
         new KyberAction(req, universe),
       ]).quote([input], destination)

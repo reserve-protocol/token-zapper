@@ -78,6 +78,8 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   universe.oracles.push(registry)
   universe.oracle = new ZapperTokenQuantityPrice(universe)
 
+
+  
   await setupWrappedGasToken(universe)
 
   // Load compound v3

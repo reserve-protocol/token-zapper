@@ -130,19 +130,28 @@ const _getExchangeMultipleArgs = (
 }
 
 export class CurveSwap extends Action('Curve') {
+  public get oneUsePrZap() {
+    if (
+      this.universe.lpTokens.has(this.outputToken[0]) ||
+      this.universe.lpTokens.has(this.inputToken[0])
+    ) {
+      return false
+    }
+    return true
+  }
+  public get addressesInUse() {
+    return new Set([Address.from(this.pool.address.address)])
+  }
   get outputSlippage() {
-    return this.slippage
+    return this.slippage + 300n
   }
   async plan(
     planner: Planner,
     inputs: Value[],
     _: Address,
-    [amountsIn]: TokenQuantity[]
+    predicted: TokenQuantity[]
   ): Promise<Value[]> {
-    const output = await this._quote(amountsIn)
-    const minOut = this.outputToken[0].fromScale18BN(
-      parseUnits(output.output, 18)
-    )
+    const output = await this._quote(predicted[0])
     const routerContract =
       curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
         .contract
@@ -162,14 +171,15 @@ export class CurveSwap extends Action('Curve') {
       )
     )
 
+    const [quoteWithSlippage] = await this.quoteWithSlippage(predicted)
     planner.add(
       curveRouterCallLib.exchange(
-        inputs[0] ?? amountsIn.amount,
-        minOut.amount - minOut.amount / this.slippage,
+        inputs[0] ?? predicted[0].amount,
+        quoteWithSlippage.amount,
         routerContract.address,
         payload
       ),
-      `Curve,swap=${amountsIn} -> ${minOut}`,
+      `Curve,swap=${predicted.join(', ')} -> ${quoteWithSlippage}`,
       `amt_${this.outputToken[0].symbol}`
     )
 
@@ -184,11 +194,6 @@ export class CurveSwap extends Action('Curve') {
     output: string
     route: IRoute
   }> {
-    const key = (
-      this.inputToken[0].address +
-      '.' +
-      this.outputToken[0].address
-    ).toLowerCase()
     const contract =
       curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
         .contract
@@ -216,10 +221,7 @@ export class CurveSwap extends Action('Curve') {
         this.outputToken[0].decimals
       )
 
-      out.output = formatUnits(
-        outParsed.sub(outParsed.div(600n)),
-        this.outputToken[0].decimals
-      )
+      out.output = formatUnits(outParsed, this.outputToken[0].decimals)
 
       return out
     } catch (e) {
@@ -229,7 +231,6 @@ export class CurveSwap extends Action('Curve') {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const out = (await this._quote(amountsIn)).output
-
     const q = [this.outputToken[0].fromScale18BN(parseUnits(out, 18))]
     return q
   }

@@ -15,15 +15,19 @@ import { TokenQuantity, type Token } from '../entities/Token'
 import { Contract, FunctionCall, Planner, Value } from '../tx-gen/Planner'
 
 export abstract class BaseCometAction extends Action('CompV3') {
+  public get outputSlippage(): bigint {
+    return 10n
+  }
   toString(): string {
     return `${this.protocol}.${this.actionName}(${this.inputToken.join(
       ', '
     )} -> ${this.outputToken.join(', ')})`
   }
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [this.outputToken[0].from(amountsIn.amount)]
+    return [
+      this.outputToken[0].from(amountsIn.into(this.outputToken[0]).amount - 1n),
+    ]
   }
-
   get receiptToken() {
     return this.outputToken[0]
   }
@@ -117,7 +121,7 @@ class MintCometWrapperAction extends BaseCometAction {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [
-      this.receiptToken.from(
+      this.outputToken[0].from(
         await this.cometWrapper.cometWrapperInst.convertDynamicToStatic(
           amountsIn.amount
         )
@@ -173,7 +177,7 @@ class BurnCometWrapperAction extends BaseCometAction {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [
-      this.cometWrapper.cometToken.from(
+      this.outputToken[0].from(
         await this.cometWrapper.cometWrapperInst.convertStaticToDynamic(
           amountsIn.amount
         )

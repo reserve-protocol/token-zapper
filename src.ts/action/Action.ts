@@ -9,6 +9,7 @@ import {
   EthBalance__factory,
   IERC20__factory,
 } from '../contracts'
+import { TRADE_SLIPPAGE_DENOMINATOR } from '../base/constants'
 
 export enum InteractionConvention {
   PayBeforeCall,
@@ -108,6 +109,13 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
+  public get oneUsePrZap() {
+    return false
+  }
+  public get addressesInUse(): Set<Address> {
+    return new Set([])
+  }
+
   outputBalanceOf(universe: Universe, planner: gen.Planner) {
     return this.outputToken.map((token) =>
       this.genUtils.erc20.balanceOf(
@@ -139,7 +147,15 @@ export abstract class BaseAction {
     amountsIn: TokenQuantity[]
   ): Promise<TokenQuantity[]> {
     const outputs = await this.quote(amountsIn)
-    return outputs
+    if (this.outputSlippage === 0n) {
+      return outputs
+    }
+    return outputs.map((output) => {
+      return output.token.from(
+        output.amount -
+          (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
+      )
+    })
   }
   abstract gasEstimate(): bigint
   public async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {

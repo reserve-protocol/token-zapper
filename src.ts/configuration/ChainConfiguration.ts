@@ -49,6 +49,7 @@ export const makeConfig = <
     blockGasLimit: bigint,
     requoteTolerance: number, // Number of blocks to tolerate before quotes need to be requoted
     routerDeadline: number,
+    searcherMinRoutesToProduce: number,
     searcherMaxRoutesToProduce: number,
     searchConcurrency: number,
     defaultInternalTradeSlippage: bigint

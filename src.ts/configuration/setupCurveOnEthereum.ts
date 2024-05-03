@@ -71,9 +71,15 @@ export const initCurveOnEthereum = async (
   )
   setupBidirectionalEdge(FRAX, eUSD__FRAX_USDC, lpActionSlippage)
   setupBidirectionalEdge(MIM, eUSD__FRAX_USDC, lpActionSlippage)
-  setupBidirectionalEdge(USDC, eUSD__FRAX_USDC, lpActionSlippage)
+  // setupBidirectionalEdge(USDC, eUSD__FRAX_USDC, lpActionSlippage)
   setupBidirectionalEdge(USDT, eUSD__FRAX_USDC, lpActionSlippage)
   setupBidirectionalEdge(DAI, eUSD__FRAX_USDC, lpActionSlippage)
+
+  universe.defineMintable(
+    curveApi.createRouterEdge(USDC, eUSD__FRAX_USDC, 100n),
+    curveApi.createRouterEdge(eUSD__FRAX_USDC, USDC, 100n),
+    true
+  )
 
   setupBidirectionalEdge(FRAX, mim_3CRV, lpActionSlippage)
   setupBidirectionalEdge(MIM, mim_3CRV, lpActionSlippage)

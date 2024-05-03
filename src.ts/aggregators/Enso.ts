@@ -9,7 +9,6 @@ import { Approval } from '../base/Approval'
 import { Token, TokenQuantity } from '../entities/Token'
 
 import { EnsoRouter__factory } from '../contracts/factories/contracts/EnsoRouter__factory'
-import { IWrappedNative__factory } from '../contracts/factories/contracts/IWrappedNative__factory'
 import { SwapPlan } from '../searcher/Swap'
 import { FunctionCall, Planner, Value } from '../tx-gen/Planner'
 import { DexRouter } from './DexAggregator'
@@ -48,16 +47,19 @@ const getEnsoQuote_ = async (
   quantityIn: TokenQuantity,
   tokenOut: Token,
   recipient: Address,
-  slippage: bigint
+  slippage: bigint,
+  uni: Universe
 ) => {
   const execAddr: string = recipient.address.toLowerCase()
   const inputTokenStr: string = encodeToken(universe, quantityIn.token)
   const outputTokenStr: string = encodeToken(universe, tokenOut)
-  const GET_QUOTE_DATA = `${API_ROOT}?chainId=${
-    universe.chainId
-  }&slippage=${slippage.toString()}&fromAddress=${execAddr}&routingStrategy=router&priceImpact=false&spender=${execAddr}`
+
+  const GET_QUOTE_DATA = `${API_ROOT}?chainId=${universe.chainId}&slippage=${(
+    slippage / 10n
+  ).toString()}&fromAddress=${execAddr}&routingStrategy=router&priceImpact=false&spender=${execAddr}`
   const reqUrl = `${GET_QUOTE_DATA}&receiver=${execAddr}&amountIn=${quantityIn.amount.toString()}&tokenIn=${inputTokenStr}&tokenOut=${outputTokenStr}`
 
+  // console.log(reqUrl)
   const quote: EnsoQuote = await (
     await fetch(reqUrl, {
       method: 'GET',
@@ -107,8 +109,17 @@ const getEnsoQuote_ = async (
       state.push('0x' + read(size * 2))
     }
 
+    const addresesInUse = new Set(
+      cmds
+        .map((i) => Address.from('0x' + i.slice(24)))
+        .filter((i) => {
+          uni.tokens.has(i) === false
+        })
+    )
+
     const parsed = {
       ...quote,
+      addresesInUse,
       tx: {
         ...quote.tx,
         data: {
@@ -139,9 +150,6 @@ const getEnsoQuote = async (
   retries = 2
 ) => {
   for (let i = 0; i < retries; i++) {
-    if (abort.aborted) {
-      throw new Error('Timeout')
-    }
     try {
       return await getEnsoQuote_(
         abort,
@@ -149,7 +157,8 @@ const getEnsoQuote = async (
         quantityIn,
         tokenOut,
         recipient,
-        slippage
+        slippage,
+        universe
       )
     } catch (e: any) {
       // console.log(
@@ -168,8 +177,14 @@ const getEnsoQuote = async (
 type ParsedQuote = Awaited<ReturnType<typeof getEnsoQuote>>
 
 class EnsoAction extends Action('Enso') {
-  public get outputSlippage(): bigint {
-    return this.slippage
+  public get oneUsePrZap() {
+    return true
+  }
+  public get addressesInUse() {
+    return this.request.addresesInUse
+  }
+  get outputSlippage() {
+    return 100n
   }
   async plan(
     planner: Planner,

@@ -90,7 +90,7 @@ class AaveV3ActionWithdraw extends BaseAaveAction {
     const lib = this.gen.Contract.createContract(this.reserve.poolInst)
     ///(address asset, uint256 amount, address to)
     planner.add(
-      lib.supply(
+      lib.withdraw(
         this.reserve.reserveToken.address.address,
         inputs[0],
         destination.address
@@ -140,7 +140,7 @@ class AaveReserve {
   }
 
   toString() {
-    return `AaveReserve(${this.reserveToken},${this.aToken})`
+    return `AaveReserve(underlying=${this.reserveToken},aToken=${this.aToken})`
   }
 }
 class AaveV3 {
@@ -226,6 +226,7 @@ class AaveV3 {
       console.warn(`No reserve found for aToken ${aToken.toString()}`)
       return
     }
+    console.log(reserve.toString())
     await setupMintableWithRate(
       this.universe,
       IStaticATokenV3LM__factory,

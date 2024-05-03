@@ -279,7 +279,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       nativeToken.decimals
     )
 
-    this.weirollZapperExec = Contract.createContract(
+    this.weirollZapperExec = Contract.createLibrary(
       ZapperExecutor__factory.connect(this.execAddress.address, this.provider)
     )
   }

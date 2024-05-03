@@ -25,6 +25,7 @@ export class MintSAV3TokensAction extends Action('AaveV3') {
     destination: Address,
     predicted: TokenQuantity[]
   ) {
+    const inp = inputs[0] ?? predicted[0].amount
     const lib = this.gen.Contract.createContract(
       IStaticATokenV3LM__factory.connect(
         this.outputToken[0].address.address,
@@ -32,7 +33,12 @@ export class MintSAV3TokensAction extends Action('AaveV3') {
       )
     )
     planner.add(
-      lib.deposit(inputs[0], destination.address, 0, true),
+      lib.deposit(
+        inp,
+        this.universe.execAddress.address,
+        0,
+        true
+      ),
       `AaveV3 mint: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
     )
     return this.outputBalanceOf(this.universe, planner)

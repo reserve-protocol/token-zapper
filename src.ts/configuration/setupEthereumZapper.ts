@@ -155,7 +155,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   await Promise.all(
     PROTOCOL_CONFIGS.erc4626.map(([addr, proto]) =>
-      setupERC4626(universe, [addr], proto, 30000000n)
+      setupERC4626(universe, [addr], proto, 30n)
     )
   )
 

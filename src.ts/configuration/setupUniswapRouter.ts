@@ -7,12 +7,7 @@ import {
   TradeType,
   Token as UniToken,
 } from '@uniswap/sdk-core'
-import {
-  Trade,
-  Trade as V3Trade,
-  encodeRouteToPath,
-  toHex,
-} from '@uniswap/v3-sdk'
+import { Trade, Trade as V3Trade, toHex } from '@uniswap/v3-sdk'
 
 import DEFAULT_TOKEN_LIST from '@uniswap/default-token-list'
 import {
@@ -29,6 +24,7 @@ import {
   UniswapMulticallProvider,
   V3PoolProvider,
   V3Route,
+  V3RouteWithValidQuote,
 } from '@uniswap/smart-order-router'
 import { Universe } from '../Universe'
 import {
@@ -52,93 +48,170 @@ import { utils } from 'ethers'
 import NodeCache from 'node-cache'
 import { RouterAction } from '../action/RouterAction'
 import { SwapPlan } from '../searcher/Swap'
+import { SwapSide } from 'paraswap-core'
+import { solidityPack } from 'ethers/lib/utils'
+
+class UniswapPool {
+  public constructor(
+    public readonly address: Address,
+    public readonly token0: Token,
+    public readonly token1: Token,
+    public readonly fee: number
+  ) {}
+
+  toString() {
+    return `(${this.token0}.${this.fee}.${this.token1})`
+  }
+}
+class UniswapStep {
+  public constructor(
+    public readonly pool: UniswapPool,
+    public readonly tokenIn: Token,
+    public readonly tokenOut: Token
+  ) {}
+
+  toString() {
+    return `${this.tokenIn} -> ${this.pool.address.toShortString()} -> ${
+      this.tokenOut
+    }`
+  }
+}
+export class UniswapTrade {
+  public constructor(
+    public readonly to: Address,
+    public readonly gasEstimate: bigint,
+    public readonly input: TokenQuantity,
+    public readonly output: TokenQuantity,
+    public readonly swaps: UniswapStep[],
+    public readonly addresses: Set<Address>,
+    public readonly outputWithSlippage: TokenQuantity
+  ) {}
+
+  toString() {
+    return `${this.input} -> [${this.swaps.join(' -> ')}] -> ${this.output}`
+  }
+}
+
 type UniQuote = {
-  route: SwapRoute
-  input: TokenQuantity
   output: TokenQuantity
   slippage: bigint
   block: number
+  slippagePercent: Percent
+  addresses: Set<Address>
+  parsedRoute: UniswapTrade
 }
+
+function encodeRouteToPath(route: UniswapTrade): string {
+  const firstInputToken = route.input.token
+  const { path, types } = route.swaps.reduce(
+    (
+      {
+        inputToken,
+        path,
+        types,
+      }: { inputToken: Token; path: (string | number)[]; types: string[] },
+      step,
+      index
+    ): { inputToken: Token; path: (string | number)[]; types: string[] } => {
+      const outputToken: Token = step.tokenOut
+      if (index === 0) {
+        return {
+          inputToken: outputToken,
+          types: ['address', 'uint24', 'address'],
+          path: [
+            inputToken.address.address,
+            step.pool.fee,
+            outputToken.address.address,
+          ],
+        }
+      } else {
+        return {
+          inputToken: outputToken,
+          types: [...types, 'uint24', 'address'],
+          path: [...path, step.pool.fee, outputToken.address.address],
+        }
+      }
+    },
+    { inputToken: firstInputToken, path: [], types: [] }
+  )
+  return solidityPack(types, path)
+}
+
 export class UniswapRouterAction extends Action('Uniswap') {
-  get outputSlippage(): bigint {
-    return this.currentQuote.slippage
+  public get oneUsePrZap() {
+    return true
+  }
+  get outputSlippage() {
+    return 0n
   }
   async planV3Trade(
     planner: Planner,
-    trade: V3Trade<Currency, Currency, TradeType>,
-    input: Value,
-    predicted: TokenQuantity
+    trade: UniswapTrade,
+    input: Value | bigint
   ): Promise<Value> {
-    if (trade.tradeType !== TradeType.EXACT_INPUT) {
-      throw new Error('Not implemented')
-    }
-
     const v3CalLRouterLib = this.gen.Contract.createLibrary(
       UniV3RouterCall__factory.connect(
         this.universe.config.addresses.uniV3Router.address,
         this.universe.provider
       )
     )
-    const [minOut] = await this.quoteWithSlippage([predicted])
-    for (const { route } of trade.swaps) {
-      const singleHop = route.pools.length === 1
-      if (singleHop) {
-        const exactInputSingleParams = {
-          tokenIn: this.inputToken[0].address.address,
-          tokenOut: this.outputToken[0].address.address,
-          fee: route.pools[0].fee,
-          recipient: this.universe.execAddress.address,
-          amountIn: 0,
-          amountOutMinimum: minOut.amount,
-          sqrtPriceLimitX96: 0,
-        }
-
-        const encoded = utils.defaultAbiCoder.encode(
-          [
-            'address',
-            'address',
-            'uint24',
-            'address',
-            'uint256',
-            'uint256',
-            'uint160',
-          ],
-          [
-            exactInputSingleParams.tokenIn,
-            exactInputSingleParams.tokenOut,
-            exactInputSingleParams.fee,
-            exactInputSingleParams.recipient,
-            0,
-            0,
-            exactInputSingleParams.sqrtPriceLimitX96,
-          ]
-        )
-
-        return planner.add(
-          v3CalLRouterLib.exactInputSingle(
-            input,
-            minOut.amount,
-            this.route.methodParameters!.to,
-            encoded
-          ),
-          `UniV3.exactInputSingle(${route.input.symbol} => ${route.output.symbol})`
-        )!
-      } else {
-        const path = encodeRouteToPath(route, false)
-        return planner.add(
-          v3CalLRouterLib.exactInput(
-            input,
-            minOut.amount,
-            this.route.methodParameters!.to,
-            this.universe.execAddress.address,
-            toHex(path)
-          ),
-          `UniV3.exactInput(${route.input.symbol} => ${route.output.symbol})`
-        )!
+    const minOut = this.outputQty.amount
+    if (trade.swaps.length === 1) {
+      const route = trade.swaps[0]
+      const exactInputSingleParams = {
+        tokenIn: this.inputToken[0].address.address,
+        tokenOut: this.outputToken[0].address.address,
+        fee: route.pool.fee,
+        recipient: this.universe.execAddress.address,
+        amountIn: 0,
+        amountOutMinimum: minOut,
+        sqrtPriceLimitX96: 0,
       }
+
+      const encoded = utils.defaultAbiCoder.encode(
+        [
+          'address',
+          'address',
+          'uint24',
+          'address',
+          'uint256',
+          'uint256',
+          'uint160',
+        ],
+        [
+          exactInputSingleParams.tokenIn,
+          exactInputSingleParams.tokenOut,
+          exactInputSingleParams.fee,
+          exactInputSingleParams.recipient,
+          0,
+          0,
+          exactInputSingleParams.sqrtPriceLimitX96,
+        ]
+      )
+
+      return planner.add(
+        v3CalLRouterLib.exactInputSingle(
+          input,
+          minOut,
+          this.currentQuote.to.address,
+          encoded
+        ),
+        `UniV3.exactInputSingle(${route})`
+      )!
     }
-    throw new Error('Not implemented')
+    const path = encodeRouteToPath(this.currentQuote)
+    return planner.add(
+      v3CalLRouterLib.exactInput(
+        input,
+        minOut,
+        this.currentQuote.to.address,
+        this.universe.execAddress.address,
+        toHex(path)
+      ),
+      `UniV3.exactInput(${trade})`
+    )!
   }
+
   async plan(
     planner: Planner,
     [input]: Value[],
@@ -146,48 +219,21 @@ export class UniswapRouterAction extends Action('Uniswap') {
     [staticInput]: TokenQuantity[]
   ): Promise<Value[]> {
     let inp = input ?? encodeArg(staticInput.amount, ParamType.from('uint256'))
-
-    for (const { route, inputAmount, outputAmount } of this.route.trade.swaps) {
-      if (route.protocol === Protocol.V3) {
-        const v3Route: V3Route = route as unknown as V3Route
-        inp = await this.planV3Trade(
-          planner,
-          V3Trade.createUncheckedTrade({
-            route: v3Route,
-            inputAmount: inputAmount,
-            outputAmount: outputAmount,
-            tradeType: TradeType.EXACT_INPUT,
-          }),
-          inp,
-          staticInput
-        )
-      } else {
-        throw new Error('Not implemented')
-      }
-    }
-    if (inp == null) {
-      throw new Error('Failed to plan')
-    }
-    return this.outputBalanceOf(this.universe, planner)
+    return [await this.planV3Trade(planner, this.currentQuote, inp)]
   }
   public createdBlock: number
   constructor(
-    public currentQuote: UniQuote,
+    public currentQuote: UniswapTrade,
     public readonly universe: Universe,
-    private reQuote: (input: TokenQuantity) => Promise<UniQuote>
+    public readonly dex: DexRouter
   ) {
     super(
-      Address.from(currentQuote.route.methodParameters!.to),
+      currentQuote.to,
       [currentQuote.input.token],
-      [currentQuote.output.token],
+      [currentQuote.outputWithSlippage.token],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      [
-        new Approval(
-          currentQuote.input.token,
-          Address.from(currentQuote.route.methodParameters!.to)
-        ),
-      ]
+      [new Approval(currentQuote.input.token, currentQuote.to)]
     )
     this.createdBlock = universe.currentBlock
   }
@@ -195,10 +241,13 @@ export class UniswapRouterAction extends Action('Uniswap') {
     return this.currentQuote.input
   }
   get outputQty() {
-    return this.currentQuote.output
+    return this.currentQuote.outputWithSlippage
   }
   toString() {
-    return `Uniswap(${this.inputQty} => ${this.outputQty})`
+    return `UniRouter(${this.currentQuote})`
+  }
+  public get addressesInUse() {
+    return this.currentQuote.addresses
   }
   async quote([input]: TokenQuantity[]): Promise<TokenQuantity[]> {
     // if (
@@ -210,10 +259,10 @@ export class UniswapRouterAction extends Action('Uniswap') {
     return [this.outputQty]
   }
   get route() {
-    return this.currentQuote.route
+    return this.currentQuote
   }
   gasEstimate(): bigint {
-    const out = this.route.estimatedGasUsed.toBigInt()
+    const out = this.currentQuote.gasEstimate
     return out === 0n ? 300000n : out
   }
 }
@@ -229,6 +278,17 @@ const ourTokenToUni = (universe: Universe, token: Token): Currency => {
     token.symbol,
     token.name
   )
+}
+
+const uniTokenToOurs = async (universe: Universe, token: Currency) => {
+  if (token.isNative) {
+    return universe.nativeToken
+  }
+  return await universe.getToken(Address.from(token.address))
+}
+const uniAmtTokenToOurs = async (universe: Universe, token: CurrencyAmount) => {
+  const ourToken = await uniTokenToOurs(universe, token.currency)
+  return ourToken.fromBigInt(BigInt(token.quotient.toString()))
 }
 const tokenQtyToCurrencyAmt = (
   universe: Universe,
@@ -270,6 +330,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
     chainId: universe.chainId,
     multicall2Provider: multicall,
     poolProvider: v3PoolProvider,
+
     quoteProvider: new OnChainQuoteProvider(
       network.chainId,
       universe.provider,
@@ -278,17 +339,92 @@ export const setupUniswapRouter = async (universe: Universe) => {
     tokenProvider: cachingTokenProvider,
   })
 
+  const pools: Map<Address, UniswapPool> = new Map()
+
+  const parseRoute = async (
+    route: SwapRoute,
+    inputTokenQuantity: TokenQuantity,
+    slippage: bigint
+  ) => {
+    const routes = route.route as V3RouteWithValidQuote[]
+    const steps = await Promise.all(
+      routes.map(async (v3Route) => {
+        const stepPools = await Promise.all(
+          v3Route.route.pools.map(async (pool, index) => {
+            const addr = Address.from(v3Route.poolAddresses[index])
+            const prev = pools.get(addr)
+            if (prev) {
+              return prev
+            }
+            const token0 = await universe.getToken(
+              Address.from(pool.token0.address)
+            )
+            const token1 = await universe.getToken(
+              Address.from(pool.token1.address)
+            )
+            const poolInst = new UniswapPool(addr, token0, token1, pool.fee)
+            pools.set(addr, poolInst)
+            return poolInst
+          })
+        )
+
+        const steps: UniswapStep[] = []
+        for (let i = 0; i < stepPools.length; i++) {
+          const tokenIn = await uniTokenToOurs(
+            universe,
+            v3Route.route.tokenPath[i]
+          )
+          const tokenOut = await uniTokenToOurs(
+            universe,
+            v3Route.route.tokenPath[i + 1]
+          )
+          steps.push(new UniswapStep(stepPools[i], tokenIn, tokenOut))
+        }
+        return steps
+      })
+    )
+    if (steps.length !== 1) {
+      throw new Error(
+        `We don't support univ3 with splits yet. Got ${steps.length} paths`
+      )
+    }
+
+    const outputWithoutSlippage = await uniAmtTokenToOurs(
+      universe,
+      route.trade.outputAmount
+    )
+    const outputWithSlippage = await uniAmtTokenToOurs(
+      universe,
+      route.trade.minimumAmountOut(
+        new Percent(Number(slippage), Number(TRADE_SLIPPAGE_DENOMINATOR))
+      )
+    )
+    return new UniswapTrade(
+      Address.from(route.methodParameters!.to),
+      route.estimatedGasUsed.toBigInt(),
+      inputTokenQuantity,
+      outputWithoutSlippage,
+      steps[0],
+      new Set(steps[0].map((i) => i.pool.address)),
+      outputWithSlippage
+    )
+  }
+
   const computeRoute = async (
     input: TokenQuantity,
     output: Token,
     slippage: bigint
-  ): Promise<UniQuote> => {
+  ): Promise<UniswapTrade> => {
     const inp = tokenQtyToCurrencyAmt(universe, input)
     const outp = ourTokenToUni(universe, output)
-
+    const slip = new Percent(
+      Number(slippage),
+      Number(TRADE_SLIPPAGE_DENOMINATOR)
+    )
     const route = await router.route(inp, outp, TradeType.EXACT_INPUT, {
       recipient: universe.execAddress.address,
-      slippageTolerance: new Percent(Number(slippage), Number(TRADE_SLIPPAGE_DENOMINATOR)),
+      slippageTolerance: slip,
+
       deadline: Math.floor(Date.now() / 1000 + 1600),
       type: SwapType.SWAP_ROUTER_02,
     })
@@ -296,29 +432,18 @@ export const setupUniswapRouter = async (universe: Universe) => {
       throw new Error('Failed to find route')
     }
 
-    const outputAmt = output.fromBigInt(
-      BigInt(route.trade.outputAmount.quotient.toString())
-    )
+    const parsedRoute = await parseRoute(route, input, slippage)
+    // console.log(`${input} -> ${output}: ${parsedRoute}`)
 
-    return {
-      route,
-      input,
-      output: outputAmt,
-      slippage: slippage,
-      block: universe.currentBlock,
-    }
+    return parsedRoute
   }
-
-  const out = new DexRouter(
+  let out!: DexRouter
+  out = new DexRouter(
     'uniswap',
     async (abort, src, dst, input, output, slippage) => {
       const route = await computeRoute(input, output, slippage)
       return await new SwapPlan(universe, [
-        new UniswapRouterAction(
-          route,
-          universe,
-          async (inp) => await computeRoute(inp, output, slippage)
-        ),
+        new UniswapRouterAction(route, universe, out),
       ]).quote([input], universe.execAddress)
     },
     true

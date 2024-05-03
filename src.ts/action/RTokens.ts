@@ -145,7 +145,7 @@ export class MintRTokenAction extends ReserveRTokenBase {
   async plan(planner: Planner, _: Value[], __: Address) {
     planner.add(
       this.universe.weirollZapperExec.mintMaxRToken(
-        this.universe.config.addresses.facadeAddress.address,
+        this.universe.config.addresses.oldFacadeAddress.address,
         this.address.address,
         this.universe.execAddress.address
       )
@@ -222,7 +222,7 @@ export class BurnRTokenAction extends ReserveRTokenBase {
     return this.rTokenDeployment.burnEstimate
   }
   get outputSlippage() {
-    return 1n
+    return 30n
   }
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const basket = this.rTokenDeployment.basket

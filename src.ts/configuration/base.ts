@@ -16,6 +16,7 @@ export const RTOKENS = {
   hyUSD: '0xCc7FF230365bD730eE4B352cC2492CEdAC49383e',
   bsd: '0xcb327b99ff831bf8223cced12b1338ff3aa322ff',
   iUSD: '0xfE0D6D83033e313691E96909d2188C150b834285',
+  MATT: '0x641b0453487c9d14c5df96d45a481ef1dc84e31f',
 } as const
 
 export const baseConfig = makeConfig(
@@ -44,11 +45,12 @@ export const baseConfig = makeConfig(
   {
     blocktime: 2000,
     blockGasLimit: 60000000n,
-    requoteTolerance: 1,
-    routerDeadline: 3000,
-    searcherMaxRoutesToProduce: 3,
-    searchConcurrency: 3,
-    defaultInternalTradeSlippage: 25n,
+    requoteTolerance: 5,
+    routerDeadline: 4000,
+    searcherMinRoutesToProduce: 4,
+    searcherMaxRoutesToProduce: 8,
+    searchConcurrency: 6,
+    defaultInternalTradeSlippage: 200n,
   }
 )
 

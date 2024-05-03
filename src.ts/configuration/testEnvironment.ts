@@ -54,11 +54,12 @@ export const testConfig = makeConfig(
   {
     blocktime: 12000,
     blockGasLimit: 30000000n,
-    requoteTolerance: 1,
+    requoteTolerance: 2,
     routerDeadline: 4000,
-    searcherMaxRoutesToProduce: 4,
-    searchConcurrency: 4,
-    defaultInternalTradeSlippage: 30n,
+    searcherMinRoutesToProduce: 4,
+    searcherMaxRoutesToProduce: 8,
+    searchConcurrency: 6,
+    defaultInternalTradeSlippage: 200n,
   }
 )
 type BaseTestConfigType = typeof testConfig

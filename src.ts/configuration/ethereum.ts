@@ -1,10 +1,9 @@
 import { type Universe } from '../Universe'
 import { makeConfig } from './ChainConfiguration'
 
-import { ChainIds, getAddressesForChain } from './ReserveAddresses'
+import { ChainIds } from './ReserveAddresses'
 
 const chainId = ChainIds.Mainnet
-const reserveAddresses = getAddressesForChain(chainId)
 export const COMMON_TOKENS = {
   USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
   USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
@@ -104,11 +103,12 @@ export const ethereumConfig = makeConfig(
   {
     blocktime: 12000,
     blockGasLimit: 30000000n,
-    requoteTolerance: 1,
-    routerDeadline: 2500,
-    searcherMaxRoutesToProduce: 3,
-    searchConcurrency: 3,
-    defaultInternalTradeSlippage: 25n,
+    requoteTolerance: 2,
+    routerDeadline: 4000,
+    searcherMinRoutesToProduce: 4,
+    searcherMaxRoutesToProduce: 8,
+    searchConcurrency: 6,
+    defaultInternalTradeSlippage: 200n,
   }
 )
 

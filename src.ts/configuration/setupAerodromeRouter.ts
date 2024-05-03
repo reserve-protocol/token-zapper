@@ -43,7 +43,7 @@ class AerodromePathStep {
   }
 
   toString() {
-    return `${this.input} -> ${this.output}`
+    return `AerodromePathStep${this.input} -> ${this.output}`
   }
 }
 class AerodromePath {
@@ -55,8 +55,8 @@ class AerodromePath {
     const steps: AerodromePathStep[] = []
     for (let i = 1; i < amts.length; i++) {
       const step = route[i - 1]
-      const input = step.tokenIn.from(amts[i - 1])
-      const output = step.tokenOut.from(amts[i])
+      const input = step.tokenIn.from(amts[i - 1].toBigInt())
+      const output = step.tokenOut.from(amts[i].toBigInt())
       steps.push(new AerodromePathStep(step, input, output))
     }
     return new AerodromePath(steps)
@@ -71,7 +71,9 @@ class AerodromePath {
   }
 
   toString() {
-    return `${this.input} -> ${this.steps.map((s) => s.output).join(' -> ')}`
+    return `${this.input} -> ${this.steps
+      .map((s) => s.pool.poolAddress.toShortString() + ' -> ' + s.output)
+      .join(' -> ')}`
   }
 }
 
@@ -98,10 +100,17 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
         this.universe.execAddress.address,
         Date.now() + 1000 * 60 * 10
       ),
-      'Aerodrome.swapExactTokensForTokens(' + this.path.toString() + ')'
+      this.toString()
     )!
 
     return this.outputBalanceOf(this.universe, planner)
+  }
+
+  public get oneUsePrZap() {
+    return true
+  }
+  public get addressesInUse() {
+    return this.addrsUsedInSwap
   }
   gasEstimate() {
     return BigInt(200000n) * BigInt(this.path.steps.length)
@@ -112,9 +121,9 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
   }
 
   get outputSlippage() {
-    return this.quoteSlippage
+    return this.quoteSlippage + 100n
   }
-
+  private addrsUsedInSwap: Set<Address>
   constructor(
     readonly universe: Universe,
     readonly path: AerodromePath,
@@ -129,13 +138,16 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
       DestinationOptions.Callee,
       [new Approval(path.input.token, Address.from(router.address))]
     )
+    this.addrsUsedInSwap = new Set(
+      this.path.steps.map((i) => i.pool.poolAddress)
+    )
 
     if (this.inputToken.length !== 1 || this.outputToken.length !== 1) {
       throw new Error('RouterAction requires exactly one input and one output')
     }
   }
   toString(): string {
-    return `AerodromeRouterSwap(${this.path.toString()})`
+    return `AerodromeRouter(${this.path.toString()})`
   }
 }
 
@@ -147,11 +159,13 @@ class AerodromePool {
     public readonly poolToken: Token | null,
     public readonly fee: bigint,
     public readonly poolType: number,
-    public readonly factory: Address
+    public readonly factory: AerodromeFactory
   ) {}
 
   toString() {
-    return `AerodromePool(${this.token0}.${this.token1})`
+    return `${this.token0}.AD.${this.poolAddress.toShortString()}.${this.fee},${
+      this.token1
+    }`
   }
 }
 
@@ -163,7 +177,7 @@ class SwapRouteStep {
   ) {}
 
   toString() {
-    return `SwapRouteStep(${this.tokenIn} -> ${this.tokenOut})`
+    return `(${this.tokenIn} -> ${this.tokenOut})`
   }
 
   intoRouteStruct(): RouteStruct {
@@ -171,8 +185,15 @@ class SwapRouteStep {
       from: this.tokenIn.address.address,
       to: this.tokenOut.address.address,
       stable: this.pool.poolType === 0,
-      factory: this.pool.factory.address,
+      factory: this.pool.factory.address.address,
     }
+  }
+}
+class AerodromeFactory {
+  constructor(public readonly address: Address) {}
+
+  public toString() {
+    return `AerodromeFactory(${this.address})`
   }
 }
 
@@ -190,7 +211,23 @@ export const setupAerodromeRouter = async (universe: Universe) => {
     universe.provider
   )
 
-  const pools = await Promise.all(
+  const factories = new Map<Address, AerodromeFactory>([
+    [
+      Address.from('0x420DD381b31aEf6683db6B902084cB0FFECe40Da'),
+      new AerodromeFactory(
+        Address.from('0x420DD381b31aEf6683db6B902084cB0FFECe40Da')
+      ),
+    ],
+    [
+      Address.from('0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A'),
+      new AerodromeFactory(
+        Address.from('0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A')
+      ),
+    ],
+  ])
+
+  console.log('Aerodrome: Loading pools')
+  let pools = await Promise.all(
     (
       await sugarInst.forSwaps(1000, 0)
     ).map(async ({ token0, token1, lp, poolType, poolFee, factory }) => {
@@ -203,6 +240,14 @@ export const setupAerodromeRouter = async (universe: Universe) => {
         return null
       }
 
+      const factoryAddr = Address.from(factory)
+
+      let factoryInst = factories.get(factoryAddr)
+      if (factoryInst == null) {
+        factoryInst = new AerodromeFactory(factoryAddr)
+        factories.set(factoryAddr, factoryInst)
+      }
+
       const pool = new AerodromePool(
         Address.from(lp),
         tok0,
@@ -210,11 +255,50 @@ export const setupAerodromeRouter = async (universe: Universe) => {
         poolToken,
         poolFee.toBigInt(),
         poolType,
-        Address.from(factory)
+        factoryInst
       )
       return pool
     })
   )
+  pools.concat(
+    await Promise.all(
+      (
+        await sugarInst.forSwaps(1000, 1000)
+      ).map(async ({ token0, token1, lp, poolType, poolFee, factory }) => {
+        const [tok0, tok1, poolToken] = await Promise.all([
+          await universe.getToken(Address.from(token0)),
+          await universe.getToken(Address.from(token1)),
+          universe.getToken(Address.from(lp)).catch(() => null),
+        ])
+        if (tok0 == null || tok1 == null) {
+          return null
+        }
+
+        const factoryAddr = Address.from(factory)
+
+        let factoryInst = factories.get(factoryAddr)
+        if (factoryInst == null) {
+          factoryInst = new AerodromeFactory(factoryAddr)
+          factories.set(factoryAddr, factoryInst)
+        }
+
+        const pool = new AerodromePool(
+          Address.from(lp),
+          tok0,
+          tok1,
+          poolToken,
+          poolFee.toBigInt(),
+          poolType,
+          factoryInst
+        )
+        return pool
+      })
+    )
+  )
+
+  console.log([...factories.values()].join(', '))
+
+  console.log(pools.length, 'pools loaded')
 
   const directSwaps = new DefaultMap<Token, DefaultMap<Token, AerodromePool[]>>(
     () => new DefaultMap(() => [])

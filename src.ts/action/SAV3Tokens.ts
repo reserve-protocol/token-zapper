@@ -105,10 +105,6 @@ export class BurnSAV3TokensAction extends Action('AaveV3') {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    IStaticATokenV3LM__factory.connect(
-      this.inputToken[0].address.address,
-      this.universe.provider
-    )
     await this.universe.refresh(this.address)
     return [
       this.saToken

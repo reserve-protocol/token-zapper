@@ -1,6 +1,7 @@
 import { type Universe } from '../Universe'
 import { type Address } from '../base/Address'
 import { Approval } from '../base/Approval'
+import { BlockCache } from '../base/BlockBasedCache'
 import { WrappedComet__factory } from '../contracts/factories/contracts/Compv3.sol/WrappedComet__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
@@ -34,16 +35,10 @@ export class MintCometWrapperAction extends Action(
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.receiptToken.from(
-        await WrappedComet__factory.connect(
-          this.receiptToken.address.address,
-          this.universe.provider
-        ).convertDynamicToStatic(amountsIn.amount)
-      ),
-    ]
+    return await this.quoteCache.get(amountsIn)
   }
 
+  private quoteCache: BlockCache<TokenQuantity, TokenQuantity[]>
   constructor(
     readonly universe: Universe,
     readonly baseToken: Token,
@@ -58,6 +53,15 @@ export class MintCometWrapperAction extends Action(
       DestinationOptions.Callee,
       [new Approval(baseToken, receiptToken.address)]
     )
+    const inst = WrappedComet__factory.connect(
+      this.receiptToken.address.address,
+      this.universe.provider
+    )
+    this.quoteCache = this.universe.createCache(async (qty: TokenQuantity) => {
+      return [
+        this.receiptToken.from(await inst.convertDynamicToStatic(qty.amount)),
+      ]
+    })
   }
   toString(): string {
     return `CompoundV3WrapperMint(${this.receiptToken.toString()})`
@@ -98,16 +102,10 @@ export class BurnCometWrapperAction extends Action(
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.baseToken.from(
-        await WrappedComet__factory.connect(
-          this.receiptToken.address.address,
-          this.universe.provider
-        ).convertStaticToDynamic(amountsIn.amount)
-      ),
-    ]
+    return await this.quoteCache.get(amountsIn)
   }
 
+  private quoteCache: BlockCache<TokenQuantity, TokenQuantity[]>
   constructor(
     readonly universe: Universe,
     readonly baseToken: Token,
@@ -122,6 +120,15 @@ export class BurnCometWrapperAction extends Action(
       DestinationOptions.Callee,
       []
     )
+    const inst = WrappedComet__factory.connect(
+      this.receiptToken.address.address,
+      this.universe.provider
+    )
+    this.quoteCache = this.universe.createCache(async (qty: TokenQuantity) => {
+      return [
+        this.receiptToken.from(await inst.convertStaticToDynamic(qty.amount)),
+      ]
+    })
   }
   toString(): string {
     return `CompoundV3Burn(${this.receiptToken.toString()})`

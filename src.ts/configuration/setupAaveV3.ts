@@ -226,7 +226,6 @@ class AaveV3 {
       console.warn(`No reserve found for aToken ${aToken.toString()}`)
       return
     }
-    console.log(reserve.toString())
     await setupMintableWithRate(
       this.universe,
       IStaticATokenV3LM__factory,

@@ -147,18 +147,27 @@ const getQuoteAndSwap = async (
   const req = await fetchRoute(abort, universe, quantityIn, tokenOut)
   const swap = await fetchSwap(abort, universe, req, dest, slippage)
 
+  const addrs = new Set(
+    req.data.routeSummary.route
+      .map((i) =>
+        i.map((ii) => {
+          try {
+            return Address.from(ii.pool)
+          } catch (e) {
+            return universe.wrappedNativeToken.address
+          }
+        })
+      )
+      .flat()
+      .filter((i) => universe.tokens.has(i) === false)
+  )
   return {
     block: universe.currentBlock,
     quantityIn,
     output: tokenOut,
     swap,
     req,
-    addresesInUse: new Set(
-      req.data.routeSummary.route
-        .map((i) => i.map((ii) => Address.from(ii.pool)))
-        .flat()
-        .filter((i) => universe.tokens.has(i))
-    ),
+    addresesInUse: addrs,
     slippage,
   }
 }
@@ -259,10 +268,9 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
         destination,
         slippage
       )
-      if (req?.swap?.data?.data == null) {
-        throw new Error('Failed')
+      if (req.swap.data == null || req.swap.data.data == null) {
+        throw new Error('Kyberswap: No swap data')
       }
-      // console.log(JSON.stringify(req.req.data, null, 2))
       return await new SwapPlan(universe, [
         new KyberAction(req, universe),
       ]).quote([input], destination)

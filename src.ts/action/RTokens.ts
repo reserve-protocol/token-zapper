@@ -20,6 +20,7 @@ import {
 } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 import { ethers } from 'ethers'
+import { BlockCache } from '../base/BlockBasedCache'
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction
@@ -224,7 +225,11 @@ export class BurnRTokenAction extends ReserveRTokenBase {
   get outputSlippage() {
     return 30n
   }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+  async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return this.quoteCache.get(amountsIn[0])
+  }
+
+  async quote_([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const basket = this.rTokenDeployment.basket
     const out = await this.rTokenDeployment.contracts.rTokenLens.callStatic
       .redeem(
@@ -255,6 +260,7 @@ export class BurnRTokenAction extends ReserveRTokenBase {
   get basket() {
     return this.rTokenDeployment.basket
   }
+  private quoteCache: BlockCache<TokenQuantity, TokenQuantity[]>
   constructor(public readonly rTokenDeployment: RTokenDeployment) {
     super(
       rTokenDeployment.rToken.address,
@@ -263,6 +269,9 @@ export class BurnRTokenAction extends ReserveRTokenBase {
       InteractionConvention.None,
       DestinationOptions.Callee,
       []
+    )
+    this.quoteCache = this.universe.createCache<TokenQuantity, TokenQuantity[]>(
+      async (amountsIn) => await this.quote_([amountsIn])
     )
   }
 }

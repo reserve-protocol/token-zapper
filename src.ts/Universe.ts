@@ -25,6 +25,9 @@ import { ZapperExecutor__factory } from './contracts'
 import { Searcher } from './searcher/Searcher'
 import { SwapPath } from './searcher/Swap'
 import { Contract } from './tx-gen/Planner'
+import { Cached } from './base/Cached'
+import { BlockCache } from './base/BlockBasedCache'
+import { PerformanceMonitor } from './searcher/PerformanceMonitor'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -44,6 +47,29 @@ export class Universe<const UniverseConf extends Config = Config> {
   })
   get chainId(): UniverseConf['chainId'] {
     return this.config.chainId
+  }
+
+  private readonly caches: BlockCache<any, any>[] = []
+
+  public readonly perf = new PerformanceMonitor()
+  public prettyPrintPerfs(addContext = false) {
+    console.log('Performance Stats')
+    for (const [_, value] of this.perf.stats.entries()) {
+      console.log('  ' + value.toString())
+      if (addContext) {
+        for (const context of value.contextStats) {
+          console.log('    ' + context.toString())
+        }
+      }
+    }
+  }
+  public createCache<Key, Result>(
+    fetch: (key: Key) => Promise<Result>,
+    ttl: number = this.config.requoteTolerance
+  ): BlockCache<Key, Result> {
+    const cache = new BlockCache(fetch, ttl, this.currentBlock)
+    this.caches.push(cache)
+    return cache
   }
 
   public readonly refreshableEntities = new Map<Address, Refreshable>()
@@ -92,6 +118,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     'USD Dollar',
     8
   )
+
+  private fairPriceCache: BlockCache<TokenQuantity, TokenQuantity>
 
   public readonly graph: Graph = new Graph()
   public readonly wrappedTokens = new Map<
@@ -147,11 +175,12 @@ export class Universe<const UniverseConf extends Config = Config> {
    */
   public oracle?: OracleDef = undefined
   async fairPrice(qty: TokenQuantity) {
-    const out =
-      (await this.oracle?.quote(qty).catch(() => {
-        return null
-      })) ?? null
-
+    const perfStart = this.perf.begin('fairPrice', qty.token.symbol)
+    let out: TokenQuantity | null = await this.fairPriceCache.get(qty)
+    if (out.amount === 0n) {
+      out = null
+    }
+    perfStart()
     return out
   }
   async priceQty(qty: TokenQuantity) {
@@ -282,6 +311,14 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.weirollZapperExec = Contract.createLibrary(
       ZapperExecutor__factory.connect(this.execAddress.address, this.provider)
     )
+    this.fairPriceCache = this.createCache<TokenQuantity, TokenQuantity>(
+      async (qty: TokenQuantity) => {
+        return (
+          this.oracle?.quote(qty).catch(() => this.usd.zero) ?? this.usd.zero
+        )
+      },
+      this.config.requoteTolerance
+    )
   }
 
   public async updateBlockState(block: number, gasPrice: bigint) {
@@ -290,6 +327,9 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
     for (const router of this.dexAggregators) {
       router.onBlock(block)
+    }
+    for (const cache of this.caches) {
+      cache.onBlock(block)
     }
     this.blockState.currentBlock = block
     this.blockState.gasPrice = gasPrice

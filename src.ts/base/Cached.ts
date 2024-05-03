@@ -1,4 +1,4 @@
-export class Cached<Key, Result extends NonNullable<unknown>> {
+export class Cached<Key, Result extends NonNullable<any>> {
     constructor(
       private readonly fetch: (key: Key) => Promise<Result>,
       private readonly ttl: number,

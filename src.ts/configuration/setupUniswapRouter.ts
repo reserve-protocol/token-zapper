@@ -1,4 +1,3 @@
-import { Protocol } from '@uniswap/router-sdk'
 import {
   Currency,
   Ether,
@@ -7,7 +6,7 @@ import {
   TradeType,
   Token as UniToken,
 } from '@uniswap/sdk-core'
-import { Trade, Trade as V3Trade, toHex } from '@uniswap/v3-sdk'
+import { toHex } from '@uniswap/v3-sdk'
 
 import DEFAULT_TOKEN_LIST from '@uniswap/default-token-list'
 import {
@@ -23,7 +22,6 @@ import {
   TokenProvider,
   UniswapMulticallProvider,
   V3PoolProvider,
-  V3Route,
   V3RouteWithValidQuote,
 } from '@uniswap/smart-order-router'
 import { Universe } from '../Universe'
@@ -45,11 +43,10 @@ import { Planner, Value, encodeArg } from '../tx-gen/Planner'
 
 import { ParamType } from '@ethersproject/abi'
 import { utils } from 'ethers'
+import { solidityPack } from 'ethers/lib/utils'
 import NodeCache from 'node-cache'
 import { RouterAction } from '../action/RouterAction'
 import { SwapPlan } from '../searcher/Swap'
-import { SwapSide } from 'paraswap-core'
-import { solidityPack } from 'ethers/lib/utils'
 
 class UniswapPool {
   public constructor(
@@ -417,18 +414,21 @@ export const setupUniswapRouter = async (universe: Universe) => {
   ): Promise<UniswapTrade> => {
     const inp = tokenQtyToCurrencyAmt(universe, input)
     const outp = ourTokenToUni(universe, output)
-    const slip = new Percent(
-      Number(slippage),
-      Number(TRADE_SLIPPAGE_DENOMINATOR)
-    )
+    const slip = new Percent(Number(50), Number(10000))
+
     const route = await router.route(inp, outp, TradeType.EXACT_INPUT, {
       recipient: universe.execAddress.address,
       slippageTolerance: slip,
 
-      deadline: Math.floor(Date.now() / 1000 + 1600),
+      deadline: Math.floor(Date.now() / 1000 + 2500),
       type: SwapType.SWAP_ROUTER_02,
     })
+
     if (route == null || route.methodParameters == null) {
+      // console.log(
+      //   router
+      // )
+      // console.log(v3PoolProvider)
       throw new Error('Failed to find route')
     }
 
@@ -441,10 +441,15 @@ export const setupUniswapRouter = async (universe: Universe) => {
   out = new DexRouter(
     'uniswap',
     async (abort, src, dst, input, output, slippage) => {
-      const route = await computeRoute(input, output, slippage)
-      return await new SwapPlan(universe, [
-        new UniswapRouterAction(route, universe, out),
-      ]).quote([input], universe.execAddress)
+      try {
+        const route = await computeRoute(input, output, slippage)
+        return await new SwapPlan(universe, [
+          new UniswapRouterAction(route, universe, out),
+        ]).quote([input], universe.execAddress)
+      } catch (e: any) {
+        // console.error(e)
+        throw e
+      }
     },
     true
   )

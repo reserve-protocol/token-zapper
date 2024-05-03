@@ -316,17 +316,17 @@ export const setupAerodromeRouter = async (universe: Universe) => {
     Token,
     DefaultMap<Token, SwapRouteStep[][]>
   >(() => new DefaultMap(() => []))
+
   const toks = [...directSwaps.keys()]
 
   const findRoutes = (src: Token, dst: Token): SwapRouteStep[][] => {
-    const direct = directSwaps
-      .get(src)
-      .get(dst)
-      .map((pool) => [new SwapRouteStep(pool, src, dst)])
-    if (direct.length > 0) {
-      return direct
-    }
-    return twoStepSwaps.get(src).get(dst)
+    return [
+      ...directSwaps
+        .get(src)
+        .get(dst)
+        .map((pool) => [new SwapRouteStep(pool, src, dst)]),
+      ...twoStepSwaps.get(src).get(dst),
+    ]
   }
 
   for (const token0 of toks) {
@@ -367,6 +367,24 @@ export const setupAerodromeRouter = async (universe: Universe) => {
       const routes = findRoutes(input.token, output)
       if (routes.length === 0) {
         throw new Error('No route found')
+      }
+
+      for (const route of routes) {
+        if (route.length <= 1) {
+          continue
+        }
+        const lastStep = route.at(-1)!
+        const pools = directSwaps.get(lastStep.tokenOut).get(output)
+
+        if (pools.length === 0) {
+          continue
+        }
+        for (const pool of pools) {
+          routes.push([
+            ...route,
+            new SwapRouteStep(pool, lastStep.tokenOut, output),
+          ])
+        }
       }
       const outAmts = (
         await Promise.all(

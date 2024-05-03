@@ -111,9 +111,9 @@ const getEnsoQuote_ = async (
 
     const addresesInUse = new Set(
       cmds
-        .map((i) => Address.from('0x' + i.slice(24)))
+        .map((i) => Address.from('0x' + i.slice(26)))
         .filter((i) => {
-          uni.tokens.has(i) === false
+          return uni.tokens.has(i) === false
         })
     )
 

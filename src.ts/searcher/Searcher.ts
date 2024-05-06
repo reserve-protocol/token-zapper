@@ -5,6 +5,7 @@ import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
 import { simulationUrls } from '../base/constants'
+import { wait } from '../base/controlflow'
 import { Config } from '../configuration/ChainConfiguration'
 import { UniswapRouterAction } from '../configuration/setupUniswapRouter'
 import { type Token, type TokenQuantity } from '../entities/Token'
@@ -79,7 +80,7 @@ const sortZaps = (
 ) => {
   let failed = txes
   if (txes.length === 0) {
-    console.log(`All ${allQuotes.length} potential zaps failed`)
+    console.log(`All ${allQuotes.length}/${allQuotes.length} potential zaps failed`)
     throw new Error('No zaps found')
   }
 
@@ -140,7 +141,7 @@ const createConcurrentStreamingSeacher = (
         return
       }
       const inToOutRatio = outVal / inVal
-      if (inToOutRatio < 0.98) {
+      if (inToOutRatio < 0.97) {
         // console.log('Low in to out ratio')
 
         // If there is more than 10% loss of value, reject
@@ -513,41 +514,47 @@ export class Searcher<
     let multiTrades: MultiChoicePath[] = []
 
     generateInputToPrecursorTradeMeasurementSetup()
-    try {
-      await Promise.all(
-        inputPrTrade.map(async ({ input, output }) => {
-          if (
-            // Skip trade if user input is part of precursor set
-            input.token === output
-          ) {
-            return
-          }
 
-          // Swaps are sorted by output amount in descending order
-          const trade = await this.findSingleInputTokenSwap(
-            input,
-            output,
-            this.universe.config.addresses.executorAddress,
-            internalTradeSlippage,
-            abortSignal,
-            2,
-            false
-          )
-          if (trade == null) {
-            throw new Error(
-              `Could not find way to swap into precursor token ${input} -> ${output}`
+    multiTrades = []
+    await Promise.all(
+      inputPrTrade.map(async ({ input, output }) => {
+        if (
+          // Skip trade if user input is part of precursor set
+          input.token === output
+        ) {
+          return
+        }
+
+        for (let i = 1; i < 5; i++) {
+          try {
+            if (abortSignal.aborted) {
+              return
+            }
+            const potentialSwaps = await this.findSingleInputTokenSwap(
+              input,
+              output,
+              this.universe.config.addresses.executorAddress,
+              internalTradeSlippage,
+              abortSignal,
+              Math.max(i, 3),
+              false
             )
-          }
-          if (!balancesBeforeTrading.hasBalance(trade.inputs)) {
-            throw new Error('Insufficient balance for trade')
-          }
-          multiTrades.push(trade)
-        })
-      )
-    } catch (e) {
-      // console.log('Failed to produce trades')
-      // console.log(e)
-      throw e
+
+            if (
+              potentialSwaps == null ||
+              potentialSwaps.paths.length === 0 ||
+              !balancesBeforeTrading.hasBalance(potentialSwaps.inputs)
+            ) {
+              throw Error('')
+            }
+            multiTrades.push(potentialSwaps)
+            return
+          } catch (e) {}
+        }
+      })
+    )
+    if (abortSignal.aborted) {
+      return
     }
 
     generateInputToPrecursorTradeMeasurement()
@@ -917,10 +924,7 @@ export class Searcher<
         toTxArgs.internalTradeSlippage,
         controller.onResult,
         controller.abortController.signal
-      ).catch((e) => {
-        // console.log(e)
-        throw e
-      }),
+      ).catch(() => {}),
       this.findTokenZapViaTrade(
         rTokenQuantity,
         output,
@@ -928,10 +932,10 @@ export class Searcher<
         toTxArgs.internalTradeSlippage,
         controller.abortController.signal
       )
-        .then(
-          async (results) => await Promise.all(results.map(controller.onResult))
-        )
-        .catch((e) => {}),
+        .catch((e) => [])
+        .then((results) =>
+          Promise.all(results.map(controller.onResult)).catch(() => {})
+        ),
     ])
     const resultsPromise = new Promise((resolve) => {
       controller.abortController.signal.addEventListener('abort', () => {
@@ -1059,36 +1063,47 @@ export class Searcher<
 
     // Trade each underlying for output
     const unwrapTokenQtys = tokenAmounts.toTokenQuantities()
-    const multiTrades = await Promise.all(
+    const multiTrades: MultiChoicePath[] = []
+    await Promise.all(
       unwrapTokenQtys
         .filter((qty) => qty.token !== outputToken)
         .map(async (qty) => {
-          const potentialSwaps = await this.findSingleInputTokenSwap(
-            qty,
-            outputToken,
-            signerAddress,
-            slippage,
-            abortSignal,
-            1,
-            true
-          )
-          if (potentialSwaps == null) {
-            throw Error(
-              'Failed to find trade for: ' +
-                qty +
-                '(' +
-                qty.token +
-                ')' +
-                ' -> ' +
-                outputToken +
-                '(' +
-                output +
-                ')'
-            )
+          for (let i = 1; i < 6; i++) {
+            if (abortSignal.aborted) {
+              return
+            }
+            const potentialSwaps = await this.findSingleInputTokenSwap(
+              qty,
+              outputToken,
+              signerAddress,
+              slippage,
+              abortSignal,
+              Math.max(i, 2),
+              true
+            ).catch(() => null)
+            if (potentialSwaps == null || potentialSwaps.paths.length === 0) {
+              continue
+            }
+            multiTrades.push(potentialSwaps)
+            return
           }
-          return potentialSwaps
+          throw Error(
+            'Failed to find trade for: ' +
+              qty +
+              '(' +
+              qty.token +
+              ')' +
+              ' -> ' +
+              outputToken +
+              '(' +
+              output +
+              ')'
+          )
         })
-    )
+    ).catch(() => {})
+    if (abortSignal.aborted) {
+      return
+    }
 
     const generateRedeemPlan = async (trades: SwapPath[] = []) => {
       const pretradeBalances = tokenAmounts.clone()
@@ -1143,13 +1158,19 @@ export class Searcher<
       allOptions,
       this.maxConcurrency
     )) {
+      if (abortSignal.aborted) {
+        return
+      }
       await Promise.all(
         candidates.map(async (paths) => {
           try {
+            if (abortSignal.aborted) {
+              return
+            }
             await onResult(await generateRedeemPlan(paths))
           } catch (e) {}
         })
-      )
+      ).catch(() => {})
       if (abortSignal.aborted) {
         break
       }
@@ -1313,7 +1334,6 @@ export class Searcher<
         controller.abortController.signal
       ).catch((e) => {
         // console.log(e)
-        throw e
       }),
       this.findTokenZapViaTrade(
         userInput,

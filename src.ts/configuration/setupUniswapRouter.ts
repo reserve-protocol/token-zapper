@@ -30,7 +30,7 @@ import {
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
-import { DexRouter } from '../aggregators/DexAggregator'
+import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import {
@@ -138,8 +138,14 @@ export class UniswapRouterAction extends Action('Uniswap') {
   public get oneUsePrZap() {
     return true
   }
+  public get returnsOutput() {
+    return true
+  }
+  public get supportsDynamicInput() {
+    return true
+  }
   get outputSlippage() {
-    return 0n
+    return 50n
   }
   async planV3Trade(
     planner: Planner,
@@ -414,7 +420,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
   ): Promise<UniswapTrade> => {
     const inp = tokenQtyToCurrencyAmt(universe, input)
     const outp = ourTokenToUni(universe, output)
-    const slip = new Percent(Number(50), Number(10000))
+    const slip = new Percent(Number(slippage), Number(TRADE_SLIPPAGE_DENOMINATOR))
 
     const route = await router.route(inp, outp, TradeType.EXACT_INPUT, {
       recipient: universe.execAddress.address,
@@ -440,7 +446,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
   let out!: DexRouter
   out = new DexRouter(
     'uniswap',
-    async (abort, src, dst, input, output, slippage) => {
+    async (abort, input, output, slippage) => {
       try {
         const route = await computeRoute(input, output, slippage)
         return await new SwapPlan(universe, [
@@ -453,22 +459,30 @@ export const setupUniswapRouter = async (universe: Universe) => {
     },
     true
   )
-  universe.dexAggregators.push(out)
   const routerAddr = Address.from(SWAP_ROUTER_02_ADDRESSES(universe.chainId))
-  return {
-    dex: out,
-    addTradeAction: (inputToken: Token, outputToken: Token) => {
-      universe.addAction(
-        new (RouterAction('Uniswap'))(
-          out,
-          universe,
-          routerAddr,
-          inputToken,
+  
+  return new TradingVenue(
+    universe,
+    out,
+    async (inputToken: Token, outputToken: Token) => {
+      try {
+        await computeRoute(
+          inputToken.one,
           outputToken,
           universe.config.defaultInternalTradeSlippage
-        ),
-        routerAddr
+        )
+      } catch (e: any) {
+        return null
+      }
+
+      return new RouterAction(
+        out,
+        universe,
+        routerAddr,
+        inputToken,
+        outputToken,
+        universe.config.defaultInternalTradeSlippage
       )
-    },
-  }
+    }
+  )
 }

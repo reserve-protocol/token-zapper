@@ -45,12 +45,12 @@ export const baseConfig = makeConfig(
   {
     blocktime: 2000,
     blockGasLimit: 60_000_000n,
-    requoteTolerance: 5,
-    routerDeadline: 3500,
+    requoteTolerance: 4,
+    routerDeadline: 3000,
     searcherMinRoutesToProduce: 2,
-    searcherMaxRoutesToProduce: 6,
-    searchConcurrency: 6,
-    defaultInternalTradeSlippage: 300n,
+    searcherMaxRoutesToProduce: 4,
+    searchConcurrency: 3,
+    defaultInternalTradeSlippage: 200n,
   }
 )
 
@@ -88,7 +88,6 @@ export const PROTOCOL_CONFIGS = {
     comets: [
       '0xb125E6687d4313864e53df431d5425969c15Eb2F',
       '0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf',
-
       '0x46e6b214b524310239732D51387075E0e70970bf', // WETH
     ],
     wrappers: [

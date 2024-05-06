@@ -19,12 +19,14 @@ import {
   RTokenLens__factory,
 } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
-import { ethers } from 'ethers'
-import { BlockCache } from '../base/BlockBasedCache'
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction
   public readonly mint: MintRTokenAction
+
+  toString() {
+    return `RToken[${this.rToken}](basket=${this.basket.join(', ')})`
+  }
 
   private block: number
   public async unitBasket() {
@@ -69,6 +71,8 @@ export class RTokenDeployment {
     this.basket = this.unitBasket_.map((i) => i.token)
     this.burn = new BurnRTokenAction(this)
     this.mint = new MintRTokenAction(this)
+
+    universe.defineMintable(this.mint, this.burn, true)
   }
 
   public static async load(
@@ -78,6 +82,7 @@ export class RTokenDeployment {
     mintEstimate: bigint = 1000000n,
     burnEstimate: bigint = 1000000n
   ) {
+    // console.log('loading ' + rToken)
     const rTokenInst = IRToken__factory.connect(
       rToken.address.address,
       uni.provider
@@ -85,6 +90,7 @@ export class RTokenDeployment {
     const facade = IFacade__factory.connect(facadeAddress.address, uni.provider)
 
     const mainAddr = Address.from(await rTokenInst.main())
+    // console.log('mainAddr: ' + mainAddr.address)
     const mainInst = IMain__factory.connect(mainAddr.address, uni.provider)
     const [basketHandlerAddr, assetRegAddr] = await Promise.all([
       mainInst.basketHandler().then((i) => Address.from(i)),
@@ -143,12 +149,12 @@ abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
 
 export class MintRTokenAction extends ReserveRTokenBase {
   action = 'issue'
-  async plan(planner: Planner, _: Value[], __: Address) {
+  async plan(planner: Planner, _: Value[], destination: Address) {
     planner.add(
       this.universe.weirollZapperExec.mintMaxRToken(
         this.universe.config.addresses.oldFacadeAddress.address,
         this.address.address,
-        this.universe.execAddress.address
+        destination.address
       )
     )
     return this.outputBalanceOf(this.universe, planner)
@@ -160,7 +166,7 @@ export class MintRTokenAction extends ReserveRTokenBase {
     return this.rTokenDeployment.mintEstimate
   }
   get outputSlippage() {
-    return 1n
+    return 10n
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     if (this.universe.config.addresses.facadeAddress !== Address.ZERO) {
@@ -194,7 +200,7 @@ export class MintRTokenAction extends ReserveRTokenBase {
       rTokenDeployment.basket,
       [rTokenDeployment.rToken],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Callee,
+      DestinationOptions.Recipient,
       rTokenDeployment.basket.map(
         (input) => new Approval(input, rTokenDeployment.rToken.address)
       )
@@ -226,7 +232,7 @@ export class BurnRTokenAction extends ReserveRTokenBase {
     return 30n
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return this.quoteCache.get(amountsIn[0])
+    return await this.quote_(amountsIn)
   }
 
   async quote_([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -260,7 +266,7 @@ export class BurnRTokenAction extends ReserveRTokenBase {
   get basket() {
     return this.rTokenDeployment.basket
   }
-  private quoteCache: BlockCache<TokenQuantity, TokenQuantity[]>
+  // private quoteCache: BlockCache<TokenQuantity, TokenQuantity[]>
   constructor(public readonly rTokenDeployment: RTokenDeployment) {
     super(
       rTokenDeployment.rToken.address,
@@ -270,8 +276,8 @@ export class BurnRTokenAction extends ReserveRTokenBase {
       DestinationOptions.Callee,
       []
     )
-    this.quoteCache = this.universe.createCache<TokenQuantity, TokenQuantity[]>(
-      async (amountsIn) => await this.quote_([amountsIn])
-    )
+    // this.quoteCache = this.universe.createCache<TokenQuantity, TokenQuantity[]>(
+    //   async (amountsIn) => await this.quote_([amountsIn])
+    // )
   }
 }

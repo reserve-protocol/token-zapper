@@ -53,7 +53,13 @@ export class PerformanceMonitor {
   public measure<T>(name: string, fn: () => T, context?: string): T {
     const end = this.begin(name, context)
     const result = fn()
-    end()
+    try {
+      end()
+    } catch (e) {
+      // console.log('Error during measurement of ' + name)
+      // console.log(e)
+      throw e
+    }
     return result
   }
 
@@ -87,6 +93,8 @@ export class PerformanceMonitor {
       end()
       return out
     } catch (e) {
+      // console.log('Error during measurement of ' + name)
+      // console.log(e)
       end()
       throw e
     }
@@ -108,7 +116,7 @@ export class PerformanceMonitor {
     context?: string
   ): T {
     return (async (...args: any[]) => {
-      return this.measureAsync(name, async () => fn(...args), context)
+      return this.measurePromise(name, fn(...args), context)
     }) as T
   }
 

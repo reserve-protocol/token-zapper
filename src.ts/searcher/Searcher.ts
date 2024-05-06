@@ -1,9 +1,7 @@
-import { resolve } from 'path'
 import { Universe } from '../Universe'
 
 import { DestinationOptions, InteractionConvention } from '../action/Action'
 import { type MintRTokenAction } from '../action/RTokens'
-import { DexRouter } from '../aggregators/DexAggregator'
 import { type Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
 import { simulationUrls } from '../base/constants'
@@ -26,11 +24,12 @@ import { SingleSwap, SwapPath, SwapPaths, SwapPlan } from './Swap'
 import { ToTransactionArgs } from './ToTransactionArgs'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction } from './ZapTransaction'
-import { BlockCache } from '../base/BlockBasedCache'
 
-const generateAllPermutations = function (
-  arr: MultiChoicePath[]
-): SwapPath[][] {
+const generateAllPermutations = async function (
+  universe: UniverseWithERC20GasTokenDefined,
+  arr: MultiChoicePath[],
+  precursorTokens: Set<Token>
+): Promise<SwapPath[][]> {
   function combos(
     list: MultiChoicePath[],
     n: number = 0,
@@ -45,7 +44,29 @@ const generateAllPermutations = function (
     return result
   }
 
-  return combos(arr)
+  const allCombos = combos(arr)
+
+  const withoutComflicts = allCombos.filter(
+    (paths) => willPathsHaveAddressConflicts(paths).length === 0
+  )
+  const valuedTrades = await Promise.all(
+    withoutComflicts.map(async (trades) => {
+      const netOut = universe.usd.zero
+      for (const trade of trades) {
+        if (precursorTokens.has(trade.outputs[0].token)) {
+          netOut.add(await trade.netValue(universe))
+        }
+      }
+
+      return {
+        trades,
+        netOut,
+      }
+    })
+  )
+  valuedTrades.sort((l, r) => -l.netOut.compare(r.netOut))
+
+  return valuedTrades.map((i) => i.trades)
 }
 
 const sortZaps = (
@@ -119,8 +140,8 @@ const createConcurrentStreamingSeacher = (
         return
       }
       const inToOutRatio = outVal / inVal
-      if (inToOutRatio < 0.9) {
-        console.log('Low in to out ratio')
+      if (inToOutRatio < 0.98) {
+        // console.log('Low in to out ratio')
 
         // If there is more than 10% loss of value, reject
         return
@@ -161,10 +182,11 @@ const createConcurrentStreamingSeacher = (
   }
 }
 
-const willPathsHaveAddressConflicts = (paths: SwapPaths) => {
+const willPathsHaveAddressConflicts = (paths: SwapPath[]) => {
   const addressesInUse = new Set<Address>()
-  for (const swaps of paths.swapPaths) {
-    for (const step of swaps.steps) {
+
+  for (const path of paths) {
+    for (const step of path.steps) {
       if (!step.action.oneUsePrZap) {
         continue
       }
@@ -209,6 +231,10 @@ class MultiChoicePath implements SwapPath {
   }
   get hasMultipleChoices() {
     return this.paths.length > 1
+  }
+
+  get supportsDynamicInput() {
+    return this.path.supportsDynamicInput
   }
 
   intoSwapPaths(universe: Universe<Config>): SwapPaths {
@@ -325,12 +351,14 @@ export const findPrecursorTokenSet = async (
   unitBasket: TokenQuantity[],
   searcher: Searcher<UniverseWithERC20GasTokenDefined>
 ) => {
+  // console.log(`Findiing precursor set for ${rToken}: ${unitBasket.join(', ')}`)
   const specialRules = universe.precursorTokenSourcingSpecialCases
   const basketTokenApplications: BasketTokenSourcingRuleApplication[] = []
 
   const recourseOn = async (
     qty: TokenQuantity
   ): Promise<BasketTokenSourcingRuleApplication> => {
+    // console.log(qty)
     const tokenSourcingRule = specialRules.get(qty.token)
     if (tokenSourcingRule != null) {
       return await tokenSourcingRule(userInputQuantity.token, qty, searcher)
@@ -367,8 +395,8 @@ export class Searcher<
   const SearcherUniverse extends UniverseWithERC20GasTokenDefined
 > {
   private readonly defaultSearcherOpts
-  private tokenPriceCache: BlockCache<Token, TokenQuantity>
 
+  // private readonly rTokenUnitBasketCache: BlockCache<Token, BasketTokenSourcingRuleApplication>
   constructor(private readonly universe: SearcherUniverse) {
     this.defaultSearcherOpts = {
       internalTradeSlippage: this.defaultInternalTradeSlippage,
@@ -377,11 +405,9 @@ export class Searcher<
       returnDust: true,
     }
 
-    this.tokenPriceCache = universe.createCache<Token, TokenQuantity>(
-      async (token: Token) =>
-        await this.universe.fairPrice(token.one).then(() => universe.usd.zero),
-      this.config.requoteTolerance
-    )
+    // rTokenUnitBasketCache = universe.createCache(
+    //   (token) =>
+    // )
   }
 
   /**
@@ -408,20 +434,18 @@ export class Searcher<
     }) => Promise<void>,
     abortSignal: AbortSignal
   ) {
+    // console.log('Finding precursors for', rToken.symbol)
     /**
      * PHASE 1: Compute precursor set
      */
-    const precursorTokens = await this.perf.measurePromise(
-      'findPrecursorTokenSet',
-      findPrecursorTokenSet(
-        this.universe,
-        inputQuantity,
-        rToken,
-        basketUnit,
-        this
-      ),
-      rToken.symbol
+    const precursorTokens = await findPrecursorTokenSet(
+      this.universe,
+      inputQuantity,
+      rToken,
+      basketUnit,
+      this
     )
+    // console.log(precursorTokens.precursorToTradeFor.join(', '))
 
     const generateInputToPrecursorTradeMeasurement = this.perf.begin(
       'generateInputToPrecursorTrade',
@@ -579,8 +603,6 @@ export class Searcher<
 
             const newFirstSwap = await uniDex.swap(
               abortSignal,
-              this.universe.execAddress,
-              this.universe.execAddress,
               inputs,
               outputToken,
               this.defaultInternalTradeSlippage
@@ -606,8 +628,6 @@ export class Searcher<
                 // )
                 const newNextTrade = await uniDex.swap(
                   abortSignal,
-                  this.universe.execAddress,
-                  this.universe.execAddress,
                   newInput,
                   nextTrade.outputToken[0],
                   this.defaultInternalTradeSlippage
@@ -621,8 +641,8 @@ export class Searcher<
           }
           return inTrades
         } catch (e: any) {
-          console.log(e)
-          console.log(e.stack)
+          // console.log(e)
+          // console.log(e.stack)
           throw e
         }
       },
@@ -729,8 +749,8 @@ export class Searcher<
             ),
           }
         } catch (e: any) {
-          console.log('Failed to generate issueance plan')
-          console.log(e.stack)
+          // console.log('Failed to generate issueance plan')
+          // console.log(e.stack)
           throw e
         }
       },
@@ -744,9 +764,14 @@ export class Searcher<
         await generateIssueancePlan(await resolveTradeConflicts(normalTrades))
       )
     }
+    const precursorSet = new Set(
+      precursorTokens.precursorToTradeFor.map((i) => i.token)
+    )
 
-    const allOptions = this.perf.measure('generateAllPermutations', () =>
-      generateAllPermutations(multiTrades)
+    const allOptions = await this.perf.measurePromise(
+      'generateAllPermutations',
+      generateAllPermutations(this.universe, multiTrades, precursorSet),
+      rToken.symbol
     )
     // console.log('Will test', allOptions.length, ' trade options for zap')
     for (const candidates of chunkifyIterable(
@@ -892,7 +917,10 @@ export class Searcher<
         toTxArgs.internalTradeSlippage,
         controller.onResult,
         controller.abortController.signal
-      ),
+      ).catch((e) => {
+        // console.log(e)
+        throw e
+      }),
       this.findTokenZapViaTrade(
         rTokenQuantity,
         output,
@@ -1041,7 +1069,7 @@ export class Searcher<
             signerAddress,
             slippage,
             abortSignal,
-            2,
+            1,
             true
           )
           if (potentialSwaps == null) {
@@ -1103,7 +1131,13 @@ export class Searcher<
         await generateRedeemPlan(multiTrades.map((i) => i.path))
       )
     }
-    const allOptions = generateAllPermutations(multiTrades)
+    const outputTokenSet = new Set([output])
+
+    const allOptions = await this.perf.measurePromise(
+      'generateAllPermutations',
+      generateAllPermutations(this.universe, multiTrades, outputTokenSet),
+      rToken.symbol
+    )
     // console.log('Possible redeem zaps', allOptions.length)
     for (const candidates of chunkifyIterable(
       allOptions,
@@ -1143,7 +1177,7 @@ export class Searcher<
         abortSignal
       )
     } catch (e) {
-      console.log(e)
+      // console.log(e)
     }
     return outputs
   }
@@ -1173,7 +1207,6 @@ export class Searcher<
       this.externalQuoters(
         inputTokenQuantity,
         rToken,
-        this.universe.execAddress,
         false,
         slippage,
         abortSignal
@@ -1184,7 +1217,6 @@ export class Searcher<
       return []
     }
     return paths
-      .map((i) => i.path)
       .filter(
         (path) => parseFloat(path.outputValue.div(inputValue).format()) > 0.98
       )
@@ -1279,7 +1311,10 @@ export class Searcher<
         slippage,
         controller.onResult,
         controller.abortController.signal
-      ),
+      ).catch((e) => {
+        // console.log(e)
+        throw e
+      }),
       this.findTokenZapViaTrade(
         userInput,
         rToken,
@@ -1291,7 +1326,9 @@ export class Searcher<
           await Promise.all(i.map(async (i) => await controller.onResult(i)))
         } catch (e) {}
       }),
-    ]).catch(() => {})
+    ]).catch((e) => {
+      // console.log(e)
+    })
 
     return controller.getResults(start)
   }
@@ -1315,6 +1352,7 @@ export class Searcher<
       }
       inputTokenQuantity = userInput.into(this.universe.commonTokens.ERC20GAS)
     }
+
     const rTokenActions = this.universe.wrappedTokens.get(rToken)
     if (rTokenActions == null) {
       console.log('RToken has no mint/burn actions')
@@ -1323,159 +1361,117 @@ export class Searcher<
 
     const mintAction = rTokenActions.mint as MintRTokenAction
 
-    const unitBasket = await mintAction.rTokenDeployment.unitBasket()
-    await this.findSingleInputToBasketGivenBasketUnit(
-      inputTokenQuantity,
-      rToken,
-      unitBasket,
-      slippage,
-      async (inputQuantityToBasketTokens) => {
-        try {
-          const tradingBalances = new TokenAmounts()
-          tradingBalances.add(inputTokenQuantity)
-          await inputQuantityToBasketTokens.trading.exchange(tradingBalances)
-          await inputQuantityToBasketTokens.minting.exchange(tradingBalances)
+    const unitBasket = await mintAction.rTokenDeployment
+      .unitBasket()
+      .catch((e) => {
+        // console.log(e)
+        throw e
+      })
+    try {
+      await this.findSingleInputToBasketGivenBasketUnit(
+        inputTokenQuantity,
+        rToken,
+        unitBasket,
+        slippage,
+        async (inputQuantityToBasketTokens) => {
+          try {
+            const tradingBalances = new TokenAmounts()
+            tradingBalances.add(inputTokenQuantity)
+            await inputQuantityToBasketTokens.trading.exchange(tradingBalances)
+            await inputQuantityToBasketTokens.minting.exchange(tradingBalances)
 
-          const rTokenMint = await new SwapPlan(this.universe, [
-            rTokenActions.mint,
-          ]).quote(
-            mintAction.inputToken.map((token) => tradingBalances.get(token)),
-            signerAddress
-          )
-          await rTokenMint.exchange(tradingBalances)
-
-          const outputReordered = [
-            tradingBalances.get(rToken),
-            ...tradingBalances
-              .toTokenQuantities()
-              .filter((i) => i.token !== rToken),
-          ]
-
-          const full = new SwapPaths(
-            this.universe,
-            [inputTokenQuantity],
-            [
-              ...inputQuantityToBasketTokens.trading.swapPaths,
-              ...inputQuantityToBasketTokens.minting.swapPaths,
-              rTokenMint,
-            ],
-            outputReordered,
-            rTokenMint.outputValue,
-            signerAddress
-          )
-          const conflicts = willPathsHaveAddressConflicts(full)
-          if (conflicts.length !== 0) {
-            // console.log(full.describe().join('\n'))
-            return
-          }
-          const parts = {
-            trading: inputQuantityToBasketTokens.trading,
-            minting: inputQuantityToBasketTokens.minting,
-            rTokenMint,
-            full,
-          }
-
-          await onResult(
-            new MintRTokenSearcherResult(
-              this.universe,
-              userInput,
-              parts,
-              signerAddress,
-              rToken
+            const rTokenMint = await new SwapPlan(this.universe, [
+              rTokenActions.mint,
+            ]).quote(
+              mintAction.inputToken.map((token) => tradingBalances.get(token)),
+              signerAddress
             )
-          )
-        } catch (e: any) {
-          console.log(e)
-          console.log(e.stack)
-          throw e
-        }
-      },
-      abort
-    )
+            await rTokenMint.exchange(tradingBalances)
+
+            const outputReordered = [
+              tradingBalances.get(rToken),
+              ...tradingBalances
+                .toTokenQuantities()
+                .filter((i) => i.token !== rToken),
+            ]
+
+            const full = new SwapPaths(
+              this.universe,
+              [inputTokenQuantity],
+              [
+                ...inputQuantityToBasketTokens.trading.swapPaths,
+                ...inputQuantityToBasketTokens.minting.swapPaths,
+                rTokenMint,
+              ],
+              outputReordered,
+              rTokenMint.outputValue,
+              signerAddress
+            )
+
+            const parts = {
+              trading: inputQuantityToBasketTokens.trading,
+              minting: inputQuantityToBasketTokens.minting,
+              rTokenMint,
+              full,
+            }
+
+            await onResult(
+              new MintRTokenSearcherResult(
+                this.universe,
+                userInput,
+                parts,
+                signerAddress,
+                rToken
+              )
+            )
+          } catch (e: any) {
+            // console.log(e)
+            // console.log(e.stack)
+            // throw e
+          }
+        },
+        abort
+      )
+    } catch (e) {
+      // console.log(e)
+      throw e
+    }
   }
 
   async externalQuoters(
     input: TokenQuantity,
     output: Token,
-    destination: Address,
     dynamicInput: boolean,
     slippage: bigint,
     abort: AbortSignal
   ) {
-    const out: {
-      venue: DexRouter
-      path: SwapPath
-    }[] = []
-
-    await this.externalQuoters_(
-      abort,
+    const out: SwapPath[] = []
+    await this.universe.swaps(
       input,
       output,
-      destination,
-      dynamicInput,
-      slippage,
       async (path) => {
-        out.push({
-          venue: path[0],
-          path: path[1],
-        })
+        out.push(path)
+      },
+      {
+        dynamicInput,
+        slippage,
+        abort,
       }
-    ).catch((e) => {
-      console.log(e)
-    })
+    )
 
     return out
   }
   async externalQuoters_(
-    abort: AbortSignal,
     input: TokenQuantity,
     output: Token,
-    destination: Address,
-    dynamicInput: boolean,
-    slippage: bigint,
-    onResult: (path: [DexRouter, SwapPath]) => Promise<void>
+    onResult: (path: SwapPath) => Promise<void>,
+    opts: {
+      abort: AbortSignal
+      dynamicInput: boolean
+      slippage: bigint
+    }
   ) {
-    const allowAggregatorSearch =
-      this.universe.wrappedTokens.get(output)?.allowAggregatorSearcher ?? true
-    if (!allowAggregatorSearch) {
-      console.log('Skipping external quoters - ' + output.toString())
-      return
-    }
-    const executorAddress = this.universe.config.addresses.executorAddress
-    let aggregators = this.universe.dexAggregators.filter((router) =>
-      router.supportsSwap(input, output)
-    )
-    if (dynamicInput) {
-      aggregators = aggregators.filter((i) => i.dynamicInput)
-    }
-    if (aggregators.length === 0) {
-      console.log('No aggregators')
-      return
-    }
-    const tradeName = `${input.token} -> ${output}`
-    await Promise.all(
-      aggregators.map(async (router) => {
-        try {
-          const res = await this.perf.measurePromise(
-            `external_routers_${router.name}`,
-            router.swap(
-              abort,
-              executorAddress,
-              destination,
-              input,
-              output,
-              slippage
-            ),
-            tradeName
-          )
-          // console.log(`${router.name} ok: ${res.steps[0].action.toString()}`)
-          await onResult([router, res])
-        } catch (e: any) {
-          // console.log(`${router.name} failed for case: ${tradeName}`)
-          // console.log(e.message)
-        }
-      })
-    )
+    await this.universe.swaps(input, output, onResult, opts)
   }
 
   async internalQuoter(
@@ -1592,13 +1588,6 @@ export class Searcher<
       if (inValue != 0 && outValue != 0) {
         const ratio = outValue / inValue
         if (ratio < 0.95) {
-          // console.log(
-          //   `Dropping path ${path.inputs.join(
-          //     ', '
-          //   )}(${inValue}) -> ${path.outputs.join(
-          //     ', '
-          //   )} (${outValue}) due to low ratio: ${ratio}`
-          // )
           dropped += 1
           return
         }
@@ -1616,26 +1605,13 @@ export class Searcher<
         emitResult,
         maxHops
       ).catch((e) => {
-        // console.log(e)
         return []
       }),
-      this.externalQuoters_(
-        abort,
-        input,
-        output,
-        destination,
+      this.externalQuoters_(input, output, emitResult, {
         dynamicInput,
+        abort,
         slippage,
-        async ([_, path]) => {
-          await emitResult(path)
-        }
-      ),
+      }).catch((e) => {}),
     ])
-    // if (total === 0 || dropped === 0) {
-    //   return
-    // }
-    // console.log(
-    //   `(${inValue}) ${input} -> ${output}, dropped ${dropped} / ${total} paths`
-    // )
   }
 }

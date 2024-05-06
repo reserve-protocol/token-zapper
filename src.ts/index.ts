@@ -36,8 +36,6 @@ export const configuration = {
 export { Searcher } from './searcher/Searcher'
 export { Universe } from './Universe'
 
-export { loadRToken } from './configuration/setupRTokens'
-
 export { createKyberswap } from './aggregators/Kyberswap'
 export { createEnso } from './aggregators/Enso'
 

@@ -109,8 +109,14 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
+  public get supportsDynamicInput() {
+    return true
+  }
   public get oneUsePrZap() {
     return false
+  }
+  public get returnsOutput() {
+    return true
   }
   public get addressesInUse(): Set<Address> {
     return new Set([])
@@ -168,14 +174,41 @@ export abstract class BaseAction {
     // Actual abstract inputs
     inputs: gen.Value[],
     destination: Address,
-
     // Inputs we predicted
-    predictedInputs: TokenQuantity[],
-    outputNotUsed?: boolean
-  ): Promise<gen.Value[]>
+    predictedInputs: TokenQuantity[]
+  ): Promise<null | gen.Value[]>
+
+  async planWithOutput(
+    universe: Universe,
+    planner: gen.Planner,
+    // Actual abstract inputs
+    inputs: gen.Value[],
+    destination: Address,
+    // Inputs we predicted
+    predictedInputs: TokenQuantity[]
+  ): Promise<gen.Value[]> {
+    const out = await this.plan(planner, inputs, destination, predictedInputs)
+
+    if (out == null) {
+      if (this.returnsOutput) {
+        throw new Error('Action did not return output as expected')
+      }
+      return this.outputBalanceOf(universe, planner)
+    }
+    return out!
+  }
 
   toString() {
-    return 'UnnamedAction'
+    return (
+      'UnnamedAction.' +
+      this.protocol +
+      '.' +
+      this.constructor.name +
+      ':' +
+      this.inputToken.join(', ') +
+      '->' +
+      this.outputToken.join(', ')
+    )
   }
 
   // TODO: This is sort of a hack for stETH as it's a mintable but not burnable token.
@@ -187,6 +220,85 @@ export abstract class BaseAction {
 
   public get outputSlippage() {
     return 0n
+  }
+
+  public combine(other: BaseAction) {
+    const self = this
+
+    if (
+      !self.outputToken.every(
+        (token, index) => other.inputToken[index] === token
+      )
+    ) {
+      throw new Error('Cannot combine actions with mismatched tokens')
+    }
+    class CombinedAction extends BaseAction {
+      public get protocol(): string {
+        return `${self.protocol}.${other.protocol}`
+      }
+      toString(): string {
+        return `${self.toString()}  -> ${other.toString()}`
+      }
+
+      public async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+        const out = await self.quote(amountsIn)
+        return await other.quote(out)
+      }
+
+      get supportsDynamicInput() {
+        return self.supportsDynamicInput && other.supportsDynamicInput
+      }
+
+      get oneUsePrZap() {
+        return self.oneUsePrZap && other.oneUsePrZap
+      }
+
+      get addressesInUse() {
+        return new Set([...self.addressesInUse, ...other.addressesInUse])
+      }
+
+      get returnsOutput() {
+        return other.returnsOutput
+      }
+
+      get outputSlippage() {
+        return self.outputSlippage + other.outputSlippage
+      }
+
+      public gasEstimate(): bigint {
+        return self.gasEstimate() + other.gasEstimate() + 10000n
+      }
+
+      public async plan(
+        planner: gen.Planner,
+        inputs: gen.Value[],
+        destination: Address,
+        predicted: TokenQuantity[]
+      ): Promise<null | gen.Value[]> {
+        const out = await self.planWithOutput(
+          this.universe,
+          planner,
+          inputs,
+          destination,
+          predicted
+        )
+
+        return other.plan(planner, out, destination, predicted)
+      }
+
+      constructor(public readonly universe: Universe) {
+        super(
+          self.address,
+          self.inputToken,
+          other.outputToken,
+          self.interactionConvention,
+          other.proceedsOptions,
+          [...self.approvals, ...other.approvals]
+        )
+      }
+    }
+
+    return CombinedAction
   }
 }
 

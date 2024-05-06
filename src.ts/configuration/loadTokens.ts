@@ -1,7 +1,6 @@
 import { type Config } from './ChainConfiguration'
 import { Address } from '../base/Address'
 import { type Universe } from '../Universe'
-import { Token } from 'paraswap'
 
 export interface JsonTokenEntry {
   address: string

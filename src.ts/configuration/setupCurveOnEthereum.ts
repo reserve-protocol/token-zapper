@@ -3,21 +3,22 @@ import { setupConvexEdges as setupConvexEdge } from '../action/Convex'
 
 import { loadCurve } from '../action/Curve'
 import { Address } from '../base/Address'
-import { Token } from '../entities/Token'
+import { TokenQuantity } from '../entities/Token'
 import {
   BasketTokenSourcingRuleApplication,
   PostTradeAction,
 } from '../searcher/BasketTokenSourcingRules'
 import { SwapPlan } from '../searcher/Swap'
 
-import { DexRouter } from '../aggregators/DexAggregator'
 import { setupCurveStableSwapNGPool } from '../action/CurveStableSwapNG'
+import { RouterAction } from '../action/RouterAction'
+import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { type SourcingRule } from '../searcher/SourcingRule'
 import { type EthereumUniverse } from './ethereum'
 
 export {
   BasketTokenSourcingRuleApplication,
-  PostTradeAction,
+  PostTradeAction
 } from '../searcher/BasketTokenSourcingRules'
 
 export interface IRouteStep {
@@ -55,49 +56,124 @@ export const initCurveOnEthereum = async (
   // curveApi.createRouterEdge(USDC, USDT);
   // curveApi.createRouterEdge(USDT, USDC);
 
-  const setupBidirectionalEdge = (
-    tokenA: Token,
-    tokenB: Token,
+  const setupBidirectionalEdge = async (
+    tokenA: TokenQuantity,
+    tokenB: TokenQuantity,
     slippage: bigint
   ) => {
-    curveApi.createRouterEdge(tokenA, tokenB, slippage)
-    curveApi.createRouterEdge(tokenB, tokenA, slippage)
+    curveApi.createRouterEdge(tokenA, tokenB.token, slippage)
+    curveApi.createRouterEdge(tokenB, tokenA.token, slippage)
   }
 
-  setupBidirectionalEdge(
-    universe.wrappedNativeToken,
-    eUSD__FRAX_USDC,
+  await setupBidirectionalEdge(
+    universe.wrappedNativeToken.from(10),
+    eUSD__FRAX_USDC.from(1000),
     lpActionSlippage
   )
-  setupBidirectionalEdge(FRAX, eUSD__FRAX_USDC, lpActionSlippage)
-  setupBidirectionalEdge(MIM, eUSD__FRAX_USDC, lpActionSlippage)
-  // setupBidirectionalEdge(USDC, eUSD__FRAX_USDC, lpActionSlippage)
-  setupBidirectionalEdge(USDT, eUSD__FRAX_USDC, lpActionSlippage)
-  setupBidirectionalEdge(DAI, eUSD__FRAX_USDC, lpActionSlippage)
+  await setupBidirectionalEdge(
+    FRAX.from(1000),
+    eUSD__FRAX_USDC.from(1000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    MIM.from(1000),
+    eUSD__FRAX_USDC.from(1000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    USDT.from(1000),
+    eUSD__FRAX_USDC.from(1000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    DAI.from(1000),
+    eUSD__FRAX_USDC.from(1000),
+    lpActionSlippage
+  )
 
   universe.defineMintable(
-    curveApi.createRouterEdge(USDC, eUSD__FRAX_USDC, 100n),
-    curveApi.createRouterEdge(eUSD__FRAX_USDC, USDC, 100n),
+    await curveApi.createRouterEdge(USDC.from(10000.0), eUSD__FRAX_USDC, 100n),
+    await curveApi.createRouterEdge(eUSD__FRAX_USDC.from(10000.0), USDC, 100n),
     true
   )
 
-  setupBidirectionalEdge(FRAX, mim_3CRV, lpActionSlippage)
-  setupBidirectionalEdge(MIM, mim_3CRV, lpActionSlippage)
-  setupBidirectionalEdge(USDC, mim_3CRV, lpActionSlippage)
-  setupBidirectionalEdge(USDT, mim_3CRV, lpActionSlippage)
-  setupBidirectionalEdge(DAI, mim_3CRV, lpActionSlippage)
+  await setupBidirectionalEdge(
+    FRAX.from(1000),
+    mim_3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    MIM.from(1000),
+    mim_3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    USDC.from(1000),
+    mim_3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    USDT.from(1000),
+    mim_3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    DAI.from(1000),
+    mim_3CRV.from(10000),
+    lpActionSlippage
+  )
 
-  setupBidirectionalEdge(FRAX, _3CRV, lpActionSlippage)
-  setupBidirectionalEdge(MIM, _3CRV, lpActionSlippage)
-  setupBidirectionalEdge(USDC, _3CRV, lpActionSlippage)
-  setupBidirectionalEdge(USDT, _3CRV, lpActionSlippage)
-  setupBidirectionalEdge(DAI, _3CRV, lpActionSlippage)
+  await setupBidirectionalEdge(
+    FRAX.from(1000),
+    _3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    MIM.from(1000),
+    _3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    USDC.from(1000),
+    _3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    USDT.from(1000),
+    _3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    DAI.from(1000),
+    _3CRV.from(10000),
+    lpActionSlippage
+  )
 
-  setupBidirectionalEdge(FRAX, _3CRV, lpActionSlippage)
-  setupBidirectionalEdge(MIM, _3CRV, lpActionSlippage)
-  setupBidirectionalEdge(USDC, _3CRV, lpActionSlippage)
-  setupBidirectionalEdge(USDT, _3CRV, lpActionSlippage)
-  setupBidirectionalEdge(DAI, _3CRV, lpActionSlippage)
+  await setupBidirectionalEdge(
+    FRAX.from(1000),
+    _3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    MIM.from(1000),
+    _3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    USDC.from(1000),
+    _3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    USDT.from(1000),
+    _3CRV.from(10000),
+    lpActionSlippage
+  )
+  await setupBidirectionalEdge(
+    DAI.from(1000),
+    _3CRV.from(10000),
+    lpActionSlippage
+  )
 
   // Add convex edges
   // const stkcvxeUSD3CRV_OLD = universe.commonTokens['stkcvxeUSD3CRV-f']
@@ -130,7 +206,11 @@ export const initCurveOnEthereum = async (
         [unitAmount.into(USDC)],
         [
           PostTradeAction.fromAction(
-            curveApi.createRouterEdge(USDC, lpTokenQty.token, lpActionSlippage),
+            await curveApi.createRouterEdge(
+              unitAmount.into(USDC),
+              lpTokenQty.token,
+              lpActionSlippage
+            ),
             true // Cause the Zapper to recalculate the inputs of the mints for the next step
           ),
           PostTradeAction.fromAction(depositAndStake),
@@ -196,19 +276,6 @@ export const initCurveOnEthereum = async (
     mim_3CRV,
     _3CRV,
   ])
-  universe.dexAggregators.push(
-    new DexRouter(
-      'Eth.Curve',
-      async (abort, payer, recipient, input, output, slippage) => {
-        return await new SwapPlan(universe, [
-          curveApi.createRouterEdge(input.token, output, slippage),
-        ]).quote([input], recipient)
-      },
-      true,
-      whitelistedRouterSwaps,
-      whitelistedRouterSwaps
-    )
-  )
 
   universe.defineTokenSourcingRule(
     universe.commonTokens.stkcvxPYUSDUSDC,
@@ -234,10 +301,33 @@ export const initCurveOnEthereum = async (
     }
   )
 
+  const dex = new DexRouter(
+    'Eth.Curve',
+    async (abort, input, output, slippage) => {
+      return await new SwapPlan(universe, [
+        await curveApi.createRouterEdge(input, output, slippage),
+      ]).quote([input], universe.execAddress)
+    },
+    true,
+    whitelistedRouterSwaps,
+    whitelistedRouterSwaps
+  )
+
   return {
     stables,
     setupConvexEdge,
     makeStkConvexSourcingRule,
     convexBoosterAddress,
+
+    venue: new TradingVenue(universe, dex, async (input, output) => {
+      return new RouterAction(
+        dex,
+        universe,
+        curveApi.routerAddress,
+        input,
+        output,
+        universe.config.defaultInternalTradeSlippage
+      )
+    }),
   }
 }

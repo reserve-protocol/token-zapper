@@ -131,16 +131,19 @@ const _getExchangeMultipleArgs = (
 
 export class CurveSwap extends Action('Curve') {
   public get oneUsePrZap() {
-    if (
-      this.universe.lpTokens.has(this.outputToken[0]) ||
-      this.universe.lpTokens.has(this.inputToken[0])
-    ) {
-      return false
-    }
     return true
   }
+  public get supportsDynamicInput() {
+    return true
+  }
+  public get returnsOutput() {
+    return true
+  }
+
+  private _addressList = new Set<Address>()
   public get addressesInUse() {
-    return new Set([Address.from(this.pool.address.address)])
+    this._addressList.add(this.pool.address)
+    return this._addressList
   }
   get outputSlippage() {
     return this.slippage + 300n
@@ -235,6 +238,14 @@ export class CurveSwap extends Action('Curve') {
     return q
   }
 
+  public async initAddressList(input: TokenQuantity[]) {
+    const output = await this._quote(input[0])
+    const { _route } = _getExchangeMultipleArgs(output.route)
+    for (const r of _route) {
+      this._addressList.add(Address.from(r))
+    }
+  }
+
   constructor(
     public readonly universe: Universe,
     public readonly pool: CurvePool,
@@ -278,17 +289,24 @@ export const loadCurve = async (universe: Universe) => {
     fakeRouterTemplate,
     'router'
   )
-  const defineCurveEdge = (
+  const defineCurveEdge = async (
     pool: CurvePool,
-    tokenIn: Token,
+    tokenIn: TokenQuantity,
     tokenOut: Token,
     slippage: bigint
   ) => {
-    const edges = curvesEdges.get(tokenIn)
+    const edges = curvesEdges.get(tokenIn.token)
     if (edges.has(tokenOut)) {
       return edges.get(tokenOut)!
     }
-    const swap = new CurveSwap(universe, pool, tokenIn, tokenOut, slippage)
+    const swap = new CurveSwap(
+      universe,
+      pool,
+      tokenIn.token,
+      tokenOut,
+      slippage
+    )
+    await swap.initAddressList([tokenIn])
     edges.set(tokenOut, swap)
 
     return swap
@@ -491,16 +509,15 @@ export const loadCurve = async (universe: Universe) => {
   )
   await addCurvePoolEdges(universe, pools)
 
+  const routerAddress = Address.from(curve.constants.ALIASES.router)
   return {
-    createLpToken: async (token: Token) => {
-      const pool = pools.find((pool) => pool.address === token.address)
-      if (!pool) {
-        throw new Error('No curve pool found for token ' + token)
-      }
-      await addLpToken(universe, pool)
-    },
-    createRouterEdge: (tokenA: Token, tokenB: Token, slippage: bigint) => {
-      return defineCurveEdge(router, tokenA, tokenB, slippage)
+    routerAddress,
+    createRouterEdge: async (
+      tokenA: TokenQuantity,
+      tokenB: Token,
+      slippage: bigint
+    ) => {
+      return await defineCurveEdge(router, tokenA, tokenB, slippage)
     },
   }
 }

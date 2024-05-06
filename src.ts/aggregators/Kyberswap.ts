@@ -6,7 +6,7 @@ import {
   InteractionConvention,
 } from '../action/Action'
 import { SwapPlan } from '../searcher/Swap'
-import { DexRouter } from './DexAggregator'
+import { DexRouter, TradingVenue } from './DexAggregator'
 
 import { Approval } from '../base/Approval'
 import { ZapperExecutor__factory } from '../contracts'
@@ -149,17 +149,30 @@ const getQuoteAndSwap = async (
 
   const addrs = new Set(
     req.data.routeSummary.route
-      .map((i) =>
-        i.map((ii) => {
+      .map((i) => {
+        // console.log(JSON.stringify(i, null, 2))
+        const out = i.map((ii) => {
           try {
             return Address.from(ii.pool)
           } catch (e) {
+            // console.log(ii.pool)
             return universe.wrappedNativeToken.address
           }
         })
-      )
+
+        return out
+      })
       .flat()
-      .filter((i) => universe.tokens.has(i) === false)
+      .filter((i) => {
+        if (!universe.tokens.has(i)) {
+          return true
+        }
+        const tok = universe.tokens.get(i)!
+        if (universe.lpTokens.has(tok)) {
+          return true
+        }
+        return false
+      })
   )
   return {
     block: universe.currentBlock,
@@ -176,20 +189,24 @@ class KyberAction extends Action('Kyberswap') {
   public get oneUsePrZap() {
     return true
   }
+  public get returnsOutput() {
+    return false
+  }
   public get addressesInUse() {
     return this.request.addresesInUse
   }
   get outputSlippage() {
     return 100n
   }
+
   async plan(
     planner: Planner,
     _: Value[],
     __: Address,
     predicted: TokenQuantity[]
-  ): Promise<Value[]> {
+  ) {
     try {
-      const zapperLib = this.gen.Contract.createContract(
+      const zapperLib = this.gen.Contract.createLibrary(
         ZapperExecutor__factory.connect(
           this.universe.config.addresses.executorAddress.address,
           this.universe.provider
@@ -212,7 +229,7 @@ class KyberAction extends Action('Kyberswap') {
           .map((i) => `(${i.poolType})`)
           .join(' -> ')}`
       )
-      return this.outputBalanceOf(this.universe, planner)
+      return null
     } catch (e: any) {
       console.log(e.stack)
       throw e
@@ -236,6 +253,9 @@ class KyberAction extends Action('Kyberswap') {
       ]
     )
   }
+  public get supportsDynamicInput() {
+    return false
+  }
   get outputQty() {
     return this.request.output.from(
       BigInt(this.request.req.data.routeSummary.amountOut)
@@ -257,15 +277,15 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
     throw new Error('Kyberswap: Unsupported chain')
   }
 
-  return new DexRouter(
+  const dex = new DexRouter(
     aggregatorName,
-    async (abort, _, destination, input, output, slippage) => {
+    async (abort, input, output, slippage) => {
       const req = await getQuoteAndSwap(
         abort,
         universe,
         input,
         output,
-        destination,
+        universe.execAddress,
         slippage
       )
       if (req.swap.data == null || req.swap.data.data == null) {
@@ -273,8 +293,10 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
       }
       return await new SwapPlan(universe, [
         new KyberAction(req, universe),
-      ]).quote([input], destination)
+      ]).quote([input], universe.execAddress)
     },
     false
   )
+
+  return new TradingVenue(universe, dex)
 }

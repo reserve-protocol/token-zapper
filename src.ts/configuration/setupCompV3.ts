@@ -12,7 +12,7 @@ import {
   ICusdcV3Wrapper__factory,
 } from '../contracts'
 import { TokenQuantity, type Token } from '../entities/Token'
-import { Contract, FunctionCall, Planner, Value } from '../tx-gen/Planner'
+import { Contract, Planner, Value } from '../tx-gen/Planner'
 
 export abstract class BaseCometAction extends Action('CompV3') {
   public get outputSlippage(): bigint {
@@ -39,6 +39,7 @@ export abstract class BaseCometAction extends Action('CompV3') {
     return BigInt(250000n)
   }
   constructor(
+    public readonly mainAddress: Address,
     public readonly comet: Comet,
     public readonly actionName: string,
     opts: {
@@ -50,7 +51,7 @@ export abstract class BaseCometAction extends Action('CompV3') {
     }
   ) {
     super(
-      comet.comet.address,
+      mainAddress,
       opts.inputToken,
       opts.outputToken,
       opts.interaction,
@@ -76,7 +77,7 @@ export abstract class BaseCometAction extends Action('CompV3') {
 }
 class MintCometAction extends BaseCometAction {
   constructor(comet: Comet) {
-    super(comet, 'supply', {
+    super(comet.comet.address, comet, 'supply', {
       inputToken: [comet.borrowToken],
       outputToken: [comet.comet],
       interaction: InteractionConvention.ApprovalRequired,
@@ -99,9 +100,10 @@ class MintCometAction extends BaseCometAction {
     )
   }
 }
+
 class MintCometWrapperAction extends BaseCometAction {
   constructor(public readonly cometWrapper: CometWrapper) {
-    super(cometWrapper.comet, 'deposit', {
+    super(cometWrapper.wrapperToken.address, cometWrapper.comet, 'deposit', {
       inputToken: [cometWrapper.cometToken],
       outputToken: [cometWrapper.wrapperToken],
       interaction: InteractionConvention.ApprovalRequired,
@@ -142,7 +144,7 @@ class MintCometWrapperAction extends BaseCometAction {
 }
 class BurnCometAction extends BaseCometAction {
   constructor(comet: Comet) {
-    super(comet, 'burn', {
+    super(comet.comet.address, comet, 'burn', {
       inputToken: [comet.comet],
       outputToken: [comet.borrowToken],
       interaction: InteractionConvention.None,
@@ -166,7 +168,7 @@ class BurnCometAction extends BaseCometAction {
 }
 class BurnCometWrapperAction extends BaseCometAction {
   constructor(public readonly cometWrapper: CometWrapper) {
-    super(cometWrapper.comet, 'withdraw', {
+    super(cometWrapper.wrapperToken.address, cometWrapper.comet, 'withdraw', {
       inputToken: [cometWrapper.wrapperToken],
       outputToken: [cometWrapper.cometToken],
       interaction: InteractionConvention.None,
@@ -273,7 +275,10 @@ class CometWrapper {
     return `CometWrapper(token=${this.wrapperToken},comet=${this.comet.comet})`
   }
 
-  public static async load(compound: CompoundV3, wrapperToken: Token) {
+  public static async load(
+    compound: CompoundV3Deployment,
+    wrapperToken: Token
+  ) {
     const cometWrapperInst = ICusdcV3Wrapper__factory.connect(
       wrapperToken.address.address,
       compound.universe.provider
@@ -293,7 +298,7 @@ class Comet {
   public readonly burnAction
   public constructor(
     public readonly cometLibrary: Contract,
-    readonly compound: CompoundV3,
+    readonly compound: CompoundV3Deployment,
     readonly comet: Token,
     readonly borrowToken: Token,
     readonly collateralTokens: CometAssetInfo[]
@@ -302,7 +307,7 @@ class Comet {
     this.burnAction = new BurnCometAction(this)
   }
 
-  public static async load(compound: CompoundV3, poolToken: Token) {
+  public static async load(compound: CompoundV3Deployment, poolToken: Token) {
     const cometInst = IComet__factory.connect(
       poolToken.address.address,
       compound.universe.provider
@@ -333,7 +338,7 @@ class Comet {
     },collateral=${this.collateralTokens.map((i) => i.asset).join()}`
   }
 }
-class CompoundV3 {
+export class CompoundV3Deployment {
   public readonly comets: Comet[] = []
   public readonly cometWrappers: CometWrapper[] = []
   public readonly cometByBaseToken: Map<Token, Comet> = new Map()
@@ -342,7 +347,10 @@ class CompoundV3 {
     new Map()
   public readonly cometWrapperByCometToken: Map<Token, CometWrapper> = new Map()
 
-  public constructor(readonly universe: Universe) {}
+  public constructor(
+    public readonly protocolName: string,
+    public readonly universe: Universe
+  ) {}
 
   async getComet(poolToken: Token) {
     if (this.cometByPoolToken.has(poolToken)) {
@@ -369,13 +377,14 @@ class CompoundV3 {
   }
 
   public static async load(
+    protocolName: string,
     universe: Universe,
     config: {
       comets: Token[]
       cTokenWrappers: Token[]
     }
   ) {
-    const compoundV3 = new CompoundV3(universe)
+    const compoundV3 = new CompoundV3Deployment(protocolName, universe)
     await Promise.all(
       config.comets.map(async (cometToken) => {
         await compoundV3.getComet(cometToken)
@@ -390,17 +399,26 @@ class CompoundV3 {
   }
 
   toString() {
-    return `CompoundV3(comets=[${this.comets.join(
+    return `${this.protocolName}(markets=[${this.comets.join(
       ', '
-    )}], wrappers=[${this.cometWrappers.join(', ')}])`
+    )}],wrappers=[${this.cometWrappers.join(', ')}])`
   }
 }
+interface CompV3Config {
+  comets: string[]
+  wrappers: string[]
+}
 export const setupCompoundV3 = async (
+  protocolName: string,
   universe: Universe,
-  config: {
-    comets: Token[]
-    cTokenWrappers: Token[]
-  }
+  config: CompV3Config
 ) => {
-  return await CompoundV3.load(universe, config)
+  const [comets, wrappers] = await Promise.all([
+    Promise.all(config.comets.map((i) => universe.getToken(Address.from(i)))),
+    Promise.all(config.wrappers.map((i) => universe.getToken(Address.from(i)))),
+  ])
+  return await CompoundV3Deployment.load(protocolName, universe, {
+    comets,
+    cTokenWrappers: wrappers,
+  })
 }

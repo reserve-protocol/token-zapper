@@ -1,7 +1,7 @@
 import { BigNumber } from 'ethers'
 import { Universe } from '../Universe'
 import { RouterAction } from '../action/RouterAction'
-import { DexRouter } from '../aggregators/DexAggregator'
+import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
 import {
@@ -19,6 +19,14 @@ import { Approval } from '../base/Approval'
 import { Planner, Value } from '../tx-gen/Planner'
 import { SwapPlan } from '../searcher/Swap'
 
+const shuffle = <T>(arr: T[]): T[] => {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
 const routers: Record<number, { router: string; sugar: string }> = {
   8453: {
     router: '0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43',
@@ -30,6 +38,16 @@ type RouteStruct = {
   to: string
   stable: boolean
   factory: string
+}
+
+const computeIdFromRoute = (route: SwapRouteStep[]) => {
+  let outId = 0n
+  for (let i = 0; i < route.length; i++) {
+    const step = route[i]
+    outId = (outId + BigInt(step.stepId)) << BigInt(i * 19)
+  }
+  // console.log(route.map((i) => i.stepId).join(', '), outId)
+  return outId
 }
 class AerodromePathStep {
   constructor(
@@ -49,14 +67,14 @@ class AerodromePathStep {
 class AerodromePath {
   constructor(public readonly steps: AerodromePathStep[]) {}
   compare(other: AerodromePath) {
-    return this.output.compare(other.output)
+    return other.output.compare(this.output)
   }
   static from(route: SwapRouteStep[], amts: BigNumber[]) {
     const steps: AerodromePathStep[] = []
-    for (let i = 1; i < amts.length; i++) {
-      const step = route[i - 1]
-      const input = step.tokenIn.from(amts[i - 1].toBigInt())
-      const output = step.tokenOut.from(amts[i].toBigInt())
+    for (let i = 0; i < steps.length; i++) {
+      const step = route[i]
+      const input = step.tokenIn.from(amts[i].toBigInt())
+      const output = step.tokenOut.from(amts[i + 1].toBigInt())
       steps.push(new AerodromePathStep(step, input, output))
     }
     return new AerodromePath(steps)
@@ -106,6 +124,12 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
     return this.outputBalanceOf(this.universe, planner)
   }
 
+  public get returnsOutput() {
+    return true
+  }
+  public get supportsDynamicInput() {
+    return true
+  }
   public get oneUsePrZap() {
     return true
   }
@@ -119,9 +143,8 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
   async quote([]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return Promise.resolve([this.path.output])
   }
-
   get outputSlippage() {
-    return this.quoteSlippage + 100n
+    return this.quoteSlippage + 50n
   }
   private addrsUsedInSwap: Set<Address>
   constructor(
@@ -170,6 +193,8 @@ class AerodromePool {
 }
 
 class SwapRouteStep {
+  private static _id = 0
+  public readonly stepId = SwapRouteStep._id++
   constructor(
     public readonly pool: AerodromePool,
     public readonly tokenIn: Token,
@@ -319,14 +344,23 @@ export const setupAerodromeRouter = async (universe: Universe) => {
 
   const toks = [...directSwaps.keys()]
 
+  const badRoutes = new Set<bigint>()
   const findRoutes = (src: Token, dst: Token): SwapRouteStep[][] => {
-    return [
+    const resultSet = [
       ...directSwaps
         .get(src)
         .get(dst)
         .map((pool) => [new SwapRouteStep(pool, src, dst)]),
       ...twoStepSwaps.get(src).get(dst),
     ]
+
+    return resultSet.filter((route) => {
+      const id = computeIdFromRoute(route)
+      if (badRoutes.has(id)) {
+        return false
+      }
+      return true
+    })
   }
 
   for (const token0 of toks) {
@@ -363,8 +397,9 @@ export const setupAerodromeRouter = async (universe: Universe) => {
 
   const out = new DexRouter(
     'aerodrome',
-    async (abort, src, dst, input, output, slippage) => {
+    async (abort, input, output, slippage) => {
       const routes = findRoutes(input.token, output)
+
       if (routes.length === 0) {
         throw new Error('No route found')
       }
@@ -386,31 +421,57 @@ export const setupAerodromeRouter = async (universe: Universe) => {
           ])
         }
       }
-      const outAmts = (
-        await Promise.all(
-          routes.map(
-            async (route) =>
-              await routerInst
-                .getAmountsOut(
-                  input.amount,
-                  route.map((step) => step.intoRouteStruct())
-                )
-                .then((parts) => AerodromePath.from(route, parts))
-                .catch(() => {
-                  return null!
-                })
-          )
-        )
-      ).filter((i) => i != null)
-      if (outAmts.length === 0) {
-        throw new Error('No route found')
-      }
 
-      outAmts.sort((a, b) => b.compare(a))
+      const toEvaluate = shuffle(routes).slice(0, 20)
+
+      const inputValue = await universe.fairPrice(input)
+      if (inputValue == null || inputValue.amount === 0n) {
+        throw new Error('Failed to quote')
+      }
+      const outputs: AerodromePath[] = []
+      await Promise.all(
+        toEvaluate.map(async (route) => {
+          if (outputs.length > 5) {
+            return
+          }
+          const parts = await routerInst.getAmountsOut(
+            input.amount,
+            route.map((step) => step.intoRouteStruct())
+          )
+          const outRoute = AerodromePath.from(route, parts)
+          if (outRoute.output.amount === 0n) {
+            return
+          }
+          if (outputs.length > 5) {
+            return
+          }
+          const outputValue =
+            (await universe.fairPrice(outRoute.output)) ?? universe.usd.zero
+          if (outputValue.amount === 0n) {
+            return
+          }
+          const inpValue = parseFloat(inputValue.format())
+          const ratio = parseFloat(outputValue.format()) / inpValue
+          if (inpValue == 0 || ratio > 0.96) {
+            return outputs.push(AerodromePath.from(route, parts))
+          }
+          const id = computeIdFromRoute(route)
+          badRoutes.add(id)
+          return null!
+        })
+      )
+
+      outputs.sort((a, b) => a.compare(b))
+
+      if (outputs.length == 0) {
+        throw new Error('No results')
+      }
+      console.log('Aerodrome generated out:')
+      console.log(outputs.map((i) => `  ${i}`).join('\n'))
 
       const outAction = new AerodromeRouterSwap(
         universe,
-        outAmts[0]!,
+        outputs[0],
         routerInst,
         BigInt(slippage)
       )
@@ -419,21 +480,19 @@ export const setupAerodromeRouter = async (universe: Universe) => {
     },
     true
   )
-  universe.dexAggregators.push(out)
-  return {
-    dex: out,
-    addTradeAction: (inputToken: Token, outputToken: Token) => {
-      universe.addAction(
-        new (RouterAction('Aerodrome'))(
-          out,
-          universe,
-          routerAddr,
-          inputToken,
-          outputToken,
-          universe.config.defaultInternalTradeSlippage
-        ),
-        routerAddr
+
+  return new TradingVenue(
+    universe,
+    out,
+    async (inputToken: Token, outputToken: Token) => {
+      return new RouterAction(
+        out,
+        universe,
+        routerAddr,
+        inputToken,
+        outputToken,
+        universe.config.defaultInternalTradeSlippage
       )
-    },
-  }
+    }
+  )
 }

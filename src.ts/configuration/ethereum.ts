@@ -104,10 +104,10 @@ export const ethereumConfig = makeConfig(
     blocktime: 12000,
     blockGasLimit: 30000000n,
     requoteTolerance: 1,
-    routerDeadline: 3500,
-    searcherMinRoutesToProduce: 2,
-    searcherMaxRoutesToProduce: 6,
-    searchConcurrency: 6,
+    routerDeadline: 2500,
+    searcherMinRoutesToProduce: 1,
+    searcherMaxRoutesToProduce: 4,
+    searchConcurrency: 2,
     defaultInternalTradeSlippage: 200n,
   }
 )
@@ -115,64 +115,26 @@ export const ethereumConfig = makeConfig(
 export const PROTOCOL_CONFIGS = {
   chainLinkRegistry: '0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf',
   aavev2: {
-    tokenWrappers: [
+    pool: '0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9',
+    wrappers: [
       '0x21fe646d1ed0733336f2d4d9b2fe67790a6099d9',
       '0xF6147b4B44aE6240F7955803B2fD5E15c77bD7ea',
       '0x60C384e226b120d93f3e0F4C502957b2B9C32B15',
       '0xafd16aFdE22D42038223A6FfDF00ee49c8fDa985',
     ],
   },
-  compound: {
-    cEther: '0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5',
+  compoundV2: {
     comptroller: '0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B',
-    markets: [
-      '0x6C8c6b02E7b2BE14d4fA6022Dfd6d75921D90E4E',
-      '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643',
-      '0x158079Ee67Fce2f58472A96584A73C7Ab9AC95c1',
-      '0x39AA39c021dfbaE8faC545936693aC917d5E7563',
-      '0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9',
-      '0xC11b1268C1A384e55C48c2391d8d480264A3A7F4',
-      '0xB3319f5D18Bc0D84dD1b4825Dcde5d5f7266d407',
-      '0xF5DCe57282A584D2746FaF1593d3121Fcac444dC',
-      '0x35A18000230DA775CAc24873d00Ff85BccdeD550',
-      '0x70e36f6BF80a52b3B46b3aF8e106CC0ed743E8e4',
-      '0xccF4429DB6322D5C611ee964527D42E5d685DD6a',
-      '0x12392F67bdf24faE0AF363c24aC620a2f67DAd86',
-      '0xFAce851a4921ce59e912d19329929CE6da6EB0c7',
-      '0x95b4eF2869eBD94BEb4eEE400a99824BF5DC325b',
-      '0x4B0181102A0112A2ef11AbEE5563bb4a3176c9d7',
-      '0xe65cdB6479BaC1e22340E4E755fAE7E509EcD06c',
-      '0x80a2AE356fc9ef4305676f7a3E2Ed04e12C33946',
-      '0x041171993284df560249B57358F931D9eB7b925D',
-      '0x7713DD9Ca933848F6819F38B8352D9A15EA73F67',
+    wrappers: [
+      '0x3043be171e846c33D5f06864Cc045d9Fc799aF52',
+      '0x4Be33630F92661afD646081BC29079A38b879aA0',
+      '0xf579F9885f1AEa0d3F8bE0F18AfED28c92a43022',
     ],
-    collaterals: {
-      '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643': [
-        '0x3043be171e846c33D5f06864Cc045d9Fc799aF52',
-      ],
-      '0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9': [
-        '0x4Be33630F92661afD646081BC29079A38b879aA0',
-      ],
-      '0x39AA39c021dfbaE8faC545936693aC917d5E7563': [
-        '0xf579F9885f1AEa0d3F8bE0F18AfED28c92a43022',
-      ],
-    } as Record<string, string[]>,
   },
 
   fluxFinance: {
     comptroller: '0x95Af143a021DF745bc78e845b54591C53a8B3A51',
-    markets: [
-      '0x1dD7950c266fB1be96180a8FDb0591F70200E018',
-      '0x465a5a630482f3abD6d3b84B39B29b07214d19e5',
-      '0xe2bA8693cE7474900A045757fe0efCa900F6530b',
-      '0x81994b9607e06ab3d5cF3AffF9a67374f05F27d7',
-      '0x1C9A2d6b33B4826757273D47ebEe0e2DddcD978B',
-    ],
-    collaterals: {
-      '0x465a5a630482f3abD6d3b84B39B29b07214d19e5': [
-        '0x6D05CB2CB647B58189FA16f81784C05B4bcd4fe9',
-      ],
-    } as Record<string, string[]>,
+    wrappers: ['0x6D05CB2CB647B58189FA16f81784C05B4bcd4fe9'],
   },
 
   rocketPool: {
@@ -199,7 +161,6 @@ export const PROTOCOL_CONFIGS = {
 
   aaveV3: {
     pool: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2',
-    controller: '0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb',
     wrappers: [
       '0x093cB4f405924a0C468b43209d5E466F1dd0aC7d',
       '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b',

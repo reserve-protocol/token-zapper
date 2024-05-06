@@ -1,14 +1,18 @@
 import { REthRouter } from '../action/REth'
-import { DexRouter } from '../aggregators/DexAggregator'
+import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { Address } from '../base/Address'
 import { SwapPlan } from '../searcher/Swap'
 import { type EthereumUniverse } from './ethereum'
 
 export const setupRETH = async (
   universe: EthereumUniverse,
-  rethAddress: string,
-  rethRouterAddress: string
+  config: {
+    reth: string
+    router: string
+  }
 ) => {
+  const rethAddress = Address.from(config.reth)
+  const rethRouterAddress = Address.from(config.router)
   const reth = await universe.getToken(Address.from(rethAddress))
   const rethRouter = new REthRouter(
     universe,
@@ -16,44 +20,34 @@ export const setupRETH = async (
     Address.from(rethRouterAddress)
   )
 
-  universe.dexAggregators.push(
-    new DexRouter(
-      'RocketpoolRouter:swapTo',
-      async (abort, payer, dest, input) => {
-        if (input.token == universe.wrappedNativeToken) {
-          return await new SwapPlan(universe, [rethRouter.mintViaWETH]).quote(
-            [input],
-            dest
-          )
+  const actions = [
+    rethRouter.burnToETH,
+    rethRouter.burnToWETH,
+    rethRouter.mintViaETH,
+    rethRouter.mintViaWETH,
+  ]
+
+  const rocketPoolRouter = new DexRouter(
+    'RocketpoolRouter:swapTo',
+    async (abort, input, output) => {
+      for (const action of actions) {
+        if (
+          action.outputToken[0] != output ||
+          action.inputToken[0] != input.token
+        ) {
+          continue
         }
-        return await new SwapPlan(universe, [rethRouter.mintViaETH]).quote(
+        return await new SwapPlan(universe, [action]).quote(
           [input],
-          dest
+          universe.execAddress
         )
-      },
-      true,
-      new Set([universe.wrappedNativeToken, universe.nativeToken]),
-      new Set([reth])
-    )
+      }
+      throw new Error('Unsupported')
+    },
+    true,
+    new Set([reth, universe.wrappedNativeToken, universe.nativeToken]),
+    new Set([reth, universe.wrappedNativeToken, universe.nativeToken])
   )
-  universe.dexAggregators.push(
-    new DexRouter(
-      'RocketpoolRouter:swapFrom',
-      async (____, _, dest, input, output) => {
-        if (output == universe.wrappedNativeToken) {
-          return await new SwapPlan(universe, [rethRouter.burnToWETH]).quote(
-            [input],
-            dest
-          )
-        }
-        return await new SwapPlan(universe, [rethRouter.burnToETH]).quote(
-          [input],
-          dest
-        )
-      },
-      true,
-      new Set([reth]),
-      new Set([universe.wrappedNativeToken, universe.nativeToken])
-    )
-  )
+
+  return new TradingVenue(universe, rocketPoolRouter)
 }

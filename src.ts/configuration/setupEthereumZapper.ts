@@ -3,22 +3,19 @@ import {
   CHAINLINK_BTC_TOKEN_ADDRESS,
   GAS_TOKEN_ADDRESS,
 } from '../base/constants'
-import { convertWrapperTokenAddressesIntoWrapperTokenPairs } from './convertWrapperTokenAddressesIntoWrapperTokenPairs'
-import wrappedToUnderlyingMapping from './data/ethereum/underlying.json'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupChainLink as setupChainLinkRegistry } from './setupChainLink'
-import { setupCompoundLike } from './setupCompound'
 import { initCurveOnEthereum } from './setupCurveOnEthereum'
 import { setupERC4626 } from './setupERC4626'
 import { loadEthereumTokenList } from './setupEthereumTokenList'
-import { setupLido } from './setupLido'
 import { setupRETH } from './setupRETH'
-import { loadRTokens } from './setupRTokens'
 import { setupCompoundV3 } from './setupCompV3'
-import { setupSAToken } from './setupSAToken'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
+import { loadCompV2Deployment } from '../action/CTokens'
+import { setupAaveV2 } from './setupAaveV2'
+import { LidoDeployment } from '../action/Lido'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
@@ -46,167 +43,74 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     ]
   )
 
-  setupWrappedGasToken(universe)
+  await setupWrappedGasToken(universe)
 
   // Set up compound
-  const cTokens = await Promise.all(
-    (
-      await convertWrapperTokenAddressesIntoWrapperTokenPairs(
-        universe,
-        PROTOCOL_CONFIGS.compound.markets,
-        wrappedToUnderlyingMapping
-      )
-    ).map(async (a) => ({
-      ...a,
-      collaterals: await Promise.all(
-        (
-          PROTOCOL_CONFIGS.compound.collaterals[
-            a.wrappedToken.address.address
-          ] ?? []
-        ).map((a) => universe.getToken(Address.from(a)))
-      ),
-    }))
+
+  universe.addIntegration(
+    'compoundV2',
+    await loadCompV2Deployment('CompV2', universe, PROTOCOL_CONFIGS.compoundV2)
   )
 
-  await setupCompoundLike(
-    universe,
-    {
-      cEth: await universe.getToken(
-        Address.from(PROTOCOL_CONFIGS.compound.cEther)
-      ),
-      comptroller: Address.from(PROTOCOL_CONFIGS.compound.comptroller),
-    },
-    cTokens
-  )
-
-  // Set up flux finance
-  const fTokens = await Promise.all(
-    (
-      await convertWrapperTokenAddressesIntoWrapperTokenPairs(
-        universe,
-        PROTOCOL_CONFIGS.fluxFinance.markets,
-        wrappedToUnderlyingMapping
-      )
-    ).map(async (a) => ({
-      ...a,
-      collaterals: await Promise.all(
-        (
-          PROTOCOL_CONFIGS.fluxFinance.collaterals[
-            a.wrappedToken.address.address
-          ] ?? []
-        ).map((a) => universe.getToken(Address.from(a)))
-      ),
-    }))
-  )
-
-  await setupCompoundLike(
-    universe,
-    {
-      comptroller: Address.from(PROTOCOL_CONFIGS.fluxFinance.comptroller),
-    },
-    fTokens
-  )
-
-  // Load compound v3
-  const [comets, cTokenWrappers] = await Promise.all([
-    Promise.all(
-      PROTOCOL_CONFIGS.compV3.comets.map((a) =>
-        universe.getToken(Address.from(a))
-      )
-    ),
-    Promise.all(
-      PROTOCOL_CONFIGS.compV3.wrappers.map((a) =>
-        universe.getToken(Address.from(a))
-      )
-    ),
-  ])
-  const compV3 = await setupCompoundV3(universe, {
-    comets,
-    cTokenWrappers,
-  })
-
-  // Set up AAVEV2
-  const saTokens = await convertWrapperTokenAddressesIntoWrapperTokenPairs(
-    universe,
-    PROTOCOL_CONFIGS.aavev2.tokenWrappers,
-    wrappedToUnderlyingMapping
-  )
-  await Promise.all(
-    saTokens.map(({ underlying, wrappedToken }) =>
-      setupSAToken(universe, wrappedToken, underlying)
+  universe.addIntegration(
+    'fluxFinance',
+    await loadCompV2Deployment(
+      'FluxFinance',
+      universe,
+      PROTOCOL_CONFIGS.fluxFinance
     )
   )
 
-  // Set up RETH
-  // if (0) {
-  await setupRETH(
-    universe,
-    PROTOCOL_CONFIGS.rocketPool.reth,
-    PROTOCOL_CONFIGS.rocketPool.router
+  // Load compound v3
+  universe.addIntegration(
+    'compoundV3',
+    await setupCompoundV3('CompV3', universe, PROTOCOL_CONFIGS.compV3)
   )
-  // }
+
+  // Set up AAVEV2
+
+  universe.addIntegration(
+    'aaveV2',
+    await setupAaveV2(universe, PROTOCOL_CONFIGS.aavev2)
+  )
+
+  const curve = universe.addIntegration(
+    'curve',
+    (await initCurveOnEthereum(universe, PROTOCOL_CONFIGS.convex.booster, 100n))
+      .venue
+  )
+
+  universe.addTradeVenue(curve)
+
+  universe.addIntegration(
+    'aaveV3',
+    await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
+  )
+
+  const uniswap = universe.addIntegration(
+    'uniswapV3',
+    await setupUniswapRouter(universe)
+  )
+
+  universe.addTradeVenue(uniswap)
+
+  // Set up RETH
+  const reth = universe.addIntegration(
+    'rocketpool',
+    await setupRETH(universe, PROTOCOL_CONFIGS.rocketPool)
+  )
+  universe.addTradeVenue(reth)
+
+  universe.addIntegration(
+    'lido',
+    await LidoDeployment.load(universe, PROTOCOL_CONFIGS.lido)
+  )
 
   // Set up Lido
-  await setupLido(
-    universe,
-    PROTOCOL_CONFIGS.lido.steth,
-    PROTOCOL_CONFIGS.lido.wsteth
-  )
 
   await Promise.all(
     PROTOCOL_CONFIGS.erc4626.map(([addr, proto]) =>
       setupERC4626(universe, [addr], proto, 30n)
     )
   )
-
-  // Set up RTokens defined in the config
-  await loadRTokens(universe)
-
-  const curve = await initCurveOnEthereum(
-    universe,
-    PROTOCOL_CONFIGS.convex.booster,
-    10n
-  ).catch((e) => {
-    console.log('Failed to intialize curve')
-    console.log(e)
-    return null
-  })
-
-  const aaveV3 = await setupAaveV3(
-    universe,
-    Address.from(PROTOCOL_CONFIGS.aaveV3.pool),
-    await Promise.all(
-      PROTOCOL_CONFIGS.aaveV3.wrappers.map((a) =>
-        universe.getToken(Address.from(a))
-      )
-    )
-  )
-
-  const uni = await setupUniswapRouter(universe)
-
-  // const internallyTradeableTokens = [
-  //   universe.commonTokens.DAI,
-  //   universe.commonTokens.USDC,
-  //   // universe.commonTokens.USDT,
-  //   // universe.commonTokens.WETH,
-  //   // universe.commonTokens.WBTC,
-  //   universe.commonTokens.reth,
-  //   universe.commonTokens.steth
-  // ]
-
-  // for(const input of internallyTradeableTokens) {
-  //   for(const output of internallyTradeableTokens) {
-  //     if(input === output) {
-  //       continue
-  //     }
-  //     uni.addTradeAction(input, output)
-  //   }
-  // }
-
-  return {
-    aaveV3,
-    compV3,
-    uni,
-    curve,
-  }
 }

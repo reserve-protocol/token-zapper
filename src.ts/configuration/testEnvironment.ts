@@ -1,5 +1,4 @@
 import { Universe } from '../Universe'
-import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens'
 import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens'
 import { DepositAction, WithdrawAction } from '../action/WrappedNative'
 import { Address } from '../base/Address'
@@ -9,8 +8,6 @@ import { constants, ethers } from 'ethers'
 import { RETHToWETH, WETHToRETH } from '../action/REth'
 import { JsonTokenEntry, loadTokens } from './loadTokens'
 
-import { BurnStETH, MintStETH } from '../action/StEth'
-import { BurnWStETH, MintWStETH } from '../action/WStEth'
 import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
 import { ApprovalsStore } from '../searcher/ApprovalsStore'
 import { makeConfig } from './ChainConfiguration'
@@ -172,15 +169,15 @@ const initialize = async (universe: TestUniverse) => {
     )
   }
 
-  for (const cToken of cTokens) {
-    const rate = {
-      value: cToken.rate,
-    }
-    universe.defineMintable(
-      new MintCTokenAction(universe, cToken.underlying, cToken.cToken, rate),
-      new BurnCTokenAction(universe, cToken.underlying, cToken.cToken, rate)
-    )
-  }
+  // for (const cToken of cTokens) {
+  //   const rate = {
+  //     value: cToken.rate,
+  //   }
+  //   universe.defineMintable(
+  //     new MintCTokenAction(universe, cToken.underlying, cToken.cToken, rate),
+  //     new BurnCTokenAction(universe, cToken.underlying, cToken.cToken, rate)
+  //   )
+  // }
 
   const reth = await universe.getToken(
     Address.from('0xae78736Cd615f374D3085123A210448E74Fc6393')
@@ -230,35 +227,35 @@ const initialize = async (universe: TestUniverse) => {
     Address.from('0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0')
   )
 
-  universe.defineMintable(
-    new MintStETH(universe, stETH, {
-      async quoteMint(qtyEth) {
-        return qtyEth.into(stETH)
-      },
-    }),
-    new BurnStETH(universe, stETH, {
-      async quoteBurn(qtyStETH) {
-        return qtyStETH.into(universe.nativeToken)
-      },
-    })
-  )
+  // universe.defineMintable(
+  //   new MintStETH(universe, stETH, {
+  //     async quoteMint(qtyEth) {
+  //       return qtyEth.into(stETH)
+  //     },
+  //   }),
+  //   new BurnStETH(universe, stETH, {
+  //     async quoteBurn(qtyStETH) {
+  //       return qtyStETH.into(universe.nativeToken)
+  //     },
+  //   })
+  // )
 
   // Test env exchange rate is harded to:
   const stEthPrWStEth = stETH.from('1.1189437171')
   const wstEthPrStEth = stETH.one.div(stEthPrWStEth).into(wstETH)
 
-  universe.defineMintable(
-    new MintWStETH(universe, stETH, wstETH, {
-      async quoteMint(qtyStEth) {
-        return qtyStEth.into(wstETH).mul(wstEthPrStEth)
-      },
-    }),
-    new BurnWStETH(universe, stETH, wstETH, {
-      async quoteBurn(qtyWstEth) {
-        return qtyWstEth.into(stETH).mul(stEthPrWStEth)
-      },
-    })
-  )
+  // universe.defineMintable(
+  //   new MintWStETH(universe, stETH, wstETH, {
+  //     async quoteWrap(qtyStEth) {
+  //       return qtyStEth.into(wstETH).mul(wstEthPrStEth)
+  //     },
+  //   }),
+  //   new BurnWStETH(universe, stETH, wstETH, {
+  //     async quoteUnwrap(qtyWstEth) {
+  //       return qtyWstEth.into(stETH).mul(stEthPrWStEth)
+  //     },
+  //   })
+  // )
   // Defines the by now 'old' eUSD.
   defineRToken(universe, eUSD, [
     saUSDT.fromDecimal('0.225063'),

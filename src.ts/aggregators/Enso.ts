@@ -11,7 +11,7 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { EnsoRouter__factory } from '../contracts/factories/contracts/EnsoRouter__factory'
 import { SwapPlan } from '../searcher/Swap'
 import { FunctionCall, Planner, Value } from '../tx-gen/Planner'
-import { DexRouter } from './DexAggregator'
+import { DexRouter, TradingVenue } from './DexAggregator'
 
 export interface EnsoQuote {
   gas: string
@@ -180,18 +180,24 @@ class EnsoAction extends Action('Enso') {
   public get oneUsePrZap() {
     return true
   }
+  public get returnsOutput() {
+    return false
+  }
+  public get supportsDynamicInput() {
+    return true
+  }
   public get addressesInUse() {
     return this.request.addresesInUse
   }
   get outputSlippage() {
-    return 100n
+    return 0n
   }
   async plan(
     planner: Planner,
     [input]: Value[],
     _: Address,
     [predicted]: TokenQuantity[]
-  ): Promise<Value[]> {
+  ) {
     const ensoLib = this.gen.Contract.createContract(
       EnsoRouter__factory.connect(this.request.tx.to, this.universe.provider)
     )
@@ -207,7 +213,7 @@ class EnsoAction extends Action('Enso') {
         .map((i) => i.protocol)
         .join(',')}, ${this.outputQty})`
     )
-    return this.outputBalanceOf(this.universe, planner)
+    return null
   }
   public outputQuantity: TokenQuantity[] = []
   private lastQuoteBlock: number = 0
@@ -270,9 +276,9 @@ export const createEnso = (
   universe: Universe,
   retries = 2
 ) => {
-  return new DexRouter(
+  const dex = new DexRouter(
     aggregatorName,
-    async (abort: AbortSignal, _, destination, input, output, slippage) => {
+    async (abort: AbortSignal, input, output, slippage) => {
       if (
         input.token === universe.nativeToken ||
         output === universe.nativeToken
@@ -284,7 +290,7 @@ export const createEnso = (
         universe,
         input,
         output,
-        destination,
+        universe.execAddress,
         slippage,
         retries
       )
@@ -296,8 +302,10 @@ export const createEnso = (
           req,
           slippage
         ),
-      ]).quote([input], destination)
+      ]).quote([input], universe.execAddress)
     },
     true
   )
+
+  return new TradingVenue(universe, dex)
 }

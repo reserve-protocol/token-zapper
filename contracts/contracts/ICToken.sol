@@ -22,13 +22,16 @@ interface ICToken  {
 }
 
 interface CTokenWrapper  {
+    function underlying() external view returns (address);
     function deposit(uint256 mintAmount, address to) external payable;
     function withdraw(uint256 cTokenAmount, address to) external payable;
     function exchangeRateStored() external returns (uint256);
 }
-interface CEther  {
+interface CEther {
     function mint() external payable returns (uint256);
     function redeem(uint256 cTokenAmount) external payable returns (uint256);
+    function exchangeRateCurrent() external returns (uint256);
+    function exchangeRateStored() external returns (uint256);
 }
 
 interface IComptroller {

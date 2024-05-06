@@ -8,6 +8,7 @@ import type {
   BytesLike,
   CallOverrides,
   ContractTransaction,
+  Overrides,
   PayableOverrides,
   PopulatedTransaction,
   Signer,
@@ -25,18 +26,42 @@ import type {
 
 export interface CEtherInterface extends utils.Interface {
   functions: {
+    "exchangeRateCurrent()": FunctionFragment;
+    "exchangeRateStored()": FunctionFragment;
     "mint()": FunctionFragment;
     "redeem(uint256)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "mint" | "redeem"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic:
+      | "exchangeRateCurrent"
+      | "exchangeRateStored"
+      | "mint"
+      | "redeem"
+  ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "exchangeRateCurrent",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "exchangeRateStored",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "mint", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "redeem",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "exchangeRateCurrent",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "exchangeRateStored",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
 
@@ -70,6 +95,14 @@ export interface CEther extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    exchangeRateCurrent(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    exchangeRateStored(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     mint(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -79,6 +112,14 @@ export interface CEther extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
+
+  exchangeRateCurrent(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  exchangeRateStored(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   mint(
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -90,6 +131,10 @@ export interface CEther extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    exchangeRateCurrent(overrides?: CallOverrides): Promise<BigNumber>;
+
+    exchangeRateStored(overrides?: CallOverrides): Promise<BigNumber>;
+
     mint(overrides?: CallOverrides): Promise<BigNumber>;
 
     redeem(
@@ -101,6 +146,14 @@ export interface CEther extends BaseContract {
   filters: {};
 
   estimateGas: {
+    exchangeRateCurrent(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    exchangeRateStored(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     mint(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -112,6 +165,14 @@ export interface CEther extends BaseContract {
   };
 
   populateTransaction: {
+    exchangeRateCurrent(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    exchangeRateStored(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     mint(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

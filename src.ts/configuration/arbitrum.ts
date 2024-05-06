@@ -107,7 +107,7 @@ export const PROTOCOL_CONFIGS = {
         '0xd54804250e9c561aea9dee34e9cf2342f767acc5', // (wcUSDCv3)
       ],
     },
-  } as const),
+  }),
 } as const
 
 export type ArbitrumConfigType = typeof arbiConfig

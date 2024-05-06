@@ -1,3 +1,6 @@
+import { Universe } from '..'
+import { BaseAction } from '../action/Action'
+import { RouterAction } from '../action/RouterAction'
 import { Token, TokenQuantity } from '../entities/Token'
 import { SwapPath } from '../searcher/Swap'
 import { type SwapSignature } from './SwapSignature'
@@ -38,8 +41,6 @@ export class DexRouter {
 
   public readonly swap: SwapSignature = async (
     abort,
-    src,
-    dst,
     input,
     output,
     slippage
@@ -49,7 +50,7 @@ export class DexRouter {
     if (prev != null) {
       return prev.path
     }
-    const out = this.swap_(abort, src, dst, input, output, slippage)
+    const out = this.swap_(abort, input, output, slippage)
       .then((path) => {
         this.cache2.set(key, path)
         return path
@@ -81,9 +82,44 @@ export class DexRouter {
     return true
   }
 
-  [Symbol.toStringTag] = 'DexAggregator'
+  [Symbol.toStringTag] = 'Router'
 
   toString() {
-    return `DexAggregator(name=${this.name})`
+    return `Router(${this.name})`
+  }
+}
+
+export class TradingVenue {
+  toString() {
+    return `Venue(${this.router.name})`
+  }
+  constructor(
+    public readonly universe: Universe,
+    public readonly router: DexRouter,
+    private readonly createTradeEdge_?: (
+      src: Token,
+      dst: Token
+    ) => Promise<RouterAction | null>
+  ) {}
+
+  get supportsDynamicInput() {
+    return this.router.dynamicInput
+  }
+
+  get name() {
+    return this.router.name
+  }
+
+  get supportsEdges() {
+    return this.createTradeEdge_ != null
+  }
+
+  async createTradeEdge(src: Token, dst: Token) {
+    if (this.createTradeEdge_ == null) {
+      throw new Error(
+        `${this.router.name} does not support creating permanent edges`
+      )
+    }
+    return await this.createTradeEdge_(src, dst)
   }
 }

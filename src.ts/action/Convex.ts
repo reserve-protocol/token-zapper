@@ -23,8 +23,6 @@ class ConvexPool {
   }
 }
 
-const wrapperInterface = IConvexWrapper__factory.createInterface()
-
 export class ConvexDepositAndStake extends Action('Convex') {
   async plan(
     planner: Planner,

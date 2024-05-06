@@ -17,7 +17,7 @@ function rayDiv(a: bigint, b: bigint): bigint {
 }
 export class MintSAV3TokensAction extends Action('AaveV3') {
   get outputSlippage() {
-    return 1n
+    return 30n
   }
   async plan(
     planner: Planner,
@@ -33,13 +33,10 @@ export class MintSAV3TokensAction extends Action('AaveV3') {
       )
     )
     planner.add(
-      lib.deposit(
-        inp,
-        this.universe.execAddress.address,
-        0,
-        true
-      ),
-      `AaveV3 mint: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
+      lib.deposit(inp, this.universe.execAddress.address, 0, true),
+      `IStaticATokenV3LM mint: ${predicted.join(', ')} -> ${await this.quote(
+        predicted
+      )}`
     )
     return this.outputBalanceOf(this.universe, planner)
   }
@@ -75,7 +72,7 @@ export class MintSAV3TokensAction extends Action('AaveV3') {
 }
 export class BurnSAV3TokensAction extends Action('AaveV3') {
   get outputSlippage() {
-    return 1n
+    return 30n
   }
   async plan(
     planner: Planner,
@@ -96,7 +93,9 @@ export class BurnSAV3TokensAction extends Action('AaveV3') {
         this.universe.execAddress.address,
         true
       ),
-      `AaveV3 burn: ${predicted.join(', ')} -> ${await this.quote(predicted)}`
+      `IStaticATokenV3LM burn: ${predicted.join(', ')} -> ${await this.quote(
+        predicted
+      )}`
     )
     return this.outputBalanceOf(this.universe, planner)
   }

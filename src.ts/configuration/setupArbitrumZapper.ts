@@ -6,7 +6,6 @@ import { ArbitrumUniverse, PROTOCOL_CONFIGS } from './arbitrum'
 import { loadArbitrumTokenList } from './loadArbitrumTokenList'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupCompoundV3 } from './setupCompV3'
-import { loadRTokens } from './setupRTokens'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
@@ -78,46 +77,23 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
 
   universe.oracles.push(registry)
   universe.oracle = new ZapperTokenQuantityPrice(universe)
-  // console.log('Setting up AAVEV3')
-  const aaveV3 = await setupAaveV3(
-    universe,
-    Address.from(PROTOCOL_CONFIGS.aaveV3.pool),
-    await Promise.all(
-      PROTOCOL_CONFIGS.aaveV3.wrappers.map(
-        async (a) => await universe.getToken(Address.from(a))
-      )
+
+  // Load compound v3
+  universe.addIntegration(
+    'compoundV3',
+    await setupCompoundV3('CompV3', universe, PROTOCOL_CONFIGS.compV3)
+  )
+
+  // Set up AAVEV2
+  universe.addIntegration(
+    'aaveV3',
+    await setupAaveV3(
+      universe,
+      PROTOCOL_CONFIGS.aaveV3
     )
   )
 
-  // console.log('Loading Compound V3 tokens')
-  const [comets, cTokenWrappers] = await Promise.all([
-    Promise.all(
-      PROTOCOL_CONFIGS.compV3.comets.map(
-        async (a) => await universe.getToken(Address.from(a))
-      )
-    ),
-    Promise.all(
-      PROTOCOL_CONFIGS.compV3.wrappers.map(
-        async (a) => await universe.getToken(Address.from(a))
-      )
-    ),
-  ])
-
-  // console.log('Setting up Compound V3')
-  const compV3 = await setupCompoundV3(universe, {
-    comets,
-    cTokenWrappers,
-  })
-
-  // console.log('Loading rTokens')
-  await loadRTokens(universe)
-
-  // console.log('Setting up uniswapV3 router')
-  const uni = await setupUniswapRouter(universe)
-
-  return {
-    uni,
-    compV3,
-    aaveV3,
-  }
+  universe.addTradeVenue(
+    universe.addIntegration('uniswapV3', await setupUniswapRouter(universe))
+  )
 }

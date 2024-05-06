@@ -196,8 +196,9 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
     const aggregators = this.getTradingVenues(input, output, opts.dynamicInput)
     const tradeName = `${input.token} -> ${output}`
+
     await Promise.all(
-      aggregators.map(async (venue) => {
+      shuffle(aggregators).map(async (venue) => {
         try {
           const res = await this.perf.measurePromise(
             venue.name,
@@ -585,4 +586,12 @@ export class Universe<const UniverseConf extends Config = Config> {
       this.config.defaultInternalTradeSlippage
     )
   }
+}
+function shuffle<T>(array: T[]): T[] {
+  const out = [...array]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
 }

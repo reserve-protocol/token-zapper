@@ -144,8 +144,19 @@ const getQuoteAndSwap = async (
   slippage: bigint
 ): Promise<KyberswapAggregatorResult> => {
   const dest = universe.execAddress
-  const req = await fetchRoute(abort, universe, quantityIn, tokenOut)
-  const swap = await fetchSwap(abort, universe, req, dest, slippage)
+
+  const control = new AbortController()
+
+  abort.addEventListener('abort', () => {
+    if (control.signal.aborted) return
+    control.abort()
+  })
+  setTimeout(() => {
+    if (control.signal.aborted) return
+    control.abort()
+  }, universe.config.routerDeadline)
+  const req = await fetchRoute(control.signal, universe, quantityIn, tokenOut)
+  const swap = await fetchSwap(control.signal, universe, req, dest, slippage)
 
   const addrs = new Set(
     req.data.routeSummary.route

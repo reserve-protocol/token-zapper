@@ -345,6 +345,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
   const pools: Map<Address, UniswapPool> = new Map()
 
   const parseRoute = async (
+    abort: AbortSignal,
     route: SwapRoute,
     inputTokenQuantity: TokenQuantity,
     slippage: bigint
@@ -352,8 +353,14 @@ export const setupUniswapRouter = async (universe: Universe) => {
     const routes = route.route as V3RouteWithValidQuote[]
     const steps = await Promise.all(
       routes.map(async (v3Route) => {
+        if (abort.aborted) {
+          throw new Error('Aborted')
+        }
         const stepPools = await Promise.all(
           v3Route.route.pools.map(async (pool, index) => {
+            if (abort.aborted) {
+              throw new Error('Aborted')
+            }
             const addr = Address.from(v3Route.poolAddresses[index])
             const prev = pools.get(addr)
             if (prev) {
@@ -414,6 +421,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
   }
 
   const computeRoute = async (
+    abort: AbortSignal,
     input: TokenQuantity,
     output: Token,
     slippage: bigint
@@ -422,6 +430,9 @@ export const setupUniswapRouter = async (universe: Universe) => {
     const outp = ourTokenToUni(universe, output)
     const slip = new Percent(Number(slippage), Number(TRADE_SLIPPAGE_DENOMINATOR))
 
+    if (abort.aborted) {
+      throw new Error('Aborted')
+    }
     const route = await router.route(inp, outp, TradeType.EXACT_INPUT, {
       recipient: universe.execAddress.address,
       slippageTolerance: slip,
@@ -438,7 +449,10 @@ export const setupUniswapRouter = async (universe: Universe) => {
       throw new Error('Failed to find route')
     }
 
-    const parsedRoute = await parseRoute(route, input, slippage)
+    if (abort.aborted) {
+      throw new Error('Aborted')
+    }
+    const parsedRoute = await parseRoute(abort, route, input, slippage)
     // console.log(`${input} -> ${output}: ${parsedRoute}`)
 
     return parsedRoute
@@ -448,7 +462,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
     'uniswap',
     async (abort, input, output, slippage) => {
       try {
-        const route = await computeRoute(input, output, slippage)
+        const route = await computeRoute(abort, input, output, slippage)
         return await new SwapPlan(universe, [
           new UniswapRouterAction(route, universe, out),
         ]).quote([input], universe.execAddress)
@@ -467,6 +481,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
     async (inputToken: Token, outputToken: Token) => {
       try {
         await computeRoute(
+          AbortSignal.timeout(universe.config.routerDeadline),
           inputToken.one,
           outputToken,
           universe.config.defaultInternalTradeSlippage

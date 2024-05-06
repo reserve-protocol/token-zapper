@@ -103,11 +103,11 @@ export const ethereumConfig = makeConfig(
   {
     blocktime: 12000,
     blockGasLimit: 30000000n,
-    requoteTolerance: 1,
-    routerDeadline: 2500,
-    searcherMinRoutesToProduce: 2,
-    searcherMaxRoutesToProduce: 4,
-    searchConcurrency: 2,
+    requoteTolerance: 5,
+    routerDeadline: 4000,
+    searcherMinRoutesToProduce: 1,
+    searcherMaxRoutesToProduce: 16,
+    searchConcurrency: 4,
     defaultInternalTradeSlippage: 200n,
   }
 )

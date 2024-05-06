@@ -285,8 +285,19 @@ export const createEnso = (
       ) {
         throw new Error('Unsupported')
       }
+      const control = new AbortController()
+
+      abort.addEventListener('abort', () => {
+        if (control.signal.aborted) return
+        control.abort()
+      })
+      setTimeout(() => {
+        if (control.signal.aborted) return
+        control.abort()
+      }, universe.config.routerDeadline)
+
       const req = await getEnsoQuote(
-        abort,
+        control.signal,
         universe,
         input,
         output,

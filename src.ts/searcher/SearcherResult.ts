@@ -346,12 +346,15 @@ export abstract class BaseSearcherResult {
     // )
     // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
-    const zapperResult = await this.simulate({
-      data,
-      value: this.value,
-      quantity: this.userInput.amount,
-      inputToken: this.inputToken,
-    })
+    const zapperResult = await this.universe.perf.measurePromise(
+      'Zap Simulation',
+      this.simulate({
+        data,
+        value: this.value,
+        quantity: this.userInput.amount,
+        inputToken: this.inputToken,
+      })
+    )
 
     const dustQuantities = zapperResult.dust
       .map((qty, index) => this.potentialResidualTokens[index].from(qty))
@@ -365,12 +368,15 @@ export abstract class BaseSearcherResult {
     //   `INITIAL_SIMULATION_OK: ${this.userInput} -> ${outputTokenOutput}`
     // )
 
-    const [valueOfOut, ...dustValues] = await Promise.all([
-      this.universe.fairPrice(outputTokenOutput),
-      ...dustQuantities.map(
-        async (i) => [await this.universe.fairPrice(i), i] as const
-      ),
-    ])
+    const [valueOfOut, ...dustValues] = await this.universe.perf.measurePromise(
+      'value dust',
+      Promise.all([
+        this.universe.fairPrice(outputTokenOutput),
+        ...dustQuantities.map(
+          async (i) => [await this.universe.fairPrice(i), i] as const
+        ),
+      ])
+    )
 
     let valueOfDust = this.universe.usd.zero
     for (const [usdValue] of dustValues) {
@@ -555,12 +561,15 @@ export abstract class BaseSearcherResult {
       if (gasEstimate === 0n) {
         throw new Error('Failed to estimate gas')
       }
-      const stats = await ZapTxStats.create(this.universe, {
-        gasUnits: gasEstimate,
-        input: this.userInput,
-        output: outputTokenQty,
-        dust: dustOutputQtys,
-      })
+      const stats = await this.universe.perf.measurePromise(
+        'ZapTxStats.create',
+        ZapTxStats.create(this.universe, {
+          gasUnits: gasEstimate,
+          input: this.userInput,
+          output: outputTokenQty,
+          dust: dustOutputQtys,
+        })
+      )
 
       this.swaps = new SwapPaths(
         this.swaps.universe,
@@ -955,7 +964,7 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
         ...new Set(
           [
             ...this.parts.minting.inputs,
-            ...(this.parts.minting.swapPaths[0]?.inputs??[]),
+            ...(this.parts.minting.swapPaths[0]?.inputs ?? []),
           ].map((i) => i.token)
         ),
       ]) {

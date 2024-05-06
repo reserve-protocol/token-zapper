@@ -23,6 +23,12 @@ export class DexRouter {
     public readonly supportedOutputTokens = new Set<Token>()
   ) {}
 
+  private maxConcurrency = 20
+  public withMaxConcurrency(concurrency: number) {
+    this.maxConcurrency = concurrency
+    return this
+  }
+
   private currentBlock = 0
   public onBlock(block: number) {
     this.currentBlock = block
@@ -58,11 +64,12 @@ export class DexRouter {
       .catch((e) => {
         this.cache.delete(key)
         throw e
-      })
+      });
     this.cache.set(key, {
       path: out,
       timestamp: this.currentBlock,
     })
+
     return await out
   }
 
@@ -102,6 +109,10 @@ export class TradingVenue {
     ) => Promise<RouterAction | null>
   ) {}
 
+  withMaxConcurrency(concurrency: number) {
+    this.router.withMaxConcurrency(concurrency)
+    return this
+  }
   get supportsDynamicInput() {
     return this.router.dynamicInput
   }

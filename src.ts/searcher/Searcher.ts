@@ -80,7 +80,7 @@ const sortZaps = (
 ) => {
   let failed = txes
   if (txes.length === 0) {
-    console.log(`All ${allQuotes.length}/${allQuotes.length} potential zaps failed`)
+    console.log(`All ${txes.length}/${allQuotes.length} potential zaps failed`)
     throw new Error('No zaps found')
   }
 
@@ -130,7 +130,10 @@ const createConcurrentStreamingSeacher = (
     seen.add(id)
     allCandidates.push(result)
     try {
-      const tx = await result.toTransaction(toTxArgs)
+      const tx = await searcher.perf.measurePromise(
+        'toTransaction',
+        result.toTransaction(toTxArgs)
+      )
       const inVal = parseFloat(tx.inputValueUSD.format())
       const dustVal = parseFloat(tx.dustValueUSD.format())
       const outVal = parseFloat(tx.outputValueUSD.format())
@@ -158,10 +161,7 @@ const createConcurrentStreamingSeacher = (
       return
     }
     const resCount = results.length
-
-    const tooManyResults =
-      resCount >= searcher.config.searcherMaxRoutesToProduce
-    if (tooManyResults) {
+    if (resCount >= searcher.config.searcherMinRoutesToProduce) {
       // console.log('Too many results, aborting')
       abortController.abort()
     }
@@ -205,15 +205,25 @@ const willPathsHaveAddressConflicts = (paths: SwapPath[]) => {
 
 const chunkifyIterable = function* <T>(
   iterable: Iterable<T>,
-  chunkSize: number
+  chunkSize: number,
+  abort: AbortSignal
 ) {
   let chunk: T[] = []
   for (const item of iterable) {
+    if (abort.aborted) {
+      return
+    }
     chunk.push(item)
     if (chunk.length >= chunkSize) {
       yield chunk
       chunk = []
     }
+    if (abort.aborted) {
+      return
+    }
+  }
+  if (abort.aborted) {
+    return
   }
   if (chunk.length !== 0) {
     yield chunk
@@ -553,9 +563,6 @@ export class Searcher<
         }
       })
     )
-    if (abortSignal.aborted) {
-      return
-    }
 
     generateInputToPrecursorTradeMeasurement()
 
@@ -725,8 +732,6 @@ export class Searcher<
             }
           }
 
-          const outquantities =
-            balancesAtStartOfMintingPhase.toTokenQuantities()
           const tradeValueOut = tradeInputToTokenSet.reduce(
             (l, r) => l.add(r.outputValue),
             this.universe.usd.zero
@@ -783,19 +788,23 @@ export class Searcher<
     // console.log('Will test', allOptions.length, ' trade options for zap')
     for (const candidates of chunkifyIterable(
       allOptions,
-      this.maxConcurrency
+      this.maxConcurrency,
+      abortSignal
     )) {
-      let resolved = 0
+      if (abortSignal.aborted) {
+        break
+      }
+      const maxWaitTime = AbortSignal.timeout(this.config.routerDeadline)
 
-      const maxWaitTime = AbortSignal.timeout(this.config.routerDeadline / 2)
-
-      const p = new Promise((resolve) =>
-        maxWaitTime.addEventListener('abort', () => {
-          if (resolved / this.maxConcurrency > 0.5) {
-            resolve(null)
-          }
+      const p = new Promise((resolve) => {
+        abortSignal.addEventListener('abort', () => {
+          resolve(null)
         })
-      )
+        maxWaitTime.addEventListener('abort', () => {
+          resolve(null)
+        })
+      })
+
       await Promise.race([
         await Promise.all(
           candidates.map(async (paths) => {
@@ -817,16 +826,9 @@ export class Searcher<
               await onResult(out)
             } catch (e: any) {}
           })
-        )
-          .catch((e) => {})
-          .finally(() => {
-            resolved += 1
-          }),
+        ).catch((e) => {}),
         p,
       ])
-      if (abortSignal.aborted) {
-        break
-      }
     }
   }
 
@@ -1156,7 +1158,8 @@ export class Searcher<
     // console.log('Possible redeem zaps', allOptions.length)
     for (const candidates of chunkifyIterable(
       allOptions,
-      this.maxConcurrency
+      this.maxConcurrency,
+      abortSignal
     )) {
       if (abortSignal.aborted) {
         return
@@ -1343,7 +1346,14 @@ export class Searcher<
         controller.abortController.signal
       ).then(async (i) => {
         try {
-          await Promise.all(i.map(async (i) => await controller.onResult(i)))
+          await Promise.all(
+            i.map(async (i) => {
+              if (controller.abortController.signal.aborted) {
+                return
+              }
+              await controller.onResult(i)
+            })
+          )
         } catch (e) {}
       }),
     ]).catch((e) => {

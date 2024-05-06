@@ -11,10 +11,7 @@ class DustStats {
     public readonly valueUSD: TokenQuantity
   ) {}
 
-  public static async fromDust(
-    universe: Universe,
-    dust: PricedTokenQuantity[]
-  ) {
+  public static fromDust(universe: Universe, dust: PricedTokenQuantity[]) {
     const valueUSD = dust.reduce((a, b) => a.add(b.price), universe.usd.zero)
     return new DustStats(dust, valueUSD)
   }
@@ -101,7 +98,7 @@ export class ZapTxStats {
       input.gasUnits,
       inputValue,
       outputValue,
-      await DustStats.fromDust(universe, dustValue),
+      DustStats.fromDust(universe, dustValue),
       [outputValue, ...dustValue],
       totalValueUSD
     )

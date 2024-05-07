@@ -103,10 +103,10 @@ export const ethereumConfig = makeConfig(
   {
     blocktime: 12000,
     blockGasLimit: 30000000n,
-    requoteTolerance: 5,
-    routerDeadline: 4000,
+    requoteTolerance: 4,
+    routerDeadline: 3500,
     searcherMinRoutesToProduce: 1,
-    searcherMaxRoutesToProduce: 16,
+    searcherMaxRoutesToProduce: 4,
     searchConcurrency: 4,
     defaultInternalTradeSlippage: 200n,
   }
@@ -157,6 +157,20 @@ export const PROTOCOL_CONFIGS = {
     ['0xE2b16e14dB6216e33082D5A8Be1Ef01DF7511bBb', 'morpho'],
     ['0x291ed25eB61fcc074156eE79c5Da87e5DA94198F', 'morpho'],
     ['0x97F9d5ed17A0C99B279887caD5254d15fb1B619B', 'morpho'],
+
+    [
+      '0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB',
+      'morpho Steakhouse USDC (steakUSDC)',
+    ],
+    [
+      '0xbEEF02e5E13584ab96848af90261f0C8Ee04722a',
+      'morpho Steakhouse PYUSD (steakPYUSD)',
+    ],
+    ['0x78Fc2c2eD1A4cDb5402365934aE5648aDAd094d0', 'morpho Re7 WETH (Re7WETH)'],
+    [
+      '0x2C25f6C25770fFEC5959D34B94Bf898865e5D6b1',
+      'morpho Flagship USDT (bbUSDT)',
+    ],
   ],
 
   aaveV3: {

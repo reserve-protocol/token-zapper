@@ -101,16 +101,27 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addTradeVenue(reth)
 
+  // Set up Lido
   universe.addIntegration(
     'lido',
     await LidoDeployment.load(universe, PROTOCOL_CONFIGS.lido)
   )
 
-  // Set up Lido
-
+  // Set up various ERC4626 tokens
   await Promise.all(
-    PROTOCOL_CONFIGS.erc4626.map(([addr, proto]) =>
-      setupERC4626(universe, [addr], proto, 30n)
-    )
+    PROTOCOL_CONFIGS.erc4626.map(async ([addr, proto]) => {
+      const vault = await setupERC4626(universe, {
+        vaultAddress: addr,
+        protocol: proto,
+        slippage: 5n,
+      })
+      // console.log(
+      //   `Loaded ${vault}, ${vault.shareToken} => ${(
+      //     await vault.mint.quote([vault.assetToken.from(1)])
+      //   ).join(', ')}`
+      // )
+
+      return vault
+    })
   )
 }

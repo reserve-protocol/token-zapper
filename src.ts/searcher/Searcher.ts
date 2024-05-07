@@ -109,10 +109,7 @@ const createConcurrentStreamingSeacher = (
   }[] = []
 
   setTimeout(() => {
-    if (
-      results.length < searcher.minResults ||
-      abortController.signal.aborted
-    ) {
+    if (results.length < searcher.minResults) {
       // console.log(`Only found ${results.length} results, timeout extended`)
       return
     }
@@ -140,12 +137,12 @@ const createConcurrentStreamingSeacher = (
 
       // If there is more than 5% dust, reject
       if (outVal / 20 < dustVal) {
-        // console.log('Large amount of dust')
+        console.log('Large amount of dust')
         return
       }
       const inToOutRatio = outVal / inVal
-      if (inToOutRatio < 0.97) {
-        // console.log('Low in to out ratio')
+      if (inToOutRatio < 0.9) {
+        console.log('Low in to out ratio')
 
         // If there is more than 10% loss of value, reject
         return
@@ -154,16 +151,15 @@ const createConcurrentStreamingSeacher = (
         tx,
         searchResult: result,
       })
+      const resCount = results.length
+      if (resCount >= searcher.config.searcherMinRoutesToProduce) {
+        // console.log('Too many results, aborting')
+        abortController.abort()
+      }
     } catch (e: any) {
+      // console.log(e)
+      // console.log('Failed to convert to transaction')
       // console.log(e.stack)
-    }
-    if (abortController.signal.aborted) {
-      return
-    }
-    const resCount = results.length
-    if (resCount >= searcher.config.searcherMinRoutesToProduce) {
-      // console.log('Too many results, aborting')
-      abortController.abort()
     }
   }
 
@@ -210,20 +206,11 @@ const chunkifyIterable = function* <T>(
 ) {
   let chunk: T[] = []
   for (const item of iterable) {
-    if (abort.aborted) {
-      return
-    }
     chunk.push(item)
     if (chunk.length >= chunkSize) {
       yield chunk
       chunk = []
     }
-    if (abort.aborted) {
-      return
-    }
-  }
-  if (abort.aborted) {
-    return
   }
   if (chunk.length !== 0) {
     yield chunk
@@ -362,6 +349,7 @@ export const findPrecursorTokenSet = async (
   unitBasket: TokenQuantity[],
   searcher: Searcher<UniverseWithERC20GasTokenDefined>
 ) => {
+  const start = Date.now()
   // console.log(`Findiing precursor set for ${rToken}: ${unitBasket.join(', ')}`)
   const specialRules = universe.precursorTokenSourcingSpecialCases
   const basketTokenApplications: BasketTokenSourcingRuleApplication[] = []
@@ -445,6 +433,7 @@ export class Searcher<
     }) => Promise<void>,
     abortSignal: AbortSignal
   ) {
+    const start = Date.now()
     // console.log('Finding precursors for', rToken.symbol)
     /**
      * PHASE 1: Compute precursor set
@@ -535,7 +524,7 @@ export class Searcher<
           return
         }
 
-        for (let i = 1; i < 5; i++) {
+        for (let i = 1; i < 3; i++) {
           try {
             if (abortSignal.aborted) {
               return
@@ -546,7 +535,7 @@ export class Searcher<
               this.universe.config.addresses.executorAddress,
               internalTradeSlippage,
               abortSignal,
-              Math.max(i, 3),
+              Math.max(i, 2),
               false
             )
 
@@ -785,23 +774,36 @@ export class Searcher<
       generateAllPermutations(this.universe, multiTrades, precursorSet),
       rToken.symbol
     )
+
+    const aborter = new AbortController()
     // console.log('Will test', allOptions.length, ' trade options for zap')
+
+    const prRound =
+      this.config.routerDeadline / (allOptions.length / this.maxConcurrency)
+    console.log(prRound, allOptions.length)
+    const endTime = Date.now() + prRound
     for (const candidates of chunkifyIterable(
       allOptions,
       this.maxConcurrency,
       abortSignal
     )) {
+      let resultsProduced = 0
       if (abortSignal.aborted) {
         break
       }
-      const maxWaitTime = AbortSignal.timeout(this.config.routerDeadline)
+      const maxWaitTime = AbortSignal.timeout(prRound + 500)
 
       const p = new Promise((resolve) => {
         abortSignal.addEventListener('abort', () => {
           resolve(null)
         })
-        maxWaitTime.addEventListener('abort', () => {
+        aborter.signal.addEventListener('abort', () => {
           resolve(null)
+        })
+        maxWaitTime.addEventListener('abort', () => {
+          if (resultsProduced != 0) {
+            resolve(null)
+          }
         })
       })
 
@@ -810,21 +812,21 @@ export class Searcher<
           candidates.map(async (paths) => {
             let out
             try {
-              if (abortSignal.aborted) {
-                return
-              }
               const pathWithResolvedTradeConflicts =
                 await resolveTradeConflicts(paths)
               out = await generateIssueancePlan(pathWithResolvedTradeConflicts)
-            } catch (e: any) {
-              return
-            }
-            try {
-              if (abortSignal.aborted) {
-                return
-              }
-              await onResult(out)
+
+              try {
+                await onResult(out)
+                resultsProduced += 1
+              } catch (e: any) {}
             } catch (e: any) {}
+            
+            if (resultsProduced > this.minResults) {
+              if (Date.now() > endTime) {
+                aborter.abort()
+              }
+            }
           })
         ).catch((e) => {}),
         p,
@@ -1103,9 +1105,9 @@ export class Searcher<
           )
         })
     ).catch(() => {})
-    if (abortSignal.aborted) {
-      return
-    }
+    // if (abortSignal.aborted) {
+    //   return
+    // }
 
     const generateRedeemPlan = async (trades: SwapPath[] = []) => {
       const pretradeBalances = tokenAmounts.clone()

@@ -1,12 +1,7 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { TransactionRequest } from '@ethersproject/providers'
 import { constants, ethers } from 'ethers'
-import {
-  ParamType,
-  defaultAbiCoder,
-  formatEther,
-  parseEther,
-} from 'ethers/lib/utils'
+import { ParamType, defaultAbiCoder, parseEther } from 'ethers/lib/utils'
 import {
   BaseAction,
   DestinationOptions,
@@ -15,9 +10,10 @@ import {
 } from '../action/Action'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
+import { DefaultMap } from '../base/DefaultMap'
+import { simulationUrls } from '../base/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import {
-  EthBalance__factory,
   IERC20__factory,
   ZapperExecutor__factory,
   Zapper__factory,
@@ -35,13 +31,10 @@ import {
   Planner,
   Value,
   encodeArg,
-  printPlan,
 } from '../tx-gen/Planner'
+import { ToTransactionArgs } from './ToTransactionArgs'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
-import { DefaultMap } from '../base/DefaultMap'
-import { ToTransactionArgs } from './ToTransactionArgs'
-import { simulationUrls } from '../base/constants'
 
 const zapperInterface = Zapper__factory.createInterface()
 interface SimulateParams {
@@ -122,12 +115,20 @@ export abstract class BaseSearcherResult {
     return this.describe().join('\n')
   }
 
+  async checkIfSearchIsAborted() {
+    if (this.abortSignal.aborted) {
+      throw new Error('Aborted')
+    }
+  }
+
   constructor(
     readonly universe: UniverseWithERC20GasTokenDefined,
     readonly userInput: TokenQuantity,
     public swaps: SwapPaths,
     public readonly signer: Address,
-    public readonly outputToken: Token
+    public readonly outputToken: Token,
+    public readonly startTime: number,
+    public readonly abortSignal: AbortSignal
   ) {
     if (this.universe.commonTokens.ERC20GAS == null) {
       throw new Error('Unexpected: Missing wrapped gas token')
@@ -419,6 +420,7 @@ export abstract class BaseSearcherResult {
     const duplicate = new Set<string>()
     await Promise.all(
       this.allApprovals.map(async (i) => {
+        await this.checkIfSearchIsAborted()
         const key = i.spender.toString() + i.token.address.toString()
         if (duplicate.has(key)) {
           return
@@ -529,6 +531,7 @@ export abstract class BaseSearcherResult {
       const data = this.encodeCall(options, params)
       const tx = this.encodeTx(data, 3000000n)
       // console.log(printPlan(this.planner, this.universe).join('\n'))
+      await this.checkIfSearchIsAborted()
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
       let dust = this.potentialResidualTokens.map((qty) => qty)
@@ -561,6 +564,7 @@ export abstract class BaseSearcherResult {
       if (gasEstimate === 0n) {
         throw new Error('Failed to estimate gas')
       }
+      await this.checkIfSearchIsAborted()
       const stats = await this.universe.perf.measurePromise(
         'ZapTxStats.create',
         ZapTxStats.create(this.universe, {
@@ -585,7 +589,7 @@ export abstract class BaseSearcherResult {
         gasEstimate
       )
 
-      return ZapTransaction.create(
+      return await ZapTransaction.create(
         this,
         this.planner,
         {
@@ -604,16 +608,16 @@ export abstract class BaseSearcherResult {
   }
 }
 
-export class TradeSearcherResult extends BaseSearcherResult {
+export class ZapViaATrade extends BaseSearcherResult {
   async toTransaction(
     options: ToTransactionArgs = {}
   ): Promise<ZapTransaction> {
     await this.setupApprovals().catch((a) => {
-      console.log('approvals failed')
       throw a
     })
 
     for (const step of this.swaps.swapPaths[0].steps) {
+      await this.checkIfSearchIsAborted()
       await step.action
         .plan(this.planner, [], this.signer, [this.userInput])
         .catch((a: any) => {
@@ -642,7 +646,7 @@ export class TradeSearcherResult extends BaseSearcherResult {
   }
 }
 
-export class BurnRTokenSearcherResult extends BaseSearcherResult {
+export class RedeemZap extends BaseSearcherResult {
   constructor(
     readonly universe: UniverseWithERC20GasTokenDefined,
     readonly userInput: TokenQuantity,
@@ -653,9 +657,19 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
       tradesToOutput: SwapPath[]
     },
     public readonly signer: Address,
-    public readonly outputToken: Token
+    public readonly outputToken: Token,
+    public readonly startTime: number,
+    public readonly abortSignal: AbortSignal
   ) {
-    super(universe, userInput, parts.full, signer, outputToken)
+    super(
+      universe,
+      userInput,
+      parts.full,
+      signer,
+      outputToken,
+      startTime,
+      abortSignal
+    )
   }
   async toTransaction(
     options: ToTransactionArgs = {}
@@ -663,6 +677,7 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
     await this.setupApprovals()
 
     const unwrapBalances = new Map<Token, Value>()
+    await this.checkIfSearchIsAborted()
     const outputs = await this.parts.rtokenRedemption.steps[0].action
       .plan(
         this.planner,
@@ -689,6 +704,7 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
     const tradeOutputs = new Map<Token, Value | null>()
     for (const unwrapBasketTokenPath of this.parts.tokenBasketUnwrap) {
       for (const step of unwrapBasketTokenPath.steps) {
+        await this.checkIfSearchIsAborted()
         const prev = unwrapBalances.get(step.inputs[0].token)
         let input =
           prev == null
@@ -733,6 +749,7 @@ export class BurnRTokenSearcherResult extends BaseSearcherResult {
     const tradeInputs = new Map<Token, Value>()
     for (const path of tradesToGenerate) {
       for (const step of path.steps) {
+        await this.checkIfSearchIsAborted()
         const input = path.inputs.map(
           (t) =>
             tradeInputs.get(t.token) ??
@@ -798,7 +815,7 @@ const ONE_Val = new LiteralValue(
   ParamType.fromString('uint256'),
   defaultAbiCoder.encode(['uint256'], [ONE])
 )
-export class MintRTokenSearcherResult extends BaseSearcherResult {
+export class MintZap extends BaseSearcherResult {
   constructor(
     readonly universe: UniverseWithERC20GasTokenDefined,
     readonly userInput: TokenQuantity,
@@ -809,9 +826,19 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
       full: SwapPaths
     },
     public readonly signer: Address,
-    public readonly outputToken: Token
+    public readonly outputToken: Token,
+    public readonly startTime: number,
+    public readonly abortSignal: AbortSignal
   ) {
-    super(universe, userInput, parts.full, signer, outputToken)
+    super(
+      universe,
+      userInput,
+      parts.full,
+      signer,
+      outputToken,
+      startTime,
+      abortSignal
+    )
   }
 
   async toTransaction(
@@ -888,6 +915,7 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
 
       for (const trade of tradesToGenerate) {
         for (const step of trade.steps) {
+          await this.checkIfSearchIsAborted()
           const tradeInput = step.inputs[0]
           const inputToken = tradeInput.token
 
@@ -980,6 +1008,7 @@ export class MintRTokenSearcherResult extends BaseSearcherResult {
       }
       for (const mintPath of this.parts.minting.swapPaths) {
         for (const step of mintPath.steps) {
+          await this.checkIfSearchIsAborted()
           const inputToken = step.inputs[0].token
           let actionInput = trades.get(inputToken)
           if (actionInput == null) {

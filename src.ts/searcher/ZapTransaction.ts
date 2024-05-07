@@ -4,6 +4,9 @@ import { type ZapERC20ParamsStruct } from '../contracts/contracts/Zapper.sol/Zap
 import { printPlan, Planner } from '../tx-gen/Planner'
 import { Universe } from '../Universe'
 import { type BaseSearcherResult } from './SearcherResult'
+import { hexlify, resolveProperties } from 'ethers/lib/utils'
+import { BigNumber } from 'ethers'
+import { time } from 'console'
 
 class DustStats {
   private constructor(
@@ -209,5 +212,53 @@ export class ZapTransaction {
 
   compare(other: ZapTransaction) {
     return this.stats.compare(other.stats)
+  }
+
+  async serialize() {
+    const txArgs = await resolveProperties(this.transaction.params)
+    const signer = this.searchResult.signer.address.toString()
+    return {
+      id: `${this.universe.chainId}.${signer}.${
+        this.searchResult.blockNumber
+      }.${this.searchResult.constructor.name}[${
+        this.input
+      }->${this.stats.outputs.join(',')}]`,
+      chainId: this.universe.chainId,
+      zapType: this.searchResult.constructor.name,
+      requestStart: new Date(this.searchResult.startTime).toISOString(),
+      requestBlock: this.searchResult.blockNumber,
+      createdAt: new Date().toISOString(),
+      createdAtBlock: this.universe.currentBlock,
+      searchTime: Date.now() - this.searchResult.startTime,
+      txArgs: Object.fromEntries(
+        Object.entries(txArgs).map(([k, v]) => {
+          if (v == null || typeof v === 'number' || typeof v === 'boolean') {
+            return [k, v ?? null] as [string, number | boolean | null]
+          }
+          if (v instanceof BigNumber) {
+            return [k, v.toString()] as [string, string]
+          }
+          if (Array.isArray(v)) {
+            return [k, v.map((i) => i.toString())] as [string, string[]]
+          }
+          return [k, v.toString()] as [string, string]
+        })
+      ),
+
+      tx: {
+        to: this.transaction.tx.to ?? null,
+        data:
+          this.transaction.tx.data == null
+            ? null
+            : hexlify(this.transaction.tx.data),
+        value: BigNumber.from(this.transaction.tx.value ?? '0x0').toString(),
+        from: this.transaction.tx.from ?? null,
+      },
+      gasUnits: this.stats.txFee.units.toString(),
+      input: this.stats.input.toString(),
+      output: this.stats.output.toString(),
+      dust: this.dust.dust.map((i) => i.toString()),
+      description: this.describe().join('\n'),
+    }
   }
 }

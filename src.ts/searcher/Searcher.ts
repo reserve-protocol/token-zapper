@@ -17,9 +17,9 @@ import {
 } from './BasketTokenSourcingRules'
 import {
   BaseSearcherResult,
-  BurnRTokenSearcherResult,
-  MintRTokenSearcherResult,
-  TradeSearcherResult,
+  RedeemZap,
+  MintZap,
+  ZapViaATrade,
 } from './SearcherResult'
 import { SingleSwap, SwapPath, SwapPaths, SwapPlan } from './Swap'
 import { ToTransactionArgs } from './ToTransactionArgs'
@@ -109,13 +109,8 @@ const createConcurrentStreamingSeacher = (
   }[] = []
 
   setTimeout(() => {
-    if (results.length < searcher.minResults) {
-      // console.log(`Only found ${results.length} results, timeout extended`)
-      return
-    }
-    // console.log('Aborting search, timeout reached')
     abortController.abort()
-  }, searcher.config.routerDeadline)
+  }, 10000)
 
   const allCandidates: BaseSearcherResult[] = []
   const seen: Set<string> = new Set()
@@ -137,12 +132,12 @@ const createConcurrentStreamingSeacher = (
 
       // If there is more than 5% dust, reject
       if (outVal / 20 < dustVal) {
-        console.log('Large amount of dust')
+        // console.log('Large amount of dust')
         return
       }
       const inToOutRatio = outVal / inVal
       if (inToOutRatio < 0.9) {
-        console.log('Low in to out ratio')
+        // console.log('Low in to out ratio')
 
         // If there is more than 10% loss of value, reject
         return
@@ -153,7 +148,6 @@ const createConcurrentStreamingSeacher = (
       })
       const resCount = results.length
       if (resCount >= searcher.config.searcherMinRoutesToProduce) {
-        // console.log('Too many results, aborting')
         abortController.abort()
       }
     } catch (e: any) {
@@ -166,6 +160,11 @@ const createConcurrentStreamingSeacher = (
   return {
     abortController,
     onResult,
+    resultReadyPromise: new Promise((resolve) => {
+      abortController.signal.addEventListener('abort', () => {
+        resolve(null)
+      })
+    }),
     getResults: (startTime: number) => {
       return sortZaps(
         results.map((i) => ({
@@ -349,7 +348,6 @@ export const findPrecursorTokenSet = async (
   unitBasket: TokenQuantity[],
   searcher: Searcher<UniverseWithERC20GasTokenDefined>
 ) => {
-  const start = Date.now()
   // console.log(`Findiing precursor set for ${rToken}: ${unitBasket.join(', ')}`)
   const specialRules = universe.precursorTokenSourcingSpecialCases
   const basketTokenApplications: BasketTokenSourcingRuleApplication[] = []
@@ -433,7 +431,7 @@ export class Searcher<
     }) => Promise<void>,
     abortSignal: AbortSignal
   ) {
-    const start = Date.now()
+    // const start = Date.now()
     // console.log('Finding precursors for', rToken.symbol)
     /**
      * PHASE 1: Compute precursor set
@@ -778,9 +776,8 @@ export class Searcher<
     const aborter = new AbortController()
     // console.log('Will test', allOptions.length, ' trade options for zap')
 
-    const prRound =
-      this.config.routerDeadline / (allOptions.length / this.maxConcurrency)
-    console.log(prRound, allOptions.length)
+    const prRound = this.config.routerDeadline / 2
+    // console.log(prRound, allOptions.length)
     const endTime = Date.now() + prRound
     for (const candidates of chunkifyIterable(
       allOptions,
@@ -821,7 +818,7 @@ export class Searcher<
                 resultsProduced += 1
               } catch (e: any) {}
             } catch (e: any) {}
-            
+
             if (resultsProduced > this.minResults) {
               if (Date.now() > endTime) {
                 aborter.abort()
@@ -920,34 +917,30 @@ export class Searcher<
 
     const controller = createConcurrentStreamingSeacher(this, toTxArgs)
 
-    const mainPromise = Promise.all([
+    void Promise.race([
       this.findRTokenIntoSingleTokenZapViaRedeem__(
         rTokenQuantity,
         output,
         signerAddress,
         toTxArgs.internalTradeSlippage,
         controller.onResult,
-        controller.abortController.signal
+        controller.abortController.signal,
+        start
       ).catch(() => {}),
       this.findTokenZapViaTrade(
         rTokenQuantity,
         output,
         signerAddress,
         toTxArgs.internalTradeSlippage,
-        controller.abortController.signal
+        controller.abortController.signal,
+        start
       )
         .catch((e) => [])
         .then((results) =>
           Promise.all(results.map(controller.onResult)).catch(() => {})
         ),
-    ])
-    const resultsPromise = new Promise((resolve) => {
-      controller.abortController.signal.addEventListener('abort', () => {
-        resolve(null)
-      })
-    })
-
-    await Promise.race([resultsPromise, mainPromise])
+    ]).catch(() => {})
+    await controller.resultReadyPromise
     return controller.getResults(start)
   }
 
@@ -958,7 +951,7 @@ export class Searcher<
     internalTradeSlippage: bigint
   ) {
     await this.universe.initialized
-
+    const start = Date.now()
     if (output === this.universe.nativeToken) {
       output = this.universe.wrappedNativeToken
     }
@@ -969,14 +962,16 @@ export class Searcher<
         output,
         signerAddress,
         internalTradeSlippage,
-        timeout
+        timeout,
+        start
       ),
       this.findTokenZapViaTrade(
         rTokenQuantity,
         output,
         signerAddress,
         internalTradeSlippage,
-        timeout
+        timeout,
+        start
       ),
     ])) as [BaseSearcherResult[], BaseSearcherResult[]]
 
@@ -1003,9 +998,10 @@ export class Searcher<
     output: Token,
     signerAddress: Address,
     slippage: bigint,
-    abortSignal: AbortSignal
+    abortSignal: AbortSignal,
+    startTime: number = Date.now()
   ) {
-    const out: BurnRTokenSearcherResult[] = []
+    const out: RedeemZap[] = []
     await this.findRTokenIntoSingleTokenZapViaRedeem__(
       rTokenQuantity,
       output,
@@ -1014,17 +1010,19 @@ export class Searcher<
       async (burnZap) => {
         out.push(burnZap)
       },
-      abortSignal
+      abortSignal,
+      startTime
     )
-    return out as BurnRTokenSearcherResult[]
+    return out as RedeemZap[]
   }
   async findRTokenIntoSingleTokenZapViaRedeem__(
     rTokenQuantity: TokenQuantity,
     output: Token,
     signerAddress: Address,
     slippage: bigint,
-    onResult: (result: BurnRTokenSearcherResult) => Promise<void>,
-    abortSignal: AbortSignal
+    onResult: (result: RedeemZap) => Promise<void>,
+    abortSignal: AbortSignal,
+    startTime: number
   ) {
     await this.universe.initialized
     const outputIsNative = output === this.universe.nativeToken
@@ -1131,7 +1129,7 @@ export class Searcher<
         signerAddress
       )
 
-      return new BurnRTokenSearcherResult(
+      return new RedeemZap(
         this.universe,
         rTokenQuantity,
         {
@@ -1141,7 +1139,9 @@ export class Searcher<
           tradesToOutput: trades,
         },
         signerAddress,
-        outputToken
+        outputToken,
+        startTime,
+        abortSignal
       )
     }
 
@@ -1190,7 +1190,7 @@ export class Searcher<
     abortSignal: AbortSignal
   ): Promise<BaseSearcherResult[]> {
     await this.universe.initialized
-    const outputs: MintRTokenSearcherResult[] = []
+    const outputs: MintZap[] = []
     try {
       await this.findSingleInputToRTokenZap_(
         userInput,
@@ -1213,8 +1213,9 @@ export class Searcher<
     rToken: Token,
     signerAddress: Address,
     slippage: bigint,
-    abortSignal: AbortSignal
-  ): Promise<TradeSearcherResult[]> {
+    abortSignal: AbortSignal,
+    startTime: number = Date.now()
+  ): Promise<ZapViaATrade[]> {
     await this.universe.initialized
 
     const inputIsNative = userInput.token === this.universe.nativeToken
@@ -1249,7 +1250,7 @@ export class Searcher<
       .slice(0, 2)
       .map(
         (path) =>
-          new TradeSearcherResult(
+          new ZapViaATrade(
             this.universe,
             userInput,
             new SwapPaths(
@@ -1261,7 +1262,9 @@ export class Searcher<
               signerAddress
             ),
             signerAddress,
-            rToken
+            rToken,
+            startTime,
+            abortSignal
           )
       )
   }
@@ -1290,7 +1293,7 @@ export class Searcher<
         slippage,
         abortSignal
       ),
-    ])) as [MintRTokenSearcherResult[], TradeSearcherResult[]]
+    ])) as [MintZap[], ZapViaATrade[]]
     const results = await Promise.all(
       [...mintResults, ...tradeResults].map(async (i) => {
         return {
@@ -1329,23 +1332,23 @@ export class Searcher<
 
     const controller = createConcurrentStreamingSeacher(this, toTxArgs)
 
-    await Promise.all([
+    void Promise.race([
       this.findSingleInputToRTokenZap_(
         userInput,
         rToken,
         userAddress,
         slippage,
         controller.onResult,
-        controller.abortController.signal
-      ).catch((e) => {
-        // console.log(e)
-      }),
+        controller.abortController.signal,
+        start
+      ).catch((e) => {}),
       this.findTokenZapViaTrade(
         userInput,
         rToken,
         userAddress,
         slippage,
-        controller.abortController.signal
+        controller.abortController.signal,
+        start
       ).then(async (i) => {
         try {
           await Promise.all(
@@ -1358,10 +1361,8 @@ export class Searcher<
           )
         } catch (e) {}
       }),
-    ]).catch((e) => {
-      // console.log(e)
-    })
-
+    ]).catch((e) => {})
+    await controller.resultReadyPromise
     return controller.getResults(start)
   }
 
@@ -1370,8 +1371,9 @@ export class Searcher<
     rToken: Token,
     signerAddress: Address,
     slippage: bigint,
-    onResult: (result: MintRTokenSearcherResult) => Promise<void>,
-    abort: AbortSignal
+    onResult: (result: MintZap) => Promise<void>,
+    abort: AbortSignal,
+    startTime: number = Date.now()
   ) {
     const inputIsNative = userInput.token === this.universe.nativeToken
     let inputTokenQuantity = userInput
@@ -1448,12 +1450,14 @@ export class Searcher<
             }
 
             await onResult(
-              new MintRTokenSearcherResult(
+              new MintZap(
                 this.universe,
                 userInput,
                 parts,
                 signerAddress,
-                rToken
+                rToken,
+                startTime,
+                abort
               )
             )
           } catch (e: any) {

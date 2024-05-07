@@ -1,5 +1,14 @@
 import { DefaultMap } from '../base/DefaultMap'
 
+interface SerializedMeasurement {
+  name: string
+  count: number
+  total: number
+  max: number
+  min: number
+  average: number
+  context: SerializedMeasurement[]
+}
 class Measurement {
   private context = new DefaultMap<string, Measurement>((name) => {
     return new Measurement(name)
@@ -21,6 +30,19 @@ class Measurement {
     this.total += time
     this.max = Math.max(this.max, time)
     this.min = Math.min(this.min, time)
+  }
+
+  serialize(): SerializedMeasurement {
+    return {
+      name: this.name,
+      count: this.count,
+      total: this.total,
+      max: this.max,
+      min: this.min,
+      average: this.average,
+
+      context: [...this.context.values()].map((m) => m.serialize()),
+    }
   }
 
   public begin(context?: string) {
@@ -49,6 +71,10 @@ export class PerformanceMonitor {
   public stats = new DefaultMap<string, Measurement>((name) => {
     return new Measurement(name)
   })
+
+  serialize() {
+    return Array.from(this.stats.values()).map((m) => m.serialize())
+  }
 
   public measure<T>(name: string, fn: () => T, context?: string): T {
     const end = this.begin(name, context)

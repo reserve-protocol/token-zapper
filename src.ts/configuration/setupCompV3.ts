@@ -118,7 +118,9 @@ class MintCometWrapperAction extends BaseCometAction {
   }
 
   toString(): string {
-    return `[reserve-wrapper]${this.cometWrapper.wrapperToken.toString()})`
+    return `CometWrapper.${this.actionName}(${this.inputToken.join(
+      ', '
+    )} -> ${this.outputToken.join(', ')})`
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

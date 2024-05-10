@@ -5,10 +5,49 @@ import { TokenAmounts } from '../entities/TokenAmounts'
 export class PostTradeAction {
   constructor(
     public readonly inputAsFractionOfCurrentBalance: TokenQuantity[],
-    public readonly action?: Action,
+    public readonly possibleActions?: Action[],
     public readonly postTradeActions?: PostTradeAction[],
     public readonly updateBalances: boolean = false
   ) {}
+
+  get action() {
+    return this.possibleActions?.[0]
+  }
+
+  get combinations() {
+    let comp = 1
+    for (const _ of this.possibleActions ?? []) {
+      comp += 1
+
+      for (const postTradeAction of this.postTradeActions ?? []) {
+        comp += postTradeAction.combinations
+      }
+    }
+
+    return comp
+  }
+
+  intoAllCombinations() {
+    const out: PostTradeAction[] = []
+
+    for (const action of this.possibleActions ?? [undefined]) {
+      const postTradeActions = this.postTradeActions?.map((i) =>
+        i.intoAllCombinations()
+      ) ?? [undefined]
+      for (const path of postTradeActions) {
+        out.push(
+          new PostTradeAction(
+            this.inputAsFractionOfCurrentBalance,
+            action == null ? undefined : [action],
+            path,
+            this.updateBalances
+          )
+        )
+      }
+    }
+
+    return out
+  }
 
   describe() {
     const out: string[] = []
@@ -42,16 +81,18 @@ export class PostTradeAction {
     return out
   }
 
-  static fromAction(
-    action: Action,
-    update?: boolean
-  ) {
+  static fromAction(action: Action, update?: boolean) {
     return new PostTradeAction(
       action.inputToken.map((input) => input.one),
-      action,
+      [action],
       [],
       update
     )
+  }
+
+  static fromMultipleChoices(action: Action[], update?: boolean) {
+    const inputToken = action.map((i) => i.inputToken[0].one)
+    return new PostTradeAction(inputToken, action, [], update)
   }
 
   static from(
@@ -61,7 +102,7 @@ export class PostTradeAction {
   ) {
     return new PostTradeAction(
       action.inputToken.map((input) => input.one),
-      action,
+      [action],
       postTradeActions,
       update
     )
@@ -72,7 +113,7 @@ export class PostTradeAction {
     action: Action,
     postTradeActions?: PostTradeAction[]
   ) {
-    return new PostTradeAction(input, action, postTradeActions)
+    return new PostTradeAction(input, [action], postTradeActions)
   }
 }
 
@@ -105,7 +146,10 @@ export class BasketTokenSourcingRuleApplication {
     )
   }
 
-  static fromBranches(branches: BasketTokenSourcingRuleApplication[], action?: Action) {
+  static fromBranches(
+    branches: BasketTokenSourcingRuleApplication[],
+    action?: Action
+  ) {
     const precursors = TokenAmounts.fromQuantities(
       branches.map((i) => i.precursorToTradeFor).flat()
     )
@@ -123,9 +167,10 @@ export class BasketTokenSourcingRuleApplication {
 
     if (action) {
       const combinedAction = PostTradeAction.from(action, subActions)
-      return new BasketTokenSourcingRuleApplication(precursors.toTokenQuantities(), [
-        combinedAction,
-      ])
+      return new BasketTokenSourcingRuleApplication(
+        precursors.toTokenQuantities(),
+        [combinedAction]
+      )
     }
 
     const inputs = precursors.toTokenQuantities()
@@ -155,7 +200,10 @@ export class BasketTokenSourcingRuleApplication {
     const lastAction = PostTradeAction.from(action)
     const inputs = precursors.toTokenQuantities()
 
-    return new BasketTokenSourcingRuleApplication(inputs, [...execFirst, lastAction])
+    return new BasketTokenSourcingRuleApplication(inputs, [
+      ...execFirst,
+      lastAction,
+    ])
   }
 
   static singleBranch(

@@ -125,6 +125,23 @@ export class TradingVenue {
     return this.createTradeEdge_ != null
   }
 
+  canCreateEdgeBetween(
+    tokenA: Token,
+    tokenB: Token
+  ) {
+    if (this.router.supportedInputTokens.size !== 0) {
+      if (!this.router.supportedInputTokens.has(tokenA)) {
+        return false
+      }
+    }
+    if (this.router.supportedOutputTokens.size !== 0) {
+      if (!this.router.supportedOutputTokens.has(tokenB)) {
+        return false
+      }
+    }
+    return true
+  }
+
   async createTradeEdge(src: Token, dst: Token) {
     if (this.createTradeEdge_ == null) {
       throw new Error(

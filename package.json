@@ -144,6 +144,10 @@
     "build:commonjs": "tsc --project tsconfig.commonjs.json && cp -r src.ts/configuration/data/ lib.commonjs/configuration/data",
     "test": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests",
     "format": "npm run prettier:fix",
+    "curve:all": "npm run curve:mainnet && npm run curve:base && npm run curve:arbitrum",
+    "curve:mainnet": "curl https://api.curve.fi/v1/getPools/big/ethereum | jq > src.ts/configuration/data/ethereum/curvePoolList.json",
+    "curve:base": "curl https://api.curve.fi/v1/getPools/big/base | jq > src.ts/configuration/data/base/curvePoolList.json",
+    "curve:arbitrum": "curl https://api.curve.fi/v1/getPools/big/arbitrum | jq > src.ts/configuration/data/arbitrum/curvePoolList.json",
     "prettier": "prettier '**/*.{ts,json,md}'",
     "prettier:check": "npm run prettier -- --check",
     "prettier:fix": "npm run prettier -- --write",
@@ -196,6 +200,7 @@
     "memoizee": "^0.4.15",
     "node-cache": "^5.1.2",
     "paraswap": "^5.2.0",
-    "paraswap-core": "^1.0.2"
+    "paraswap-core": "^1.0.2",
+    "ts-toolbelt": "^9.6.0"
   }
 }

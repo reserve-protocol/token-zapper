@@ -8,7 +8,7 @@ import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 export class RouterAction extends Action('Router') {
   public get outputSlippage(): bigint {
-    return 50n
+    return this.universe.config.defaultInternalTradeSlippage
   }
   async plan(
     planner: Planner,

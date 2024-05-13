@@ -1,21 +1,16 @@
-import { DepositAction, WithdrawAction } from '../action/WrappedNative'
-import { BurnCTokenAction, MintCTokenAction } from '../action/CTokens'
-import { BurnRTokenAction, MintRTokenAction } from '../action/RTokens'
-import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens'
-import { Address } from '../base/Address'
 import { Universe } from '../Universe'
-import { PriceOracle } from '../oracles/PriceOracle'
+import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens'
+import { DepositAction, WithdrawAction } from '../action/WrappedNative'
+import { Address } from '../base/Address'
 import { Token, TokenQuantity } from '../entities/Token'
-import { IBasket } from '../entities/TokenBasket'
-import { JsonTokenEntry, loadTokens } from './loadTokens'
-import { ETHToRETH, RETHToETH } from '../action/REth'
+// import { IBasket } from '../entities/TokenBasket'
 import { constants, ethers } from 'ethers'
+import { RETHToWETH, WETHToRETH } from '../action/REth'
+import { JsonTokenEntry, loadTokens } from './loadTokens'
 
-import { BurnWStETH, MintWStETH } from '../action/WStEth'
-import { BurnStETH, MintStETH } from '../action/StEth'
-import { makeConfig } from './ChainConfiguration'
 import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
 import { ApprovalsStore } from '../searcher/ApprovalsStore'
+import { makeConfig } from './ChainConfiguration'
 
 export const testConfig = makeConfig(
   1,
@@ -30,42 +25,39 @@ export const testConfig = makeConfig(
     DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
     WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-    ERC20GAS: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+    ERC20GAS: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
   },
   {
-    eUSD: {
-      main: '0x7697aE4dEf3C3Cd52493Ba3a6F57fc6d8c59108a',
-      erc20: "0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F"
-    },
-    'ETH+': {
-      main: '0xb6A7d481719E97e142114e905E86a39a2Fa0dfD2',
-      erc20: "0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8"
-    },
-    hyUSD: {
-      main: '0x2cabaa8010b3fbbDEeBe4a2D0fEffC2ed155bf37',
-      erc20: "0xaCdf0DBA4B9839b96221a8487e9ca660a48212be"
-    },
-    RSD: {
-      main: '0xa410AA8304CcBD53F88B4a5d05bD8fa048F42478',
-      erc20: "0xF2098092a5b9D25A3cC7ddc76A0553c9922eEA9E"
-    },
-    iUSD: {
-      main: '0x555143D2E6653c80a399f77c612D33D5Bf67F331',
-      erc20: "0x9b451BEB49a03586e6995E5A93b9c745D068581e"
-    },
+    eUSD: '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F',
+    'ETH+': '0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8',
+    hyUSD: '0xaCdf0DBA4B9839b96221a8487e9ca660a48212be',
+    RSD: '0xF2098092a5b9D25A3cC7ddc76A0553c9922eEA9E',
+    iUSD: '0x9b451BEB49a03586e6995E5A93b9c745D068581e',
   },
   {
-    facadeAddress: "0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C",
-    zapperAddress: '0xfa81b1a2f31786bfa680a9B603c63F25A2F9296b',
-    executorAddress: '0x7fA27033835d48ea32feB34Ab7a66d05bf38DE11',
-    wrappedNative: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    rtokenLens: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-    balanceOf: "0x0000000000000000000000000000000000000000",
-    curveRouterCall: "0x0000000000000000000000000000000000000000",
-    ethBalanceOf: "0x0000000000000000000000000000000000000000",
-    uniV3Router: "0x0000000000000000000000000000000000000000",
+    facadeAddress: '0x2C7ca56342177343A2954C250702Fd464f4d0613',
+    oldFacadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
+    zapperAddress: '0xcc2b9b55952718b210660b56ca12eb88694dc60f',
+    executorAddress: '0x675D37489A7A64c051D0204e5c72a469f6558a47',
+    wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    rtokenLens: '0xE787491314A3Da6412Ac4DeEB39c0F8EfdE1b53C',
+
+    balanceOf: '0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D',
+    curveRouterCall: '0xA18ad6dCb6B217A4c3810f865f5eEf45570024dc',
+    ethBalanceOf: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
+    uniV3Router: '0x32F59e2881e1DC9a808DE8C37545FE33F2B617A9',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
   },
+  {
+    blocktime: 12000,
+    blockGasLimit: 30000000n,
+    requoteTolerance: 2,
+    routerDeadline: 4000,
+    searcherMinRoutesToProduce: 4,
+    searcherMaxRoutesToProduce: 8,
+    searchConcurrency: 6,
+    defaultInternalTradeSlippage: 200n,
+  }
 )
 type BaseTestConfigType = typeof testConfig
 
@@ -76,20 +68,22 @@ const defineRToken = (
   rToken: Token,
   basket: TokenQuantity[]
 ) => {
-  const basketHandler: IBasket = {
-    basketTokens: basket.map((i) => i.token),
-    unitBasket: basket,
-    rToken: rToken,
-    basketNonce: 0,
-    version: "3.1.0",
-    async redeem(baskets) {
-      return basket.map((i) => i.scalarMul(baskets.amount).scalarDiv(rToken.scale))
-    }
-  }
-  universe.defineMintable(
-    new MintRTokenAction(universe, basketHandler),
-    new BurnRTokenAction(universe, basketHandler)
-  )
+  // const basketHandler: IBasket = {
+  //   basketTokens: basket.map((i) => i.token),
+  //   unitBasket: basket,
+  //   rToken: rToken,
+  //   basketNonce: 0,
+  //   version: '3.1.0',
+  //   async redeem(baskets) {
+  //     return basket.map((i) =>
+  //       i.scalarMul(baskets.amount).scalarDiv(rToken.scale)
+  //     )
+  //   },
+  // }
+  // universe.defineMintable(
+  //   new MintRTokenAction(universe, basketHandler),
+  //   new BurnRTokenAction(universe, basketHandler)
+  // )
   universe.rTokens[rToken.symbol] = rToken
 }
 
@@ -132,13 +126,12 @@ const initialize = async (universe: TestUniverse) => {
     18
   )
 
-
   const USDT = universe.commonTokens.USDT
   const USDC = universe.commonTokens.USDC
   const DAI = universe.commonTokens.DAI
   const WBTC = universe.commonTokens.WBTC
   const WETH = universe.commonTokens.WETH
-  
+
   universe.defineMintable(
     new DepositAction(universe, WETH),
     new WithdrawAction(universe, WETH)
@@ -176,15 +169,15 @@ const initialize = async (universe: TestUniverse) => {
     )
   }
 
-  for (const cToken of cTokens) {
-    const rate = {
-      value: cToken.rate,
-    }
-    universe.defineMintable(
-      new MintCTokenAction(universe, cToken.underlying, cToken.cToken, rate),
-      new BurnCTokenAction(universe, cToken.underlying, cToken.cToken, rate)
-    )
-  }
+  // for (const cToken of cTokens) {
+  //   const rate = {
+  //     value: cToken.rate,
+  //   }
+  //   universe.defineMintable(
+  //     new MintCTokenAction(universe, cToken.underlying, cToken.cToken, rate),
+  //     new BurnCTokenAction(universe, cToken.underlying, cToken.cToken, rate)
+  //   )
+  // }
 
   const reth = await universe.getToken(
     Address.from('0xae78736Cd615f374D3085123A210448E74Fc6393')
@@ -221,8 +214,8 @@ const initialize = async (universe: TestUniverse) => {
     },
   }
 
-  const ethToREth = new ETHToRETH(universe, rethRouter as any)
-  const rEthtoEth = new RETHToETH(universe, rethRouter as any)
+  const ethToREth = new WETHToRETH(universe, rethRouter as any)
+  const rEthtoEth = new RETHToWETH(universe, rethRouter as any)
 
   universe.defineMintable(ethToREth, rEthtoEth)
 
@@ -234,35 +227,35 @@ const initialize = async (universe: TestUniverse) => {
     Address.from('0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0')
   )
 
-  universe.defineMintable(
-    new MintStETH(universe, stETH, {
-      async quoteMint(qtyEth) {
-        return qtyEth.into(stETH)
-      },
-    }),
-    new BurnStETH(universe, stETH, {
-      async quoteBurn(qtyStETH) {
-        return qtyStETH.into(universe.nativeToken)
-      },
-    })
-  )
+  // universe.defineMintable(
+  //   new MintStETH(universe, stETH, {
+  //     async quoteMint(qtyEth) {
+  //       return qtyEth.into(stETH)
+  //     },
+  //   }),
+  //   new BurnStETH(universe, stETH, {
+  //     async quoteBurn(qtyStETH) {
+  //       return qtyStETH.into(universe.nativeToken)
+  //     },
+  //   })
+  // )
 
   // Test env exchange rate is harded to:
   const stEthPrWStEth = stETH.from('1.1189437171')
   const wstEthPrStEth = stETH.one.div(stEthPrWStEth).into(wstETH)
 
-  universe.defineMintable(
-    new MintWStETH(universe, stETH, wstETH, {
-      async quoteMint(qtyStEth) {
-        return qtyStEth.into(wstETH).mul(wstEthPrStEth)
-      },
-    }),
-    new BurnWStETH(universe, stETH, wstETH, {
-      async quoteBurn(qtyWstEth) {
-        return qtyWstEth.into(stETH).mul(stEthPrWStEth)
-      },
-    })
-  )
+  // universe.defineMintable(
+  //   new MintWStETH(universe, stETH, wstETH, {
+  //     async quoteWrap(qtyStEth) {
+  //       return qtyStEth.into(wstETH).mul(wstEthPrStEth)
+  //     },
+  //   }),
+  //   new BurnWStETH(universe, stETH, wstETH, {
+  //     async quoteUnwrap(qtyWstEth) {
+  //       return qtyWstEth.into(stETH).mul(stEthPrWStEth)
+  //     },
+  //   })
+  // )
   // Defines the by now 'old' eUSD.
   defineRToken(universe, eUSD, [
     saUSDT.fromDecimal('0.225063'),
@@ -282,24 +275,23 @@ const initialize = async (universe: TestUniverse) => {
     [reth, universe.usd.fromDecimal('1920')],
     [wstETH, universe.usd.fromDecimal('1900')],
     [WBTC, universe.usd.fromDecimal('29000')],
-    [DAI, universe.usd.from("0.999")],
-    [USDC, universe.usd.from("1.001")],
-    [universe.nativeToken, universe.usd.from("1750")],
+    [DAI, universe.usd.from('0.999')],
+    [USDC, universe.usd.from('1.001')],
+    [universe.nativeToken, universe.usd.from('1750')],
   ])
-  const oracle = new PriceOracle('Test', async (token) => {
-    return prices.get(token) ?? null
-  }, () => universe.currentBlock)
-  universe.oracles.push(
-    oracle
-  )
+  // const oracle = new PriceOracle(
+  //   'Test',
+  //   async (token) => {
+  //     return prices.get(token) ?? null
+  //   },
+  //   () => universe.currentBlock
+  // )
+  // universe.oracles.push(oracle)
   universe.oracle = new ZapperTokenQuantityPrice(universe)
 }
 
-
-
 export class MockApprovalsStore extends ApprovalsStore {
-  constructor(
-  ) {
+  constructor() {
     super(null as any)
   }
   async needsApproval(
@@ -315,17 +307,12 @@ export class MockApprovalsStore extends ApprovalsStore {
 export const createForTest = async <const Conf extends BaseTestConfigType>(
   c = testConfig as Conf
 ) => {
-  const universe = await Universe.createWithConfig(
-    null as any,
-    c,
-    initialize,
-    {
-      approvalsStore: new MockApprovalsStore(),
-      tokenLoader: async (_: Address) => {
-        throw new Error('Not implemented')
-      },
-    }
-  )
+  const universe = await Universe.createWithConfig(null as any, c, initialize, {
+    approvalsStore: new MockApprovalsStore(),
+    tokenLoader: async (_: Address) => {
+      throw new Error('Not implemented')
+    },
+  })
 
   await universe.initialized
 

@@ -34,8 +34,10 @@ export interface IRTokenInterface extends utils.Interface {
     "balanceOf(address)": FunctionFragment;
     "basketsNeeded()": FunctionFragment;
     "decimals()": FunctionFragment;
+    "issuanceAvailable()": FunctionFragment;
     "issue(uint256)": FunctionFragment;
     "issueTo(address,uint256)": FunctionFragment;
+    "main()": FunctionFragment;
     "mint(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "redeem(uint256)": FunctionFragment;
@@ -54,8 +56,10 @@ export interface IRTokenInterface extends utils.Interface {
       | "balanceOf"
       | "basketsNeeded"
       | "decimals"
+      | "issuanceAvailable"
       | "issue"
       | "issueTo"
+      | "main"
       | "mint"
       | "name"
       | "redeem"
@@ -85,6 +89,10 @@ export interface IRTokenInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "issuanceAvailable",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "issue",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
@@ -92,6 +100,7 @@ export interface IRTokenInterface extends utils.Interface {
     functionFragment: "issueTo",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(functionFragment: "main", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "mint",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
@@ -132,8 +141,13 @@ export interface IRTokenInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "issuanceAvailable",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "issue", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "issueTo", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "main", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
@@ -231,6 +245,8 @@ export interface IRToken extends BaseContract {
 
     decimals(overrides?: CallOverrides): Promise<[number]>;
 
+    issuanceAvailable(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     issue(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -241,6 +257,8 @@ export interface IRToken extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    main(overrides?: CallOverrides): Promise<[string]>;
 
     mint(
       recipient: PromiseOrValue<string>,
@@ -302,6 +320,8 @@ export interface IRToken extends BaseContract {
 
   decimals(overrides?: CallOverrides): Promise<number>;
 
+  issuanceAvailable(overrides?: CallOverrides): Promise<BigNumber>;
+
   issue(
     amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -312,6 +332,8 @@ export interface IRToken extends BaseContract {
     amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  main(overrides?: CallOverrides): Promise<string>;
 
   mint(
     recipient: PromiseOrValue<string>,
@@ -373,6 +395,8 @@ export interface IRToken extends BaseContract {
 
     decimals(overrides?: CallOverrides): Promise<number>;
 
+    issuanceAvailable(overrides?: CallOverrides): Promise<BigNumber>;
+
     issue(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -383,6 +407,8 @@ export interface IRToken extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    main(overrides?: CallOverrides): Promise<string>;
 
     mint(
       recipient: PromiseOrValue<string>,
@@ -469,6 +495,8 @@ export interface IRToken extends BaseContract {
 
     decimals(overrides?: CallOverrides): Promise<BigNumber>;
 
+    issuanceAvailable(overrides?: CallOverrides): Promise<BigNumber>;
+
     issue(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -479,6 +507,8 @@ export interface IRToken extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    main(overrides?: CallOverrides): Promise<BigNumber>;
 
     mint(
       recipient: PromiseOrValue<string>,
@@ -541,6 +571,8 @@ export interface IRToken extends BaseContract {
 
     decimals(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    issuanceAvailable(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     issue(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -551,6 +583,8 @@ export interface IRToken extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    main(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     mint(
       recipient: PromiseOrValue<string>,

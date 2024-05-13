@@ -6,6 +6,7 @@ import { PriceOracle } from './PriceOracle'
 export class ZapperOracleAggregator extends PriceOracle {
   constructor(readonly universe: Universe) {
     super(
+      universe.config.requoteTolerance,
       'Aggregator',
       (qty) => this.priceAsset(qty),
       () => universe.currentBlock
@@ -32,7 +33,7 @@ export class ZapperTokenQuantityPrice extends Cached<
   constructor(readonly universe: Universe) {
     super(
       (qty) => this.quoteFn(qty),
-      1,
+      universe.config.requoteTolerance * 4,
       () => universe.currentBlock
     )
 

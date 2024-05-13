@@ -4,9 +4,8 @@ import { Address } from '../base/Address'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Approval } from '../base/Approval'
 
-import { IConvexWrapper__factory } from '../contracts/factories/contracts/IConvexWrapper__factory'
-import { IBooster__factory } from '../contracts/factories/contracts/IBooster__factory'
 import { Planner, Value } from '../tx-gen/Planner'
+import { ConvexStakingWrapper__factory, IBooster__factory } from '../contracts'
 
 class ConvexPool {
   constructor(
@@ -23,8 +22,6 @@ class ConvexPool {
   }
 }
 
-const wrapperInterface = IConvexWrapper__factory.createInterface()
-
 export class ConvexDepositAndStake extends Action('Convex') {
   async plan(
     planner: Planner,
@@ -32,7 +29,7 @@ export class ConvexDepositAndStake extends Action('Convex') {
     destination: Address
   ): Promise<Value[]> {
     const lib = this.gen.Contract.createContract(
-      IConvexWrapper__factory.connect(
+      ConvexStakingWrapper__factory.connect(
         this.convexPool.stakedConvexDepositToken.address.address,
         this.universe.provider
       )
@@ -55,7 +52,7 @@ export class ConvexDepositAndStake extends Action('Convex') {
       [convexPool.curveLPToken],
       [convexPool.stakedConvexDepositToken],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       [
         new Approval(
           convexPool.curveLPToken,
@@ -67,19 +64,24 @@ export class ConvexDepositAndStake extends Action('Convex') {
 }
 
 export class ConvexUnstakeAndWithdraw extends Action('Convex') {
+  public get outputSlippage(): bigint {
+    return 0n
+  }
   async plan(
     planner: Planner,
-    inputs: Value[],
-    destination: Address
+    [input]: Value[],
+    _: Address,
+    [predicted]: TokenQuantity[]
   ): Promise<Value[]> {
     const lib = this.gen.Contract.createContract(
-      IConvexWrapper__factory.connect(
+      ConvexStakingWrapper__factory.connect(
         this.convexPool.stakedConvexDepositToken.address.address,
         this.universe.provider
       )
     )
-    planner.add(lib.withdrawAndUnwrap(inputs[0]))
-    return [inputs[0]]
+    planner.add(lib.withdrawAndUnwrap(input ?? predicted.amount))
+
+    return this.outputBalanceOf(this.universe, planner)
   }
   toString(): string {
     return `ConvexUnstakeAndWithdraw(${this.convexPool})`
@@ -96,7 +98,7 @@ export class ConvexUnstakeAndWithdraw extends Action('Convex') {
       [convexPool.stakedConvexDepositToken],
       [convexPool.curveLPToken],
       InteractionConvention.None,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }
@@ -117,7 +119,7 @@ export const setupConvexEdges = async (
     convex.address,
     universe.provider
   )
-  const stkCVXTokenInst = IConvexWrapper__factory.connect(
+  const stkCVXTokenInst = ConvexStakingWrapper__factory.connect(
     stakedConvexToken.address.address,
     universe.provider
   )
@@ -128,7 +130,7 @@ export const setupConvexEdges = async (
   const convexDepositToken = await universe.getToken(
     Address.from(await stkCVXTokenInst.convexToken())
   )
-  const convexPoolId = await stkCVXTokenInst.convexPoolId()
+  const convexPoolId = await stkCVXTokenInst.callStatic.convexPoolId()
 
   const info = await convexBooster.poolInfo(convexPoolId.toBigInt())
 

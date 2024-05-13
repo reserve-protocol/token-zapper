@@ -2,13 +2,10 @@ import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 
-import { parseHexStringIntoBuffer } from '../base/utils'
-import { IERC4626__factory } from '../contracts/factories/contracts/IERC4626__factory'
+import { IERC4626__factory } from '../contracts/factories/@openzeppelin/contracts/interfaces/IERC4626__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
-import { Action, DestinationOptions, InteractionConvention } from './Action'
 import { Planner, Value } from '../tx-gen/Planner'
-
-const vaultInterface = IERC4626__factory.createInterface()
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 export class ERC4626TokenVault {
   constructor(
@@ -24,7 +21,7 @@ export class ERC4626TokenVault {
 export const ERC4626DepositAction = (proto: string) =>
   class ERC4626DepositAction extends Action(proto) {
     get outputSlippage() {
-      return 3000000n
+      return this.slippage
     }
     async plan(
       planner: Planner,
@@ -57,7 +54,8 @@ export const ERC4626DepositAction = (proto: string) =>
     constructor(
       readonly universe: Universe,
       readonly underlying: Token,
-      readonly shareToken: Token
+      readonly shareToken: Token,
+      readonly slippage: bigint
     ) {
       super(
         shareToken.address,
@@ -79,7 +77,8 @@ export const ERC4626WithdrawAction = (proto: string) =>
     async plan(
       planner: Planner,
       inputs: Value[],
-      destination: Address
+      destination: Address,
+      predicted: TokenQuantity[]
     ): Promise<Value[]> {
       const lib = this.gen.Contract.createContract(
         IERC4626__factory.connect(
@@ -87,14 +86,14 @@ export const ERC4626WithdrawAction = (proto: string) =>
           this.universe.provider
         )
       )
-      const out = planner.add(
+      planner.add(
         lib.redeem(
-          inputs[0],
+          inputs[0] ?? predicted[0].amount,
           destination.address,
           this.universe.config.addresses.executorAddress.address
         )
       )
-      return [out!]
+      return this.outputBalanceOf(this.universe, planner)
     }
     gasEstimate() {
       return BigInt(200000n)
@@ -114,14 +113,15 @@ export const ERC4626WithdrawAction = (proto: string) =>
     constructor(
       readonly universe: Universe,
       readonly underlying: Token,
-      readonly shareToken: Token
+      readonly shareToken: Token,
+      readonly slippage: bigint
     ) {
       super(
         shareToken.address,
         [shareToken],
         [underlying],
         InteractionConvention.None,
-        DestinationOptions.Recipient,
+        DestinationOptions.Callee,
         []
       )
     }
@@ -130,6 +130,6 @@ export const ERC4626WithdrawAction = (proto: string) =>
     }
 
     get outputSliptepage() {
-      return 3000000n
+      return this.slippage
     }
   }

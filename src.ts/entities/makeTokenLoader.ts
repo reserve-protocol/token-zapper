@@ -3,12 +3,12 @@ import { parseHexStringIntoBuffer } from '../base/utils';
 import { id } from "@ethersproject/hash";
 import { defaultAbiCoder } from "@ethersproject/abi";
 import { type Provider } from '@ethersproject/providers'
-import { IERC20__factory } from '../contracts/factories/contracts/IERC20__factory';
+import { IERC20Metadata__factory } from '../contracts';
 
 export const makeTokenLoader = (provider: Provider) => async (
   address: Address
 ) => {
-  const erc20 = IERC20__factory.connect(address.address, provider);
+  const erc20 = IERC20Metadata__factory.connect(address.address, provider);
   let [symbol, decimals] = await Promise.all([
     provider.call({
       to: address.address,

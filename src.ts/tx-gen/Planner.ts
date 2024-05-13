@@ -7,6 +7,9 @@ import { hexConcat, hexDataSlice } from '@ethersproject/bytes'
 import { DefaultMap } from '../base/DefaultMap'
 import { Address } from '../base/Address'
 import type { Universe } from '../Universe'
+import { Token, TokenQuantity } from '../entities/Token'
+import { TokenAmounts } from '../entities/TokenAmounts'
+import { SingleSwap, SwapPath, SwapPaths } from '../searcher/Swap'
 
 const variableNames = [
   'a',
@@ -914,6 +917,176 @@ export class Planner {
     let encodedCommands = this.buildCommands(ps)
 
     return { commands: encodedCommands, state }
+  }
+}
+
+const makeTokenUsersTracker = () =>
+  new DefaultMap<
+    Token,
+    {
+      inputsNeedSplit: boolean
+      users: SwapPath[]
+      total: number
+      fractionFor: (user: SwapPath) => {
+        fraction: number
+        quantity: TokenQuantity
+      }
+      addUser: (user: SwapPath) => void
+    }
+  >((token: Token) => {
+    const state = {
+      users: [] as SwapPath[],
+      total: 0 as number,
+    }
+    const fractionFor = (user: SwapPath) => {
+      const userStats =
+        state.users.length === 0
+          ? undefined
+          : user.inputs.find((input) => input.token === token)
+      if (userStats === undefined) {
+        return {
+          fraction: 0,
+          quantity: token.zero,
+        }
+      }
+      if (state.users.length === 1) {
+        return {
+          fraction: 1,
+          quantity: userStats,
+        }
+      }
+      const userInput = parseFloat(userStats.format())
+      const total = state.total
+
+      const fraction = userInput / total
+
+      return {
+        fraction,
+        quantity: token.from(
+          BigInt((fraction * total).toFixed(token.decimals))
+        ),
+      }
+    }
+    return {
+      get total() {
+        return state.total
+      },
+      get users() {
+        return state.users
+      },
+      get inputsNeedSplit() {
+        return state.users.length <= 1
+      },
+      fractionFor,
+      addUser: (user: SwapPath) => {
+        const inpToken = user.inputs.find((input) => input.token === token)
+        if (inpToken === undefined) {
+          throw new Error('Token not found in user')
+        }
+        state.users.push(user)
+        state.total += parseFloat(
+          user.inputs.find((input) => input.token === token)!.format()
+        )
+      },
+    }
+  })
+
+export class StatefullPlanner {
+  public readonly balanceValues: Map<Token, Value> = new DefaultMap(() =>
+    encodeArg(0, ParamType.from('uint256'))
+  )
+  public readonly predictedTokenBalances: TokenAmounts = new TokenAmounts()
+  public readonly tokensHeldByExecutor: Set<Token> = new Set()
+
+  private constructor(
+    public readonly planner: Planner,
+    public readonly universe: Universe,
+    public readonly phases: SwapPaths[],
+    public readonly userInput: TokenQuantity
+  ) {
+    this.addInputQuantity(userInput)
+  }
+
+  public static create(
+    planner: Planner,
+    universe: Universe,
+    phases: SwapPaths[],
+    userInput: TokenQuantity
+  ) {
+    return new StatefullPlanner(planner, universe, phases, userInput)
+  }
+
+  private addInputQuantity(value: TokenQuantity) {
+    this.predictedTokenBalances.add(value)
+    this.balanceValues.set(
+      value.token,
+      encodeArg(
+        this.predictedTokenBalances.get(value.token)!.amount,
+        ParamType.from('uint256')
+      )
+    )
+  }
+  generatePlan(userInput: TokenQuantity) {
+    this.predictedTokenBalances.add(userInput)
+    this.tokensHeldByExecutor.add(userInput.token)
+    let initialBalances = new TokenAmounts()
+    initialBalances.add(userInput)
+
+    let workingBalances = initialBalances.clone()
+    const phases = this.phases.map((phase) => {
+      const out = this.analyzePhase(phase, workingBalances)
+      workingBalances = out.balancesPostPhase.clone()
+      return out
+    })
+
+    const finalBalances = workingBalances.clone()
+  }
+
+  private tokenUsers = new DefaultMap<Token, Set<SingleSwap>>(() => new Set())
+
+  private analyzePath(path: SwapPath) {
+    const needs = new TokenAmounts()
+    const produces = new TokenAmounts()
+    for (const input of path.steps[0].inputs) {
+      needs.add(input)
+    }
+    for (const output of path.steps[0].outputs) {
+      produces.add(output)
+    }
+    for (const step of path.steps) {
+      for (const inpt of step.inputs) {
+        this.tokenUsers.get(inpt.token).add(step)
+      }
+    }
+    return {
+      needs,
+      produces,
+    }
+  }
+
+  private analyzePhase(phase: SwapPaths, initialBalances?: TokenAmounts) {
+    const balancesPostPhase = initialBalances?.clone() ?? new TokenAmounts()
+    const needs = new TokenAmounts()
+    const produces = new TokenAmounts()
+
+    phase.swapPaths.map((path) => {
+      const { needs: pathNeeds, produces: pathProduces } =
+        this.analyzePath(path)
+      needs.addAll(pathNeeds)
+      produces.addAll(pathProduces)
+      return {
+        needs: pathNeeds,
+        produces: pathProduces,
+        path,
+      }
+    })
+    balancesPostPhase.subAll(needs)
+    balancesPostPhase.addAll(produces)
+    return {
+      balancesPostPhase,
+      needs,
+      produces,
+    }
   }
 }
 

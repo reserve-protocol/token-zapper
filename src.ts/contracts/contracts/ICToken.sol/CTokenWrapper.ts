@@ -28,11 +28,16 @@ export interface CTokenWrapperInterface extends utils.Interface {
   functions: {
     "deposit(uint256,address)": FunctionFragment;
     "exchangeRateStored()": FunctionFragment;
+    "underlying()": FunctionFragment;
     "withdraw(uint256,address)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "deposit" | "exchangeRateStored" | "withdraw"
+    nameOrSignatureOrTopic:
+      | "deposit"
+      | "exchangeRateStored"
+      | "underlying"
+      | "withdraw"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -41,6 +46,10 @@ export interface CTokenWrapperInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "exchangeRateStored",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "underlying",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -53,6 +62,7 @@ export interface CTokenWrapperInterface extends utils.Interface {
     functionFragment: "exchangeRateStored",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "underlying", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {};
@@ -95,6 +105,8 @@ export interface CTokenWrapper extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    underlying(overrides?: CallOverrides): Promise<[string]>;
+
     withdraw(
       cTokenAmount: PromiseOrValue<BigNumberish>,
       to: PromiseOrValue<string>,
@@ -112,6 +124,8 @@ export interface CTokenWrapper extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  underlying(overrides?: CallOverrides): Promise<string>;
+
   withdraw(
     cTokenAmount: PromiseOrValue<BigNumberish>,
     to: PromiseOrValue<string>,
@@ -126,6 +140,8 @@ export interface CTokenWrapper extends BaseContract {
     ): Promise<void>;
 
     exchangeRateStored(overrides?: CallOverrides): Promise<BigNumber>;
+
+    underlying(overrides?: CallOverrides): Promise<string>;
 
     withdraw(
       cTokenAmount: PromiseOrValue<BigNumberish>,
@@ -147,6 +163,8 @@ export interface CTokenWrapper extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    underlying(overrides?: CallOverrides): Promise<BigNumber>;
+
     withdraw(
       cTokenAmount: PromiseOrValue<BigNumberish>,
       to: PromiseOrValue<string>,
@@ -164,6 +182,8 @@ export interface CTokenWrapper extends BaseContract {
     exchangeRateStored(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    underlying(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     withdraw(
       cTokenAmount: PromiseOrValue<BigNumberish>,

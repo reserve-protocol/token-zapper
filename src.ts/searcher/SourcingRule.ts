@@ -5,7 +5,8 @@ import { BasketTokenSourcingRuleApplication } from './BasketTokenSourcingRules';
 
 
 export type SourcingRule = (
-  userInputToken: Token,
-  heldQuantity: TokenQuantity,
-  searcher: Searcher<any>
+  input: Token,
+  prUnitBasketTokenQuantity: TokenQuantity,
+  searcher: Searcher<any>,
+  unitBasket: TokenQuantity[],
 ) => Promise<BasketTokenSourcingRuleApplication>;

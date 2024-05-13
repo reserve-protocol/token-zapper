@@ -1,16 +1,14 @@
 import { Address } from '../base/Address'
 import { type Token } from '../entities/Token'
 import { PROTOCOL_CONFIGS, type BaseUniverse } from './base'
-import { convertWrapperTokenAddressesIntoWrapperTokenPairs } from './convertWrapperTokenAddressesIntoWrapperTokenPairs'
 import { loadBaseTokenList } from './loadBaseTokenList'
-import { setupCompoundV3 } from './setupCompoundV3'
-import { loadRTokens } from './setupRTokens'
+import { setupStargate } from './setupStargate'
 import { setupStargateWrapper } from './setupStargateWrapper'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
-import { setupStargate } from './setupStargate'
-import { setupSAV3Token } from './setupSAV3Tokens'
-import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
 import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
+import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
+import { setupCompoundV3 } from './setupCompV3'
+import { setupAaveV3 } from './setupAaveV3'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupAerodromeRouter } from './setupAerodromeRouter'
 
@@ -21,6 +19,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
 
   const registry: OffchainOracleRegistry = new OffchainOracleRegistry(
+    universe.config.requoteTolerance,
     'BaseOracles',
     async (token: Token) => {
       if (token === wsteth) {
@@ -80,37 +79,23 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   await setupWrappedGasToken(universe)
 
   // Load compound v3
-  const compoundV3Markets = await Promise.all(
-    PROTOCOL_CONFIGS.compoundV3.markets.map(async (a) => {
-      return {
-        baseToken: await universe.getToken(Address.from(a.baseToken)),
-        receiptToken: await universe.getToken(Address.from(a.receiptToken)),
-        vaults: await Promise.all(
-          a.vaults.map((vault) => universe.getToken(Address.from(vault)))
-        ),
-      }
-    })
+  universe.addIntegration(
+    'compoundV3',
+    await setupCompoundV3('CompV3', universe, PROTOCOL_CONFIGS.compV3)
   )
 
-  await setupCompoundV3(universe, compoundV3Markets)
-
-  const aaveWrapperToUnderlying = {
-    '0x308447562442Cc43978f8274fA722C9C14BafF8b':
-      '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA',
-    '0x184460704886f9F2A7F3A0c2887680867954dC6E':
-      '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  }
-
-  // Set up AAVEV3
-  const saTokens = await convertWrapperTokenAddressesIntoWrapperTokenPairs(
-    universe,
-    PROTOCOL_CONFIGS.aave.tokenWrappers,
-    aaveWrapperToUnderlying
+  // Set up AAVEV2
+  universe.addIntegration(
+    'aaveV3',
+    await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
   )
-  await Promise.all(
-    saTokens.map(({ underlying, wrappedToken }) =>
-      setupSAV3Token(universe, wrappedToken, underlying)
-    )
+
+  universe.addTradeVenue(
+    universe.addIntegration('uniswapV3', await setupUniswapRouter(universe))
+  )
+
+  universe.addTradeVenue(
+    universe.addIntegration('aerodrome', await setupAerodromeRouter(universe))
   )
 
   // Set up stargate
@@ -121,14 +106,4 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     {}
   )
   await setupStargateWrapper(universe, PROTOCOL_CONFIGS.stargate.wrappers, {})
-
-  // Set up RTokens defined in the config
-  await loadRTokens(universe)
-
-  await setupUniswapRouter(universe)
-  await setupAerodromeRouter(universe)
-
-  return {
-    curve: null,
-  }
 }

@@ -4,7 +4,7 @@
     "access": "public",
     "tag": "latest"
   },
-  "version": "3.4.7",
+  "version": "3.7.5",
   "description": "A library to help convert tokens into RTokens",
   "keywords": [],
   "module": "./lib.esm/index.js",
@@ -138,12 +138,16 @@
     "clean": "rm -rf dist/ lib.esm/ lib.commonjs/ types/",
     "build:types": "tsc --project tsconfig.types.json",
     "build": "npm run clean && npm run build:contracts && npm run build:typechain && npm run build:esm && npm run build:commonjs && npm run build:types",
-    "build:contracts": "npm run compile:contracts && npm run copy:artifacts",
+    "build:contracts": "cd contracts/ && npm run compile:contracts && npm run copy:artifacts",
     "build:typechain": "rm -rf contracts/artifacts/ && rm -rf contracts/cache/ && rm -rf src/contracts && cd contracts/ && npx hardhat compile",
     "build:esm": "tsc --project tsconfig.esm.json && cp -r src.ts/configuration/data/ lib.esm/configuration/data",
     "build:commonjs": "tsc --project tsconfig.commonjs.json && cp -r src.ts/configuration/data/ lib.commonjs/configuration/data",
     "test": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests",
     "format": "npm run prettier:fix",
+    "curve:all": "npm run curve:mainnet && npm run curve:base && npm run curve:arbitrum",
+    "curve:mainnet": "curl https://api.curve.fi/v1/getPools/big/ethereum | jq > src.ts/configuration/data/ethereum/curvePoolList.json",
+    "curve:base": "curl https://api.curve.fi/v1/getPools/big/base | jq > src.ts/configuration/data/base/curvePoolList.json",
+    "curve:arbitrum": "curl https://api.curve.fi/v1/getPools/big/arbitrum | jq > src.ts/configuration/data/arbitrum/curvePoolList.json",
     "prettier": "prettier '**/*.{ts,json,md}'",
     "prettier:check": "npm run prettier -- --check",
     "prettier:fix": "npm run prettier -- --write",
@@ -196,6 +200,7 @@
     "memoizee": "^0.4.15",
     "node-cache": "^5.1.2",
     "paraswap": "^5.2.0",
-    "paraswap-core": "^1.0.2"
+    "paraswap-core": "^1.0.2",
+    "ts-toolbelt": "^9.6.0"
   }
 }

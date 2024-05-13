@@ -12,9 +12,7 @@ import { Planner, Value } from '../tx-gen/Planner'
  * Used to mint/burn stargate LP tokens
  * They mint/burn 1:1
  */
-const routerInterface = IStargateRouter__factory.createInterface()
-
-export class StargateDepositAction extends Action("Stargate") {
+export class StargateDepositAction extends Action('Stargate') {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
       IStargateRouter__factory.connect(
@@ -24,25 +22,18 @@ export class StargateDepositAction extends Action("Stargate") {
     )
     planner.add(lib.addLiquidity(this.poolId, inputs[0], destination.address))
 
-    return [
-      this.genUtils.erc20.balanceOf(
-        this.universe,
-        planner,
-        this.outputToken[0],
-        destination
-      ),
-    ]
+    return this.outputBalanceOf(this.universe, planner)
   }
   gasEstimate() {
     return BigInt(200000n)
   }
 
+  get outputSlippage() {
+    return 1n
+  }
+
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    let slipapgeAmt = amountsIn.amount / 100000n
-    if (slipapgeAmt <= 100n) {
-      slipapgeAmt = 100n
-    }
-    return [this.stargateToken.from(amountsIn.amount - slipapgeAmt)]
+    return [this.stargateToken.from(amountsIn.amount)]
   }
 
   constructor(
@@ -67,7 +58,10 @@ export class StargateDepositAction extends Action("Stargate") {
   }
 }
 
-export class StargateWithdrawAction extends Action("Stargate") {
+export class StargateWithdrawAction extends Action('Stargate') {
+  get outputSlippage() {
+    return 1n
+  }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
       IStargateRouter__factory.connect(

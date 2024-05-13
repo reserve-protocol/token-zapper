@@ -13,6 +13,10 @@ import { type Universe } from '../Universe'
  */
 export class SingleSwap {
   public readonly type = 'SingleSwap'
+
+  get supportsDynamicInput() {
+    return this.action.supportsDynamicInput
+  }
   constructor(
     public readonly inputs: TokenQuantity[],
     public readonly action: BaseAction,
@@ -89,6 +93,10 @@ export class SwapPath {
     if (steps.length === 0) {
       throw new Error('Invalid SwapPath, no steps')
     }
+  }
+
+  get supportsDynamicInput() {
+    return this.steps[0].action.supportsDynamicInput
   }
 
   async exchange(tokenAmounts: TokenAmounts) {
@@ -301,7 +309,13 @@ export class SwapPlan {
     const value = (
       await Promise.all(
         legAmount.map((i) =>
-          this.universe.fairPrice(i).then((i) => i ?? this.universe.usd.zero)
+          this.universe
+            .fairPrice(i.token.one)
+            .then((priceOfOne) =>
+              i
+                .into(this.universe.usd)
+                .mul(priceOfOne ?? this.universe.usd.zero)
+            )
         )
       )
     ).reduce((l, r) => l.add(r))

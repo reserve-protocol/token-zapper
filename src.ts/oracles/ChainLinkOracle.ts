@@ -1,4 +1,5 @@
 import { Address } from '../base/Address'
+import { Config } from '../configuration/ChainConfiguration'
 import { IChainLinkFeedRegistry__factory } from '../contracts/factories/contracts/IChainLinkFeedRegistry__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
@@ -64,10 +65,11 @@ export class ChainLinkOracle extends PriceOracle {
   }
 
   constructor(
-    readonly universe: Universe<any>,
+    readonly universe: Universe<Config>,
     readonly chainlinkRegistry: Address
   ) {
     super(
+      universe.config.requoteTolerance,
       'ChainLink',
       (t) => this.quoteTok(t),
       () => universe.currentBlock

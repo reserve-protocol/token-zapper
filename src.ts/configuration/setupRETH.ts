@@ -1,14 +1,18 @@
-import { DexAggregator } from '..'
-import { ETHToRETH, RETHToETH, REthRouter } from '../action/REth'
+import { REthRouter } from '../action/REth'
+import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { Address } from '../base/Address'
 import { SwapPlan } from '../searcher/Swap'
 import { type EthereumUniverse } from './ethereum'
 
 export const setupRETH = async (
   universe: EthereumUniverse,
-  rethAddress: string,
-  rethRouterAddress: string
+  config: {
+    reth: string
+    router: string
+  }
 ) => {
+  const rethAddress = Address.from(config.reth)
+  const rethRouterAddress = Address.from(config.router)
   const reth = await universe.getToken(Address.from(rethAddress))
   const rethRouter = new REthRouter(
     universe,
@@ -16,18 +20,34 @@ export const setupRETH = async (
     Address.from(rethRouterAddress)
   )
 
-  const ethToREth = new ETHToRETH(universe, rethRouter)
-  const rEthtoEth = new RETHToETH(universe, rethRouter)
+  const actions = [
+    rethRouter.burnToETH,
+    rethRouter.burnToWETH,
+    rethRouter.mintViaETH,
+    rethRouter.mintViaWETH,
+  ]
 
-  universe.dexAggregators.push(
-    new DexAggregator('reth', async (_, dest, input, output, __) => {
-      if (input.token === universe.nativeToken && output === reth) {
-        return await new SwapPlan(universe, [ethToREth]).quote([input], dest)
+  const rocketPoolRouter = new DexRouter(
+    'RocketpoolRouter:swapTo',
+    async (abort, input, output) => {
+      for (const action of actions) {
+        if (
+          action.outputToken[0] != output ||
+          action.inputToken[0] != input.token
+        ) {
+          continue
+        }
+        return await new SwapPlan(universe, [action]).quote(
+          [input],
+          universe.execAddress
+        )
       }
-      if (input.token === reth && output === universe.nativeToken) {
-        return await new SwapPlan(universe, [rEthtoEth]).quote([input], dest)
-      }
-      throw new Error('Unsupported trade')
-    })
+      throw new Error('Unsupported')
+    },
+    true,
+    new Set([reth, universe.wrappedNativeToken, universe.nativeToken]),
+    new Set([reth, universe.wrappedNativeToken, universe.nativeToken])
   )
+
+  return new TradingVenue(universe, rocketPoolRouter)
 }

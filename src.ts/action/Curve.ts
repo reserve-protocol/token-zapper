@@ -16,6 +16,7 @@ import { LPToken } from './LPToken'
 import { Planner, Value } from '../tx-gen/Planner'
 import { CurveRouterCall__factory } from '../contracts'
 
+
 const whiteList = new Set(
   [
     '0xa2b47e3d5c44877cca798226b7b8118f9bfb7a56', // compound
@@ -79,10 +80,12 @@ const whiteList = new Set(
   ].map((i) => i.toLowerCase())
 )
 
-class CurvePool {
+export class CurvePool {
   [Symbol.toStringTag] = 'CurvePool'
+
   constructor(
     readonly address: Address,
+    readonly lpToken: Token,
     readonly tokens: Token[],
     readonly underlyingTokens: Token[],
     public readonly meta: PoolTemplate,
@@ -284,11 +287,13 @@ export const loadCurve = async (universe: Universe) => {
   } as any
   const router: CurvePool = new CurvePool(
     Address.from(fakeRouterTemplate.address),
+    universe.nativeToken,
     [],
     [],
     fakeRouterTemplate,
     'router'
   )
+
   const defineCurveEdge = async (
     pool: CurvePool,
     tokenIn: TokenQuantity,
@@ -394,8 +399,11 @@ export const loadCurve = async (universe: Universe) => {
             (a) => universe.tokens.get(Address.from(a))!
           )
 
+          const lpToken = await universe.getToken(Address.from(pool.lpToken))
+
           return new CurvePool(
             Address.from(pool.address),
+            lpToken,
             tokens,
             underlying,
             pool,
@@ -510,8 +518,16 @@ export const loadCurve = async (universe: Universe) => {
   await addCurvePoolEdges(universe, pools)
 
   const routerAddress = Address.from(curve.constants.ALIASES.router)
+
+  const getPoolByLPMap = new Map<Token, CurvePool>()
+  for (const pool of pools) {
+    getPoolByLPMap.set(pool.lpToken, pool)
+  }
+
   return {
     routerAddress,
+    pools,
+    getPoolByLPMap,
     createRouterEdge: async (
       tokenA: TokenQuantity,
       tokenB: Token,
@@ -521,3 +537,5 @@ export const loadCurve = async (universe: Universe) => {
     },
   }
 }
+
+export type CurveApi = Awaited<ReturnType<typeof loadCurve>>

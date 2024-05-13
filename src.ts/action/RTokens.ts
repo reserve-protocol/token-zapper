@@ -140,6 +140,15 @@ export class RTokenDeployment {
 
 abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
   abstract action: string
+  get supportsDynamicInput() {
+    return true
+  }
+  get oneUsePrZap() {
+    return false
+  }
+  get returnsOutput() {
+    return false
+  }
   toString(): string {
     return `RToken(action=${this.action}, ${this.inputToken.join(
       ', '
@@ -157,7 +166,7 @@ export class MintRTokenAction extends ReserveRTokenBase {
         destination.address
       )
     )
-    return this.outputBalanceOf(this.universe, planner)
+    return null
   }
   get universe() {
     return this.rTokenDeployment.universe
@@ -220,7 +229,7 @@ export class BurnRTokenAction extends ReserveRTokenBase {
       this.rTokenDeployment.contracts.rToken
     )
     planner.add(rtokenContract.redeem(input ?? predictedInput.amount))
-    return this.outputBalanceOf(this.universe, planner)
+    return null
   }
   get universe() {
     return this.rTokenDeployment.universe

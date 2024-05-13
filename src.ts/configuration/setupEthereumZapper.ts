@@ -16,6 +16,8 @@ import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { loadCompV2Deployment } from '../action/CTokens'
 import { setupAaveV2 } from './setupAaveV2'
 import { LidoDeployment } from '../action/Lido'
+import { setupConvexStakingWrappers } from './setupConvexStakingWrappers'
+import { CurveIntegration } from './setupCurve'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
@@ -73,14 +75,21 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     'aaveV2',
     await setupAaveV2(universe, PROTOCOL_CONFIGS.aavev2)
   )
+  const curve = await initCurveOnEthereum(universe)
+  universe.addIntegration('curve', curve.venue)
+  universe.addTradeVenue(curve.venue)
 
-  const curve = universe.addIntegration(
-    'curve',
-    (await initCurveOnEthereum(universe, PROTOCOL_CONFIGS.convex.booster, 100n))
-      .venue
+  const newCurveIntegration = await CurveIntegration.load(universe)
+
+  universe.addIntegration(
+    'convex',
+    await setupConvexStakingWrappers(
+      universe,
+      newCurveIntegration,
+      curve.curveApi,
+      PROTOCOL_CONFIGS.convex
+    )
   )
-
-  universe.addTradeVenue(curve)
 
   universe.addIntegration(
     'aaveV3',

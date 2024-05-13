@@ -41,6 +41,13 @@ abstract class BaseAaveAction extends Action('AAVEV3') {
   async quote(amountsIn: TokenQuantity[]) {
     return amountsIn.map((tok, i) => tok.into(this.outputToken[i]))
   }
+
+  abstract get actionName(): string
+
+
+  toString(): string {
+    return `${this.actionName}(${this.inputToken.join(',')} -> ${this.outputToken.join(',')})`
+  }
 }
 
 class AaveV3ActionSupply extends BaseAaveAction {
@@ -67,6 +74,9 @@ class AaveV3ActionSupply extends BaseAaveAction {
     )
     return null
   }
+  get actionName() {
+    return 'Supply'
+  }
   constructor(
     readonly universe: Universe,
     public readonly reserve: AaveReserve
@@ -84,6 +94,9 @@ class AaveV3ActionSupply extends BaseAaveAction {
 class AaveV3ActionWithdraw extends BaseAaveAction {
   gasEstimate(): bigint {
     return BigInt(300000n)
+  }
+  get actionName() {
+    return 'Withdraw'
   }
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [await this.reserve.intoAssets(amountsIn)]

@@ -5,7 +5,6 @@ import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
 import { simulationUrls } from '../base/constants'
-import { wait } from '../base/controlflow'
 import { Config } from '../configuration/ChainConfiguration'
 import { UniswapRouterAction } from '../configuration/setupUniswapRouter'
 import { type Token, type TokenQuantity } from '../entities/Token'
@@ -87,9 +86,6 @@ const sortZaps = (
   txes.sort((l, r) => -l.tx.compare(r.tx))
 
   console.log(`${txes.length} / ${allQuotes.length} passed simulation:`)
-  // console.log(
-  //   notFailed.map((i, idx) => `   ${idx}. ${i.tx.stats}`).join('\n')
-  // )
   return {
     failed,
     bestZapTx: txes[0],

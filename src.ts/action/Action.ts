@@ -302,6 +302,7 @@ export abstract class BaseAction {
   }
 }
 
+
 export const Action = (proto: string) => {
   abstract class ProtocolAction extends BaseAction {
     public get protocol() {

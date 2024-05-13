@@ -33,6 +33,7 @@ import { CompoundV2Deployment } from './action/CTokens'
 import { CompoundV3Deployment } from './configuration/setupCompV3'
 import { RTokenDeployment } from './action/RTokens'
 import { LidoDeployment } from './action/Lido'
+import { ReserveConvex } from './configuration/setupConvexStakingWrappers'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -55,6 +56,7 @@ export type Integrations = Partial<{
   rocketpool: TradingVenue
   aerodrome: TradingVenue
   lido: LidoDeployment
+  convex: ReserveConvex
 }>
 export class Universe<const UniverseConf extends Config = Config> {
   private emitter = new EventEmitter()
@@ -223,7 +225,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     UniverseConf['addresses']['commonTokens']
   >
 
-  private readonly integrations: Integrations = {}
+  public readonly integrations: Integrations = {}
   private readonly rTokenDeployments = new Map<Token, RTokenDeployment>()
   public async defineRToken(rTokenAddress: Address) {
     const rToken = await this.getToken(rTokenAddress)
@@ -355,6 +357,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   public addAction(action: Action, actionAddress?: Address) {
+    console.log('Adding action ' + action)
     if (this.allActions.has(action)) {
       return this
     }
@@ -388,6 +391,27 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this.config.addresses.zapperAddress
   }
 
+  public async createTradeEdge(tokenIn: Token, tokenOut: Token) {
+    const edges: Action[] = []
+    for (const venue of this.tradeVenues) {
+      if (
+        !venue.supportsDynamicInput ||
+        !venue.supportsEdges ||
+        !venue.canCreateEdgeBetween(tokenIn, tokenOut)
+      ) {
+        continue
+      }
+      const edge = await venue.createTradeEdge(tokenIn, tokenOut)
+      if (edge != null) {
+        edges.push(edge)
+      }
+    }
+
+    if (edges.length === 0) {
+      throw new Error(`No trade edge found for ${tokenIn} -> ${tokenOut}`)
+    }
+    return edges
+  }
   public defineMintable(
     mint: Action,
     burn: Action,

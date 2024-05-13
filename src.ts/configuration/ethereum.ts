@@ -64,6 +64,7 @@ export const COMMON_TOKENS = {
   steakPYUSD: '0xbEEF02e5E13584ab96848af90261f0C8Ee04722a',
 
   steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
+  'stkcvxETH+ETH-f': '0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7',
 } as const
 
 export const RTOKENS = {
@@ -104,16 +105,30 @@ export const ethereumConfig = makeConfig(
     blocktime: 12000,
     blockGasLimit: 30000000n,
     requoteTolerance: 3,
-    routerDeadline: 4000,
+    routerDeadline: 5000,
     searcherMinRoutesToProduce: 1,
     searcherMaxRoutesToProduce: 4,
-    searchConcurrency: 4,
+    searchConcurrency: 8,
     defaultInternalTradeSlippage: 200n,
   }
 )
 
 export const PROTOCOL_CONFIGS = {
   chainLinkRegistry: '0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf',
+
+  convex: {
+    boosterAddress: '0xF403C135812408BFbE8713b5A23a04b3D48AAE31',
+    wrappers: {
+      cvx3Pool: '0x24CDc6b4Edd3E496b7283D94D93119983A61056a',
+      cvxPayPool: '0x511daB8150966aFfE15F0a5bFfBa7F4d2b62DEd4',
+      cvxMIM3Pool: '0x3e8f7EDc03E0133b95EcB4dD2f72B5027E695413',
+      cvxETHPlusETH: '0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7',
+      cvxCrvUSDUSDC: '0x6ad24C0B8fD4B594C6009A7F7F48450d9F56c6b8',
+      cvxCrvUSDUSDT: '0x5d1B749bA7f689ef9f260EDC54326C48919cA88b',
+      stkcvxeUSD3CRV: '0x8e33D5aC344f9F2fc1f2670D45194C280d4fBcF1',
+    },
+  },
+
   aavev2: {
     pool: '0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9',
     wrappers: [
@@ -145,10 +160,6 @@ export const PROTOCOL_CONFIGS = {
   lido: {
     steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
     wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
-  },
-
-  convex: {
-    booster: '0xF403C135812408BFbE8713b5A23a04b3D48AAE31',
   },
   erc4626: [
     ['0x83F20F44975D03b1b09e64809B757c47f942BEeA', 'sdai'],

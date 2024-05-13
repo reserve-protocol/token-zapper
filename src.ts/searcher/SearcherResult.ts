@@ -31,6 +31,7 @@ import {
   Planner,
   Value,
   encodeArg,
+  printPlan,
 } from '../tx-gen/Planner'
 import { ToTransactionArgs } from './ToTransactionArgs'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
@@ -324,13 +325,12 @@ export abstract class BaseSearcherResult {
           return out
         })
     } catch (e) {
-      // console.log(
-      //   'Failing program:',
-      //   this.inputToken.toString(),
-      //   this.outputToken.toString(),
-      //   printPlan(this.planner, this.universe).join('\n')
-      // )
-      // console.log()
+      console.log(
+        'Failing program:',
+        this.inputToken.toString(),
+        this.outputToken.toString(),
+        printPlan(this.planner, this.universe).join('\n')
+      )
       return this.simulateNoNode({
         data,
         value,

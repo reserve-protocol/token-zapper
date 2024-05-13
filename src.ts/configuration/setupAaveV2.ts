@@ -11,10 +11,7 @@ import {
 import { Approval } from '../base/Approval'
 import { rayMul } from '../action/aaveMath'
 import { setupMintableWithRate } from './setupMintableWithRate'
-import {
-  BurnSAV3TokensAction,
-  MintSAV3TokensAction,
-} from '../action/SAV3Tokens'
+
 import {
   ILendingPool,
   ReserveDataStruct,
@@ -28,6 +25,7 @@ import {
   IATokenInterface,
 } from '../contracts/contracts/AaveV2.sol/IAToken'
 import { IStaticATokenLM__factory } from '../contracts/factories/contracts/ISAtoken.sol'
+import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens'
 
 const DataTypes = {}
 
@@ -205,25 +203,26 @@ export class AaveV2Deployment {
   ) {}
 
   static async from(poolInst: ILendingPool, universe: Universe) {
-    const reserveTokens = await Promise.all(
-      (
-        await poolInst.getReservesList()
-      ).map(async (i) => universe.getToken(Address.from(i)))
-    )
-
     const aaveOut = new AaveV2Deployment(poolInst, universe)
-
-    await Promise.all(
-      reserveTokens.map(async (token) => {
-        return await aaveOut.addReserve(token)
-      })
-    )
 
     return aaveOut
   }
 
+  async loadAllReserves() {
+    const reserveTokens = await Promise.all(
+      (
+        await this.poolInst.getReservesList()
+      ).map(async (i) => this.universe.getToken(Address.from(i)))
+    )
+    await Promise.all(
+      reserveTokens.map(async (token) => {
+        return await this.addReserve(token)
+      })
+    )
+  }
+
   toString() {
-    return `AaveV3([${this.reserves.join(', ')}])`
+    return `AaveV2([${this.reserves.join(', ')}])`
   }
 
   public async addWrapper(wrapper: Token) {
@@ -234,7 +233,10 @@ export class AaveV2Deployment {
     const aToken = await this.universe.getToken(
       Address.from(await wrapperInst.ATOKEN())
     )
-    const reserve = this.tokenToReserve.get(aToken)
+    const reserveToken = await this.universe.getToken(
+      Address.from(await wrapperInst.ASSET())
+    );
+    const reserve = await this.addReserve(reserveToken)
     if (reserve == null) {
       console.warn(`No reserve found for aToken ${aToken.toString()}`)
       return
@@ -246,13 +248,13 @@ export class AaveV2Deployment {
       async (rate, saInst) => {
         return {
           fetchRate: async () => (await saInst.rate()).toBigInt(),
-          mint: new MintSAV3TokensAction(
+          mint: new MintSATokensAction(
             this.universe,
             reserve.reserveToken,
             wrapper,
             rate
           ),
-          burn: new BurnSAV3TokensAction(
+          burn: new BurnSATokensAction(
             this.universe,
             reserve.reserveToken,
             wrapper,

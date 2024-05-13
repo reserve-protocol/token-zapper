@@ -1,8 +1,9 @@
 import { type Universe } from '../Universe'
 import { DexRouter } from '../aggregators/DexAggregator'
-import { type Address } from '../base/Address'
+import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { type TokenQuantity, Token } from '../entities/Token'
+import { SwapPath } from '../searcher/Swap'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
@@ -10,6 +11,21 @@ export class RouterAction extends Action('Router') {
   public get outputSlippage(): bigint {
     return this.universe.config.defaultInternalTradeSlippage
   }
+  get supportsDynamicInput() {
+    return this.dex.supportsDynamicInput
+  }
+  get oneUsePrZap() {
+    return this.dex.oneUsePrZap
+  }
+  get returnsOutput() {
+    return this.dex.returnsOutput
+  }
+
+  private _addressesInUse = new Set<Address>()
+  get addressesInUse() {
+    return this._addressesInUse
+  }
+
   async plan(
     planner: Planner,
     inputs: Value[],
@@ -31,15 +47,32 @@ export class RouterAction extends Action('Router') {
     return inputs
   }
   gasEstimate() {
-    return BigInt(300000n)
+    return BigInt(150000n)
   }
 
-  async innerQuote(input: TokenQuantity[]) {
-    return await this.dex.swap(
-      AbortSignal.timeout(this.universe.config.routerDeadline),
-      input[0],
-      this.outputToken[0],
-      this.universe.config.defaultInternalTradeSlippage
+  async innerQuote(input: TokenQuantity[]): Promise<SwapPath> {
+    const ctr = new AbortController()
+    this._addressesInUse = new Set()
+    return await new Promise((resolve) =>
+      this.dex
+        .swap(
+          ctr.signal,
+          input[0],
+          this.outputToken[0],
+          this.universe.config.defaultInternalTradeSlippage
+        )
+        .then((res) => {
+          ctr.abort()
+          const a = res.steps
+            .filter((i) => i.action.oneUsePrZap)
+            .map((i) => i.action.addressesInUse)
+          this._addressesInUse = new Set(a.map((i) => [...i]).flat())
+          resolve(res)
+        })
+        .catch((e) => {
+          this._addressesInUse = new Set()
+          throw e
+        })
     )
   }
 
@@ -53,11 +86,10 @@ export class RouterAction extends Action('Router') {
     readonly universe: Universe,
     readonly router: Address,
     inputToken: Token,
-    outputToken: Token,
-    public readonly slippage: bigint
+    outputToken: Token
   ) {
     super(
-      universe.execAddress,
+      router,
       [inputToken],
       [outputToken],
       InteractionConvention.ApprovalRequired,

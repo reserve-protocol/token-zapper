@@ -116,7 +116,7 @@ export abstract class BaseAction {
     return false
   }
   public get returnsOutput() {
-    return true
+    return false
   }
   public get addressesInUse(): Set<Address> {
     return new Set([])
@@ -146,7 +146,7 @@ export abstract class BaseAction {
     public readonly interactionConvention: InteractionConvention,
     public readonly proceedsOptions: DestinationOptions,
     public readonly approvals: Approval[]
-  ) {}
+  ) { }
 
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
   public async quoteWithSlippage(
@@ -159,7 +159,7 @@ export abstract class BaseAction {
     return outputs.map((output) => {
       return output.token.from(
         output.amount -
-          (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
+        (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
       )
     })
   }
@@ -218,9 +218,7 @@ export abstract class BaseAction {
     return true
   }
 
-  public get outputSlippage() {
-    return 0n
-  }
+  public abstract get outputSlippage(): bigint;
 
   public combine(other: BaseAction) {
     const self = this

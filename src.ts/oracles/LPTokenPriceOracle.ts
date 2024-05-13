@@ -11,7 +11,7 @@ export class LPTokenPriceOracle extends PriceOracle {
     const lpToken = this.universe.lpTokens.get(token)!
     const out = await Promise.all(
       (
-        await lpToken.burn(token.one)
+        await lpToken.burn(lpToken.token.one)
       ).map(
         async (t) =>
           (await this.universe.fairPrice(t)) ?? this.universe.usd.zero

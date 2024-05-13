@@ -18,6 +18,10 @@ import { setupAaveV2 } from './setupAaveV2'
 import { LidoDeployment } from '../action/Lido'
 import { setupConvexStakingWrappers } from './setupConvexStakingWrappers'
 import { CurveIntegration } from './setupCurve'
+import { setupFrxETH } from './setupsfrxeth'
+import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
+import { SwapPath } from '../searcher/Swap'
+import { MultiChoicePath } from '../searcher/MultiChoicePath'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
@@ -75,21 +79,17 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     'aaveV2',
     await setupAaveV2(universe, PROTOCOL_CONFIGS.aavev2)
   )
-  const curve = await initCurveOnEthereum(universe)
+  const newCurveIntegration = await CurveIntegration.load(universe)
+  const convex = await setupConvexStakingWrappers(
+    universe,
+    newCurveIntegration,
+    PROTOCOL_CONFIGS.convex
+  )
+  universe.addIntegration('convex', convex)
+
+  const curve = await initCurveOnEthereum(universe, convex)
   universe.addIntegration('curve', curve.venue)
   universe.addTradeVenue(curve.venue)
-
-  const newCurveIntegration = await CurveIntegration.load(universe)
-
-  universe.addIntegration(
-    'convex',
-    await setupConvexStakingWrappers(
-      universe,
-      newCurveIntegration,
-      curve.curveApi,
-      PROTOCOL_CONFIGS.convex
-    )
-  )
 
   universe.addIntegration(
     'aaveV3',
@@ -122,15 +122,107 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       const vault = await setupERC4626(universe, {
         vaultAddress: addr,
         protocol: proto,
-        slippage: 5n,
+        slippage: 30n,
       })
-      // console.log(
-      //   `Loaded ${vault}, ${vault.shareToken} => ${(
-      //     await vault.mint.quote([vault.assetToken.from(1)])
-      //   ).join(', ')}`
-      // )
 
       return vault
     })
   )
+
+  await setupFrxETH(universe, PROTOCOL_CONFIGS.frxETH)
+
+  const stables = [
+    universe.commonTokens.USDC,
+    universe.commonTokens.USDT,
+    universe.commonTokens.DAI,
+    universe.commonTokens.FRAX,
+    universe.commonTokens.MIM,
+  ]
+
+  const ethDerivatives = [
+    universe.commonTokens.steth,
+    universe.commonTokens.cbeth,
+    universe.commonTokens.reth,
+    universe.commonTokens.frxeth,
+  ]
+
+  // const stableCoinTrader = new TradingVenue(
+  //   universe,
+  //   DexRouter.builder(
+  //     `InternalTraderStables`,
+  //     async (abort, input, output, slippage) => {
+  //       const out: SwapPath[] = []
+  //       const max = AbortSignal.timeout(1000)
+  //       const ctr = new AbortController()
+  //       max.addEventListener('abort', () => ctr.abort())
+  //       abort.addEventListener('abort', () => ctr.abort())
+  //       const onResult = async (result: SwapPath) => {
+  //         out.push(result)
+  //       }
+  //       await universe.swaps(
+  //         input,
+  //         output,
+  //         onResult,
+  //         {
+  //           slippage,
+  //           dynamicInput: true,
+  //           ignore: new Set([stableCoinTrader]),
+  //           abort: ctr.signal,
+  //         },
+  //         true
+  //       )
+  //       return new MultiChoicePath(universe, out)
+  //     },
+  //     {
+  //       dynamicInput: true,
+  //       returnsOutput: false,
+  //       onePrZap: true,
+  //     }
+  //   )
+  //     .addManyToMany(stables, stables, true)
+  //     .build()
+  // )
+  // universe.addTradeVenue(stableCoinTrader)
+
+  // const ethTrader = new TradingVenue(
+  //   universe,
+  //   DexRouter.builder(
+  //     `ETHTrader`,
+  //     async (abort, input, output, slippage) => {
+  //       const out: SwapPath[] = []
+  //       const max = AbortSignal.timeout(1000)
+  //       const ctr = new AbortController()
+  //       max.addEventListener('abort', () => ctr.abort())
+  //       abort.addEventListener('abort', () => ctr.abort())
+  //       const onResult = async (result: SwapPath) => {
+  //         out.push(result)
+  //       }
+  //       await universe.swaps(
+  //         input,
+  //         output,
+  //         onResult,
+  //         {
+  //           slippage,
+  //           dynamicInput: true,
+  //           ignore: new Set([stableCoinTrader]),
+  //           abort: ctr.signal,
+  //         },
+  //         true
+  //       )
+  //       return new MultiChoicePath(universe, out)
+  //     },
+  //     {
+  //       dynamicInput: true,
+  //       returnsOutput: false,
+  //       onePrZap: false,
+  //     }
+  //   )
+  //     .addManyToMany(
+  //       ethDerivatives,
+  //       [universe.wrappedNativeToken, universe.nativeToken],
+  //       true
+  //     )
+  //     .build()
+  // )
+  // universe.addTradeVenue(ethTrader)
 }

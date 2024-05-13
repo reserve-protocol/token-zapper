@@ -1,4 +1,6 @@
 import { DefaultMap } from '../base/DefaultMap'
+import { SwapPath } from '../searcher/Swap'
+import { UniverseWithERC20GasTokenDefined } from '../searcher/UniverseWithERC20GasTokenDefined'
 import { Token, TokenQuantity } from './Token'
 
 /**
@@ -17,6 +19,8 @@ export class TokenAmounts {
   public tokenBalances = new DefaultMap<Token, TokenQuantity>((tok) =>
     tok.fromBigInt(0n)
   )
+
+  
 
   static fromQuantities(qtys: TokenQuantity[]) {
     const out = new TokenAmounts()
@@ -42,6 +46,30 @@ export class TokenAmounts {
 
   hasBalance(inputs: TokenQuantity[]) {
     return inputs.every((i) => this.get(i.token).gte(i))
+  }
+
+  public exchangeSwapPath(
+    swapPath: SwapPath[],
+  ) {
+    for (const step of swapPath) {
+      this.exchange(step.inputs, step.outputs)
+    }
+    return this
+  }
+
+  public async priceBasket(
+    universe: UniverseWithERC20GasTokenDefined,
+  ) {
+    let total = universe.usd.zero;
+    
+    await Promise.all([...this.tokenBalances].map(async ([,qty]) => {
+      if (qty.amount === 0n) {
+        return
+      }
+      total = total.add(await universe.fairPrice(qty))
+    }))
+
+    return total
   }
 
   exchange(

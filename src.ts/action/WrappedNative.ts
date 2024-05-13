@@ -10,7 +10,9 @@ import { Address } from '..'
 const iWrappedNativeIFace = IWrappedNative__factory.createInterface()
 
 export class DepositAction extends Action("WETH") {
-  
+  public get outputSlippage(): bigint {
+    return 0n
+  }
   gasEstimate(): bigint {
     return 25000n
   }
@@ -44,6 +46,9 @@ export class DepositAction extends Action("WETH") {
 }
 
 export class WithdrawAction extends Action("WETH") {
+  public get outputSlippage(): bigint {
+    return 0n
+  }
   gasEstimate(): bigint {
     return 25000n
   }

@@ -288,7 +288,7 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
     throw new Error('Kyberswap: Unsupported chain')
   }
 
-  const dex = new DexRouter(
+  let dexBuilder = DexRouter.builder(
     aggregatorName,
     async (abort, input, output, slippage) => {
       const req = await getQuoteAndSwap(
@@ -306,8 +306,20 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
         new KyberAction(req, universe),
       ]).quote([input], universe.execAddress)
     },
-    false
+    {
+      dynamicInput: false,
+      returnsOutput: false,
+      onePrZap: true,
+    }
   )
 
-  return new TradingVenue(universe, dex)
+  const dex = dexBuilder.build()
+
+  return new TradingVenue(
+    universe,
+    dex,
+    undefined,
+    () => universe.currentBlock,
+    true
+  )
 }

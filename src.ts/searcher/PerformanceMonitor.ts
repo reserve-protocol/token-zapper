@@ -47,7 +47,9 @@ class Measurement {
 
   public begin(context?: string) {
     const start = Date.now()
+    // console.log('begin', this.name + (context ? ' ' + context : ''), start)
     return () => {
+      // console.log('end', this.name + (context ? ' ' + context : ''), start)
       const end = Date.now()
       const time = end - start
       this.addPoint(time)

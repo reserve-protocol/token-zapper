@@ -140,7 +140,7 @@ export class CurveSwap extends Action('Curve') {
     return true
   }
   public get returnsOutput() {
-    return true
+    return false
   }
 
   private _addressList = new Set<Address>()
@@ -151,12 +151,13 @@ export class CurveSwap extends Action('Curve') {
   get outputSlippage() {
     return this.slippage + 300n
   }
+  
   async plan(
     planner: Planner,
     inputs: Value[],
     _: Address,
     predicted: TokenQuantity[]
-  ): Promise<Value[]> {
+  ): Promise<Value[]|null> {
     const output = await this._quote(predicted[0])
     const routerContract =
       curveInner.contracts[curveInner.constants.ALIASES.registry_exchange]
@@ -181,7 +182,7 @@ export class CurveSwap extends Action('Curve') {
     planner.add(
       curveRouterCallLib.exchange(
         inputs[0] ?? predicted[0].amount,
-        quoteWithSlippage.amount,
+        quoteWithSlippage.amount / 5n,
         routerContract.address,
         payload
       ),
@@ -189,7 +190,7 @@ export class CurveSwap extends Action('Curve') {
       `amt_${this.outputToken[0].symbol}`
     )
 
-    return this.outputBalanceOf(this.universe, planner)
+    return null
   }
   private estimate?: bigint
   gasEstimate() {
@@ -296,22 +297,22 @@ export const loadCurve = async (universe: Universe) => {
 
   const defineCurveEdge = async (
     pool: CurvePool,
-    tokenIn: TokenQuantity,
+    tokenIn: Token,
     tokenOut: Token,
     slippage: bigint
   ) => {
-    const edges = curvesEdges.get(tokenIn.token)
+    const edges = curvesEdges.get(tokenIn)
     if (edges.has(tokenOut)) {
       return edges.get(tokenOut)!
     }
     const swap = new CurveSwap(
       universe,
       pool,
-      tokenIn.token,
+      tokenIn,
       tokenOut,
       slippage
     )
-    await swap.initAddressList([tokenIn])
+    await swap.initAddressList([tokenIn.one])
     edges.set(tokenOut, swap)
 
     return swap
@@ -528,8 +529,8 @@ export const loadCurve = async (universe: Universe) => {
     routerAddress,
     pools,
     getPoolByLPMap,
-    createRouterEdge: async (
-      tokenA: TokenQuantity,
+    createRouterEdge2: async (
+      tokenA: Token,
       tokenB: Token,
       slippage: bigint
     ) => {

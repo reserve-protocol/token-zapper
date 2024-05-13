@@ -34,6 +34,7 @@ import { CompoundV3Deployment } from './configuration/setupCompV3'
 import { RTokenDeployment } from './action/RTokens'
 import { LidoDeployment } from './action/Lido'
 import { ReserveConvex } from './configuration/setupConvexStakingWrappers'
+import { wait } from './base/controlflow'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -84,9 +85,10 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
   public createCache<Key, Result>(
     fetch: (key: Key) => Promise<Result>,
-    ttl: number = this.config.requoteTolerance
+    ttl: number = this.config.requoteTolerance,
+    onBlock?: (block: number) => void
   ): BlockCache<Key, Result> {
-    const cache = new BlockCache(fetch, ttl, this.currentBlock)
+    const cache = new BlockCache(fetch, ttl, this.currentBlock, onBlock)
     this.caches.push(cache)
     return cache
   }
@@ -160,13 +162,16 @@ export class Universe<const UniverseConf extends Config = Config> {
   public getTradingVenues(
     input: TokenQuantity,
     output: Token,
-    dynamicInput: boolean
+    dynamicInput: boolean,
+    externalOnly = true
   ) {
     const venues = dynamicInput
       ? this.tradingVenuesSupportingDynamicInput
       : this.tradeVenues
-    const out = venues.filter((venue) =>
-      venue.router.supportsSwap(input, output)
+    const out = venues.filter(
+      (venue) =>
+        (externalOnly && venue.external) ||
+        venue.router.supportsSwap(input, output)
     )
     if (out.length !== 0) {
       return out
@@ -190,31 +195,31 @@ export class Universe<const UniverseConf extends Config = Config> {
       slippage: bigint
       dynamicInput: boolean
       abort: AbortSignal
-    }
+      ignore?: Set<TradingVenue>
+    },
+    externalOnly = true
   ) {
     const wrapper = this.wrappedTokens.get(input.token)
     if (wrapper?.allowAggregatorSearcher === false) {
       return
     }
-    const aggregators = this.getTradingVenues(input, output, opts.dynamicInput)
-    const tradeName = `${input.token} -> ${output}`
+    const aggregators = this.getTradingVenues(
+      input,
+      output,
+      opts.dynamicInput,
+      externalOnly
+    ).filter((venue) => !opts.ignore?.has(venue))
 
-    await Promise.all(
-      shuffle(aggregators).map(async (venue) => {
-        try {
-          const res = await this.perf.measurePromise(
-            venue.name,
-            venue.router.swap(opts.abort, input, output, opts.slippage),
-            tradeName
-          )
-          // console.log(`${venue.name} ok: ${res.steps[0].action.toString()}`)
-          await onResult(res)
-        } catch (e: any) {
-          // console.log(`${router.name} failed for case: ${tradeName}`)
-          // console.log(e.message)
-        }
-      })
-    )
+    for (const venue of shuffle(aggregators).slice(0, 4)) {
+      if (opts.abort.aborted) {
+        return
+      }
+      venue.router
+        .swap(opts.abort, input, output, opts.slippage)
+        .then((e) => onResult(e))
+        .catch((e) => {})
+      await wait(250)
+    }
   }
 
   // Sentinel token used for pricing things
@@ -253,6 +258,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     key: K,
     value: Integrations[K]
   ) {
+    console.log(`Adding integration ${key}`)
     if (this.integrations[key] != null) {
       throw new Error(`Integration ${key} already defined`)
     }
@@ -300,7 +306,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     const perfStart = this.perf.begin('fairPrice', qty.token.symbol)
     let out: TokenQuantity | null = await this.fairPriceCache.get(qty)
     if (out.amount === 0n) {
-      out = null
+      throw new Error(`Failed to price ${qty.token} ${qty.amount}`)
     }
     perfStart()
     return out
@@ -357,7 +363,9 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   public addAction(action: Action, actionAddress?: Address) {
-    console.log('Adding action ' + action)
+    // console.log(
+    //   `${action.inputToken.join(', ')} -> ${action.outputToken.join(', ')}`
+    // )
     if (this.allActions.has(action)) {
       return this
     }
@@ -394,22 +402,21 @@ export class Universe<const UniverseConf extends Config = Config> {
   public async createTradeEdge(tokenIn: Token, tokenOut: Token) {
     const edges: Action[] = []
     for (const venue of this.tradeVenues) {
+      console.log(venue.name)
       if (
         !venue.supportsDynamicInput ||
-        !venue.supportsEdges ||
         !venue.canCreateEdgeBetween(tokenIn, tokenOut)
       ) {
         continue
       }
-      const edge = await venue.createTradeEdge(tokenIn, tokenOut)
-      if (edge != null) {
-        edges.push(edge)
-      }
+      try {
+        const edge = await venue.createTradeEdge(tokenIn, tokenOut)
+        if (edge != null) {
+          edges.push(edge)
+        }
+      } catch (e) {}
     }
 
-    if (edges.length === 0) {
-      throw new Error(`No trade edge found for ${tokenIn} -> ${tokenOut}`)
-    }
     return edges
   }
   public defineMintable(

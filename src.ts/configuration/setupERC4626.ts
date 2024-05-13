@@ -4,7 +4,7 @@ import { Address } from '../base/Address'
 import { IERC4626__factory } from '../contracts/factories/@openzeppelin/contracts/interfaces/IERC4626__factory'
 import { Token } from '../entities/Token'
 
-class ERC4626Deployment {
+export class ERC4626Deployment {
   public readonly mint: InstanceType<ReturnType<typeof ERC4626DepositAction>>
   public readonly burn: InstanceType<ReturnType<typeof ERC4626WithdrawAction>>
   constructor(
@@ -12,7 +12,7 @@ class ERC4626Deployment {
     public readonly universe: Universe,
     public readonly shareToken: Token,
     public readonly assetToken: Token,
-    public readonly slippage: bigint = 10n
+    public readonly slippage: bigint = 0n
   ) {
     this.mint = new (ERC4626DepositAction(protocol))(
       universe,

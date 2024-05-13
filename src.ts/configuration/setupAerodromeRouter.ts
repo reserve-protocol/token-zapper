@@ -395,7 +395,7 @@ export const setupAerodromeRouter = async (universe: Universe) => {
     }
   }
 
-  const out = new DexRouter(
+  const out = DexRouter.builder(
     'aerodrome',
     async (abort, input, output, slippage) => {
       const routes = findRoutes(input.token, output)
@@ -478,8 +478,12 @@ export const setupAerodromeRouter = async (universe: Universe) => {
       const plan = new SwapPlan(universe, [outAction])
       return await plan.quote([input], universe.execAddress)
     },
-    true
-  )
+    {
+      dynamicInput: true,
+      returnsOutput: false,
+      onePrZap: true,
+    }
+  ).build()
 
   return new TradingVenue(
     universe,
@@ -490,8 +494,7 @@ export const setupAerodromeRouter = async (universe: Universe) => {
         universe,
         routerAddr,
         inputToken,
-        outputToken,
-        universe.config.defaultInternalTradeSlippage
+        outputToken
       )
     }
   )

@@ -68,12 +68,15 @@ export const ERC4626DepositAction = (proto: string) =>
     }
 
     toString(): string {
-      return `ERC4626Deposit(${this.shareToken.toString()})`
+      return `ERC4626(${this.underlying.toString()} -> ${this.shareToken.toString()})`
     }
   }
 
 export const ERC4626WithdrawAction = (proto: string) =>
   class ERC4626WithdrawAction extends Action(proto) {
+    get outputSlippage() {
+      return this.slippage
+    }
     async plan(
       planner: Planner,
       inputs: Value[],
@@ -126,7 +129,7 @@ export const ERC4626WithdrawAction = (proto: string) =>
       )
     }
     toString(): string {
-      return `ERC4626Withdraw(${this.shareToken.toString()})`
+      return `ERC4626(${this.shareToken} -> ${this.underlying})`
     }
 
     get outputSliptepage() {

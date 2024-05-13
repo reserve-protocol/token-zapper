@@ -4,8 +4,8 @@ pragma solidity 0.8.17;
 /// Portion of external interface for CTokens
 // See: https://github.com/compound-finance/compound-protocol/blob/master/contracts/CToken.sol
 interface ICToken  {
-    function mint(uint256 mintAmount) external payable returns (uint256);
-    function redeem(uint256 cTokenAmount) external payable returns (uint256);
+    function mint(uint256 mintAmount) external payable;
+    function redeem(uint256 cTokenAmount) external payable;
 
     /// @dev From Compound Docs:
     /// The current (up to date) exchange rate, scaled by 10^(18 - 8 + Underlying Token Decimals).

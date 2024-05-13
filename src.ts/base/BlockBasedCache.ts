@@ -2,7 +2,8 @@ export class BlockCache<Key, Result extends NonNullable<any>> {
   constructor(
     private readonly fetch: (key: Key) => Promise<Result>,
     private readonly blocksToLive: number,
-    private currentBlock: number
+    private currentBlock: number,
+    private readonly onBlockOpt?: (block: number) => void
   ) {}
 
   private cache = new Map<Key, { result: Promise<Result>; time: number }>()
@@ -35,6 +36,7 @@ export class BlockCache<Key, Result extends NonNullable<any>> {
 
   public onBlock(block: number) {
     this.currentBlock = block
+    void this.onBlockOpt?.(block);
     for (const [key, { time }] of [...this.cache.entries()]) {
       if (block - time > this.blocksToLive) {
         this.cache.delete(key)

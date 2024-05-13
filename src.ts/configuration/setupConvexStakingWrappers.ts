@@ -30,8 +30,6 @@ import {
   PostTradeAction,
 } from './setupCurveOnEthereum'
 import { setupCurveStableSwapNGPool } from '../action/CurveStableSwapNG'
-import { curve } from '../curve-js/src/curve'
-import { RouterAction } from '../action/RouterAction'
 
 type ConvexStakingWrapperAddresss = string
 type ConvexStakingWrapperName = string
@@ -43,6 +41,25 @@ interface IConvexConfig {
 }
 
 abstract class BaseConvexStakingWrapper extends Action('ConvexStakingWrapper') {
+  constructor(
+    universe: UniverseWithERC20GasTokenDefined,
+    wrapperToken: Address,
+    inputToken: Token[],
+    outputToken: Token[],
+    interactionConvention: InteractionConvention,
+    destinationOption: DestinationOptions,
+    approvals: Approval[]
+  ) {
+    super(
+      wrapperToken,
+      inputToken,
+      outputToken,
+      interactionConvention,
+      destinationOption,
+      approvals
+    )
+    universe.addAction(this)
+  }
   toString() {
     return `ConvexStakingWrapper.${this.actionName}(${this.inputToken.join(
       ', '
@@ -100,6 +117,7 @@ class CurveLpToWrapper extends BaseConvexStakingWrapper {
     readonly wrapper: ConvexStakingWrapper
   ) {
     super(
+      universe,
       wrapper.wrapperToken.address,
       [wrapper.curveToken],
       [wrapper.wrapperToken],
@@ -128,6 +146,7 @@ class ConvexDepositToWrapper extends BaseConvexStakingWrapper {
     readonly wrapper: ConvexStakingWrapper
   ) {
     super(
+      universe,
       wrapper.wrapperToken.address,
       [wrapper.convexToken],
       [wrapper.wrapperToken],
@@ -153,6 +172,7 @@ class WrapperToCurveLp extends BaseConvexStakingWrapper {
     readonly wrapper: ConvexStakingWrapper
   ) {
     super(
+      universe,
       wrapper.wrapperToken.address,
       [wrapper.wrapperToken],
       [wrapper.curveToken],
@@ -178,6 +198,7 @@ class WrapperToConvexDeposit extends BaseConvexStakingWrapper {
     readonly wrapper: ConvexStakingWrapper
   ) {
     super(
+      universe,
       wrapper.wrapperToken.address,
       [wrapper.wrapperToken],
       [wrapper.convexToken],
@@ -188,7 +209,7 @@ class WrapperToConvexDeposit extends BaseConvexStakingWrapper {
   }
 }
 
-class ConvexStakingWrapper {
+export class ConvexStakingWrapper {
   toString() {
     return `ConvexStakingWrapper(${this.curvePool.lpToken}(${this.curvePool.lpToken.token.address}) => ${this.wrapperToken}(${this.wrapperToken.address}))`
   }
@@ -197,7 +218,6 @@ class ConvexStakingWrapper {
   public readonly unwrapToCurveLp: WrapperToCurveLp
   public readonly unwrapToConvexDeposit: WrapperToConvexDeposit
   private constructor(
-    public readonly curveApi: CurveApi,
     public readonly universe: EthereumUniverse,
     public readonly wrapperToken: Token,
     public readonly curveToken: Token,
@@ -236,50 +256,6 @@ class ConvexStakingWrapper {
       ...this.curvePool.poolTokens.map((i) => i.token),
     ])
 
-    console.log(`${lpToken} => ${[...goodInputs].join(', ')}`)
-
-    if (this.curvePool.isBasePool) {
-      for (const goodInput of this.curvePool.poolTokens) {
-        if (goodInput.isBasePoolLpToken) {
-          continue
-        }
-        const swapIn = await universe.integrations.curve!.createTradeEdge(
-          goodInput.token,
-          lpToken
-        )
-        const swapOut = await universe.integrations.curve!.createTradeEdge(
-          lpToken,
-          goodInput.token
-        )
-        if (swapIn) {
-          universe.addAction(swapIn)
-        }
-        if (swapOut) {
-          universe.addAction(swapOut)
-        }
-      }
-    } else {
-      for (const goodInput of this.curvePool.underlyingTokens) {
-        if (goodInput.isBasePoolLpToken) {
-          continue
-        }
-        const swapIn = await universe.integrations.curve!.createTradeEdge(
-          goodInput.token,
-          lpToken
-        )
-        const swapOut = await universe.integrations.curve!.createTradeEdge(
-          lpToken,
-          goodInput.token
-        )
-        if (swapIn) {
-          universe.addAction(swapIn)
-        }
-        if (swapOut) {
-          universe.addAction(swapOut)
-        }
-      }
-    }
-
     const ngPools = new Map([
       [
         universe.commonTokens.PYUSDUSDC,
@@ -289,15 +265,43 @@ class ConvexStakingWrapper {
         ),
       ],
     ])
+    console.log(lpToken.toString() + "->" + [...goodInputs].join(', '))
+    if (!ngPools.has(lpToken)) {
+      for (const goodInput of goodInputs) {
+        await universe
+          .integrations.curve?.createTradeEdge(goodInput, lpToken)
+          .catch(() => {})
+      }
+      // for (const goodInput of goodInputs) {
+      //   await universe
+      //     .integrations.curve?.createTradeEdge(lpToken, goodInput)
+      //     .catch(() => {})
+      // }
+    }
+    
 
     const curvePool = this.curvePool
-    const curveApi = this.curveApi
-
+    
     universe.defineTokenSourcingRule(
       this.wrapperToken,
       async (input, unitAmount, searcher) => {
-        const curveKnowsAboutPool = this.curveApi.getPoolByLPMap.has(lpToken)
+        const ngPool = ngPools.get(curvePool.lpToken.token)
 
+        if (ngPool) {
+          const act = ngPool.getAddLiquidityAction(input)
+          return BasketTokenSourcingRuleApplication.singleBranch(
+            [unitAmount.into(act.inputToken[0])],
+            [
+              PostTradeAction.fromAction(
+                act,
+                true // Cause the Zapper to recalculate the inputs of the mints for the next step
+              ),
+              PostTradeAction.fromAction(this.curveLpToWrapper),
+            ]
+          )
+        }
+
+        // console.log(lpToken + ' ' + curveKnowsAboutPool)
         if (input === this.curveToken) {
           return BasketTokenSourcingRuleApplication.singleBranch(
             [unitAmount.into(this.curveToken)],
@@ -308,16 +312,6 @@ class ConvexStakingWrapper {
           return BasketTokenSourcingRuleApplication.singleBranch(
             [unitAmount.into(this.convexToken)],
             [PostTradeAction.fromAction(this.convexDepositToWrapper)]
-          )
-        }
-        if (goodInputs.has(input)) {
-          const possibleActions = await universe.createTradeEdge(input, lpToken)
-          return BasketTokenSourcingRuleApplication.singleBranch(
-            [unitAmount],
-            [
-              PostTradeAction.fromMultipleChoices(possibleActions),
-              PostTradeAction.fromAction(this.curveLpToWrapper),
-            ]
           )
         }
 
@@ -334,51 +328,31 @@ class ConvexStakingWrapper {
         if (curvePool.assetType.assetType === 'sameTypeCrypto') {
           bestToken = curvePool.poolTokens[0].token
         }
+        const inputToken = goodInputs.has(input) ? input : bestToken
 
-        const tradeInput = unitAmount.into(bestToken)
-
-        if (curveKnowsAboutPool) {
-          return BasketTokenSourcingRuleApplication.singleBranch(
-            [tradeInput],
-            [
-              PostTradeAction.fromAction(
-                await curveApi.createRouterEdge(
-                  tradeInput,
-                  bestToken,
-                  universe.config.defaultInternalTradeSlippage
-                ),
-                true // Cause the Zapper to recalculate the inputs of the mints for the next step
-              ),
-              PostTradeAction.fromAction(this.mint),
-            ]
-          )
-        } else {
-          const ngPool = ngPools.get(lpToken)
-          if (!ngPool) {
-            throw new Error(`Could not find ng pool for ${lpToken}`)
-          }
-
-          const precursor = goodInputs.has(input) ? input : bestToken
-          return BasketTokenSourcingRuleApplication.singleBranch(
-            [unitAmount.into(precursor)],
-            [
-              PostTradeAction.fromAction(
-                ngPool.getAddLiquidityAction(input),
-                true // Cause the Zapper to recalculate the inputs of the mints for the next step
-              ),
-              PostTradeAction.fromAction(this.mint),
-            ]
+        const possibleActions = await universe.createTradeEdge(
+          goodInputs.has(input) ? input : bestToken,
+          lpToken
+        )
+        if (possibleActions.length === 0) {
+          throw new Error(
+            `No trade path from ${input} to ${lpToken} in ConvexStakingWrapper`
           )
         }
+        return BasketTokenSourcingRuleApplication.singleBranch(
+          [unitAmount.into(inputToken)],
+          [
+            PostTradeAction.fromMultipleChoices(possibleActions, true),
+            PostTradeAction.fromAction(this.curveLpToWrapper),
+          ]
+        )
       }
     )
-
-    universe.defineMintable(this.mint, this.burn)
+    universe.defineMintable(this.curveLpToWrapper, this.unwrapToCurveLp)
   }
 
   public static async fromConfigAddress(
     universe: EthereumUniverse,
-    curve: CurveApi,
     curveIntegration: CurveIntegration,
     boosterInst: IBooster,
     {
@@ -424,7 +398,6 @@ class ConvexStakingWrapper {
     }
 
     const out = new ConvexStakingWrapper(
-      curve,
       universe,
       wrapperToken,
       curveToken,
@@ -455,12 +428,15 @@ export class ReserveConvex {
   toString() {
     return `ReserveConvex(${this.wrapperTokens.join(', ')})`
   }
+
+  get lpTokens() {
+    return this.wrapperTokens.map((i) => i.curvePool.lpToken.token)
+  }
 }
 
 export const setupConvexStakingWrappers = async (
   universe: EthereumUniverse,
   curveIntegration: CurveIntegration,
-  curve: CurveApi,
   config: IConvexConfig
 ) => {
   const boosterAddress = Address.from(config.boosterAddress)
@@ -474,7 +450,6 @@ export const setupConvexStakingWrappers = async (
     Object.entries(config.wrappers).map(([name, wrapperAddress]) =>
       ConvexStakingWrapper.fromConfigAddress(
         universe,
-        curve,
         curveIntegration,
         boosterInst,
         {

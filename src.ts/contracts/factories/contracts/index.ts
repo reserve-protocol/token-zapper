@@ -8,6 +8,8 @@ export * as compoundV3Sol from "./CompoundV3.sol";
 export * as convexSol from "./Convex.sol";
 export * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
 export * as icTokenSol from "./ICToken.sol";
+export * as iFraxOracleSol from "./IFraxOracle.sol";
+export * as iFrxEthMinterSol from "./IFrxETHMinter.sol";
 export * as irTokenZapperSol from "./IRTokenZapper.sol";
 export * as isAtokenSol from "./ISAtoken.sol";
 export * as iStargadeWrapperSol from "./IStargadeWrapper.sol";

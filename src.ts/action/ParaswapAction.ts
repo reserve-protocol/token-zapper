@@ -5,6 +5,9 @@ import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 export class ParaswapAction extends Action('Paraswap') {
+  get outputSlippage(): bigint {
+    return 0n
+  }
   plan(
     planner: Planner,
     inputs: Value[],

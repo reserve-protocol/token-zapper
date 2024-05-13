@@ -1,4 +1,4 @@
-import { type Universe } from '../Universe'
+import { Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
@@ -114,6 +114,20 @@ export class RTokenDeployment {
             )
           )
       )
+    const pricesOfUnderlying = await Promise.all(
+      uniBasket.map(async (i) => await uni.fairPrice(i.token.one))
+    )
+
+    const pricesOfUnderlyingInBasket = await Promise.all(
+      uniBasket.map(async (u, i) => u.into(uni.usd).mul(pricesOfUnderlying[i]))
+    )
+
+    console.log(
+      `1 ${rToken} = ${uniBasket.map(
+        (u, i) => `${u} ~ ${pricesOfUnderlyingInBasket[i]}`
+      )}`
+    )
+
     return new RTokenDeployment(
       uni,
       rToken,

@@ -36,6 +36,7 @@ import {
 import { ToTransactionArgs } from './ToTransactionArgs'
 import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
+import { getBalances } from '../curve-js/src/utils'
 
 const zapperInterface = Zapper__factory.createInterface()
 interface SimulateParams {
@@ -55,7 +56,10 @@ class Step {
   ) {}
 }
 
-const linearize = (executor: Address, tokenExchange: SwapPaths) => {
+const linearize = (
+  executor: Address,
+  tokenExchange: SwapPaths
+): [Step[], TokenAmounts, Approval[]] => {
   const out: Step[] = []
   const allApprovals: Approval[] = []
   const balances = new TokenAmounts()
@@ -145,9 +149,10 @@ export abstract class BaseSearcherResult {
     const potentialResidualTokens = new Set<Token>()
     const executorAddress = this.universe.config.addresses.executorAddress
 
-    const [steps, , allApprovals] = linearize(executorAddress, this.swaps)
+    const [steps, _, allApprovals] = linearize(executorAddress, this.swaps)
     this.allApprovals = allApprovals
     this.commands = steps
+    // console.log(expectedOutputs.toString())
     for (const step of steps) {
       for (const qty of step.inputs) {
         if (qty.token === this.universe.nativeToken) {
@@ -204,6 +209,7 @@ export abstract class BaseSearcherResult {
           },
         },
       ])
+      // console.log(resp)
       try {
         return zapperInterface.decodeFunctionResult('zapERC20', resp)
           .out as ZapperOutputStructOutput
@@ -325,12 +331,12 @@ export abstract class BaseSearcherResult {
           return out
         })
     } catch (e) {
-      console.log(
-        'Failing program:',
-        this.inputToken.toString(),
-        this.outputToken.toString(),
-        printPlan(this.planner, this.universe).join('\n')
-      )
+      // console.log(
+      //   'Failing program:',
+      //   this.inputToken.toString(),
+      //   this.outputToken.toString(),
+      //   printPlan(this.planner, this.universe).join('\n')
+      // )
       return this.simulateNoNode({
         data,
         value,
@@ -345,6 +351,7 @@ export abstract class BaseSearcherResult {
     // console.log(
     //   `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
     // )
+
     // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
     const zapperResult = await this.universe.perf.measurePromise(
@@ -365,9 +372,11 @@ export abstract class BaseSearcherResult {
 
     const outputTokenOutput = this.outputToken.from(amount)
 
-    // console.log(
-    //   `INITIAL_SIMULATION_OK: ${this.userInput} -> ${outputTokenOutput}`
-    // )
+    console.log(
+      `INITIAL_SIMULATION_OK: ${
+        this.userInput
+      } -> ${amount} + (${dustQuantities.join(', ')})`
+    )
 
     const [valueOfOut, ...dustValues] = await this.universe.perf.measurePromise(
       'value dust',
@@ -418,14 +427,22 @@ export abstract class BaseSearcherResult {
     const executorAddress = this.universe.config.addresses.executorAddress
     const approvalNeeded: Approval[] = []
     const duplicate = new Set<string>()
+    const dumbTokens = new Set([
+      '0xfbd1a538f5707c0d67a16ca4e3fc711b80bd931a',
+      '0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9',
+    ])
     await Promise.all(
       this.allApprovals.map(async (i) => {
-        await this.checkIfSearchIsAborted()
         const key = i.spender.toString() + i.token.address.toString()
         if (duplicate.has(key)) {
           return
         }
         duplicate.add(key)
+        if (dumbTokens.has(i.token.address.address.toLowerCase())) {
+          approvalNeeded.push(i)
+          return
+        }
+
         if (
           await this.universe.approvalsStore.needsApproval(
             i.token,
@@ -529,11 +546,14 @@ export abstract class BaseSearcherResult {
       })
       // console.log(params)
       const data = this.encodeCall(options, params)
-      const tx = this.encodeTx(data, 3000000n)
+      // console.log(params)
+      const tx = this.encodeTx(data, 300000n)
       // console.log(printPlan(this.planner, this.universe).join('\n'))
       await this.checkIfSearchIsAborted()
-      const result = await this.simulateAndParse(options, tx.data!.toString())
 
+      const result = await this.simulateAndParse(options, tx.data!.toString())
+      // console.log("DONE")
+      // console.log(result.output.toString())
       let dust = this.potentialResidualTokens.map((qty) => qty)
       if (options.returnDust === true) {
         for (const tok of dust) {
@@ -619,7 +639,9 @@ export class ZapViaATrade extends BaseSearcherResult {
     for (const step of this.swaps.swapPaths[0].steps) {
       await this.checkIfSearchIsAborted()
       await step.action
-        .plan(this.planner, [], this.signer, [this.userInput])
+        .planWithOutput(this.universe, this.planner, [], this.signer, [
+          this.userInput,
+        ])
         .catch((a: any) => {
           console.log(`${step.action.toString()}.plan failed`)
           console.log(a.stack)
@@ -674,138 +696,254 @@ export class RedeemZap extends BaseSearcherResult {
   async toTransaction(
     options: ToTransactionArgs = {}
   ): Promise<ZapTransaction> {
-    await this.setupApprovals()
-
-    const unwrapBalances = new Map<Token, Value>()
     await this.checkIfSearchIsAborted()
-    const outputs = await this.parts.rtokenRedemption.steps[0].action
-      .plan(
-        this.planner,
-        [encodeArg(this.userInput.amount, ParamType.fromString('uint256'))],
-        this.universe.config.addresses.executorAddress,
-        [this.userInput]
+    await this.setupApprovals()
+    const zapperLib = Contract.createLibrary(
+      ZapperExecutor__factory.connect(
+        this.universe.config.addresses.executorAddress.address,
+        this.universe.provider
       )
-      .catch((a: any) => {
-        console.log(
-          `${this.parts.rtokenRedemption.steps[0].action.toString()}.plan failed`
-        )
-        console.log(a.stack)
-        throw a
-      })
-
-    if (outputs == null) {
-      throw new Error('MISSING OUTPUTS')
-    }
-    const outputTokens = this.parts.rtokenRedemption.steps[0].action.outputToken
-    for (let i = 0; i < outputTokens.length; i++) {
-      unwrapBalances.set(outputTokens[i], outputs[i])
-    }
-    const executorAddress = this.universe.config.addresses.executorAddress
-    const tradeOutputs = new Map<Token, Value | null>()
-    for (const unwrapBasketTokenPath of this.parts.tokenBasketUnwrap) {
-      for (const step of unwrapBasketTokenPath.steps) {
-        await this.checkIfSearchIsAborted()
-        const prev = unwrapBalances.get(step.inputs[0].token)
-        let input =
-          prev == null
-            ? step.inputs.map((t) =>
-                plannerUtils.erc20.balanceOf(
-                  this.universe,
-                  this.planner,
-                  t.token,
-                  executorAddress
-                )
-              )
-            : [prev]
-        if (input == null) {
-          throw new Error('MISSING INPUT')
-        }
-        const size = await step.action
-          .plan(this.planner, input, executorAddress, step.inputs)
-          .catch((a) => {
-            console.log(`${step.action.toString()}.plan failed`)
-            console.log(a.stack)
-            throw a
-          })
-        if (size != null) {
-          for (let i = 0; i < step.outputs.length; i++) {
-            unwrapBalances.set(step.outputs[i].token, size[i])
-          }
-        }
-      }
-    }
-
-    const allSupportDynamicInput = this.parts.tradesToOutput.every(
-      (i) => i.supportsDynamicInput
     )
+    const ONE_Val = encodeArg(10n ** 18n, ParamType.fromString('uint256'))
+    const multiplyByFraction = (
+      value: Value,
+      fraction: number,
+      varName: string
+    ) => {
+      return this.planner.add(
+        zapperLib.fpMul(value, parseEther(fraction.toFixed(18)), ONE_Val),
+        `take ${(fraction * 100).toFixed(2)}%`,
+        varName
+      )!
+    }
+    const add = (a: Value, b: Value, comment: string, varName: string) => {
+      return this.planner.add(zapperLib.add(a, b), comment, varName)!
+    }
 
-    const tradesToGenerate = allSupportDynamicInput
-      ? this.parts.tradesToOutput
-      : [
-          ...this.parts.tradesToOutput.filter((i) => !i.supportsDynamicInput),
-          ...this.parts.tradesToOutput.filter((i) => i.supportsDynamicInput),
-        ]
+    const balanceOf = new Map<
+      Token,
+      { type: 'recent'; value: Value } | { type: 'taken'; value: null }
+    >([
+      [
+        this.inputToken,
+        {
+          type: 'recent',
+          value: encodeArg(
+            this.userInput.amount,
+            ParamType.fromString('uint256')
+          ),
+        },
+      ],
+    ])
 
-    const tradeInputs = new Map<Token, Value>()
-    for (const path of tradesToGenerate) {
-      for (const step of path.steps) {
-        await this.checkIfSearchIsAborted()
-        const input = path.inputs.map(
-          (t) =>
-            tradeInputs.get(t.token) ??
-            encodeArg(t.amount, ParamType.from('uint256'))
+    const getBalanceOf = (token: Token, comsume = false) => {
+      let curBalance = balanceOf.get(token)
+      let curVal
+      if (curBalance == null) {
+        curVal = plannerUtils.erc20.balanceOf(
+          this.universe,
+          this.planner,
+          token,
+          this.universe.config.addresses.executorAddress
         )
-        const outputs = await step.action
-          .planWithOutput(
+        balanceOf.set(token, {
+          type: 'recent',
+          value: curVal,
+        })
+      } else {
+        curVal = curBalance.value
+        if (curVal == null) {
+          curVal = plannerUtils.erc20.balanceOf(
             this.universe,
             this.planner,
-            input,
-            executorAddress,
-            step.inputs
+            token,
+            this.universe.config.addresses.executorAddress
           )
-          .catch((a) => {
-            console.log(`${step.action.toString()}.plan failed`)
-            console.log(a.stack)
-            throw a
+          balanceOf.set(token, {
+            type: 'recent',
+            value: curVal,
           })
-        for (let i = 0; i < step.outputs.length; i++) {
-          tradeOutputs.set(step.outputs[i].token, outputs[i])
         }
+      }
+
+      if (comsume) {
+        balanceOf.set(token, {
+          type: 'taken',
+          value: null,
+        })
+      }
+
+      return curVal
+    }
+
+    const addOutputToBalance = (token: Token, amount: Value) => {
+      let cur = balanceOf.get(token)
+      if (cur == null) {
+        balanceOf.set(token, {
+          type: 'recent',
+          value: amount,
+        })
+      } else if (cur.type === 'recent') {
+        balanceOf.set(token, {
+          type: 'recent',
+          value: add(
+            cur.value,
+            amount,
+            `add ${token.symbol}`,
+            `bal_${token.symbol}`
+          ),
+        })
+      } else {
+        balanceOf.set(token, {
+          type: 'recent',
+          value: plannerUtils.erc20.balanceOf(
+            this.universe,
+            this.planner,
+            token,
+            this.universe.config.addresses.executorAddress
+          ),
+        })
+      }
+      return amount
+    }
+
+    const tokenUsers = new DefaultMap<
+      Token,
+      { total: Step[]; current: Set<Step> }
+    >(() => ({
+      total: [],
+      current: new Set(),
+    }))
+
+    const sumOfAllInputs = new TokenAmounts()
+    sumOfAllInputs.add(this.userInput)
+
+    const balances = new TokenAmounts()
+    balances.add(this.userInput)
+
+    const addUser = (token: Token, step: Step) => {
+      const user = tokenUsers.get(token)
+      user.total.push(step)
+      user.current.add(step)
+    }
+
+    addOutputToBalance(
+      this.userInput.token,
+      encodeArg(this.userInput.amount, ParamType.fromString('uint256'))
+    )
+
+    for (const step of this.commands) {
+      for (const input of step.inputs) {
+        addUser(input.token, step)
+        sumOfAllInputs.add(input)
       }
     }
 
-    for (const [token] of unwrapBalances) {
-      tradeOutputs.delete(token)
-      const out = plannerUtils.erc20.balanceOf(
-        this.universe,
-        this.planner,
-        token,
-        executorAddress
-      )
-      plannerUtils.planForwardERC20(
-        this.universe,
-        this.planner,
-        token,
-        out,
-        this.signer
-      )
-    }
-    for (const [token] of tradeOutputs) {
-      const out = plannerUtils.erc20.balanceOf(
-        this.universe,
-        this.planner,
-        token,
-        executorAddress
-      )
-      plannerUtils.planForwardERC20(
-        this.universe,
-        this.planner,
-        token,
-        out,
-        this.signer
-      )
+    const getUsageStatsForToken = (qty: TokenQuantity) => {
+      const token = qty.token
+      const stats = tokenUsers.get(token)
+      const total = stats.total.length
+      const left = stats.current.size
+      const inputsTotal = sumOfAllInputs.get(token)
+      const fraction =
+        inputsTotal.amount === 0n
+          ? 1
+          : parseFloat(qty.format()) / parseFloat(inputsTotal.format())
+      return {
+        totalUsers: total,
+        remainingUsers: total - left,
+        inputsTotal,
+        fraction,
+        value() {
+          const curBal = getBalanceOf(token, true)
+          if (left <= 1) {
+            return curBal
+          }
+          return multiplyByFraction(curBal, fraction, `bal_${token.symbol}`)
+        },
+      }
     }
 
+    const execAction = async (step: SingleSwap, prev?: Value[]) => {
+      const inputs =
+        prev ??
+        step.inputs.map((inp) => {
+          const stats = getUsageStatsForToken(inp)
+          return stats.value()
+        })
+      if (prev) {
+        step.inputs.map((inp) =>
+          balanceOf.set(inp.token, { type: 'taken', value: null })
+        )
+      }
+      balances.subQtys(step.inputs)
+      const out = await step.action.plan(
+        this.planner,
+        inputs,
+        this.universe.config.addresses.executorAddress,
+        step.inputs
+      )
+      const outputs: Value[] = []
+      if (step.action.returnsOutput) {
+        if (out == null) {
+          throw new Error('Failed to get output')
+        }
+        for (let i = 0; i < step.outputs.length; i++) {
+          outputs.push(addOutputToBalance(step.outputs[0].token, out[i]))
+        }
+      }
+      balances.addQtys(step.outputs)
+
+      if (!step.action.returnsOutput) {
+        return null
+      }
+      return outputs
+    }
+
+    for (const step of this.parts.rtokenRedemption.steps) {
+      await execAction(step)
+    }
+
+    for (const paths of this.parts.tokenBasketUnwrap) {
+      let v: Value[] | null = await Promise.all(
+        paths.inputs.map((i) => getBalanceOf(i.token))
+      )
+      for (const step of paths.steps) {
+        v = await execAction(step, v ? v : undefined)
+      }
+    }
+
+    for (const paths of this.parts.tradesToOutput) {
+      for (const step of paths.steps) {
+        await execAction(step)
+      }
+    }
+
+    for (const [tok, cas] of balanceOf) {
+      if (cas.type === 'recent') {
+        plannerUtils.erc20.transfer(
+          this.universe,
+          this.planner,
+          cas.value,
+          tok,
+          this.signer
+        )
+      } else {
+        const bal = plannerUtils.erc20.balanceOf(
+          this.universe,
+          this.planner,
+          tok,
+          this.universe.config.addresses.executorAddress
+        )
+        plannerUtils.erc20.transfer(
+          this.universe,
+          this.planner,
+          bal,
+          tok,
+          this.signer
+        )
+      }
+    }
     return this.createZapTransaction(options)
   }
 }
@@ -845,24 +983,11 @@ export class MintZap extends BaseSearcherResult {
     options: ToTransactionArgs = {}
   ): Promise<ZapTransaction> {
     try {
-      const totalUsedInMinting = new TokenAmounts()
+      console.log(this.swaps.describe().join('\n'))
+      const totalInputs = new TokenAmounts()
       const numberOfUsers = new DefaultMap<Token, number>(() => 0)
       const totalUsers = new DefaultMap<Token, number>(() => 0)
-      for (const mintPath of this.parts.minting.swapPaths) {
-        for (const step of mintPath.steps) {
-          totalUsedInMinting.addQtys(step.inputs)
-          for (const { token } of step.inputs) {
-            numberOfUsers.set(token, numberOfUsers.get(token) + 1)
-            totalUsers.set(token, totalUsers.get(token) + 1)
-          }
-        }
-      }
-      const mintingBalances = new TokenAmounts()
-      if (totalUsedInMinting.tokenBalances.has(this.userInput.token)) {
-        mintingBalances.tokenBalances.set(this.userInput.token, this.userInput)
-      }
       const tradingBalances = new TokenAmounts()
-      tradingBalances.add(this.userInput)
 
       const trades = new Map<Token, Value>()
       await this.setupApprovals()
@@ -879,6 +1004,7 @@ export class MintZap extends BaseSearcherResult {
         this.userInput.token,
         encodeArg(this.userInput.amount, ParamType.from('uint256'))
       )
+
       const tradeBalanceValues = new Map<Token, Value>()
       tradeBalanceValues.set(
         this.userInput.token,
@@ -1014,7 +1140,6 @@ export class MintZap extends BaseSearcherResult {
           if (actionInput == null) {
             throw new Error('NO INPUT')
           }
-          const total = totalUsedInMinting.get(inputToken)
 
           const inputQty = step.inputs[0]
           const usersLeft = numberOfUsers.get(inputToken)
@@ -1028,8 +1153,12 @@ export class MintZap extends BaseSearcherResult {
                 this.universe.config.addresses.executorAddress
               )
             } else {
+              let total = totalInputs.get(inputToken)
+
               const fraction =
-                parseFloat(inputQty.format()) / parseFloat(total.format())
+                total.amount === 0n
+                  ? 1.0
+                  : parseFloat(inputQty.format()) / parseFloat(total.format())
 
               actionInput = this.planner.add(
                 zapperLib.fpMul(

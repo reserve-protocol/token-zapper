@@ -1199,7 +1199,11 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
       out.push(`cmd ${i}:`)
     }
 
-    const addr = formatAddress(step.call.contract.address, universe)
+    const addr =
+      formatAddress(step.call.contract.address, universe) +
+      '(' +
+      Address.from(step.call.contract.address).toShortString() +
+      ')'
     const methodName = step.call.fragment.name
     let formattedArgs: string[] = []
 

@@ -8,7 +8,6 @@ import {
   IStETH,
   IStETH__factory,
   IWrappedNative__factory,
-  ZapperExecutor__factory,
 } from '../contracts'
 import { type IWStETH } from '../contracts/contracts/IWStETH'
 import { IWStETH__factory } from '../contracts/factories/contracts/IWStETH__factory'
@@ -22,6 +21,10 @@ import {
   InteractionConvention,
 } from './Action'
 import { constants } from 'ethers'
+import {
+  BasketTokenSourcingRuleApplication,
+  PostTradeAction,
+} from '../searcher/BasketTokenSourcingRules'
 
 export class LidoDeployment {
   public readonly contracts: {
@@ -93,9 +96,10 @@ export class LidoDeployment {
 
     const stakeFromWETH = new (wethMintable.burn.combine(stake))(universe)
 
-    universe.defineMintable(wrap, unwrap, true)
-    universe.addAction(stake, steth.address)
-    universe.addAction(stakeFromWETH, steth.address)
+    universe.addAction(wrap)
+    universe.addAction(unwrap)
+    universe.addAction(stake)
+    universe.addAction(stakeFromWETH)
 
     this.actions = {
       stake: {
@@ -145,11 +149,26 @@ export class LidoDeployment {
       universe.getToken(Address.from(config.steth)),
       universe.getToken(Address.from(config.wsteth)),
     ])
-    return new LidoDeployment(universe, steth, wsteth)
+    const dep = new LidoDeployment(universe, steth, wsteth)
+
+    universe.defineTokenSourcingRule(
+      wsteth,
+      async (input, unitAmount, searcher) => {
+        return BasketTokenSourcingRuleApplication.singleBranch(
+          [unitAmount.into(universe.wrappedNativeToken)],
+          [
+            PostTradeAction.fromAction(dep.actions.stake.weth, true),
+            PostTradeAction.fromAction(dep.actions.wrap.steth),
+          ]
+        )
+      }
+    )
+
+    return dep
   }
 }
 
-abstract class BaseLidoAction extends Action('Lido.Base') {
+abstract class BaseLidoAction extends Action('Lido') {
   abstract get actionName(): string
   get oneUsePrZap() {
     return false
@@ -195,7 +214,7 @@ abstract class BaseStETHAction extends BaseLidoAction {
     return this.output.from(amountsIn.amount - 1n)
   }
   gasEstimate() {
-    return BigInt(175000n)
+    return BigInt(100000n)
   }
   constructor(
     readonly lido: LidoDeployment,
@@ -241,7 +260,7 @@ abstract class BaseWSTETHAction extends BaseLidoAction {
     return false
   }
   gasEstimate() {
-    return BigInt(175000n)
+    return BigInt(140000n)
   }
 
   abstract planAction(inputs: gen.Value): gen.FunctionCall

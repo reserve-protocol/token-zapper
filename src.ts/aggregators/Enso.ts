@@ -1,6 +1,7 @@
 import { Universe } from '../Universe'
 import {
   Action,
+  BaseAction,
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
@@ -12,6 +13,8 @@ import { EnsoRouter__factory } from '../contracts/factories/contracts/EnsoRouter
 import { SwapPlan } from '../searcher/Swap'
 import { FunctionCall, Planner, Value } from '../tx-gen/Planner'
 import { DexRouter, TradingVenue } from './DexAggregator'
+import { RouterAction } from '../action/RouterAction'
+import { DefaultMap } from '../base/DefaultMap'
 
 export interface EnsoQuote {
   gas: string
@@ -276,7 +279,7 @@ export const createEnso = (
   universe: Universe,
   retries = 2
 ) => {
-  const dex = new DexRouter(
+  const dex = DexRouter.builder(
     aggregatorName,
     async (abort: AbortSignal, input, output, slippage) => {
       if (
@@ -315,8 +318,92 @@ export const createEnso = (
         ),
       ]).quote([input], universe.execAddress)
     },
-    true
+    {
+      dynamicInput: true,
+      returnsOutput: false,
+      onePrZap: true,
+    }
+  ).build()
+  type CachedKey = [number, TokenQuantity, Token]
+  const keyIdToEdgeCache = new Map<string, CachedKey>()
+  const computeKey = (input: TokenQuantity, output: Token) => {
+    return `${
+      universe.currentBlock
+    },${input.toString()} -> ${output.toString()}`
+  }
+  universe.createCache<CachedKey, RouterAction>(
+    async (inp: CachedKey): Promise<RouterAction> => {
+      const [_, input, output] = inp
+      keyIdToEdgeCache.set(computeKey(input, output), [
+        universe.currentBlock,
+        input,
+        output,
+      ])
+
+      const req = await getEnsoQuote(
+        AbortSignal.timeout(universe.config.routerDeadline),
+        universe,
+        input,
+        output,
+        universe.execAddress,
+        universe.config.defaultInternalTradeSlippage,
+        retries
+      )
+
+      const action = new RouterAction(
+        dex,
+        universe,
+        Address.from(req.tx.to),
+        input.token,
+        output
+      )
+
+      return action
+    },
+    universe.config.requoteTolerance / 2 > 0
+      ? universe.config.requoteTolerance / 2
+      : 1
   )
 
-  return new TradingVenue(universe, dex)
+  let lastClear = universe.currentBlock
+  return new TradingVenue(
+    universe,
+    dex,
+    async (input, output) => {
+      if (universe.lpTokens.has(output) || universe.lpTokens.has(input)) {
+        return null
+      }
+      if (
+        universe.integrations.convex?.lpTokens.includes(output) ||
+        universe.integrations.convex?.lpTokens.includes(input)
+      ) {
+        return null
+      }
+      const req = await getEnsoQuote(
+        AbortSignal.timeout(universe.config.routerDeadline),
+        universe,
+        input.one,
+        output,
+        universe.execAddress,
+        universe.config.defaultInternalTradeSlippage,
+        retries
+      )
+
+      return new RouterAction(
+        dex,
+        universe,
+        Address.from(req.tx.to),
+        input,
+        output
+      )
+    },
+    (currentBlock: number) => {
+      if (currentBlock - lastClear < universe.config.requoteTolerance) {
+        return
+      }
+      lastClear = currentBlock
+      keyIdToEdgeCache.clear()
+    },
+    true
+  )
 }

@@ -1,3 +1,4 @@
+import { ParamType } from '@ethersproject/abi'
 import { Universe } from '../Universe'
 import {
   Action,
@@ -10,13 +11,23 @@ import {
   IComet__factory,
   ICusdcV3Wrapper,
   ICusdcV3Wrapper__factory,
+  IERC20__factory,
 } from '../contracts'
 import { TokenQuantity, type Token } from '../entities/Token'
-import { Contract, Planner, Value } from '../tx-gen/Planner'
+import { Contract, Planner, Value, encodeArg } from '../tx-gen/Planner'
 
 export abstract class BaseCometAction extends Action('CompV3') {
   public get outputSlippage(): bigint {
-    return 10n
+    return 0n
+  }
+  get returnsOutput(): boolean {
+    return true
+  }
+  get supportsDynamicInput(): boolean {
+    return true
+  }
+  get oneUsePrZap(): boolean {
+    return false
   }
   toString(): string {
     return `${this.protocol}.${this.actionName}(${this.inputToken.join(
@@ -27,9 +38,6 @@ export abstract class BaseCometAction extends Action('CompV3') {
     return [
       this.outputToken[0].from(amountsIn.into(this.outputToken[0]).amount - 1n),
     ]
-  }
-  get receiptToken() {
-    return this.outputToken[0]
   }
   get universe() {
     return this.comet.universe
@@ -62,18 +70,19 @@ export abstract class BaseCometAction extends Action('CompV3') {
   async plan(
     planner: Planner,
     [input]: Value[],
-    destination: Address,
-    [predicted]: TokenQuantity[]
-  ): Promise<Value[]> {
-    this.planAction(planner, destination, input, predicted)
-    return this.outputBalanceOf(this.universe, planner)
+    destination: Address
+  ): Promise<null | Value[]> {
+    const out = await this.planAction(planner, destination, input)!
+    if (out) {
+      return [out]
+    }
+    return null
   }
   abstract planAction(
     planner: Planner,
     destination: Address,
-    input: Value,
-    predicted: TokenQuantity
-  ): void
+    input: Value
+  ): Promise<Value | null>
 }
 class MintCometAction extends BaseCometAction {
   constructor(comet: Comet) {
@@ -85,23 +94,18 @@ class MintCometAction extends BaseCometAction {
       approvals: [new Approval(comet.borrowToken, comet.comet.address)],
     })
   }
-  planAction(
-    planner: Planner,
-    destination: Address,
-    input: Value | null,
-    predicted: TokenQuantity
-  ) {
+  async planAction(planner: Planner, _: Address, input: Value) {
     planner.add(
-      this.comet.cometLibrary.supplyTo(
-        destination.address,
-        this.comet.borrowToken.address.address,
-        input ?? predicted.amount
-      )
+      this.comet.cometLibrary.supply(this.inputToken[0].address.address, input)
     )
+    return input
   }
 }
 
 class MintCometWrapperAction extends BaseCometAction {
+  public get outputSlippage(): bigint {
+    return 30n
+  }
   constructor(public readonly cometWrapper: CometWrapper) {
     super(cometWrapper.wrapperToken.address, cometWrapper.comet, 'deposit', {
       inputToken: [cometWrapper.cometToken],
@@ -133,42 +137,47 @@ class MintCometWrapperAction extends BaseCometAction {
     ]
   }
 
-  planAction(
-    planner: Planner,
-    _: Address,
-    input: Value | null,
-    predicted: TokenQuantity
-  ) {
-    planner.add(
-      this.cometWrapper.cometWrapperLibrary.deposit(input ?? predicted.amount)
-    )
+  async planAction(planner: Planner, _: Address, input: Value) {
+    planner.add(this.cometWrapper.cometWrapperLibrary.deposit(input))
+    return this.outputBalanceOf(this.universe, planner)[0]
   }
 }
 class BurnCometAction extends BaseCometAction {
+  get returnsOutput(): boolean {
+    return false
+  }
+  get supportsDynamicInput(): boolean {
+    return true
+  }
   constructor(comet: Comet) {
     super(comet.comet.address, comet, 'burn', {
       inputToken: [comet.comet],
       outputToken: [comet.borrowToken],
-      interaction: InteractionConvention.None,
+      interaction: InteractionConvention.ApprovalRequired,
       destination: DestinationOptions.Callee,
-      approvals: [],
+      approvals: [
+        new Approval(comet.borrowToken, comet.comet.address),
+      ],
     })
   }
-  planAction(
-    planner: Planner,
-    destination: Address,
-    input: Value | null,
-    predicted: TokenQuantity
-  ) {
+  async planAction(planner: Planner, _: Address, input: Value) {
     planner.add(
       this.comet.cometLibrary.withdraw(
         this.comet.borrowToken.address.address,
-        input ?? predicted.amount
+        input
       )
     )
+    return null
   }
 }
 class BurnCometWrapperAction extends BaseCometAction {
+  public get outputSlippage(): bigint {
+    return 10n
+  }
+  get returnsOutput(): boolean {
+    return false
+  }
+
   constructor(public readonly cometWrapper: CometWrapper) {
     super(cometWrapper.wrapperToken.address, cometWrapper.comet, 'withdraw', {
       inputToken: [cometWrapper.wrapperToken],
@@ -181,7 +190,7 @@ class BurnCometWrapperAction extends BaseCometAction {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [
-      this.outputToken[0].from(
+      this.cometWrapper.comet.comet.from(
         await this.cometWrapper.cometWrapperInst.convertStaticToDynamic(
           amountsIn.amount
         )
@@ -189,19 +198,17 @@ class BurnCometWrapperAction extends BaseCometAction {
     ]
   }
 
-  planAction(
-    planner: Planner,
-    _: Address,
-    input: Value | null,
-    predicted: TokenQuantity
-  ) {
-    const amt = planner.add(
-      this.cometWrapper.cometWrapperLibrary.convertStaticToDynamic(
-        input ?? predicted.amount
+  private get wrappedCommitLib() {
+    return this.cometWrapper.cometWrapperLibrary
+  }
+  async planAction(planner: Planner, _: Address, __: Value) {
+    const cometBalance = planner.add(
+      this.wrappedCommitLib.underlyingBalanceOf(
+        this.universe.execAddress.address
       )
-    )
-
-    planner.add(this.cometWrapper.cometWrapperLibrary.withdraw(amt))
+    )!
+    planner.add(this.wrappedCommitLib.withdraw(cometBalance))
+    return cometBalance
   }
 }
 class CometAssetInfo {
@@ -263,14 +270,14 @@ class CometWrapper {
     public readonly comet: Comet,
     public readonly wrapperToken: Token
   ) {
-    this.mintAction = new MintCometWrapperAction(this)
-    this.burnAction = new BurnCometWrapperAction(this)
     this.cometWrapperLibrary = Contract.createContract(
       ICusdcV3Wrapper__factory.connect(
         this.wrapperToken.address.address,
         this.universe.provider
       )
     )
+    this.mintAction = new MintCometWrapperAction(this)
+    this.burnAction = new BurnCometWrapperAction(this)
   }
 
   toString() {
@@ -300,6 +307,7 @@ class Comet {
   public readonly burnAction
   public constructor(
     public readonly cometLibrary: Contract,
+    public readonly borrowTokenAsERC20: Contract,
     readonly compound: CompoundV3Deployment,
     readonly comet: Token,
     readonly borrowToken: Token,
@@ -325,13 +333,21 @@ class Comet {
       })
     )
 
-    return new Comet(
+    const comet = new Comet(
       Contract.createContract(cometInst),
+      Contract.createContract(
+        IERC20__factory.connect(
+          baseToken.address.address,
+          compound.universe.provider
+        )
+      ),
       compound,
       poolToken,
       baseToken,
       collateralTokens
     )
+    console.log(`Loaded comet ${comet}`)
+    return comet
   }
 
   toString() {
@@ -345,7 +361,7 @@ export class CompoundV3Deployment {
   public readonly cometWrappers: CometWrapper[] = []
   public readonly cometByBaseToken: Map<Token, Comet> = new Map()
   public readonly cometByPoolToken: Map<Token, Comet> = new Map()
-  public readonly cometWrapperByWrapperToken: Map<Token, CometWrapper> =
+  public readonly cometWrapperByWrapperToken: Map<Address, CometWrapper> =
     new Map()
   public readonly cometWrapperByCometToken: Map<Token, CometWrapper> = new Map()
 
@@ -359,22 +375,24 @@ export class CompoundV3Deployment {
       return this.cometByPoolToken.get(poolToken)!
     }
     const comet = await Comet.load(this, poolToken)
-    this.universe.defineMintable(comet.mintAction, comet.burnAction, false)
+    this.cometByPoolToken.set(poolToken, comet)
     this.comets.push(comet)
     this.cometByBaseToken.set(comet.borrowToken, comet)
     this.cometByPoolToken.set(poolToken, comet)
+    this.universe.defineMintable(comet.mintAction, comet.burnAction)
     return comet
   }
 
   async getCometWrapper(wrapperToken: Token) {
-    if (this.cometWrapperByWrapperToken.has(wrapperToken)) {
-      return this.cometWrapperByWrapperToken.get(wrapperToken)!
+    if (this.cometWrapperByWrapperToken.has(wrapperToken.address)) {
+      return this.cometWrapperByWrapperToken.get(wrapperToken.address)!
     }
     const wrapper = await CometWrapper.load(this, wrapperToken)
-    this.universe.defineMintable(wrapper.mintAction, wrapper.burnAction, false)
+    this.cometWrapperByWrapperToken.set(wrapperToken.address, wrapper)
     this.cometWrappers.push(wrapper)
-    this.cometWrapperByWrapperToken.set(wrapperToken, wrapper)
     this.cometWrapperByCometToken.set(wrapper.cometToken, wrapper)
+    this.universe.defineMintable(wrapper.mintAction, wrapper.burnAction)
+    console.log(wrapper.toString())
     return wrapper
   }
 

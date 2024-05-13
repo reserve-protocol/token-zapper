@@ -12,6 +12,7 @@ import {
 export class LPToken {
   public readonly mintAction: BaseAction
   public readonly burnAction: BaseAction
+  
   constructor(
     public readonly token: Token,
     public readonly poolTokens: Token[],
@@ -35,6 +36,9 @@ export class LPToken {
 }
 
 export class LPTokenMint extends Action('LPPlaceholder') {
+  get outputSlippage(): bigint {
+    return 0n
+  }
   async plan(
     planner: Planner,
     inputs: Value[],
@@ -70,6 +74,9 @@ export class LPTokenMint extends Action('LPPlaceholder') {
   }
 }
 export class LPTokenBurn extends Action('LPPlaceholder') {
+  get outputSlippage(): bigint {
+    return 0n
+  }
   async plan(
     planner: Planner,
     inputs: Value[],

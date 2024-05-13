@@ -20,34 +20,40 @@ export const setupRETH = async (
     Address.from(rethRouterAddress)
   )
 
-  const actions = [
-    rethRouter.burnToETH,
-    rethRouter.burnToWETH,
-    rethRouter.mintViaETH,
-    rethRouter.mintViaWETH,
-  ]
+  const burns = new Map([
+    [universe.nativeToken, rethRouter.burnToETH],
+    [universe.wrappedNativeToken, rethRouter.burnToWETH],
+  ])
+  const mints = new Map([
+    [universe.nativeToken, rethRouter.mintViaETH],
+    [universe.wrappedNativeToken, rethRouter.mintViaWETH],
+  ])
 
-  const rocketPoolRouter = new DexRouter(
-    'RocketpoolRouter:swapTo',
-    async (abort, input, output) => {
-      for (const action of actions) {
-        if (
-          action.outputToken[0] != output ||
-          action.inputToken[0] != input.token
-        ) {
-          continue
-        }
-        return await new SwapPlan(universe, [action]).quote(
-          [input],
-          universe.execAddress
-        )
+  const rocketPoolRouter = DexRouter.builder(
+    'RocketpoolRouter',
+    async (abort, input, output, slippage) => {
+      if (abort.aborted) {
+        throw new Error('Aborted')
       }
-      throw new Error('Unsupported')
+      const action =
+        output === reth ? mints.get(input.token) : burns.get(output)
+      if (action == null) {
+        throw new Error(`No action for ${input.token} -> ${output}`)
+      }
+      return await new SwapPlan(universe, [action]).quote(
+        [input],
+        universe.execAddress
+      )
     },
-    true,
-    new Set([reth, universe.wrappedNativeToken, universe.nativeToken]),
-    new Set([reth, universe.wrappedNativeToken, universe.nativeToken])
+    {
+      dynamicInput: true,
+      returnsOutput: false,
+      onePrZap: true,
+    }
   )
+    .addOneToMany(reth, [universe.nativeToken, universe.wrappedNativeToken])
+    .addManyToOne([universe.nativeToken, universe.wrappedNativeToken], reth)
+    .build()
 
   return new TradingVenue(universe, rocketPoolRouter)
 }

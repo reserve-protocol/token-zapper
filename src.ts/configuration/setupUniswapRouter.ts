@@ -139,18 +139,19 @@ export class UniswapRouterAction extends Action('Uniswap') {
     return true
   }
   public get returnsOutput() {
-    return true
+    return false
   }
   public get supportsDynamicInput() {
     return true
   }
   get outputSlippage() {
-    return 50n
+    return 250n
   }
   async planV3Trade(
     planner: Planner,
     trade: UniswapTrade,
-    input: Value | bigint
+    input: Value,
+    minOut: bigint
   ): Promise<Value> {
     const v3CalLRouterLib = this.gen.Contract.createLibrary(
       UniV3RouterCall__factory.connect(
@@ -158,7 +159,6 @@ export class UniswapRouterAction extends Action('Uniswap') {
         this.universe.provider
       )
     )
-    const minOut = this.outputQty.amount
     if (trade.swaps.length === 1) {
       const route = trade.swaps[0]
       const exactInputSingleParams = {
@@ -222,7 +222,14 @@ export class UniswapRouterAction extends Action('Uniswap') {
     [staticInput]: TokenQuantity[]
   ): Promise<Value[]> {
     let inp = input ?? encodeArg(staticInput.amount, ParamType.from('uint256'))
-    return [await this.planV3Trade(planner, this.currentQuote, inp)]
+    return [
+      await this.planV3Trade(
+        planner,
+        this.currentQuote,
+        inp,
+        this.currentQuote.outputWithSlippage.amount
+      ),
+    ]
   }
   public createdBlock: number
   constructor(
@@ -233,7 +240,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
     super(
       currentQuote.to,
       [currentQuote.input.token],
-      [currentQuote.outputWithSlippage.token],
+      [currentQuote.output.token],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
       [new Approval(currentQuote.input.token, currentQuote.to)]
@@ -244,7 +251,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
     return this.currentQuote.input
   }
   get outputQty() {
-    return this.currentQuote.outputWithSlippage
+    return this.currentQuote.output
   }
   toString() {
     return `UniRouter(${this.currentQuote})`
@@ -403,11 +410,10 @@ export const setupUniswapRouter = async (universe: Universe) => {
       universe,
       route.trade.outputAmount
     )
-    const outputWithSlippage = await uniAmtTokenToOurs(
-      universe,
-      route.trade.minimumAmountOut(
-        new Percent(Number(slippage), Number(TRADE_SLIPPAGE_DENOMINATOR))
-      )
+
+    const outputWithSlippage = outputWithoutSlippage.token.fromBigInt(
+      outputWithoutSlippage.amount -
+        (outputWithoutSlippage.amount * slippage) / TRADE_SLIPPAGE_DENOMINATOR
     )
     return new UniswapTrade(
       Address.from(route.methodParameters!.to),
@@ -428,7 +434,10 @@ export const setupUniswapRouter = async (universe: Universe) => {
   ): Promise<UniswapTrade> => {
     const inp = tokenQtyToCurrencyAmt(universe, input)
     const outp = ourTokenToUni(universe, output)
-    const slip = new Percent(Number(slippage), Number(TRADE_SLIPPAGE_DENOMINATOR))
+    const slip = new Percent(
+      Number(slippage),
+      Number(TRADE_SLIPPAGE_DENOMINATOR)
+    )
 
     if (abort.aborted) {
       throw new Error('Aborted')
@@ -453,12 +462,12 @@ export const setupUniswapRouter = async (universe: Universe) => {
       throw new Error('Aborted')
     }
     const parsedRoute = await parseRoute(abort, route, input, slippage)
-    // console.log(`${input} -> ${output}: ${parsedRoute}`)
+    console.log(`${input} -> ${output}: ${parsedRoute}`)
 
     return parsedRoute
   }
-  let out!: DexRouter
-  out = new DexRouter(
+
+  const out = DexRouter.builder(
     'uniswap',
     async (abort, input, output, slippage) => {
       try {
@@ -471,33 +480,37 @@ export const setupUniswapRouter = async (universe: Universe) => {
         throw e
       }
     },
-    true
-  )
+    {
+      dynamicInput: true,
+      returnsOutput: false,
+      onePrZap: true,
+    }
+  ).build() as DexRouter
+
   const routerAddr = Address.from(SWAP_ROUTER_02_ADDRESSES(universe.chainId))
-  
+
   return new TradingVenue(
     universe,
     out,
     async (inputToken: Token, outputToken: Token) => {
       try {
         await computeRoute(
-          AbortSignal.timeout(universe.config.routerDeadline),
+          AbortSignal.timeout(1000),
           inputToken.one,
           outputToken,
-          universe.config.defaultInternalTradeSlippage
+          50n
         )
-      } catch (e: any) {
+      } catch (e) {
         return null
       }
-
       return new RouterAction(
         out,
         universe,
         routerAddr,
         inputToken,
-        outputToken,
-        universe.config.defaultInternalTradeSlippage
+        outputToken
       )
-    }
+    },
+    () => universe.currentBlock
   )
 }

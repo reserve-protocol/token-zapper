@@ -1,5 +1,5 @@
 import { ParamType } from '@ethersproject/abi'
-import { type Universe } from '../Universe'
+import { Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { BlockCache } from '../base/BlockBasedCache'
@@ -10,6 +10,7 @@ import {
   ICToken,
   IComptroller,
   IComptroller__factory,
+  IWrappedNative__factory,
 } from '../contracts'
 
 import { CEther__factory } from '../contracts/factories/contracts/ICToken.sol/CEther__factory'
@@ -23,7 +24,6 @@ import {
   encodeArg,
 } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
-import { DefaultMap } from '../base/DefaultMap'
 
 const ONEFP18 = 10n ** 18n
 
@@ -64,10 +64,11 @@ class CompoundV2Market {
       this.universe.provider
     )
     this.instCEtherLib = Contract.createContract(this.instCEther)
-    this.mint = new MintCTokenAction(this, underlying, cToken)
-    this.burn = new BurnCTokenAction(this, cToken, underlying)
 
-    deployment.universe.defineMintable(this.mint, this.burn, false)
+    this.mint = new MintCTokenAction(this)
+    this.burn = new BurnCTokenAction(this)
+
+    deployment.universe.defineMintable(this.mint, this.burn)
   }
 
   public createCTokenWrapper(wrapperToken: Token): ReserveCTokenWrapper {
@@ -92,6 +93,10 @@ class CompoundV2Market {
     deployment: CompoundV2Deployment,
     cToken: Token
   ): Promise<CompoundV2Market> {
+    const prev = deployment.markets.get(cToken)
+    if (prev) {
+      return prev
+    }
     const marketAddr = cToken.address
     const universe = deployment.universe
     let underlying: Token
@@ -127,7 +132,7 @@ class CompoundV2Market {
   }
 }
 export class CompoundV2Deployment {
-  private markets_: Map<Token, CompoundV2Market> | null = null
+  private markets_: Map<Token, CompoundV2Market> = new Map()
   private cTokenRateCache: BlockCache<CompoundV2Market, bigint>
   private constructor(
     public readonly universe: Universe,
@@ -227,8 +232,12 @@ abstract class CompV2Action extends Action('CompV2') {
   get returnsOutput() {
     return false
   }
+  get dynamicInput() {
+    return true
+  }
+
   get outputSlippage(): bigint {
-    return 1n
+    return 15n
   }
 
   public async plan(
@@ -237,11 +246,9 @@ abstract class CompV2Action extends Action('CompV2') {
     _: Address,
     [inputPredicted]: TokenQuantity[]
   ) {
-    planner.add(
-      this.planAction(
-        input ?? encodeArg(inputPredicted.amount, ParamType.from('uint256'))
-      )
-    )
+    const inp =
+      input ?? encodeArg(inputPredicted.amount, ParamType.from('uint256'))
+    planner.add(this.planAction(inp))
     return null
   }
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -263,13 +270,11 @@ abstract class CompV2Action extends Action('CompV2') {
       market.cToken.address,
       [input],
       [output],
-      input === market.universe.nativeToken
+      input === market.cToken
         ? InteractionConvention.None
         : InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      input === market.universe.nativeToken
-        ? []
-        : [new Approval(input, output.address)]
+      input === market.cToken ? [] : [new Approval(input, output.address)]
     )
   }
 }
@@ -278,24 +283,22 @@ export class MintCTokenAction extends CompV2Action {
   gasEstimate() {
     return BigInt(150000n)
   }
+
   public quoteAction(rate: bigint, amountsIn: TokenQuantity) {
-    let out =
-      (amountsIn.amount * this.market.rateScale) / rate / this.input.scale
-    return this.output.fromBigInt(out)
+    return this.output.fromBigInt(
+      (amountsIn.amount * this.market.rateScale) / rate / this.market.underlying.scale
+    )
   }
+
   public planAction(input: Value): FunctionCall {
-    if (this.market.cToken === this.market.universe.nativeToken) {
+    if (this.input === this.market.universe.nativeToken) {
       return this.market.instCEtherLib.mint().withValue(input)
     }
     return this.market.instICTokenLib.mint(input)
   }
 
-  constructor(
-    public readonly market: CompoundV2Market,
-    input: Token,
-    output: Token
-  ) {
-    super(market, input, output)
+  constructor(public readonly market: CompoundV2Market) {
+    super(market, market.underlying, market.cToken)
   }
 }
 
@@ -314,17 +317,13 @@ export class BurnCTokenAction extends CompV2Action {
   }
 
   public planAction(input: Value): FunctionCall {
-    if (this.market.underlying === this.market.universe.nativeToken) {
+    if (this.outputToken[0] === this.market.universe.nativeToken) {
       return this.market.instCEtherLib.redeem(input)
     }
     return this.market.instICTokenLib.redeem(input)
   }
-  constructor(
-    public readonly market: CompoundV2Market,
-    input: Token,
-    output: Token
-  ) {
-    super(market, input, output)
+  constructor(public readonly market: CompoundV2Market) {
+    super(market, market.cToken, market.underlying)
   }
 }
 
@@ -342,9 +341,8 @@ export class ReserveCTokenWrapper {
     this.mint = new MintCTokenWrapperAction(this)
     this.burn = new BurnCTokenWrapperAction(this)
 
-    market.universe.defineMintable(this.mint, this.burn, false)
+    market.universe.defineMintable(this.mint, this.burn)
   }
-
   public static fromMarket(
     market: CompoundV2Market,
     wrapperToken: Token
@@ -393,11 +391,14 @@ abstract class CTokenWrapperAction extends Action('Reserve.CTokenWrapper') {
   public toString(): string {
     return `CTokenWrapper.${this.actionName}(${this.input} => ${this.output})`
   }
-  get returnsOutput() {
+  get dynamicInput() {
     return true
   }
+  get returnsOutput() {
+    return false
+  }
   get outputSlippage(): bigint {
-    return 50n
+    return 0n
   }
   public async plan(
     planner: Planner,
@@ -407,10 +408,8 @@ abstract class CTokenWrapperAction extends Action('Reserve.CTokenWrapper') {
   ) {
     const inp =
       input ?? encodeArg(inputPredicted.amount, ParamType.from('uint256'))
-
     planner.add(this.planAction(inp))
-
-    return [input]
+    return this.outputBalanceOf(this.wrapper.market.universe, planner)
   }
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return await Promise.resolve([this.quoteAction(amountsIn)])
@@ -434,7 +433,7 @@ abstract class CTokenWrapperAction extends Action('Reserve.CTokenWrapper') {
       DestinationOptions.Callee,
       input === wrapper.wrapperToken
         ? []
-        : [new Approval(input, output.address)]
+        : [new Approval(input, wrapper.wrapperToken.address)]
     )
   }
 }
@@ -442,6 +441,15 @@ abstract class CTokenWrapperAction extends Action('Reserve.CTokenWrapper') {
 export class MintCTokenWrapperAction extends CTokenWrapperAction {
   gasEstimate() {
     return BigInt(250000n)
+  }
+  get returnsOutput() {
+    return false
+  }
+  public quoteAction(amountsIn: TokenQuantity) {
+    return this.output.from(amountsIn.amount - 1n)
+  }
+  public get supportsDynamicInput(): boolean {
+    return true
   }
   public planAction(input: Value): FunctionCall {
     return this.wrapper.contracts.weirollWrapper.deposit(
@@ -460,6 +468,16 @@ export class MintCTokenWrapperAction extends CTokenWrapperAction {
 export class BurnCTokenWrapperAction extends CTokenWrapperAction {
   gasEstimate() {
     return BigInt(250000n)
+  }
+
+  get returnsOutput() {
+    return false
+  }
+  public quoteAction(amountsIn: TokenQuantity) {
+    return this.output.from(amountsIn.amount - 1n)
+  }
+  public get supportsDynamicInput(): boolean {
+    return true
   }
 
   public planAction(input: Value): FunctionCall {

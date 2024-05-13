@@ -298,7 +298,7 @@ class ConvexStakingWrapper {
         }
         const acts = await this.universe.createTradeEdge(curveLpToken, baseTok)
         for (const act of acts) {
-          console.log('Adding action', act.toString())
+          // console.log('Adding action', act.toString())
           this.universe.addAction(act)
         }
       } catch (e) {}

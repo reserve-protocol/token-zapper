@@ -367,7 +367,7 @@ export class CurveIntegration {
 
     for (const w of withdrawals) {
       if (w != null) {
-        console.log(`${w.inputToken.join(', ')} -> ${w.outputToken.join(', ')}`)
+        // console.log(`${w.inputToken.join(', ')} -> ${w.outputToken.join(', ')}`)
         universe.addAction(w)
       }
     }

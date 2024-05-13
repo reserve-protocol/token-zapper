@@ -365,7 +365,7 @@ export interface ConvexStakingWrapper extends BaseContract {
 
     convexPool(overrides?: CallOverrides): Promise<[string]>;
 
-    convexPoolId(overrides?: CallOverrides): Promise<[string]>;
+    convexPoolId(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     convexToken(overrides?: CallOverrides): Promise<[string]>;
 
@@ -447,7 +447,7 @@ export interface ConvexStakingWrapper extends BaseContract {
 
   convexPool(overrides?: CallOverrides): Promise<string>;
 
-  convexPoolId(overrides?: CallOverrides): Promise<string>;
+  convexPoolId(overrides?: CallOverrides): Promise<BigNumber>;
 
   convexToken(overrides?: CallOverrides): Promise<string>;
 
@@ -529,7 +529,7 @@ export interface ConvexStakingWrapper extends BaseContract {
 
     convexPool(overrides?: CallOverrides): Promise<string>;
 
-    convexPoolId(overrides?: CallOverrides): Promise<string>;
+    convexPoolId(overrides?: CallOverrides): Promise<BigNumber>;
 
     convexToken(overrides?: CallOverrides): Promise<string>;
 

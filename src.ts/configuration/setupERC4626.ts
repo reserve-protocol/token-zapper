@@ -4,7 +4,7 @@ import { Address } from '../base/Address'
 import { IERC4626__factory } from '../contracts/factories/@openzeppelin/contracts/interfaces/IERC4626__factory'
 import { Token } from '../entities/Token'
 
-class ERC4626Deployment {
+export class ERC4626Deployment {
   public readonly mint: InstanceType<ReturnType<typeof ERC4626DepositAction>>
   public readonly burn: InstanceType<ReturnType<typeof ERC4626WithdrawAction>>
   constructor(

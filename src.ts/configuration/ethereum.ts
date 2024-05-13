@@ -53,9 +53,6 @@ export const COMMON_TOKENS = {
   saDAI: '0xF6147b4B44aE6240F7955803B2fD5E15c77bD7ea',
   saUSDC: '0x60C384e226b120d93f3e0F4C502957b2B9C32B15',
 
-  reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
-  steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
-  wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
   pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
 
   aEthPYUSD: '0x0C0d01AbF3e6aDfcA0989eBbA9d6e85dD58EaB1E',
@@ -63,6 +60,13 @@ export const COMMON_TOKENS = {
   steakPYUSD: '0xbEEF02e5E13584ab96848af90261f0C8Ee04722a',
 
   'stkcvxETH+ETH-f': '0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7',
+
+  reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
+  steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
+  wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
+  cbeth: '0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
+  frxeth: '0x5E8422345238F34275888049021821E8E08CAa1f',
+  sfrxeth: '0xac3E018457B222d93114458476f3E3416Abbe38F',
 } as const
 
 export const RTOKENS = {
@@ -102,20 +106,24 @@ export const ethereumConfig = makeConfig(
   {
     blocktime: 12000,
     blockGasLimit: 30000000n,
-    requoteTolerance: 3,
-    routerDeadline: 3500,
+    requoteTolerance: 5,
+    routerDeadline: 4500,
     searcherMinRoutesToProduce: 1,
-    searcherMaxRoutesToProduce: 4,
-    searchConcurrency: 3,
-    defaultInternalTradeSlippage: 200n,
+    searcherMaxRoutesToProduce: 8,
+    searchConcurrency: 4,
+    defaultInternalTradeSlippage: 250n,
   }
 )
-
-
 
 export const PROTOCOL_CONFIGS = {
   chainLinkRegistry: '0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf',
 
+  frxETH: {
+    minter: '0xbAFA44EFE7901E04E39Dad13167D089C559c1138',
+    sfrxeth: '0xac3E018457B222d93114458476f3E3416Abbe38F',
+    frxeth: '0x5E8422345238F34275888049021821E8E08CAa1f',
+    frxethOracle: '0xc58f3385fbc1c8ad2c0c9a061d7c13b141d7a5df',
+  },
   curve: {
     allowedTradeInputs: {
       USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
@@ -126,13 +134,15 @@ export const PROTOCOL_CONFIGS = {
 
       MIM: '0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3',
       FRAX: '0x853d955acef822db058eb8505911ed77f175b99e',
-      crvUSD: "0xf939e0a03fb07f59a73314e73794be0e57ac1b4e",
-
+      crvUSD: '0xf939e0a03fb07f59a73314e73794be0e57ac1b4e',
+      pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
 
       reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
       steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
       wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
-      pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
+      cbeth: '0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
+      frxeth: '0x5E8422345238F34275888049021821E8E08CAa1f',
+      sfrxeth: '0xac3E018457B222d93114458476f3E3416Abbe38F',
     },
     allowedTradeOutput: {
       USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
@@ -141,10 +151,14 @@ export const PROTOCOL_CONFIGS = {
       WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
       WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
 
+      pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
+
       reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
       steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
       wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
-      pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
+      cbeth: '0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
+      frxeth: '0x5E8422345238F34275888049021821E8E08CAa1f',
+      sfrxeth: '0xac3E018457B222d93114458476f3E3416Abbe38F',
     },
     ngPools: {
       PYUSDC: '0x383E6b4437b59fff47B619CBA855CA29342A8559',

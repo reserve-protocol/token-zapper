@@ -49,7 +49,7 @@ interface ConvexStakingWrapper is IERC20Metadata {
     function curveToken() external view returns (address);
     function convexToken() external view returns (address);
     function convexPool() external view returns (address);
-    function convexPoolId() external view returns (address);
+    function convexPoolId() external view returns (uint256);
     function collateralVault() external view returns (address);
 
     //rewards

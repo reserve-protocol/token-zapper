@@ -51,6 +51,13 @@ export class RTokenDeployment {
     }
     return this.unitBasket_
   }
+
+  async maxIssueable() {
+    return this.rToken.from(
+      await this.contracts.rToken.callStatic.issuanceAvailable()
+    )
+  }
+
   public readonly basket: Token[]
   private constructor(
     public readonly universe: Universe,

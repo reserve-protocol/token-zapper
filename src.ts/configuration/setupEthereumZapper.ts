@@ -17,6 +17,7 @@ import { setupAaveV2 } from './setupAaveV2'
 import { LidoDeployment } from '../action/Lido'
 import { setupConvexStakingWrappers } from './setupConvexStakingWrappers'
 import { CurveIntegration } from './setupCurve'
+import { setupFrxETH } from './setupFrxETH'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
@@ -115,6 +116,10 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     await LidoDeployment.load(universe, PROTOCOL_CONFIGS.lido)
   )
 
+  await setupFrxETH(
+    universe,
+    PROTOCOL_CONFIGS.frxETH
+  )
 
   // Set up various ERC4626 tokens
   await Promise.all(
@@ -123,13 +128,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
         vaultAddress: addr,
         protocol: proto,
         slippage: 5n,
-      })
-      // console.log(
-      //   `Loaded ${vault}, ${vault.shareToken} => ${(
-      //     await vault.mint.quote([vault.assetToken.from(1)])
-      //   ).join(', ')}`
-      // )
-
+      }).catch((e) => null)
       return vault
     })
   )

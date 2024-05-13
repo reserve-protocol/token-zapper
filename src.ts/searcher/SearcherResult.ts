@@ -325,12 +325,12 @@ export abstract class BaseSearcherResult {
           return out
         })
     } catch (e) {
-      console.log(
-        'Failing program:',
-        this.inputToken.toString(),
-        this.outputToken.toString(),
-        printPlan(this.planner, this.universe).join('\n')
-      )
+      // console.log(
+      //   'Failing program:',
+      //   this.inputToken.toString(),
+      //   this.outputToken.toString(),
+      //   printPlan(this.planner, this.universe).join('\n')
+      // )
       return this.simulateNoNode({
         data,
         value,

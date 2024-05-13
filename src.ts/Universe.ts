@@ -568,55 +568,6 @@ export class Universe<const UniverseConf extends Config = Config> {
   get approvalAddress() {
     return this.config.addresses.zapperAddress.address
   }
-
-  public async zap(
-    tokenIn: string,
-    amountIn: bigint,
-    rToken: string,
-    signerAddress: string
-  ) {
-    const [inputTokenQty, outputToken] = await Promise.all([
-      this.getToken(Address.from(tokenIn)).then((tok) => tok.from(amountIn)),
-      this.getToken(Address.from(rToken)),
-    ])
-
-    return this.searcher.findSingleInputToRTokenZap(
-      inputTokenQty,
-      outputToken,
-      Address.from(signerAddress),
-      this.config.defaultInternalTradeSlippage
-    )
-  }
-
-  public async zapETH(amountIn: bigint, rToken: string, signerAddress: string) {
-    const inputTokenQty = this.nativeToken.from(amountIn)
-    const outputToken = await this.getToken(Address.from(rToken))
-
-    return this.searcher.findSingleInputToRTokenZap(
-      inputTokenQty,
-      outputToken,
-      Address.from(signerAddress),
-      this.config.defaultInternalTradeSlippage
-    )
-  }
-
-  public async redeem(
-    rToken: string,
-    amount: bigint,
-    output: string,
-    signerAddress: string
-  ) {
-    const [inputTokenQty, outputToken] = await Promise.all([
-      this.getToken(Address.from(rToken)).then((tok) => tok.from(amount)),
-      this.getToken(Address.from(output)),
-    ])
-    return this.searcher.findRTokenIntoSingleTokenZap(
-      inputTokenQty,
-      outputToken,
-      Address.from(signerAddress),
-      this.config.defaultInternalTradeSlippage
-    )
-  }
 }
 function shuffle<T>(array: T[]): T[] {
   const out = [...array]

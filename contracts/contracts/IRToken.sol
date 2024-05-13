@@ -17,6 +17,9 @@ interface IRToken is IERC20Metadata {
         address recipient,
         uint256 amount
     ) external;
+
+    function issuanceAvailable() external view returns (uint256);
+
     function mint(address recipient, uint256 amount) external;
     function basketsNeeded() external view returns (uint192);
 }

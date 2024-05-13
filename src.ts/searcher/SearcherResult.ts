@@ -679,7 +679,8 @@ export class RedeemZap extends BaseSearcherResult {
     const unwrapBalances = new Map<Token, Value>()
     await this.checkIfSearchIsAborted()
     const outputs = await this.parts.rtokenRedemption.steps[0].action
-      .plan(
+      .planWithOutput(
+        this.universe,
         this.planner,
         [encodeArg(this.userInput.amount, ParamType.fromString('uint256'))],
         this.universe.config.addresses.executorAddress,

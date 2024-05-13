@@ -6,7 +6,6 @@ import {
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupChainLink as setupChainLinkRegistry } from './setupChainLink'
-import { initCurveOnEthereum } from './setupCurveOnEthereum'
 import { setupERC4626 } from './setupERC4626'
 import { loadEthereumTokenList } from './setupEthereumTokenList'
 import { setupRETH } from './setupRETH'
@@ -75,18 +74,18 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     'aaveV2',
     await setupAaveV2(universe, PROTOCOL_CONFIGS.aavev2)
   )
-  const curve = await initCurveOnEthereum(universe)
-  universe.addIntegration('curve', curve.venue)
+  const curve = await CurveIntegration.load(
+    universe,
+    PROTOCOL_CONFIGS.curve
+  )
+  universe.integrations.curve = curve
   universe.addTradeVenue(curve.venue)
-
-  const newCurveIntegration = await CurveIntegration.load(universe)
 
   universe.addIntegration(
     'convex',
     await setupConvexStakingWrappers(
       universe,
-      newCurveIntegration,
-      curve.curveApi,
+      curve,
       PROTOCOL_CONFIGS.convex
     )
   )
@@ -115,6 +114,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     'lido',
     await LidoDeployment.load(universe, PROTOCOL_CONFIGS.lido)
   )
+
 
   // Set up various ERC4626 tokens
   await Promise.all(

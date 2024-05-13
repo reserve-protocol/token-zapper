@@ -359,7 +359,7 @@ export class CompoundV3Deployment {
       return this.cometByPoolToken.get(poolToken)!
     }
     const comet = await Comet.load(this, poolToken)
-    this.universe.defineMintable(comet.mintAction, comet.burnAction, false)
+    this.universe.defineMintable(comet.mintAction, comet.burnAction, true)
     this.comets.push(comet)
     this.cometByBaseToken.set(comet.borrowToken, comet)
     this.cometByPoolToken.set(poolToken, comet)
@@ -371,7 +371,7 @@ export class CompoundV3Deployment {
       return this.cometWrapperByWrapperToken.get(wrapperToken)!
     }
     const wrapper = await CometWrapper.load(this, wrapperToken)
-    this.universe.defineMintable(wrapper.mintAction, wrapper.burnAction, false)
+    this.universe.defineMintable(wrapper.mintAction, wrapper.burnAction, true)
     this.cometWrappers.push(wrapper)
     this.cometWrapperByWrapperToken.set(wrapperToken, wrapper)
     this.cometWrapperByCometToken.set(wrapper.cometToken, wrapper)

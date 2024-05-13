@@ -19,21 +19,22 @@ import { ApprovalsStore } from './searcher/ApprovalsStore'
 import { SourcingRule } from './searcher/SourcingRule'
 
 import EventEmitter from 'events'
+import { CompoundV2Deployment } from './action/CTokens'
+import { LidoDeployment } from './action/Lido'
+import { RTokenDeployment } from './action/RTokens'
 import { TradingVenue } from './aggregators/DexAggregator'
+import { BlockCache } from './base/BlockBasedCache'
 import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
+import { AaveV2Deployment } from './configuration/setupAaveV2'
+import { AaveV3Deployment } from './configuration/setupAaveV3'
+import { CompoundV3Deployment } from './configuration/setupCompV3'
+import { ReserveConvex } from './configuration/setupConvexStakingWrappers'
+import { CurveIntegration } from './configuration/setupCurve'
 import { ZapperExecutor__factory } from './contracts'
+import { PerformanceMonitor } from './searcher/PerformanceMonitor'
 import { Searcher } from './searcher/Searcher'
 import { SwapPath } from './searcher/Swap'
 import { Contract } from './tx-gen/Planner'
-import { BlockCache } from './base/BlockBasedCache'
-import { PerformanceMonitor } from './searcher/PerformanceMonitor'
-import { AaveV3Deployment } from './configuration/setupAaveV3'
-import { AaveV2Deployment } from './configuration/setupAaveV2'
-import { CompoundV2Deployment } from './action/CTokens'
-import { CompoundV3Deployment } from './configuration/setupCompV3'
-import { RTokenDeployment } from './action/RTokens'
-import { LidoDeployment } from './action/Lido'
-import { ReserveConvex } from './configuration/setupConvexStakingWrappers'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -52,7 +53,7 @@ export type Integrations = Partial<{
   compoundV2: CompoundV2Deployment
   compoundV3: CompoundV3Deployment
   uniswapV3: TradingVenue
-  curve: TradingVenue
+  curve: CurveIntegration
   rocketpool: TradingVenue
   aerodrome: TradingVenue
   lido: LidoDeployment
@@ -357,7 +358,6 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   public addAction(action: Action, actionAddress?: Address) {
-    console.log('Adding action ' + action)
     if (this.allActions.has(action)) {
       return this
     }
@@ -368,13 +368,14 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (action.addToGraph) {
       this.graph.addEdge(action)
     }
+    // console.log(`${action.inputToken.join(', ')} -> ${action.outputToken.join(', ')}`)
     return this
   }
 
   public defineLPToken(lpTokenInstance: LPToken) {
     this.lpTokens.set(lpTokenInstance.token, lpTokenInstance)
     this.addAction(lpTokenInstance.mintAction)
-    // this.addAction(lpTokenInstance.burnAction)
+    this.addAction(lpTokenInstance.burnAction)
     // this.defineMintable(
     //   lpTokenInstance.mintAction,
     //   lpTokenInstance.burnAction,
@@ -384,6 +385,12 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   public weirollZapperExec
 
+  findBurnActions(token: Token) {
+    const out = this.actions
+      .get(token.address)
+      .filter((i) => i.inputToken.length === 1 && i.inputToken[0] === token)
+    return [...out]
+  }
   get execAddress() {
     return this.config.addresses.executorAddress
   }
@@ -521,16 +528,16 @@ export class Universe<const UniverseConf extends Config = Config> {
       opts.tokenLoader ?? makeTokenLoader(provider)
     )
     universe.oracles.push(new LPTokenPriceOracle(universe))
-
+    await Promise.all(
+      Object.values(universe.config.addresses.rTokens).map(
+        async (rTokenAddress) => {
+          await universe.defineRToken(rTokenAddress)
+        }
+      )
+    )
     initialize(universe).then(async () => {
       // Load all predefined rTokens
-      await Promise.all(
-        Object.values(universe.config.addresses.rTokens).map(
-          async (rTokenAddress) => {
-            await universe.defineRToken(rTokenAddress)
-          }
-        )
-      )
+      
       universe._finishResolving()
     })
 

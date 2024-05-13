@@ -54,16 +54,14 @@ export const COMMON_TOKENS = {
   saUSDC: '0x60C384e226b120d93f3e0F4C502957b2B9C32B15',
 
   reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
-
+  steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
+  wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
   pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
-  PYUSDUSDC: '0x383E6b4437b59fff47B619CBA855CA29342A8559',
-  stkcvxPYUSDUSDC: '0x6Cd8b88Dd65B004A82C33276C7AD3Fd4F569e254',
 
   aEthPYUSD: '0x0C0d01AbF3e6aDfcA0989eBbA9d6e85dD58EaB1E',
   saEthPyUSD: '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b',
   steakPYUSD: '0xbEEF02e5E13584ab96848af90261f0C8Ee04722a',
 
-  steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
   'stkcvxETH+ETH-f': '0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7',
 } as const
 
@@ -105,19 +103,56 @@ export const ethereumConfig = makeConfig(
     blocktime: 12000,
     blockGasLimit: 30000000n,
     requoteTolerance: 3,
-    routerDeadline: 5000,
+    routerDeadline: 3500,
     searcherMinRoutesToProduce: 1,
     searcherMaxRoutesToProduce: 4,
-    searchConcurrency: 8,
+    searchConcurrency: 3,
     defaultInternalTradeSlippage: 200n,
   }
 )
 
+
+
 export const PROTOCOL_CONFIGS = {
   chainLinkRegistry: '0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf',
 
+  curve: {
+    allowedTradeInputs: {
+      USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+      USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+      DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
+      WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
+      WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+
+      MIM: '0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3',
+      FRAX: '0x853d955acef822db058eb8505911ed77f175b99e',
+      crvUSD: "0xf939e0a03fb07f59a73314e73794be0e57ac1b4e",
+
+
+      reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
+      steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
+      wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
+      pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
+    },
+    allowedTradeOutput: {
+      USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+      USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+      DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
+      WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
+      WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+
+      reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
+      steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
+      wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
+      pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
+    },
+    ngPools: {
+      PYUSDC: '0x383E6b4437b59fff47B619CBA855CA29342A8559',
+    },
+  },
   convex: {
     boosterAddress: '0xF403C135812408BFbE8713b5A23a04b3D48AAE31',
+
     wrappers: {
       cvx3Pool: '0x24CDc6b4Edd3E496b7283D94D93119983A61056a',
       cvxPayPool: '0x511daB8150966aFfE15F0a5bFfBa7F4d2b62DEd4',
@@ -125,7 +160,13 @@ export const PROTOCOL_CONFIGS = {
       cvxETHPlusETH: '0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7',
       cvxCrvUSDUSDC: '0x6ad24C0B8fD4B594C6009A7F7F48450d9F56c6b8',
       cvxCrvUSDUSDT: '0x5d1B749bA7f689ef9f260EDC54326C48919cA88b',
-      stkcvxeUSD3CRV: '0x8e33D5aC344f9F2fc1f2670D45194C280d4fBcF1',
+      stkcvxPYUSDUSDC: '0x6Cd8b88Dd65B004A82C33276C7AD3Fd4F569e254',
+
+      'stkcvxeUSD3CRV-f': '0xBF2FBeECc974a171e319b6f92D8f1d042C6F1AC3',
+      'stkcvxeUSD3CRV-f2': '0x3BECE5EC596331033726E5C6C188c313Ff4E3fE5',
+      'stkcvxeUSD3CRV-f3': '0x8e33D5aC344f9F2fc1f2670D45194C280d4fBcF1',
+      'stkcvxMIM-3LP3CRV-f': '0x8443364625e09a33d793acd03aCC1F3b5DbFA6F6',
+      stkcvx3Crv: '0xee0ac49885719DBF5FC1CDAFD9c752127E009fFa',
     },
   },
 

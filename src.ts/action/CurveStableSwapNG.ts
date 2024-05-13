@@ -10,33 +10,109 @@ import {
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
+abstract class NGSwapBase extends Action('CurveStableSwapNG') {
+  gasEstimate(): bigint {
+    return 10000000n
+  }
+  plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address,
+    predictedInputs: TokenQuantity[]
+  ): Promise<Value[] | null> {
+    throw new Error('Method not implemented.')
+  }
 
+  public get addToGraph(): boolean {
+    return false
+  }
+}
+
+class NGSwapMint extends NGSwapBase {
+  async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const amts = await this.pool.poolInstance.callStatic.calc_token_amount(
+      amountsIn.map((amt) => amt.amount),
+      true
+    )
+    return [this.pool.lpToken.from(amts)]
+  }
+  constructor(public readonly pool: CurveStableSwapNGPool) {
+    super(
+      pool.pool.address,
+      pool.underlying,
+      [pool.lpToken],
+      InteractionConvention.ApprovalRequired,
+      DestinationOptions.Callee,
+      pool.underlying.map((token) => new Approval(token, pool.pool.address))
+    )
+  }
+}
+class NGSwapBurn extends NGSwapBase {
+  async quote(amounts: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const amts = await this.pool.poolInstance.callStatic.remove_liquidity(
+      amounts[0].amount,
+      this.pool.underlying.map((_) => 0)
+    )
+    return amts.map((amt, i) => this.pool.underlying[i].from(amt))
+  }
+  constructor(public readonly pool: CurveStableSwapNGPool) {
+    super(
+      pool.pool.address,
+      [pool.lpToken],
+      pool.underlying,
+      InteractionConvention.None,
+      DestinationOptions.Callee,
+      []
+    )
+  }
+}
 export class CurveStableSwapNGPool {
-  public readonly addLiqudity: CurveStableSwapNGAddLiquidity[]
-  public readonly removeLiquidity: CurveStableSwapNGRemoveLiquidity[]
+  public readonly actions: {
+    add: CurveStableSwapNGAddLiquidity
+    remove: CurveStableSwapNGRemoveLiquidity
+  }[]
+
+  get outputSlippage() {
+    return 1n
+  }
+  get address() {
+    return this.pool.address
+  }
 
   public readonly poolInstance: ICurveStableSwapNG
+
+  public get lpToken() {
+    return this.pool
+  }
+  public get allPoolTokens() {
+    return this.underlying
+  }
 
   public constructor(
     public readonly universe: Universe,
     public readonly pool: Token,
     public readonly underlying: Token[]
   ) {
-    this.addLiqudity = underlying.map(
-      (_, index) => new CurveStableSwapNGAddLiquidity(universe, this, index)
-    )
+    this.actions = underlying.map((_, index) => ({
+      remove: new CurveStableSwapNGRemoveLiquidity(universe, this, index),
+      add: new CurveStableSwapNGAddLiquidity(universe, this, index),
+    }))
 
-    this.removeLiquidity = underlying.map(
-      (_, index) => new CurveStableSwapNGRemoveLiquidity(universe, this, index)
-    )
+    const mintable = {
+      mint: new NGSwapMint(this),
+      burn: new NGSwapBurn(this),
+    }
 
     this.poolInstance = ICurveStableSwapNG__factory.connect(
       pool.address.address,
       universe.provider
     )
-    for (const action of [...this.addLiqudity, ...this.removeLiquidity]) {
-      universe.addAction(action)
+    for (const { add, remove } of this.actions) {
+      universe.addAction(add)
+      universe.addAction(remove)
     }
+
+    universe.defineMintable(mintable.mint, mintable.burn)
   }
 
   toString(): string {
@@ -46,8 +122,8 @@ export class CurveStableSwapNGPool {
   }
 
   getAddLiquidityAction(input: Token) {
-    const out = this.addLiqudity.find(
-      (action) => action.inputToken[0] === input
+    const out = this.actions.find(
+      (action) => action.add.inputToken[0] === input
     )
     if (out) {
       return out
@@ -55,8 +131,8 @@ export class CurveStableSwapNGPool {
     throw new Error(`Could not find add liquidity action for ${input}`)
   }
   getRemoveLiquidityAction(input: Token) {
-    const out = this.removeLiquidity.find(
-      (action) => action.inputToken[0] === input
+    const out = this.actions.find(
+      (action) => action.remove.outputToken[0] === input
     )
     if (out) {
       return out

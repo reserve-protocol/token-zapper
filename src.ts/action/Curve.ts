@@ -16,7 +16,6 @@ import { LPToken } from './LPToken'
 import { Planner, Value } from '../tx-gen/Planner'
 import { CurveRouterCall__factory } from '../contracts'
 
-
 const whiteList = new Set(
   [
     '0xa2b47e3d5c44877cca798226b7b8118f9bfb7a56', // compound
@@ -77,6 +76,9 @@ const whiteList = new Set(
 
     '0xb30da2376f63de30b42dc055c93fa474f31330a5',
     '0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f',
+    '0x4DEcE678ceceb27446b35C672dC7d61F30bAD69E',
+    '0xe8a5677171c87fCB65b76957f2852515B404C7b1',
+    '0x390f3595bCa2Df7d23783dFd126427CCeb997BF4',
   ].map((i) => i.toLowerCase())
 )
 
@@ -241,11 +243,16 @@ export class CurveSwap extends Action('Curve') {
     return q
   }
 
-  public async initAddressList(input: TokenQuantity[]) {
-    const output = await this._quote(input[0])
-    const { _route } = _getExchangeMultipleArgs(output.route)
-    for (const r of _route) {
-      this._addressList.add(Address.from(r))
+  public async initAddressList(toks: Token[]) {
+    for (const tok of toks) {
+      try {
+        const output = await this._quote(tok.one)
+        const { _route } = _getExchangeMultipleArgs(output.route)
+        for (const r of _route) {
+          this._addressList.add(Address.from(r))
+        }
+      } catch (e) {
+      }
     }
   }
 
@@ -277,10 +284,6 @@ export class CurveSwap extends Action('Curve') {
 }
 
 export const loadCurve = async (universe: Universe) => {
-  const curvesEdges = new DefaultMap<Token, Map<Token, CurveSwap>>(
-    () => new Map()
-  )
-
   const fakeRouterTemplate: PoolTemplate = {
     address: Address.from('0x99a58482bd75cbab83b27ec03ca68ff489b5788f'),
     name: 'curve-router',
@@ -300,10 +303,6 @@ export const loadCurve = async (universe: Universe) => {
     tokenOut: Token,
     slippage: bigint
   ) => {
-    const edges = curvesEdges.get(tokenIn.token)
-    if (edges.has(tokenOut)) {
-      return edges.get(tokenOut)!
-    }
     const swap = new CurveSwap(
       universe,
       pool,
@@ -311,8 +310,7 @@ export const loadCurve = async (universe: Universe) => {
       tokenOut,
       slippage
     )
-    await swap.initAddressList([tokenIn])
-    edges.set(tokenOut, swap)
+    await swap.initAddressList(swap.inputToken.concat(swap.outputToken))
 
     return swap
   }
@@ -333,7 +331,6 @@ export const loadCurve = async (universe: Universe) => {
       curve.fetchFactoryPools(true),
       curve.fetchCryptoFactoryPools(true),
     ])
-
     const poolsUnfiltered = [
       ...curve.getPoolList(),
       ...curve.getCryptoFactoryPoolList(),
@@ -377,21 +374,8 @@ export const loadCurve = async (universe: Universe) => {
       )
     )
     const curvePools = await Promise.all(
-      pools
-        .filter(({ pool }) => {
-          for (const addr of pool.wrappedCoinAddresses) {
-            if (!universe.tokens.has(Address.from(addr))) {
-              return false
-            }
-          }
-          for (const addr of pool.underlyingCoinAddresses) {
-            if (!universe.tokens.has(Address.from(addr))) {
-              return false
-            }
-          }
-          return true
-        })
-        .map(async ({ name, pool }) => {
+      pools.map(async ({ name, pool }) => {
+        try {
           const tokens = pool.wrappedCoinAddresses.map(
             (a) => universe.tokens.get(Address.from(a))!
           )
@@ -409,9 +393,13 @@ export const loadCurve = async (universe: Universe) => {
             pool,
             name
           )
-        })
+        } catch (e) {
+          console.log(e)
+          return null!
+        }
+      })
     )
-    return curvePools
+    return curvePools.filter((i) => i !== null)
   }
 
   const addLpToken = async (universe: Universe, pool: CurvePool) => {

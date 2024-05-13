@@ -10,6 +10,7 @@ import {
   IERC20__factory,
 } from '../contracts'
 import { TRADE_SLIPPAGE_DENOMINATOR } from '../base/constants'
+import { SwapPlan } from '../searcher/Swap'
 
 export enum InteractionConvention {
   PayBeforeCall,
@@ -148,6 +149,12 @@ export abstract class BaseAction {
     public readonly approvals: Approval[]
   ) {}
 
+  public async intoSwapPath(universe: Universe, qty: TokenQuantity) {
+    return await new SwapPlan(universe, [
+      this,
+    ]).quote([qty], universe.execAddress)
+
+  }
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
   public async quoteWithSlippage(
     amountsIn: TokenQuantity[]

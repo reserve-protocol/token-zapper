@@ -428,10 +428,12 @@ export const setupAerodromeRouter = async (universe: Universe) => {
       if (inputValue == null || inputValue.amount === 0n) {
         throw new Error('Failed to quote')
       }
+      const inpValue = parseFloat(inputValue.format())
+
       const outputs: AerodromePath[] = []
       await Promise.all(
         toEvaluate.map(async (route) => {
-          if (outputs.length > 5) {
+          if (outputs.length > 10) {
             return
           }
           const parts = await routerInst.getAmountsOut(
@@ -442,7 +444,7 @@ export const setupAerodromeRouter = async (universe: Universe) => {
           if (outRoute.output.amount === 0n) {
             return
           }
-          if (outputs.length > 5) {
+          if (outputs.length > 10) {
             return
           }
           const outputValue =
@@ -450,9 +452,8 @@ export const setupAerodromeRouter = async (universe: Universe) => {
           if (outputValue.amount === 0n) {
             return
           }
-          const inpValue = parseFloat(inputValue.format())
           const ratio = parseFloat(outputValue.format()) / inpValue
-          if (inpValue == 0 || ratio > 0.96) {
+          if (ratio < 0.95) {
             return outputs.push(AerodromePath.from(route, parts))
           }
           const id = computeIdFromRoute(route)

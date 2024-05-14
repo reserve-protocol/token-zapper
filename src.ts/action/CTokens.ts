@@ -395,9 +395,6 @@ abstract class CTokenWrapperAction extends Action('Reserve.CTokenWrapper') {
   get outputSlippage() {
     return 0n
   }
-  public get returnsOutput(): boolean {
-    return true
-  }
   public async plan(
     planner: Planner,
     [input]: Value[],
@@ -409,7 +406,7 @@ abstract class CTokenWrapperAction extends Action('Reserve.CTokenWrapper') {
 
     planner.add(this.planAction(inp))
 
-    return [input]
+    return null
   }
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return await Promise.resolve([this.quoteAction(amountsIn)])

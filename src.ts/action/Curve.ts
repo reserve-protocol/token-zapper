@@ -8,7 +8,6 @@ import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 
-import { DefaultMap } from '../base/DefaultMap'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Token, type TokenQuantity } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
@@ -151,7 +150,7 @@ export class CurveSwap extends Action('Curve') {
     return this._addressList
   }
   get outputSlippage() {
-    return this.slippage + 300n
+    return 0n
   }
   async plan(
     planner: Planner,
@@ -179,15 +178,17 @@ export class CurveSwap extends Action('Curve') {
       )
     )
 
-    const [quoteWithSlippage] = await this.quoteWithSlippage(predicted)
+    const [quoteWithout] = await this.quote(predicted)
+
+    const minOut = quoteWithout.amount - quoteWithout.amount / 100n
     planner.add(
       curveRouterCallLib.exchange(
         inputs[0] ?? predicted[0].amount,
-        quoteWithSlippage.amount,
+        minOut,
         routerContract.address,
         payload
       ),
-      `Curve,swap=${predicted.join(', ')} -> ${quoteWithSlippage}`,
+      `Curve,swap=${predicted.join(', ')} -> ${quoteWithout}`,
       `amt_${this.outputToken[0].symbol}`
     )
 
@@ -214,6 +215,18 @@ export class CurveSwap extends Action('Curve') {
       )
       const { _route, _swapParams, _factorySwapAddresses } =
         _getExchangeMultipleArgs(out.route)
+
+      const out_: ethers.BigNumber =
+        await contract.callStatic.get_exchange_multiple_amount(
+          _route,
+          _swapParams,
+          amountsIn.amount,
+          _factorySwapAddresses,
+          {
+            blockTag: 'pending',
+          }
+        )
+
       const gasEstimate: ethers.BigNumber =
         await contract.estimateGas.get_exchange_multiple_amount(
           _route,
@@ -223,13 +236,11 @@ export class CurveSwap extends Action('Curve') {
           curveInner.constantOptions
         )
 
+      const outAmt = this.outputToken[0].fromBigInt(out_.toBigInt())
       this.estimate = gasEstimate.toBigInt()
-      const outParsed = parseUnits(
-        parseFloat(out.output).toFixed(this.outputToken[0].decimals),
-        this.outputToken[0].decimals
-      )
+      const outParsed = parseFloat(outAmt.format())
 
-      out.output = formatUnits(outParsed, this.outputToken[0].decimals)
+      out.output = outParsed.toFixed(this.outputToken[0].decimals)
 
       return out
     } catch (e) {
@@ -251,8 +262,7 @@ export class CurveSwap extends Action('Curve') {
         for (const r of _route) {
           this._addressList.add(Address.from(r))
         }
-      } catch (e) {
-      }
+      } catch (e) {}
     }
   }
 

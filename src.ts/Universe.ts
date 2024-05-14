@@ -163,9 +163,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     output: Token,
     dynamicInput: boolean
   ) {
-    const venues = dynamicInput
-      ? this.tradingVenuesSupportingDynamicInput
-      : this.tradeVenues
+    const venues =
+      dynamicInput === true
+        ? this.tradingVenuesSupportingDynamicInput
+        : this.tradeVenues
     const out = venues.filter((venue) =>
       venue.router.supportsSwap(input, output)
     )
@@ -201,7 +202,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     const tradeName = `${input.token} -> ${output}`
 
     await Promise.all(
-      shuffle(aggregators).map(async (venue) => {
+      aggregators.map(async (venue) => {
         try {
           const res = await this.perf.measurePromise(
             venue.name,
@@ -211,7 +212,7 @@ export class Universe<const UniverseConf extends Config = Config> {
           // console.log(`${venue.name} ok: ${res.steps[0].action.toString()}`)
           await onResult(res)
         } catch (e: any) {
-          // console.log(`${router.name} failed for case: ${tradeName}`)
+          // console.log(`${venue.name} failed for case: ${tradeName}`)
           // console.log(e.message)
         }
       })
@@ -537,7 +538,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     )
     initialize(universe).then(async () => {
       // Load all predefined rTokens
-      
+
       universe._finishResolving()
     })
 

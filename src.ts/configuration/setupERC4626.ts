@@ -12,7 +12,7 @@ export class ERC4626Deployment {
     public readonly universe: Universe,
     public readonly shareToken: Token,
     public readonly assetToken: Token,
-    public readonly slippage: bigint = 10n
+    public readonly slippage: bigint
   ) {
     this.mint = new (ERC4626DepositAction(protocol))(
       universe,
@@ -34,7 +34,7 @@ export class ERC4626Deployment {
     universe: Universe,
     protocol: string,
     shareTokenAddress: Address,
-    slippage: bigint = 10n
+    slippage: bigint
   ): Promise<ERC4626Deployment> {
     const vaultInst = IERC4626__factory.connect(
       shareTokenAddress.address,

@@ -342,9 +342,9 @@ export abstract class BaseSearcherResult {
   }
 
   protected async simulateAndParse(options: ToTransactionArgs, data: string) {
-    // console.log(
-    //   `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
-    // )
+    console.log(
+      `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
+    )
     // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
     const zapperResult = await this.universe.perf.measurePromise(
@@ -365,9 +365,9 @@ export abstract class BaseSearcherResult {
 
     const outputTokenOutput = this.outputToken.from(amount)
 
-    // console.log(
-    //   `INITIAL_SIMULATION_OK: ${this.userInput} -> ${outputTokenOutput}`
-    // )
+    console.log(
+      `INITIAL_SIMULATION_OK: ${this.userInput} -> ${outputTokenOutput}`
+    )
 
     const [valueOfOut, ...dustValues] = await this.universe.perf.measurePromise(
       'value dust',
@@ -527,11 +527,10 @@ export abstract class BaseSearcherResult {
         ...options,
         returnDust: false,
       })
-      // console.log(params)
       const data = this.encodeCall(options, params)
       const tx = this.encodeTx(data, 3000000n)
-      // console.log(printPlan(this.planner, this.universe).join('\n'))
       await this.checkIfSearchIsAborted()
+      // console.log(params)
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
       let dust = this.potentialResidualTokens.map((qty) => qty)

@@ -73,7 +73,7 @@ export class ZapTxStats {
   }
 
   get netValueUSD() {
-    return this.valueUSD.sub(this.txFee.txFee.price)
+    return this.valueUSD.sub(this.txFee.txFee.price);
   }
 
   public static async create(

@@ -36,7 +36,7 @@ export class BlockCache<Key, Result extends NonNullable<any>> {
   public onBlock(block: number) {
     this.currentBlock = block
     for (const [key, { time }] of [...this.cache.entries()]) {
-      if (block - time > this.blocksToLive) {
+      if ((block - time) > this.blocksToLive) {
         this.cache.delete(key)
       }
     }

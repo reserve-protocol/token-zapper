@@ -54,10 +54,8 @@ const getEnsoQuote_ = async (
   const inputTokenStr: string = encodeToken(universe, quantityIn.token)
   const outputTokenStr: string = encodeToken(universe, tokenOut)
 
-  const GET_QUOTE_DATA = `${API_ROOT}?chainId=${universe.chainId}&slippage=${(
-    slippage / 10n
-  ).toString()}&fromAddress=${execAddr}&routingStrategy=router&priceImpact=false&spender=${execAddr}`
-  const reqUrl = `${GET_QUOTE_DATA}&receiver=${execAddr}&amountIn=${quantityIn.amount.toString()}&tokenIn=${inputTokenStr}&tokenOut=${outputTokenStr}`
+  const GET_QUOTE_DATA = `${API_ROOT}?chainId=${universe.chainId}&slippage=1&fromAddress=${execAddr}&routingStrategy=router&priceImpact=false&spender=${execAddr}`
+  const reqUrl = `${GET_QUOTE_DATA}&receiver=${execAddr}&amountIn=${quantityIn.amount.toString()}&tokenIn=${inputTokenStr}&tokenOut=${outputTokenStr}&disableRFQs=false`
 
   // console.log(reqUrl)
   const quote: EnsoQuote = await (
@@ -69,6 +67,8 @@ const getEnsoQuote_ = async (
       },
     })
   ).json()
+  // console.log(reqUrl)
+  // console.log(quote)
 
   if (quote.tx?.data == null) {
     // console.log(reqUrl)
@@ -190,7 +190,7 @@ class EnsoAction extends Action('Enso') {
     return this.request.addresesInUse
   }
   get outputSlippage() {
-    return 0n
+    return this.universe.config.defaultInternalTradeSlippage
   }
   async plan(
     planner: Planner,

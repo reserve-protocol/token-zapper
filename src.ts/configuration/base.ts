@@ -46,11 +46,11 @@ export const baseConfig = makeConfig(
     blocktime: 2000,
     blockGasLimit: 60_000_000n,
     requoteTolerance: 10,
-    routerDeadline: 4000,
+    routerDeadline: 3500,
     searcherMinRoutesToProduce: 1,
     searcherMaxRoutesToProduce: 4,
     searchConcurrency: 4,
-    defaultInternalTradeSlippage: 200n,
+    defaultInternalTradeSlippage: 250n,
   }
 )
 

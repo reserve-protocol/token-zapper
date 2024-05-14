@@ -520,7 +520,7 @@ export class Searcher<
 
     const controller = createConcurrentStreamingSeacher(this, toTxArgs)
 
-    void Promise.race([
+    void Promise.all([
       this.findRTokenIntoSingleTokenZapViaRedeem__(
         rTokenQuantity,
         output,
@@ -599,7 +599,7 @@ export class Searcher<
       unwrapTokenQtys
         .filter((qty) => qty.token !== outputToken)
         .map(async (qty) => {
-          for (let i = 1; i < 3; i++) {
+          for (let i = 2; i <= 3; i++) {
             const potentialSwaps = await this.findSingleInputTokenSwap(
               qty,
               outputToken,
@@ -681,7 +681,7 @@ export class Searcher<
         abortSignal
       )
 
-      return await onResult(zap)
+      return await onResult(zap).catch((e) => {})
     }
 
     if (permutableTrades.length === 0) {

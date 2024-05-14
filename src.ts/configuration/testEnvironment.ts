@@ -1,5 +1,4 @@
 import { Universe } from '../Universe'
-import { BurnSATokensAction, MintSATokensAction } from '../action/SATokens'
 import { DepositAction, WithdrawAction } from '../action/WrappedNative'
 import { Address } from '../base/Address'
 import { Token, TokenQuantity } from '../entities/Token'
@@ -149,25 +148,25 @@ const initialize = async (universe: TestUniverse) => {
     { underlying: DAI, cToken: fDAI, rate: 201658648975913110959308192n },
   ]
 
-  for (const saToken of saTokens) {
-    const rate = {
-      value: saToken.rate,
-    }
-    universe.defineMintable(
-      new MintSATokensAction(
-        universe,
-        saToken.underlying,
-        saToken.saToken,
-        rate
-      ),
-      new BurnSATokensAction(
-        universe,
-        saToken.underlying,
-        saToken.saToken,
-        rate
-      )
-    )
-  }
+  // for (const saToken of saTokens) {
+  //   const rate = {
+  //     value: saToken.rate,
+  //   }
+  //   universe.defineMintable(
+  //     new MintSATokensAction(
+  //       universe,
+  //       saToken.underlying,
+  //       saToken.saToken,
+  //       rate
+  //     ),
+  //     new BurnSATokensAction(
+  //       universe,
+  //       saToken.underlying,
+  //       saToken.saToken,
+  //       rate
+  //     )
+  //   )
+  // }
 
   // for (const cToken of cTokens) {
   //   const rate = {

@@ -342,9 +342,9 @@ export abstract class BaseSearcherResult {
   }
 
   protected async simulateAndParse(options: ToTransactionArgs, data: string) {
-    console.log(
-      `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
-    )
+    // console.log(
+    //   `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
+    // )
     // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
     const zapperResult = await this.universe.perf.measurePromise(
@@ -365,9 +365,9 @@ export abstract class BaseSearcherResult {
 
     const outputTokenOutput = this.outputToken.from(amount)
 
-    console.log(
-      `INITIAL_SIMULATION_OK: ${this.userInput} -> ${outputTokenOutput}`
-    )
+    // console.log(
+    //   `INITIAL_SIMULATION_OK: ${this.userInput} -> ${outputTokenOutput}`
+    // )
 
     const [valueOfOut, ...dustValues] = await this.universe.perf.measurePromise(
       'value dust',
@@ -774,8 +774,11 @@ export class RedeemZap extends BaseSearcherResult {
       }
     }
 
+    const outs = new Set<Token>() 
+
     for (const [token] of unwrapBalances) {
       tradeOutputs.delete(token)
+      outs.add(token)
       const out = plannerUtils.erc20.balanceOf(
         this.universe,
         this.planner,
@@ -791,6 +794,11 @@ export class RedeemZap extends BaseSearcherResult {
       )
     }
     for (const [token] of tradeOutputs) {
+      if (outs.has(token)) {
+        continue
+      }
+      outs.add(token)
+      
       const out = plannerUtils.erc20.balanceOf(
         this.universe,
         this.planner,
@@ -801,6 +809,21 @@ export class RedeemZap extends BaseSearcherResult {
         this.universe,
         this.planner,
         token,
+        out,
+        this.signer
+      )
+    }
+    if (!outs.has(this.outputToken)) {
+      const out = plannerUtils.erc20.balanceOf(
+        this.universe,
+        this.planner,
+        this.outputToken,
+        executorAddress
+      )
+      plannerUtils.planForwardERC20(
+        this.universe,
+        this.planner,
+        this.outputToken,
         out,
         this.signer
       )

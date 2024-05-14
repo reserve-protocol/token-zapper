@@ -43,7 +43,7 @@ export const ERC4626DepositAction = (proto: string) =>
       return BigInt(200000n)
     }
 
-    private async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
+    public async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
       const x = (
         await this.inst.callStatic.previewDeposit(amountIn, {
           blockTag: 'pending',
@@ -51,8 +51,8 @@ export const ERC4626DepositAction = (proto: string) =>
       ).toBigInt()
       return [this.outputToken[0].fromBigInt(x)]
     }
-    private readonly inst: IERC4626
-    private readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
+    public readonly inst: IERC4626
+    public readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
     async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
       return await this.quoteCache.get(amountIn.amount)
     }
@@ -111,12 +111,12 @@ export const ERC4626WithdrawAction = (proto: string) =>
     gasEstimate() {
       return BigInt(200000n)
     }
-    private async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
+    public async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
       const x = (await this.inst.previewRedeem(amountIn)).toBigInt()
       return [this.outputToken[0].fromBigInt(x)]
     }
-    private readonly inst: IERC4626
-    private readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
+    public readonly inst: IERC4626
+    public readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
     async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
       return await this.quoteCache.get(amountIn.amount)
     }

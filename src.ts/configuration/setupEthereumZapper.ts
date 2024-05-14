@@ -75,26 +75,21 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     'aaveV2',
     await setupAaveV2(universe, PROTOCOL_CONFIGS.aavev2)
   )
-  const curve = await CurveIntegration.load(
-    universe,
-    PROTOCOL_CONFIGS.curve
-  )
+  // console.log(aaveV2.describe().join('\n'))
+  const curve = await CurveIntegration.load(universe, PROTOCOL_CONFIGS.curve)
   universe.integrations.curve = curve
   universe.addTradeVenue(curve.venue)
 
   universe.addIntegration(
     'convex',
-    await setupConvexStakingWrappers(
-      universe,
-      curve,
-      PROTOCOL_CONFIGS.convex
-    )
+    await setupConvexStakingWrappers(universe, curve, PROTOCOL_CONFIGS.convex)
   )
 
   universe.addIntegration(
     'aaveV3',
     await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
   )
+  // console.log(aaveV3.describe().join('\n'))
 
   const uniswap = universe.addIntegration(
     'uniswapV3',
@@ -116,10 +111,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     await LidoDeployment.load(universe, PROTOCOL_CONFIGS.lido)
   )
 
-  await setupFrxETH(
-    universe,
-    PROTOCOL_CONFIGS.frxETH
-  )
+  await setupFrxETH(universe, PROTOCOL_CONFIGS.frxETH)
 
   // Set up various ERC4626 tokens
   await Promise.all(
@@ -127,8 +119,8 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       const vault = await setupERC4626(universe, {
         vaultAddress: addr,
         protocol: proto,
-        slippage: 5n,
-      }).catch((e) => null)
+        slippage: 50n,
+      })
       return vault
     })
   )

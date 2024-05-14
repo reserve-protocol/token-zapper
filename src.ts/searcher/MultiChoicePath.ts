@@ -166,6 +166,9 @@ const sortZaps = (
   txes.sort((l, r) => -l.tx.compare(r.tx))
 
   console.log(`${txes.length} / ${allQuotes.length} passed simulation:`)
+  for(const tx of txes) {
+    console.log(tx.tx.stats.toString())
+  }
   return {
     failed,
     bestZapTx: txes[0],
@@ -202,18 +205,18 @@ export const createConcurrentStreamingSeacher = (
         result.toTransaction(toTxArgs)
       )
       const inVal = parseFloat(tx.inputValueUSD.format())
-      const dustVal = parseFloat(tx.dustValueUSD.format())
-      const outVal = parseFloat(tx.outputValueUSD.format())
+      const dustVal = parseFloat(tx.stats.dust.valueUSD.format())
+      const outVal = parseFloat(tx.stats.valueUSD.format()) // Total out value
 
-      // If there is more than 5% dust, reject
-      if (outVal / 20 < dustVal) {
+      // If there is more than 2% dust, reject
+      if (outVal / 50 < dustVal) {
         console.log('Large amount of dust')
         return
       }
       const inToOutRatio = outVal / inVal
-      if (inToOutRatio < 0.9) {
+      if (inToOutRatio < 0.95) {
         console.log('Low in to out ratio')
-        // If there is more than 10% loss of value, reject
+        // If there is more than 5% loss of value, reject
         return
       }
       results.push({

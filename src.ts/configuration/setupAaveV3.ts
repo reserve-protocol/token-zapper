@@ -1,31 +1,32 @@
 import { Address } from '../base/Address'
+import { IAToken, IAToken__factory, IPool, IPool__factory } from '../contracts'
 import { TokenQuantity, type Token } from '../entities/Token'
-import {
-  IAToken,
-  IAToken__factory,
-  IPool,
-  IPool__factory,
-  IStaticATokenV3LM__factory,
-} from '../contracts'
 
 import { DataTypes } from '../contracts/contracts/AaveV3.sol/IPool'
 
 import { Universe } from '../Universe'
-import * as gen from '../tx-gen/Planner'
 import {
   Action,
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
-import { Approval } from '../base/Approval'
+import { AaveV3Wrapper } from '../action/SAV3Tokens'
 import { rayMul } from '../action/aaveMath'
-import { setupMintableWithRate } from './setupMintableWithRate'
-import {
-  BurnSAV3TokensAction,
-  MintSAV3TokensAction,
-} from '../action/SAV3Tokens'
+import { Approval } from '../base/Approval'
+import { BlockCache } from '../base/BlockBasedCache'
+import { DefaultMap } from '../base/DefaultMap'
+import * as gen from '../tx-gen/Planner'
 
 abstract class BaseAaveAction extends Action('AAVEV3') {
+  get outToken() {
+    return this.outputToken[0]
+  }
+  async quote(amountsIn: TokenQuantity[]) {
+    return amountsIn.map((tok, i) =>
+      tok.into(this.outToken).sub(this.outToken.fromBigInt(1n))
+    )
+  }
+
   public get supportsDynamicInput() {
     return true
   }
@@ -36,17 +37,15 @@ abstract class BaseAaveAction extends Action('AAVEV3') {
     return false
   }
   get outputSlippage() {
-    return 1n
-  }
-  async quote(amountsIn: TokenQuantity[]) {
-    return amountsIn.map((tok, i) => tok.into(this.outputToken[i]))
+    return 0n
   }
 
   abstract get actionName(): string
 
-
   toString(): string {
-    return `${this.actionName}(${this.inputToken.join(',')} -> ${this.outputToken.join(',')})`
+    return `${this.actionName}(${this.inputToken.join(
+      ','
+    )} -> ${this.outputToken.join(',')})`
   }
 }
 
@@ -79,7 +78,7 @@ class AaveV3ActionSupply extends BaseAaveAction {
   }
   constructor(
     readonly universe: Universe,
-    public readonly reserve: AaveReserve
+    public readonly reserve: AaveV3Reserve
   ) {
     super(
       reserve.aToken.address,
@@ -100,6 +99,10 @@ class AaveV3ActionWithdraw extends BaseAaveAction {
   }
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [await this.reserve.intoAssets(amountsIn)]
+  }
+
+  get outputSlippage() {
+    return 1000n;
   }
   async plan(
     planner: gen.Planner,
@@ -122,7 +125,7 @@ class AaveV3ActionWithdraw extends BaseAaveAction {
   }
   constructor(
     readonly universe: Universe,
-    public readonly reserve: AaveReserve
+    public readonly reserve: AaveV3Reserve
   ) {
     super(
       reserve.aToken.address,
@@ -134,7 +137,8 @@ class AaveV3ActionWithdraw extends BaseAaveAction {
     )
   }
 }
-class AaveReserve {
+
+export class AaveV3Reserve {
   public readonly supply: AaveV3ActionSupply
   public readonly withdraw: AaveV3ActionWithdraw
   get universe() {
@@ -143,6 +147,16 @@ class AaveReserve {
   get poolInst() {
     return this.aave.poolInst
   }
+
+  public async queryRate() {
+    return (
+      await this.aave.poolInst.callStatic.getReserveNormalizedIncome(
+        this.reserveToken.address.address,
+        { blockTag: "pending" }
+      )
+    ).toBigInt()
+  }
+
   constructor(
     public readonly aave: AaveV3Deployment,
     public readonly reserveData: DataTypes.ReserveDataStruct,
@@ -156,16 +170,18 @@ class AaveReserve {
   ) {
     this.supply = new AaveV3ActionSupply(this.universe, this)
     this.withdraw = new AaveV3ActionWithdraw(this.universe, this)
+
+    this.universe.defineMintable(this.supply, this.withdraw, false)
   }
 
   toString() {
-    return `AaveReserve(underlying=${this.reserveToken},aToken=${this.aToken})`
+    return `AaveV3Reserve(underlying=${this.reserveToken},aToken=${this.aToken})`
   }
 }
 export class AaveV3Deployment {
-  public readonly reserves: AaveReserve[] = []
+  public readonly reserves: AaveV3Reserve[] = []
 
-  public readonly tokenToReserve: Map<Token, AaveReserve> = new Map()
+  public readonly tokenToReserve: Map<Token, AaveV3Reserve> = new Map()
   get addresss() {
     return Address.from(this.poolInst.address)
   }
@@ -184,7 +200,7 @@ export class AaveV3Deployment {
       aTokenAddress,
       this.universe.provider
     )
-    const reserve = new AaveReserve(
+    const reserve = new AaveV3Reserve(
       this,
       reserveData,
       token,
@@ -205,10 +221,28 @@ export class AaveV3Deployment {
     return reserve
   }
 
+  private readonly rateCache: BlockCache<AaveV3Reserve, bigint>
+  public async getRateForReserve(reserve: AaveV3Reserve) {
+    return await this.rateCache.get(reserve)
+  }
+
   private constructor(
     public readonly poolInst: IPool,
     public readonly universe: Universe
-  ) {}
+  ) {
+    this.rateCache = universe.createCache<AaveV3Reserve, bigint>(
+      async (reserve: AaveV3Reserve) => await reserve.queryRate(),
+      1
+    )
+  }
+
+  public async getRateForAToken(aToken: Token) {
+    const reserve = this.tokenToReserve.get(aToken)
+    if (reserve == null) {
+      throw new Error(`No reserve found for aToken ${aToken.toString()}`)
+    }
+    return await this.rateCache.get(reserve)
+  }
 
   static async from(poolInst: IPool, universe: Universe) {
     const reserveTokens = await Promise.all(
@@ -232,41 +266,29 @@ export class AaveV3Deployment {
     return `AaveV3([${this.reserves.join(', ')}])`
   }
 
+  private wrappers: AaveV3Wrapper[] = []
+  private wrapperTokens = new DefaultMap<Token, Promise<AaveV3Wrapper>>(
+    (wrapper) => AaveV3Wrapper.create(this, wrapper).then((w) => {
+      this.wrappers.push(w)
+      return w
+    })
+  )
   public async addWrapper(wrapper: Token) {
-    const wrapperInst = IStaticATokenV3LM__factory.connect(
-      wrapper.address.address,
-      this.universe.provider
-    )
-    const aToken = await this.universe.getToken(
-      Address.from(await wrapperInst.aToken())
-    )
-    const reserve = this.tokenToReserve.get(aToken)
-    if (reserve == null) {
-      console.warn(`No reserve found for aToken ${aToken.toString()}`)
-      return
-    }
-    await setupMintableWithRate(
-      this.universe,
-      IStaticATokenV3LM__factory,
-      wrapper,
-      async (rate, saInst) => {
-        return {
-          fetchRate: async () => (await saInst.rate()).toBigInt(),
-          mint: new MintSAV3TokensAction(
-            this.universe,
-            reserve.reserveToken,
-            wrapper,
-            rate
-          ),
-          burn: new BurnSAV3TokensAction(
-            this.universe,
-            reserve.reserveToken,
-            wrapper,
-            rate
-          ),
-        }
-      }
-    )
+    return await this.wrapperTokens.get(wrapper)
+  }
+
+  describe() {
+    const out: string[] = []
+    out.push('AaveV3Deployment {')
+    out.push(`  pool: ${this.poolInst.address}`)
+    out.push(`  reserves: [`)
+    out.push(...this.reserves.map((i) => `    ${i.toString()}`))
+    out.push(`  ]`)
+    out.push(`  wrappers: [`)
+    out.push(...this.wrappers.map((i) => `    ${i.toString()}`))
+    out.push(`  ]`)
+    out.push('}')
+    return out
   }
 }
 
@@ -283,12 +305,11 @@ export const setupAaveV3 = async (universe: Universe, config: AaveV3Config) => {
   )
   const aaveInstance = await AaveV3Deployment.from(poolInst, universe)
 
-  await Promise.all(
-    config.wrappers
-      .map(Address.from)
-      .map(
-        async (i) => await aaveInstance.addWrapper(await universe.getToken(i))
-      )
+  const wrappers = await Promise.all(
+    config.wrappers.map(Address.from).map((addr) => universe.getToken(addr))
   )
+
+  await Promise.all(wrappers.map(async (i) => await aaveInstance.addWrapper(i)))
+
   return aaveInstance
 }

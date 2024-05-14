@@ -2,19 +2,17 @@ import { Address } from '../base/Address'
 import { TokenQuantity, type Token } from '../entities/Token'
 
 import { Universe } from '../Universe'
-import * as gen from '../tx-gen/Planner'
 import {
   Action,
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
-import { Approval } from '../base/Approval'
+import { AaveV2Wrapper } from '../action/SATokens'
 import { rayMul } from '../action/aaveMath'
-import { setupMintableWithRate } from './setupMintableWithRate'
-import {
-  BurnSAV3TokensAction,
-  MintSAV3TokensAction,
-} from '../action/SAV3Tokens'
+import { Approval } from '../base/Approval'
+import { BlockCache } from '../base/BlockBasedCache'
+import { DefaultMap } from '../base/DefaultMap'
+import { IAToken } from '../contracts/contracts/AaveV2.sol/IAToken'
 import {
   ILendingPool,
   ReserveDataStruct,
@@ -23,13 +21,7 @@ import {
   IAToken__factory,
   ILendingPool__factory,
 } from '../contracts/factories/contracts/AaveV2.sol'
-import {
-  IAToken,
-  IATokenInterface,
-} from '../contracts/contracts/AaveV2.sol/IAToken'
-import { IStaticATokenLM__factory } from '../contracts/factories/contracts/ISAtoken.sol'
-
-const DataTypes = {}
+import * as gen from '../tx-gen/Planner'
 
 abstract class BaseAaveV2Action extends Action('AAVEV2') {
   public get supportsDynamicInput() {
@@ -42,17 +34,22 @@ abstract class BaseAaveV2Action extends Action('AAVEV2') {
     return false
   }
   get outputSlippage() {
-    return 1n
+    return 0n
+  }
+  get outToken() {
+    return this.outputToken[0]
   }
   async quote(amountsIn: TokenQuantity[]) {
-    return amountsIn.map((tok, i) => tok.into(this.outputToken[i]))
+    return amountsIn.map((tok, i) =>
+      tok.into(this.outToken).sub(this.outToken.fromBigInt(1n))
+    )
+  }
+  gasEstimate(): bigint {
+    return BigInt(300000n)
   }
 }
 
 class AaveV2ActionSupply extends BaseAaveV2Action {
-  gasEstimate(): bigint {
-    return BigInt(300000n)
-  }
   async plan(
     planner: gen.Planner,
     inputs: gen.Value[],
@@ -97,7 +94,7 @@ class AaveV2ActionWithdraw extends BaseAaveV2Action {
   async plan(
     planner: gen.Planner,
     inputs: gen.Value[],
-    destination: Address,
+    _: Address,
     predictedInputs: TokenQuantity[]
   ) {
     const lib = this.gen.Contract.createContract(this.reserve.poolInst)
@@ -108,7 +105,7 @@ class AaveV2ActionWithdraw extends BaseAaveV2Action {
         inputs[0],
         this.universe.execAddress.address
       ),
-      `AaveV3: withdraw ${predictedInputs} -> ${await this.quote(
+      `AaveV2: withdraw ${predictedInputs} -> ${await this.quote(
         predictedInputs
       )}`
     )
@@ -128,7 +125,7 @@ class AaveV2ActionWithdraw extends BaseAaveV2Action {
     )
   }
 }
-class AaveV2Reserve {
+export class AaveV2Reserve {
   public readonly supply: AaveV2ActionSupply
   public readonly withdraw: AaveV2ActionWithdraw
   get universe() {
@@ -150,6 +147,16 @@ class AaveV2Reserve {
   ) {
     this.supply = new AaveV2ActionSupply(this.universe, this)
     this.withdraw = new AaveV2ActionWithdraw(this.universe, this)
+    this.universe.defineMintable(this.supply, this.withdraw, false)
+  }
+
+  public async queryRate() {
+    return (
+      await this.aave.poolInst.callStatic.getReserveNormalizedIncome(
+        this.reserveToken.address.address,
+        { blockTag: "pending" }
+      )
+    ).toBigInt()
   }
 
   toString() {
@@ -202,7 +209,12 @@ export class AaveV2Deployment {
   private constructor(
     public readonly poolInst: ILendingPool,
     public readonly universe: Universe
-  ) {}
+  ) {
+    this.rateCache = universe.createCache<AaveV2Reserve, bigint>(
+      async (reserve: AaveV2Reserve) => await reserve.queryRate(),
+      1
+    )
+  }
 
   static async from(poolInst: ILendingPool, universe: Universe) {
     const reserveTokens = await Promise.all(
@@ -226,41 +238,35 @@ export class AaveV2Deployment {
     return `AaveV3([${this.reserves.join(', ')}])`
   }
 
+  private readonly rateCache: BlockCache<AaveV2Reserve, bigint>
+  public async getRateForReserve(reserve: AaveV2Reserve) {
+    return await this.rateCache.get(reserve)
+  }
+
+  private wrappers: AaveV2Wrapper[] = []
+  private wrapperTokens = new DefaultMap<Token, Promise<AaveV2Wrapper>>(
+    (wrapper) =>
+      AaveV2Wrapper.create(this, wrapper).then((w) => {
+        this.wrappers.push(w)
+        return w
+      })
+  )
   public async addWrapper(wrapper: Token) {
-    const wrapperInst = IStaticATokenLM__factory.connect(
-      wrapper.address.address,
-      this.universe.provider
-    )
-    const aToken = await this.universe.getToken(
-      Address.from(await wrapperInst.ATOKEN())
-    )
-    const reserve = this.tokenToReserve.get(aToken)
-    if (reserve == null) {
-      console.warn(`No reserve found for aToken ${aToken.toString()}`)
-      return
-    }
-    await setupMintableWithRate(
-      this.universe,
-      IStaticATokenLM__factory,
-      wrapper,
-      async (rate, saInst) => {
-        return {
-          fetchRate: async () => (await saInst.rate()).toBigInt(),
-          mint: new MintSAV3TokensAction(
-            this.universe,
-            reserve.reserveToken,
-            wrapper,
-            rate
-          ),
-          burn: new BurnSAV3TokensAction(
-            this.universe,
-            reserve.reserveToken,
-            wrapper,
-            rate
-          ),
-        }
-      }
-    )
+    return await this.wrapperTokens.get(wrapper)
+  }
+
+  describe() {
+    const out: string[] = []
+    out.push('AaveV2Deployment {')
+    out.push(`  pool: ${this.poolInst.address}`)
+    out.push(`  reserves: [`)
+    out.push(...this.reserves.map((i) => `    ${i.toString()}`))
+    out.push(`  ]`)
+    out.push(`  wrappers: [`)
+    out.push(...this.wrappers.map((i) => `    ${i.toString()}`))
+    out.push(`  ]`)
+    out.push('}')
+    return out
   }
 }
 
@@ -276,12 +282,9 @@ export const setupAaveV2 = async (universe: Universe, config: AaveV2Config) => {
     universe.provider
   )
   const aaveInstance = await AaveV2Deployment.from(poolInst, universe)
-  await Promise.all(
-    config.wrappers
-      .map(Address.from)
-      .map(
-        async (i) => await aaveInstance.addWrapper(await universe.getToken(i))
-      )
+  const wrappers = await Promise.all(
+    config.wrappers.map(Address.from).map((addr) => universe.getToken(addr))
   )
+  await Promise.all(wrappers.map(async (i) => await aaveInstance.addWrapper(i)))
   return aaveInstance
 }

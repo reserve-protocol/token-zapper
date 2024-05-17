@@ -1,5 +1,18 @@
 import { Address } from '../base/Address'
 
+
+const defaultSearcherOptions = {
+  requoteTolerance: 2,
+  routerDeadline: 4000,
+  searcherMinRoutesToProduce: 1,
+  searcherMaxRoutesToProduce: 8,
+  searchConcurrency: 1,
+  defaultInternalTradeSlippage: 150n,
+  maxSearchTimeMs: 10000,
+}
+
+type SearcherOptions = typeof defaultSearcherOptions
+
 const convertAddressObject = <const T extends Record<string, unknown>>(
   obj: T
 ) =>
@@ -47,13 +60,7 @@ export const makeConfig = <
   options: {
     blocktime: Blocktime,
     blockGasLimit: bigint,
-    requoteTolerance: number, // Number of blocks to tolerate before quotes need to be requoted
-    routerDeadline: number,
-    searcherMinRoutesToProduce: number,
-    searcherMaxRoutesToProduce: number,
-    searchConcurrency: number,
-    defaultInternalTradeSlippage: bigint
-  }
+  } & Partial<SearcherOptions>
 ) => {
   return {
     chainId,
@@ -67,7 +74,7 @@ export const makeConfig = <
         ) as { [K in keyof RTokens]: string }
       ),
     },
-    ...options
+    ...Object.assign({}, defaultSearcherOptions, options)
   } as const
 }
 export type Config<

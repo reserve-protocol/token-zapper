@@ -33,7 +33,7 @@ export class ZapperTokenQuantityPrice extends Cached<
   constructor(readonly universe: Universe) {
     super(
       (qty) => this.quoteFn(qty),
-      universe.config.requoteTolerance * 4,
+      universe.config.requoteTolerance,
       () => universe.currentBlock
     )
 

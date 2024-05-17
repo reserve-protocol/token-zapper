@@ -159,9 +159,9 @@ export abstract class BaseSearcherResult {
   }
 
   async checkIfSearchIsAborted() {
-    if (this.abortSignal.aborted) {
-      throw new Error('Aborted')
-    }
+    // if (this.abortSignal.aborted) {
+    //   throw new Error('Aborted')
+    // }
   }
 
   constructor(

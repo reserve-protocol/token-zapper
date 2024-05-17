@@ -199,10 +199,12 @@ export class Universe<const UniverseConf extends Config = Config> {
       return
     }
     const aggregators = this.getTradingVenues(input, output, opts.dynamicInput)
+
+    
     const tradeName = `${input.token} -> ${output}`
 
     await Promise.all(
-      aggregators.map(async (venue) => {
+      shuffle(aggregators).map(async (venue) => {
         try {
           const res = await this.perf.measurePromise(
             venue.name,

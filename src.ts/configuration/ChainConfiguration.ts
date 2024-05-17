@@ -3,11 +3,11 @@ import { Address } from '../base/Address'
 
 const defaultSearcherOptions = {
   requoteTolerance: 2,
-  routerDeadline: 4000,
+  routerDeadline: 4500,
   searcherMinRoutesToProduce: 1,
   searcherMaxRoutesToProduce: 8,
-  searchConcurrency: 1,
-  defaultInternalTradeSlippage: 150n,
+  searchConcurrency: 4,
+  defaultInternalTradeSlippage: 250n,
   maxSearchTimeMs: 10000,
 }
 

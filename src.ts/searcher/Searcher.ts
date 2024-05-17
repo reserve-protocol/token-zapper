@@ -232,7 +232,7 @@ export class Searcher<
               this.universe.config.addresses.executorAddress,
               internalTradeSlippage,
               abortSignal,
-              Math.max(i, 2),
+              i,
               false
             )
 
@@ -1055,7 +1055,7 @@ export class Searcher<
     maxHops: number = 2,
     dynamicInput: boolean = false,
     onResult: (result: SwapPath) => Promise<void>,
-    rejectRatio: number = 0.95
+    rejectRatio: number = 0.90
   ): Promise<void> {
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {

@@ -2,13 +2,13 @@ import { Address } from '../base/Address'
 
 
 const defaultSearcherOptions = {
-  requoteTolerance: 2,
+  requoteTolerance: 1,
   routerDeadline: 4500,
   searcherMinRoutesToProduce: 1,
   searcherMaxRoutesToProduce: 8,
   searchConcurrency: 4,
   defaultInternalTradeSlippage: 250n,
-  maxSearchTimeMs: 10000,
+  maxSearchTimeMs: 15000,
 }
 
 type SearcherOptions = typeof defaultSearcherOptions

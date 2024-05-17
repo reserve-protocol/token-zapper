@@ -308,15 +308,15 @@ export abstract class BaseSearcherResult {
     inputToken,
     gasLimit = 10000000,
   }: SimulateParams) {
-    if (this.universe.chainId === 1) {
-      return await this.customSimulator({
-        data,
-        value,
-        quantity,
-        inputToken,
-        gasLimit,
-      })
-    }
+    // if (this.universe.chainId === 1) {
+    //   return await this.customSimulator({
+    //     data,
+    //     value,
+    //     quantity,
+    //     inputToken,
+    //     gasLimit,
+    //   })
+    // }
 
     const url = simulationUrls[this.universe.chainId]
 

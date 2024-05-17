@@ -462,7 +462,6 @@ export abstract class BaseSearcherResult {
     }
 
     const encodedBody = JSON.stringify(body)
-
     const resp = await fetch('http://127.0.0.1:3000/api/v1/simulate', {
       method: 'POST',
       headers: {
@@ -471,8 +470,6 @@ export abstract class BaseSearcherResult {
       body: encodedBody,
     })
     const results = await resp.json()
-    console.log(results)
-
     const resultOfZap = results[results.length - 1]
     if (resultOfZap.error) {
       throw new Error(resultOfZap.error.error)
@@ -484,7 +481,7 @@ export abstract class BaseSearcherResult {
           amountOut,
           gasUsed
         ]
-      ] = defaultAbiCoder.decode(['(uint256[],uint256,uint256)'], '0x' + resultOfZap.success.value) as [
+      ] = defaultAbiCoder.decode(['(uint256[],uint256,uint256)'], resultOfZap.success.value) as [
         [
           BigNumber[],
           BigNumber,
@@ -507,9 +504,9 @@ export abstract class BaseSearcherResult {
   }
 
   protected async simulateAndParse(options: ToTransactionArgs, data: string) {
-    console.log(
-      `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
-    )
+    // console.log(
+    //   `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
+    // )
     // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
     const zapperResult = await this.universe.perf.measurePromise(
@@ -530,9 +527,9 @@ export abstract class BaseSearcherResult {
 
     const outputTokenOutput = this.outputToken.from(amount)
 
-    console.log(
-      `INITIAL_SIMULATION_OK: ${this.userInput} -> ${outputTokenOutput}`
-    )
+    // console.log(
+    //   `INITIAL_SIMULATION_OK: ${this.userInput} -> ${outputTokenOutput}`
+    // )
 
     const [valueOfOut, ...dustValues] = await this.universe.perf.measurePromise(
       'value dust',
@@ -728,7 +725,6 @@ export abstract class BaseSearcherResult {
       if (gasEstimate === 0n) {
         throw new Error('Failed to estimate gas')
       }
-      await this.checkIfSearchIsAborted()
       const stats = await this.universe.perf.measurePromise(
         'ZapTxStats.create',
         ZapTxStats.create(this.universe, {

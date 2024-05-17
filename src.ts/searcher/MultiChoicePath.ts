@@ -188,7 +188,7 @@ export const createConcurrentStreamingSeacher = (
 
   setTimeout(() => {
     abortController.abort()
-  }, 10000)
+  }, searcher.config.maxSearchTimeMs ?? 10000)
 
   const allCandidates: BaseSearcherResult[] = []
   const seen: Set<string> = new Set()
@@ -225,7 +225,7 @@ export const createConcurrentStreamingSeacher = (
       })
       const resCount = results.length
       if (resCount >= searcher.config.searcherMinRoutesToProduce) {
-        abortController.abort()
+        setTimeout(() => abortController.abort(), 250);
       }
     } catch (e: any) {
       // console.log(e)

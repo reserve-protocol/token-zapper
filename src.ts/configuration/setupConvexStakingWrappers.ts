@@ -4,6 +4,7 @@ import {
   BaseAction,
   DestinationOptions,
   InteractionConvention,
+  isMultiChoiceEdge,
 } from '../action/Action'
 import { CurveStableSwapNGPool } from '../action/CurveStableSwapNG'
 import { Address } from '../base/Address'
@@ -296,9 +297,12 @@ class ConvexStakingWrapper {
         if (this.universe.wrappedTokens.has(baseTok)) {
           continue
         }
-        const acts = await this.universe.createTradeEdge(curveLpToken, baseTok)
-        for (const act of acts) {
-          // console.log('Adding action', act.toString())
+        const act = await this.universe.createTradeEdge(curveLpToken, baseTok)
+        if (isMultiChoiceEdge(act)) {
+          for (const a of act.choices) {
+            this.universe.addAction(a)
+          }
+        } else {
           this.universe.addAction(act)
         }
       } catch (e) {}

@@ -1,10 +1,18 @@
 import { ethers } from 'ethers'
 
-import { type BaseAction as Action } from './action/Action'
+import {
+  createMultiChoiceAction,
+  type BaseAction as Action,
+} from './action/Action'
 import { LPToken } from './action/LPToken'
 import { Address } from './base/Address'
 import { DefaultMap } from './base/DefaultMap'
-import { type Config } from './configuration/ChainConfiguration'
+import {
+  SimulateZapTransactionFunction,
+  createSimulateZapTransactionUsingProvider,
+  createSimulatorThatUsesOneOfReservesCallManyProxies,
+  type Config,
+} from './configuration/ChainConfiguration'
 import { Refreshable } from './entities/Refreshable'
 import {
   PricedTokenQuantity,
@@ -24,7 +32,11 @@ import { LidoDeployment } from './action/Lido'
 import { RTokenDeployment } from './action/RTokens'
 import { TradingVenue } from './aggregators/DexAggregator'
 import { BlockCache } from './base/BlockBasedCache'
-import { GAS_TOKEN_ADDRESS, USD_ADDRESS } from './base/constants'
+import {
+  GAS_TOKEN_ADDRESS,
+  USD_ADDRESS,
+  simulationUrls,
+} from './base/constants'
 import { AaveV2Deployment } from './configuration/setupAaveV2'
 import { AaveV3Deployment } from './configuration/setupAaveV3'
 import { CompoundV3Deployment } from './configuration/setupCompV3'
@@ -35,6 +47,7 @@ import { PerformanceMonitor } from './searcher/PerformanceMonitor'
 import { Searcher } from './searcher/Searcher'
 import { SwapPath } from './searcher/Swap'
 import { Contract } from './tx-gen/Planner'
+import { MultiChoicePath } from './searcher/MultiChoicePath'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -200,7 +213,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
     const aggregators = this.getTradingVenues(input, output, opts.dynamicInput)
 
-    
     const tradeName = `${input.token} -> ${output}`
 
     await Promise.all(
@@ -270,13 +282,6 @@ export class Universe<const UniverseConf extends Config = Config> {
       return
     }
     await refreshable.refresh(this.currentBlock)
-  }
-
-  createRefreshableEntity(
-    address: Address,
-    refresh: Refreshable['refreshAddress']
-  ) {
-    this.refreshableEntities.set(address, new Refreshable(address, -1, refresh))
   }
 
   private readonly blockState = {
@@ -420,7 +425,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (edges.length === 0) {
       throw new Error(`No trade edge found for ${tokenIn} -> ${tokenOut}`)
     }
-    return edges
+    return createMultiChoiceAction(this, edges)
   }
   public defineMintable(
     mint: Action,
@@ -466,7 +471,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     public readonly provider: ethers.providers.JsonRpcProvider,
     public readonly config: UniverseConf,
     public readonly approvalsStore: ApprovalsStore,
-    public readonly loadToken: TokenLoader
+    public readonly loadToken: TokenLoader,
+    public readonly simulateZapFn: SimulateZapTransactionFunction
   ) {
     const nativeToken = config.nativeToken
     this.searcher = new Searcher(this as any)
@@ -522,13 +528,20 @@ export class Universe<const UniverseConf extends Config = Config> {
     opts: Partial<{
       tokenLoader?: TokenLoader
       approvalsStore?: ApprovalsStore
+      simulateZapFn?: SimulateZapTransactionFunction
     }> = {}
   ) {
+    const network = await provider.getNetwork()
+    const simulateZapFunction =
+      opts.simulateZapFn ?? simulationUrls[network.chainId]
+        ? createSimulatorThatUsesOneOfReservesCallManyProxies(network.chainId)
+        : createSimulateZapTransactionUsingProvider(provider)
     const universe = new Universe<C>(
       provider,
       config,
       opts.approvalsStore ?? new ApprovalsStore(provider),
-      opts.tokenLoader ?? makeTokenLoader(provider)
+      opts.tokenLoader ?? makeTokenLoader(provider),
+      simulateZapFunction
     )
     universe.oracles.push(new LPTokenPriceOracle(universe))
     await Promise.all(

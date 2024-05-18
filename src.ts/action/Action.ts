@@ -140,20 +140,32 @@ export abstract class BaseAction {
     return 'Unknown'
   }
 
+  get interactionConvention(): InteractionConvention {
+    return this._interactionConvention
+  }
+  get proceedsOptions(): DestinationOptions {
+    return this._proceedsOptions
+  }
+  get approvals(): Approval[] {
+    return this._approvals
+  }
+  get address(): Address {
+    return this._address
+  }
   constructor(
-    public readonly address: Address,
+    private _address: Address,
     public readonly inputToken: Token[],
     public readonly outputToken: Token[],
-    public readonly interactionConvention: InteractionConvention,
-    public readonly proceedsOptions: DestinationOptions,
-    public readonly approvals: Approval[]
+    private _interactionConvention: InteractionConvention,
+    private _proceedsOptions: DestinationOptions,
+    private _approvals: Approval[]
   ) {}
 
   public async intoSwapPath(universe: Universe, qty: TokenQuantity) {
-    return await new SwapPlan(universe, [
-      this,
-    ]).quote([qty], universe.execAddress)
-
+    return await new SwapPlan(universe, [this]).quote(
+      [qty],
+      universe.execAddress
+    )
   }
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
   public async quoteWithSlippage(
@@ -309,6 +321,109 @@ export abstract class BaseAction {
   }
 }
 
+class TradeEdgeAction extends BaseAction {
+  private currentChoice = 0
+  private get current() {
+    return this.choices[this.currentChoice]
+  }
+  public get interactionConvention() {
+    return this.current.interactionConvention
+  }
+  public get proceedsOptions() {
+    return this.current.proceedsOptions
+  }
+  public get approvals() {
+    return this.current.approvals
+  }
+  public get address() {
+    return this.current.address
+  }
+  public quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return this.current.quote(amountsIn)
+  }
+  public gasEstimate() {
+    return this.current.gasEstimate()
+  }
+  public async plan(
+    planner: gen.Planner,
+    inputs: gen.Value[],
+    destination: Address,
+    predicted: TokenQuantity[]
+  ): Promise<null | gen.Value[]> {
+    return this.current.plan(planner, inputs, destination, predicted)
+  }
+
+  get totalChoices() {
+    return this.choices.length
+  }
+
+  get outputSlippage() {
+    return this.current.outputSlippage
+  }
+
+  get supportsDynamicInput() {
+    return this.current.supportsDynamicInput
+  }
+  get oneUsePrZap() {
+    return this.current.oneUsePrZap
+  }
+  get returnsOutput() {
+    return this.current.returnsOutput
+  }
+  get addressesInUse() {
+    return this.current.addressesInUse
+  }
+  get addToGraph() {
+    return this.current.addToGraph
+  }
+
+  constructor(
+    public readonly universe: Universe,
+    public readonly choices: BaseAction[]
+  ) {
+    super(
+      choices[0].address,
+      choices[0].inputToken,
+      choices[0].outputToken,
+      choices[0].interactionConvention,
+      choices[0].proceedsOptions,
+      choices[0].approvals
+    )
+  }
+}
+
+export const isMultiChoiceEdge = (
+  edge: BaseAction
+): edge is TradeEdgeAction => {
+  return edge instanceof TradeEdgeAction
+}
+
+export const createMultiChoiceAction = (
+  universe: Universe,
+  choices: BaseAction[]
+) => {
+  if (choices.length === 0) {
+    throw new Error('Cannot create a TradeEdgeAction with no choices')
+  }
+  if (choices.length === 1) {
+    return choices[0]
+  }
+  if (
+    !choices.every(
+      (choice) =>
+        choice.inputToken.length === 1 &&
+        choice.outputToken.length === 1 &&
+        choice.inputToken[0] === choice.inputToken[0] &&
+        choice.outputToken[0] === choice.outputToken[0]
+    )
+  ) {
+    throw new Error(
+      'Add choices in a trade edge must produce the same input and output token'
+    )
+  }
+
+  return new TradeEdgeAction(universe, choices)
+}
 
 export const Action = (proto: string) => {
   abstract class ProtocolAction extends BaseAction {

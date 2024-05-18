@@ -12,6 +12,9 @@ import { ZapTransaction } from './ZapTransaction'
 import { Searcher } from './Searcher'
 import { DefaultMap } from '../base/DefaultMap'
 import { UniswapRouterAction } from '../configuration/setupUniswapRouter'
+import { EthereumUniverse } from '../configuration/ethereum'
+import { BaseUniverse } from '../configuration/base'
+import { ArbitrumUniverse } from '../configuration/arbitrum'
 
 export const resolveTradeConflicts = async (
   searcher: Searcher<any>,
@@ -177,7 +180,7 @@ const sortZaps = (
   }
 }
 export const createConcurrentStreamingSeacher = (
-  searcher: Searcher<UniverseWithERC20GasTokenDefined>,
+  searcher: Searcher<EthereumUniverse|BaseUniverse|ArbitrumUniverse>,
   toTxArgs: ToTransactionArgs
 ) => {
   const abortController = new AbortController()
@@ -192,6 +195,8 @@ export const createConcurrentStreamingSeacher = (
 
   const allCandidates: BaseSearcherResult[] = []
   const seen: Set<string> = new Set()
+  const maxAcceptableValueLossForRejectingZap = 1 - (searcher.config.zapMaxValueLoss / 100);
+  const maxAcceptableDustPercentable = (searcher.config.zapMaxDustProduced / 100);
   const onResult = async (result: BaseSearcherResult): Promise<void> => {
     const id = result.describe().join(';')
     if (seen.has(id)) {
@@ -206,17 +211,17 @@ export const createConcurrentStreamingSeacher = (
       )
       const inVal = parseFloat(tx.inputValueUSD.format())
       const dustVal = parseFloat(tx.stats.dust.valueUSD.format())
-      const outVal = parseFloat(tx.stats.valueUSD.format()) // Total out value
-
-      // If there is more than 2% dust, reject
-      if (outVal / 50 < dustVal) {
+      const outVal = parseFloat(tx.stats.valueUSD.format()) // Total out (output + dust), excluding gas fees
+      const inToOutRatio = outVal / inVal
+      
+      // Reject if the dust is too high
+      if ((outVal * maxAcceptableDustPercentable) < dustVal) {
         console.log('Large amount of dust')
         return
       }
-      const inToOutRatio = outVal / inVal
-      if (inToOutRatio < 0.95) {
+      // Reject if the zap looses too much value
+      if (inToOutRatio < maxAcceptableValueLossForRejectingZap) {
         console.log('Low in to out ratio')
-        // If there is more than 5% loss of value, reject
         return
       }
       results.push({
@@ -293,7 +298,7 @@ export const chunkifyIterable = function* <T>(
 export class MultiChoicePath implements SwapPath {
   private index: number = 0
   constructor(
-    public readonly universe: UniverseWithERC20GasTokenDefined,
+    public readonly universe: EthereumUniverse|BaseUniverse|ArbitrumUniverse,
     public readonly paths: SwapPath[]
   ) {
     if (this.paths.length === 0) {

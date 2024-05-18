@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { TransactionRequest } from '@ethersproject/providers'
-import { constants, ethers } from 'ethers'
+import { constants } from 'ethers'
 import { ParamType, defaultAbiCoder, parseEther } from 'ethers/lib/utils'
 import {
   BaseAction,
@@ -11,8 +11,10 @@ import {
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { DefaultMap } from '../base/DefaultMap'
-import { simulationUrls } from '../base/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
+import { ArbitrumUniverse } from '../configuration/arbitrum'
+import { BaseUniverse } from '../configuration/base'
+import { EthereumUniverse } from '../configuration/ethereum'
 import {
   IERC20__factory,
   ZapperExecutor__factory,
@@ -30,21 +32,14 @@ import {
   LiteralValue,
   Planner,
   Value,
-  encodeArg,
-  printPlan,
+  encodeArg
 } from '../tx-gen/Planner'
 import { ToTransactionArgs } from './ToTransactionArgs'
-import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
+import { SimulateParams } from '../configuration/ZapSimulation'
 
 const zapperInterface = Zapper__factory.createInterface()
-interface SimulateParams {
-  data: string
-  value: bigint
-  quantity: bigint
-  inputToken: Token
-  gasLimit?: number
-}
+
 
 class Step {
   constructor(
@@ -55,48 +50,6 @@ class Step {
   ) { }
 }
 
-const whales = new Map<number, Record<string, string>>()
-whales.set(1, {
-  // weth
-  '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2':
-    '0x8eb8a3b98659cce290402893d0123abb75e3ab28',
-  // dai
-  '0x6b175474e89094c44da98b954eedeac495271d0f':
-    '0x8eb8a3b98659cce290402893d0123abb75e3ab28',
-  // wbtc
-  '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599':
-    '0x8eb8a3b98659cce290402893d0123abb75e3ab28',
-  // usdt
-  '0xdac17f958d2ee523a2206206994597c13d831ec7':
-    '0xf977814e90da44bfa03b6295a0616a897441acec',
-  // usdc
-  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48':
-    '0xd6153f5af5679a75cc85d8974463545181f48772',
-  // mim
-  '0x99d8a9c45b2eca8864373a26d1459e3dff1e17f3':
-    '0x25431341a5800759268a6ac1d3cd91c029d7d9ca',
-  // frax
-  '0x853d955acef822db058eb8505911ed77f175b99e':
-    '0x267fc49a3170950ee5d49ef84878695c29cca1e0',
-  // eusd
-  '0xa0d69e286b938e21cbf7e51d71f6a4c8918f482f':
-    '0x3154cf16ccdb4c6d922629664174b904d80f2c35',
-  // eth+
-  '0xe72b141df173b999ae7c1adcbf60cc9833ce56a8':
-    '0x7cc1bfab73be4e02bb53814d1059a98cf7e49644',
-  // hyusd+
-  '0xacdf0dba4b9839b96221a8487e9ca660a48212be':
-    '0x8a8434a5952ac2cf4927bbea3ace255c6dd165cd',
-  // usdc+
-  '0xfc0b1eef20e4c68b3dcf36c4537cfa7ce46ca70b':
-    '0xf2b25362a03f6eacca8de8d5350a9f37944c1e59',
-  // usd3
-  '0x0d86883faf4ffd7aeb116390af37746f45b6f378':
-    '0x7cc1bfab73be4e02bb53814d1059a98cf7e49644',
-  // pyusd
-  '0x6c3ea9036406852006290770bedfcaba0e23a0e8':
-    '0xa5588f7cdf560811710a2d82d3c9c99769db1dcb',
-})
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
   const out: Step[] = []
   const allApprovals: Approval[] = []
@@ -159,13 +112,13 @@ export abstract class BaseSearcherResult {
   }
 
   async checkIfSearchIsAborted() {
-    // if (this.abortSignal.aborted) {
-    //   throw new Error('Aborted')
-    // }
+    if (this.abortSignal.aborted) {
+      //   throw new Error('Aborted')
+    }
   }
 
   constructor(
-    readonly universe: UniverseWithERC20GasTokenDefined,
+    readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
     readonly userInput: TokenQuantity,
     public swaps: SwapPaths,
     public readonly signer: Address,
@@ -229,277 +182,39 @@ export abstract class BaseSearcherResult {
     return sum
   }
 
-  async simulateNoNode({ data, value }: SimulateParams) {
-    try {
-      const resp = await this.universe.provider.send('eth_call', [
-        {
-          data,
-          from: this.signer.address,
-          to: this.universe.config.addresses.zapperAddress.address,
-          value: '0x' + value.toString(16),
-        },
-        'latest',
-        {
-          [this.signer.address]: {
-            balance:
-              '0x' + ethers.utils.parseEther('10000').toBigInt().toString(16),
-          },
-        },
-      ])
-      try {
-        return zapperInterface.decodeFunctionResult('zapERC20', resp)
-          .out as ZapperOutputStructOutput
-      } catch (e) {
-        // console.log(
-        //   {
-        //     data,
-        //     from: this.signer.address,
-        //     to: this.universe.config.addresses.zapperAddress.address,
-        //     value: value.toString(16),
-        //   },
-        //   'latest',
-        //   {
-        //     [this.signer.address]: {
-        //       balance: ethers.utils.parseEther('10000').toHexString(),
-        //     },
-        //   }
-        // )
-        // console.log(resp)
-      }
-      if (resp.startsWith('0x08c379a0')) {
-        const data = resp.slice(138)
-        const msg = Buffer.from(data, 'hex').toString()
-        throw new Error(msg)
-      } else {
-        for (let i = 10; i < resp.length; i += 128) {
-          const len = BigInt('0x' + resp.slice(i, i + 64))
-          if (len != 0n && len < 256n) {
-            const data = resp.slice(i + 64, i + 64 + Number(len) * 2)
-            const msg = Buffer.from(data, 'hex').toString()
-            throw new Error(msg)
-          }
-        }
-      }
-      throw new Error('Unknonw error: ' + resp)
-    } catch (e: any) {
-      // console.log(e)
-      if (e.message.includes('LPStakingTime')) {
+
+  async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
+    const resp = await this.universe.simulateZapFn(
+      opts
+    )
+    // If the response starts with a pointer to the first location of the output tuple
+    // when we know if can be decoded by the zapper interface
+    if (resp.startsWith("0x0000000000000000000000000000000000000000000000000000000000000020")) {
+      return zapperInterface.decodeFunctionResult('zapERC20', resp)
+        .out as ZapperOutputStructOutput
+    }
+
+    // Try and decode the error message
+    if (resp.startsWith('0x08c379a0')) {
+      const errorMsgLen = Number(BigInt('0x' + resp.slice(10 + 64)))
+      const errorMsgCharsInHex = resp.slice(10 + 64 + 64, 10 + 64 + 64 + errorMsgLen * 2);
+      const msg = Buffer.from(errorMsgCharsInHex, 'hex').toString()
+      if (msg.includes('LPStakingTime')) {
         console.error('Stargate staking contract out of funds.. Aborting')
         throw new ThirdPartyIssue('Stargate out of funds')
       }
-    }
-
-    // console.log(
-    //   JSON.stringify({
-    //     data,
-    //     value: value.toString(),
-    //     address: this.universe.zapperAddress.address,
-    //     from: this.signer.address,
-    //     block: this.blockNumber,
-    //   })
-    // )
-    throw new Error('Failed to simulate')
-  }
-
-  async simulate({
-    data,
-    value,
-    quantity,
-    inputToken,
-    gasLimit = 10000000,
-  }: SimulateParams) {
-    // if (this.universe.chainId === 1) {
-    //   return await this.customSimulator({
-    //     data,
-    //     value,
-    //     quantity,
-    //     inputToken,
-    //     gasLimit,
-    //   })
-    // }
-
-    const url = simulationUrls[this.universe.chainId]
-
-    if (url == null) {
-      return this.simulateNoNode({
-        data,
-        value,
-        quantity,
-        inputToken,
-        gasLimit,
-      })
-    }
-    try {
-      const overrides = {}
-
-      const body = JSON.stringify(
-        {
-          from: this.signer.address,
-          to: this.universe.config.addresses.zapperAddress.address,
-          data,
-          quantity: '0x' + quantity.toString(16),
-          gasLimit,
-          value: '0x' + value.toString(16),
-          token: inputToken.address.address,
-          overrides,
-        },
-        null,
-        1
-      )
-
-      return await (
-        await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body,
-        })
-      )
-        .json()
-        .then((a: { data: string; error?: string }) => {
-          // console.log(a)
-          if (a.error != null) {
-            throw new Error(a.error)
-          }
-          if (a.data.startsWith('0x08c379a0')) {
-            const length = BigInt('0x' + a.data.slice(10, 74))
-            const data = a.data.slice(74, 74 + Number(length) * 2)
-            const msg = Buffer.from(data, 'hex').toString()
-            throw new Error(msg)
-          }
-          if (a.data === '0xundefined') {
-            throw new Error('Failed to simulate')
-          }
-          const out = zapperInterface.decodeFunctionResult('zapERC20', a.data)
-            .out as ZapperOutputStructOutput
-          // console.log(out)
-          return out
-        })
-    } catch (e) {
-      // console.log(
-      //   'Failing program:',
-      //   this.inputToken.toString(),
-      //   this.outputToken.toString(),
-      //   printPlan(this.planner, this.universe).join('\n')
-      // )
-      return this.simulateNoNode({
-        data,
-        value,
-        quantity,
-        inputToken,
-        gasLimit,
-      })
-    }
-  }
-
-  //   #[derive(Debug, Clone, Serialize, Deserialize)]
-  // #[serde(rename_all = "camelCase")]
-  // pub struct ApprovalSetup {
-  //     pub owner: EthrsAddress,
-  //     pub token: EthrsAddress,
-  //     pub spender: EthrsAddress,
-  //     pub value: PermissiveUint,
-  // }
-
-  // #[derive(Debug, Clone, Serialize, Deserialize)]
-  // #[serde(rename_all = "camelCase")]
-  // pub struct MoveFunds {
-  //     pub owner: EthrsAddress,
-  //     pub spender: EthrsAddress,
-  //     pub token: EthrsAddress,
-  //     pub quantity: PermissiveUint,
-  // }
-
-  async customSimulator(opts: {
-    data: string
-    value: bigint
-    quantity: bigint
-    inputToken: Token
-    gasLimit: number
-  }) {
-
-    const inputTok = opts.inputToken.address.address.toLowerCase();
-    const whale = whales.get(1)![inputTok]
-    const body = {
-      setupApprovals: [
-        {
-          owner: this.signer.address,
-          token: opts.inputToken.address.address,
-          spender: this.universe.config.addresses.zapperAddress.address,
-          value: '0x' + constants.MaxUint256.toBigInt().toString(16),
-        },
-      ],
-      moveFunds:
-        whale != null
-          ? [
-            {
-              owner: whale,
-              token: opts.inputToken.address.address,
-              spender: this.signer.address,
-              quantity: '0x' + opts.quantity.toString(16),
-            },
-          ]
-          : [],
-      transactions: [
-        {
-          from: this.signer.address,
-          to: this.universe.config.addresses.zapperAddress.address,
-          data: opts.data,
-          gas: '0x' + opts.gasLimit.toString(16),
-          gasPrice: '0x1',
-          value: '0x0',
-        },
-      ],
-      stateOverride: {
-        [this.signer.address]: {
-          balance: '0x56bc75e2d6310000000',
-        },
-        [whale]: {
-          balance: '0x56bc75e2d6310000000',
-        },
-      },
-    }
-
-    const encodedBody = JSON.stringify(body)
-    const resp = await fetch('http://127.0.0.1:3000/api/v1/simulate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: encodedBody,
-    })
-    const results = await resp.json()
-    const resultOfZap = results[results.length - 1]
-    if (resultOfZap.error) {
-      throw new Error(resultOfZap.error.error)
-    }
-    try {
-      const [
-        [
-          dust,
-          amountOut,
-          gasUsed
-        ]
-      ] = defaultAbiCoder.decode(['(uint256[],uint256,uint256)'], resultOfZap.success.value) as [
-        [
-          BigNumber[],
-          BigNumber,
-          BigNumber
-        ]
-      ];
-      const out = {
-        0: dust,
-        dust,
-        1: amountOut,
-        amountOut: amountOut,
-        2: gasUsed,
-        gasUsed: gasUsed,
+      throw new Error(msg)
+    } else {
+      // Try and randomly see if we can find something that looks like a string 🙃
+      for (let i = 10; i < resp.length; i += 128) {
+        const len = BigInt('0x' + resp.slice(i, i + 64))
+        if (len != 0n && len < 256n) {
+          const data = resp.slice(i + 64, i + 64 + Number(len) * 2)
+          const msg = Buffer.from(data, 'hex').toString()
+          throw new Error(msg)
+        }
       }
-      return out
-    } catch (e) {
-      console.log(e)
-      throw e
+      throw new Error(`Failed for unknown reasons: '${resp}`)
     }
   }
 
@@ -512,10 +227,14 @@ export abstract class BaseSearcherResult {
     const zapperResult = await this.universe.perf.measurePromise(
       'Zap Simulation',
       this.simulate({
+        to: this.universe.config.addresses.zapperAddress.address,
+        from: this.signer.address,
         data,
         value: this.value,
-        quantity: this.userInput.amount,
-        inputToken: this.inputToken,
+        setup: {
+          inputTokenAddress: this.inputToken.address.address,
+          userBalanceAndApprovalRequirements: this.userInput.amount,
+        }
       })
     )
 
@@ -661,22 +380,12 @@ export abstract class BaseSearcherResult {
       from: this.signer.address,
     } as TransactionRequest
 
-    if (this.universe.chainId === 1 || this.universe.chainId === 8453) {
-      tx = {
-        ...tx,
-        type: 2,
-        maxFeePerGas: BigNumber.from(
-          this.universe.gasPrice + this.universe.gasPrice / 12n
-        ),
-      }
-    } else {
-      tx = {
-        ...tx,
-        type: 0,
-        gasPrice: BigNumber.from(
-          this.universe.gasPrice + this.universe.gasPrice / 12n
-        ),
-      }
+    tx = {
+      ...tx,
+      type: 2,
+      maxFeePerGas: BigNumber.from(
+        this.universe.gasPrice + this.universe.gasPrice / 12n
+      ),
     }
     return tx
   }
@@ -808,7 +517,7 @@ export class ZapViaATrade extends BaseSearcherResult {
 
 export class RedeemZap extends BaseSearcherResult {
   constructor(
-    readonly universe: UniverseWithERC20GasTokenDefined,
+    readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
     readonly userInput: TokenQuantity,
     readonly parts: {
       full: SwapPaths
@@ -1001,7 +710,7 @@ const ONE_Val = new LiteralValue(
 )
 export class MintZap extends BaseSearcherResult {
   constructor(
-    readonly universe: UniverseWithERC20GasTokenDefined,
+    readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
     readonly userInput: TokenQuantity,
     readonly parts: {
       trading: SwapPaths

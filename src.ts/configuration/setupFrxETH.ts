@@ -14,6 +14,7 @@ import {
   BaseAction,
   DestinationOptions,
   InteractionConvention,
+  isMultiChoiceEdge,
 } from '../action/Action'
 import { UniverseWithERC20GasTokenDefined } from '../searcher/UniverseWithERC20GasTokenDefined'
 import { ERC4626Deployment, setupERC4626 } from './setupERC4626'
@@ -194,8 +195,11 @@ export const setupFrxETH = async (
     frxETH,
     universe.wrappedNativeToken
   )!
-
-  for (const edge of frxETHToETH) {
-    universe.addAction(edge)
+  if (isMultiChoiceEdge(frxETHToETH)) {
+    for (const edge of frxETHToETH.choices) {
+      universe.addAction(edge)
+    }
+  } else {
+    universe.addAction(frxETHToETH)
   }
 }

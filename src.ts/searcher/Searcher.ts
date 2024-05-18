@@ -1,6 +1,9 @@
 import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
 import { simulationUrls } from '../base/constants'
+import { ArbitrumUniverse } from '../configuration/arbitrum'
+import { BaseUniverse } from '../configuration/base'
+import { EthereumUniverse } from '../configuration/ethereum'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { bfs } from '../exchange-graph/BFS'
@@ -36,11 +39,11 @@ import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTok
  * producing the basket from the precursor set.
  */
 export const findPrecursorTokenSet = async (
-  universe: UniverseWithERC20GasTokenDefined,
+  universe: EthereumUniverse|ArbitrumUniverse|BaseUniverse,
   userInputQuantity: TokenQuantity,
   rToken: Token,
   unitBasket: TokenQuantity[],
-  searcher: Searcher<UniverseWithERC20GasTokenDefined>
+  searcher: Searcher<EthereumUniverse|ArbitrumUniverse|BaseUniverse>
 ) => {
   // console.log(`Findiing precursor set for ${rToken}: ${unitBasket.join(', ')}`)
   const specialRules = universe.precursorTokenSourcingSpecialCases
@@ -88,7 +91,9 @@ export const findPrecursorTokenSet = async (
 }
 
 export class Searcher<
-  const SearcherUniverse extends UniverseWithERC20GasTokenDefined
+  const SearcherUniverse extends ArbitrumUniverse
+    | EthereumUniverse
+    | BaseUniverse
 > {
   private readonly defaultSearcherOpts
 
@@ -136,11 +141,11 @@ export class Searcher<
      * PHASE 1: Compute precursor set
      */
     const precursorTokens = await findPrecursorTokenSet(
-      this.universe,
+      this.universe as any,
       inputQuantity,
       rToken,
       basketUnit,
-      this
+      this as any
     )
     console.log(precursorTokens.precursorToTradeFor.join(', '))
     // console.log(precursorTokens.describe().join('\n'))
@@ -370,7 +375,7 @@ export class Searcher<
 
     const allOptions = await this.perf.measurePromise(
       'generateAllPermutations',
-      generateAllPermutations(this.universe, multiTrades, precursorSet),
+      generateAllPermutations(this.universe as any, multiTrades, precursorSet),
       rToken.symbol
     )
 
@@ -518,7 +523,7 @@ export class Searcher<
     await this.universe.initialized
     this.checkIfSimulationSupported()
 
-    const controller = createConcurrentStreamingSeacher(this, toTxArgs)
+    const controller = createConcurrentStreamingSeacher(this as any, toTxArgs)
 
     void Promise.all([
       this.findRTokenIntoSingleTokenZapViaRedeem__(
@@ -688,7 +693,7 @@ export class Searcher<
       return await generatePermutation(permutableTrades.map((i) => i.path))
     } else {
       const allposibilities = await generateAllPermutations(
-        this.universe,
+        this.universe as any,
         permutableTrades,
         new Set([outputToken])
       )
@@ -792,7 +797,7 @@ export class Searcher<
     await this.universe.initialized
     this.checkIfSimulationSupported()
 
-    const controller = createConcurrentStreamingSeacher(this, toTxArgs)
+    const controller = createConcurrentStreamingSeacher(this as any, toTxArgs)
 
     void this.findSingleInputToRTokenZap_(
       userInput,
@@ -1055,7 +1060,7 @@ export class Searcher<
     maxHops: number = 2,
     dynamicInput: boolean = false,
     onResult: (result: SwapPath) => Promise<void>,
-    rejectRatio: number = 0.90
+    rejectRatio: number = 0.9
   ): Promise<void> {
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {

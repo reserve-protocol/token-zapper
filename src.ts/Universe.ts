@@ -532,10 +532,15 @@ export class Universe<const UniverseConf extends Config = Config> {
     }> = {}
   ) {
     const network = await provider.getNetwork()
-    const simulateZapFunction =
-      opts.simulateZapFn ?? simulationUrls[network.chainId]
-        ? createSimulatorThatUsesOneOfReservesCallManyProxies(network.chainId)
-        : createSimulateZapTransactionUsingProvider(provider)
+    let simulateZapFunction = opts.simulateZapFn
+
+    if (simulateZapFunction == null) {
+      simulateZapFunction =
+        opts.simulateZapFn ?? simulationUrls[network.chainId]
+          ? createSimulatorThatUsesOneOfReservesCallManyProxies(network.chainId)
+          : createSimulateZapTransactionUsingProvider(provider)
+    }
+
     const universe = new Universe<C>(
       provider,
       config,

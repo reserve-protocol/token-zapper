@@ -153,12 +153,12 @@ export abstract class BaseAction {
     return this._address
   }
   constructor(
-    private _address: Address,
+    public _address: Address,
     public readonly inputToken: Token[],
     public readonly outputToken: Token[],
-    private _interactionConvention: InteractionConvention,
-    private _proceedsOptions: DestinationOptions,
-    private _approvals: Approval[]
+    public _interactionConvention: InteractionConvention,
+    public _proceedsOptions: DestinationOptions,
+    public _approvals: Approval[]
   ) {}
 
   public async intoSwapPath(universe: Universe, qty: TokenQuantity) {

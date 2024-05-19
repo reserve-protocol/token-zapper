@@ -135,13 +135,16 @@ export const createSimulatorThatUsesOneOfReservesCallManyProxies = (
   }
 }
 
-export const makeCustomRouterSimulator =
-  (
-    url: string,
-    whales: Record<string, string>
-  ): SimulateZapTransactionFunction =>
-  async (input: SimulateParams) => {
-    const whale = whales[input.setup.inputTokenAddress]
+export const makeCustomRouterSimulator = (
+  url: string,
+  whales: Record<string, string>
+): SimulateZapTransactionFunction => {
+  whales = Object.fromEntries(
+    Object.entries(whales).map(([k, v]) => [k.toLowerCase(), v.toLowerCase()])
+  )
+
+  return async (input: SimulateParams) => {
+    const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
 
     if (whale == null) {
       console.log(
@@ -194,6 +197,7 @@ export const makeCustomRouterSimulator =
     }
 
     const encodedBody = JSON.stringify(body)
+
     const resp = await fetch(url, {
       method: 'POST',
       headers: {
@@ -208,3 +212,4 @@ export const makeCustomRouterSimulator =
     }
     return resultOfZap.success.value
   }
+}

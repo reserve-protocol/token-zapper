@@ -45,7 +45,7 @@ provider.on('block', async (blockNumber) => {
 
 After this setup, you can use the zapper to find a way to zap into an rToken, or zap redeem it into something else
 
-```
+```typescript
 const yourAddress = "0x....."
 const zapTx = await zapperState.zap(
   zapperState.commonTokens.USDC.from(1000.0),
@@ -127,7 +127,8 @@ Transaction {
 ```
 
 To execute your zap you just need to use the parametres in the zapTx:
-```
+
+```typescript
 const {
   to,
   data,

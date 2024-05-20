@@ -22,8 +22,10 @@ import { setupEthereumZapper } from './configuration/setupEthereumZapper'
 import { loadTokens } from './configuration/loadTokens'
 import { makeConfig } from './configuration/ChainConfiguration'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { ChainIds } from './configuration/ReserveAddresses'
+import { ChainId, ChainIds, isChainIdSupported } from './configuration/ReserveAddresses'
 import { Universe } from './Universe'
+import { createKyberswap } from './aggregators/Kyberswap'
+import { createEnso } from './aggregators/Enso'
 export { type Config } from './configuration/ChainConfiguration'
 
 export const configuration = {
@@ -39,21 +41,41 @@ export { Universe } from './Universe'
 export { createKyberswap } from './aggregators/Kyberswap'
 export { createEnso } from './aggregators/Enso'
 
-const CHAIN_ID_TO_CONFIG = {
+const CHAIN_ID_TO_CONFIG: Record<ChainId, {
+  config: ReturnType<typeof makeConfig>
+  blockTime: number
+  setup: (uni: any) => Promise<void>
+  setupWithDexes: (uni: any) => Promise<void>
+}> = {
   [ChainIds.Mainnet]: {
     config: ethereumConfig,
     blockTime: 12,
     setup: setupEthereumZapper,
+    setupWithDexes: async (uni: EthereumUniverse) => {
+      uni.addTradeVenue(createKyberswap("Kyberswap", uni))
+      uni.addTradeVenue(createEnso("Enso", uni, 1))
+      await setupEthereumZapper(uni)
+    }
   },
   [ChainIds.Arbitrum]: {
     config: arbiConfig,
     blockTime: 0.25,
     setup: setupArbitrumZapper,
+    setupWithDexes: async (uni: ArbitrumUniverse) => {
+      uni.addTradeVenue(createKyberswap("Kyberswap", uni))
+      uni.addTradeVenue(createEnso("Enso", uni, 1))
+      await setupArbitrumZapper(uni)
+    }
   },
   [ChainIds.Base]: {
     config: baseConfig,
     blockTime: 2,
     setup: setupBaseZapper,
+    setupWithDexes: async (uni: BaseUniverse) => {
+      uni.addTradeVenue(createKyberswap("Kyberswap", uni))
+      uni.addTradeVenue(createEnso("Enso", uni, 1))
+      await setupBaseZapper(uni)
+    }
   },
 }
 
@@ -67,21 +89,33 @@ export const fromProvider = async <
   const ID extends keyof typeof CHAIN_ID_TO_CONFIG
 >(
   provider: JsonRpcProvider,
-  chainId: ID
+  withDexes: boolean = true
 ): Promise<ChainIdToUni[ID]> => {
   const network = await provider.getNetwork()
+  const chainId = network.chainId
+  if (isChainIdSupported(chainId) === false) {
+    throw new Error(`chainId ${chainId} is not supported`)
+  }
   if (chainId !== network.chainId) {
     throw new Error(
       `provider chainId (${network.chainId}) does not match requested chainId (${chainId})`
     )
   }
-  const { config, setup } = CHAIN_ID_TO_CONFIG[chainId]
+  const { config, setup, setupWithDexes } = CHAIN_ID_TO_CONFIG[chainId]
   const universe = await Universe.createWithConfig(
     provider,
     config,
     async (uni) => {
-      await setup(uni as any)
+      if (withDexes) {
+        await setupWithDexes(uni as any)
+      } else {
+        await setup(uni as any)
+      }
     }
+  )
+  await universe.updateBlockState(
+    await provider.getBlockNumber(),
+    (await provider.getGasPrice()).toBigInt()
   )
   return universe as ChainIdToUni[ID]
 }

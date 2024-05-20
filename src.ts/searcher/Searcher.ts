@@ -136,7 +136,7 @@ export class Searcher<
     abortSignal: AbortSignal
   ) {
     // const start = Date.now()
-    console.log('Finding precursors for', rToken.symbol)
+    // console.log('Finding precursors for', rToken.symbol)
     /**
      * PHASE 1: Compute precursor set
      */
@@ -147,7 +147,7 @@ export class Searcher<
       basketUnit,
       this as any
     )
-    console.log(precursorTokens.precursorToTradeFor.join(', '))
+    // console.log(precursorTokens.precursorToTradeFor.join(', '))
     // console.log(precursorTokens.describe().join('\n'))
 
     const generateInputToPrecursorTradeMeasurement = this.perf.begin(

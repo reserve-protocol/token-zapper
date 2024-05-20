@@ -48,6 +48,7 @@ import { Searcher } from './searcher/Searcher'
 import { SwapPath } from './searcher/Swap'
 import { Contract } from './tx-gen/Planner'
 import { MultiChoicePath } from './searcher/MultiChoicePath'
+import { ToTransactionArgs } from './searcher/ToTransactionArgs'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -584,6 +585,37 @@ export class Universe<const UniverseConf extends Config = Config> {
     return () => {
       this.emitter.off('event', cb)
     }
+  }
+
+  public async zap(
+    userInput: TokenQuantity,
+    rToken: Token|string,
+    userAddress: Address|string,
+    opts?: ToTransactionArgs
+  ) {
+    if (typeof userAddress === 'string') {
+      userAddress = Address.from(userAddress)
+    }
+    if (typeof rToken === 'string') {
+      rToken = await this.getToken(Address.from(rToken))
+    }
+    const out = await this.searcher.zapIntoRToken(userInput, rToken, userAddress, opts)
+    return out.bestZapTx.tx
+  }
+  public async redeem(
+    rTokenQuantity: TokenQuantity,
+    outputToken: Token|string,
+    userAddress: Address|string,
+    opts?: ToTransactionArgs
+  ) {
+    if (typeof userAddress === 'string') {
+      userAddress = Address.from(userAddress)
+    }
+    if (typeof outputToken === 'string') {
+      outputToken = await this.getToken(Address.from(outputToken))
+    }
+    const out = await this.searcher.redeem(rTokenQuantity, outputToken, userAddress, opts)
+    return out.bestZapTx.tx
   }
 
   get approvalAddress() {

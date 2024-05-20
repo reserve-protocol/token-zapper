@@ -5,7 +5,6 @@ export const ChainIds = {
   Mainnet: 1,
   Base: 8453,
   Arbitrum: 42161,
-  Hardhat: 31337,
 } as const
 
 export type ChainName = keyof typeof ChainIds
@@ -34,26 +33,22 @@ export const DEPLOYER_ADDRESS = makeAddressMap({
   [ChainIds.Mainnet]: '0x43587CAA7dE69C3c2aD0fb73D4C9da67A8E35b0b',
   [ChainIds.Base]: '0x9C75314AFD011F22648ca9C655b61674e27bA4AC',
   [ChainIds.Arbitrum]: '0xfd7eb6B208E1fa7B14E26A1fb10fFC17Cf695d68',
-  [ChainIds.Hardhat]: '0x15480f5B5ED98A94e1d36b52Dd20e9a35453A38e',
 })
 export const FACADE_ADDRESS = makeAddressMap({
   [ChainIds.Mainnet]: '0x2815c24F49D5c5316Ffd0952dB0EFe68b0d5F132',
   [ChainIds.Base]: '0xDf99ccA98349DeF0eaB8eC37C1a0B270de38E682',
   [ChainIds.Arbitrum]: '0x15175d35F3d88548B49600B4ee8067253A2e4e66',
-  [ChainIds.Hardhat]: '0x2815c24F49D5c5316Ffd0952dB0EFe68b0d5F132',
 })
 export const FACADE_ACT_ADDRESS: AddressMap = makeAddressMap({
   [ChainIds.Mainnet]: '0x801fF27bacc7C00fBef17FC901504c79D59E845C',
   [ChainIds.Base]: '0x3d6D679c863858E89e35c925F937F5814ca687F3',
   [ChainIds.Arbitrum]: '0xE774CCF1431c3DEe7Fa4c20f67534b61289CAa45',
-  [ChainIds.Hardhat]: '0x30426D33a78afdb8788597D5BFaBdADc3Be95698',
 })
 
 export const FACADE_WRITE_ADDRESS: AddressMap = makeAddressMap({
   [ChainIds.Mainnet]: '0x3312507BC3F22430B34D5841A472c767DC5C36e4',
   [ChainIds.Base]: '0x46c600CB3Fb7Bf386F8f53952D64aC028e289AFb',
   [ChainIds.Arbitrum]: '0xe2B652E538543d02f985A5E422645A704633956d',
-  [ChainIds.Hardhat]: '0xAe2563b4315469bF6bdD41A6ea26157dE57Ed94e',
 })
 
 /**
@@ -63,14 +58,12 @@ export const RSR_ADDRESS: AddressMap = makeAddressMap({
   [ChainIds.Mainnet]: '0x320623b8E4fF03373931769A31Fc52A4E78B5d70',
   [ChainIds.Base]: '0xaB36452DbAC151bE02b16Ca17d8919826072f64a',
   [ChainIds.Arbitrum]: '0xCa5Ca9083702c56b481D1eec86F1776FDbd2e594',
-  [ChainIds.Hardhat]: '0x320623b8e4ff03373931769a31fc52a4e78b5d70',
 })
 
 export const EUSD_ADDRESS: AddressMap = makeAddressMap({
   [ChainIds.Mainnet]: '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F',
   [ChainIds.Base]: '0xCfA3Ef56d303AE4fAabA0592388F19d7C3399FB4',
   [ChainIds.Arbitrum]: '0x12275DCB9048680c4Be40942eA4D92c74C63b844',
-  [ChainIds.Hardhat]: '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F',
 })
 
 export const RGUSD_ADDRESS: AddressMap = makeAddressMap({
@@ -88,7 +81,6 @@ export const ETHPLUS_ADDRESS: AddressMap = makeAddressMap({
  */
 export const ENS_ADDRESS: AddressMap = makeAddressMap({
   [ChainIds.Mainnet]: '0x3671aE578E63FdF66ad4F3E12CC0c0d71Ac7510C',
-  [ChainIds.Hardhat]: '0x3671aE578E63FdF66ad4F3E12CC0c0d71Ac7510C',
 })
 
 /**

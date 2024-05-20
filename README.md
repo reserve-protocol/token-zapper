@@ -10,167 +10,145 @@ You can install the package using npm:
 npm install @reserve-protocol/token-zapper
 ```
 
-The test suite can be run using the command:
-
-```bash
-npm run test
-```
-
 ## Usage
 
 To use the library, import it in your TypeScript file:
 
 ```typescript
 import {
-  Address,
-  createDefillama,
-  setupEthereumZapper,
-  ethereumConfig,
-  Searcher,
-  Universe,
-  createKyberswap,
+  fromProvider
 } from '@reserve-protocol/token-zapper'
 ```
 
-Then, create the searcher universe `Universe`, and instantiate a `Searcher`.
-
-Otherwise you need to use the `createWithConfig` factory and pass in the network you want to use.
-
 ```typescript
-const universe = await Universe.createWithConfig(
-  provider,
-  ethereumConfig,
-  setupEthereumZapper
+
+// The fromProvider<1> in the fromProvider method, specifies the chainId. 
+//   1 for ethereum mainnet
+//   8453 for base
+//   42161 for arbitrum
+const zapperState = await fromProvider<1>(
+  provider
 )
 
 // Zapper loads asynchroniously, you can wait the initialized promise to wait for it to fully bootstrap
-await universe.initialized
+await zapperState.initialized
 
-// The zapper can use multiple dex aggregators as liquidity sources. We recommend initializing a few of these for
-// better zaps
-universe.dexAggregators.push(
-  createDefillama('DefiLlama:macha', universe, 10, 'Matcha/0x')
-)
-universe.dexAggregators.push(createKyberswap('KyberSwap', universe, 50))
-
-// The zapper does not pull data unless it's needed for a zap, so you need to hook this into your own
-// on 'block' handler.
+// The the zapper state needs to be updated with every new block,
+// because a lot of internal caching is bound to the current block, and gas price determines which zap is the best for the user
 provider.on('block', async (blockNumber) => {
-  universe.updateBlockState(
+  await zapperState.updateBlockState(
     blockNumber,
     (await provider.getGasPrice()).toBigInt()
   )
 })
-
-const searcher = new Searcher(universe)
 ```
 
-Use the searcher to compose some transaction that will either attempt to mint eUSD, or buy it off a dex, whatever gives the better quote.
+After this setup, you can use the zapper to find a way to zap into an rToken, or zap redeem it into something else
 
-```typescript
-const searchResult = await searcher.findSingleInputToRTokenZap(
-    universe.nativeToken.from("1.0"),
-    universe.rTokens.eUSD!,
-    Address.from(your ADDRESS)
+```
+const yourAddress = "0x....."
+const zapTx = await zapperState.zap(
+  zapperState.commonTokens.USDC.from(1000.0),
+  zapperState.rTokens.eUSD,
+  yourAddress
 );
-```
-A search result contains a description of your zap based on the current state of the zapper, and state the zapper managed to infer while searching for a way to zap into the RToken.
 
-You can use `.describe()` to dump an abstract description of how the zapper ended up assembling your token. 
+// const zapTx = await zapperState.redeem(
+//  zapperState.rTokens.eUSD.from(1000.0),
+//  zapperState.commonTokens.USDC,
+//  yourAddress
+// );
 
-```text
-SwapPaths {
-  inputs: 0.1 ETH
-  actions:
-    SwapPath {
-      inputs: 0.1 WETH
-      steps:
-        Step 1: Exchange 0.1 WETH for 178.048635 USDT via OneInch(path=[SUSHI])
-        Step 2: Exchange 44.512158 USDT for 40.059929 saUSDT via SATokenMint(Token(saUSDT))
-        Step 3: Exchange 44.512158 USDT for 2001.47314954 cUSDT via CTokenMint(Token(cUSDT))
-      outputs: 89.024319 USDT, 40.059929 saUSDT, 2001.47314954 cUSDT
-    }
-    SwapPath {
-      inputs: 40.059929 saUSDT, 2001.47314954 cUSDT, 89.024319 USDT
-      steps:
-        Step 1: Exchange 40.059929 saUSDT,2001.47314954 cUSDT,89.024319 USDT for 178.04845398 eUSD via RTokenMint(Token(eUSD))
-      outputs: 178.04845398 eUSD
-    }
-  outputs: 0.000093 USDT, 0.000096 saUSDT, 0.00000002 cUSDT, 178.04845398 eUSD
-}
-```
-
-The `SearcherResult` will show you the path the path the searcher will use and an on the individual swaps it will execute. The `SearcherResult` can be converted into a transaction via the `.toTransaction()` method on the `SearcherResult`. This will encode all the individual `Action's` into something the `ZapperExecutor` can run. It will also simulate the transaction fully estimate gas and outputs.
-
-```typescript
-const transaction = await searcherResult.toTransaction()
-
-console.log(transaction.toString())
-// ZapTransaction(input:0.1 ETH,outputs:[180.95878994 eUSD],txFee:0.015921885964378245 ETH)
-
-// To execute the transaction simply sign the transaction.tx, and send it via a provider
-const pendingTx = await provider.sendTransaction(
-  await wallet.signTransaction(transaction.tx)
-)
-```
-
-You can dump a textural description of the final zap transaction if you're curious about such things.
-
-```typescript
-console.log(transaction.describe().join("\n"))
+// You can get an overview of the zap transaction by describing it:
+console.log(zapTx.describe().join("\n"));
 ```
 
 ```
 Transaction {
-  Commands: [
-    Setup approvals: Approval(token: WETH, spender: 0x6131B5fae19EA4f9D964eAc0408E4408b66337b5)
-    Kyberswap(0x6131B5fae19EA4f9D964eAc0408E4408b66337b5) (1.0 WETH) -> (1825.486423921903285671 eUSD)
-    Drain ERC20s eUSD to 0x.....
+  zap: 100000.0 USDC (99995.0 USD) -> 31.282717305975456267 ETH+ (98273.98377038 USD) (+ $183.56379896 USD D.) @ fee: 25.61216338 USD,
+  dust: [0.021474740048719004 rETH (73.52053689 USD), 0.000000000000000001 stETH (0.0 stETH), 0.030485670541067423 wstETH (110.04326207 USD)],
+  fees: 0.00828157863717086 ETH (25.61216338 USD) (3070865 wei)
+  program: [
+   cmd 0: // Curve,swap=33259.3 USDC -> 10.707839131756914597 frxETH
+   amt_frxETH: uint256 = [curve-router-caller]:delegate.exchange(
+      amountIn: uint256 = 33259300000,
+      _expected: uint256 = 10600760740439345452,
+      router: address = [0x99a5...788f],
+      encodedRouterCall: bytes = [len=1666]0x000000000000000000000000a0b86991...00000000000000000000000000000000
+   );
+
+   cmd 1:
+   bal_frxETH: uint256 = [tok=frxETH].balanceOf(account: address = [this]);
+
+   cmd 2: // UniV3.exactInput(33377.2 USDC -> [USDC -> 0x8ad5...e6D8 -> WETH -> WETH -> 0xa4e0...9613 -> rETH] -> 9.699320281516622756 rETH)
+   b: uint256 = [0x32F5...17A9]:delegate.exactInput(
+      amountIn: uint256 = 33377200000,
+      _expected: uint256 = 9675132450390646140,
+      router: address = [0x68b3...Fc45],
+      recipient: address = [this],
+      path: bytes = [len=258]0xa0b86991c6218b36c1d19d4a2e9eb0ce...00000000000000000000000000000000
+   );
+
+   cmd 3: // Enso(33363.5 USDC, enso,lido, 10.743417369406715664 stETH)
+   d: bytes[] = [0x80Eb...fB8E].routeSingle(
+      tokenIn: address = [tok=USDC],
+      amountIn: uint256 = 33363500000,
+      commands: bytes32[] = (bytes32[]),
+      state: bytes[] = (bytes[])
+   );
+
+   cmd 4:
+   bal_stETH: uint256 = [tok=stETH].balanceOf(account: address = [this]);
+
+   cmd 5:
+   bal_frxETH: uint256 = [tok=frxETH].balanceOf(account: address = [this]);
+
+   cmd 6:
+   bal_rETH: uint256 = [tok=rETH].balanceOf(account: address = [this]);
+
+   cmd 7:
+   bal_stETH: uint256 = [tok=stETH].balanceOf(account: address = [this]);
+
+   cmd 8:
+   f: uint256 = [tok=sfrxETH].deposit(assets: uint256 = bal_frxETH, receiver: address = [this]);
+
+   cmd 9:
+   bal_sfrxETH: uint256 = [tok=sfrxETH].balanceOf(account: address = [this]);
+
+   cmd 10:
+   h: uint256 = [tok=wstETH].wrap(_stETHAmount: uint256 = bal_stETH);
+
+   cmd 11:
+   [this]:delegate.mintMaxRToken(facade: address = [0x81b9...eB3C], token: address = [tok=ETH+], recipient: address = [0x..yourAddress]);
+
+   [...] // More commands to collect any leftover dust. (In the future we hope to reduce it or at least unwrap the returned tokens)
   ],
-  input: 1.0 WETH
-  outputs: 1834.62955555997961 eUSD
 }
 ```
 
-### Redemption zaps
+To execute your zap you just need to use the parametres in the zapTx:
+```
+const {
+  to,
+  data,
+  value
+} = zapTx.transaction.tx;
 
-The zapper can also work in reverse, 
+const signer = new ethers.Wallet([YOUR_PRIVATE_KEY], provider)
+const { to, data, value } = zapTx.transaction.tx
+const resp = await signer.sendTransaction({
+  to,
+  data,
+  value
+})
+console.log("Tx pending, hash: ", resp.hash);
+const receipt = await resp.wait(1)
+console.log("Your zap was" + receipt.status === 1 ? "successfull!" : "reverted")
 
-```typescript
-const res = await searcher.findRTokenIntoSingleTokenZap(
-  universe.rTokens.eUSD!.from('50.0'),
-  universe.commonTokens.USDC!,
-  testUserAddr,
-  0.0
-)
+console.log("See it here: https://etherscan.io/tx/" + resp.hash);
+
 ```
 
-**note**: If zapping from rToken into ETH, the library will silently convert the output token to WETH.
-
-```typescript
-await searcher.findRTokenIntoSingleTokenZap(
-  universe.rTokens.eUSD!.from('50.0'),
-  universe.nativeToken!,
-  testUserAddr,
-  0.0
-)
-
-// Is the same as:
-await searcher.findRTokenIntoSingleTokenZap(
-  universe.rTokens.eUSD!.from('50.0'),
-  universe.commonTokens.ERC20GAS!,
-  testUserAddr,
-  0.0
-)
-
-// So end user receives WETH!
-```
-
-## Current features and limitations
-
-**RToken to RToken zaps are not currently supported**
-
-RToken to RToken zaps are planned for the future.
 
 ## Contributing
 

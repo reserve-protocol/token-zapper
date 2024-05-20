@@ -1,6 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { TransactionRequest } from '@ethersproject/providers'
-import { constants, ethers } from 'ethers'
+import { constants } from 'ethers'
 import { ParamType, defaultAbiCoder, parseEther } from 'ethers/lib/utils'
 import {
   BaseAction,
@@ -11,8 +11,10 @@ import {
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { DefaultMap } from '../base/DefaultMap'
-import { simulationUrls } from '../base/constants'
 import { parseHexStringIntoBuffer } from '../base/utils'
+import { ArbitrumUniverse } from '../configuration/arbitrum'
+import { BaseUniverse } from '../configuration/base'
+import { EthereumUniverse } from '../configuration/ethereum'
 import {
   IERC20__factory,
   ZapperExecutor__factory,
@@ -30,21 +32,14 @@ import {
   LiteralValue,
   Planner,
   Value,
-  encodeArg,
-  printPlan,
+  encodeArg
 } from '../tx-gen/Planner'
 import { ToTransactionArgs } from './ToTransactionArgs'
-import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
+import { SimulateParams } from '../configuration/ZapSimulation'
 
 const zapperInterface = Zapper__factory.createInterface()
-interface SimulateParams {
-  data: string
-  value: bigint
-  quantity: bigint
-  inputToken: Token
-  gasLimit?: number
-}
+
 
 class Step {
   constructor(
@@ -52,7 +47,7 @@ class Step {
     readonly action: BaseAction,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) {}
+  ) { }
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -83,7 +78,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-          InteractionConvention.PayBeforeCall
+        InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -118,12 +113,12 @@ export abstract class BaseSearcherResult {
 
   async checkIfSearchIsAborted() {
     if (this.abortSignal.aborted) {
-      throw new Error('Aborted')
+      //   throw new Error('Aborted')
     }
   }
 
   constructor(
-    readonly universe: UniverseWithERC20GasTokenDefined,
+    readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
     readonly userInput: TokenQuantity,
     public swaps: SwapPaths,
     public readonly signer: Address,
@@ -187,157 +182,39 @@ export abstract class BaseSearcherResult {
     return sum
   }
 
-  async simulateNoNode({ data, value }: SimulateParams) {
-    try {
-      const resp = await this.universe.provider.send('eth_call', [
-        {
-          data,
-          from: this.signer.address,
-          to: this.universe.config.addresses.zapperAddress.address,
-          value: '0x' + value.toString(16),
-        },
-        'latest',
-        {
-          [this.signer.address]: {
-            balance:
-              '0x' + ethers.utils.parseEther('10000').toBigInt().toString(16),
-          },
-        },
-      ])
-      try {
-        return zapperInterface.decodeFunctionResult('zapERC20', resp)
-          .out as ZapperOutputStructOutput
-      } catch (e) {
-        // console.log(
-        //   {
-        //     data,
-        //     from: this.signer.address,
-        //     to: this.universe.config.addresses.zapperAddress.address,
-        //     value: value.toString(16),
-        //   },
-        //   'latest',
-        //   {
-        //     [this.signer.address]: {
-        //       balance: ethers.utils.parseEther('10000').toHexString(),
-        //     },
-        //   }
-        // )
-        // console.log(resp)
-      }
-      if (resp.startsWith('0x08c379a0')) {
-        const data = resp.slice(138)
-        const msg = Buffer.from(data, 'hex').toString()
-        throw new Error(msg)
-      } else {
-        for (let i = 10; i < resp.length; i += 128) {
-          const len = BigInt('0x' + resp.slice(i, i + 64))
-          if (len != 0n && len < 256n) {
-            const data = resp.slice(i + 64, i + 64 + Number(len) * 2)
-            const msg = Buffer.from(data, 'hex').toString()
-            throw new Error(msg)
-          }
-        }
-      }
-      throw new Error('Unknonw error: ' + resp)
-    } catch (e: any) {
-      // console.log(e)
-      if (e.message.includes('LPStakingTime')) {
+
+  async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
+    const resp = await this.universe.simulateZapFn(
+      opts
+    )
+    // If the response starts with a pointer to the first location of the output tuple
+    // when we know if can be decoded by the zapper interface
+    if (resp.startsWith("0x0000000000000000000000000000000000000000000000000000000000000020")) {
+      return zapperInterface.decodeFunctionResult('zapERC20', resp)
+        .out as ZapperOutputStructOutput
+    }
+
+    // Try and decode the error message
+    if (resp.startsWith('0x08c379a0')) {
+      const errorMsgLen = Number(BigInt('0x' + resp.slice(10 + 64)))
+      const errorMsgCharsInHex = resp.slice(10 + 64 + 64, 10 + 64 + 64 + errorMsgLen * 2);
+      const msg = Buffer.from(errorMsgCharsInHex, 'hex').toString()
+      if (msg.includes('LPStakingTime')) {
         console.error('Stargate staking contract out of funds.. Aborting')
         throw new ThirdPartyIssue('Stargate out of funds')
       }
-    }
-
-    // console.log(
-    //   JSON.stringify({
-    //     data,
-    //     value: value.toString(),
-    //     address: this.universe.zapperAddress.address,
-    //     from: this.signer.address,
-    //     block: this.blockNumber,
-    //   })
-    // )
-    throw new Error('Failed to simulate')
-  }
-
-  async simulate({
-    data,
-    value,
-    quantity,
-    inputToken,
-    gasLimit = 10000000,
-  }: SimulateParams) {
-    const url = simulationUrls[this.universe.chainId]
-
-    if (url == null) {
-      return this.simulateNoNode({
-        data,
-        value,
-        quantity,
-        inputToken,
-        gasLimit,
-      })
-    }
-    try {
-      const overrides = {}
-
-      const body = JSON.stringify(
-        {
-          from: this.signer.address,
-          to: this.universe.config.addresses.zapperAddress.address,
-          data,
-          quantity: '0x' + quantity.toString(16),
-          gasLimit,
-          value: '0x' + value.toString(16),
-          token: inputToken.address.address,
-          overrides,
-        },
-        null,
-        1
-      )
-
-      return await (
-        await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body,
-        })
-      )
-        .json()
-        .then((a: { data: string; error?: string }) => {
-          // console.log(a)
-          if (a.error != null) {
-            throw new Error(a.error)
-          }
-          if (a.data.startsWith('0x08c379a0')) {
-            const length = BigInt('0x' + a.data.slice(10, 74))
-            const data = a.data.slice(74, 74 + Number(length) * 2)
-            const msg = Buffer.from(data, 'hex').toString()
-            throw new Error(msg)
-          }
-          if (a.data === '0xundefined') {
-            throw new Error('Failed to simulate')
-          }
-          const out = zapperInterface.decodeFunctionResult('zapERC20', a.data)
-            .out as ZapperOutputStructOutput
-          // console.log(out)
-          return out
-        })
-    } catch (e) {
-      // console.log(
-      //   'Failing program:',
-      //   this.inputToken.toString(),
-      //   this.outputToken.toString(),
-      //   printPlan(this.planner, this.universe).join('\n')
-      // )
-      return this.simulateNoNode({
-        data,
-        value,
-        quantity,
-        inputToken,
-        gasLimit,
-      })
+      throw new Error(msg)
+    } else {
+      // Try and randomly see if we can find something that looks like a string 🙃
+      for (let i = 10; i < resp.length; i += 128) {
+        const len = BigInt('0x' + resp.slice(i, i + 64))
+        if (len != 0n && len < 256n) {
+          const data = resp.slice(i + 64, i + 64 + Number(len) * 2)
+          const msg = Buffer.from(data, 'hex').toString()
+          throw new Error(msg)
+        }
+      }
+      throw new Error(`Failed for unknown reasons: '${resp}`)
     }
   }
 
@@ -350,10 +227,14 @@ export abstract class BaseSearcherResult {
     const zapperResult = await this.universe.perf.measurePromise(
       'Zap Simulation',
       this.simulate({
+        to: this.universe.config.addresses.zapperAddress.address,
+        from: this.signer.address,
         data,
         value: this.value,
-        quantity: this.userInput.amount,
-        inputToken: this.inputToken,
+        setup: {
+          inputTokenAddress: this.inputToken.address.address,
+          userBalanceAndApprovalRequirements: this.userInput.amount,
+        }
       })
     )
 
@@ -466,7 +347,7 @@ export abstract class BaseSearcherResult {
         outputTokenOutput.amount === 1n
           ? 1n
           : outputTokenOutput.amount -
-            outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
+          outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
       tokenOut: this.outputToken.address.address,
       tokens: this.potentialResidualTokens.map((i) => i.address.address),
     }
@@ -480,8 +361,8 @@ export abstract class BaseSearcherResult {
     return this.inputIsNative
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -499,22 +380,12 @@ export abstract class BaseSearcherResult {
       from: this.signer.address,
     } as TransactionRequest
 
-    if (this.universe.chainId === 1 || this.universe.chainId === 8453) {
-      tx = {
-        ...tx,
-        type: 2,
-        maxFeePerGas: BigNumber.from(
-          this.universe.gasPrice + this.universe.gasPrice / 12n
-        ),
-      }
-    } else {
-      tx = {
-        ...tx,
-        type: 0,
-        gasPrice: BigNumber.from(
-          this.universe.gasPrice + this.universe.gasPrice / 12n
-        ),
-      }
+    tx = {
+      ...tx,
+      type: 2,
+      maxFeePerGas: BigNumber.from(
+        this.universe.gasPrice + this.universe.gasPrice / 12n
+      ),
     }
     return tx
   }
@@ -527,11 +398,10 @@ export abstract class BaseSearcherResult {
         ...options,
         returnDust: false,
       })
-      // console.log(params)
       const data = this.encodeCall(options, params)
       const tx = this.encodeTx(data, 3000000n)
-      // console.log(printPlan(this.planner, this.universe).join('\n'))
       await this.checkIfSearchIsAborted()
+      // console.log(params)
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
       let dust = this.potentialResidualTokens.map((qty) => qty)
@@ -564,7 +434,6 @@ export abstract class BaseSearcherResult {
       if (gasEstimate === 0n) {
         throw new Error('Failed to estimate gas')
       }
-      await this.checkIfSearchIsAborted()
       const stats = await this.universe.perf.measurePromise(
         'ZapTxStats.create',
         ZapTxStats.create(this.universe, {
@@ -648,7 +517,7 @@ export class ZapViaATrade extends BaseSearcherResult {
 
 export class RedeemZap extends BaseSearcherResult {
   constructor(
-    readonly universe: UniverseWithERC20GasTokenDefined,
+    readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
     readonly userInput: TokenQuantity,
     readonly parts: {
       full: SwapPaths
@@ -710,13 +579,13 @@ export class RedeemZap extends BaseSearcherResult {
         let input =
           prev == null
             ? step.inputs.map((t) =>
-                plannerUtils.erc20.balanceOf(
-                  this.universe,
-                  this.planner,
-                  t.token,
-                  executorAddress
-                )
+              plannerUtils.erc20.balanceOf(
+                this.universe,
+                this.planner,
+                t.token,
+                executorAddress
               )
+            )
             : [prev]
         if (input == null) {
           throw new Error('MISSING INPUT')
@@ -743,9 +612,9 @@ export class RedeemZap extends BaseSearcherResult {
     const tradesToGenerate = allSupportDynamicInput
       ? this.parts.tradesToOutput
       : [
-          ...this.parts.tradesToOutput.filter((i) => !i.supportsDynamicInput),
-          ...this.parts.tradesToOutput.filter((i) => i.supportsDynamicInput),
-        ]
+        ...this.parts.tradesToOutput.filter((i) => !i.supportsDynamicInput),
+        ...this.parts.tradesToOutput.filter((i) => i.supportsDynamicInput),
+      ]
 
     const tradeInputs = new Map<Token, Value>()
     for (const path of tradesToGenerate) {
@@ -775,8 +644,11 @@ export class RedeemZap extends BaseSearcherResult {
       }
     }
 
+    const outs = new Set<Token>()
+
     for (const [token] of unwrapBalances) {
       tradeOutputs.delete(token)
+      outs.add(token)
       const out = plannerUtils.erc20.balanceOf(
         this.universe,
         this.planner,
@@ -792,6 +664,11 @@ export class RedeemZap extends BaseSearcherResult {
       )
     }
     for (const [token] of tradeOutputs) {
+      if (outs.has(token)) {
+        continue
+      }
+      outs.add(token)
+
       const out = plannerUtils.erc20.balanceOf(
         this.universe,
         this.planner,
@@ -802,6 +679,21 @@ export class RedeemZap extends BaseSearcherResult {
         this.universe,
         this.planner,
         token,
+        out,
+        this.signer
+      )
+    }
+    if (!outs.has(this.outputToken)) {
+      const out = plannerUtils.erc20.balanceOf(
+        this.universe,
+        this.planner,
+        this.outputToken,
+        executorAddress
+      )
+      plannerUtils.planForwardERC20(
+        this.universe,
+        this.planner,
+        this.outputToken,
         out,
         this.signer
       )
@@ -818,7 +710,7 @@ const ONE_Val = new LiteralValue(
 )
 export class MintZap extends BaseSearcherResult {
   constructor(
-    readonly universe: UniverseWithERC20GasTokenDefined,
+    readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
     readonly userInput: TokenQuantity,
     readonly parts: {
       trading: SwapPaths
@@ -900,9 +792,9 @@ export class MintZap extends BaseSearcherResult {
       const tradesToGenerate = allSupportDynamicInput
         ? allTrades
         : [
-            ...allTrades.filter((i) => !i.supportsDynamicInput),
-            ...allTrades.filter((i) => i.supportsDynamicInput),
-          ]
+          ...allTrades.filter((i) => !i.supportsDynamicInput),
+          ...allTrades.filter((i) => i.supportsDynamicInput),
+        ]
 
       for (const trade of tradesToGenerate) {
         const current = splitTrades.get(trade.outputs[0].token)

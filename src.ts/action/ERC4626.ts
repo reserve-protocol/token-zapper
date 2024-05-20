@@ -1,6 +1,8 @@
 import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
+import { BlockCache } from '../base/BlockBasedCache'
+import { IERC4626 } from '../contracts'
 
 import { IERC4626__factory } from '../contracts/factories/@openzeppelin/contracts/interfaces/IERC4626__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
@@ -11,7 +13,7 @@ export class ERC4626TokenVault {
   constructor(
     public readonly shareToken: Token,
     public readonly underlying: Token
-  ) {}
+  ) { }
 
   get address(): Address {
     return this.shareToken.address
@@ -23,34 +25,41 @@ export const ERC4626DepositAction = (proto: string) =>
     get outputSlippage() {
       return this.slippage
     }
+    public get returnsOutput(): boolean {
+      return false
+    }
     async plan(
       planner: Planner,
       inputs: Value[],
-      destination: Address
-    ): Promise<Value[]> {
+      destination: Address,
+      predicted: TokenQuantity[]
+    ) {
       const lib = this.gen.Contract.createContract(
         IERC4626__factory.connect(
           this.shareToken.address.address,
           this.universe.provider
         )
       )
-      const out = planner.add(lib.deposit(inputs[0], destination.address))
-      return [out!]
+      planner.add(lib.deposit(inputs[0] || predicted[0].amount, destination.address))
+      return null;
     }
     gasEstimate() {
       return BigInt(200000n)
     }
 
-    async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    public async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
       const x = (
-        await IERC4626__factory.connect(
-          this.shareToken.address.address,
-          this.universe.provider
-        ).previewDeposit(amountsIn.amount)
+        await this.inst.callStatic.previewDeposit(amountIn, {
+          blockTag: 'pending',
+        })
       ).toBigInt()
-      return [this.shareToken.from(x)]
+      return [this.outputToken[0].fromBigInt(x)]
     }
-
+    public readonly inst: IERC4626
+    public readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
+    async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+      return await this.quoteCache.get(amountIn.amount)
+    }
     constructor(
       readonly universe: Universe,
       readonly underlying: Token,
@@ -65,6 +74,14 @@ export const ERC4626DepositAction = (proto: string) =>
         DestinationOptions.Callee,
         [new Approval(underlying, shareToken.address)]
       )
+      this.inst = IERC4626__factory.connect(
+        this.shareToken.address.address,
+        this.universe.provider
+      )
+      this.quoteCache = this.universe.createCache<bigint, TokenQuantity[]>(
+        async (a) => await this._quote(a),
+        1
+      )
     }
 
     toString(): string {
@@ -74,12 +91,15 @@ export const ERC4626DepositAction = (proto: string) =>
 
 export const ERC4626WithdrawAction = (proto: string) =>
   class ERC4626WithdrawAction extends Action(proto) {
+    public get returnsOutput(): boolean {
+      return false
+    }
     async plan(
       planner: Planner,
       inputs: Value[],
       destination: Address,
       predicted: TokenQuantity[]
-    ): Promise<Value[]> {
+    ) {
       const lib = this.gen.Contract.createContract(
         IERC4626__factory.connect(
           this.shareToken.address.address,
@@ -93,21 +113,19 @@ export const ERC4626WithdrawAction = (proto: string) =>
           this.universe.config.addresses.executorAddress.address
         )
       )
-      return this.outputBalanceOf(this.universe, planner)
+      return null
     }
     gasEstimate() {
       return BigInt(200000n)
     }
-
-    async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-      return [
-        this.underlying.from(
-          await IERC4626__factory.connect(
-            this.shareToken.address.address,
-            this.universe.provider
-          ).previewRedeem(amountsIn.amount)
-        ),
-      ]
+    public async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
+      const x = (await this.inst.previewRedeem(amountIn)).toBigInt()
+      return [this.outputToken[0].fromBigInt(x)]
+    }
+    public readonly inst: IERC4626
+    public readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
+    async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+      return await this.quoteCache.get(amountIn.amount)
     }
 
     constructor(
@@ -123,6 +141,15 @@ export const ERC4626WithdrawAction = (proto: string) =>
         InteractionConvention.None,
         DestinationOptions.Callee,
         []
+      )
+
+      this.inst = IERC4626__factory.connect(
+        this.shareToken.address.address,
+        this.universe.provider
+      )
+      this.quoteCache = this.universe.createCache<bigint, TokenQuantity[]>(
+        async (a) => await this._quote(a),
+        1
       )
     }
     toString(): string {

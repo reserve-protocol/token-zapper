@@ -1,5 +1,30 @@
 import { Address } from '../base/Address'
 
+export * from './ZapSimulation'
+import {
+  SimulateZapTransactionFunction
+} from './ZapSimulation'
+
+
+const defaultSearcherOptions = {
+  requoteTolerance: 1,
+  routerDeadline: 4500,
+  searcherMinRoutesToProduce: 1,
+  searcherMaxRoutesToProduce: 8,
+  searchConcurrency: 4,
+  defaultInternalTradeSlippage: 250n,
+  maxSearchTimeMs: 15000,
+
+  // These parameters will reject zaps that have successfully simulated
+  // but even if it produced a valid result, the result should be within some bounds
+  zapMaxValueLoss: 5, // 0.05 or 5%
+
+  // total output value = output token value + dust value
+  zapMaxDustProduced: 2, // 0.02 or 2% of total output value
+}
+
+export type SearcherOptions = (typeof defaultSearcherOptions) & { simulateZapTransaction?: SimulateZapTransactionFunction}
+
 const convertAddressObject = <const T extends Record<string, unknown>>(
   obj: T
 ) =>
@@ -45,15 +70,9 @@ export const makeConfig = <
     curveStableSwapNGHelper: string
   },
   options: {
-    blocktime: Blocktime,
-    blockGasLimit: bigint,
-    requoteTolerance: number, // Number of blocks to tolerate before quotes need to be requoted
-    routerDeadline: number,
-    searcherMinRoutesToProduce: number,
-    searcherMaxRoutesToProduce: number,
-    searchConcurrency: number,
-    defaultInternalTradeSlippage: bigint
-  }
+    blocktime: Blocktime
+    blockGasLimit: bigint
+  } & Partial<SearcherOptions>
 ) => {
   return {
     chainId,
@@ -67,7 +86,7 @@ export const makeConfig = <
         ) as { [K in keyof RTokens]: string }
       ),
     },
-    ...options
+    ...Object.assign({}, defaultSearcherOptions, options),
   } as const
 }
 export type Config<

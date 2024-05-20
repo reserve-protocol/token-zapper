@@ -16,7 +16,10 @@ import { Contract, Planner, Value } from '../tx-gen/Planner'
 
 export abstract class BaseCometAction extends Action('CompV3') {
   public get outputSlippage(): bigint {
-    return 10n
+    return 0n
+  }
+  get returnsOutput() {
+    return false
   }
   toString(): string {
     return `${this.protocol}.${this.actionName}(${this.inputToken.join(
@@ -64,9 +67,9 @@ export abstract class BaseCometAction extends Action('CompV3') {
     [input]: Value[],
     destination: Address,
     [predicted]: TokenQuantity[]
-  ): Promise<Value[]> {
+  ) {
     this.planAction(planner, destination, input, predicted)
-    return this.outputBalanceOf(this.universe, planner)
+    return null
   }
   abstract planAction(
     planner: Planner,

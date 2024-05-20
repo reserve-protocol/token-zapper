@@ -1,10 +1,10 @@
 export { Address } from './base/Address'
 export { Token, TokenQuantity } from './entities/Token'
 
-export { arbiConfig } from './configuration/arbitrum'
+export { ArbitrumUniverse, arbiConfig } from './configuration/arbitrum'
 export { setupArbitrumZapper } from './configuration/setupArbitrumZapper'
 
-export { baseConfig } from './configuration/base'
+export { BaseUniverse, baseConfig } from './configuration/base'
 export { setupBaseZapper } from './configuration/setupBaseZapper'
 
 export { ethereumConfig } from './configuration/ethereum'

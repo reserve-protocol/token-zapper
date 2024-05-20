@@ -8,8 +8,8 @@ export const ChainIds = {
   Hardhat: 31337,
 } as const
 
-type ChainName = keyof typeof ChainIds
-type ChainId = (typeof ChainIds)[ChainName]
+export type ChainName = keyof typeof ChainIds
+export type ChainId = (typeof ChainIds)[ChainName]
 
 export const isChainIdSupported = (chainId: number): chainId is ChainId => {
   return Object.values(ChainIds).includes(chainId as ChainId)

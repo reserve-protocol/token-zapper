@@ -23,7 +23,6 @@ import {
   encodeArg,
 } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
-import { DefaultMap } from '../base/DefaultMap'
 
 const ONEFP18 = 10n ** 18n
 
@@ -145,10 +144,10 @@ export class CompoundV2Deployment {
             .then((rate) => rate.toBigInt())
           return out
         } catch (e) {
-          return 0n
+          throw new Error(`Failed to get rate for ${market.cToken.address}`)
         }
       },
-      universe.config.requoteTolerance
+      1
     )
   }
   public async getCurrentRate(market: CompoundV2Market): Promise<bigint> {
@@ -228,7 +227,7 @@ abstract class CompV2Action extends Action('CompV2') {
     return false
   }
   get outputSlippage(): bigint {
-    return 1n
+    return 0n
   }
 
   public async plan(
@@ -393,11 +392,8 @@ abstract class CTokenWrapperAction extends Action('Reserve.CTokenWrapper') {
   public toString(): string {
     return `CTokenWrapper.${this.actionName}(${this.input} => ${this.output})`
   }
-  get returnsOutput() {
-    return true
-  }
-  get outputSlippage(): bigint {
-    return 50n
+  get outputSlippage() {
+    return 0n
   }
   public async plan(
     planner: Planner,
@@ -410,7 +406,7 @@ abstract class CTokenWrapperAction extends Action('Reserve.CTokenWrapper') {
 
     planner.add(this.planAction(inp))
 
-    return [input]
+    return null
   }
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return await Promise.resolve([this.quoteAction(amountsIn)])

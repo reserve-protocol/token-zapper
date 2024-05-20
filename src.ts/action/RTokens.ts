@@ -182,7 +182,7 @@ export class MintRTokenAction extends ReserveRTokenBase {
     return this.rTokenDeployment.mintEstimate
   }
   get outputSlippage() {
-    return 10n
+    return 0n
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     if (this.universe.config.addresses.facadeAddress !== Address.ZERO) {
@@ -245,7 +245,7 @@ export class BurnRTokenAction extends ReserveRTokenBase {
     return this.rTokenDeployment.burnEstimate
   }
   get outputSlippage() {
-    return 30n
+    return 0n
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     return await this.quote_(amountsIn)
@@ -258,7 +258,10 @@ export class BurnRTokenAction extends ReserveRTokenBase {
         this.rTokenDeployment.contracts.assetRegistry.address,
         this.rTokenDeployment.contracts.basketHandler.address,
         this.rTokenDeployment.rToken.address.address,
-        amountIn.amount
+        amountIn.amount,
+        {
+          blockTag: "pending"
+        }
       )
       .then(
         async ([ercs, amts]) =>

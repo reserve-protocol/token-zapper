@@ -74,6 +74,9 @@ export class DexRouter {
   }
 
   supportsSwap(inputTokenQty: TokenQuantity, output: Token) {
+    if (this.supportedInputTokens.size === 0 && this.supportedOutputTokens.size === 0) {
+      return true
+    }
     if (
       this.supportedInputTokens.size !== 0 &&
       !this.supportedInputTokens.has(inputTokenQty.token)

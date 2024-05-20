@@ -61,10 +61,19 @@ export class ZapTxStats {
   private constructor(
     public readonly universe: Universe,
     private readonly gasUnits: bigint,
+
+    // value of (input token qty)
     public readonly input: PricedTokenQuantity,
+
+    // value of (output token qty)
     public readonly output: PricedTokenQuantity,
+
     public readonly dust: DustStats,
+
+    // all outputtoken + dust
     public readonly outputs: PricedTokenQuantity[],
+
+    // value of (output token + dust)
     public readonly valueUSD: TokenQuantity
   ) {}
 
@@ -73,7 +82,7 @@ export class ZapTxStats {
   }
 
   get netValueUSD() {
-    return this.valueUSD.sub(this.txFee.txFee.price)
+    return this.valueUSD.sub(this.txFee.txFee.price);
   }
 
   public static async create(

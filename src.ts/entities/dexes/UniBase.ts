@@ -20,7 +20,7 @@ export abstract class UniBase extends Action('UniV2-Like') {
 
     readonly direction: SwapDirection,
     readonly destination: DestinationOptions,
-    readonly interactionConvention: InteractionConvention
+    interactionConvention: InteractionConvention
   ) {
     super(
       basePool.address,

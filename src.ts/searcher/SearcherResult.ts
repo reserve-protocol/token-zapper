@@ -167,22 +167,6 @@ export abstract class BaseSearcherResult {
     return this.swaps.describe()
   }
 
-  public async valueOfDust() {
-    let sum = this.universe.usd.zero
-    await Promise.all(
-      this.swaps.outputs.map(async (out) => {
-        if (out.token === this.outputToken) {
-          return
-        }
-        const price =
-          (await this.universe.fairPrice(out)) ?? this.universe.usd.zero
-        sum = sum.add(price)
-      })
-    )
-    return sum
-  }
-
-
   async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
     const resp = await this.universe.simulateZapFn(
       opts
@@ -205,6 +189,9 @@ export abstract class BaseSearcherResult {
       }
       throw new Error(msg)
     } else {
+      if (resp.length / 128 > 100) {
+        throw new Error('Failed to decode response')
+      }
       // Try and randomly see if we can find something that looks like a string 🙃
       for (let i = 10; i < resp.length; i += 128) {
         const len = BigInt('0x' + resp.slice(i, i + 64))
@@ -274,7 +261,7 @@ export abstract class BaseSearcherResult {
 
     const gasUsed = zapperResult.gasUsed.toBigInt()
     return {
-      gasUsed: gasUsed + 100000n + gasUsed / 10n,
+      gasUsed: gasUsed + gasUsed / 12n,
       simulatedOutputs,
       totalValue,
       swaps: new SwapPaths(
@@ -965,12 +952,12 @@ export class MintZap extends BaseSearcherResult {
           step.inputs
         )
       }
-
-      return await this.createZapTransaction(options)
     } catch (e: any) {
-      // console.log('ToTransaction failed:')
-      // console.log(e.stack)
+      console.log('ToTransaction failed:')
+      console.log(e.stack)
       throw e
     }
+    return await this.createZapTransaction(options)
+
   }
 }

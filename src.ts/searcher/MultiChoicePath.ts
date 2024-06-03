@@ -215,7 +215,7 @@ export const createConcurrentStreamingSeacher = (
       const inToOutRatio = outVal / inVal
       
       // Reject if the dust is too high
-      if ((outVal * maxAcceptableDustPercentable) < dustVal) {
+      if ((inVal * maxAcceptableDustPercentable) < dustVal) {
         console.log('Large amount of dust')
         return
       }

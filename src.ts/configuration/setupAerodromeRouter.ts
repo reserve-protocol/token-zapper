@@ -321,10 +321,6 @@ export const setupAerodromeRouter = async (universe: Universe) => {
     )
   )
 
-  console.log([...factories.values()].join(', '))
-
-  console.log(pools.length, 'pools loaded')
-
   const directSwaps = new DefaultMap<Token, DefaultMap<Token, AerodromePool[]>>(
     () => new DefaultMap(() => [])
   )

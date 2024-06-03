@@ -28,7 +28,7 @@ export const COMMON_TOKENS = {
 } as const
 
 export const RTOKENS = {
-  KNOX: '0x0bbf664d46becc28593368c97236faa0fb397595',
+  KNOX: '0x0bbf664d46becc28593368c97236faa0fb397595'
 }
 export const arbiConfig = makeConfig(
   ChainIds.Arbitrum,

@@ -498,6 +498,13 @@ export class Universe<const UniverseConf extends Config = Config> {
     )
     this.fairPriceCache = this.createCache<TokenQuantity, TokenQuantity>(
       async (qty: TokenQuantity) => {
+        if (this.rTokenDeployments.has(qty.token)) {
+          const outs = await this.rTokenDeployments.get(qty.token)!.burn.quote(
+            [qty],
+          )
+          const outsPriced = await Promise.all(outs.map(async (i) => (await this.fairPrice(i) ?? this.usd.zero)))
+          return outsPriced.reduce((a, b) => a.add(b), this.usd.zero)
+        }
         return (
           (await this.oracle?.quote(qty).catch(() => this.usd.zero)) ??
           this.usd.zero

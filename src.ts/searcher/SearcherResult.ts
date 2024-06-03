@@ -32,7 +32,8 @@ import {
   LiteralValue,
   Planner,
   Value,
-  encodeArg
+  encodeArg,
+  printPlan
 } from '../tx-gen/Planner'
 import { ToTransactionArgs } from './ToTransactionArgs'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
@@ -234,7 +235,7 @@ export abstract class BaseSearcherResult {
     const outputTokenOutput = this.outputToken.from(amount)
 
     // console.log(
-    //   `INITIAL_SIMULATION_OK: ${this.userInput} -> ${outputTokenOutput}`
+    //   `INITIAL_SIMULATION_OK: ${this.userInput} -> ${outputTokenOutput} + (${dustQuantities.join(", ")})`
     // )
 
     const [valueOfOut, ...dustValues] = await this.universe.perf.measurePromise(
@@ -246,6 +247,7 @@ export abstract class BaseSearcherResult {
         ),
       ])
     )
+    console.log(`${outputTokenOutput} => ${valueOfOut} `)
 
     let valueOfDust = this.universe.usd.zero
     for (const [usdValue] of dustValues) {

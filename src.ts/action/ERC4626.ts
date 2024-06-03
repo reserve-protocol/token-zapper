@@ -49,9 +49,7 @@ export const ERC4626DepositAction = (proto: string) =>
 
     public async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
       const x = (
-        await this.inst.callStatic.previewDeposit(amountIn, {
-          blockTag: 'pending',
-        })
+        await this.inst.callStatic.previewDeposit(amountIn)
       ).toBigInt()
       return [this.outputToken[0].fromBigInt(x)]
     }

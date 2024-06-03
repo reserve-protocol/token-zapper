@@ -154,7 +154,7 @@ export const setupFrxETH = async (
   const frxETH = await universe.getToken(Address.from(config.frxeth))
 
   const sfrxeth = await setupERC4626(universe, {
-    protocol: 'FraxETh',
+    protocol: 'FraxETH',
     vaultAddress: config.sfrxeth,
     slippage: 0n,
   })

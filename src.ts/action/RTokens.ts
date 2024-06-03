@@ -188,7 +188,7 @@ export class MintRTokenAction extends ReserveRTokenBase {
     if (this.universe.config.addresses.facadeAddress !== Address.ZERO) {
       const out = await this.rTokenDeployment.contracts.facade.callStatic
         .maxIssuableByAmounts(
-          this.address.address,
+          this.outputToken[0].address.address,
           amountsIn.map((i) => i.amount)
         )
         .then((amt) => this.rTokenDeployment.rToken.from(amt))
@@ -258,10 +258,7 @@ export class BurnRTokenAction extends ReserveRTokenBase {
         this.rTokenDeployment.contracts.assetRegistry.address,
         this.rTokenDeployment.contracts.basketHandler.address,
         this.rTokenDeployment.rToken.address.address,
-        amountIn.amount,
-        {
-          blockTag: "pending"
-        }
+        amountIn.amount
       )
       .then(
         async ([ercs, amts]) =>

@@ -6,7 +6,7 @@ import 'hardhat-deploy'
 import 'hardhat-deploy-ethers'
 import * as dotenv from 'dotenv'
 
-const conf = dotenv.config()
+dotenv.config()
 
 const config: HardhatUserConfig = {
   typechain: {

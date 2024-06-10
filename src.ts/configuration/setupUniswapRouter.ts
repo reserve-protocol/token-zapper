@@ -145,7 +145,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
     return true
   }
   get outputSlippage() {
-    return 5n
+    return 0n
   }
   async planV3Trade(
     planner: Planner,

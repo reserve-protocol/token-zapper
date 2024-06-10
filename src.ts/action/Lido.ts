@@ -229,7 +229,7 @@ class ETHToSTETH extends BaseStETHAction {
 
 abstract class BaseWSTETHAction extends BaseLidoAction {
   get outputSlippage() {
-    return 10n
+    return 0n
   }
   get returnsOutput() {
     return true

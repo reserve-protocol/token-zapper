@@ -75,7 +75,7 @@ export type Integrations = Partial<{
 }>
 export class Universe<const UniverseConf extends Config = Config> {
   private emitter = new EventEmitter()
-  public _finishResolving: () => void = () => {}
+  public _finishResolving: () => void = () => { }
   public initialized: Promise<void> = new Promise((resolve) => {
     this._finishResolving = resolve
   })
@@ -519,7 +519,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       return
     }
     for (const router of this.tradeVenues) {
-      router.router.onBlock(block)
+      router.router.onBlock(block, this.config.requoteTolerance)
     }
     for (const cache of this.caches) {
       cache.onBlock(block)
@@ -596,8 +596,8 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   public async zap(
     userInput: TokenQuantity,
-    rToken: Token|string,
-    userAddress: Address|string,
+    rToken: Token | string,
+    userAddress: Address | string,
     opts?: ToTransactionArgs
   ) {
     if (typeof userAddress === 'string') {
@@ -611,8 +611,8 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
   public async redeem(
     rTokenQuantity: TokenQuantity,
-    outputToken: Token|string,
-    userAddress: Address|string,
+    outputToken: Token | string,
+    userAddress: Address | string,
     opts?: ToTransactionArgs
   ) {
     if (typeof userAddress === 'string') {
@@ -633,7 +633,7 @@ function shuffle<T>(array: T[]): T[] {
   const out = [...array]
   for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[out[i], out[j]] = [out[j], out[i]]
+      ;[out[i], out[j]] = [out[j], out[i]]
   }
   return out
 }

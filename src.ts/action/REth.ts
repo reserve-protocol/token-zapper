@@ -98,7 +98,7 @@ export class ETHToRETH extends RocketPoolBase {
     return 'swapTo'
   }
   public get outputSlippage(): bigint {
-    return this.universe.config.defaultInternalTradeSlippage
+    return 0n
   }
   async plan(
     planner: Planner,
@@ -180,7 +180,7 @@ export class WETHToRETH extends RocketPoolBase {
     return 'swapTo'
   }
   public get outputSlippage(): bigint {
-    return this.universe.config.defaultInternalTradeSlippage
+    return 0n
   }
   async plan(
     planner: Planner,
@@ -270,7 +270,7 @@ export class RETHToWETH extends RocketPoolBase {
     return 'swapFrom'
   }
   public get outputSlippage(): bigint {
-    return 1n
+    return 0n
   }
   async plan(
     planner: Planner,
@@ -366,7 +366,7 @@ export class RETHToETH extends RocketPoolBase {
     return 'swapFrom'
   }
   public get outputSlippage(): bigint {
-    return this.universe.config.defaultInternalTradeSlippage
+    return 0n
   }
   async plan(
     planner: Planner,

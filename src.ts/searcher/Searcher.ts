@@ -286,17 +286,25 @@ export class Searcher<
             if (tradeAction.action) {
               const actionInput = subBranchBalances.toTokenQuantities()
 
-              const mintExec = await new SwapPlan(this.universe, [
-                tradeAction.action,
-              ]).quote(
-                actionInput,
-                this.universe.config.addresses.executorAddress
-              )
-              exchanges.push(mintExec)
-              precursorIntoUnitBasket.push(mintExec)
-              subBranchBalances.exchange(actionInput, mintExec.outputs)
+              try {
+                const mintExec = await new SwapPlan(this.universe, [
+                  tradeAction.action,
+                ]).quote(
+                  actionInput,
+                  this.universe.config.addresses.executorAddress
+                )
+                exchanges.push(mintExec)
+                precursorIntoUnitBasket.push(mintExec)
+                subBranchBalances.exchange(actionInput, mintExec.outputs)
 
-              balances.exchange(actionInput, mintExec.outputs)
+                balances.exchange(actionInput, mintExec.outputs)
+              } catch (e) {
+                console.error(
+                  `Failed to generate issueance plan, available tokens were ${actionInput.join(', ')}`
+                )
+                throw e
+              }
+
             }
             let subActionExchanges: SwapPath[] = []
             for (const subAction of tradeAction.postTradeActions ?? []) {

@@ -1,5 +1,4 @@
 import { Universe } from '..'
-import { BaseAction } from '../action/Action'
 import { RouterAction } from '../action/RouterAction'
 import { Token, TokenQuantity } from '../entities/Token'
 import { SwapPath } from '../searcher/Swap'
@@ -21,19 +20,13 @@ export class DexRouter {
     public readonly dynamicInput: boolean,
     public readonly supportedInputTokens = new Set<Token>(),
     public readonly supportedOutputTokens = new Set<Token>()
-  ) {}
-
-  private maxConcurrency = 20
-  public withMaxConcurrency(concurrency: number) {
-    this.maxConcurrency = concurrency
-    return this
-  }
+  ) { }
 
   private currentBlock = 0
-  public onBlock(block: number) {
+  public onBlock(block: number, tolerance: number) {
     this.currentBlock = block
     for (const [key, data] of [...this.cache.entries()]) {
-      if (data.timestamp !== this.currentBlock) {
+      if (data.timestamp + tolerance < this.currentBlock) {
         this.cache.delete(key)
         this.cache2.delete(key)
       }
@@ -52,9 +45,9 @@ export class DexRouter {
     slippage
   ) => {
     const key = `${input.amount}.${input.token.address.address}.${output.address.address}.${slippage}`
-    const prev = this.cache.get(key)
+    const prev = this.cache2.get(key)
     if (prev != null) {
-      return prev.path
+      return prev
     }
     const out = this.swap_(abort, input, output, slippage)
       .then((path) => {
@@ -110,12 +103,9 @@ export class TradingVenue {
       src: Token,
       dst: Token
     ) => Promise<RouterAction | null>
-  ) {}
+  ) { }
 
-  withMaxConcurrency(concurrency: number) {
-    this.router.withMaxConcurrency(concurrency)
-    return this
-  }
+
   get supportsDynamicInput() {
     return this.router.dynamicInput
   }

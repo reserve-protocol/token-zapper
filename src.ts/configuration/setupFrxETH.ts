@@ -1,26 +1,22 @@
 import { Address } from '../base/Address'
-import { TokenQuantity, type Token } from '../entities/Token'
 import {
-  IChainlinkAggregator__factory,
   IERC4626,
   IERC4626__factory,
   IFrxEthFraxOracle__factory,
-  IWrappedNative__factory,
   IfrxETHMinter,
-  IfrxETHMinter__factory,
+  IfrxETHMinter__factory
 } from '../contracts'
+import { TokenQuantity, type Token } from '../entities/Token'
 
-import * as gen from '../tx-gen/Planner'
 import {
   Action,
-  BaseAction,
   DestinationOptions,
-  InteractionConvention,
-  isMultiChoiceEdge,
+  InteractionConvention
 } from '../action/Action'
 import { UniverseWithERC20GasTokenDefined } from '../searcher/UniverseWithERC20GasTokenDefined'
-import { ERC4626Deployment, setupERC4626 } from './setupERC4626'
+import * as gen from '../tx-gen/Planner'
 
+import { Approval } from '../base/Approval'
 import { PriceOracle } from '../oracles/PriceOracle'
 
 abstract class BaseFrxETH extends Action('FrxETH') {
@@ -113,7 +109,7 @@ class SFrxETHMint extends BaseFrxETH {
     return 100000n
   }
   get outputSlippage(): bigint {
-    return 1n
+    return 0n
   }
   constructor(
     private readonly universe: UniverseWithERC20GasTokenDefined,
@@ -127,11 +123,16 @@ class SFrxETHMint extends BaseFrxETH {
       [sfrxeth],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      []
+      [
+        new Approval(
+          frxeth,
+          Address.from(vault.address),
+        )
+      ]
     )
   }
   get actionName() {
-    return 'FrxETH.mint'
+    return 'SFrxETH.mint'
   }
 
   public get returnsOutput(): boolean {
@@ -150,6 +151,7 @@ class SFrxETHMint extends BaseFrxETH {
   ): Promise<gen.Value[] | null> {
     const lib = gen.Contract.createContract(this.vault)
     const inp = inputs[0] || predictedInputs[0].amount
+
     planner.add(
       lib.deposit(inp, this.universe.execAddress.address)
     )
@@ -158,7 +160,7 @@ class SFrxETHMint extends BaseFrxETH {
 
   async quote(amountsIn: TokenQuantity[]) {
     return [
-      this.sfrxeth.from(
+      this.outputToken[0].from(
         await this.vault.previewDeposit(amountsIn[0].amount))
     ]
   }
@@ -217,7 +219,7 @@ class SFrxETHburn extends BaseFrxETH {
 
   async quote(amountsIn: TokenQuantity[]) {
     return [
-      this.frxeth.from(
+      this.outputToken[0].from(
         await this.vault.previewRedeem(amountsIn[0].amount))
     ]
   }
@@ -239,13 +241,6 @@ export const setupFrxETH = async (
   const frxETH = await universe.getToken(Address.from(config.frxeth))
   const sfrxETH = await universe.getToken(Address.from(config.sfrxeth))
 
-  const mintSfrxETH = new SFrxETHMint(
-    universe,
-    frxETH,
-    sfrxETH,
-    vaultInst
-  )
-
   const mintFrxETH = new FrxETHMint(
     universe,
     frxETH,
@@ -253,6 +248,12 @@ export const setupFrxETH = async (
   )
 
   const burnSfrxETH = new SFrxETHburn(
+    universe,
+    frxETH,
+    sfrxETH,
+    vaultInst
+  )
+  const mintSfrxETH = new SFrxETHMint(
     universe,
     frxETH,
     sfrxETH,
@@ -284,7 +285,6 @@ export const setupFrxETH = async (
         )
         .then((price) => universe.fairPrice(price).then((i) => i!))
   )
-  universe.oracles.push(frxEthOracle)
   const sfrxEthOracle = PriceOracle.createSingleTokenOracle(
     universe,
     sfrxETH,
@@ -297,5 +297,6 @@ export const setupFrxETH = async (
             .then((i) => o[0].into(universe.usd).mul(i))
         )
   )
+  universe.oracles.push(frxEthOracle)
   universe.oracles.push(sfrxEthOracle)
 }

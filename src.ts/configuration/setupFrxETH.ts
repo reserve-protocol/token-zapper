@@ -2,6 +2,8 @@ import { Address } from '../base/Address'
 import { TokenQuantity, type Token } from '../entities/Token'
 import {
   IChainlinkAggregator__factory,
+  IERC4626,
+  IERC4626__factory,
   IFrxEthFraxOracle__factory,
   IWrappedNative__factory,
   IfrxETHMinter,
@@ -54,7 +56,7 @@ interface IFrxETHConfig {
   frxethOracle: string
 }
 
-class FrxETH extends BaseFrxETH {
+class FrxETHMint extends BaseFrxETH {
   gasEstimate(): bigint {
     return 100000n
   }
@@ -65,7 +67,7 @@ class FrxETH extends BaseFrxETH {
   ) {
     super(
       frxeth.address,
-      [universe.wrappedNativeToken],
+      [universe.nativeToken],
       [frxeth],
       InteractionConvention.None,
       DestinationOptions.Callee,
@@ -75,6 +77,23 @@ class FrxETH extends BaseFrxETH {
   get actionName() {
     return 'FrxETH.mint'
   }
+  get outputSlippage(): bigint {
+    return 0n
+  }
+  get oneUsePrZap(): boolean {
+    return false
+  }
+  get returnsOutput(): boolean {
+    return false
+  }
+
+  quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return Promise.resolve([
+      this.frxeth.from(
+        amountsIn[0].amount
+      )
+    ])
+  }
 
   async plan(
     planner: gen.Planner,
@@ -84,14 +103,6 @@ class FrxETH extends BaseFrxETH {
   ): Promise<gen.Value[] | null> {
     const lib = gen.Contract.createContract(this.minter)
     const inp = inputs[0] || predictedInputs[0].amount
-    const wethlib = gen.Contract.createContract(
-      IWrappedNative__factory.connect(
-        this.universe.wrappedNativeToken.address.address,
-        this.universe.provider
-      )
-    )
-
-    planner.add(wethlib.withdraw(inp))
     planner.add(lib.submit(this.universe.execAddress.address).withValue(inp))
     return null
   }
@@ -101,16 +112,20 @@ class SFrxETHMint extends BaseFrxETH {
   gasEstimate(): bigint {
     return 100000n
   }
+  get outputSlippage(): bigint {
+    return 1n
+  }
   constructor(
     private readonly universe: UniverseWithERC20GasTokenDefined,
-    public readonly sfrxeth: ERC4626Deployment,
-    public readonly minter: IfrxETHMinter
+    public readonly frxeth: Token,
+    public readonly sfrxeth: Token,
+    public readonly vault: IERC4626
   ) {
     super(
-      sfrxeth.shareToken.address,
-      [universe.wrappedNativeToken],
-      [sfrxeth.shareToken],
-      InteractionConvention.None,
+      sfrxeth.address,
+      [frxeth],
+      [sfrxeth],
+      InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
       []
     )
@@ -119,26 +134,92 @@ class SFrxETHMint extends BaseFrxETH {
     return 'FrxETH.mint'
   }
 
+  public get returnsOutput(): boolean {
+    return false
+  }
+
+  public get oneUsePrZap(): boolean {
+    return false
+  }
+
   async plan(
     planner: gen.Planner,
     inputs: gen.Value[],
     _: Address,
     predictedInputs: TokenQuantity[]
   ): Promise<gen.Value[] | null> {
-    const lib = gen.Contract.createContract(this.minter)
+    const lib = gen.Contract.createContract(this.vault)
     const inp = inputs[0] || predictedInputs[0].amount
-    const wethlib = gen.Contract.createContract(
-      IWrappedNative__factory.connect(
-        this.universe.wrappedNativeToken.address.address,
-        this.universe.provider
-      )
-    )
-
-    planner.add(wethlib.withdraw(inp))
     planner.add(
-      lib.submitAndDeposit(this.universe.execAddress.address).withValue(inp)
+      lib.deposit(inp, this.universe.execAddress.address)
     )
     return null
+  }
+
+  async quote(amountsIn: TokenQuantity[]) {
+    return [
+      this.sfrxeth.from(
+        await this.vault.previewDeposit(amountsIn[0].amount))
+    ]
+  }
+}
+
+class SFrxETHburn extends BaseFrxETH {
+  gasEstimate(): bigint {
+    return 100000n
+  }
+  get outputSlippage(): bigint {
+    return 0n
+  }
+  constructor(
+    private readonly universe: UniverseWithERC20GasTokenDefined,
+    public readonly frxeth: Token,
+    public readonly sfrxeth: Token,
+    public readonly vault: IERC4626
+  ) {
+    super(
+      sfrxeth.address,
+      [sfrxeth],
+      [frxeth],
+      InteractionConvention.None,
+      DestinationOptions.Callee,
+      []
+    )
+  }
+  get actionName() {
+    return 'FrxETH.burn'
+  }
+
+  public get returnsOutput(): boolean {
+    return false
+  }
+
+  public get oneUsePrZap(): boolean {
+    return false
+  }
+
+  async plan(
+    planner: gen.Planner,
+    inputs: gen.Value[],
+    _: Address,
+    predictedInputs: TokenQuantity[]
+  ): Promise<gen.Value[] | null> {
+    const lib = gen.Contract.createContract(this.vault)
+    const inp = inputs[0] || predictedInputs[0].amount
+    planner.add(
+      lib.redeem(
+        inp,
+        this.universe.execAddress.address
+      )
+    )
+    return null
+  }
+
+  async quote(amountsIn: TokenQuantity[]) {
+    return [
+      this.frxeth.from(
+        await this.vault.previewRedeem(amountsIn[0].amount))
+    ]
   }
 }
 
@@ -150,14 +231,41 @@ export const setupFrxETH = async (
     config.minter,
     universe.provider
   )
+  const vaultInst = IERC4626__factory.connect(
+    config.sfrxeth,
+    universe.provider
+  )
 
   const frxETH = await universe.getToken(Address.from(config.frxeth))
+  const sfrxETH = await universe.getToken(Address.from(config.sfrxeth))
 
-  const sfrxeth = await setupERC4626(universe, {
-    protocol: 'FraxETH',
-    vaultAddress: config.sfrxeth,
-    slippage: 0n,
-  })
+  const mintSfrxETH = new SFrxETHMint(
+    universe,
+    frxETH,
+    sfrxETH,
+    vaultInst
+  )
+
+  const mintFrxETH = new FrxETHMint(
+    universe,
+    frxETH,
+    poolInst
+  )
+
+  const burnSfrxETH = new SFrxETHburn(
+    universe,
+    frxETH,
+    sfrxETH,
+    vaultInst
+  )
+
+  universe.defineMintable(
+    mintSfrxETH,
+    burnSfrxETH,
+    true
+  )
+
+  universe.addAction(mintFrxETH)
 
   const oracle = IFrxEthFraxOracle__factory.connect(
     config.frxethOracle,
@@ -179,10 +287,10 @@ export const setupFrxETH = async (
   universe.oracles.push(frxEthOracle)
   const sfrxEthOracle = PriceOracle.createSingleTokenOracle(
     universe,
-    sfrxeth.shareToken,
+    sfrxETH,
     () =>
-      sfrxeth.burn
-        .quote([sfrxeth.shareToken.one])
+      burnSfrxETH
+        .quote([sfrxETH.one])
         .then((o) =>
           frxEthOracle
             .quote(o[0].token)
@@ -190,16 +298,4 @@ export const setupFrxETH = async (
         )
   )
   universe.oracles.push(sfrxEthOracle)
-
-  const frxETHToETH = await universe.createTradeEdge(
-    frxETH,
-    universe.wrappedNativeToken
-  )!
-  if (isMultiChoiceEdge(frxETHToETH)) {
-    for (const edge of frxETHToETH.choices) {
-      universe.addAction(edge)
-    }
-  } else {
-    universe.addAction(frxETHToETH)
-  }
 }

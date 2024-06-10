@@ -247,7 +247,7 @@ export abstract class BaseSearcherResult {
         ),
       ])
     )
-    console.log(`${outputTokenOutput} => ${valueOfOut} `)
+    // console.log(`${outputTokenOutput} => ${valueOfOut} `)
 
     let valueOfDust = this.universe.usd.zero
     for (const [usdValue] of dustValues) {

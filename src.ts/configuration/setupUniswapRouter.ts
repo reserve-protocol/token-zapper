@@ -453,8 +453,6 @@ export const setupUniswapRouter = async (universe: Universe) => {
       throw new Error('Aborted')
     }
     const parsedRoute = await parseRoute(abort, route, input, slippage)
-    // console.log(`${input} -> ${output}: ${parsedRoute}`)
-
     return parsedRoute
   }
   let out!: DexRouter
@@ -463,9 +461,13 @@ export const setupUniswapRouter = async (universe: Universe) => {
     async (abort, input, output, slippage) => {
       try {
         const route = await computeRoute(abort, input, output, slippage)
-        return await new SwapPlan(universe, [
+        const plan = await new SwapPlan(universe, [
           new UniswapRouterAction(route, universe, out),
         ]).quote([input], universe.execAddress)
+        if (plan.outputs[0].amount === 0n) {
+          throw new Error('No output')
+        }
+        return plan
       } catch (e: any) {
         // console.error(e)
         throw e

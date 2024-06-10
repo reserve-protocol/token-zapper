@@ -533,6 +533,7 @@ export class Universe<const UniverseConf extends Config = Config> {
         return prev
       }
       const p = this.simulateZapFn_(params)
+      
       pending.set(k, p)
 
       p.then(() => {

@@ -21,7 +21,6 @@ import {
 import { MintZap, RedeemZap, ZapViaATrade } from './SearcherResult'
 import { SingleSwap, SwapPath, SwapPaths, SwapPlan } from './Swap'
 import { ToTransactionArgs } from './ToTransactionArgs'
-import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 
 /**
  * Takes some base basket set representing a unit of output, and converts it into some
@@ -299,6 +298,10 @@ export class Searcher<
 
                 balances.exchange(actionInput, mintExec.outputs)
               } catch (e) {
+                console.error(tradingBalances.toString())
+                console.error(
+                  tradeInputToTokenSet.map(i => i.describe().join("\n")).join(', '),
+                )
                 console.error(
                   `Failed to generate issueance plan, available tokens were ${actionInput.join(', ')}`
                 )
@@ -1022,13 +1025,7 @@ export class Searcher<
 
     await Promise.all(
       swapPlans.map(async (plan) => {
-        try {
-          await onResult(await plan.quote([input], destination))
-        } catch (e) {
-          // console.log(e)
-          // console.log(plan.toString())
-          // console.log(e)
-        }
+        await onResult(await plan.quote([input], destination))
       })
     )
     internalQuoterPerf()

@@ -12,7 +12,6 @@ export class DexRouter {
     }
   > = new Map()
 
-  private cache2: Map<string, SwapPath> = new Map()
 
   constructor(
     public readonly name: string,
@@ -28,42 +27,31 @@ export class DexRouter {
     for (const [key, data] of [...this.cache.entries()]) {
       if (data.timestamp + tolerance < this.currentBlock) {
         this.cache.delete(key)
-        this.cache2.delete(key)
       }
     }
   }
-
-  getPrevious(input: TokenQuantity, output: Token, slippage: bigint) {
-    const key = `${input.amount}.${input.token.address.address}.${output.address.address}.${slippage}`
-    return this.cache2.get(key)
-  }
-
-  public readonly swap: SwapSignature = async (
+  public readonly swap: SwapSignature = (
     abort,
     input,
     output,
     slippage
   ) => {
     const key = `${input.amount}.${input.token.address.address}.${output.address.address}.${slippage}`
-    const prev = this.cache2.get(key)
+    const prev = this.cache.get(key)
     if (prev != null) {
-      return prev
+      return prev.path
     }
     const out = this.swap_(abort, input, output, slippage)
-      .then((path) => {
-        this.cache2.set(key, path)
-        return path
-      })
-      .catch((e) => {
-        this.cache.delete(key)
-        throw e
-      });
     this.cache.set(key, {
       path: out,
       timestamp: this.currentBlock,
     })
 
-    return await out
+    out.catch(() => {
+      this.cache.delete(key)
+    })
+
+    return out
   }
 
   supportsSwap(inputTokenQty: TokenQuantity, output: Token) {

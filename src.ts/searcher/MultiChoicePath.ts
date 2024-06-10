@@ -169,7 +169,7 @@ const sortZaps = (
   txes.sort((l, r) => -l.tx.compare(r.tx))
 
   console.log(`${txes.length} / ${allQuotes.length} passed simulation:`)
-  for(const tx of txes) {
+  for (const tx of txes) {
     console.log(tx.tx.stats.toString())
   }
   return {
@@ -180,7 +180,7 @@ const sortZaps = (
   }
 }
 export const createConcurrentStreamingSeacher = (
-  searcher: Searcher<EthereumUniverse|BaseUniverse|ArbitrumUniverse>,
+  searcher: Searcher<EthereumUniverse | BaseUniverse | ArbitrumUniverse>,
   toTxArgs: ToTransactionArgs
 ) => {
   const abortController = new AbortController()
@@ -213,7 +213,7 @@ export const createConcurrentStreamingSeacher = (
       const dustVal = parseFloat(tx.stats.dust.valueUSD.format())
       const outVal = parseFloat(tx.stats.valueUSD.format()) // Total out (output + dust), excluding gas fees
       const inToOutRatio = outVal / inVal
-      
+
       // Reject if the dust is too high
       if ((inVal * maxAcceptableDustPercentable) < dustVal) {
         console.log('Large amount of dust')
@@ -233,9 +233,6 @@ export const createConcurrentStreamingSeacher = (
         setTimeout(() => abortController.abort(), 250);
       }
     } catch (e: any) {
-      // console.log(e)
-      // console.log('Failed to convert to transaction')
-      // console.log(e.stack)
     }
   }
 
@@ -298,7 +295,7 @@ export const chunkifyIterable = function* <T>(
 export class MultiChoicePath implements SwapPath {
   private index: number = 0
   constructor(
-    public readonly universe: EthereumUniverse|BaseUniverse|ArbitrumUniverse,
+    public readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
     public readonly paths: SwapPath[]
   ) {
     if (this.paths.length === 0) {

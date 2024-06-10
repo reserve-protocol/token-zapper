@@ -83,12 +83,12 @@ class FrxETHMint extends BaseFrxETH {
     return false
   }
 
-  quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return Promise.resolve([
+  async quote(amountsIn: TokenQuantity[]) {
+    return [
       this.frxeth.from(
         amountsIn[0].amount
       )
-    ])
+    ]
   }
 
   async plan(

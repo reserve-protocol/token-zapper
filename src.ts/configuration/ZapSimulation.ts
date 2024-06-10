@@ -208,6 +208,9 @@ export const makeCustomRouterSimulator = (
     const results = await resp.json()
     const resultOfZap = results[results.length - 1]
     if (resultOfZap.error) {
+      if (resultOfZap.error.value != null) {
+        return resultOfZap.error.value    
+      }
       throw new Error(resultOfZap.error.error)
     }
     return resultOfZap.success.value

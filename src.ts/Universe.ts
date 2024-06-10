@@ -8,6 +8,7 @@ import { LPToken } from './action/LPToken'
 import { Address } from './base/Address'
 import { DefaultMap } from './base/DefaultMap'
 import {
+  SimulateParams,
   SimulateZapTransactionFunction,
   createSimulateZapTransactionUsingProvider,
   createSimulatorThatUsesOneOfReservesCallManyProxies,
@@ -49,6 +50,7 @@ import { SwapPath } from './searcher/Swap'
 import { Contract } from './tx-gen/Planner'
 import { MultiChoicePath } from './searcher/MultiChoicePath'
 import { ToTransactionArgs } from './searcher/ToTransactionArgs'
+import { id } from 'ethers/lib/utils'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -468,12 +470,14 @@ export class Universe<const UniverseConf extends Config = Config> {
     return out
   }
 
+  public simulateZapFn: SimulateZapTransactionFunction;
+
   private constructor(
     public readonly provider: ethers.providers.JsonRpcProvider,
     public readonly config: UniverseConf,
     public readonly approvalsStore: ApprovalsStore,
     public readonly loadToken: TokenLoader,
-    public readonly simulateZapFn: SimulateZapTransactionFunction
+    private readonly simulateZapFn_: SimulateZapTransactionFunction
   ) {
     const nativeToken = config.nativeToken
     this.searcher = new Searcher(this as any)
@@ -512,6 +516,33 @@ export class Universe<const UniverseConf extends Config = Config> {
       },
       this.config.requoteTolerance
     )
+    const pending = new Map<string, Promise<string>>();
+    this.simulateZapFn = async (params) => {
+      const keyObj = {
+        data: params.data?.toString(),
+        value: params.value?.toString(),
+        block: this.currentBlock,
+        setup: {
+          inputTokenAddress: params.setup.inputTokenAddress,
+          amount: params.setup.userBalanceAndApprovalRequirements.toString()
+        }
+      }
+      const k = JSON.stringify(keyObj)
+      const prev = pending.get(k)
+      if (prev != null) {
+        return prev
+      }
+      const p = this.simulateZapFn_(params)
+      pending.set(k, p)
+
+      p.then(() => {
+        setTimeout(() => {
+          pending.delete(k)
+        }, 5000)
+      })
+      return p
+    }
+    // this.simulateZapFn = this.simulateZapFn_
   }
 
   public async updateBlockState(block: number, gasPrice: bigint) {

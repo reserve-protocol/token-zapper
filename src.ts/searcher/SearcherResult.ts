@@ -182,7 +182,7 @@ export abstract class BaseSearcherResult {
     //   `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
     // )
 
-    console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
+    // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
     // Try and decode the error message
     if (resp.startsWith('0x08c379a0')) {

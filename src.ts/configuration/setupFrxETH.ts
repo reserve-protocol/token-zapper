@@ -4,20 +4,21 @@ import {
   IERC4626__factory,
   IFrxEthFraxOracle__factory,
   IfrxETHMinter,
-  IfrxETHMinter__factory
+  IfrxETHMinter__factory,
 } from '../contracts'
 import { TokenQuantity, type Token } from '../entities/Token'
 
 import {
   Action,
   DestinationOptions,
-  InteractionConvention
+  InteractionConvention,
 } from '../action/Action'
 import { UniverseWithERC20GasTokenDefined } from '../searcher/UniverseWithERC20GasTokenDefined'
 import * as gen from '../tx-gen/Planner'
 
 import { Approval } from '../base/Approval'
 import { PriceOracle } from '../oracles/PriceOracle'
+import { ParamType } from '@ethersproject/abi'
 
 abstract class BaseFrxETH extends Action('FrxETH') {
   public get supportsDynamicInput() {
@@ -80,15 +81,11 @@ class FrxETHMint extends BaseFrxETH {
     return false
   }
   get returnsOutput(): boolean {
-    return false
+    return true
   }
 
   async quote(amountsIn: TokenQuantity[]) {
-    return [
-      this.frxeth.from(
-        amountsIn[0].amount
-      )
-    ]
+    return [this.frxeth.from(amountsIn[0].amount)]
   }
 
   async plan(
@@ -96,11 +93,13 @@ class FrxETHMint extends BaseFrxETH {
     inputs: gen.Value[],
     _: Address,
     predictedInputs: TokenQuantity[]
-  ): Promise<gen.Value[] | null> {
+  ): Promise<gen.Value[]> {
     const lib = gen.Contract.createContract(this.minter)
-    const inp = inputs[0] || predictedInputs[0].amount
-    planner.add(lib.submit(this.universe.execAddress.address).withValue(inp))
-    return null
+    const inp =
+      inputs[0] ||
+      gen.encodeArg(predictedInputs[0].amount, ParamType.from('uint256'))
+    planner.add(lib.submit().withValue(inp))!
+    return [inp]
   }
 }
 
@@ -123,12 +122,7 @@ class SFrxETHMint extends BaseFrxETH {
       [sfrxeth],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      [
-        new Approval(
-          frxeth,
-          Address.from(vault.address),
-        )
-      ]
+      [new Approval(frxeth, Address.from(vault.address))]
     )
   }
   get actionName() {
@@ -150,18 +144,17 @@ class SFrxETHMint extends BaseFrxETH {
     predictedInputs: TokenQuantity[]
   ): Promise<gen.Value[] | null> {
     const lib = gen.Contract.createContract(this.vault)
-    const inp = inputs[0] || predictedInputs[0].amount
+    const inp = inputs[0] || gen.encodeArg(predictedInputs[0].amount, ParamType.from('uint256'))
 
-    planner.add(
-      lib.deposit(inp, this.universe.execAddress.address)
-    )
+    planner.add(lib.deposit(inp, this.universe.execAddress.address))
     return null
   }
 
   async quote(amountsIn: TokenQuantity[]) {
     return [
       this.outputToken[0].from(
-        await this.vault.previewDeposit(amountsIn[0].amount))
+        await this.vault.previewDeposit(amountsIn[0].amount)
+      ),
     ]
   }
 }
@@ -207,20 +200,16 @@ class SFrxETHburn extends BaseFrxETH {
     predictedInputs: TokenQuantity[]
   ): Promise<gen.Value[] | null> {
     const lib = gen.Contract.createContract(this.vault)
-    const inp = inputs[0] || predictedInputs[0].amount
-    planner.add(
-      lib.redeem(
-        inp,
-        this.universe.execAddress.address
-      )
-    )
+    const inp = inputs[0] || gen.encodeArg(predictedInputs[0].amount, ParamType.from('uint256'))
+    planner.add(lib.redeem(inp, this.universe.execAddress.address))
     return null
   }
 
   async quote(amountsIn: TokenQuantity[]) {
     return [
       this.outputToken[0].from(
-        await this.vault.previewRedeem(amountsIn[0].amount))
+        await this.vault.previewRedeem(amountsIn[0].amount)
+      ),
     ]
   }
 }
@@ -233,38 +222,17 @@ export const setupFrxETH = async (
     config.minter,
     universe.provider
   )
-  const vaultInst = IERC4626__factory.connect(
-    config.sfrxeth,
-    universe.provider
-  )
+  const vaultInst = IERC4626__factory.connect(config.sfrxeth, universe.provider)
 
   const frxETH = await universe.getToken(Address.from(config.frxeth))
   const sfrxETH = await universe.getToken(Address.from(config.sfrxeth))
 
-  const mintFrxETH = new FrxETHMint(
-    universe,
-    frxETH,
-    poolInst
-  )
+  const mintFrxETH = new FrxETHMint(universe, frxETH, poolInst)
 
-  const burnSfrxETH = new SFrxETHburn(
-    universe,
-    frxETH,
-    sfrxETH,
-    vaultInst
-  )
-  const mintSfrxETH = new SFrxETHMint(
-    universe,
-    frxETH,
-    sfrxETH,
-    vaultInst
-  )
+  const burnSfrxETH = new SFrxETHburn(universe, frxETH, sfrxETH, vaultInst)
+  const mintSfrxETH = new SFrxETHMint(universe, frxETH, sfrxETH, vaultInst)
 
-  universe.defineMintable(
-    mintSfrxETH,
-    burnSfrxETH,
-    true
-  )
+  universe.defineMintable(mintSfrxETH, burnSfrxETH, true)
 
   universe.addAction(mintFrxETH)
 

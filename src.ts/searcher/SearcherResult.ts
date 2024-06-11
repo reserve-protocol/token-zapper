@@ -178,6 +178,7 @@ export abstract class BaseSearcherResult {
       return zapperInterface.decodeFunctionResult('zapERC20', resp)
         .out as ZapperOutputStructOutput
     }
+    // console.log(resp)
     // console.log(
     //   `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
     // )

@@ -141,9 +141,7 @@ contract Zapper is ReentrancyGuard {
         
     }
 
-    receive() external payable {
-        require(msg.sender == address(wrappedNative), "INVALID_CALLER");
-    }
+    receive() external payable {}
 
     function zapERC20(
         ZapERC20Params calldata params
@@ -197,6 +195,22 @@ contract Zapper is ReentrancyGuard {
             IERC20(address(wrappedNative)),
             address(zapperExecutor),
             wrappedNative.balanceOf(address(this))
+        );
+        out = zapInner(params);
+        out.gasUsed = startGas - gasleft();
+    }
+
+    function zapToETH(
+        ZapERC20Params calldata params
+    ) external payable nonReentrant returns (ZapperOutput memory out) {
+        uint256 startGas = gasleft();
+        require(params.amountIn != 0, "INVALID_INPUT_AMOUNT");
+        require(params.amountOut != 0, "INVALID_OUTPUT_AMOUNT");
+        SafeERC20.safeTransferFrom(
+            params.tokenIn,
+            msg.sender,
+            address(zapperExecutor),
+            params.amountIn
         );
         out = zapInner(params);
         out.gasUsed = startGas - gasleft();

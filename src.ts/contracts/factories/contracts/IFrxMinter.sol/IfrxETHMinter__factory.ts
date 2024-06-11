@@ -11,21 +11,9 @@ import type {
 
 const _abi = [
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "recipient",
-        type: "address",
-      },
-    ],
+    inputs: [],
     name: "submit",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "shares",
-        type: "uint256",
-      },
-    ],
+    outputs: [],
     stateMutability: "payable",
     type: "function",
   },

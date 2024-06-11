@@ -24,7 +24,7 @@ import type {
 
 export interface IfrxETHMinterInterface extends utils.Interface {
   functions: {
-    "submit(address)": FunctionFragment;
+    "submit()": FunctionFragment;
     "submitAndDeposit(address)": FunctionFragment;
   };
 
@@ -32,10 +32,7 @@ export interface IfrxETHMinterInterface extends utils.Interface {
     nameOrSignatureOrTopic: "submit" | "submitAndDeposit"
   ): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "submit",
-    values: [PromiseOrValue<string>]
-  ): string;
+  encodeFunctionData(functionFragment: "submit", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "submitAndDeposit",
     values: [PromiseOrValue<string>]
@@ -78,7 +75,6 @@ export interface IfrxETHMinter extends BaseContract {
 
   functions: {
     submit(
-      recipient: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -89,7 +85,6 @@ export interface IfrxETHMinter extends BaseContract {
   };
 
   submit(
-    recipient: PromiseOrValue<string>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -99,10 +94,7 @@ export interface IfrxETHMinter extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    submit(
-      recipient: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    submit(overrides?: CallOverrides): Promise<void>;
 
     submitAndDeposit(
       recipient: PromiseOrValue<string>,
@@ -114,7 +106,6 @@ export interface IfrxETHMinter extends BaseContract {
 
   estimateGas: {
     submit(
-      recipient: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -126,7 +117,6 @@ export interface IfrxETHMinter extends BaseContract {
 
   populateTransaction: {
     submit(
-      recipient: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

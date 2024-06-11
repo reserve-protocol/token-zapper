@@ -225,8 +225,9 @@ export class Searcher<
           return
         }
 
-        for (let i = 1; i < 3; i++) {
+        for (let i = 1; i <= 4; i++) {
           try {
+
             if (abortSignal.aborted) {
               return
             }
@@ -239,15 +240,15 @@ export class Searcher<
               i,
               false
             )
-
             if (
               potentialSwaps == null ||
               potentialSwaps.paths.length === 0 ||
               !balancesBeforeTrading.hasBalance(potentialSwaps.inputs)
             ) {
-              throw Error('')
+              continue
             }
             multiTrades.push(potentialSwaps)
+            
             return
           } catch (e) { }
         }
@@ -391,7 +392,7 @@ export class Searcher<
     )
 
     const aborter = new AbortController()
-    const prRound = this.config.routerDeadline / 4
+    const prRound = this.config.routerDeadline / 2
     const endTime = Date.now() + prRound
     for (const candidates of chunkifyIterable(
       allOptions,
@@ -402,7 +403,7 @@ export class Searcher<
       if (abortSignal.aborted) {
         break
       }
-      const maxWaitTime = AbortSignal.timeout(prRound + 500)
+      const maxWaitTime = AbortSignal.timeout(prRound + 1000)
 
       const p = new Promise((resolve) => {
         abortSignal.addEventListener('abort', () => {
@@ -762,21 +763,24 @@ export class Searcher<
         if (results >= 2) {
           return
         }
-        await onResult(
-          new ZapViaATrade(
-            this.universe,
-            userInput,
-            path.intoSwapPaths(this.universe),
-            signerAddress,
-            rToken,
-            startTime,
-            abortSignal
+        try {
+          await onResult(
+            new ZapViaATrade(
+              this.universe,
+              userInput,
+              path.intoSwapPaths(this.universe),
+              signerAddress,
+              rToken,
+              startTime,
+              abortSignal
+            )
           )
-        )
-        results += 1
-        if (results >= 2) {
-          ownController.abort()
-        }
+          results += 1
+          if (results >= 2) {
+            ownController.abort()
+          }
+        } catch(e) {}
+        
       },
       0.997
     )

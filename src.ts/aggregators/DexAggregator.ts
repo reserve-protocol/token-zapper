@@ -21,6 +21,14 @@ export class DexRouter {
     public readonly supportedOutputTokens = new Set<Token>()
   ) { }
 
+  private maxConcurrency = Infinity
+  private pending = 0
+  public withMaxConcurrency(
+    concurrency: number
+  ) {
+    this.maxConcurrency = concurrency
+    return this
+  }
   private currentBlock = 0
   public onBlock(block: number, tolerance: number) {
     this.currentBlock = block
@@ -41,6 +49,10 @@ export class DexRouter {
     if (prev != null) {
       return prev.path
     }
+    if (this.pending > this.maxConcurrency) {
+      throw new Error('Too many concurrent swaps')
+    }
+    this.pending++
     const out = this.swap_(abort, input, output, slippage)
     this.cache.set(key, {
       path: out,
@@ -48,10 +60,14 @@ export class DexRouter {
     })
 
     out.catch(() => {
-      this.cache.delete(key)
+      if (this.cache.get(key)?.path === out) {
+        this.cache.delete(key)
+      }
     })
 
-    return out
+    return out.finally(() => {
+      this.pending--
+    })
   }
 
   supportsSwap(inputTokenQty: TokenQuantity, output: Token) {

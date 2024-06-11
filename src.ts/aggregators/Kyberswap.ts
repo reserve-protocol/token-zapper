@@ -307,7 +307,7 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
       ]).quote([input], universe.execAddress)
     },
     false
-  )
+  ).withMaxConcurrency(4)
 
   return new TradingVenue(universe, dex)
 }

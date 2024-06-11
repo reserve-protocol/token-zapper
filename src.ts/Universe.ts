@@ -537,9 +537,9 @@ export class Universe<const UniverseConf extends Config = Config> {
       pending.set(k, p)
 
       p.then(() => {
-        setTimeout(() => {
+        if (pending.get(k) === p) {
           pending.delete(k)
-        }, 5000)
+        }
       })
       return p
     }

@@ -316,7 +316,7 @@ export const createEnso = (
       ]).quote([input], universe.execAddress)
     },
     true
-  )
+  ).withMaxConcurrency(4)
 
   return new TradingVenue(universe, dex)
 }

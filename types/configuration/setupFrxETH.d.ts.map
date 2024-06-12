@@ -1,0 +1,1 @@
+{"version":3,"file":"setupFrxETH.d.ts","sourceRoot":"","sources":["../../src.ts/configuration/setupFrxETH.ts"],"names":[],"mappings":"AAeA,OAAO,EAAE,gCAAgC,EAAE,MAAM,8CAA8C,CAAA;AAiC/F,UAAU,aAAa;IACrB,MAAM,EAAE,MAAM,CAAA;IACd,MAAM,EAAE,MAAM,CAAA;IACd,OAAO,EAAE,MAAM,CAAA;IACf,YAAY,EAAE,MAAM,CAAA;CACrB;AAmKD,eAAO,MAAM,WAAW,aACZ,gCAAgC,UAClC,aAAa,kBAmDtB,CAAA"}

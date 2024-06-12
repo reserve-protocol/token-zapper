@@ -201,7 +201,7 @@ class SFrxETHburn extends BaseFrxETH {
   ): Promise<gen.Value[] | null> {
     const lib = gen.Contract.createContract(this.vault)
     const inp = inputs[0] || gen.encodeArg(predictedInputs[0].amount, ParamType.from('uint256'))
-    planner.add(lib.redeem(inp, this.universe.execAddress.address))
+    planner.add(lib.redeem(inp, this.universe.execAddress.address, this.universe.execAddress.address))
     return null
   }
 

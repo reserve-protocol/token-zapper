@@ -269,7 +269,7 @@ export abstract class BaseSearcherResult {
 
     const gasUsed = zapperResult.gasUsed.toBigInt()
     return {
-      gasUsed: gasUsed + gasUsed / 12n,
+      gasUsed: gasUsed + 100000n + gasUsed / 10n,
       simulatedOutputs,
       totalValue,
       swaps: new SwapPaths(

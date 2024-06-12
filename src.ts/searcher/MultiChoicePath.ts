@@ -230,7 +230,7 @@ export const createConcurrentStreamingSeacher = (
       })
       const resCount = results.length
       if (resCount >= searcher.config.searcherMinRoutesToProduce) {
-        setTimeout(() => abortController.abort(), 250);
+        setTimeout(() => abortController.abort(), 500);
       }
     } catch (e: any) {
     }

@@ -27,6 +27,7 @@ import { Universe } from './Universe'
 import { createKyberswap } from './aggregators/Kyberswap'
 import { createEnso } from './aggregators/Enso'
 export { type Config } from './configuration/ChainConfiguration'
+export { makeCustomRouterSimulator } from './configuration/ZapSimulation'
 
 export const configuration = {
   utils: {

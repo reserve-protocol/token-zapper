@@ -51,7 +51,6 @@ export const findPrecursorTokenSet = async (
   const recourseOn = async (
     qty: TokenQuantity
   ): Promise<BasketTokenSourcingRuleApplication> => {
-    // console.log(qty)
     const tokenSourcingRule = specialRules.get(qty.token)
     if (tokenSourcingRule != null) {
       return await tokenSourcingRule(
@@ -162,6 +161,7 @@ export class Searcher<
      * PHASE 2: Trade inputQuantity into precursor set
      */
     const precursorTokenBasket = precursorTokens.precursorToTradeFor
+    // console.log(precursorTokens.describe().join('\n'))
     // console.log(precursorTokenBasket.join(', '))
     // Split input by how large each token in precursor set is worth.
     // Example: We're trading 0.1 ETH, and precursorTokenSet(rToken) = (0.5 usdc, 0.5 usdt)

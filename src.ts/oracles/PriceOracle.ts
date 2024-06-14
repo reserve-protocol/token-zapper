@@ -11,13 +11,16 @@ export class PriceOracle extends Cached<Token, TokenQuantity> {
     private readonly supportedTokens: Set<Token> = new Set()
   ) {
     super(
-      (k) =>
-        fetchPrice(k).then((v) => {
-          if (v == null) {
-            throw new Error('Price not found')
-          }
-          return v
-        }),
+      async (k) => {
+        if (!this.supports(k)) {
+          throw new Error(`Unsupported token ${k}`)
+        }
+        const v = await fetchPrice(k)
+        if (v == null) {
+          throw new Error('Price not found')
+        }
+        return v
+      },
       ltvBlocks,
       getCurrentBlock
     )

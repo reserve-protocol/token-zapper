@@ -235,10 +235,7 @@ class KyberAction extends Action('Kyberswap') {
           this.request.swap.data.routerAddress
         },swap=${predicted.join(', ')} -> ${minOut.join(
           ', '
-        )},route=${this.request.req.data.routeSummary.route
-          .flat()
-          .map((i) => `(${i.poolType})`)
-          .join(' -> ')}`
+        )},pools=${[...this.request.addresesInUse].join(", ")}`
       )
       return null
     } catch (e: any) {

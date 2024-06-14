@@ -1,3 +1,4 @@
+import { ethers } from 'ethers'
 import { type Universe } from '../Universe'
 import { BTC_TOKEN_ADDRESS, GAS_TOKEN_ADDRESS } from '../base/constants'
 import { makeConfig } from './ChainConfiguration'
@@ -52,6 +53,7 @@ export const arbiConfig = makeConfig(
     ethBalanceOf: '0x0326bF8E7efEBAe81898d366c1491D196d143a4C',
     uniV3Router: '0x922eDac4D5c6702192473ec77a294edD834Fb2af',
     curveStableSwapNGHelper: '0x323EB0B5e2a59d5565E59CBEb965f00298d3A2a1',
+    curveCryptoFactoryHelper: ethers.constants.AddressZero
   } as const,
   {
     blocktime: 250,

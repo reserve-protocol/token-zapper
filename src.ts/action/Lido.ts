@@ -22,6 +22,7 @@ import {
   InteractionConvention,
 } from './Action'
 import { constants } from 'ethers'
+import { DepositAction, WithdrawAction } from './WrappedNative'
 
 export class LidoDeployment {
   public readonly contracts: {
@@ -85,13 +86,9 @@ export class LidoDeployment {
     const wrap = new STETHToWSTETH(this)
     const unwrap = new WSTETHToSTETH(this)
     const stake = new ETHToSTETH(this)
-    const wethMintable = universe.wrappedTokens.get(universe.wrappedNativeToken)
+    const unwrapWeth = new WithdrawAction(universe, universe.wrappedNativeToken)
 
-    if (!wethMintable) {
-      throw new Error('WETH is not mintable??')
-    }
-
-    const stakeFromWETH = new (wethMintable.burn.combine(stake))(universe)
+    const stakeFromWETH = new (unwrapWeth.combine(stake))(universe)
 
     universe.defineMintable(wrap, unwrap, true)
     universe.addAction(stake, steth.address)

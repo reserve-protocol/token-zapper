@@ -181,7 +181,7 @@ export const makeCustomRouterSimulator = (
           from: input.from,
           to: input.to,
           data: input.data,
-          gas: '0x' + (10_000_000).toString(16),
+          gas: '0x' + (25_000_000).toString(16),
           gasPrice: '0x1',
           value: '0x' + input.value.toString(16),
         },
@@ -196,7 +196,7 @@ export const makeCustomRouterSimulator = (
       },
     }
 
-    const encodedBody = JSON.stringify(body)
+    const encodedBody = JSON.stringify(body, null, 2)
 
     const resp = await fetch(url, {
       method: 'POST',
@@ -209,7 +209,7 @@ export const makeCustomRouterSimulator = (
     const resultOfZap = results[results.length - 1]
     if (resultOfZap.error) {
       if (resultOfZap.error.value != null) {
-        return resultOfZap.error.value    
+        return resultOfZap.error.value
       }
       throw new Error(resultOfZap.error.error)
     }

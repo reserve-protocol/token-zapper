@@ -77,7 +77,7 @@ export type Integrations = Partial<{
 }>
 export class Universe<const UniverseConf extends Config = Config> {
   private emitter = new EventEmitter()
-  public _finishResolving: () => void = () => { }
+  public _finishResolving: () => void = () => {}
   public initialized: Promise<void> = new Promise((resolve) => {
     this._finishResolving = resolve
   })
@@ -470,7 +470,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     return out
   }
 
-  public simulateZapFn: SimulateZapTransactionFunction;
+  public simulateZapFn: SimulateZapTransactionFunction
 
   private constructor(
     public readonly provider: ethers.providers.JsonRpcProvider,
@@ -503,20 +503,23 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.fairPriceCache = this.createCache<TokenQuantity, TokenQuantity>(
       async (qty: TokenQuantity) => {
         if (this.rTokenDeployments.has(qty.token)) {
-          const outs = await this.rTokenDeployments.get(qty.token)!.burn.quote(
-            [qty],
+          const outs = await this.rTokenDeployments
+            .get(qty.token)!
+            .burn.quote([qty])
+          const outsPriced = await Promise.all(
+            outs.map(async (i) => (await this.fairPrice(i)) ?? this.usd.zero)
           )
-          const outsPriced = await Promise.all(outs.map(async (i) => (await this.fairPrice(i) ?? this.usd.zero)))
-          return outsPriced.reduce((a, b) => a.add(b), this.usd.zero)
+          const sum = outsPriced.reduce((a, b) => a.add(b), this.usd.zero)
+          return sum
         }
-        return (
+        const out =
           (await this.oracle?.quote(qty).catch(() => this.usd.zero)) ??
           this.usd.zero
-        )
+        return out
       },
       this.config.requoteTolerance
     )
-    const pending = new Map<string, Promise<string>>();
+    const pending = new Map<string, Promise<string>>()
     this.simulateZapFn = async (params) => {
       const keyObj = {
         data: params.data?.toString(),
@@ -524,8 +527,8 @@ export class Universe<const UniverseConf extends Config = Config> {
         block: this.currentBlock,
         setup: {
           inputTokenAddress: params.setup.inputTokenAddress,
-          amount: params.setup.userBalanceAndApprovalRequirements.toString()
-        }
+          amount: params.setup.userBalanceAndApprovalRequirements.toString(),
+        },
       }
       const k = JSON.stringify(keyObj)
       const prev = pending.get(k)
@@ -533,7 +536,7 @@ export class Universe<const UniverseConf extends Config = Config> {
         return prev
       }
       const p = this.simulateZapFn_(params)
-      
+
       pending.set(k, p)
 
       p.then(() => {
@@ -638,7 +641,12 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (typeof rToken === 'string') {
       rToken = await this.getToken(Address.from(rToken))
     }
-    const out = await this.searcher.zapIntoRToken(userInput, rToken, userAddress, opts)
+    const out = await this.searcher.zapIntoRToken(
+      userInput,
+      rToken,
+      userAddress,
+      opts
+    )
     return out.bestZapTx.tx
   }
   public async redeem(
@@ -653,7 +661,12 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (typeof outputToken === 'string') {
       outputToken = await this.getToken(Address.from(outputToken))
     }
-    const out = await this.searcher.redeem(rTokenQuantity, outputToken, userAddress, opts)
+    const out = await this.searcher.redeem(
+      rTokenQuantity,
+      outputToken,
+      userAddress,
+      opts
+    )
     return out.bestZapTx.tx
   }
 
@@ -665,7 +678,7 @@ function shuffle<T>(array: T[]): T[] {
   const out = [...array]
   for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-      ;[out[i], out[j]] = [out[j], out[i]]
+    ;[out[i], out[j]] = [out[j], out[i]]
   }
   return out
 }

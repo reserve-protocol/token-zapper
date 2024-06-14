@@ -60,7 +60,8 @@ export class ZapperTokenQuantityPrice extends Cached<
   private async tokenPrice(token: Token) {
     for (const oracle of this.universe.oracles) {
       try {
-        return await oracle.quote(token)
+        const out = await oracle.quote(token)
+        return out
       } catch (e) { }
     }
     throw new Error('Unable to price ' + token)

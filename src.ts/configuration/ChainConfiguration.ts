@@ -68,6 +68,7 @@ export const makeConfig = <
     ethBalanceOf: string
     uniV3Router: string
     curveStableSwapNGHelper: string
+    curveCryptoFactoryHelper: string
   },
   options: {
     blocktime: Blocktime

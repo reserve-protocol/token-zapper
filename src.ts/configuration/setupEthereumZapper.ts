@@ -124,4 +124,5 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       return vault
     })
   )
+  console.log("Etheruem zapper setup complete")
 }

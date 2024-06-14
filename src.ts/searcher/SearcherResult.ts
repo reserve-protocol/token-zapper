@@ -172,6 +172,7 @@ export abstract class BaseSearcherResult {
     const resp = await this.universe.simulateZapFn(
       opts
     )
+    // console.log(resp)
     // If the response starts with a pointer to the first location of the output tuple
     // when we know if can be decoded by the zapper interface
     if (resp.startsWith("0x0000000000000000000000000000000000000000000000000000000000000020")) {

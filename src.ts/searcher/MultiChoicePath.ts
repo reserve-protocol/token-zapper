@@ -216,11 +216,13 @@ export const createConcurrentStreamingSeacher = (
 
       // Reject if the dust is too high
       if ((inVal * maxAcceptableDustPercentable) < dustVal) {
+        console.log(tx.stats.toString())
         console.log('Large amount of dust')
         return
       }
       // Reject if the zap looses too much value
       if (inToOutRatio < maxAcceptableValueLossForRejectingZap) {
+        console.log(tx.stats.toString())
         console.log('Low in to out ratio')
         return
       }
@@ -230,7 +232,7 @@ export const createConcurrentStreamingSeacher = (
       })
       const resCount = results.length
       if (resCount >= searcher.config.searcherMinRoutesToProduce) {
-        setTimeout(() => abortController.abort(), 500);
+        setTimeout(() => abortController.abort(), 1000);
       }
     } catch (e: any) {
     }

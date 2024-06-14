@@ -19,11 +19,12 @@ export const setupWrappedGasToken = async <
     k!
   );
 
-  const wrappedGasTokenActions = universe.defineMintable(
-    new DepositAction(universe, wrappedToken),
-    new WithdrawAction(universe, wrappedToken),
-    true
-  );
+  const wrappedGasTokenActions = {
+    burn: new DepositAction(universe, wrappedToken),
+    mint: new WithdrawAction(universe, wrappedToken),
+  }
+  universe.addAction(wrappedGasTokenActions.burn)
+  universe.addAction(wrappedGasTokenActions.mint)
   universe.tokenTradeSpecialCases.set(
     universe.nativeToken,
     async (input: TokenQuantity, dest: Address) => {

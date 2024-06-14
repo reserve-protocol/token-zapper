@@ -35,16 +35,3 @@ interface ICurveStableSwapNG {
 }
 
 
-
-contract CurveStableSwapNGHelper {
-    function addliquidity(
-        uint256 amount,
-        uint256 coinIdx,
-        ICurveStableSwapNG pool,
-        uint256 minOut
-    ) external returns (uint256) {
-        uint256[] memory amounts = new uint256[](pool.N_COINS());
-        amounts[coinIdx] = amount;
-        return pool.add_liquidity(amounts, minOut);
-    }
-}

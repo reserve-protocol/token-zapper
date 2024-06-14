@@ -59,8 +59,6 @@ export const COMMON_TOKENS = {
   saEthPyUSD: '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b',
   steakPYUSD: '0xbEEF02e5E13584ab96848af90261f0C8Ee04722a',
 
-  'stkcvxETH+ETH-f': '0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7',
-
   reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
   steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
   wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
@@ -78,6 +76,7 @@ export const RTOKENS = {
   'USDC+': '0xFc0B1EEf20e4c68B3DCF36c4537Cfa7Ce46CA70b',
   USD3: '0x0d86883faf4ffd7aeb116390af37746f45b6f378',
   rgUSD: '0x78da5799cf427fee11e9996982f4150ece7a99a7',
+  dgnETH: '0x005f893ecd7bf9667195642f7649da8163e23658',
 } as const
 
 export const ethereumConfig = makeConfig(
@@ -102,6 +101,7 @@ export const ethereumConfig = makeConfig(
     ethBalanceOf: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
     uniV3Router: '0x32F59e2881e1DC9a808DE8C37545FE33F2B617A9',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
+    curveCryptoFactoryHelper: '0xf4fe93bb762A0b890B08C96FE99a6F405c44B360',
   },
   {
     blocktime: 12000,
@@ -160,22 +160,34 @@ export const PROTOCOL_CONFIGS = {
       frxeth: '0x5E8422345238F34275888049021821E8E08CAa1f',
       sfrxeth: '0xac3E018457B222d93114458476f3E3416Abbe38F',
     },
-    ngPools: {
-      PYUSDC: '0x383E6b4437b59fff47B619CBA855CA29342A8559',
-    },
+    // Tells setupCurve.ts to not use the generic curve implementation, but use our own
+    specialCases: [
+      {
+        pool: '0x7fb53345f1B21aB5d9510ADB38F7d3590BE6364b',
+        type: 'factory-crypto',
+      },
+      {
+        pool: '0x383E6b4437b59fff47B619CBA855CA29342A8559',
+        type: 'ngPool',
+      },
+    ] as {
+      pool: string
+      type: 'factory-crypto' | 'ngPool'
+    }[],
   },
   convex: {
     boosterAddress: '0xF403C135812408BFbE8713b5A23a04b3D48AAE31',
 
     wrappers: {
-      cvx3Pool: '0x24CDc6b4Edd3E496b7283D94D93119983A61056a',
-      cvxPayPool: '0x511daB8150966aFfE15F0a5bFfBa7F4d2b62DEd4',
-      cvxMIM3Pool: '0x3e8f7EDc03E0133b95EcB4dD2f72B5027E695413',
-      cvxETHPlusETH: '0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7',
-      cvxCrvUSDUSDC: '0x6ad24C0B8fD4B594C6009A7F7F48450d9F56c6b8',
-      cvxCrvUSDUSDT: '0x5d1B749bA7f689ef9f260EDC54326C48919cA88b',
-      stkcvxPYUSDUSDC: '0x6Cd8b88Dd65B004A82C33276C7AD3Fd4F569e254',
+      stkcvx3Pool: '0x24CDc6b4Edd3E496b7283D94D93119983A61056a',
+      stkcvxPayPool: '0x511daB8150966aFfE15F0a5bFfBa7F4d2b62DEd4',
+      stkcvxMIM3Pool: '0x3e8f7EDc03E0133b95EcB4dD2f72B5027E695413',
+      stkcvxCrvUSDUSDC: '0x6ad24C0B8fD4B594C6009A7F7F48450d9F56c6b8',
+      stkcvxCrvUSDUSDT: '0x5d1B749bA7f689ef9f260EDC54326C48919cA88b',
 
+      'stkcvxETH+ETH-f': '0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7',
+
+      stkcvxPYUSDUSDC: '0x6Cd8b88Dd65B004A82C33276C7AD3Fd4F569e254',
       'stkcvxeUSD3CRV-f': '0xBF2FBeECc974a171e319b6f92D8f1d042C6F1AC3',
       'stkcvxeUSD3CRV-f2': '0x3BECE5EC596331033726E5C6C188c313Ff4E3fE5',
       'stkcvxeUSD3CRV-f3': '0x8e33D5aC344f9F2fc1f2670D45194C280d4fBcF1',

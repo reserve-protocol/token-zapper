@@ -22,6 +22,13 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     universe.config.requoteTolerance,
     'BaseOracles',
     async (token: Token) => {
+      if (token === universe.wrappedNativeToken) {
+        const oracle = registry.getOracle(universe.nativeToken.address, universe.usd.address)
+        if (oracle == null) {
+          return null
+        }
+        return universe.usd.from(await oracle.callStatic.latestAnswer())
+      }
       if (token === wsteth) {
         const oraclewstethToEth = registry.getOracle(
           token.address,

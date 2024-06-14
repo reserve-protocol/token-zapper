@@ -2,19 +2,20 @@ import ethereumPools from '../configuration/data/ethereum/curvePoolList.json'
 import { UniverseWithCommonBaseTokens } from '../searcher/UniverseWithERC20GasTokenDefined'
 import { Address } from '../base/Address'
 import { Token, TokenQuantity } from '../entities/Token'
-import { LPToken } from '../action/LPToken'
 import { DefaultMap } from '../base/DefaultMap'
-import { BaseAction } from '../action/Action'
 import {
   CurveStableSwapNGPool,
   setupCurveStableSwapNGPool,
 } from '../action/CurveStableSwapNG'
+
+import {
+  CurveFactoryCryptoPool,
+  setupCurveFactoryCryptoPool,
+} from '../action/CurveFactoryCryptoPool'
 import { loadCurve } from '../action/Curve'
 import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { Universe } from '..'
-import { MultiChoicePath } from '../searcher/MultiChoicePath'
 import { RouterAction } from '../action/RouterAction'
-import { curve } from '../curve-js/src/curve'
 
 type JSONPoolDataGeneric = (typeof ethereumPools.data.poolData)[number]
 type JSONCoin = Omit<
@@ -274,9 +275,10 @@ type Restriction = {
 interface ICurveConfig {
   allowedTradeInputs: Restriction
   allowedTradeOutput: Restriction
-  ngPools: {
-    [lpTokenName: string]: string
-  }
+  specialCases: {
+    pool: string
+    type: 'factory-crypto' | 'ngPool'
+  }[]
 }
 
 export class CurveIntegration {
@@ -288,8 +290,12 @@ export class CurveIntegration {
     public readonly curvePools: Awaited<
       ReturnType<typeof convertPoolListIntoMaps<CurvePool>>
     >,
-    public readonly ngCurvePools: Awaited<
-      ReturnType<typeof convertPoolListIntoMaps<CurveStableSwapNGPool>>
+    public readonly specialCasePools: Awaited<
+      ReturnType<
+        typeof convertPoolListIntoMaps<
+          CurveStableSwapNGPool | CurveFactoryCryptoPool
+        >
+      >
     >
   ) {
     this.venue = new TradingVenue(universe, dex, async (a, b) => {
@@ -311,11 +317,17 @@ export class CurveIntegration {
     const curveApi = await loadCurve(universe)
     const normalCurvePoolList = await loadPoolList(universe)
     const ngPoolList = await Promise.all(
-      Object.entries(config.ngPools).map(async ([_, poolAddress]) => {
-        return await setupCurveStableSwapNGPool(
-          universe,
-          await universe.getToken(Address.from(poolAddress))
-        )
+      config.specialCases.map(async ({ pool, type }) => {
+        if (type === 'ngPool') {
+          return await setupCurveStableSwapNGPool(
+            universe,
+            await universe.getToken(Address.from(pool))
+          )
+        }
+        if (type === 'factory-crypto') {
+          return await setupCurveFactoryCryptoPool(universe, Address.from(pool))
+        }
+        throw new Error(`Unknown type ${type}`)
       })
     )
 
@@ -347,14 +359,14 @@ export class CurveIntegration {
       new Set(outputTradeRestrictions)
     )
 
-    const ngPools = await convertPoolListIntoMaps(ngPoolList)
+    const specialCasePools = await convertPoolListIntoMaps(ngPoolList)
 
     const out = new CurveIntegration(
       universe,
       curveApi,
       dex,
       normalCurvePoolList,
-      ngPools
+      specialCasePools
     )
 
     const withdrawals = (
@@ -376,9 +388,12 @@ export class CurveIntegration {
   }
 
   async findWithdrawActions(lpToken: Token) {
+    if (this.specialCasePools.poolByLPToken.has(lpToken)) {
+      const p = this.specialCasePools.poolByLPToken.get(lpToken)!
+      return Object.values(p.actions).map(({ remove }) => remove)
+    }
     if (this.curvePools.poolByLPToken.has(lpToken)) {
       const out = this.curveApi.getPoolByLPMap.get(lpToken)
-
       if (out != null) {
         const actions = await Promise.all(
           out.underlyingTokens.map(async (outToken) => {
@@ -401,14 +416,19 @@ export class CurveIntegration {
         }
       }
     }
-    if (this.ngCurvePools.poolByLPToken.has(lpToken)) {
-      const p = this.ngCurvePools.poolByLPToken.get(lpToken)!
-      return Object.values(p.actions).map(({ remove }) => remove)
-    }
     return []
   }
 
   async findDepositAction(input: TokenQuantity, lpToken: Token) {
+    if (this.specialCasePools.poolByLPToken.has(lpToken)) {
+      const out = this.specialCasePools.poolByLPToken
+        .get(lpToken)!
+        .actions.find((action) => action.add.inputToken[0] === input.token)
+      if (out != null) {
+        return out.add
+      }
+      throw new Error(`Could not find add liquidity action for ${input}`)
+    }
     if (this.curvePools.poolByLPToken.has(lpToken)) {
       const out = await this.curveApi
         .createRouterEdge(
@@ -424,15 +444,11 @@ export class CurveIntegration {
         return out
       }
     }
-    if (this.ngCurvePools.poolByLPToken.has(lpToken)) {
-      return this.ngCurvePools.poolByLPToken
-        .get(lpToken)!
-        .getAddLiquidityAction(input.token).add
-    }
+
     throw new Error(`No pool found for ${lpToken}`)
   }
 
   toString() {
-    return `CurveIntegration(curveV2Pools=${this.curvePools.poolInst.length}, curveNGPools=${this.ngCurvePools.poolInst.length})`
+    return `CurveIntegration(curveV2Pools=${this.curvePools.poolInst.length}, curveNGPools=${this.specialCasePools.poolInst.length})`
   }
 }

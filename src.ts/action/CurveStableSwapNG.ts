@@ -9,7 +9,13 @@ import {
 } from '../contracts'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
-import { Action, DestinationOptions, InteractionConvention } from './Action'
+import {
+  Action,
+  BaseAction,
+  DestinationOptions,
+  InteractionConvention,
+} from './Action'
+
 abstract class NGSwapBase extends Action('CurveStableSwapNG') {
   gasEstimate(): bigint {
     return 10000000n
@@ -68,8 +74,8 @@ class NGSwapBurn extends NGSwapBase {
 }
 export class CurveStableSwapNGPool {
   public readonly actions: {
-    add: CurveStableSwapNGAddLiquidity
-    remove: CurveStableSwapNGRemoveLiquidity
+    add: BaseAction
+    remove: BaseAction
   }[]
 
   get outputSlippage() {
@@ -119,25 +125,6 @@ export class CurveStableSwapNGPool {
     return `CurveStableSwapNGPool(addr=${this.pool.address}, lp=${
       this.pool
     }, coins=[${this.underlying.join(', ')}])`
-  }
-
-  getAddLiquidityAction(input: Token) {
-    const out = this.actions.find(
-      (action) => action.add.inputToken[0] === input
-    )
-    if (out) {
-      return out
-    }
-    throw new Error(`Could not find add liquidity action for ${input}`)
-  }
-  getRemoveLiquidityAction(input: Token) {
-    const out = this.actions.find(
-      (action) => action.remove.outputToken[0] === input
-    )
-    if (out) {
-      return out
-    }
-    throw new Error(`Could not find remove liquidity action for ${input}`)
   }
 }
 

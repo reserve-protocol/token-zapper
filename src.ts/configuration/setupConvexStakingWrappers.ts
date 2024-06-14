@@ -29,6 +29,7 @@ import {
   encodeArg,
 } from '../tx-gen/Planner'
 import { CurveIntegration, CurvePool } from './setupCurve'
+import { PriceOracle } from '../oracles/PriceOracle'
 
 type ConvexStakingWrapperAddresss = string
 type ConvexStakingWrapperName = string
@@ -258,22 +259,29 @@ class ConvexStakingWrapper {
         continue
       }
 
-      handlers.set(token, async (unit) =>
-        BasketTokenSourcingRuleApplication.singleBranch(
-          [unit.into(token)],
+      handlers.set(token, async (unit) => {
+        const edge = await this.curve.findDepositAction(token.one, curveLpToken)
+        const out = await edge.quote([token.one])
+
+        const inputQty = unit.div(out[0]).into(token)
+        return BasketTokenSourcingRuleApplication.singleBranch(
+          [inputQty],
           [
-            PostTradeAction.fromAction(
-              await this.curve.findDepositAction(
-                unit.into(token),
-                curveLpToken
-              ),
-              true
-            ),
+            PostTradeAction.fromAction(edge, true),
             PostTradeAction.fromAction(this.curveLpToWrapper, true),
           ]
         )
-      )
+      })
     }
+
+    const oracle = PriceOracle.createSingleTokenOracle(
+      this.universe,
+      this.wrapperToken,
+      async () =>
+        (await this.universe.fairPrice(this.curvePool.lpToken.one)) ??
+        this.universe.usd.zero
+    )
+    this.universe.oracles.push(oracle)
 
     this.universe.defineTokenSourcingRule(
       this.wrapperToken,
@@ -353,8 +361,8 @@ class ConvexStakingWrapper {
       curveIntegration.curvePools.poolByLPToken.get(lpToken)! ??
       curveIntegration.curvePools.poolByPoolAddress.get(lpToken.address)!
     const ngPool =
-      curveIntegration.ngCurvePools.poolByLPToken.get(lpToken)! ??
-      curveIntegration.ngCurvePools.poolByPoolAddress.get(lpToken.address)!
+      curveIntegration.specialCasePools.poolByLPToken.get(lpToken)! ??
+      curveIntegration.specialCasePools.poolByPoolAddress.get(lpToken.address)!
 
     if (stdPool == null && ngPool == null) {
       throw new Error(

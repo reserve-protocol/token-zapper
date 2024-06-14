@@ -76,7 +76,7 @@ const whiteList = new Set(
     '0xb30da2376f63de30b42dc055c93fa474f31330a5',
     '0xaeda92e6a3b1028edc139a4ae56ec881f3064d4f',
     '0x4DEcE678ceceb27446b35C672dC7d61F30bAD69E',
-    '0xe8a5677171c87fCB65b76957f2852515B404C7b1',
+    '0x7fb53345f1B21aB5d9510ADB38F7d3590BE6364b',
     '0x390f3595bCa2Df7d23783dFd126427CCeb997BF4',
   ].map((i) => i.toLowerCase())
 )

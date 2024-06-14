@@ -144,7 +144,9 @@ class SFrxETHMint extends BaseFrxETH {
     predictedInputs: TokenQuantity[]
   ): Promise<gen.Value[] | null> {
     const lib = gen.Contract.createContract(this.vault)
-    const inp = inputs[0] || gen.encodeArg(predictedInputs[0].amount, ParamType.from('uint256'))
+    const inp =
+      inputs[0] ||
+      gen.encodeArg(predictedInputs[0].amount, ParamType.from('uint256'))
 
     planner.add(lib.deposit(inp, this.universe.execAddress.address))
     return null
@@ -200,8 +202,16 @@ class SFrxETHburn extends BaseFrxETH {
     predictedInputs: TokenQuantity[]
   ): Promise<gen.Value[] | null> {
     const lib = gen.Contract.createContract(this.vault)
-    const inp = inputs[0] || gen.encodeArg(predictedInputs[0].amount, ParamType.from('uint256'))
-    planner.add(lib.redeem(inp, this.universe.execAddress.address, this.universe.execAddress.address))
+    const inp =
+      inputs[0] ||
+      gen.encodeArg(predictedInputs[0].amount, ParamType.from('uint256'))
+    planner.add(
+      lib.redeem(
+        inp,
+        this.universe.execAddress.address,
+        this.universe.execAddress.address
+      )
+    )
     return null
   }
 
@@ -243,27 +253,24 @@ export const setupFrxETH = async (
   const frxEthOracle = PriceOracle.createSingleTokenOracle(
     universe,
     frxETH,
-    () =>
-      oracle
-        .getPrices()
-        .then(([, low, high]) =>
-          universe.wrappedNativeToken.fromBigInt(
-            (low.toBigInt() + high.toBigInt()) / 2n
-          )
-        )
-        .then((price) => universe.fairPrice(price).then((i) => i!))
+    async () => {
+      const [, low, high] = await oracle.getPrices()
+      const weth = universe.nativeToken.fromBigInt(
+        (low.toBigInt() + high.toBigInt()) / 2n
+      )
+      const out = (await universe.fairPrice(weth)) ?? universe.usd.zero
+      return out
+    }
   )
   const sfrxEthOracle = PriceOracle.createSingleTokenOracle(
     universe,
     sfrxETH,
-    () =>
-      burnSfrxETH
-        .quote([sfrxETH.one])
-        .then((o) =>
-          frxEthOracle
-            .quote(o[0].token)
-            .then((i) => o[0].into(universe.usd).mul(i))
-        )
+    async () => {
+      const out = await burnSfrxETH.quote([sfrxETH.one])
+      const i = await frxEthOracle.quote(out[0].token)
+      const res = out[0].into(universe.usd).mul(i)
+      return res
+    }
   )
   universe.oracles.push(frxEthOracle)
   universe.oracles.push(sfrxEthOracle)

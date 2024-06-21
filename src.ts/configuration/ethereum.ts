@@ -111,7 +111,7 @@ export const ethereumConfig = makeConfig(
     searcherMinRoutesToProduce: 1,
     searcherMaxRoutesToProduce: 8,
     searchConcurrency: 8,
-    defaultInternalTradeSlippage: 25n,
+    defaultInternalTradeSlippage: 250n,
   }
 )
 

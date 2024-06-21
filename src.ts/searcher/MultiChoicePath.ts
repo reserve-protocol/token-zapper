@@ -235,6 +235,7 @@ export const createConcurrentStreamingSeacher = (
         setTimeout(() => abortController.abort(), 1000);
       }
     } catch (e: any) {
+      // console.log(e)
     }
   }
 

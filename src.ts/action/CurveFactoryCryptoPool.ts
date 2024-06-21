@@ -22,6 +22,9 @@ import { PriceOracle } from '../oracles/PriceOracle'
 abstract class CurveFactoryCryptoPoolBase extends Action(
   'CurveFactoryCryptoPool'
 ) {
+  public get outputSlippage(): bigint {
+    return 1n
+  }
   gasEstimate(): bigint {
     return 10000000n
   }
@@ -33,7 +36,6 @@ abstract class CurveFactoryCryptoPoolBase extends Action(
   ): Promise<Value[] | null> {
     throw new Error('Method not implemented.')
   }
-
   public get addToGraph(): boolean {
     return false
   }
@@ -60,26 +62,49 @@ class CryptoFactoryPoolSwapMint extends CurveFactoryCryptoPoolBase {
 
 class CryptoFactoryPoolSwapBurn extends CurveFactoryCryptoPoolBase {
   async quote([amount]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const [bal0, bal1, totalSupply] = (
-      await Promise.all([
-        this.pool.poolInstance.callStatic.balances(0),
-        this.pool.poolInstance.callStatic.balances(1),
-        IERC20__factory.connect(
-          this.pool.lpToken.address.address,
-          this.pool.universe.provider
-        ).callStatic.totalSupply()
-      ])
-    ) as [BigNumber, BigNumber, BigNumber]
+    const [bal0, bal1, totalSupply] = (await Promise.all([
+      this.pool.poolInstance.callStatic.balances(0),
+      this.pool.poolInstance.callStatic.balances(1),
+      IERC20__factory.connect(
+        this.pool.lpToken.address.address,
+        this.pool.universe.provider
+      ).callStatic.totalSupply(),
+    ])) as [BigNumber, BigNumber, BigNumber]
 
     return [
       this.outputToken[0].from(
-        (bal0.toBigInt() * ((amount.amount * amount.token.scale) / totalSupply.toBigInt())) / amount.token.scale
+        (bal0.toBigInt() *
+          ((amount.amount * amount.token.scale) / totalSupply.toBigInt())) /
+          amount.token.scale
       ),
       this.outputToken[1].from(
-        (bal1.toBigInt() * ((amount.amount * amount.token.scale) / totalSupply.toBigInt())) / amount.token.scale
+        (bal1.toBigInt() *
+          ((amount.amount * amount.token.scale) / totalSupply.toBigInt())) /
+          amount.token.scale
       ),
     ]
   }
+
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    _: Address,
+    predictedInputs: TokenQuantity[]
+  ) {
+    const lib = this.gen.Contract.createContract(this.pool.poolInstance)
+    planner.add(
+      lib.remove_liquidity(
+        inputs[0] ?? predictedInputs[0].amount,
+        encodeArg([0, 0], ParamType.fromString('uint256[2]')),
+        false
+      )
+    )
+    return null
+  }
+  public get returnsOutput(): boolean {
+    return false
+  }
+
   constructor(public readonly pool: CurveFactoryCryptoPool) {
     super(
       pool.pool,
@@ -192,8 +217,8 @@ class CurveFactoryCryptoPoolRemoveLiquidityAction extends Action(
         lib.remove_liquidity_one_coin(
           input,
           this.tokenIndex,
+          this.universe.execAddress.address,
           false,
-          this.universe.execAddress.address
         ),
         `CurveFactoryCryptoPool.removeLiquidity: ${predicted.join(
           ', '
@@ -203,7 +228,7 @@ class CurveFactoryCryptoPoolRemoveLiquidityAction extends Action(
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const out = await this.pool.poolInstance.calc_withdraw_one_coin(
+    const out = await this.pool.poolInstance.callStatic.calc_withdraw_one_coin(
       amountsIn.amount,
       this.tokenIndex
     )
@@ -309,14 +334,16 @@ export class CurveFactoryCryptoPool {
             async (i) => (await universe.fairPrice(i)) ?? universe.usd.zero
           )
         )
-        const sum = underlyingTokens.reduce((a, b) => a.add(b), universe.usd.zero)
+        const sum = underlyingTokens.reduce(
+          (a, b) => a.add(b),
+          universe.usd.zero
+        )
         return sum
-
       }
     )
     universe.oracles.push(oracle)
-    
-    universe.defineMintable(mintable.mint, mintable.burn)
+
+    universe.defineMintable(mintable.mint, mintable.burn, true)
   }
 
   toString(): string {

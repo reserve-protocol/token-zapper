@@ -6,6 +6,7 @@ import { ArbitrumUniverse, PROTOCOL_CONFIGS } from './arbitrum'
 import { loadArbitrumTokenList } from './loadArbitrumTokenList'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupCompoundV3 } from './setupCompV3'
+import { setupERC4626 } from './setupERC4626'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
@@ -22,6 +23,18 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
     universe.config.requoteTolerance,
     'ArbiOracles',
     async (token: Token) => {
+      if (token === universe.commonTokens.USDM) {
+        const oraclewusdm = registry.getOracle(
+          universe.commonTokens.WUSDM.address,
+          universe.usd.address
+        )
+
+        if (oraclewusdm == null) {
+          return null
+        }
+
+        return universe.usd.one;
+      }
       if (token === wsteth) {
         const oraclewstethToEth = registry.getOracle(
           token.address,
@@ -49,7 +62,16 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
       if (oracle == null) {
         return null
       }
-      return universe.usd.from(await oracle.callStatic.latestAnswer())
+      const decimals = BigInt(await oracle.callStatic.decimals())
+      const answer = (await oracle.callStatic.latestAnswer()).toBigInt()
+      if (decimals > 8) {
+        return universe.usd.from(answer / 10n ** (decimals - 8n))
+      }
+      if (decimals < 8) {
+        return universe.usd.from(answer * 10n ** (8n - decimals))
+      }
+
+      return universe.usd.from(answer)
     },
     () => universe.currentBlock,
     universe.provider
@@ -87,13 +109,21 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
   // Set up AAVEV2
   universe.addIntegration(
     'aaveV3',
-    await setupAaveV3(
-      universe,
-      PROTOCOL_CONFIGS.aaveV3
-    )
+    await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
   )
 
   universe.addTradeVenue(
     universe.addIntegration('uniswapV3', await setupUniswapRouter(universe))
+  )
+
+  await Promise.all(
+    PROTOCOL_CONFIGS.erc4626.map(async ([addr, proto]) => {
+      const vault = await setupERC4626(universe, {
+        vaultAddress: addr,
+        protocol: proto,
+        slippage: 1n,
+      })
+      return vault
+    })
   )
 }

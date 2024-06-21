@@ -24,12 +24,19 @@ export const COMMON_TOKENS = {
   reth: '0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8',
   USDT: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
   WBTC: '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f',
+  USDM: '0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C',
+  WUSDM: '0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812',
   FRAX: '0x17fc002b466eec40dae837fc4be5c67993ddbd6f',
+
   // COMP: reserveAddresses.COMP_ADDRESS,
 } as const
 
 export const RTOKENS = {
-  KNOX: '0x0bbf664d46becc28593368c97236faa0fb397595'
+  KNOX: '0x0bbf664d46becc28593368c97236faa0fb397595',
+  
+  _rTokenWithWUSDM: "0x05d0e5a60251cef203a06b17973c843c8225cc4e"
+
+
 }
 export const arbiConfig = makeConfig(
   ChainIds.Arbitrum,
@@ -53,7 +60,7 @@ export const arbiConfig = makeConfig(
     ethBalanceOf: '0x0326bF8E7efEBAe81898d366c1491D196d143a4C',
     uniV3Router: '0x922eDac4D5c6702192473ec77a294edD834Fb2af',
     curveStableSwapNGHelper: '0x323EB0B5e2a59d5565E59CBEb965f00298d3A2a1',
-    curveCryptoFactoryHelper: ethers.constants.AddressZero
+    curveCryptoFactoryHelper: ethers.constants.AddressZero,
   } as const,
   {
     blocktime: 250,
@@ -68,7 +75,7 @@ export const arbiConfig = makeConfig(
 )
 
 export const PROTOCOL_CONFIGS = {
-  ...({
+  ...{
     oracles: {
       USD: {
         [COMMON_TOKENS.ARB]: '0xb2A824043730FE05F3DA2efaFa1CBbe83fa548D6',
@@ -76,6 +83,7 @@ export const PROTOCOL_CONFIGS = {
         [COMMON_TOKENS.USDC]: '0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3',
         [COMMON_TOKENS.USDT]: '0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7',
         [COMMON_TOKENS.RSR]: '0xcfF9349ec6d027f20fC9360117fef4a1Ad38B488',
+        [COMMON_TOKENS.WUSDM]: '0xdC6720c996Fad27256c7fd6E0a271e2A4687eF18',
         [BTC_TOKEN_ADDRESS]: '0xd0C7101eACbB49F3deCcCc166d238410D6D46d57',
         [COMMON_TOKENS.cbETH]: '0xa668682974E3f121185a3cD94f00322beC674275',
         // [COMMON_TOKENS.COMP]: '0xe7C53FFd03Eb6ceF7d208bC4C13446c76d1E5884',
@@ -109,7 +117,8 @@ export const PROTOCOL_CONFIGS = {
         '0xd54804250e9c561aea9dee34e9cf2342f767acc5', // (wcUSDCv3)
       ],
     },
-  }),
+    erc4626: [['0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812', 'wUSDM']],
+  },
 } as const
 
 export type ArbitrumConfigType = typeof arbiConfig

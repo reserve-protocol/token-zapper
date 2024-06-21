@@ -89,9 +89,10 @@ export const findPrecursorTokenSet = async (
 }
 
 export class Searcher<
-  const SearcherUniverse extends ArbitrumUniverse
-  | EthereumUniverse
-  | BaseUniverse
+  const SearcherUniverse extends
+    | ArbitrumUniverse
+    | EthereumUniverse
+    | BaseUniverse
 > {
   private readonly defaultSearcherOpts
 
@@ -184,21 +185,21 @@ export class Searcher<
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r), this.universe.usd.zero)
       : precursorTokenBasket
-        .map((p) => p.into(inputQuantity.token))
-        .reduce((l, r) => l.add(r))
+          .map((p) => p.into(inputQuantity.token))
+          .reduce((l, r) => l.add(r))
 
     // console.log(`sum: ${quoteSum}, ${precursorTokensPrices.join(', ')}`)
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
-        input: inputQuantity.mul(
-          precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
-        ),
-        output: token,
-      }))
+          input: inputQuantity.mul(
+            precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
+          ),
+          output: token,
+        }))
       : precursorTokenBasket.map((qty) => ({
-        output: qty.token,
-        input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
-      }))
+          output: qty.token,
+          input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
+        }))
     const total = inputPrTrade.reduce(
       (l, r) => l.add(r.input),
       inputQuantity.token.zero
@@ -227,7 +228,6 @@ export class Searcher<
 
         for (let i = 1; i <= 4; i++) {
           try {
-
             if (abortSignal.aborted) {
               return
             }
@@ -248,9 +248,9 @@ export class Searcher<
               continue
             }
             multiTrades.push(potentialSwaps)
-            
+
             return
-          } catch (e) { }
+          } catch (e) {}
         }
       })
     )
@@ -301,14 +301,17 @@ export class Searcher<
               } catch (e) {
                 console.error(tradingBalances.toString())
                 console.error(
-                  tradeInputToTokenSet.map(i => i.describe().join("\n")).join(', '),
+                  tradeInputToTokenSet
+                    .map((i) => i.describe().join('\n'))
+                    .join(', ')
                 )
                 console.error(
-                  `Failed to generate issueance plan, available tokens were ${actionInput.join(', ')}`
+                  `Failed to generate issueance plan, available tokens were ${actionInput.join(
+                    ', '
+                  )}`
                 )
                 throw e
               }
-
             }
             let subActionExchanges: SwapPath[] = []
             for (const subAction of tradeAction.postTradeActions ?? []) {
@@ -431,8 +434,8 @@ export class Searcher<
               try {
                 await onResult(out)
                 resultsProduced += 1
-              } catch (e: any) { }
-            } catch (e: any) { }
+              } catch (e: any) {}
+            } catch (e: any) {}
 
             if (resultsProduced > this.minResults) {
               if (Date.now() > endTime) {
@@ -467,7 +470,7 @@ export class Searcher<
     while (potentiallyUnwrappable.length !== 0) {
       const qty = potentiallyUnwrappable.pop()!
       const mintBurnActions = this.universe.wrappedTokens.get(qty.token)
-      if (mintBurnActions == null) {
+      if (mintBurnActions == null || mintBurnActions.burn.addToGraph == false) {
         tokenAmounts.add(qty)
         continue
       }
@@ -544,7 +547,7 @@ export class Searcher<
         controller.abortController.signal,
         start
       ).catch((e) => {
-        // console.log(e)
+        console.log(e)
       }),
       this.findTokenZapViaTrade(
         rTokenQuantity,
@@ -554,8 +557,8 @@ export class Searcher<
         controller.onResult,
         controller.abortController.signal,
         start
-      ).catch(() => { }),
-    ]).catch(() => { })
+      ).catch(() => {}),
+    ]).catch(() => {})
     await controller.resultReadyPromise
     return controller.getResults(start)
   }
@@ -630,15 +633,15 @@ export class Searcher<
           }
           throw Error(
             'Failed to find trade for: ' +
-            qty +
-            '(' +
-            qty.token +
-            ')' +
-            ' -> ' +
-            outputToken +
-            '(' +
-            output +
-            ')'
+              qty +
+              '(' +
+              qty.token +
+              ')' +
+              ' -> ' +
+              outputToken +
+              '(' +
+              output +
+              ')'
           )
         })
     )
@@ -694,8 +697,11 @@ export class Searcher<
         startTime,
         abortSignal
       )
+      // console.log(zap.describe().join('\n'))
 
-      return await onResult(zap).catch((e) => { })
+      return await onResult(zap).catch((e) => {
+        // console.log(e)
+      })
     }
 
     if (permutableTrades.length === 0) {
@@ -718,7 +724,7 @@ export class Searcher<
           )
           await generatePermutation(resolveTrades)
         } catch (e) {
-          // console.log(e)
+          console.log(e)
         }
       }
     }
@@ -779,8 +785,7 @@ export class Searcher<
           if (results >= 2) {
             ownController.abort()
           }
-        } catch(e) {}
-        
+        } catch (e) {}
       },
       0.997
     )
@@ -821,6 +826,7 @@ export class Searcher<
       controller.abortController.signal,
       start
     ).catch((e) => {
+      // console.log(e)
       errors.push(e)
     })
     const tradeZap = this.findTokenZapViaTrade(
@@ -1117,7 +1123,7 @@ export class Searcher<
         dynamicInput,
         abort,
         slippage,
-      }).catch((e) => { }),
+      }).catch((e) => {}),
     ])
   }
 }

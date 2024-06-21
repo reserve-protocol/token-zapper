@@ -1,0 +1,1 @@
+{"version":3,"file":"loadArbitrumTokenList.js","sourceRoot":"","sources":["../../src.ts/configuration/loadArbitrumTokenList.ts"],"names":[],"mappings":"AAAA,OAAO,EAAuB,UAAU,EAAE,MAAM,cAAc,CAAA;AAE9D,OAAO,MAAM,MAAM,6BAA6B,CAAA;AAEhD,MAAM,CAAC,MAAM,qBAAqB,GAAG,KAAK,EAAE,QAAkB,EAAE,EAAE;IAChE,MAAM,UAAU,CAAC,QAAQ,EAAE,MAA0B,CAAC,CAAA;AACxD,CAAC,CAAA"}

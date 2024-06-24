@@ -190,14 +190,16 @@ export const makeCustomRouterSimulator = (
         [input.from]: {
           balance: '0x56bc75e2d6310000000',
         },
-        [whale]: {
-          balance: '0x56bc75e2d6310000000',
-        },
       },
     }
 
-    const encodedBody = JSON.stringify(body, null, 2)
+    if (whale) {
+      body.stateOverride[whale] = {
+        balance: '0x56bc75e2d6310000000',
+      }
+    }
 
+    const encodedBody = JSON.stringify(body, null, 2)
     const resp = await fetch(url, {
       method: 'POST',
       headers: {

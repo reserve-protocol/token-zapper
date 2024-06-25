@@ -191,6 +191,7 @@ export const PROTOCOL_CONFIGS = {
       'stkcvxeUSD3CRV-f': '0xBF2FBeECc974a171e319b6f92D8f1d042C6F1AC3',
       'stkcvxeUSD3CRV-f2': '0x3BECE5EC596331033726E5C6C188c313Ff4E3fE5',
       'stkcvxeUSD3CRV-f3': '0x8e33D5aC344f9F2fc1f2670D45194C280d4fBcF1',
+      'stkcvxeUSD3CRV-f4': '0x81697e25DFf8564d9E0bC6D27edb40006b34ea2A',
       'stkcvxMIM-3LP3CRV-f': '0x8443364625e09a33d793acd03aCC1F3b5DbFA6F6',
       stkcvx3Crv: '0xee0ac49885719DBF5FC1CDAFD9c752127E009fFa',
     },
@@ -203,6 +204,7 @@ export const PROTOCOL_CONFIGS = {
       '0xF6147b4B44aE6240F7955803B2fD5E15c77bD7ea',
       '0x60C384e226b120d93f3e0F4C502957b2B9C32B15',
       '0xafd16aFdE22D42038223A6FfDF00ee49c8fDa985',
+      '0x684AA4faf9b07d5091B88c6e0a8160aCa5e6d17b',
     ],
   },
   compoundV2: {
@@ -256,6 +258,7 @@ export const PROTOCOL_CONFIGS = {
     wrappers: [
       '0x093cB4f405924a0C468b43209d5E466F1dd0aC7d',
       '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b',
+      '0x0aDc69041a2B086f8772aCcE2A754f410F211bed'
     ],
   },
   compV3: {
@@ -267,7 +270,8 @@ export const PROTOCOL_CONFIGS = {
       // wrapped cUSDCV3
       '0x7e1e077b289c0153b5ceAD9F264d66215341c9Ab',
       '0x093c07787920eB34A0A0c7a09823510725Aee4Af',
-      '0xfbd1a538f5707c0d67a16ca4e3fc711b80bd931a', // <- latest
+      '0xfbd1a538f5707c0d67a16ca4e3fc711b80bd931a',
+      '0x27F2f159Fe990Ba83D57f39Fd69661764BEbf37a' // <- latest
       // ^ wrapped cUSDCV3
     ],
   },

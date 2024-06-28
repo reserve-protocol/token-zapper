@@ -251,6 +251,8 @@ export const PROTOCOL_CONFIGS = {
       '0x2C25f6C25770fFEC5959D34B94Bf898865e5D6b1',
       'morpho Flagship USDT (bbUSDT)',
     ],
+
+    ['0x9D39A5DE30e57443BfF2A8307A4256c8797A3497', 'sUSDe'],
   ],
 
   aaveV3: {
@@ -258,7 +260,7 @@ export const PROTOCOL_CONFIGS = {
     wrappers: [
       '0x093cB4f405924a0C468b43209d5E466F1dd0aC7d',
       '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b',
-      '0x0aDc69041a2B086f8772aCcE2A754f410F211bed'
+      '0x0aDc69041a2B086f8772aCcE2A754f410F211bed',
     ],
   },
   compV3: {
@@ -271,7 +273,7 @@ export const PROTOCOL_CONFIGS = {
       '0x7e1e077b289c0153b5ceAD9F264d66215341c9Ab',
       '0x093c07787920eB34A0A0c7a09823510725Aee4Af',
       '0xfbd1a538f5707c0d67a16ca4e3fc711b80bd931a',
-      '0x27F2f159Fe990Ba83D57f39Fd69661764BEbf37a' // <- latest
+      '0x27F2f159Fe990Ba83D57f39Fd69661764BEbf37a', // <- latest
       // ^ wrapped cUSDCV3
     ],
   },

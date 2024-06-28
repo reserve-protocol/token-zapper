@@ -179,12 +179,19 @@ export abstract class BaseSearcherResult {
       return zapperInterface.decodeFunctionResult('zapERC20', resp)
         .out as ZapperOutputStructOutput
     }
-    console.log(resp)
+    // console.log(resp)
+    // console.log({
+    //   block: this.blockNumber,
+    //   data: opts.data,
+    //   value: opts.value,
+    //   to: opts.to,
+    //   from: opts.from,
+    // })
     // console.log(
     //   `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
     // )
 
-    console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
+    // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
     // Try and decode the error message
     if (resp.startsWith('0x08c379a0')) {

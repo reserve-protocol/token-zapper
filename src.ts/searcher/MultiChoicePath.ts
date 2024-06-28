@@ -15,6 +15,7 @@ import { UniswapRouterAction } from '../configuration/setupUniswapRouter'
 import { EthereumUniverse } from '../configuration/ethereum'
 import { BaseUniverse } from '../configuration/base'
 import { ArbitrumUniverse } from '../configuration/arbitrum'
+import { wait } from '../base/controlflow'
 
 export const resolveTradeConflicts = async (
   searcher: Searcher<any>,
@@ -197,6 +198,7 @@ export const createConcurrentStreamingSeacher = (
   const seen: Set<string> = new Set()
   const maxAcceptableValueLossForRejectingZap = 1 - (searcher.config.zapMaxValueLoss / 100);
   const maxAcceptableDustPercentable = (searcher.config.zapMaxDustProduced / 100);
+
   const onResult = async (result: BaseSearcherResult): Promise<void> => {
     const id = result.describe().join(';')
     if (seen.has(id)) {
@@ -232,7 +234,7 @@ export const createConcurrentStreamingSeacher = (
       })
       const resCount = results.length
       if (resCount >= searcher.config.searcherMinRoutesToProduce) {
-        setTimeout(() => abortController.abort(), 1000);
+        abortController.abort()
       }
     } catch (e: any) {
       // console.log(e)

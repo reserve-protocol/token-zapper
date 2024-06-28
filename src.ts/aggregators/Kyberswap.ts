@@ -98,6 +98,7 @@ const fetchRoute = async (
     idToSlug[universe.chainId]
   }/api/v1/routes`
   const url = `${GET_ROUTE_SWAP}?source=register&amountIn=${quantityIn.amount}&tokenIn=${quantityIn.token.address.address}&tokenOut=${tokenOut.address.address}`
+
   return fetch(url, {
     method: 'GET',
     signal: abort,
@@ -207,7 +208,7 @@ class KyberAction extends Action('Kyberswap') {
     return this.request.addresesInUse
   }
   get outputSlippage() {
-    return 100n
+    return 1n
   }
 
   async plan(

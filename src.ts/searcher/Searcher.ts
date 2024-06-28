@@ -757,7 +757,7 @@ export class Searcher<
       ownController.abort()
     })
     let results = 0
-    this.findSingleInputTokenSwap_(
+    await this.findSingleInputTokenSwap_(
       inputTokenQuantity,
       rToken,
       signerAddress,
@@ -787,7 +787,7 @@ export class Searcher<
           }
         } catch (e) {}
       },
-      0.997
+      0.98
     )
   }
 
@@ -1100,6 +1100,8 @@ export class Searcher<
       if (inValue != 0 && outValue != 0) {
         const ratio = outValue / inValue
         if (ratio < rejectRatio) {
+          // console.log(`inValue: ${inValue}, outValue: ${outValue}, ratio: ${ratio}, rejectRatio: ${rejectRatio}`)
+          // console.log('Rejecting', path.describe().join('\n'))
           dropped += 1
           return
         }

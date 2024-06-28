@@ -190,7 +190,7 @@ class EnsoAction extends Action('Enso') {
     return this.request.addresesInUse
   }
   get outputSlippage() {
-    return this.universe.config.defaultInternalTradeSlippage
+    return 1n
   }
   async plan(
     planner: Planner,

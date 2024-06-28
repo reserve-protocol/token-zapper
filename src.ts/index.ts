@@ -26,6 +26,8 @@ import { ChainId, ChainIds, isChainIdSupported } from './configuration/ReserveAd
 import { Universe } from './Universe'
 import { createKyberswap } from './aggregators/Kyberswap'
 import { createEnso } from './aggregators/Enso'
+import { createParaswap } from './aggregators/Paraswap'
+
 export { type Config } from './configuration/ChainConfiguration'
 export { makeCustomRouterSimulator } from './configuration/ZapSimulation'
 

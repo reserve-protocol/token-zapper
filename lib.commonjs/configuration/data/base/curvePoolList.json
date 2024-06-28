@@ -1,0 +1,835 @@
+{
+  "success": true,
+  "data": {
+    "poolData": [
+      {
+        "id": "factory-v2-1",
+        "address": "0xf6C5F01C7F3148891ad0e19DF78743D31E390D1f",
+        "coinsAddresses": [
+          "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+          "0xEB466342C4d449BC9f53A865D5Cb90586f405215",
+          "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93"
+        ],
+        "decimals": [
+          "6",
+          "6",
+          "6",
+          "18"
+        ],
+        "virtualPrice": "1007812090520830576",
+        "amplificationCoefficient": "750",
+        "totalSupply": "1378102251133788610931296",
+        "name": "Curve.fi Factory Plain Pool: 4pool",
+        "assetType": "0",
+        "implementationAddress": "0x1621E58d36EB5Ef26F9768Ebe9DB77181b1f5a02",
+        "symbol": "4poolUSD-f",
+        "priceOracle": null,
+        "priceOracles": null,
+        "implementation": "plain4basic",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "usdPrice": 0.999809,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC",
+            "poolBalance": "171600668491"
+          },
+          {
+            "address": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDbC",
+            "poolBalance": "171794392567"
+          },
+          {
+            "address": "0xEB466342C4d449BC9f53A865D5Cb90586f405215",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "axlUSDC",
+            "poolBalance": "171268792223"
+          },
+          {
+            "address": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93",
+            "usdPrice": 0.9996864124700652,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "875263946057420336563093"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/base/pools/factory-v2-1/swap"
+          ],
+          "deposit": [
+            "https://curve.fi/#/base/pools/factory-v2-1/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/base/pools/factory-v2-1/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xf6C5F01C7F3148891ad0e19DF78743D31E390D1f",
+        "usdTotal": 1389620.5517518534,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 1389620.5517518534,
+        "gaugeAddress": "0x79edc58c471acf2244b8f93d6f425fd06a439407",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x79edc58c471acf2244b8f93d6f425fd06a439407",
+            "tokenPrice": 0.4331107539444854,
+            "name": "Curve DAO Token",
+            "symbol": "CRV",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "69432779389084371",
+              "periodFinish": 1695254891
+            },
+            "tokenAddress": "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415"
+          },
+          {
+            "gaugeAddress": "0x79edc58c471acf2244b8f93d6f425fd06a439407",
+            "tokenPrice": 0.9996864124700652,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "8818342151675485",
+              "periodFinish": 1699907069
+            },
+            "tokenAddress": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93"
+          }
+        ],
+        "gaugeCrvApy": [
+          10.767664397566417,
+          26.919160993916044
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "base",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-2",
+        "address": "0xda3de145054ED30Ee937865D31B500505C4bDfe7",
+        "coinsAddresses": [
+          "0xB79DD08EA68A908A97220C76d19A6aA9cBDE4376",
+          "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "6",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1019416611343933824",
+        "amplificationCoefficient": "100",
+        "totalSupply": "204317797538768423045903",
+        "name": "Curve.fi Factory Plain Pool: Overnight/Curve",
+        "assetType": "0",
+        "implementationAddress": "0x5C627d6925e448Ae418BC8a45d56B31fe5009Bea",
+        "symbol": "USD+crvUSD-f",
+        "priceOracle": null,
+        "implementation": "plain2balances",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0xB79DD08EA68A908A97220C76d19A6aA9cBDE4376",
+            "usdPrice": 1.0056483778978904,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USD+",
+            "poolBalance": "75562230239"
+          },
+          {
+            "address": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93",
+            "usdPrice": 0.9996864124700652,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "132806835551982372901454"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/base/pools/factory-v2-2/swap"
+          ],
+          "deposit": [
+            "https://curve.fi/#/base/pools/factory-v2-2/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/base/pools/factory-v2-2/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xda3de145054ED30Ee937865D31B500505C4bDfe7",
+        "usdTotal": 208754.22325466044,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 208754.22325466044,
+        "gaugeAddress": "0xc0798d022eee81f1408895325a9fbe171d2a24f1",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0xc0798d022eee81f1408895325a9fbe171d2a24f1",
+            "tokenPrice": 1.0056483778978904,
+            "name": "USD+",
+            "symbol": "USD+",
+            "decimals": "6",
+            "apy": 0,
+            "metaData": {
+              "rate": "8267",
+              "periodFinish": 1695865145
+            },
+            "tokenAddress": "0xB79DD08EA68A908A97220C76d19A6aA9cBDE4376"
+          },
+          {
+            "gaugeAddress": "0xc0798d022eee81f1408895325a9fbe171d2a24f1",
+            "tokenPrice": 0.4331107539444854,
+            "name": "Curve DAO Token",
+            "symbol": "CRV",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "20667989417989417",
+              "periodFinish": 1695363415
+            },
+            "tokenAddress": "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415"
+          },
+          {
+            "gaugeAddress": "0xc0798d022eee81f1408895325a9fbe171d2a24f1",
+            "tokenPrice": 0.9996864124700652,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "2755731922398589",
+              "periodFinish": 1699286053
+            },
+            "tokenAddress": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93"
+          }
+        ],
+        "gaugeCrvApy": [
+          16.659469616698228,
+          41.64867404174557
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "base",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-crypto-1",
+        "address": "0x11C1fBd4b3De66bC0565779b35171a6CF3E71f59",
+        "coinsAddresses": [
+          "0x4200000000000000000000000000000000000006",
+          "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22"
+        ],
+        "decimals": [
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1002040498758811298",
+        "amplificationCoefficient": "20000000",
+        "lpTokenAddress": "0x98244d93D42b42aB3E3A4D12A5dc0B3e7f8F32f9",
+        "implementationAddress": "0x0cD5A1e9E19Af1f1b910Ac3C3452A16B2B37155b",
+        "priceOracle": 1.0688619371249597,
+        "name": "Curve.fi Factory Crypto Pool: cbETH/WETH",
+        "symbol": "cbeth-f",
+        "totalSupply": "7946206473365675631",
+        "implementation": "",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x4200000000000000000000000000000000000006",
+            "usdPrice": 2984.11,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "WETH",
+            "poolBalance": "9223715934267738610"
+          },
+          {
+            "address": "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
+            "usdPrice": 3189.6015951939635,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "cbETH",
+            "poolBalance": "6771865579022841176",
+            "ethLsdApy": 0.0292772
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/base/pools/factory-crypto-1/swap"
+          ],
+          "deposit": [
+            "https://curve.fi/#/base/pools/factory-crypto-1/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/base/pools/factory-crypto-1/withdraw"
+          ]
+        },
+        "usdTotal": 49124.136209898046,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 49124.136209898046,
+        "gaugeAddress": "0xe9c898ba654dec2ba440392028d2e7a194e6dc3e",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0xe9c898ba654dec2ba440392028d2e7a194e6dc3e",
+            "tokenPrice": 0.439495,
+            "name": "Curve DAO Token",
+            "symbol": "CRV",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "52330036953052826",
+              "periodFinish": 1695254913
+            },
+            "tokenAddress": "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415"
+          },
+          {
+            "gaugeAddress": "0xe9c898ba654dec2ba440392028d2e7a194e6dc3e",
+            "tokenPrice": 0.9996853499977687,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "5511463844797178",
+              "periodFinish": 1699907095
+            },
+            "tokenAddress": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": true
+        },
+        "blockchainId": "base",
+        "registryId": "factory-crypto",
+        "factory": true
+      },
+      {
+        "id": "factory-crypto-4",
+        "address": "0xDE37E221442Fa15C35dc19FbAE11Ed106ba52fB2",
+        "coinsAddresses": [
+          "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415",
+          "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93"
+        ],
+        "decimals": [
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1007491367835527396",
+        "amplificationCoefficient": "400000",
+        "lpTokenAddress": "0x6DfE79cecE4f64c1a34F48cF5802492aB595257E",
+        "implementationAddress": "0x0cD5A1e9E19Af1f1b910Ac3C3452A16B2B37155b",
+        "priceOracle": 2.3081463738700236,
+        "name": "Curve.fi Factory Crypto Pool: CRV/crvUSD",
+        "symbol": "CRV crvUSD-f",
+        "totalSupply": "244484152907052294147321",
+        "implementation": "",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415",
+            "usdPrice": 0.4331119949173004,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "CRV",
+            "poolBalance": "371280126695052783906524"
+          },
+          {
+            "address": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93",
+            "usdPrice": 0.999685880547979,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "163403198085816074753737"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/base/pools/factory-crypto-4/swap"
+          ],
+          "deposit": [
+            "https://curve.fi/#/base/pools/factory-crypto-4/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/base/pools/factory-crypto-4/withdraw"
+          ]
+        },
+        "usdTotal": 324157.7463088172,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 324157.7463088172,
+        "gaugeAddress": "0x89289dc2192914a9f0674f1e9a17c56456549b8a",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x89289dc2192914a9f0674f1e9a17c56456549b8a",
+            "tokenPrice": 0.4331119949173004,
+            "name": "Curve DAO Token",
+            "symbol": "CRV",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "70085359045284359",
+              "periodFinish": 1695254921
+            },
+            "tokenAddress": "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415"
+          },
+          {
+            "gaugeAddress": "0x89289dc2192914a9f0674f1e9a17c56456549b8a",
+            "tokenPrice": 0.999685880547979,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "8818342151675485",
+              "periodFinish": 1699907109
+            },
+            "tokenAddress": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93"
+          }
+        ],
+        "gaugeCrvApy": [
+          41.653611238154966,
+          104.13402809538741
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": true
+        },
+        "blockchainId": "base",
+        "registryId": "factory-crypto",
+        "factory": true
+      },
+      {
+        "id": "factory-tricrypto-1",
+        "address": "0x6e53131F68a034873b6bFA15502aF094Ef0c5854",
+        "coinsAddresses": [
+          "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93",
+          "0x236aa50979D5f3De3Bd1Eeb40E81137F22ab794b",
+          "0x4200000000000000000000000000000000000006"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1011110993439626190",
+        "amplificationCoefficient": "540000",
+        "name": "tricrypto",
+        "symbol": "tricrypto",
+        "totalSupply": "576399996815287155473",
+        "implementationAddress": "0xa274c88e09fDF1798a7517096557e6c1bEa1f65A",
+        "priceOracle": 61756.85969529502,
+        "priceOracles": [
+          61756.85969529502,
+          3005.0834528540204
+        ],
+        "implementation": "",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93",
+            "usdPrice": 0.9996866811557246,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "329873447711932175015533"
+          },
+          {
+            "address": "0x236aa50979D5f3De3Bd1Eeb40E81137F22ab794b",
+            "usdPrice": 61271,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "tBTC",
+            "poolBalance": "5412724551907428861"
+          },
+          {
+            "address": "0x4200000000000000000000000000000000000006",
+            "usdPrice": 2984.87,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "WETH",
+            "poolBalance": "110859863411560460683"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/base/pools/factory-tricrypto-1/swap"
+          ],
+          "deposit": [
+            "https://curve.fi/#/base/pools/factory-tricrypto-1/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/base/pools/factory-tricrypto-1/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x6e53131F68a034873b6bFA15502aF094Ef0c5854",
+        "usdTotal": 992315.4186657225,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 992315.4186657225,
+        "gaugeAddress": "0x93933fa992927284e9d508339153b31eb871e1f4",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x93933fa992927284e9d508339153b31eb871e1f4",
+            "tokenPrice": 0.439495,
+            "name": "Curve DAO Token",
+            "symbol": "CRV",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "69743419487136418",
+              "periodFinish": 1695254903
+            },
+            "tokenAddress": "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415"
+          },
+          {
+            "gaugeAddress": "0x93933fa992927284e9d508339153b31eb871e1f4",
+            "tokenPrice": 0.9996866811557246,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "8818342151675485",
+              "periodFinish": 1699907153
+            },
+            "tokenAddress": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93"
+          }
+        ],
+        "gaugeCrvApy": [
+          14.64481034186258,
+          36.61202585465645
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": true
+        },
+        "blockchainId": "base",
+        "registryId": "factory-tricrypto",
+        "factory": true
+      },
+      {
+        "id": "factory-tricrypto-2",
+        "address": "0xA177D2bd2BD723878bD95982c0855291953f74C9",
+        "coinsAddresses": [
+          "0x236aa50979D5f3De3Bd1Eeb40E81137F22ab794b",
+          "0xCa32694B58FD19b23F585054e4A8d8b84a6e3177",
+          "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1000291276000020294",
+        "amplificationCoefficient": "1707629",
+        "name": "tBTC/cbETH/ONE",
+        "symbol": "beONE",
+        "totalSupply": "1926665344183566556",
+        "implementationAddress": "0xa274c88e09fDF1798a7517096557e6c1bEa1f65A",
+        "priceOracle": 0.19213728868160937,
+        "priceOracles": [
+          0.19213728868160937,
+          0.05207340926793185
+        ],
+        "implementation": "",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x236aa50979D5f3De3Bd1Eeb40E81137F22ab794b",
+            "usdPrice": 61271,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "tBTC",
+            "poolBalance": "414022141333583533"
+          },
+          {
+            "address": "0xCa32694B58FD19b23F585054e4A8d8b84a6e3177",
+            "usdPrice": 11772.443814810887,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "ONE",
+            "poolBalance": "2168870277250775419"
+          },
+          {
+            "address": "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
+            "usdPrice": 3190.5898592554527,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "cbETH",
+            "poolBalance": "7960045018948619713",
+            "ethLsdApy": 0.0292772
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/base/pools/factory-tricrypto-2/swap"
+          ],
+          "deposit": [
+            "https://curve.fi/#/base/pools/factory-tricrypto-2/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/base/pools/factory-tricrypto-2/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xA177D2bd2BD723878bD95982c0855291953f74C9",
+        "usdTotal": 76297.6930188724,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 76297.6930188724,
+        "gaugeAddress": "0xec9d936f691fd9a970c79113149f0f9e9eeb3154",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          null,
+          null
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": true
+        },
+        "blockchainId": "base",
+        "registryId": "factory-tricrypto",
+        "factory": true
+      },
+      {
+        "id": "factory-tricrypto-3",
+        "address": "0x773FdE6F33522d7A92775F2375AC76A6E6F279b7",
+        "coinsAddresses": [
+          "0xCa32694B58FD19b23F585054e4A8d8b84a6e3177",
+          "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93",
+          "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "6"
+        ],
+        "virtualPrice": "1000056816450816633",
+        "amplificationCoefficient": "2700000",
+        "name": "ONE/USDC/crvUSD",
+        "symbol": "ONES",
+        "totalSupply": "229488320582806831914",
+        "implementationAddress": "0xa274c88e09fDF1798a7517096557e6c1bEa1f65A",
+        "priceOracle": 8.4080912232406e-05,
+        "priceOracles": [
+          8.4080912232406e-05,
+          8.4624941502293e-05
+        ],
+        "implementation": "",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0xCa32694B58FD19b23F585054e4A8d8b84a6e3177",
+            "usdPrice": 11889.579389820547,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "ONE",
+            "poolBalance": "441921104746574773"
+          },
+          {
+            "address": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93",
+            "usdPrice": 0.9996866811557246,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "5246383772431202941170"
+          },
+          {
+            "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "usdPrice": 1.0008088089999998,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC",
+            "poolBalance": "5213570597"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/base/pools/factory-tricrypto-3/swap"
+          ],
+          "deposit": [
+            "https://curve.fi/#/base/pools/factory-tricrypto-3/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/base/pools/factory-tricrypto-3/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x773FdE6F33522d7A92775F2375AC76A6E6F279b7",
+        "usdTotal": 15716.78342027359,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 15716.78342027359,
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": true
+        },
+        "blockchainId": "base",
+        "registryId": "factory-tricrypto",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-0",
+        "address": "0x63Eb7846642630456707C3efBb50A03c79B89D81",
+        "coinsAddresses": [
+          "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C"
+        ],
+        "decimals": [
+          "6",
+          "18"
+        ],
+        "virtualPrice": "1010385421368935159",
+        "amplificationCoefficient": "1500",
+        "totalSupply": "247837637579910372442488",
+        "name": "USDC/USDM",
+        "implementationAddress": "0xf3A6aa40cf048a3960E9664847E9a7be025a390a",
+        "symbol": "usdc-usdm",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "usdPrice": 1.0008088089999998,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC",
+            "poolBalance": "119991615753"
+          },
+          {
+            "address": "0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C",
+            "usdPrice": 1.0006526828257958,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "USDM",
+            "poolBalance": "130420065043918299961390"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/base/pools/factory-stable-ng-0/swap"
+          ],
+          "deposit": [
+            "https://curve.fi/#/base/pools/factory-stable-ng-0/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/base/pools/factory-stable-ng-0/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x63Eb7846642630456707C3efBb50A03c79B89D81",
+        "usdTotal": 250593.85403225716,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 250593.85403225716,
+        "gaugeAddress": "0xa5ac7470555781974f8772f23191a749a413cba4",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          null,
+          null
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "base",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-4",
+        "address": "0xd876fdB964652072c9D57988831b1e1f04A98E80",
+        "coinsAddresses": [
+          "0xCa72827a3D211CfD8F6b00Ac98824872b72CAb49",
+          "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93"
+        ],
+        "decimals": [
+          "6",
+          "18"
+        ],
+        "virtualPrice": "1002550354604659869",
+        "amplificationCoefficient": "200",
+        "totalSupply": "22076425590782267022763",
+        "name": "cgUSD/crvUSD",
+        "implementationAddress": "0xf3A6aa40cf048a3960E9664847E9a7be025a390a",
+        "symbol": "cgUcrvU",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0xCa72827a3D211CfD8F6b00Ac98824872b72CAb49",
+            "usdPrice": 1.0001501845740295,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "cgUSD",
+            "poolBalance": "10117014841"
+          },
+          {
+            "address": "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93",
+            "usdPrice": 0.999685880547979,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "12016121797010190400612"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/base/pools/factory-stable-ng-4/swap"
+          ],
+          "deposit": [
+            "https://curve.fi/#/base/pools/factory-stable-ng-4/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/base/pools/factory-stable-ng-4/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xd876fdB964652072c9D57988831b1e1f04A98E80",
+        "usdTotal": 22130.881559980244,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 22130.881559980244,
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "base",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      }
+    ],
+    "tvl": 3328711.2882223343
+  },
+  "generatedTimeMs": 1715244652615
+}

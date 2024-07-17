@@ -9,7 +9,7 @@ import {
 const defaultSearcherOptions = {
   requoteTolerance: 1,
   routerDeadline: 4500,
-  searcherMinRoutesToProduce: 1,
+  searcherMinRoutesToProduce: 4,
   searcherMaxRoutesToProduce: 8,
   searchConcurrency: 4,
   defaultInternalTradeSlippage: 250n,

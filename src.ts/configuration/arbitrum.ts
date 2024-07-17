@@ -33,10 +33,8 @@ export const COMMON_TOKENS = {
 
 export const RTOKENS = {
   KNOX: '0x0bbf664d46becc28593368c97236faa0fb397595',
-  
-  _rTokenWithWUSDM: "0x05d0e5a60251cef203a06b17973c843c8225cc4e"
 
-
+  _rTokenWithWUSDM: '0x05d0e5a60251cef203a06b17973c843c8225cc4e',
 }
 export const arbiConfig = makeConfig(
   ChainIds.Arbitrum,
@@ -66,11 +64,7 @@ export const arbiConfig = makeConfig(
     blocktime: 250,
     blockGasLimit: 1125899906842624n,
     requoteTolerance: 4,
-    routerDeadline: 4000,
-    searcherMinRoutesToProduce: 2,
-    searcherMaxRoutesToProduce: 8,
     searchConcurrency: 4,
-    defaultInternalTradeSlippage: 250n,
   }
 )
 

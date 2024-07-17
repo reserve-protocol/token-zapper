@@ -757,6 +757,15 @@ export class Searcher<
       ownController.abort()
     })
     let results = 0
+
+    let tolerance = 0.98
+    const invalue = parseFloat(
+      (await this.universe.fairPrice(inputTokenQuantity))?.toString() ?? '0'
+    )
+
+    if (invalue > 50000) {
+      tolerance = 0.997
+    }
     await this.findSingleInputTokenSwap_(
       inputTokenQuantity,
       rToken,
@@ -787,7 +796,7 @@ export class Searcher<
           }
         } catch (e) {}
       },
-      0.98
+      tolerance
     )
   }
 

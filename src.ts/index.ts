@@ -22,14 +22,22 @@ import { setupEthereumZapper } from './configuration/setupEthereumZapper'
 import { loadTokens } from './configuration/loadTokens'
 import { makeConfig } from './configuration/ChainConfiguration'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { ChainId, ChainIds, isChainIdSupported } from './configuration/ReserveAddresses'
+import {
+  ChainId,
+  ChainIds,
+  isChainIdSupported,
+} from './configuration/ReserveAddresses'
 import { Universe } from './Universe'
 import { createKyberswap } from './aggregators/Kyberswap'
 import { createEnso } from './aggregators/Enso'
-import { createParaswap } from './aggregators/Paraswap'
+export { createParaswap } from './aggregators/Paraswap'
 
 export { type Config } from './configuration/ChainConfiguration'
-export { makeCustomRouterSimulator } from './configuration/ZapSimulation'
+export {
+  makeCustomRouterSimulator,
+  createSimulateZapTransactionUsingProvider,
+  SimulateParams,
+} from './configuration/ZapSimulation'
 
 export const configuration = {
   utils: {
@@ -44,41 +52,44 @@ export { Universe } from './Universe'
 export { createKyberswap } from './aggregators/Kyberswap'
 export { createEnso } from './aggregators/Enso'
 
-const CHAIN_ID_TO_CONFIG: Record<ChainId, {
-  config: ReturnType<typeof makeConfig>
-  blockTime: number
-  setup: (uni: any) => Promise<void>
-  setupWithDexes: (uni: any) => Promise<void>
-}> = {
+const CHAIN_ID_TO_CONFIG: Record<
+  ChainId,
+  {
+    config: ReturnType<typeof makeConfig>
+    blockTime: number
+    setup: (uni: any) => Promise<void>
+    setupWithDexes: (uni: any) => Promise<void>
+  }
+> = {
   [ChainIds.Mainnet]: {
     config: ethereumConfig,
     blockTime: 12,
     setup: setupEthereumZapper,
     setupWithDexes: async (uni: EthereumUniverse) => {
-      uni.addTradeVenue(createKyberswap("Kyberswap", uni))
-      uni.addTradeVenue(createEnso("Enso", uni, 1))
+      uni.addTradeVenue(createKyberswap('Kyberswap', uni))
+      uni.addTradeVenue(createEnso('Enso', uni, 1))
       await setupEthereumZapper(uni)
-    }
+    },
   },
   [ChainIds.Arbitrum]: {
     config: arbiConfig,
     blockTime: 0.25,
     setup: setupArbitrumZapper,
     setupWithDexes: async (uni: ArbitrumUniverse) => {
-      uni.addTradeVenue(createKyberswap("Kyberswap", uni))
-      uni.addTradeVenue(createEnso("Enso", uni, 1))
+      uni.addTradeVenue(createKyberswap('Kyberswap', uni))
+      uni.addTradeVenue(createEnso('Enso', uni, 1))
       await setupArbitrumZapper(uni)
-    }
+    },
   },
   [ChainIds.Base]: {
     config: baseConfig,
     blockTime: 2,
     setup: setupBaseZapper,
     setupWithDexes: async (uni: BaseUniverse) => {
-      uni.addTradeVenue(createKyberswap("Kyberswap", uni))
-      uni.addTradeVenue(createEnso("Enso", uni, 1))
+      uni.addTradeVenue(createKyberswap('Kyberswap', uni))
+      uni.addTradeVenue(createEnso('Enso', uni, 1))
       await setupBaseZapper(uni)
-    }
+    },
   },
 }
 

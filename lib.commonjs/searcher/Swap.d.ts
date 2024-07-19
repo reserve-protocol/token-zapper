@@ -1,0 +1,98 @@
+import { type DestinationOptions, type InteractionConvention, type BaseAction } from '../action/Action';
+import { type Address } from '../base/Address';
+import { type TokenQuantity } from '../entities/Token';
+import { TokenAmounts } from '../entities/TokenAmounts';
+import { type Universe } from '../Universe';
+/**
+ * A single Step token exchange
+ */
+export declare class SingleSwap {
+    readonly inputs: TokenQuantity[];
+    readonly action: BaseAction;
+    readonly outputs: TokenQuantity[];
+    readonly type = "SingleSwap";
+    get supportsDynamicInput(): boolean;
+    constructor(inputs: TokenQuantity[], action: BaseAction, outputs: TokenQuantity[]);
+    get proceedsOptions(): DestinationOptions;
+    get interactionConvention(): InteractionConvention;
+    get address(): Address;
+    exchange(tokenAmounts: TokenAmounts): Promise<void>;
+    toString(): string;
+    describe(): string[];
+    get gasUnits(): bigint;
+}
+/**
+ * A SwapPath groups a set of SingleSwap's together. The output of one SingleSwap is the input of the next.
+ * A SwapPath may be optimized, as long as the input's and output's remain the same.
+ */
+export declare class SwapPath {
+    readonly inputs: TokenQuantity[];
+    readonly steps: SingleSwap[];
+    readonly outputs: TokenQuantity[];
+    readonly outputValue: TokenQuantity;
+    readonly destination: Address;
+    readonly type = "MultipleSwaps";
+    get proceedsOptions(): DestinationOptions;
+    get interactionConvention(): InteractionConvention;
+    get address(): Address;
+    intoSwapPaths(universe: Universe): SwapPaths;
+    constructor(inputs: TokenQuantity[], steps: SingleSwap[], outputs: TokenQuantity[], outputValue: TokenQuantity, destination: Address);
+    get supportsDynamicInput(): boolean;
+    exchange(tokenAmounts: TokenAmounts): Promise<void>;
+    compare(other: SwapPath): number;
+    toString(): string;
+    describe(): string[];
+    cost(universe: Universe): Promise<{
+        units: bigint;
+        txFee: TokenQuantity;
+        txFeeUsd: TokenQuantity;
+    }>;
+    netValue(universe: Universe): Promise<TokenQuantity>;
+    get gasUnits(): bigint;
+}
+/**
+ * SwapPaths groups SwapPath's together into sections
+ * The swapPaths can be reordered, as long as the following holds for the ith SwapPath:
+ * (sum(swapPaths[0..i-1].outputs) - sum(swapPaths[0..i-1].inputs)) >= swapPaths[i].inputs
+ *
+ * Basically, if you sum up all the inputs and output for all previous steps
+ * You are holding enough tokens to do the current step.
+ */
+export declare class SwapPaths {
+    readonly universe: Universe;
+    readonly inputs: TokenQuantity[];
+    readonly swapPaths: SwapPath[];
+    readonly outputs: TokenQuantity[];
+    readonly outputValue: TokenQuantity;
+    readonly destination: Address;
+    constructor(universe: Universe, inputs: TokenQuantity[], swapPaths: SwapPath[], outputs: TokenQuantity[], outputValue: TokenQuantity, destination: Address);
+    static fromPaths(universe: Universe, paths: SwapPath[]): SwapPaths;
+    exchange(tokenAmounts: TokenAmounts): Promise<void>;
+    get gasUnits(): bigint;
+    toShortString(): string;
+    toString(): string;
+    describe(): string[];
+    cost(universe: Universe): Promise<{
+        units: bigint;
+        txFee: TokenQuantity;
+        txFeeUsd: TokenQuantity;
+    }>;
+    netValue(universe: Universe): Promise<TokenQuantity>;
+}
+/**
+ * A list steps to go from token set A to token set B.
+ * A SwapPlan contains a linear set of actions to go from some input basket
+ * to some output basket. But does not yet has any concrete values attached to it.
+ *
+ * Using the quote method with an input basket, a SwapPath can be generated.
+ * The SwapPath is the concrete SwapPlan that contains the sub-actions inputs and outputs,
+ * and can be used to generate an actual transaction.
+ * */
+export declare class SwapPlan {
+    readonly universe: Universe;
+    readonly steps: BaseAction[];
+    constructor(universe: Universe, steps: BaseAction[]);
+    get inputs(): import("../entities/Token").Token[];
+    quote(input: TokenQuantity[], destination: Address): Promise<SwapPath>;
+    toString(): string;
+}

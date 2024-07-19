@@ -26,22 +26,33 @@ export class ChainLinkOracle extends PriceOracle {
     this.derived.set(derived, { uoaToken, derivedTokenUnit })
   }
 
+  private unsupported: Set<Token> = new Set()
+
   async quote_(
     token: Token,
     quoteSymbol = ISO4217USDCodeInHex
   ): Promise<TokenQuantity | null> {
-    const addrToLookup =
-      this.tokenToChainLinkInternalAddress.get(token)?.address ??
-      token.address.address
-    const lastestAnswer = await IChainLinkFeedRegistry__factory.connect(
-      this.chainlinkRegistry.address,
-      this.universe.provider
-    ).callStatic.latestAnswer(addrToLookup, quoteSymbol)
-    return (
-      this.universe.tokens
-        .get(Address.from(quoteSymbol))
-        ?.fromEthersBn(lastestAnswer) ?? null
-    )
+    try {
+      const addrToLookup =
+        this.tokenToChainLinkInternalAddress.get(token)?.address ??
+        token.address.address
+      const lastestAnswer = await IChainLinkFeedRegistry__factory.connect(
+        this.chainlinkRegistry.address,
+        this.universe.provider
+      ).callStatic.latestAnswer(addrToLookup, quoteSymbol)
+      return (
+        this.universe.tokens
+          .get(Address.from(quoteSymbol))
+          ?.fromEthersBn(lastestAnswer) ?? null
+      )
+    } catch (e) {
+      this.unsupported.add(token)
+      return null
+    }
+  }
+
+  public supports(token: Token): boolean {
+    return !this.unsupported.has(token)
   }
 
   async quoteTok(token: Token): Promise<TokenQuantity | null> {

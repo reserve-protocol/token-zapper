@@ -90,9 +90,9 @@ export const findPrecursorTokenSet = async (
 
 export class Searcher<
   const SearcherUniverse extends
-    | ArbitrumUniverse
-    | EthereumUniverse
-    | BaseUniverse
+  | ArbitrumUniverse
+  | EthereumUniverse
+  | BaseUniverse
 > {
   private readonly defaultSearcherOpts
 
@@ -185,21 +185,21 @@ export class Searcher<
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r), this.universe.usd.zero)
       : precursorTokenBasket
-          .map((p) => p.into(inputQuantity.token))
-          .reduce((l, r) => l.add(r))
+        .map((p) => p.into(inputQuantity.token))
+        .reduce((l, r) => l.add(r))
 
     // console.log(`sum: ${quoteSum}, ${precursorTokensPrices.join(', ')}`)
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
-          input: inputQuantity.mul(
-            precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
-          ),
-          output: token,
-        }))
+        input: inputQuantity.mul(
+          precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
+        ),
+        output: token,
+      }))
       : precursorTokenBasket.map((qty) => ({
-          output: qty.token,
-          input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
-        }))
+        output: qty.token,
+        input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
+      }))
     const total = inputPrTrade.reduce(
       (l, r) => l.add(r.input),
       inputQuantity.token.zero
@@ -250,7 +250,7 @@ export class Searcher<
             multiTrades.push(potentialSwaps)
 
             return
-          } catch (e) {}
+          } catch (e) { }
         }
       })
     )
@@ -434,8 +434,8 @@ export class Searcher<
               try {
                 await onResult(out)
                 resultsProduced += 1
-              } catch (e: any) {}
-            } catch (e: any) {}
+              } catch (e: any) { }
+            } catch (e: any) { }
 
             if (resultsProduced > this.minResults) {
               if (Date.now() > endTime) {
@@ -557,8 +557,8 @@ export class Searcher<
         controller.onResult,
         controller.abortController.signal,
         start
-      ).catch(() => {}),
-    ]).catch(() => {})
+      ).catch(() => { }),
+    ]).catch(() => { })
     await controller.resultReadyPromise
     return controller.getResults(start)
   }
@@ -633,15 +633,15 @@ export class Searcher<
           }
           throw Error(
             'Failed to find trade for: ' +
-              qty +
-              '(' +
-              qty.token +
-              ')' +
-              ' -> ' +
-              outputToken +
-              '(' +
-              output +
-              ')'
+            qty +
+            '(' +
+            qty.token +
+            ')' +
+            ' -> ' +
+            outputToken +
+            '(' +
+            output +
+            ')'
           )
         })
     )
@@ -794,7 +794,7 @@ export class Searcher<
           if (results >= 2) {
             ownController.abort()
           }
-        } catch (e) {}
+        } catch (e) { }
       },
       tolerance
     )
@@ -838,7 +838,8 @@ export class Searcher<
       // console.log(e)
       errors.push(e)
     })
-    const tradeZap = this.findTokenZapViaTrade(
+    const doTrades = opts?.enableTradeZaps !== false
+    const tradeZap = doTrades ? this.findTokenZapViaTrade(
       userInput,
       rToken,
       userAddress,
@@ -848,7 +849,7 @@ export class Searcher<
       start
     ).catch((e) => {
       errors.push(e)
-    })
+    }) : Promise.resolve()
     void Promise.all([mintZap, tradeZap]).then(() => {
       if (!controller.abortController.signal.aborted) {
         // If both trading and minting failed for unknown reasons without producing any results abort the search
@@ -1134,7 +1135,7 @@ export class Searcher<
         dynamicInput,
         abort,
         slippage,
-      }).catch((e) => {}),
+      }).catch((e) => { }),
     ])
   }
 }

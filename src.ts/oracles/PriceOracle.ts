@@ -1,8 +1,10 @@
 import { Universe } from '../Universe'
+import { Address } from '../base/Address'
 import { Cached } from '../base/Cached'
+import { IChainlinkAggregator__factory } from '../contracts'
 import { type Token, type TokenQuantity } from '../entities/Token'
 
-export class PriceOracle extends Cached<Token, TokenQuantity> {
+export class PriceOracle extends Cached<Token, TokenQuantity | null> {
   constructor(
     ltvBlocks: number,
     public readonly name: string,
@@ -13,17 +15,21 @@ export class PriceOracle extends Cached<Token, TokenQuantity> {
     super(
       async (k) => {
         if (!this.supports(k)) {
-          throw new Error(`Unsupported token ${k}`)
+          return null
         }
         const v = await fetchPrice(k)
         if (v == null) {
-          throw new Error('Price not found')
+          return null
         }
         return v
       },
       ltvBlocks,
       getCurrentBlock
     )
+  }
+
+  toString() {
+    return `PriceOracle[${this.name}]`
   }
 
   public static createSingleTokenOracle(
@@ -40,6 +46,37 @@ export class PriceOracle extends Cached<Token, TokenQuantity> {
     )
   }
 
+  public static async createSingleTokenOracleChainLinkLike(
+    universe: Universe,
+    token: Token,
+    oracleAddress: Address,
+    priceToken: Token
+  ) {
+    const oracle = IChainlinkAggregator__factory.connect(oracleAddress.address, universe.provider);
+    const digits = BigInt(await oracle.decimals());
+    return new PriceOracle(
+      universe.config.requoteTolerance,
+      `PriceProvider(${token})`,
+      async (_: Token) => {
+        let answer = (await oracle.latestAnswer()).toBigInt()
+
+        if (digits > 18) {
+          answer = answer * 10n ** (digits - 18n)
+        } else if (digits < 18) {
+          answer = answer / 10n ** (18n - digits)
+        }
+
+        const out = priceToken.fromScale18BN(answer)
+        if (priceToken !== universe.usd) {
+          return await universe.fairPrice(out)
+        }
+        return out
+      },
+      () => universe.currentBlock,
+      new Set([token])
+    )
+  }
+
   public supports(token: Token) {
     if (this.supportedTokens.size === 0) {
       return true
@@ -48,6 +85,11 @@ export class PriceOracle extends Cached<Token, TokenQuantity> {
   }
 
   public async quote(token: Token) {
-    return this.get(token)
+    try {
+      return await this.get(token)
+    } catch (e) {
+      return null
+    }
   }
+
 }

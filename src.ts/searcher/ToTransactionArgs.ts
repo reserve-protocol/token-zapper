@@ -10,4 +10,6 @@ export type ToTransactionArgs = Partial<{
     permit: PermitTransferFrom;
     signature: string;
   };
+
+  enableTradeZaps?: boolean;
 }>;

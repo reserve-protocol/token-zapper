@@ -1,8 +1,9 @@
 import { type Address } from '../base/Address'
 
 import { parseUnits, formatUnits } from '@ethersproject/units'
-import { type BigNumber } from '@ethersproject/bignumber'
+import { BigNumber } from '@ethersproject/bignumber'
 import { type BaseUniverse } from '../configuration/base'
+import { BigNumberish } from 'ethers'
 /**
  * A class representing a token.
  * @property {Address} address - The address of the token.
@@ -87,7 +88,8 @@ export class Token {
     return new TokenQuantity(this, decimalStringOrNumber.toBigInt())
   }
 
-  fromScale18BN(decimalStringOrNumber: BigNumber): TokenQuantity {
+  fromScale18BN(decimalStringOrNumber: BigNumberish): TokenQuantity {
+    decimalStringOrNumber = BigNumber.from(decimalStringOrNumber)
     const diff = Math.abs(18 - this.decimals)
 
     if (diff === 0) {

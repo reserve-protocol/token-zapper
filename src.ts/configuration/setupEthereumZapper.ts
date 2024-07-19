@@ -18,6 +18,7 @@ import { LidoDeployment } from '../action/Lido'
 import { setupConvexStakingWrappers } from './setupConvexStakingWrappers'
 import { CurveIntegration } from './setupCurve'
 import { setupFrxETH } from './setupFrxETH'
+import { PriceOracle } from '../oracles/PriceOracle'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
@@ -26,6 +27,13 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   const chainLinkETH = Address.from(GAS_TOKEN_ADDRESS)
   const chainLinkBTC = Address.from(CHAINLINK_BTC_TOKEN_ADDRESS)
 
+
+  universe.oracles.push(await PriceOracle.createSingleTokenOracleChainLinkLike(
+    universe,
+    universe.commonTokens.apxETH,
+    Address.from("0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea"),
+    universe.nativeToken
+  ))
   setupChainLinkRegistry(
     universe,
     PROTOCOL_CONFIGS.chainLinkRegistry,
@@ -33,6 +41,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       [universe.commonTokens.WBTC, chainLinkBTC],
       [universe.commonTokens.WETH, chainLinkETH],
       [universe.nativeToken, chainLinkETH],
+      [universe.commonTokens.pxETH, chainLinkETH],
     ],
     [
       [
@@ -44,6 +53,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       ],
     ]
   )
+
 
   await setupWrappedGasToken(universe)
 

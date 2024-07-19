@@ -267,7 +267,7 @@ export const setupFrxETH = async (
     sfrxETH,
     async () => {
       const out = await burnSfrxETH.quote([sfrxETH.one])
-      const i = await frxEthOracle.quote(out[0].token)
+      const i = (await frxEthOracle.quote(out[0].token)) ?? universe.usd.zero
       const res = out[0].into(universe.usd).mul(i)
       return res
     }

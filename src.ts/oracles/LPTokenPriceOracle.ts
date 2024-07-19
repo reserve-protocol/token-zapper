@@ -4,6 +4,15 @@ import { type Universe } from '../Universe'
 import { PriceOracle } from './PriceOracle'
 
 export class LPTokenPriceOracle extends PriceOracle {
+  public supports(token: Token): boolean {
+    if (this.universe.lpTokens.has(token)) {
+      return true
+    }
+    return false
+  }
+  toString() {
+    return `LPTokenPriceOracle[${this.name}]`
+  }
   async quoteTok(token: Token): Promise<TokenQuantity | null> {
     if (!this.universe.lpTokens.has(token)) {
       return null

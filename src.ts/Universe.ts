@@ -513,7 +513,9 @@ export class Universe<const UniverseConf extends Config = Config> {
           return sum
         }
         const out =
-          (await this.oracle?.quote(qty).catch(() => this.usd.zero)) ??
+          (await this.oracle?.quote(qty).catch(e => {
+            return this.usd.zero
+          })) ??
           this.usd.zero
         return out
       },

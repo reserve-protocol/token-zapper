@@ -121,7 +121,7 @@ export const createParaswap = (aggregatorName: string, universe: Universe) => {
           {
             srcToken: input.token.address.address,
             destToken: output.address.address,
-            destAmount: rate.destAmount,
+            slippage: Number(slippage),
             srcAmount: input.amount.toString(),
             priceRoute: rate,
             userAddress: universe.execAddress.address,
@@ -167,7 +167,7 @@ export const createParaswap = (aggregatorName: string, universe: Universe) => {
       }
     },
     false
-  ).withMaxConcurrency(12)
+  ).withMaxConcurrency(4)
 
   return new TradingVenue(universe, router)
 }

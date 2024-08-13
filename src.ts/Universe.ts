@@ -205,7 +205,7 @@ export class Universe<const UniverseConf extends Config = Config> {
             opts.dynamicInput === true &&
             venue.supportsDynamicInput == false
           ) {
-            const subtract = inp.amount / 100000n
+            const subtract = inp.amount / 1000000n
             inp = inp.token.from(inp.amount - (subtract === 0n ? 1n : subtract))
           }
           const res = await this.perf.measurePromise(

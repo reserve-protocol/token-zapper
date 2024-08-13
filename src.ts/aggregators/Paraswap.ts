@@ -1,18 +1,17 @@
 import { constructSimpleSDK, SwapSide, TransactionParams } from '@paraswap/sdk'
+import { OptimalRate } from 'paraswap-core'
 import { Universe } from '../Universe'
 import {
   Action,
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
-import { Planner, Value } from '../tx-gen/Planner'
 import { Address } from '../base/Address'
-import { Token, TokenQuantity } from '../entities/Token'
-import { ZapperExecutor__factory } from '../contracts/factories/contracts/Zapper.sol/ZapperExecutor__factory'
 import { Approval } from '../base/Approval'
-import { DexRouter, TradingVenue } from './DexAggregator'
-import { OptimalRate } from 'paraswap-core'
+import { Token, TokenQuantity } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
+import { Planner, Value } from '../tx-gen/Planner'
+import { DexRouter, TradingVenue } from './DexAggregator'
 
 interface ParaswapAggregatorResult {
   addresesInUse: Set<Address>
@@ -45,32 +44,20 @@ class ParaswapAction extends Action('Paraswap') {
     __: Address,
     predicted: TokenQuantity[]
   ) {
-    try {
-      const zapperLib = this.gen.Contract.createLibrary(
-        ZapperExecutor__factory.connect(
-          this.universe.config.addresses.executorAddress.address,
-          this.universe.provider
-        )
-      )
-      const minOut = await this.quoteWithSlippage(predicted)
-      planner.add(
-        zapperLib.rawCall(
-          this.request.request.tx.to,
-          0,
-          this.request.request.tx.data
-        ),
+    const minOut = await this.quoteWithSlippage(predicted)
+    const zapperLib = this.universe.weirollZapperExec
+    planner.add(
+      zapperLib.rawCall(
+        this.request.request.tx.to,
+        0,
+        this.request.request.tx.data
+      ),
 
-        `paraswap,router=${this.request.request.tx.to},swap=${predicted.join(
-          ', '
-        )} -> ${minOut.join(', ')},pools=${[...this.request.addresesInUse].join(
-          ', '
-        )}`
-      )
-      return null
-    } catch (e: any) {
-      console.log(e.stack)
-      throw e
-    }
+      `paraswap,router=${this.request.request.tx.to},swap=${predicted.join(
+        ', '
+      )} -> ${minOut.join(', ')},pools=${[...this.addressesInUse].join(', ')}`
+    )
+    return null
   }
   constructor(
     public readonly request: ParaswapAggregatorResult,
@@ -85,7 +72,7 @@ class ParaswapAction extends Action('Paraswap') {
       [
         new Approval(
           request.quantityIn.token,
-          Address.from(request.request.tx.to)
+          Address.from(request.request.rate.tokenTransferProxy)
         ),
       ]
     )
@@ -97,7 +84,7 @@ class ParaswapAction extends Action('Paraswap') {
     return this.request.quantityOut
   }
   toString() {
-    return `Kyberswap(${this.request.quantityIn} => ${this.outputQty})`
+    return `Paraswap(${this.request.quantityIn} => ${this.outputQty})`
   }
   async quote(_: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [this.outputQty]
@@ -117,74 +104,67 @@ export const createParaswap = (aggregatorName: string, universe: Universe) => {
   const router = new DexRouter(
     aggregatorName,
     async (abort, input, output, slippage) => {
-      let rate = await client.swap.getRate(
-        {
-          userAddress: universe.execAddress.address,
-          srcDecimals: input.token.decimals,
-          destDecimals: output.decimals,
-          srcToken: input.token.address.address,
-          destToken: output.address.address,
-          amount: input.amount.toString(),
-          side: SwapSide.SELL,
-        },
-        abort
-      )
+      try {
+        let rate = await client.swap.getRate(
+          {
+            userAddress: universe.execAddress.address,
+            srcDecimals: input.token.decimals,
+            destDecimals: output.decimals,
+            srcToken: input.token.address.address,
+            destToken: output.address.address,
+            amount: input.amount.toString(),
+            side: SwapSide.SELL,
+          },
+          abort
+        )
+        const tx = await client.swap.buildTx(
+          {
+            srcToken: input.token.address.address,
+            destToken: output.address.address,
+            destAmount: rate.destAmount,
+            srcAmount: input.amount.toString(),
+            priceRoute: rate,
+            userAddress: universe.execAddress.address,
+          },
+          {
+            ignoreAllowance: true,
+            ignoreGasEstimate: true,
+            ignoreChecks: true,
+          }
+        )
 
-      const tx = await client.swap.buildTx(
-        {
-          srcToken: input.token.address.address,
-          destToken: output.address.address,
-          destAmount: rate.destAmount,
-          srcAmount: input.amount.toString(),
-          priceRoute: rate,
-          userAddress: universe.execAddress.address,
-        },
-        {
-          ignoreAllowance: true,
-          ignoreGasEstimate: true,
-          ignoreChecks: true,
-        }
-      )
-
-      const addrs = new Set<Address>()
-      for (const route of rate.bestRoute) {
-        for (const swap of route.swaps) {
-          for (const exchange of swap.swapExchanges) {
-            for (const addr of exchange.poolAddresses?.map(Address.from) ??
-              []) {
-              const token = universe.tokens.get(addr)
-              if (token) {
-                if (universe.lpTokens.has(token)) {
-                  addrs.add(addr)
-                } else {
-                  // console.log('para ' + addr)
-                }
-
-                continue
+        const addrs = new Set<Address>()
+        for (const route of rate.bestRoute) {
+          for (const swap of route.swaps) {
+            for (const exchange of swap.swapExchanges) {
+              for (const addr of (exchange.poolAddresses ?? []).map(
+                Address.from
+              )) {
+                addrs.add(addr)
               }
-              addrs.add(addr)
             }
           }
         }
-      }
 
-      const out = await new SwapPlan(universe, [
-        new ParaswapAction(
-          {
-            addresesInUse: addrs,
-            quantityIn: input,
-            quantityOut: output.from(BigInt(rate.destAmount)),
-            output: output,
-            request: {
-              rate,
-              tx: tx,
+        const out = await new SwapPlan(universe, [
+          new ParaswapAction(
+            {
+              addresesInUse: addrs,
+              quantityIn: input,
+              quantityOut: output.from(BigInt(rate.destAmount)),
+              output: output,
+              request: {
+                rate,
+                tx: tx,
+              },
             },
-          },
-          universe
-        ),
-      ]).quote([input], universe.execAddress)
-
-      return out
+            universe
+          ),
+        ]).quote([input], universe.execAddress)
+        return out
+      } catch (e) {
+        throw e
+      }
     },
     false
   ).withMaxConcurrency(8)

@@ -514,7 +514,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     )
 
     this.weirollZapperExec = Contract.createLibrary(
-      ZapperExecutor__factory.connect(this.execAddress.address, this.provider)
+      ZapperExecutor__factory.connect(
+        this.config.addresses.executorAddress.address,
+        this.provider
+      )
     )
     this.oracle = new ZapperTokenQuantityPrice(this)
     this.fairPriceCache = this.createCache<TokenQuantity, TokenQuantity>(

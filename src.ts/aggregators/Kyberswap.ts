@@ -166,7 +166,7 @@ const getQuoteAndSwap = async (
       .map((i) => {
         const out = i.map((ii) => {
           try {
-            if (ii.pool.startsWith('kyber_pmm_')) {
+            if (!ii.pool.startsWith('0x')) {
               const tok1 = Address.from(ii.tokenIn)
               const tok2 = Address.from(ii.tokenOut)
 
@@ -193,14 +193,10 @@ const getQuoteAndSwap = async (
       .flat()
       .filter((i) => {
         const tok = universe.tokens.get(i)
-        if (tok && universe.lpTokens.has(tok)) {
+        if (!tok) {
           return true
         }
-        if (tok) {
-          // console.log('kyber ' + i)
-          return false
-        }
-        return true
+        return universe.lpTokens.has(tok)
       })
   )
   return {

@@ -12,6 +12,7 @@ import { EnsoRouter__factory } from '../contracts/factories/contracts/EnsoRouter
 import { SwapPlan } from '../searcher/Swap'
 import { FunctionCall, Planner, Value } from '../tx-gen/Planner'
 import { DexRouter, TradingVenue } from './DexAggregator'
+import { defaultAbiCoder, ParamType } from '@ethersproject/abi'
 
 export interface EnsoQuote {
   gas: string
@@ -109,19 +110,27 @@ const getEnsoQuote_ = async (
       state.push('0x' + read(size * 2))
     }
 
+    const cmdsToCheck: string[] = cmds
+    for (let i = 0; i < state.length; i++) {
+      const val = state[i]
+      if (val.length > 320) {
+        try {
+          const decoded = defaultAbiCoder.decode(
+            [ParamType.from('bytes32[]')],
+            val
+          )[0] as string[]
+          console.log(decoded)
+          cmdsToCheck.push(...decoded)
+        } catch (e) {}
+      }
+    }
+
     const addresesInUse = new Set(
-      cmds
+      cmdsToCheck
         .map((i) => Address.from('0x' + i.slice(26)))
         .filter((i) => {
           const tok = uni.tokens.get(i)
-          if (tok == null) {
-            return true
-          }
-          if (uni.lpTokens.has(tok)) {
-            return true
-          }
-          // console.log('enso ' + i)
-          return false
+          return !tok || universe.lpTokens.has(tok)
         })
     )
 

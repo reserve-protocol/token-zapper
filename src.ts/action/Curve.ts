@@ -149,10 +149,6 @@ export class CurveSwap extends Action('Curve') {
     if (addr === Address.ZERO) {
       return
     }
-    const tok = this.universe.tokens.get(addr)
-    if (tok && !this.universe.lpTokens.has(tok)) {
-      return
-    }
     this.addressList_.add(addr)
   }
   public get addressesInUse() {

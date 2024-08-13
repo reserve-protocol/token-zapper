@@ -308,14 +308,9 @@ export class SwapPlan {
 
     const value = (
       await Promise.all(
-        legAmount.map((i) =>
-          this.universe
-            .fairPrice(i.token.one)
-            .then((priceOfOne) =>
-              i
-                .into(this.universe.usd)
-                .mul(priceOfOne ?? this.universe.usd.zero)
-            )
+        legAmount.map(
+          async (i) =>
+            (await this.universe.fairPrice(i)) ?? this.universe.usd.zero
         )
       )
     ).reduce((l, r) => l.add(r))

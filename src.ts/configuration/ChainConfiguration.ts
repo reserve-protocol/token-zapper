@@ -1,10 +1,7 @@
 import { Address } from '../base/Address'
 
 export * from './ZapSimulation'
-import {
-  SimulateZapTransactionFunction
-} from './ZapSimulation'
-
+import { SimulateZapTransactionFunction } from './ZapSimulation'
 
 const defaultSearcherOptions = {
   requoteTolerance: 1,
@@ -12,18 +9,20 @@ const defaultSearcherOptions = {
   searcherMinRoutesToProduce: 4,
   searcherMaxRoutesToProduce: 8,
   searchConcurrency: 4,
-  defaultInternalTradeSlippage: 250n,
+  defaultInternalTradeSlippage: 15n,
   maxSearchTimeMs: 15000,
 
   // These parameters will reject zaps that have successfully simulated
   // but even if it produced a valid result, the result should be within some bounds
-  zapMaxValueLoss: 5, // 0.05 or 5%
+  zapMaxValueLoss: 4, // 0.04 or 3%
 
   // total output value = output token value + dust value
   zapMaxDustProduced: 2, // 0.02 or 2% of total output value
 }
 
-export type SearcherOptions = (typeof defaultSearcherOptions) & { simulateZapTransaction?: SimulateZapTransactionFunction}
+export type SearcherOptions = typeof defaultSearcherOptions & {
+  simulateZapTransaction?: SimulateZapTransactionFunction
+}
 
 const convertAddressObject = <const T extends Record<string, unknown>>(
   obj: T
@@ -58,6 +57,7 @@ export const makeConfig = <
     facadeAddress: string
     oldFacadeAddress: string
     executorAddress: string
+    emitId: string
     zapperAddress: string
     wrappedNative: string
     rtokenLens: string
@@ -96,16 +96,23 @@ export type Config<
     string,
     string
   > = NativeTokenDefinition<string, string>,
-  CommonTokens extends Record<string, string> = {},
+  CommonTokens extends {
+    ERC20GAS: string
+  } & Record<string, string> = {
+    ERC20GAS: string
+  },
   RTokens extends Record<string, string> = Record<string, string>,
   Blocktime extends number = number
 > = ReturnType<
   typeof makeConfig<ChainId, NativeToken, CommonTokens, RTokens, Blocktime>
 >
 
-export type ConfigWithToken<K extends { [KK in string]: string }> = Config<
+export type ConfigWithToken<
+  K extends { [KK in string]: string },
+  R extends { [KK in string]: string } = Record<string, string>
+> = Config<
   number,
   NativeTokenDefinition<string, string>,
-  K,
-  {}
+  K & { ERC20GAS: string },
+  R
 >

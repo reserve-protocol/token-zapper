@@ -8,20 +8,38 @@ export class ZapperOracleAggregator extends PriceOracle {
     super(
       universe.config.requoteTolerance,
       'Aggregator',
-      (qty) => this.priceAsset(qty),
+      async (qty) => await this.priceAsset(qty),
       () => universe.currentBlock
     )
   }
 
   private async priceAsset(token: Token): Promise<TokenQuantity> {
-    const promises = this.universe.oracles.map(async (oracle) => {
-      const price = await oracle.quote(token)
-      if (price != null) {
-        return price
-      }
+    let sum = this.universe.usd.zero
+    let samples = 0n
+
+    await Promise.all(
+      this.universe.oracles.map(async (oracle) => {
+        const price = await oracle.quote(token)
+        if (price == null) {
+          return
+        }
+        if (price.token !== this.universe.usd) {
+          console.log(
+            'Price oracle returned price in ' +
+              price.token.symbol +
+              ' instead of USD'
+          )
+          return
+        }
+        sum = sum.add(price)
+        samples += 1n
+      })
+    )
+
+    if (samples === 0n) {
       throw new Error('Unable to price ' + token)
-    })
-    return await Promise.race(promises)
+    }
+    return sum.scalarDiv(samples)
   }
 }
 
@@ -30,6 +48,7 @@ export class ZapperTokenQuantityPrice extends Cached<
   TokenQuantity
 > {
   private aggregatorOracle: ZapperOracleAggregator
+  private latestPrices: Map<Token, TokenQuantity> = new Map()
   constructor(readonly universe: Universe) {
     super(
       (qty) => this.quoteFn(qty),
@@ -40,6 +59,15 @@ export class ZapperTokenQuantityPrice extends Cached<
     this.aggregatorOracle = new ZapperOracleAggregator(this.universe)
   }
 
+  public dumpPrices() {
+    return [...this.latestPrices.entries()].map((k) => {
+      return {
+        token: k[0],
+        price: k[1],
+      } as const
+    })
+  }
+
   private async quoteFn(qty: TokenQuantity) {
     const universe = this.universe
     const wrappedToken = universe.wrappedTokens.get(qty.token)
@@ -48,7 +76,13 @@ export class ZapperTokenQuantityPrice extends Cached<
       const sums = await Promise.all(
         outTokens.map(async (qty) => await this.get(qty))
       )
-      return sums.reduce((l, r) => l.add(r))
+      const out = sums.reduce((l, r) => l.add(r))
+
+      const unitPrice =
+        qty.amount === qty.token.scale ? out : out.div(qty.into(out.token))
+      this.latestPrices.set(qty.token, unitPrice)
+
+      return out
     } else {
       return (await this.tokenPrice(qty.token))
         .into(qty.token)
@@ -58,40 +92,24 @@ export class ZapperTokenQuantityPrice extends Cached<
   }
 
   private async tokenPrice(token: Token) {
-    for (const oracle of this.universe.oracles) {
-      try {
-        if (!oracle.supports(token)) {
-          continue
-        }
-        const out = await oracle.quote(token)
-
-        if (out == null) {
-          continue
-        }
-        return out
-      } catch (e) {
-      }
+    const outPrice = await this.aggregatorOracle.quote(token)
+    if (outPrice != null) {
+      this.latestPrices.set(token, outPrice)
     }
-    throw new Error('Unable to price ' + token)
+    return outPrice ?? this.universe.usd.zero
   }
 
-  public async quoteToken(token: Token) {
-    if (!this.universe.wrappedTokens.has(token)) {
-      return this.aggregatorOracle.quote(token)
-    }
-    return this.get(token.one)
-  }
   public async quote(qty: TokenQuantity) {
     return this.get(qty)
   }
-  public async quoteIn(qty: TokenQuantity, tokenToQuoteWith: Token) {
+  public async quoteIn(tokenQty: TokenQuantity, quoteToken: Token) {
     const [priceOfOneUnitOfInput, priceOfOneUnitOfOutput] = await Promise.all([
-      this.quote(qty.token.one),
-      this.quote(tokenToQuoteWith.one),
+      this.quote(tokenQty.token.one),
+      this.quote(quoteToken.one),
     ])
     return priceOfOneUnitOfInput
       .div(priceOfOneUnitOfOutput)
-      .into(tokenToQuoteWith)
-      .mul(qty.into(tokenToQuoteWith))
+      .into(quoteToken)
+      .mul(tokenQty.into(quoteToken))
   }
 }

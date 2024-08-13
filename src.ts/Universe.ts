@@ -8,7 +8,6 @@ import { LPToken } from './action/LPToken'
 import { Address } from './base/Address'
 import { DefaultMap } from './base/DefaultMap'
 import {
-  SimulateParams,
   SimulateZapTransactionFunction,
   createSimulateZapTransactionUsingProvider,
   createSimulatorThatUsesOneOfReservesCallManyProxies,
@@ -23,7 +22,7 @@ import {
 import { TokenLoader, makeTokenLoader } from './entities/makeTokenLoader'
 import { Graph } from './exchange-graph/Graph'
 import { LPTokenPriceOracle } from './oracles/LPTokenPriceOracle'
-import { type PriceOracle } from './oracles/PriceOracle'
+import { PriceOracle } from './oracles/PriceOracle'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
 import { SourcingRule } from './searcher/SourcingRule'
 
@@ -47,20 +46,12 @@ import { ZapperExecutor__factory } from './contracts'
 import { PerformanceMonitor } from './searcher/PerformanceMonitor'
 import { Searcher } from './searcher/Searcher'
 import { SwapPath } from './searcher/Swap'
-import { Contract } from './tx-gen/Planner'
-import { MultiChoicePath } from './searcher/MultiChoicePath'
 import { ToTransactionArgs } from './searcher/ToTransactionArgs'
-import { id } from 'ethers/lib/utils'
+import { Contract } from './tx-gen/Planner'
+import { ZapperTokenQuantityPrice } from './oracles/ZapperAggregatorOracle'
 
 type TokenList<T> = {
   [K in keyof T]: Token
-}
-interface OracleDef {
-  quote: (qty: TokenQuantity) => Promise<TokenQuantity>
-  quoteIn: (
-    qty: TokenQuantity,
-    tokenToQuoteWith: Token
-  ) => Promise<TokenQuantity>
 }
 export type Integrations = Partial<{
   aaveV3: AaveV3Deployment
@@ -307,7 +298,36 @@ export class Universe<const UniverseConf extends Config = Config> {
    * @param qty quantity to price
    * @returns The price of the qty in USD, or null if the price cannot be determined
    */
-  public oracle?: OracleDef = undefined
+  public readonly oracle: ZapperTokenQuantityPrice
+
+  /** */
+  public async addSingleTokenPriceOracle(opts: {
+    token: Token
+    oracleAddress: Address
+    priceToken: Token
+  }) {
+    const oracle = await PriceOracle.createSingleTokenOracleChainLinkLike(
+      this,
+      opts.token,
+      opts.oracleAddress,
+      opts.priceToken
+    )
+    this.oracles.push(oracle)
+    return oracle
+  }
+  public addSingleTokenPriceSource(opts: {
+    token: Token
+    priceFn: () => Promise<TokenQuantity>
+    priceToken: Token
+  }) {
+    const oracle = PriceOracle.createSingleTokenOracle(
+      this,
+      opts.token,
+      opts.priceFn
+    )
+    this.oracles.push(oracle)
+    return oracle
+  }
   async fairPrice(qty: TokenQuantity) {
     const perfStart = this.perf.begin('fairPrice', qty.token.symbol)
     let out: TokenQuantity | null = await this.fairPriceCache.get(qty)
@@ -317,16 +337,9 @@ export class Universe<const UniverseConf extends Config = Config> {
     perfStart()
     return out
   }
-  async priceQty(qty: TokenQuantity) {
-    const out = await this.fairPrice(qty)
-
-    return new PricedTokenQuantity(qty, out)
-  }
   async quoteIn(qty: TokenQuantity, tokenToQuoteWith: Token) {
     return this.oracle?.quoteIn(qty, tokenToQuoteWith).catch(() => null) ?? null
   }
-
-  public readonly searcher: Searcher<Universe<any>>
 
   get currentBlock() {
     return this.blockState.currentBlock
@@ -472,6 +485,10 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   public simulateZapFn: SimulateZapTransactionFunction
 
+  public get searcher() {
+    return new Searcher<Universe<UniverseConf>>(this)
+  }
+
   private constructor(
     public readonly provider: ethers.providers.JsonRpcProvider,
     public readonly config: UniverseConf,
@@ -480,7 +497,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     private readonly simulateZapFn_: SimulateZapTransactionFunction
   ) {
     const nativeToken = config.nativeToken
-    this.searcher = new Searcher(this as any)
     this.nativeToken = Token.createToken(
       this.tokens,
       Address.fromHexString(GAS_TOKEN_ADDRESS),
@@ -500,6 +516,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.weirollZapperExec = Contract.createLibrary(
       ZapperExecutor__factory.connect(this.execAddress.address, this.provider)
     )
+    this.oracle = new ZapperTokenQuantityPrice(this)
     this.fairPriceCache = this.createCache<TokenQuantity, TokenQuantity>(
       async (qty: TokenQuantity) => {
         if (this.rTokenDeployments.has(qty.token)) {
@@ -513,10 +530,9 @@ export class Universe<const UniverseConf extends Config = Config> {
           return sum
         }
         const out =
-          (await this.oracle?.quote(qty).catch(e => {
+          (await this.oracle?.quote(qty).catch((e) => {
             return this.usd.zero
-          })) ??
-          this.usd.zero
+          })) ?? this.usd.zero
         return out
       },
       this.config.requoteTolerance
@@ -548,7 +564,6 @@ export class Universe<const UniverseConf extends Config = Config> {
       })
       return p
     }
-    // this.simulateZapFn = this.simulateZapFn_
   }
 
   public async updateBlockState(block: number, gasPrice: bigint) {
@@ -602,8 +617,6 @@ export class Universe<const UniverseConf extends Config = Config> {
       )
     )
     initialize(universe).then(async () => {
-      // Load all predefined rTokens
-
       universe._finishResolving()
     })
 

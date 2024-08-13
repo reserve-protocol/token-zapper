@@ -88,6 +88,10 @@ class AaveV2ActionWithdraw extends BaseAaveV2Action {
   gasEstimate(): bigint {
     return BigInt(300000n)
   }
+
+  get outputSlippage() {
+    return 1n
+  }
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [await this.reserve.intoAssets(amountsIn)]
   }

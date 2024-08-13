@@ -25,7 +25,7 @@ interface ParaswapAggregatorResult {
   }
 }
 
-class ParaswapAction extends Action('Kyberswap') {
+class ParaswapAction extends Action('Paraswap') {
   public get oneUsePrZap() {
     return true
   }
@@ -36,7 +36,7 @@ class ParaswapAction extends Action('Kyberswap') {
     return this.request.addresesInUse
   }
   get outputSlippage() {
-    return 1n
+    return 0n
   }
 
   async plan(
@@ -152,7 +152,14 @@ export const createParaswap = (aggregatorName: string, universe: Universe) => {
           for (const exchange of swap.swapExchanges) {
             for (const addr of exchange.poolAddresses?.map(Address.from) ??
               []) {
-              if (universe.tokens.has(addr)) {
+              const token = universe.tokens.get(addr)
+              if (token) {
+                if (universe.lpTokens.has(token)) {
+                  addrs.add(addr)
+                } else {
+                  // console.log('para ' + addr)
+                }
+
                 continue
               }
               addrs.add(addr)
@@ -160,7 +167,6 @@ export const createParaswap = (aggregatorName: string, universe: Universe) => {
           }
         }
       }
-
 
       const out = await new SwapPlan(universe, [
         new ParaswapAction(
@@ -177,7 +183,6 @@ export const createParaswap = (aggregatorName: string, universe: Universe) => {
           universe
         ),
       ]).quote([input], universe.execAddress)
-
 
       return out
     },

@@ -265,7 +265,9 @@ export class PricedTokenQuantity {
     private innerPrice: TokenQuantity | null
   ) {}
 
-  public async update(universe: BaseUniverse) {
+  public async update(universe: {
+    fairPrice: (qty: TokenQuantity) => Promise<TokenQuantity | null>
+  }) {
     this.innerPrice = await universe.fairPrice(this.quantity)
   }
 

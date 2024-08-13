@@ -23,7 +23,10 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     'BaseOracles',
     async (token: Token) => {
       if (token === universe.wrappedNativeToken) {
-        const oracle = registry.getOracle(universe.nativeToken.address, universe.usd.address)
+        const oracle = registry.getOracle(
+          universe.nativeToken.address,
+          universe.usd.address
+        )
         if (oracle == null) {
           return null
         }
@@ -81,7 +84,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
 
   universe.oracles.push(registry)
-  universe.oracle = new ZapperTokenQuantityPrice(universe)
 
   await setupWrappedGasToken(universe)
 

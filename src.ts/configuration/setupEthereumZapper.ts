@@ -1,59 +1,53 @@
-import { Address } from '../base/Address'
-import {
-  CHAINLINK_BTC_TOKEN_ADDRESS,
-  GAS_TOKEN_ADDRESS,
-} from '../base/constants'
-import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
-import { setupAaveV3 } from './setupAaveV3'
-import { setupChainLink as setupChainLinkRegistry } from './setupChainLink'
-import { setupERC4626 } from './setupERC4626'
-import { loadEthereumTokenList } from './setupEthereumTokenList'
-import { setupRETH } from './setupRETH'
-import { setupCompoundV3 } from './setupCompV3'
-import { setupUniswapRouter } from './setupUniswapRouter'
-import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { loadCompV2Deployment } from '../action/CTokens'
-import { setupAaveV2 } from './setupAaveV2'
 import { LidoDeployment } from '../action/Lido'
+import { Address } from '../base/Address'
+import { CHAINLINK } from '../base/constants'
+import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
+import { setupAaveV2 } from './setupAaveV2'
+import { setupAaveV3 } from './setupAaveV3'
+import { setupChainlinkRegistry } from './setupChainLink'
+import { setupCompoundV3 } from './setupCompV3'
 import { setupConvexStakingWrappers } from './setupConvexStakingWrappers'
 import { CurveIntegration } from './setupCurve'
+import { setupERC4626 } from './setupERC4626'
+import { loadEthereumTokenList } from './setupEthereumTokenList'
 import { setupFrxETH } from './setupFrxETH'
-import { PriceOracle } from '../oracles/PriceOracle'
+import { setupRETH } from './setupRETH'
+import { setupUniswapRouter } from './setupUniswapRouter'
+import { setupWrappedGasToken } from './setupWrappedGasToken'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
+  const eth = universe.nativeToken
+  const commonTokens = universe.commonTokens
   // Searcher depends on a way to price tokens
   // Below we set up the chainlink registry to price tokens
-  const chainLinkETH = Address.from(GAS_TOKEN_ADDRESS)
-  const chainLinkBTC = Address.from(CHAINLINK_BTC_TOKEN_ADDRESS)
 
+  await universe.addSingleTokenPriceOracle({
+    token: commonTokens.apxETH,
+    oracleAddress: Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea'),
+    priceToken: eth,
+  })
 
-  universe.oracles.push(await PriceOracle.createSingleTokenOracleChainLinkLike(
-    universe,
-    universe.commonTokens.apxETH,
-    Address.from("0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea"),
-    universe.nativeToken
-  ))
-  setupChainLinkRegistry(
+  setupChainlinkRegistry(
     universe,
     PROTOCOL_CONFIGS.chainLinkRegistry,
     [
-      [universe.commonTokens.WBTC, chainLinkBTC],
-      [universe.commonTokens.WETH, chainLinkETH],
-      [universe.nativeToken, chainLinkETH],
-      [universe.commonTokens.pxETH, chainLinkETH],
+      [commonTokens.WBTC, CHAINLINK.BTC],
+      [commonTokens.WETH, CHAINLINK.ETH],
+      [eth, CHAINLINK.ETH],
+      [commonTokens.pxETH, CHAINLINK.ETH],
     ],
     [
       [
-        universe.commonTokens.reth,
+        commonTokens.reth,
         {
-          uoaToken: universe.nativeToken,
-          derivedTokenUnit: chainLinkETH,
+          uoaToken: eth,
+          derivedTokenUnit: CHAINLINK.ETH,
         },
       ],
     ]
   )
-
 
   await setupWrappedGasToken(universe)
 
@@ -134,5 +128,5 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       return vault
     })
   )
-  console.log("Etheruem zapper setup complete")
+  console.log('Etheruem zapper setup complete')
 }

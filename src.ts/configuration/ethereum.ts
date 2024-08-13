@@ -1,3 +1,4 @@
+import { constants } from 'ethers'
 import { type Universe } from '../Universe'
 import { makeConfig } from './ChainConfiguration'
 
@@ -93,6 +94,7 @@ export const ethereumConfig = makeConfig(
   COMMON_TOKENS,
   RTOKENS,
   {
+    emitId: "0x6d92146F63d95BF38eB6158856f95139B15C66Bb",
     facadeAddress: '0x2C7ca56342177343A2954C250702Fd464f4d0613',
     oldFacadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
     zapperAddress: '0xcc2b9b55952718b210660b56ca12eb88694dc60f',

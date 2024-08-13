@@ -1,12 +1,10 @@
 import { type TransactionRequest } from '@ethersproject/providers'
-import { PricedTokenQuantity, type TokenQuantity } from '../entities/Token'
-import { type ZapERC20ParamsStruct } from '../contracts/contracts/Zapper.sol/Zapper'
-import { printPlan, Planner } from '../tx-gen/Planner'
-import { Universe } from '../Universe'
-import { type BaseSearcherResult } from './SearcherResult'
-import { hexlify, resolveProperties } from 'ethers/lib/utils'
 import { BigNumber } from 'ethers'
-import { time } from 'console'
+import { hexlify, resolveProperties } from 'ethers/lib/utils'
+import { type ZapERC20ParamsStruct } from '../contracts/contracts/Zapper.sol/Zapper'
+import { PricedTokenQuantity, type TokenQuantity } from '../entities/Token'
+import { Planner, printPlan } from '../tx-gen/Planner'
+import { type BaseSearcherResult } from './SearcherResult'
 
 class DustStats {
   private constructor(
@@ -14,8 +12,14 @@ class DustStats {
     public readonly valueUSD: TokenQuantity
   ) {}
 
-  public static fromDust(universe: Universe, dust: PricedTokenQuantity[]) {
-    const valueUSD = dust.reduce((a, b) => a.add(b.price), universe.usd.zero)
+  public static fromDust(
+    result: BaseSearcherResult,
+    dust: PricedTokenQuantity[]
+  ) {
+    const valueUSD = dust.reduce(
+      (a, b) => a.add(b.price),
+      result.universe.usd.zero
+    )
     return new DustStats(dust, valueUSD)
   }
 
@@ -26,24 +30,24 @@ class DustStats {
 }
 class FeeStats {
   private constructor(
-    private readonly universe: Universe,
+    private readonly result: BaseSearcherResult,
     public readonly units: bigint
   ) {}
 
   get txFee() {
-    const ethFee = this.universe.nativeToken.from(
-      this.units * this.universe.gasPrice
+    const ethFee = this.result.universe.nativeToken.from(
+      this.units * this.result.universe.gasPrice
     )
     return new PricedTokenQuantity(
       ethFee,
-      this.universe.gasTokenPrice
+      this.result.universe.gasTokenPrice
         .into(ethFee.token)
         .mul(ethFee)
-        .into(this.universe.usd)
+        .into(this.result.universe.usd)
     )
   }
 
-  public static fromGas(universe: Universe, gasUnits: bigint) {
+  public static fromGas(universe: BaseSearcherResult, gasUnits: bigint) {
     return new FeeStats(universe, gasUnits)
   }
 
@@ -58,8 +62,11 @@ class FeeStats {
   }
 }
 export class ZapTxStats {
+  get universe() {
+    return this.result.universe
+  }
   private constructor(
-    public readonly universe: Universe,
+    public readonly result: BaseSearcherResult,
     private readonly gasUnits: bigint,
 
     // value of (input token qty)
@@ -78,15 +85,15 @@ export class ZapTxStats {
   ) {}
 
   get txFee() {
-    return FeeStats.fromGas(this.universe, this.gasUnits)
+    return FeeStats.fromGas(this.result, this.gasUnits)
   }
 
   get netValueUSD() {
-    return this.valueUSD.sub(this.txFee.txFee.price);
+    return this.valueUSD.sub(this.txFee.txFee.price)
   }
 
   public static async create(
-    universe: Universe,
+    result: BaseSearcherResult,
     input: {
       gasUnits: bigint
       input: TokenQuantity
@@ -95,9 +102,7 @@ export class ZapTxStats {
     }
   ) {
     const [inputValue, outputValue, ...dustValue] = await Promise.all(
-      [input.input, input.output, ...input.dust].map((i) =>
-        universe.priceQty(i)
-      )
+      [input.input, input.output, ...input.dust].map((i) => result.priceQty(i))
     )
 
     const totalValueUSD = dustValue.reduce(
@@ -106,11 +111,11 @@ export class ZapTxStats {
     )
 
     return new ZapTxStats(
-      universe,
+      result,
       input.gasUnits,
       inputValue,
       outputValue,
-      DustStats.fromDust(universe, dustValue),
+      DustStats.fromDust(result, dustValue),
       [outputValue, ...dustValue],
       totalValueUSD
     )
@@ -268,6 +273,16 @@ export class ZapTransaction {
       output: this.stats.output.toString(),
       dust: this.dust.dust.map((i) => i.toString()),
       description: this.describe().join('\n'),
+
+
+      state: {
+        prices: {
+          searcherPrices: Array.from(this.searchResult.searcher.tokenPrices.entries()).map(([k, v]) => ({
+            token: k.symbol,
+            price: v.format()
+          })),
+        }
+      }
     }
   }
 }

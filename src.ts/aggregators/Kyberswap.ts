@@ -12,6 +12,8 @@ import { Approval } from '../base/Approval'
 import { ZapperExecutor__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 import { ChainIds } from '../configuration/ReserveAddresses'
+import { hexlify, hexZeroPad } from 'ethers/lib/utils'
+import { parseHexStringIntoBuffer } from '../base/utils'
 
 export interface GetRoute {
   code: number
@@ -162,12 +164,26 @@ const getQuoteAndSwap = async (
   const addrs = new Set(
     req.data.routeSummary.route
       .map((i) => {
-        // console.log(JSON.stringify(i, null, 2))
         const out = i.map((ii) => {
           try {
-            return Address.from(ii.pool)
+            if (ii.pool.startsWith('kyber_pmm_')) {
+              const tok1 = Address.from(ii.tokenIn)
+              const tok2 = Address.from(ii.tokenOut)
+
+              const [a, b] = tok1.gt(tok2) ? [tok1, tok2] : [tok2, tok1]
+              const mix = parseHexStringIntoBuffer(
+                hexZeroPad(
+                  '0x' + (a.integer ^ b.integer).toString(16),
+                  20
+                ).toLowerCase()
+              )
+              const custom = Address.from(mix)
+              return custom
+            }
+            return Address.from(ii.pool.toLowerCase())
           } catch (e) {
-            // console.log(ii.pool)
+            console.log(e)
+            console.log(ii.pool)
             return universe.wrappedNativeToken.address
           }
         })
@@ -176,14 +192,15 @@ const getQuoteAndSwap = async (
       })
       .flat()
       .filter((i) => {
-        if (!universe.tokens.has(i)) {
+        const tok = universe.tokens.get(i)
+        if (tok && universe.lpTokens.has(tok)) {
           return true
         }
-        const tok = universe.tokens.get(i)!
-        if (universe.lpTokens.has(tok)) {
-          return true
+        if (tok) {
+          // console.log('kyber ' + i)
+          return false
         }
-        return false
+        return true
       })
   )
   return {
@@ -208,7 +225,7 @@ class KyberAction extends Action('Kyberswap') {
     return this.request.addresesInUse
   }
   get outputSlippage() {
-    return 1n
+    return 0n
   }
 
   async plan(
@@ -234,9 +251,9 @@ class KyberAction extends Action('Kyberswap') {
 
         `kyberswap,router=${
           this.request.swap.data.routerAddress
-        },swap=${predicted.join(', ')} -> ${minOut.join(
-          ', '
-        )},pools=${[...this.request.addresesInUse].join(", ")}`
+        },swap=${predicted.join(', ')} -> ${minOut.join(', ')},pools=${[
+          ...this.request.addresesInUse,
+        ].join(', ')}`
       )
       return null
     } catch (e: any) {

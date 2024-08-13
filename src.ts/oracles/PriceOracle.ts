@@ -40,7 +40,7 @@ export class PriceOracle extends Cached<Token, TokenQuantity | null> {
     return new PriceOracle(
       universe.config.requoteTolerance,
       `PriceProvider(${token})`,
-      async (_: Token) => fetchPrice(),
+      async (_: Token) => await fetchPrice(),
       () => universe.currentBlock,
       new Set([token])
     )
@@ -52,21 +52,20 @@ export class PriceOracle extends Cached<Token, TokenQuantity | null> {
     oracleAddress: Address,
     priceToken: Token
   ) {
-    const oracle = IChainlinkAggregator__factory.connect(oracleAddress.address, universe.provider);
-    const digits = BigInt(await oracle.decimals());
+    const oracle = IChainlinkAggregator__factory.connect(
+      oracleAddress.address,
+      universe.provider
+    )
+    const digits = BigInt(await oracle.decimals())
+    const feedScale = 10n ** BigInt(digits)
+    const targetScale = priceToken.scale
     return new PriceOracle(
       universe.config.requoteTolerance,
       `PriceProvider(${token})`,
       async (_: Token) => {
         let answer = (await oracle.latestAnswer()).toBigInt()
-
-        if (digits > 18) {
-          answer = answer * 10n ** (digits - 18n)
-        } else if (digits < 18) {
-          answer = answer / 10n ** (18n - digits)
-        }
-
-        const out = priceToken.fromScale18BN(answer)
+        answer = (answer * targetScale) / feedScale
+        const out = priceToken.from(answer)
         if (priceToken !== universe.usd) {
           return await universe.fairPrice(out)
         }
@@ -91,5 +90,4 @@ export class PriceOracle extends Cached<Token, TokenQuantity | null> {
       return null
     }
   }
-
 }

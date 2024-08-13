@@ -29,7 +29,7 @@ const config: HardhatUserConfig = {
       accounts: [process.env.PRIVATE_KEY_DEPLOYER!],
     },
     base: {
-      url: process.env.PROVIDER_BASE!,
+      url: "https://mainnet.base.org",
       accounts: [process.env.PRIVATE_KEY_DEPLOYER!],
     },
   },

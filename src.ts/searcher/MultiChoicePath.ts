@@ -197,8 +197,9 @@ export const createConcurrentStreamingSeacher = (
 
   const allCandidates: BaseSearcherResult[] = []
   const seen: Set<string> = new Set()
-  const maxAcceptableValueLossForRejectingZap = 1 - (searcher.config.zapMaxValueLoss / 100);
-  const maxAcceptableDustPercentable = (searcher.config.zapMaxDustProduced / 100);
+  const maxAcceptableValueLossForRejectingZap =
+    1 - searcher.config.zapMaxValueLoss / 100
+  const maxAcceptableDustPercentable = searcher.config.zapMaxDustProduced / 100
 
   const onResult = async (result: BaseSearcherResult): Promise<void> => {
     const id = result.describe().join(';')
@@ -218,14 +219,10 @@ export const createConcurrentStreamingSeacher = (
       const inToOutRatio = outVal / inVal
 
       // Reject if the dust is too high
-      if ((inVal * maxAcceptableDustPercentable) < dustVal) {
+      if (inVal * maxAcceptableDustPercentable < dustVal) {
         console.log(tx.stats.toString())
-        console.log(
-          printPlan(
-            tx.planner,
-            tx.universe
-          ).join("\n")
-        )
+        console.log(tx.stats.dust.toString())
+        console.log(printPlan(tx.planner, tx.universe).join('\n'))
         console.log('Large amount of dust')
         return
       }
@@ -270,22 +267,20 @@ export const createConcurrentStreamingSeacher = (
 }
 const willPathsHaveAddressConflicts = (paths: SwapPath[]) => {
   const addressesInUse = new Set<Address>()
+  const conflicts = new Set<Address>()
 
   for (const path of paths) {
     for (const step of path.steps) {
-      if (!step.action.oneUsePrZap) {
-        continue
-      }
       for (const addr of step.action.addressesInUse) {
         if (addressesInUse.has(addr)) {
-          addressesInUse.add(addr)
-          return [...addressesInUse]
+          conflicts.add(addr)
         }
+        addressesInUse.add(addr)
       }
     }
   }
 
-  return []
+  return [...conflicts]
 }
 export const chunkifyIterable = function* <T>(
   iterable: Iterable<T>,
@@ -307,7 +302,7 @@ export const chunkifyIterable = function* <T>(
 export class MultiChoicePath implements SwapPath {
   private index: number = 0
   constructor(
-    public readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
+    public readonly universe: Universe<Config>,
     public readonly paths: SwapPath[]
   ) {
     if (this.paths.length === 0) {
@@ -351,7 +346,7 @@ export class MultiChoicePath implements SwapPath {
     return this.path.steps[0].action.addressesInUse
   }
   public get oneUsePrZap() {
-    return this.path.steps[0].action.oneUsePrZap
+    return this.path.steps.some((i) => i.action.oneUsePrZap)
   }
   exchange(tokenAmounts: TokenAmounts): Promise<void> {
     return this.path.exchange(tokenAmounts)

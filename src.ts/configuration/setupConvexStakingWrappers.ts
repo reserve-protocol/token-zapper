@@ -56,7 +56,7 @@ abstract class BaseConvexStakingWrapper extends Action('ConvexStakingWrapper') {
     return false
   }
   get outputSlippage() {
-    return 1n
+    return 0n
   }
 
   async quote(amountsIn: TokenQuantity[]) {
@@ -274,14 +274,16 @@ class ConvexStakingWrapper {
       })
     }
 
-    const oracle = PriceOracle.createSingleTokenOracle(
-      this.universe,
-      this.wrapperToken,
-      async () =>
-        (await this.universe.fairPrice(this.curvePool.lpToken.one)) ??
-        this.universe.usd.zero
-    )
-    this.universe.oracles.push(oracle)
+    this.universe.addSingleTokenPriceSource({
+      token: this.wrapperToken,
+      priceFn: async () => {
+        return (
+          (await this.universe.fairPrice(this.curvePool.lpToken.one)) ??
+          this.universe.usd.zero
+        )
+      },
+      priceToken: this.universe.usd,
+    })
 
     this.universe.defineTokenSourcingRule(
       this.wrapperToken,

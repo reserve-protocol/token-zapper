@@ -218,7 +218,7 @@ class CurveFactoryCryptoPoolRemoveLiquidityAction extends Action(
           input,
           this.tokenIndex,
           this.universe.execAddress.address,
-          false,
+          false
         ),
         `CurveFactoryCryptoPool.removeLiquidity: ${predicted.join(
           ', '
@@ -324,10 +324,9 @@ export class CurveFactoryCryptoPool {
       universe.addAction(remove)
     }
 
-    const oracle = PriceOracle.createSingleTokenOracle(
-      universe,
-      this.lpToken,
-      async () => {
+    universe.addSingleTokenPriceSource({
+      token: this.lpToken,
+      priceFn: async () => {
         const out = await mintable.burn.quote([this.lpToken.one])
         const underlyingTokens = await Promise.all(
           out.map(
@@ -339,9 +338,9 @@ export class CurveFactoryCryptoPool {
           universe.usd.zero
         )
         return sum
-      }
-    )
-    universe.oracles.push(oracle)
+      },
+      priceToken: universe.usd,
+    })
 
     universe.defineMintable(mintable.mint, mintable.burn, true)
   }

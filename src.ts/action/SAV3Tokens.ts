@@ -108,9 +108,8 @@ export class BurnSAV3TokensAction extends BaseAaveV3 {
     )
   }
 
-
-  get outputSlippage(): bigint {
-    return 50n
+  get outputSlippage() {
+    return 1n
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

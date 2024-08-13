@@ -59,7 +59,7 @@ abstract class BaseAaveV2 extends Action('SAV2Token') {
     return await this.reserve.aave.getRateForReserve(this.reserve)
   }
   get outputSlippage() {
-    return 1n
+    return 0n
   }
 
   toString() {
@@ -96,6 +96,9 @@ export class MintSAV2TokensAction extends BaseAaveV2 {
 export class BurnSAV2TokensAction extends BaseAaveV2 {
   public actionName: string = 'withdraw'
 
+  get outputSlippage() {
+    return 1n
+  }
   protected planAction(input: Value): FunctionCall {
     return this.lib.withdraw(this.universe.execAddress.address, input, true)
   }

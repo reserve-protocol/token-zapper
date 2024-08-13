@@ -1,7 +1,13 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { TransactionRequest } from '@ethersproject/providers'
 import { constants } from 'ethers'
-import { ParamType, defaultAbiCoder, parseEther } from 'ethers/lib/utils'
+import {
+  ParamType,
+  defaultAbiCoder,
+  hexlify,
+  parseEther,
+  randomBytes,
+} from 'ethers/lib/utils'
 import {
   BaseAction,
   DestinationOptions,
@@ -12,10 +18,8 @@ import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { DefaultMap } from '../base/DefaultMap'
 import { parseHexStringIntoBuffer } from '../base/utils'
-import { ArbitrumUniverse } from '../configuration/arbitrum'
-import { BaseUniverse } from '../configuration/base'
-import { EthereumUniverse } from '../configuration/ethereum'
 import {
+  EmitId__factory,
   IERC20__factory,
   ZapperExecutor__factory,
   Zapper__factory,
@@ -24,7 +28,11 @@ import {
   ZapERC20ParamsStruct,
   ZapperOutputStructOutput,
 } from '../contracts/contracts/Zapper.sol/Zapper'
-import { type Token, type TokenQuantity } from '../entities/Token'
+import {
+  PricedTokenQuantity,
+  type Token,
+  type TokenQuantity,
+} from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { SwapPath, SwapPaths, type SingleSwap } from '../searcher/Swap'
 import {
@@ -33,14 +41,15 @@ import {
   Planner,
   Value,
   encodeArg,
-  printPlan
+  printPlan,
 } from '../tx-gen/Planner'
 import { ToTransactionArgs } from './ToTransactionArgs'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { SimulateParams } from '../configuration/ZapSimulation'
+import { Config } from '../configuration/ChainConfiguration'
+import { Searcher, Universe } from '..'
 
 const zapperInterface = Zapper__factory.createInterface()
-
 
 class Step {
   constructor(
@@ -48,7 +57,7 @@ class Step {
     readonly action: BaseAction,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) { }
+  ) {}
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -79,7 +88,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-        InteractionConvention.PayBeforeCall
+          InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -100,6 +109,7 @@ export class ThirdPartyIssue extends Error {
   }
 }
 export abstract class BaseSearcherResult {
+  public readonly zapId: bigint = BigInt(hexlify(randomBytes(32)))
   protected readonly planner = new Planner()
   public readonly blockNumber: number
   public readonly commands: Step[]
@@ -108,7 +118,23 @@ export abstract class BaseSearcherResult {
   public readonly inputToken: Token
   public readonly inputIsNative: boolean
 
-  toId() {
+  public tokenPrices = new Map<Token, TokenQuantity>()
+  public async priceQty(qty: TokenQuantity) {
+    const price = await this.fairPrice(qty)
+    return new PricedTokenQuantity(qty, price)
+  }
+  public async fairPrice(qty: TokenQuantity) {
+    const out = await this.universe.fairPrice(qty)
+    if (out != null) {
+      const unitPrice =
+        qty.amount === qty.token.scale ? out : out.div(qty.into(out.token))
+      this.tokenPrices.set(qty.token, unitPrice)
+    }
+
+    return out
+  }
+
+  identity() {
     return this.describe().join('\n')
   }
 
@@ -118,8 +144,10 @@ export abstract class BaseSearcherResult {
     }
   }
 
+  public universe: Universe<Config>
+
   constructor(
-    readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
+    public readonly searcher: Searcher<Universe<Config>>,
     readonly userInput: TokenQuantity,
     public swaps: SwapPaths,
     public readonly signer: Address,
@@ -127,6 +155,7 @@ export abstract class BaseSearcherResult {
     public readonly startTime: number,
     public readonly abortSignal: AbortSignal
   ) {
+    this.universe = searcher.universe
     if (this.universe.commonTokens.ERC20GAS == null) {
       throw new Error('Unexpected: Missing wrapped gas token')
     }
@@ -137,7 +166,7 @@ export abstract class BaseSearcherResult {
 
     this.inputToken = inputToken
 
-    this.blockNumber = universe.currentBlock
+    this.blockNumber = this.universe.currentBlock
     const potentialResidualTokens = new Set<Token>()
     const executorAddress = this.universe.config.addresses.executorAddress
 
@@ -169,13 +198,15 @@ export abstract class BaseSearcherResult {
   }
 
   async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
-    const resp = await this.universe.simulateZapFn(
-      opts
-    )
+    const resp = await this.universe.simulateZapFn(opts)
     // console.log(resp)
     // If the response starts with a pointer to the first location of the output tuple
     // when we know if can be decoded by the zapper interface
-    if (resp.startsWith("0x0000000000000000000000000000000000000000000000000000000000000020")) {
+    if (
+      resp.startsWith(
+        '0x0000000000000000000000000000000000000000000000000000000000000020'
+      )
+    ) {
       return zapperInterface.decodeFunctionResult('zapERC20', resp)
         .out as ZapperOutputStructOutput
     }
@@ -196,7 +227,10 @@ export abstract class BaseSearcherResult {
     // Try and decode the error message
     if (resp.startsWith('0x08c379a0')) {
       const errorMsgLen = Number(BigInt('0x' + resp.slice(10 + 64)))
-      const errorMsgCharsInHex = resp.slice(10 + 64 + 64, 10 + 64 + 64 + errorMsgLen * 2);
+      const errorMsgCharsInHex = resp.slice(
+        10 + 64 + 64,
+        10 + 64 + 64 + errorMsgLen * 2
+      )
       const msg = Buffer.from(errorMsgCharsInHex, 'hex').toString()
       if (msg.includes('LPStakingTime')) {
         console.error('Stargate staking contract out of funds.. Aborting')
@@ -236,7 +270,7 @@ export abstract class BaseSearcherResult {
         setup: {
           inputTokenAddress: this.inputToken.address.address,
           userBalanceAndApprovalRequirements: this.userInput.amount,
-        }
+        },
       })
     )
 
@@ -255,9 +289,9 @@ export abstract class BaseSearcherResult {
     const [valueOfOut, ...dustValues] = await this.universe.perf.measurePromise(
       'value dust',
       Promise.all([
-        this.universe.fairPrice(outputTokenOutput),
+        this.fairPrice(outputTokenOutput),
         ...dustQuantities.map(
-          async (i) => [await this.universe.fairPrice(i), i] as const
+          async (i) => [await this.fairPrice(i), i] as const
         ),
       ])
     )
@@ -350,7 +384,7 @@ export abstract class BaseSearcherResult {
         outputTokenOutput.amount === 1n
           ? 1n
           : outputTokenOutput.amount -
-          outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
+            outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
       tokenOut: this.outputToken.address.address,
       tokens: this.potentialResidualTokens.map((i) => i.address.address),
     }
@@ -364,8 +398,8 @@ export abstract class BaseSearcherResult {
     return this.inputIsNative
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -396,6 +430,15 @@ export abstract class BaseSearcherResult {
   abstract toTransaction(options: ToTransactionArgs): Promise<ZapTransaction>
 
   async createZapTransaction(options: ToTransactionArgs) {
+    const emitIdContract = Contract.createLibrary(
+      EmitId__factory.connect(
+        this.universe.config.addresses.emitId.address,
+        this.universe.provider
+      )
+    )
+
+    this.planner.add(emitIdContract.emitId(this.zapId))
+
     try {
       const params = this.encodePayload(this.outputToken.from(1n), {
         ...options,
@@ -439,7 +482,7 @@ export abstract class BaseSearcherResult {
       }
       const stats = await this.universe.perf.measurePromise(
         'ZapTxStats.create',
-        ZapTxStats.create(this.universe, {
+        ZapTxStats.create(this, {
           gasUnits: gasEstimate,
           input: this.userInput,
           output: outputTokenQty,
@@ -520,7 +563,7 @@ export class ZapViaATrade extends BaseSearcherResult {
 
 export class RedeemZap extends BaseSearcherResult {
   constructor(
-    readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
+    readonly searcher: Searcher<Universe<Config>>,
     readonly userInput: TokenQuantity,
     readonly parts: {
       full: SwapPaths
@@ -534,7 +577,7 @@ export class RedeemZap extends BaseSearcherResult {
     public readonly abortSignal: AbortSignal
   ) {
     super(
-      universe,
+      searcher,
       userInput,
       parts.full,
       signer,
@@ -582,13 +625,13 @@ export class RedeemZap extends BaseSearcherResult {
         let input =
           prev == null
             ? step.inputs.map((t) =>
-              plannerUtils.erc20.balanceOf(
-                this.universe,
-                this.planner,
-                t.token,
-                executorAddress
+                plannerUtils.erc20.balanceOf(
+                  this.universe,
+                  this.planner,
+                  t.token,
+                  executorAddress
+                )
               )
-            )
             : [prev]
         if (input == null) {
           throw new Error('MISSING INPUT')
@@ -615,9 +658,9 @@ export class RedeemZap extends BaseSearcherResult {
     const tradesToGenerate = allSupportDynamicInput
       ? this.parts.tradesToOutput
       : [
-        ...this.parts.tradesToOutput.filter((i) => !i.supportsDynamicInput),
-        ...this.parts.tradesToOutput.filter((i) => i.supportsDynamicInput),
-      ]
+          ...this.parts.tradesToOutput.filter((i) => !i.supportsDynamicInput),
+          ...this.parts.tradesToOutput.filter((i) => i.supportsDynamicInput),
+        ]
 
     const tradeInputs = new Map<Token, Value>()
     for (const path of tradesToGenerate) {
@@ -713,7 +756,7 @@ const ONE_Val = new LiteralValue(
 )
 export class MintZap extends BaseSearcherResult {
   constructor(
-    readonly universe: EthereumUniverse | BaseUniverse | ArbitrumUniverse,
+    readonly searcher: Searcher<Universe<Config>>,
     readonly userInput: TokenQuantity,
     readonly parts: {
       trading: SwapPaths
@@ -727,7 +770,7 @@ export class MintZap extends BaseSearcherResult {
     public readonly abortSignal: AbortSignal
   ) {
     super(
-      universe,
+      searcher,
       userInput,
       parts.full,
       signer,
@@ -795,9 +838,9 @@ export class MintZap extends BaseSearcherResult {
       const tradesToGenerate = allSupportDynamicInput
         ? allTrades
         : [
-          ...allTrades.filter((i) => !i.supportsDynamicInput),
-          ...allTrades.filter((i) => i.supportsDynamicInput),
-        ]
+            ...allTrades.filter((i) => !i.supportsDynamicInput),
+            ...allTrades.filter((i) => i.supportsDynamicInput),
+          ]
 
       for (const trade of tradesToGenerate) {
         const current = splitTrades.get(trade.outputs[0].token)
@@ -974,6 +1017,5 @@ export class MintZap extends BaseSearcherResult {
       throw e
     }
     return await this.createZapTransaction(options)
-
   }
 }

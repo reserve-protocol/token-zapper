@@ -144,7 +144,7 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
     return Promise.resolve([this.path.output])
   }
   get outputSlippage() {
-    return this.quoteSlippage + 50n
+    return this.quoteSlippage
   }
   private addrsUsedInSwap: Set<Address>
   constructor(

@@ -182,7 +182,7 @@ export class MintRTokenAction extends ReserveRTokenBase {
     return this.rTokenDeployment.mintEstimate
   }
   get outputSlippage() {
-    return 0n
+    return 1n
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     if (this.universe.config.addresses.facadeAddress !== Address.ZERO) {
@@ -245,7 +245,7 @@ export class BurnRTokenAction extends ReserveRTokenBase {
     return this.rTokenDeployment.burnEstimate
   }
   get outputSlippage() {
-    return 0n
+    return 1n
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
     return await this.quote_(amountsIn)

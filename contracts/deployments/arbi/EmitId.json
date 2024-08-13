@@ -1,0 +1,67 @@
+{
+  "address": "0x66BC6029408a5dEB3ffacA6835119af963bB408a",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "name": "ReserveZapId",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "name": "emitId",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x1a873cfa9bd79ffc267f0235a4b74f72c518a6f9c9b31fc9596f3dfaf2dc3d6f",
+  "receipt": {
+    "to": null,
+    "from": "0xF2d98377d80DADf725bFb97E91357F1d81384De2",
+    "contractAddress": "0x66BC6029408a5dEB3ffacA6835119af963bB408a",
+    "transactionIndex": 2,
+    "gasUsed": "143306",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x382d9218b2835c8155f8ca57f83c9f95cd9eb0ecbba2d7150a42e2a05799c7e5",
+    "transactionHash": "0x1a873cfa9bd79ffc267f0235a4b74f72c518a6f9c9b31fc9596f3dfaf2dc3d6f",
+    "logs": [],
+    "blockNumber": 242372389,
+    "cumulativeGasUsed": "388151",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "85e94d79ddfa1d369317a93016da6a9b",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.17+commit.8df45f5f\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"ReserveZapId\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"emitId\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/weiroll-helpers/EmitId.sol\":\"EmitId\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/weiroll-helpers/EmitId.sol\":{\"content\":\"// SPDX-License-Identifier: BlueOak-1.0.0\\npragma solidity 0.8.17;\\n\\ncontract EmitId {\\n    event ReserveZapId(uint256 id);\\n    function emitId(uint256 id) external {\\n        emit ReserveZapId(id);  \\n    }\\n}\",\"keccak256\":\"0x48fe96220a665a0cef905cce4e9bd289a914ef5b84bc43f345a8e749bdd61ea5\",\"license\":\"BlueOak-1.0.0\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b5061014e806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063c1c4eae714610030575b600080fd5b61004a600480360381019061004591906100c1565b61004c565b005b7fa1516f6784b75b19c0c5fcf1293f6a3a472188b8775eda8e33d9209b007ea22c8160405161007b91906100fd565b60405180910390a150565b600080fd5b6000819050919050565b61009e8161008b565b81146100a957600080fd5b50565b6000813590506100bb81610095565b92915050565b6000602082840312156100d7576100d6610086565b5b60006100e5848285016100ac565b91505092915050565b6100f78161008b565b82525050565b600060208201905061011260008301846100ee565b9291505056fea26469706673582212208745e45893b4e7cc79e243312bb105d726a62429ca8b187a97842b350c72897d64736f6c63430008110033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063c1c4eae714610030575b600080fd5b61004a600480360381019061004591906100c1565b61004c565b005b7fa1516f6784b75b19c0c5fcf1293f6a3a472188b8775eda8e33d9209b007ea22c8160405161007b91906100fd565b60405180910390a150565b600080fd5b6000819050919050565b61009e8161008b565b81146100a957600080fd5b50565b6000813590506100bb81610095565b92915050565b6000602082840312156100d7576100d6610086565b5b60006100e5848285016100ac565b91505092915050565b6100f78161008b565b82525050565b600060208201905061011260008301846100ee565b9291505056fea26469706673582212208745e45893b4e7cc79e243312bb105d726a62429ca8b187a97842b350c72897d64736f6c63430008110033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

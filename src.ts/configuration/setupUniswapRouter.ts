@@ -54,7 +54,7 @@ class UniswapPool {
     public readonly token0: Token,
     public readonly token1: Token,
     public readonly fee: number
-  ) { }
+  ) {}
 
   toString() {
     return `(${this.token0}.${this.fee}.${this.token1})`
@@ -65,11 +65,12 @@ class UniswapStep {
     public readonly pool: UniswapPool,
     public readonly tokenIn: Token,
     public readonly tokenOut: Token
-  ) { }
+  ) {}
 
   toString() {
-    return `${this.tokenIn} -> ${this.pool.address.toShortString()} -> ${this.tokenOut
-      }`
+    return `${this.tokenIn} -> ${this.pool.address.toString()} -> ${
+      this.tokenOut
+    }`
   }
 }
 export class UniswapTrade {
@@ -81,7 +82,7 @@ export class UniswapTrade {
     public readonly swaps: UniswapStep[],
     public readonly addresses: Set<Address>,
     public readonly outputWithSlippage: TokenQuantity
-  ) { }
+  ) {}
 
   toString() {
     return `${this.input} -> [${this.swaps.join(' -> ')}] -> ${this.output}`
@@ -144,7 +145,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
     return true
   }
   get outputSlippage() {
-    return 1n
+    return 0n
   }
   async planV3Trade(
     planner: Planner,
@@ -430,7 +431,10 @@ export const setupUniswapRouter = async (universe: Universe) => {
   ): Promise<UniswapTrade> => {
     const inp = tokenQtyToCurrencyAmt(universe, input)
     const outp = ourTokenToUni(universe, output)
-    const slip = new Percent(Number(slippage), Number(TRADE_SLIPPAGE_DENOMINATOR))
+    const slip = new Percent(
+      Number(slippage),
+      Number(TRADE_SLIPPAGE_DENOMINATOR)
+    )
 
     if (abort.aborted) {
       throw new Error('Aborted')
@@ -463,7 +467,10 @@ export const setupUniswapRouter = async (universe: Universe) => {
     async (abort, input, output, slippage) => {
       try {
         const route = await computeRoute(abort, input, output, slippage)
-        if (route.output.amount <= 1000n || route.outputWithSlippage.amount <= 1000n) {
+        if (
+          route.output.amount <= 1000n ||
+          route.outputWithSlippage.amount <= 1000n
+        ) {
           throw new Error('No output')
         }
         const plan = await new SwapPlan(universe, [

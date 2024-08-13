@@ -144,10 +144,20 @@ export class CurveSwap extends Action('Curve') {
     return true
   }
 
-  private _addressList = new Set<Address>()
+  private addressList_ = new Set<Address>()
+  private addPool(addr: Address) {
+    if (addr === Address.ZERO) {
+      return
+    }
+    const tok = this.universe.tokens.get(addr)
+    if (tok && !this.universe.lpTokens.has(tok)) {
+      return
+    }
+    this.addressList_.add(addr)
+  }
   public get addressesInUse() {
-    this._addressList.add(this.pool.address)
-    return this._addressList
+    this.addPool(this.pool.address)
+    return this.addressList_
   }
   get outputSlippage() {
     return 0n
@@ -188,7 +198,9 @@ export class CurveSwap extends Action('Curve') {
         routerContract.address,
         payload
       ),
-      `Curve,swap=${predicted.join(', ')} -> ${quoteWithout}`,
+      `Curve,swap=${predicted.join(', ')} -> ${quoteWithout},pools=${[
+        ...this.addressesInUse,
+      ].join(', ')}`,
       `amt_${this.outputToken[0].symbol}`
     )
 
@@ -215,6 +227,13 @@ export class CurveSwap extends Action('Curve') {
       )
       const { _route, _swapParams, _factorySwapAddresses } =
         _getExchangeMultipleArgs(out.route)
+
+      for (const r of _route) {
+        this.addPool(Address.from(r))
+      }
+      for (const a of _factorySwapAddresses) {
+        this.addPool(Address.from(a))
+      }
 
       const out_: ethers.BigNumber =
         await contract.callStatic.get_exchange_multiple_amount(
@@ -260,7 +279,7 @@ export class CurveSwap extends Action('Curve') {
         const output = await this._quote(tok.one)
         const { _route } = _getExchangeMultipleArgs(output.route)
         for (const r of _route) {
-          this._addressList.add(Address.from(r))
+          this.addPool(Address.from(r))
         }
       } catch (e) {}
     }

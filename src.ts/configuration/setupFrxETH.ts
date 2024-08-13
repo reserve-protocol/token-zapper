@@ -31,7 +31,7 @@ abstract class BaseFrxETH extends Action('FrxETH') {
     return false
   }
   get outputSlippage() {
-    return 0n
+    return 1n
   }
   async quote(amountsIn: TokenQuantity[]) {
     return amountsIn.map((tok, i) => tok.into(this.outputToken[i]))
@@ -74,9 +74,6 @@ class FrxETHMint extends BaseFrxETH {
   get actionName() {
     return 'FrxETH.mint'
   }
-  get outputSlippage(): bigint {
-    return 0n
-  }
   get oneUsePrZap(): boolean {
     return false
   }
@@ -106,9 +103,6 @@ class FrxETHMint extends BaseFrxETH {
 class SFrxETHMint extends BaseFrxETH {
   gasEstimate(): bigint {
     return 100000n
-  }
-  get outputSlippage(): bigint {
-    return 0n
   }
   constructor(
     private readonly universe: UniverseWithERC20GasTokenDefined,
@@ -164,9 +158,6 @@ class SFrxETHMint extends BaseFrxETH {
 class SFrxETHburn extends BaseFrxETH {
   gasEstimate(): bigint {
     return 100000n
-  }
-  get outputSlippage(): bigint {
-    return 0n
   }
   constructor(
     private readonly universe: UniverseWithERC20GasTokenDefined,
@@ -250,28 +241,27 @@ export const setupFrxETH = async (
     config.frxethOracle,
     universe.provider
   )
-  const frxEthOracle = PriceOracle.createSingleTokenOracle(
-    universe,
-    frxETH,
-    async () => {
+  const frxEthOracle = universe.addSingleTokenPriceSource({
+    token: frxETH,
+    priceFn: async () => {
       const [, low, high] = await oracle.getPrices()
       const weth = universe.nativeToken.fromBigInt(
         (low.toBigInt() + high.toBigInt()) / 2n
       )
       const out = (await universe.fairPrice(weth)) ?? universe.usd.zero
       return out
-    }
-  )
-  const sfrxEthOracle = PriceOracle.createSingleTokenOracle(
-    universe,
-    sfrxETH,
-    async () => {
+    },
+    priceToken: universe.usd,
+  })
+
+  universe.addSingleTokenPriceSource({
+    token: sfrxETH,
+    priceFn: async () => {
       const out = await burnSfrxETH.quote([sfrxETH.one])
       const i = (await frxEthOracle.quote(out[0].token)) ?? universe.usd.zero
       const res = out[0].into(universe.usd).mul(i)
       return res
-    }
-  )
-  universe.oracles.push(frxEthOracle)
-  universe.oracles.push(sfrxEthOracle)
+    },
+    priceToken: universe.usd,
+  })
 }

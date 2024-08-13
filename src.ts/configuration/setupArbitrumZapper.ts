@@ -33,7 +33,7 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
           return null
         }
 
-        return universe.usd.one;
+        return universe.usd.one
       }
       if (token === wsteth) {
         const oraclewstethToEth = registry.getOracle(
@@ -98,7 +98,6 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
   )
 
   universe.oracles.push(registry)
-  universe.oracle = new ZapperTokenQuantityPrice(universe)
 
   // Load compound v3
   universe.addIntegration(

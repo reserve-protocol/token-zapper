@@ -1,4 +1,4 @@
-import { type Config } from './ChainConfiguration'
+import { ConfigWithToken, type Config } from './ChainConfiguration'
 import { Address } from '../base/Address'
 import { type Universe } from '../Universe'
 
@@ -18,9 +18,7 @@ export interface JsonTokenEntry {
  * @param tokens
  */
 export const loadTokens = async (
-  universe: Universe<
-    Config<number, any, { [K in string]: string }, { [K in string]: string }>
-  >,
+  universe: Universe<ConfigWithToken<Record<string, string>>>,
   tokens: JsonTokenEntry[]
 ) => {
   for (const token of tokens) {

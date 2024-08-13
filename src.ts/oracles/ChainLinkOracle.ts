@@ -1,11 +1,10 @@
 import { Address } from '../base/Address'
+import { CHAINLINK } from '../base/constants'
 import { Config } from '../configuration/ChainConfiguration'
 import { IChainLinkFeedRegistry__factory } from '../contracts/factories/contracts/IChainLinkFeedRegistry__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { PriceOracle } from './PriceOracle'
-
-const ISO4217USDCodeInHex = '0x0000000000000000000000000000000000000348'
 
 export class ChainLinkOracle extends PriceOracle {
   private tokenToChainLinkInternalAddress = new Map<Token, Address>()
@@ -28,9 +27,9 @@ export class ChainLinkOracle extends PriceOracle {
 
   private unsupported: Set<Token> = new Set()
 
-  async quote_(
+  private async quote_(
     token: Token,
-    quoteSymbol = ISO4217USDCodeInHex
+    quoteSymbol: Address
   ): Promise<TokenQuantity | null> {
     try {
       const addrToLookup =
@@ -39,7 +38,7 @@ export class ChainLinkOracle extends PriceOracle {
       const lastestAnswer = await IChainLinkFeedRegistry__factory.connect(
         this.chainlinkRegistry.address,
         this.universe.provider
-      ).callStatic.latestAnswer(addrToLookup, quoteSymbol)
+      ).callStatic.latestAnswer(addrToLookup, quoteSymbol.address)
       return (
         this.universe.tokens
           .get(Address.from(quoteSymbol))
@@ -63,8 +62,8 @@ export class ChainLinkOracle extends PriceOracle {
       ]
 
       const [basePrice, derivedPrice] = await Promise.all([
-        this.quote_(uoaToken, ISO4217USDCodeInHex),
-        this.quote_(derivedToken, derivedTokenUnit.address),
+        this.quote_(uoaToken, CHAINLINK.USD),
+        this.quote_(derivedToken, derivedTokenUnit),
       ])
 
       if (!basePrice || !derivedPrice) {
@@ -72,7 +71,7 @@ export class ChainLinkOracle extends PriceOracle {
       }
       return basePrice.mul(derivedPrice.into(basePrice.token))
     }
-    return await this.quote_(token)
+    return await this.quote_(token, CHAINLINK.USD)
   }
 
   constructor(

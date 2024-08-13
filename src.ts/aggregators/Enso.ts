@@ -113,7 +113,15 @@ const getEnsoQuote_ = async (
       cmds
         .map((i) => Address.from('0x' + i.slice(26)))
         .filter((i) => {
-          return uni.tokens.has(i) === false
+          const tok = uni.tokens.get(i)
+          if (tok == null) {
+            return true
+          }
+          if (uni.lpTokens.has(tok)) {
+            return true
+          }
+          // console.log('enso ' + i)
+          return false
         })
     )
 
@@ -190,7 +198,7 @@ class EnsoAction extends Action('Enso') {
     return this.request.addresesInUse
   }
   get outputSlippage() {
-    return 1n
+    return 0n
   }
   async plan(
     planner: Planner,
@@ -207,16 +215,10 @@ class EnsoAction extends Action('Enso') {
       this.request.tx.data.commands,
       this.request.tx.data.state
     )
-    planner.add(
-      routeSingleCall,
-      `Enso(${this.inputQty}, ${this.request.route
-        .map((i) => i.protocol)
-        .join(',')}, ${this.outputQty})`
-    )
+    planner.add(routeSingleCall, this.toString())
     return null
   }
   public outputQuantity: TokenQuantity[] = []
-  private lastQuoteBlock: number = 0
   constructor(
     public readonly universe: Universe,
     inputQty: TokenQuantity,
@@ -232,7 +234,6 @@ class EnsoAction extends Action('Enso') {
       DestinationOptions.Callee,
       [new Approval(inputQty.token, Address.from(request.tx.to))]
     )
-    this.lastQuoteBlock = universe.currentBlock
   }
   get inputQty() {
     return this.request.quantityIn
@@ -241,7 +242,9 @@ class EnsoAction extends Action('Enso') {
     return this.request.quantityOut
   }
   toString() {
-    return `Enso(${this.inputQty} => ${this.outputQty})`
+    return `Enso(${this.inputQty} => ${this.outputQty}, pools=${[
+      ...this.addressesInUse,
+    ].join(', ')})`
   }
 
   async quote([_]: TokenQuantity[]): Promise<TokenQuantity[]> {

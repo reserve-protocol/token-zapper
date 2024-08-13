@@ -46,6 +46,7 @@ export const arbiConfig = makeConfig(
   COMMON_TOKENS,
   RTOKENS,
   {
+    emitId: "0x66BC6029408a5dEB3ffacA6835119af963bB408a",
     facadeAddress: reserveAddresses.FACADE_ADDRESS,
     oldFacadeAddress: reserveAddresses.FACADE_ADDRESS,
     wrappedNative: COMMON_TOKENS.WETH,

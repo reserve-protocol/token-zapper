@@ -1,0 +1,1 @@
+{"version":3,"file":"loadBaseTokenList.js","sourceRoot":"","sources":["../../src.ts/configuration/loadBaseTokenList.ts"],"names":[],"mappings":"AAAA,OAAO,EAAuB,UAAU,EAAE,MAAM,cAAc,CAAA;AAE9D,OAAO,MAAM,MAAM,yBAAyB,CAAA;AAE5C,MAAM,CAAC,MAAM,iBAAiB,GAAG,KAAK,EAAE,QAAkB,EAAE,EAAE;IAC1D,MAAM,UAAU,CAAC,QAAQ,EAAE,MAA0B,CAAC,CAAA;AAC1D,CAAC,CAAA"}

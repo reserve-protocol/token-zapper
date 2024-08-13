@@ -96,9 +96,6 @@ export class MintSAV2TokensAction extends BaseAaveV2 {
 export class BurnSAV2TokensAction extends BaseAaveV2 {
   public actionName: string = 'withdraw'
 
-  get outputSlippage() {
-    return 1n
-  }
   protected planAction(input: Value): FunctionCall {
     return this.lib.withdraw(this.universe.execAddress.address, input, true)
   }

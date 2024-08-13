@@ -78,9 +78,6 @@ export class CurveStableSwapNGPool {
     remove: BaseAction
   }[]
 
-  get outputSlippage() {
-    return 1n
-  }
   get address() {
     return this.pool.address
   }
@@ -129,9 +126,6 @@ export class CurveStableSwapNGPool {
 }
 
 export class CurveStableSwapNGAddLiquidity extends Action('CurveStableSwapNG') {
-  get outputSlippage() {
-    return 1n
-  }
   gasEstimate() {
     return BigInt(300000n)
   }

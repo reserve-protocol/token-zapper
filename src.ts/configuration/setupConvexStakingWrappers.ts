@@ -1,10 +1,9 @@
 import { ParamType } from '@ethersproject/abi'
 import {
   Action,
-  BaseAction,
   DestinationOptions,
   InteractionConvention,
-  isMultiChoiceEdge,
+  isMultiChoiceEdge
 } from '../action/Action'
 import { CurveStableSwapNGPool } from '../action/CurveStableSwapNG'
 import { Address } from '../base/Address'
@@ -29,7 +28,6 @@ import {
   encodeArg,
 } from '../tx-gen/Planner'
 import { CurveIntegration, CurvePool } from './setupCurve'
-import { PriceOracle } from '../oracles/PriceOracle'
 
 type ConvexStakingWrapperAddresss = string
 type ConvexStakingWrapperName = string

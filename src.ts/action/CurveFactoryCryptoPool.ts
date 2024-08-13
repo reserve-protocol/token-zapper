@@ -2,6 +2,13 @@ import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 
+import { ParamType } from '@ethersproject/abi'
+import { BigNumber, BigNumberish, Contract } from 'ethers'
+import {
+  CurveCryptoFactoryHelper__factory,
+  IERC20__factory,
+} from '../contracts'
+import ABI from '../curve-js/src/constants/abis/factory-crypto/factory-crypto-pool-2.json'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value, encodeArg } from '../tx-gen/Planner'
 import {
@@ -10,14 +17,6 @@ import {
   DestinationOptions,
   InteractionConvention,
 } from './Action'
-import ABI from '../curve-js/src/constants/abis/factory-crypto/factory-crypto-pool-2.json'
-import { BigNumber, BigNumberish, Contract } from 'ethers'
-import { ParamType } from '@ethersproject/abi'
-import {
-  CurveCryptoFactoryHelper__factory,
-  IERC20__factory,
-} from '../contracts'
-import { PriceOracle } from '../oracles/PriceOracle'
 
 abstract class CurveFactoryCryptoPoolBase extends Action(
   'CurveFactoryCryptoPool'
@@ -122,9 +121,6 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
 ) {
   gasEstimate(): bigint {
     return 100000n
-  }
-  get outputSlippage() {
-    return 1n
   }
   public get returnsOutput(): boolean {
     return true

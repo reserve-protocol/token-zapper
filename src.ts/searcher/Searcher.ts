@@ -234,7 +234,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
               internalTradeSlippage,
               abortSignal,
               i,
-              false
+              true
             )
             if (
               potentialSwaps == null ||

@@ -101,9 +101,6 @@ class AaveV3ActionWithdraw extends BaseAaveAction {
     return [await this.reserve.intoAssets(amountsIn)]
   }
 
-  get outputSlippage() {
-    return 1000n;
-  }
   async plan(
     planner: gen.Planner,
     inputs: gen.Value[],

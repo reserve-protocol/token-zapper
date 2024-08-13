@@ -303,9 +303,6 @@ export class BurnCTokenAction extends CompV2Action {
     return 'redeem'
   }
 
-  get outputSlippage(): bigint {
-    return 1n
-  }
   gasEstimate() {
     return BigInt(150000n)
   }

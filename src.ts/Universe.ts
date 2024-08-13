@@ -165,30 +165,18 @@ export class Universe<const UniverseConf extends Config = Config> {
       this.tradeVenues = [venue, ...this.tradeVenues]
     }
   }
-  public getTradingVenues(
-    input: TokenQuantity,
-    output: Token,
-    dynamicInput: boolean
-  ) {
-    const venues =
-      dynamicInput === true
-        ? this.tradingVenuesSupportingDynamicInput
-        : this.tradeVenues
+  public getTradingVenues(input: TokenQuantity, output: Token) {
+    const venues = this.tradeVenues
     const out = venues.filter((venue) =>
       venue.router.supportsSwap(input, output)
     )
     if (out.length !== 0) {
       return out
     }
-    if (dynamicInput) {
-      throw new Error(
-        `Failed to find any trading venues for ${input.token} -> ${output} where dynamic input is allowed`
-      )
-    } else {
-      throw new Error(
-        `Failed to find any trading venues for ${input.token} -> ${output}`
-      )
-    }
+
+    throw new Error(
+      `Failed to find any trading venues for ${input.token} -> ${output}`
+    )
   }
 
   public async swaps(
@@ -205,16 +193,21 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (wrapper?.allowAggregatorSearcher === false) {
       return
     }
-    const aggregators = this.getTradingVenues(input, output, opts.dynamicInput)
+    const aggregators = this.getTradingVenues(input, output)
 
     const tradeName = `${input.token} -> ${output}`
 
     await Promise.all(
       shuffle(aggregators).map(async (venue) => {
         try {
+          let inp = input
+          if (opts.dynamicInput && venue.supportsDynamicInput == false) {
+            const subtract = inp.amount / 1000000n
+            inp = inp.token.from(inp.amount - (subtract === 0n ? 1n : subtract))
+          }
           const res = await this.perf.measurePromise(
             venue.name,
-            venue.router.swap(opts.abort, input, output, opts.slippage),
+            venue.router.swap(opts.abort, inp, output, opts.slippage),
             tradeName
           )
           // console.log(`${venue.name} ok: ${res.steps[0].action.toString()}`)

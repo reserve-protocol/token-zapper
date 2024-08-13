@@ -16,9 +16,8 @@ import {
 import { UniverseWithERC20GasTokenDefined } from '../searcher/UniverseWithERC20GasTokenDefined'
 import * as gen from '../tx-gen/Planner'
 
-import { Approval } from '../base/Approval'
-import { PriceOracle } from '../oracles/PriceOracle'
 import { ParamType } from '@ethersproject/abi'
+import { Approval } from '../base/Approval'
 
 abstract class BaseFrxETH extends Action('FrxETH') {
   public get supportsDynamicInput() {
@@ -31,7 +30,7 @@ abstract class BaseFrxETH extends Action('FrxETH') {
     return false
   }
   get outputSlippage() {
-    return 1n
+    return 0n
   }
   async quote(amountsIn: TokenQuantity[]) {
     return amountsIn.map((tok, i) => tok.into(this.outputToken[i]))

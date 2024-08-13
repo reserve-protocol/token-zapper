@@ -1,11 +1,10 @@
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
-import { parseHexStringIntoBuffer } from '../base/utils'
-import { InteractionConvention, DestinationOptions, Action } from './Action'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-import { Approval } from '../base/Approval'
 import { Address } from '../base/Address'
-import { IStargateRouter__factory, ZapperExecutor__factory } from '../contracts'
+import { Approval } from '../base/Approval'
+import { IStargateRouter__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 
 /**
@@ -59,9 +58,6 @@ export class StargateDepositAction extends Action('Stargate') {
 }
 
 export class StargateWithdrawAction extends Action('Stargate') {
-  get outputSlippage() {
-    return 1n
-  }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
       IStargateRouter__factory.connect(

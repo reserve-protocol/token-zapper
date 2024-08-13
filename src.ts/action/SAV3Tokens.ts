@@ -108,9 +108,6 @@ export class BurnSAV3TokensAction extends BaseAaveV3 {
     )
   }
 
-  get outputSlippage() {
-    return 1n
-  }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const rate = await this.getRate()

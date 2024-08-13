@@ -167,7 +167,7 @@ export const createParaswap = (aggregatorName: string, universe: Universe) => {
       }
     },
     false
-  ).withMaxConcurrency(8)
+  ).withMaxConcurrency(12)
 
   return new TradingVenue(universe, router)
 }

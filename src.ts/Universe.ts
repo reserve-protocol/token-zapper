@@ -201,8 +201,11 @@ export class Universe<const UniverseConf extends Config = Config> {
       shuffle(aggregators).map(async (venue) => {
         try {
           let inp = input
-          if (opts.dynamicInput && venue.supportsDynamicInput == false) {
-            const subtract = inp.amount / 1000000n
+          if (
+            opts.dynamicInput === true &&
+            venue.supportsDynamicInput == false
+          ) {
+            const subtract = inp.amount / 100000n
             inp = inp.token.from(inp.amount - (subtract === 0n ? 1n : subtract))
           }
           const res = await this.perf.measurePromise(

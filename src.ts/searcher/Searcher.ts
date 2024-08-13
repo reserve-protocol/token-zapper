@@ -228,13 +228,13 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
               return
             }
             const potentialSwaps = await this.findSingleInputTokenSwap(
+              true,
               input,
               output,
               this.universe.config.addresses.executorAddress,
               internalTradeSlippage,
               abortSignal,
-              i,
-              true
+              i
             )
             if (
               potentialSwaps == null ||
@@ -613,13 +613,13 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         .map(async (qty) => {
           for (let i = 2; i <= 3; i++) {
             const potentialSwaps = await this.findSingleInputTokenSwap(
+              true,
               qty,
               outputToken,
               this.universe.config.addresses.executorAddress,
               slippage,
               abortSignal,
-              i,
-              false
+              i
             ).catch(() => null)
             if (potentialSwaps == null) {
               continue
@@ -951,29 +951,6 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     )
   }
 
-  async externalQuoters(
-    input: TokenQuantity,
-    output: Token,
-    dynamicInput: boolean,
-    slippage: bigint,
-    abort: AbortSignal
-  ) {
-    const out: SwapPath[] = []
-    await this.universe.swaps(
-      input,
-      output,
-      async (path) => {
-        out.push(path)
-      },
-      {
-        dynamicInput,
-        slippage,
-        abort,
-      }
-    )
-
-    return out
-  }
   async externalQuoters_(
     input: TokenQuantity,
     output: Token,
@@ -1038,13 +1015,13 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
   }
 
   async findSingleInputTokenSwap(
+    dynamicInput: boolean,
     input: TokenQuantity,
     output: Token,
     destination: Address,
     slippage: bigint,
     abort: AbortSignal,
-    maxHops: number = 2,
-    dynamicInput: boolean = false
+    maxHops: number
   ): Promise<MultiChoicePath> {
     const out: SwapPath[] = []
     await this.findSingleInputTokenSwap_(
@@ -1085,8 +1062,8 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     destination: Address,
     slippage: bigint,
     abort: AbortSignal,
-    maxHops: number = 2,
-    dynamicInput: boolean = false,
+    maxHops: number,
+    dynamicInput: boolean,
     onResult: (result: SwapPath) => Promise<void>,
     rejectRatio: number = 0.9
   ): Promise<void> {
@@ -1108,7 +1085,9 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       if (inValue != 0 && outValue != 0) {
         const ratio = outValue / inValue
         if (ratio < rejectRatio) {
-          console.log(`inValue: ${inValue}, outValue: ${outValue}, ratio: ${ratio}, rejectRatio: ${rejectRatio}`)
+          console.log(
+            `inValue: ${inValue}, outValue: ${outValue}, ratio: ${ratio}, rejectRatio: ${rejectRatio}`
+          )
           // console.log('Rejecting', path.describe().join('\n'))
           dropped += 1
           return

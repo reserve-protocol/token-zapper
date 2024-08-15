@@ -132,7 +132,7 @@ export const generateAllPermutations = async function (
   const allCombos = combos(arr)
 
   const withoutComflicts = allCombos.filter(
-    (paths) => willPathsHaveAddressConflicts(paths).length === 0
+    (paths) => willPathsHaveAddressConflicts(universe, paths).length === 0
   )
   const valuedTrades = await Promise.all(
     withoutComflicts.map(async (trades) => {
@@ -264,13 +264,16 @@ export const createConcurrentStreamingSeacher = (
     },
   }
 }
-const willPathsHaveAddressConflicts = (paths: SwapPath[]) => {
+const willPathsHaveAddressConflicts = (universe: Universe, paths: SwapPath[]) => {
   const addressesInUse = new Set<Address>()
   const conflicts = new Set<Address>()
 
   for (const path of paths) {
     for (const step of path.steps) {
       for (const addr of step.action.addressesInUse) {
+        if (universe.tokens.has(addr)) {
+          continue
+        }
         if (addressesInUse.has(addr)) {
           console.log('Address conflict', addr.toString())
           conflicts.add(addr)

@@ -1106,13 +1106,13 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         emitResult,
         maxHops
       ).catch((e) => {
-        return []
       }),
       this.externalQuoters_(input, output, emitResult, {
         dynamicInput,
         abort,
         slippage,
-      }).catch((e) => {}),
+      }).catch((e) => {
+      }),
     ])
   }
 }

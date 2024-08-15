@@ -15,7 +15,6 @@ import { UniswapRouterAction } from '../configuration/setupUniswapRouter'
 import { EthereumUniverse } from '../configuration/ethereum'
 import { BaseUniverse } from '../configuration/base'
 import { ArbitrumUniverse } from '../configuration/arbitrum'
-import { wait } from '../base/controlflow'
 import { printPlan } from '../tx-gen/Planner'
 
 export const resolveTradeConflicts = async (
@@ -273,6 +272,7 @@ const willPathsHaveAddressConflicts = (paths: SwapPath[]) => {
     for (const step of path.steps) {
       for (const addr of step.action.addressesInUse) {
         if (addressesInUse.has(addr)) {
+          console.log('Address conflict', addr.toString())
           conflicts.add(addr)
         }
         addressesInUse.add(addr)

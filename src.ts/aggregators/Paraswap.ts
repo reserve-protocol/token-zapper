@@ -140,6 +140,12 @@ export const createParaswap = (aggregatorName: string, universe: Universe) => {
               for (const addr of (exchange.poolAddresses ?? []).map(
                 Address.from
               )) {
+                const tok = universe.tokens.get(addr)
+                if (tok != null) {
+                  if (!universe.lpTokens.has(tok)) {
+                    continue
+                  }
+                }
                 addrs.add(addr)
               }
             }

@@ -30,7 +30,7 @@ abstract class BaseFrxETH extends Action('FrxETH') {
     return false
   }
   get outputSlippage() {
-    return 0n
+    return 1n
   }
   async quote(amountsIn: TokenQuantity[]) {
     return amountsIn.map((tok, i) => tok.into(this.outputToken[i]))

@@ -120,7 +120,7 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
       const vault = await setupERC4626(universe, {
         vaultAddress: addr,
         protocol: proto,
-        slippage: 1n,
+        slippage: 0n,
       })
       return vault
     })

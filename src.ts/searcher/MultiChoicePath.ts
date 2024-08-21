@@ -271,7 +271,9 @@ const noConflictAddrs = new Set([
   Address.from('0xDef1C0ded9bec7F1a1670819833240f027b25EfF'),
   Address.from('0xCA99eAa38e8F37a168214a3A57c9a45a58563ED5'),
   Address.from('0x89B78CfA322F6C5dE0aBcEecab66Aee45393cC5A'),
-  Address.from('0x111111125421cA6dc452d289314280a0f8842A65')
+  Address.from('0x111111125421cA6dc452d289314280a0f8842A65'),
+  Address.from('0x010224949cCa211Fb5dDfEDD28Dc8Bf9D2990368'),
+  Address.from('0x6352a56caadC4F1E25CD6c75970Fa768A3304e64')
 ])
 const willPathsHaveAddressConflicts = (
   universe: Universe,

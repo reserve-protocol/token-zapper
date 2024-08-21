@@ -42,7 +42,7 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { Planner, Value, encodeArg } from '../tx-gen/Planner'
 
 import { ParamType } from '@ethersproject/abi'
-import { utils } from 'ethers'
+import { BigNumber, utils } from 'ethers'
 import { solidityPack } from 'ethers/lib/utils'
 import NodeCache from 'node-cache'
 import { RouterAction } from '../action/RouterAction'
@@ -291,7 +291,8 @@ const uniTokenToOurs = async (universe: Universe, token: Currency) => {
 }
 const uniAmtTokenToOurs = async (universe: Universe, token: CurrencyAmount) => {
   const ourToken = await uniTokenToOurs(universe, token.currency)
-  return ourToken.fromBigInt(BigInt(token.quotient.toString()))
+  const out = token.toFixed(ourToken.decimals)
+  return ourToken.fromDecimal(out)
 }
 const tokenQtyToCurrencyAmt = (
   universe: Universe,
@@ -432,8 +433,8 @@ export const setupUniswapRouter = async (universe: Universe) => {
     const inp = tokenQtyToCurrencyAmt(universe, input)
     const outp = ourTokenToUni(universe, output)
     const slip = new Percent(
-      Number(slippage),
-      Number(TRADE_SLIPPAGE_DENOMINATOR)
+      30,
+      10000
     )
 
     if (abort.aborted) {

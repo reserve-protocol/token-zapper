@@ -146,7 +146,10 @@ export class CurveSwap extends Action('Curve') {
 
   private addressList_ = new Set<Address>()
   private addPool(addr: Address) {
-    if (addr === Address.ZERO) {
+    if (
+      addr === Address.ZERO ||
+      this.universe.commonTokensInfo.addresses.has(addr)
+    ) {
       return
     }
     this.addressList_.add(addr)

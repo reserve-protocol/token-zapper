@@ -1,6 +1,6 @@
 import { Universe } from '../Universe'
 import { DestinationOptions, InteractionConvention } from '../action/Action'
-import { type Address } from '../base/Address'
+import { Address } from '../base/Address'
 import { Config } from '../configuration/ChainConfiguration'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
@@ -264,14 +264,29 @@ export const createConcurrentStreamingSeacher = (
     },
   }
 }
-const willPathsHaveAddressConflicts = (universe: Universe, paths: SwapPath[]) => {
+
+const noConflictAddrs = new Set([
+  Address.from('0x7E7d64D987cAb6EeD08A191C4C2459dAF2f8ED0B'),
+  Address.from('0x6675a323dEDb77822FCf39eAa9D682F6Abe72555'),
+  Address.from('0xDef1C0ded9bec7F1a1670819833240f027b25EfF'),
+  Address.from('0xCA99eAa38e8F37a168214a3A57c9a45a58563ED5'),
+  Address.from('0x89B78CfA322F6C5dE0aBcEecab66Aee45393cC5A'),
+  Address.from('0x111111125421cA6dc452d289314280a0f8842A65')
+])
+const willPathsHaveAddressConflicts = (
+  universe: Universe,
+  paths: SwapPath[]
+) => {
   const addressesInUse = new Set<Address>()
   const conflicts = new Set<Address>()
 
   for (const path of paths) {
     for (const step of path.steps) {
       for (const addr of step.action.addressesInUse) {
-        if (universe.tokens.has(addr)) {
+        if (
+          noConflictAddrs.has(addr) ||
+          universe.commonTokensInfo.addresses.has(addr)
+        ) {
           continue
         }
         if (addressesInUse.has(addr)) {

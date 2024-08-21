@@ -66,6 +66,13 @@ export class Token {
     return `${this.symbol}`
   }
 
+  serialize() {
+    return {
+      address: this.address.address,
+      symbol: this.symbol,
+    }
+  }
+
   get [Symbol.toStringTag]() {
     return `Token(${this.address.toShortString()},${this.symbol})`
   }
@@ -152,6 +159,14 @@ export class Token {
  */
 export class TokenQuantity {
   constructor(public readonly token: Token, public readonly amount: bigint) {}
+
+  serialize() {
+    return {
+      token: this.token.serialize(),
+      amount: this.amount.toString(),
+      formatted: this.toString(),
+    }
+  }
 
   public gte(other: TokenQuantity) {
     return this.amount >= other.amount
@@ -264,6 +279,13 @@ export class PricedTokenQuantity {
     public readonly quantity: TokenQuantity,
     private innerPrice: TokenQuantity | null
   ) {}
+
+  serialize() {
+    return {
+      quantity: this.quantity.serialize(),
+      price: this.price?.serialize() ?? null,
+    }
+  }
 
   public async update(universe: {
     fairPrice: (qty: TokenQuantity) => Promise<TokenQuantity | null>

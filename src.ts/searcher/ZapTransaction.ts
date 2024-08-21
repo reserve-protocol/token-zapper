@@ -1,6 +1,6 @@
 import { type TransactionRequest } from '@ethersproject/providers'
 import { BigNumber } from 'ethers'
-import { hexlify, resolveProperties } from 'ethers/lib/utils'
+import { hexlify, hexZeroPad, resolveProperties } from 'ethers/lib/utils'
 import { type ZapERC20ParamsStruct } from '../contracts/contracts/Zapper.sol/Zapper'
 import { PricedTokenQuantity, type TokenQuantity } from '../entities/Token'
 import { Planner, printPlan } from '../tx-gen/Planner'
@@ -230,13 +230,8 @@ export class ZapTransaction {
 
   async serialize() {
     const txArgs = await resolveProperties(this.transaction.params)
-    const signer = this.searchResult.signer.address.toString()
     return {
-      id: `${this.universe.chainId}.${signer}.${
-        this.searchResult.blockNumber
-      }.${this.searchResult.constructor.name}[${
-        this.input
-      }->${this.stats.outputs.join(',')}]`,
+      id: hexZeroPad(hexlify(this.searchResult.zapId), 32),
       chainId: this.universe.chainId,
       zapType: this.searchResult.constructor.name,
       requestStart: new Date(this.searchResult.startTime).toISOString(),
@@ -269,20 +264,21 @@ export class ZapTransaction {
         from: this.transaction.tx.from ?? null,
       },
       gasUnits: this.stats.txFee.units.toString(),
-      input: this.stats.input.toString(),
-      output: this.stats.output.toString(),
-      dust: this.dust.dust.map((i) => i.toString()),
+      input: this.stats.input.serialize(),
+      output: this.stats.output.serialize(),
+      dust: this.dust.dust.map((i) => i.serialize()),
       description: this.describe().join('\n'),
-
 
       state: {
         prices: {
-          searcherPrices: Array.from(this.searchResult.searcher.tokenPrices.entries()).map(([k, v]) => ({
-            token: k.symbol,
-            price: v.format()
+          searcherPrices: Array.from(
+            this.searchResult.searcher.tokenPrices.entries()
+          ).map(([k, v]) => ({
+            token: k.serialize(),
+            price: v.serialize(),
           })),
-        }
-      }
+        },
+      },
     }
   }
 }

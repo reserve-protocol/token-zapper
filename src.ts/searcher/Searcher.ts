@@ -1085,8 +1085,11 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       if (inValue != 0 && outValue != 0) {
         const ratio = outValue / inValue
         if (ratio < rejectRatio) {
+          console.log(path.toString());
           console.log(
-            `inValue: ${inValue}, outValue: ${outValue}, ratio: ${ratio}, rejectRatio: ${rejectRatio}`
+            `Found trade: ${input} ${inValue} -> ${path.outputs.join(
+              ', '
+            )} outValue: ${outValue}, price impact: ${ratio}! rejectRatio: ${rejectRatio}`
           )
           // console.log('Rejecting', path.describe().join('\n'))
           dropped += 1
@@ -1105,14 +1108,12 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         destination,
         emitResult,
         maxHops
-      ).catch((e) => {
-      }),
+      ).catch((e) => {}),
       this.externalQuoters_(input, output, emitResult, {
         dynamicInput,
         abort,
         slippage,
-      }).catch((e) => {
-      }),
+      }).catch((e) => {}),
     ])
   }
 }

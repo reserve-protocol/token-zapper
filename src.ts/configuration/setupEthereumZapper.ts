@@ -123,7 +123,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       const vault = await setupERC4626(universe, {
         vaultAddress: addr,
         protocol: proto,
-        slippage: 5n,
+        slippage: 1n,
       })
       return vault
     })

@@ -231,6 +231,27 @@ export class Universe<const UniverseConf extends Config = Config> {
     UniverseConf['addresses']['commonTokens']
   >
 
+  private commonTokensSet_: Set<Token> | null = null
+  public get commonTokensInfo() {
+    if (this.commonTokensSet_ == null) {
+      this.commonTokensSet_ = new Set(Object.values(this.commonTokens))
+    }
+    return {
+      addresses: new Set([...this.commonTokensSet_].map((i) => i.address)),
+      tokens: this.commonTokensSet_,
+    }
+  }
+  private rTokensSet_: Set<Token> | null = null
+  public get rTokensInfo() {
+    if (this.rTokensSet_ == null) {
+      this.rTokensSet_ = new Set(Object.values(this.rTokens))
+    }
+    return {
+      addresses: new Set([...this.rTokensSet_].map((i) => i.address)),
+      tokens: this.rTokensSet_,
+    }
+  }
+
   public readonly integrations: Integrations = {}
   private readonly rTokenDeployments = new Map<Token, RTokenDeployment>()
   public async defineRToken(rTokenAddress: Address) {

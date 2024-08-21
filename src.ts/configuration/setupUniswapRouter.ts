@@ -10,17 +10,27 @@ import { toHex } from '@uniswap/v3-sdk'
 
 import DEFAULT_TOKEN_LIST from '@uniswap/default-token-list'
 import {
+  AlphaRouter,
+  CachingGasStationProvider,
   CachingTokenListProvider,
   CachingTokenProviderWithFallback,
+  CachingV2PoolProvider,
   CachingV3PoolProvider,
   CurrencyAmount,
+  EIP1559GasPriceProvider,
+  EthEstimateGasSimulator,
+  GasPrice,
+  LegacyGasPriceProvider,
   LegacyRouter,
   NodeJSCache,
+  OnChainGasPriceProvider,
   OnChainQuoteProvider,
   SwapRoute,
   SwapType,
+  TokenPropertiesProvider,
   TokenProvider,
   UniswapMulticallProvider,
+  V2PoolProvider,
   V3PoolProvider,
   V3RouteWithValidQuote,
 } from '@uniswap/smart-order-router'
@@ -47,6 +57,9 @@ import { solidityPack } from 'ethers/lib/utils'
 import NodeCache from 'node-cache'
 import { RouterAction } from '../action/RouterAction'
 import { SwapPlan } from '../searcher/Swap'
+import { OnChainTokenFeeFetcher } from '@uniswap/smart-order-router/build/main/providers/token-fee-fetcher'
+import { PortionProvider } from '@uniswap/smart-order-router/build/main/providers/portion-provider'
+import { Protocol } from '@uniswap/router-sdk'
 
 class UniswapPool {
   public constructor(
@@ -305,7 +318,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
   const tokenCache = new NodeJSCache<UniToken>(
     new NodeCache({ stdTTL: 3600, useClones: false })
   )
-  const network = await universe.provider.getNetwork()
+  await universe.provider.getNetwork()
 
   const multicall = new UniswapMulticallProvider(
     universe.chainId,
@@ -324,22 +337,68 @@ export const setupUniswapRouter = async (universe: Universe) => {
     tokenProviderOnChain
   )
 
+  const tokenFeeFetcher = new OnChainTokenFeeFetcher(
+    universe.chainId,
+    universe.provider
+  )
+  const tokenPropertiesProvider = new TokenPropertiesProvider(
+    universe.chainId,
+    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false })),
+    tokenFeeFetcher
+  )
+
+  const v2PoolProvider = new CachingV2PoolProvider(
+    universe.chainId,
+    new V2PoolProvider(universe.chainId, multicall, tokenPropertiesProvider),
+    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
+  )
+
   const v3PoolProvider = new CachingV3PoolProvider(
     universe.chainId,
     new V3PoolProvider(universe.chainId, multicall),
     new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
   )
 
-  const router = new LegacyRouter({
+  const portionProvider = new PortionProvider()
+
+  const ethEstimateGasSimulator = new EthEstimateGasSimulator(
+    universe.chainId,
+    universe.provider,
+    v2PoolProvider,
+    v3PoolProvider,
+    portionProvider
+  )
+
+  const gasPriceCache = new NodeJSCache<GasPrice>(
+    new NodeCache({ stdTTL: 15, useClones: true })
+  )
+
+  const gasPriceProvider = new CachingGasStationProvider(
+    universe.chainId,
+    new OnChainGasPriceProvider(
+      universe.chainId,
+      new EIP1559GasPriceProvider(universe.provider),
+      new LegacyGasPriceProvider(universe.provider)
+    ),
+    gasPriceCache
+  )
+  const legacy = new LegacyRouter({
     chainId: universe.chainId,
     multicall2Provider: multicall,
     poolProvider: v3PoolProvider,
-
     quoteProvider: new OnChainQuoteProvider(
-      network.chainId,
+      universe.chainId,
       universe.provider,
       multicall
     ),
+    tokenProvider: cachingTokenProvider,
+  })
+  const router = new AlphaRouter({
+    chainId: universe.chainId,
+    multicall2Provider: multicall,
+    provider: universe.provider,
+    simulator: ethEstimateGasSimulator,
+    gasPriceProvider: gasPriceProvider,
     tokenProvider: cachingTokenProvider,
   })
 
@@ -433,20 +492,27 @@ export const setupUniswapRouter = async (universe: Universe) => {
     const inp = tokenQtyToCurrencyAmt(universe, input)
     const outp = ourTokenToUni(universe, output)
     const slip = new Percent(
-      30,
-      10000
+      Number(slippage),
+      Number(TRADE_SLIPPAGE_DENOMINATOR)
     )
 
     if (abort.aborted) {
       throw new Error('Aborted')
     }
-    const route = await router.route(inp, outp, TradeType.EXACT_INPUT, {
-      recipient: universe.execAddress.address,
-      slippageTolerance: slip,
-
-      deadline: Math.floor(Date.now() / 1000 + 2500),
-      type: SwapType.SWAP_ROUTER_02,
-    })
+    const route = await router.route(
+      inp,
+      outp,
+      TradeType.EXACT_INPUT,
+      {
+        recipient: universe.execAddress.address,
+        slippageTolerance: slip,
+        deadline: Math.floor(Date.now() / 1000 + 10000),
+        type: SwapType.SWAP_ROUTER_02,
+      },
+      {
+        protocols: [Protocol.V3],
+      }
+    )
 
     if (route == null || route.methodParameters == null) {
       // console.log(

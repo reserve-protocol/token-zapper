@@ -119,7 +119,6 @@ const getEnsoQuote_ = async (
             [ParamType.from('bytes32[]')],
             val
           )[0] as string[]
-          console.log(decoded)
           cmdsToCheck.push(...decoded)
         } catch (e) {}
       }

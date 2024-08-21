@@ -273,7 +273,9 @@ const noConflictAddrs = new Set([
   Address.from('0x89B78CfA322F6C5dE0aBcEecab66Aee45393cC5A'),
   Address.from('0x111111125421cA6dc452d289314280a0f8842A65'),
   Address.from('0x010224949cCa211Fb5dDfEDD28Dc8Bf9D2990368'),
-  Address.from('0x6352a56caadC4F1E25CD6c75970Fa768A3304e64')
+  Address.from('0x6352a56caadC4F1E25CD6c75970Fa768A3304e64'),
+  Address.from('0x179dC3fb0F2230094894317f307241A52CdB38Aa'),
+  Address.from('0x99a58482BD75cbab83b27EC03CA68fF489b5788f')
 ])
 const willPathsHaveAddressConflicts = (
   universe: Universe,
@@ -292,7 +294,7 @@ const willPathsHaveAddressConflicts = (
           continue
         }
         if (addressesInUse.has(addr)) {
-          console.log('Address conflict', addr.toString())
+          // console.log('Address conflict', addr.toString())
           conflicts.add(addr)
         }
         addressesInUse.add(addr)

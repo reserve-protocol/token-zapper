@@ -244,7 +244,7 @@ export const PROTOCOL_CONFIGS = {
     ],
 
     ['0x9D39A5DE30e57443BfF2A8307A4256c8797A3497', 'sUSDe'],
-    ['0x9Ba021B0a9b958B5E75cE9f6dff97C7eE52cb3E6', 'apxETH'],
+    ['0x9ba021b0a9b958b5e75ce9f6dff97c7ee52cb3e6', 'apxETH'],
   ],
 
   aaveV3: {

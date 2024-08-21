@@ -2,6 +2,12 @@ import { loadCompV2Deployment } from '../action/CTokens'
 import { LidoDeployment } from '../action/Lido'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
+import { Token, TokenQuantity } from '../entities/Token'
+import {
+  BasketTokenSourcingRuleApplication,
+  PostTradeAction,
+} from '../searcher/BasketTokenSourcingRules'
+import { SwapPath, SwapPaths, SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
@@ -17,17 +23,12 @@ import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
+  await universe.provider.getNetwork()
   await loadEthereumTokenList(universe)
   const eth = universe.nativeToken
   const commonTokens = universe.commonTokens
   // Searcher depends on a way to price tokens
   // Below we set up the chainlink registry to price tokens
-
-  await universe.addSingleTokenPriceOracle({
-    token: commonTokens.apxETH,
-    oracleAddress: Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea'),
-    priceToken: eth,
-  })
 
   setupChainlinkRegistry(
     universe,
@@ -100,6 +101,12 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     await setupUniswapRouter(universe)
   )
 
+  await universe.addSingleTokenPriceOracle({
+    token: commonTokens.apxETH,
+    oracleAddress: Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea'),
+    priceToken: eth,
+  })
+
   universe.addTradeVenue(uniswap)
 
   // Set up RETH
@@ -123,10 +130,33 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       const vault = await setupERC4626(universe, {
         vaultAddress: addr,
         protocol: proto,
-        slippage: 1n,
+        slippage: 0n,
       })
       return vault
     })
   )
+
+  // universe.tokenFromTradeSpecialCases.set(
+  //   commonTokens.pxETH,
+  //   async (input: TokenQuantity, output: Token) => {
+  //     if (output !== commonTokens.WETH) {
+  //       return null
+  //     }
+
+  //     try {
+  //       const out = await uniswap.router.swap(
+  //         AbortSignal.timeout(5000),
+  //         input,
+  //         output,
+  //         universe.config.defaultInternalTradeSlippage
+  //       )
+  //       return out
+  //     } catch (e) {
+  //       console.log(e)
+  //       return null
+  //     }
+  //   }
+  // )
+
   console.log('Etheruem zapper setup complete')
 }

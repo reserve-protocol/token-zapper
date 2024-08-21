@@ -133,6 +133,11 @@ export class Universe<const UniverseConf extends Config = Config> {
     (amount: TokenQuantity, destination: Address) => Promise<SwapPath | null>
   >()
 
+  public readonly tokenFromTradeSpecialCases = new Map<
+    Token,
+    (amount: TokenQuantity, output: Token) => Promise<SwapPath | null>
+  >()
+
   // The GAS token for the EVM chain, set by the StaticConfig
   public readonly nativeToken: Token
   public readonly wrappedNativeToken: Token
@@ -179,6 +184,32 @@ export class Universe<const UniverseConf extends Config = Config> {
     )
   }
 
+  public async swap(
+    input: TokenQuantity,
+    output: Token,
+    opts?: {
+      slippage: bigint
+      dynamicInput: boolean
+      abort: AbortSignal
+    }
+  ) {
+    const out: SwapPath[] = []
+    await this.swaps(
+      input,
+      output,
+      async (res) => {
+        out.push(res)
+      },
+      {
+        ...opts,
+        slippage: this.config.defaultInternalTradeSlippage,
+        dynamicInput: true,
+        abort: AbortSignal.timeout(this.config.routerDeadline),
+      }
+    )
+    out.sort((l, r) => l.compare(r))
+    return out[0]
+  }
   public async swaps(
     input: TokenQuantity,
     output: Token,
@@ -425,6 +456,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   public weirollZapperExec
+  public weirollZapperExecContract
 
   findBurnActions(token: Token) {
     const out = this.actions
@@ -531,6 +563,12 @@ export class Universe<const UniverseConf extends Config = Config> {
     )
 
     this.weirollZapperExec = Contract.createLibrary(
+      ZapperExecutor__factory.connect(
+        this.config.addresses.executorAddress.address,
+        this.provider
+      )
+    )
+    this.weirollZapperExecContract = Contract.createContract(
       ZapperExecutor__factory.connect(
         this.config.addresses.executorAddress.address,
         this.provider

@@ -158,14 +158,14 @@ export interface ZapperExecutor extends BaseContract {
     assertEqual(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[void]>;
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     assertLarger(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[void]>;
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     execute(
       commands: PromiseOrValue<BytesLike>[],
@@ -211,14 +211,14 @@ export interface ZapperExecutor extends BaseContract {
   assertEqual(
     a: PromiseOrValue<BigNumberish>,
     b: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<void>;
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   assertLarger(
     a: PromiseOrValue<BigNumberish>,
     b: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<void>;
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   execute(
     commands: PromiseOrValue<BytesLike>[],
@@ -265,13 +265,13 @@ export interface ZapperExecutor extends BaseContract {
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<boolean>;
 
     assertLarger(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<boolean>;
 
     execute(
       commands: PromiseOrValue<BytesLike>[],
@@ -320,13 +320,13 @@ export interface ZapperExecutor extends BaseContract {
     assertEqual(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     assertLarger(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     execute(
@@ -374,13 +374,13 @@ export interface ZapperExecutor extends BaseContract {
     assertEqual(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     assertLarger(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     execute(

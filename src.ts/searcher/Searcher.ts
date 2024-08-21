@@ -1067,6 +1067,16 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     onResult: (result: SwapPath) => Promise<void>,
     rejectRatio: number = 0.9
   ): Promise<void> {
+    const inputTokenSpecialCase = this.universe.tokenFromTradeSpecialCases.get(
+      input.token
+    )
+    if (inputTokenSpecialCase != null) {
+      const out = await inputTokenSpecialCase(input, output)
+      if (out != null) {
+        await onResult(out)
+        return
+      }
+    }
     const tradeSpecialCase = this.universe.tokenTradeSpecialCases.get(output)
     if (tradeSpecialCase != null) {
       const out = await tradeSpecialCase(input, destination)
@@ -1085,7 +1095,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       if (inValue != 0 && outValue != 0) {
         const ratio = outValue / inValue
         if (ratio < rejectRatio) {
-          console.log(path.toString());
+          console.log(path.toString())
           console.log(
             `Found trade: ${input} ${inValue} -> ${path.outputs.join(
               ', '

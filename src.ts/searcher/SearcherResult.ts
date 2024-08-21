@@ -199,7 +199,7 @@ export abstract class BaseSearcherResult {
 
   async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
     const resp = await this.universe.simulateZapFn(opts)
-    // console.log(resp)
+
     // If the response starts with a pointer to the first location of the output tuple
     // when we know if can be decoded by the zapper interface
     if (
@@ -224,7 +224,24 @@ export abstract class BaseSearcherResult {
     // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
     // Try and decode the error message
-    if (resp.startsWith('0x08c379a0')) {
+    if (resp.startsWith('0xef3dcb2f')) {
+      // uint, address, _, uint, bytes...
+      const cmdIdx = Number(BigInt('0x' + resp.slice(10, 10 + 64)))
+      const addr = '0x' + resp.slice(10 + 64, 10 + 64 * 2)
+      const errorMsgLen = Number(
+        BigInt('0x' + resp.slice(10 + 64 * 3, 10 + 64 * 4))
+      )
+      const errorMsgCharsInHex = resp.slice(
+        10 + 64 * 4,
+        10 + 64 * 4 + errorMsgLen * 2
+      )
+      const errorMsg = Buffer.from(errorMsgCharsInHex, 'hex').toString()
+
+      const msg = `${cmdIdx}: failed calling '${addr}'. Error: '${errorMsg}'`
+
+      console.error(msg)
+      throw new Error(msg)
+    } else if (resp.startsWith('0x08c379a0')) {
       const errorMsgLen = Number(BigInt('0x' + resp.slice(10 + 64)))
       const errorMsgCharsInHex = resp.slice(
         10 + 64 + 64,

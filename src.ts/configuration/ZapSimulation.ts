@@ -2,7 +2,9 @@ import { defaultAbiCoder } from '@ethersproject/abi/lib/abi-coder'
 import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
 import { BigNumber, constants, providers } from 'ethers'
 import { simulationUrls } from '../base/constants'
-
+import abi from '../../contracts/artifacts/contracts/Zapper.sol/ZapperExecutor.json'
+import { Config, Universe } from '..'
+const byteCode = abi.deployedBytecode
 export interface SimulateParams {
   // Zapper address on the chain
   to: string
@@ -115,8 +117,6 @@ export const createSimulatorThatUsesOneOfReservesCallManyProxies = (
       quantity:
         '0x' + input.setup.userBalanceAndApprovalRequirements.toString(16),
       token: input.setup.inputTokenAddress,
-
-      overrides: {},
     })
 
     const a: { data: string; error?: string } = await (
@@ -137,7 +137,8 @@ export const createSimulatorThatUsesOneOfReservesCallManyProxies = (
 
 export const makeCustomRouterSimulator = (
   url: string,
-  whales: Record<string, string>
+  whales: Record<string, string>,
+  addreses?: Config['addresses']
 ): SimulateZapTransactionFunction => {
   whales = Object.fromEntries(
     Object.entries(whales).map(([k, v]) => [k.toLowerCase(), v.toLowerCase()])
@@ -189,8 +190,13 @@ export const makeCustomRouterSimulator = (
       stateOverride: {
         [input.from]: {
           balance: '0x56bc75e2d6310000000',
-        },
+        } as Partial<{ balance: string; code: string }>,
       },
+    }
+    if (addreses) {
+      body.stateOverride[addreses.executorAddress.address] = {
+        code: byteCode,
+      }
     }
 
     if (whale) {

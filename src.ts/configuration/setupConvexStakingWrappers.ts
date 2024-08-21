@@ -3,7 +3,7 @@ import {
   Action,
   DestinationOptions,
   InteractionConvention,
-  isMultiChoiceEdge
+  isMultiChoiceEdge,
 } from '../action/Action'
 import { CurveStableSwapNGPool } from '../action/CurveStableSwapNG'
 import { Address } from '../base/Address'
@@ -283,16 +283,25 @@ class ConvexStakingWrapper {
       priceToken: this.universe.usd,
     })
 
+    const pickBestPrecursorToken = (toks: Token[]): Token => {
+      const t = toks.find((i) => !this.universe.rTokensInfo.tokens.has(i))
+      return t ?? toks[0]
+    }
+
     this.universe.defineTokenSourcingRule(
       this.wrapperToken,
       async (token, unit) => {
         const handler = handlers.get(token)
         if (handler == null) {
           if (this.curvePool instanceof CurveStableSwapNGPool) {
-            const randInput = [...this.curvePool.underlying][0]
+            const randInput = pickBestPrecursorToken([
+              ...this.curvePool.underlying,
+            ])
             return await handlers.get(randInput)!(unit)
           } else {
-            const randInput = [...this.curvePool.assetType.bestInputTokens][0]
+            const randInput = pickBestPrecursorToken([
+              ...this.curvePool.assetType.bestInputTokens,
+            ])
             return await handlers.get(randInput)!(unit)
           }
         }
@@ -302,7 +311,10 @@ class ConvexStakingWrapper {
 
     for (const baseTok of this.curvePool.allPoolTokens) {
       try {
-        if (this.universe.wrappedTokens.has(baseTok)) {
+        if (
+          !this.universe.rTokensInfo.tokens.has(baseTok) &&
+          this.universe.wrappedTokens.has(baseTok)
+        ) {
           continue
         }
         const act = await this.universe.createTradeEdge(curveLpToken, baseTok)

@@ -40,14 +40,16 @@ contract ZapperExecutor is VM {
     function assertLarger(
         uint256 a,
         uint256 b
-    ) external pure {
+    ) external returns (bool) {
         require(a > b, "!ASSERT_GT");
+        return true;
     }
     function assertEqual(
         uint256 a,
         uint256 b
-    ) external pure {
+    ) external returns (bool) {
         require(a == b, "!ASSERT_EQ");
+        return true;
     }
 
 

@@ -166,6 +166,15 @@ abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
 export class MintRTokenAction extends ReserveRTokenBase {
   action = 'issue'
   async plan(planner: Planner, _: Value[], destination: Address) {
+    // for (const token of this.inputToken) {
+    //   const bal = this.genUtils.erc20.balanceOf(
+    //     this.universe,
+    //     planner,
+    //     token,
+    //     this.universe.execAddress
+    //   )
+    //   planner.add(this.universe.weirollZapperExec.assertLarger(bal, 0))
+    // }
     planner.add(
       this.universe.weirollZapperExec.mintMaxRToken(
         this.universe.config.addresses.oldFacadeAddress.address,

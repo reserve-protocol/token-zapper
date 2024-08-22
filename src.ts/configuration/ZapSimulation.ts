@@ -2,9 +2,9 @@ import { defaultAbiCoder } from '@ethersproject/abi/lib/abi-coder'
 import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
 import { BigNumber, constants, providers } from 'ethers'
 import { simulationUrls } from '../base/constants'
-import abi from '../../contracts/artifacts/contracts/Zapper.sol/ZapperExecutor.json'
+// import abi from '../../contracts/artifacts/contracts/Zapper.sol/ZapperExecutor.json'
+// const byteCode = abi.deployedBytecode
 import { Config } from '../configuration/ChainConfiguration'
-const byteCode = abi.deployedBytecode
 export interface SimulateParams {
   // Zapper address on the chain
   to: string
@@ -194,9 +194,9 @@ export const makeCustomRouterSimulator = (
       },
     }
     if (addreses) {
-      body.stateOverride[addreses.executorAddress.address] = {
-        code: byteCode,
-      }
+      // body.stateOverride[addreses.executorAddress.address] = {
+      //   code: byteCode,
+      // }
     }
 
     if (whale) {

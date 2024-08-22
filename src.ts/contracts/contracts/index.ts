@@ -15,6 +15,8 @@ import type * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
 export type { curveStableSwapNgSol };
 import type * as icTokenSol from "./ICToken.sol";
 export type { icTokenSol };
+import type * as ierc4626Sol from "./IERC4626.sol";
+export type { ierc4626Sol };
 import type * as iFrxEthFraxOracleSol from "./IFrxEthFraxOracle.sol";
 export type { iFrxEthFraxOracleSol };
 import type * as iFrxMinterSol from "./IFrxMinter.sol";

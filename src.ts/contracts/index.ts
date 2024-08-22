@@ -108,6 +108,8 @@ export type { IComptroller } from "./contracts/ICToken.sol/IComptroller";
 export { IComptroller__factory } from "./factories/contracts/ICToken.sol/IComptroller__factory";
 export type { ICToken } from "./contracts/ICToken.sol/ICToken";
 export { ICToken__factory } from "./factories/contracts/ICToken.sol/ICToken__factory";
+export type { IStakedEthenaUSD } from "./contracts/IERC4626.sol/IStakedEthenaUSD";
+export { IStakedEthenaUSD__factory } from "./factories/contracts/IERC4626.sol/IStakedEthenaUSD__factory";
 export type { IFacade } from "./contracts/IFacade";
 export { IFacade__factory } from "./factories/contracts/IFacade__factory";
 export type { AggregatorV3Interface } from "./contracts/IFrxEthFraxOracle.sol/AggregatorV3Interface";

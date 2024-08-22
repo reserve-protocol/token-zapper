@@ -2,18 +2,18 @@ import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { BlockCache } from '../base/BlockBasedCache'
-import { IERC4626 } from '../contracts'
+import { IERC4626, IStakedEthenaUSD__factory } from '../contracts'
 
 import { IERC4626__factory } from '../contracts/factories/@openzeppelin/contracts/interfaces/IERC4626__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
+
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
-
 export class ERC4626TokenVault {
   constructor(
     public readonly shareToken: Token,
     public readonly underlying: Token
-  ) { }
+  ) {}
 
   get address(): Address {
     return this.shareToken.address
@@ -40,17 +40,17 @@ export const ERC4626DepositAction = (proto: string) =>
           this.universe.provider
         )
       )
-      planner.add(lib.deposit(inputs[0] || predicted[0].amount, destination.address))
-      return null;
+      planner.add(
+        lib.deposit(inputs[0] || predicted[0].amount, destination.address)
+      )
+      return null
     }
     gasEstimate() {
       return BigInt(200000n)
     }
 
     public async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
-      const x = (
-        await this.inst.callStatic.previewDeposit(amountIn)
-      ).toBigInt()
+      const x = (await this.inst.callStatic.previewDeposit(amountIn)).toBigInt()
       return [this.outputToken[0].fromBigInt(x)]
     }
     public readonly inst: IERC4626
@@ -90,7 +90,7 @@ export const ERC4626DepositAction = (proto: string) =>
 export const ERC4626WithdrawAction = (proto: string) =>
   class ERC4626WithdrawAction extends Action(proto) {
     public get returnsOutput(): boolean {
-      return false
+      return true
     }
     async plan(
       planner: Planner,
@@ -98,6 +98,21 @@ export const ERC4626WithdrawAction = (proto: string) =>
       destination: Address,
       predicted: TokenQuantity[]
     ) {
+      const inputBal = inputs[0] ?? predicted[0].amount
+
+      if (
+        this.shareToken.address.address ===
+        '0x9D39A5DE30e57443BfF2A8307A4256c8797A3497'
+      ) {
+        const lib = this.gen.Contract.createContract(
+          IStakedEthenaUSD__factory.connect(
+            this.shareToken.address.address,
+            this.universe.provider
+          )
+        )
+        planner.add(lib.cooldownShares(inputBal))
+        return this.outputBalanceOf(this.universe, planner)
+      }
       const lib = this.gen.Contract.createContract(
         IERC4626__factory.connect(
           this.shareToken.address.address,
@@ -106,12 +121,12 @@ export const ERC4626WithdrawAction = (proto: string) =>
       )
       planner.add(
         lib.redeem(
-          inputs[0] ?? predicted[0].amount,
-          destination.address,
+          inputBal,
+          this.universe.config.addresses.executorAddress.address,
           this.universe.config.addresses.executorAddress.address
         )
       )
-      return null
+      return this.outputBalanceOf(this.universe, planner)
     }
     gasEstimate() {
       return BigInt(200000n)

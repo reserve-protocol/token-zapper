@@ -223,6 +223,7 @@ export abstract class BaseSearcherResult {
 
     // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
+    // console.log(resp)
     // Try and decode the error message
     if (resp.startsWith('0xef3dcb2f')) {
       // uint, address, _, uint, bytes...
@@ -239,7 +240,7 @@ export abstract class BaseSearcherResult {
 
       const msg = `${cmdIdx}: failed calling '${addr}'. Error: '${errorMsg}'`
 
-      console.error(msg)
+      // console.error(msg)
       throw new Error(msg)
     } else if (resp.startsWith('0x08c379a0')) {
       const errorMsgLen = Number(BigInt('0x' + resp.slice(10 + 64)))

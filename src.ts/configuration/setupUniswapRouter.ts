@@ -499,7 +499,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
     if (abort.aborted) {
       throw new Error('Aborted')
     }
-    const route = await router.route(
+    const route = await legacy.route(
       inp,
       outp,
       TradeType.EXACT_INPUT,
@@ -509,9 +509,9 @@ export const setupUniswapRouter = async (universe: Universe) => {
         deadline: Math.floor(Date.now() / 1000 + 10000),
         type: SwapType.SWAP_ROUTER_02,
       },
-      {
-        protocols: [Protocol.V3],
-      }
+      // {
+      //   protocols: [Protocol.V3],
+      // }
     )
 
     if (route == null || route.methodParameters == null) {

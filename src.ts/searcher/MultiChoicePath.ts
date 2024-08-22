@@ -221,7 +221,7 @@ export const createConcurrentStreamingSeacher = (
       if (inVal * maxAcceptableDustPercentable < dustVal) {
         console.log(tx.stats.toString())
         console.log(tx.stats.dust.toString())
-        console.log(printPlan(tx.planner, tx.universe).join('\n'))
+        // console.log(printPlan(tx.planner, tx.universe).join('\n'))
         console.log('Large amount of dust')
         return
       }

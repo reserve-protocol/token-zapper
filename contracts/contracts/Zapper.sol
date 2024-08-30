@@ -11,11 +11,11 @@ import { IWrappedNative } from "./IWrappedNative.sol";
 import { FacadeRead, RToken, Call, ZapERC20Params } from "./IRTokenZapper.sol";
 import { IPermit2, SignatureTransferDetails, PermitTransferFrom } from "./IPermit2.sol";
 import { VM } from "./weiroll/VM.sol";
-
+import { PreventTampering } from "./PreventTampering.sol";
 struct ExecuteOutput {
     uint256[] dust;
 }
-contract ZapperExecutor is VM {
+contract ZapperExecutor is VM, PreventTampering {
     receive() external payable {}
 
     function add(
@@ -40,14 +40,14 @@ contract ZapperExecutor is VM {
     function assertLarger(
         uint256 a,
         uint256 b
-    ) external returns (bool) {
+    ) external pure returns (bool) {
         require(a > b, "!ASSERT_GT");
         return true;
     }
     function assertEqual(
         uint256 a,
         uint256 b
-    ) external returns (bool) {
+    ) external pure returns (bool) {
         require(a == b, "!ASSERT_EQ");
         return true;
     }
@@ -63,6 +63,7 @@ contract ZapperExecutor is VM {
         bytes[] memory state,
         IERC20[] memory tokens
     )
+        revertOnCodeHashChange
         public
         payable
         returns (ExecuteOutput memory out)
@@ -84,6 +85,7 @@ contract ZapperExecutor is VM {
         uint256 value,
         bytes calldata data
     ) external returns (bool success, bytes memory out) {
+        require(msg.sender == address(this), "ZapperExecutor: Only callable by Zapper");
         (success, out) = to.call{value: value}(data);
     }
 

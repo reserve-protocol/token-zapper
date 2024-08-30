@@ -231,12 +231,7 @@ class KyberAction extends Action('Kyberswap') {
     predicted: TokenQuantity[]
   ) {
     try {
-      const zapperLib = this.gen.Contract.createLibrary(
-        ZapperExecutor__factory.connect(
-          this.universe.config.addresses.executorAddress.address,
-          this.universe.provider
-        )
-      )
+      const zapperLib = this.universe.weirollZapperExec
       const minOut = await this.quoteWithSlippage(predicted)
       planner.add(
         zapperLib.rawCall(

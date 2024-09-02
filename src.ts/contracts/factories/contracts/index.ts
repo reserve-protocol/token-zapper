@@ -15,6 +15,8 @@ export * as irTokenZapperSol from "./IRTokenZapper.sol";
 export * as isAtokenSol from "./ISAtoken.sol";
 export * as iStargadeWrapperSol from "./IStargadeWrapper.sol";
 export * as iStargateRouterSol from "./IStargateRouter.sol";
+export * as preventTamperingSol from "./PreventTampering.sol";
+export * as selfDestructSol from "./SelfDestruct.sol";
 export * as zapperSol from "./Zapper.sol";
 export * as weiroll from "./weiroll";
 export * as weirollHelpers from "./weiroll-helpers";

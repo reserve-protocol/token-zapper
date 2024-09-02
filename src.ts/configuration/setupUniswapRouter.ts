@@ -52,14 +52,13 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { Planner, Value, encodeArg } from '../tx-gen/Planner'
 
 import { ParamType } from '@ethersproject/abi'
-import { BigNumber, utils } from 'ethers'
+import { PortionProvider } from '@uniswap/smart-order-router/build/main/providers/portion-provider'
+import { OnChainTokenFeeFetcher } from '@uniswap/smart-order-router/build/main/providers/token-fee-fetcher'
+import { utils } from 'ethers'
 import { solidityPack } from 'ethers/lib/utils'
 import NodeCache from 'node-cache'
 import { RouterAction } from '../action/RouterAction'
 import { SwapPlan } from '../searcher/Swap'
-import { OnChainTokenFeeFetcher } from '@uniswap/smart-order-router/build/main/providers/token-fee-fetcher'
-import { PortionProvider } from '@uniswap/smart-order-router/build/main/providers/portion-provider'
-import { Protocol } from '@uniswap/router-sdk'
 
 class UniswapPool {
   public constructor(
@@ -165,7 +164,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
     trade: UniswapTrade,
     input: Value | bigint
   ): Promise<Value> {
-    const v3CalLRouterLib = this.gen.Contract.createLibrary(
+    const v3CalLRouterLib = this.gen.Contract.createContract(
       UniV3RouterCall__factory.connect(
         this.universe.config.addresses.uniV3Router.address,
         this.universe.provider
@@ -508,7 +507,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
         slippageTolerance: slip,
         deadline: Math.floor(Date.now() / 1000 + 10000),
         type: SwapType.SWAP_ROUTER_02,
-      },
+      }
       // {
       //   protocols: [Protocol.V3],
       // }

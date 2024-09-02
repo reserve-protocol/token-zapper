@@ -100,7 +100,7 @@ library CommandBuilder {
         bytes[] memory state,
         bytes1 index,
         bytes memory output
-    ) internal pure returns (bytes[] memory) {
+    ) internal view returns (bytes[] memory) {
         uint256 idx = uint8(index);
         if (idx == IDX_END_OF_ARGS) return state;
 
@@ -129,11 +129,21 @@ library CommandBuilder {
                 }
             }
         } else {
+            require(output.length >= 32, "Return at least 32 bytes");
             // Single word
-            require(
-                output.length == 32,
-                "Only one return value permitted (static)"
-            );
+            // require(
+            //     output.length == 32,
+            //     "Only one return value permitted (static)"
+            // );
+
+            // There are rare instances of contracts whoes ABI indicate a single word return returning more than 1 word
+            // returndata buffers containing a single word of data.
+            if (output.length > 32) {
+                // Truncate returndata to proper size
+                bytes memory newOutput = new bytes(32);
+                memcpy(output, 0, newOutput, 0, output.length);
+                output = newOutput;
+            }
 
             state[idx & IDX_VALUE_MASK] = output;
         }

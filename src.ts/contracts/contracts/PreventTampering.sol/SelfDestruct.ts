@@ -25,13 +25,18 @@ import type {
 export interface SelfDestructInterface extends utils.Interface {
   functions: {
     "destroy()": FunctionFragment;
+    "doNothing()": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "destroy"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic: "destroy" | "doNothing"
+  ): FunctionFragment;
 
   encodeFunctionData(functionFragment: "destroy", values?: undefined): string;
+  encodeFunctionData(functionFragment: "doNothing", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "destroy", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "doNothing", data: BytesLike): Result;
 
   events: {};
 }
@@ -66,14 +71,24 @@ export interface SelfDestruct extends BaseContract {
     destroy(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    doNothing(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   destroy(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  doNothing(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     destroy(overrides?: CallOverrides): Promise<void>;
+
+    doNothing(overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {};
@@ -82,10 +97,18 @@ export interface SelfDestruct extends BaseContract {
     destroy(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    doNothing(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     destroy(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    doNothing(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

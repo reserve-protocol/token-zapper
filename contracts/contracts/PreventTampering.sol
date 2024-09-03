@@ -2,22 +2,17 @@
 pragma solidity 0.8.17;
 
 abstract contract PreventTampering {
-    bytes32 public immutable deployCodehash;
-    constructor() {
-        bytes32 deployCodehash_;
-        assembly {
-            deployCodehash_ := extcodehash(address())
-        }
-        deployCodehash = deployCodehash_;
-    }
     modifier revertOnCodeHashChange() {
+        bytes32 hashBefore;
+        assembly {
+            hashBefore := extcodehash(address())
+        }
         _;
-
         bytes32 hashPostExecution;
         assembly {
             hashPostExecution := extcodehash(address())
         }
-        require(hashPostExecution == deployCodehash, "PreventTampering: Code has changed");
+        require(hashPostExecution == hashBefore, "PreventTampering: Code has changed");
     }
 }
 
@@ -26,6 +21,7 @@ contract SelfDestruct {
     function destroy() external {
         selfdestruct(payable(msg.sender));
     }
+    function doNothing() external {}
 }
 
 contract TestPreventTampering is PreventTampering {
@@ -36,5 +32,9 @@ contract TestPreventTampering is PreventTampering {
     function shouldRevert() revertOnCodeHashChange() external {
         SelfDestruct selfDestruct = new SelfDestruct();
         address(selfDestruct).delegatecall(abi.encodeWithSelector(selfDestruct.destroy.selector));
+    }
+    function markedRevertOnCodeHashChangeDontRevert() revertOnCodeHashChange() external {
+        SelfDestruct selfDestruct = new SelfDestruct();
+        address(selfDestruct).delegatecall(abi.encodeWithSelector(selfDestruct.doNothing.selector));
     }
 }

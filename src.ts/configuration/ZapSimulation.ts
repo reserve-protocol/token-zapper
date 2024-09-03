@@ -193,11 +193,11 @@ export const makeCustomRouterSimulator = (
         } as Partial<{ balance: string; code: string }>,
       },
     }
-    if (addreses) {
-      // body.stateOverride[addreses.executorAddress.address] = {
-      //   code: byteCode,
-      // }
-    }
+    // if (addreses) {
+    //   body.stateOverride[addreses.executorAddress.address] = {
+    //     code: byteCode,
+    //   }
+    // }
 
     if (whale) {
       body.stateOverride[whale] = {

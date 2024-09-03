@@ -87,8 +87,8 @@ export const ethereumConfig = makeConfig(
     emitId: '0x6d92146F63d95BF38eB6158856f95139B15C66Bb',
     facadeAddress: '0x2C7ca56342177343A2954C250702Fd464f4d0613',
     oldFacadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
-    zapperAddress: '0xcc2b9b55952718b210660b56ca12eb88694dc60f',
-    executorAddress: '0x675D37489A7A64c051D0204e5c72a469f6558a47',
+    zapperAddress: '0xE988c8C49043C798F118BBCF769b210fD04c0bc3',
+    executorAddress: '0xb3805E5f44B97daB82BC00d63f7F8C5a56b96D8D',
     wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     rtokenLens: '0xE787491314A3Da6412Ac4DeEB39c0F8EfdE1b53C',
 

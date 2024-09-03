@@ -164,7 +164,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
     trade: UniswapTrade,
     input: Value | bigint
   ): Promise<Value> {
-    const v3CalLRouterLib = this.gen.Contract.createContract(
+    const v3CalLRouterLib = this.gen.Contract.createLibrary(
       UniV3RouterCall__factory.connect(
         this.universe.config.addresses.uniV3Router.address,
         this.universe.provider

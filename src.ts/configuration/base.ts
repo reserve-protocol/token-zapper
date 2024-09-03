@@ -32,8 +32,8 @@ export const baseConfig = makeConfig(
     emitId: "0xC7a942301d92024321995f7f748C2B0687a1Cb60",
     facadeAddress: ethers.constants.AddressZero,
     oldFacadeAddress: '0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF',
-    zapperAddress: '0xe811b62AB97d9370cE2e25F9ceBC904522b81FE1',
-    executorAddress: '0xA4b275feAf3A1450fc57270Ed863923261aBFD05',
+    zapperAddress: '0xaA560D5C2Fade67CF6836Ab793e56A79F09d4282',
+    executorAddress: '0x560740052F380669c90811f711f80B21306d4713',
     wrappedNative: '0x4200000000000000000000000000000000000006',
     rtokenLens: '0x5cF5eD1715b6416710f106A3257E5C55B65EF418',
 

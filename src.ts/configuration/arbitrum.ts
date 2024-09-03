@@ -51,8 +51,8 @@ export const arbiConfig = makeConfig(
     oldFacadeAddress: reserveAddresses.FACADE_ADDRESS,
     wrappedNative: COMMON_TOKENS.WETH,
 
-    zapperAddress: '0x39Eb11db86140d5bd0Cc24d411d833e53b0ACAf8',
-    executorAddress: '0x59B56F9e965445f007bCc73960F6d0D034562c3e',
+    zapperAddress: '0x4F923E78dfD0A6F7308eE06Fc2739d0Be6314592',
+    executorAddress: '0xbD2F0B5e3a64Ef22e0b695180EE53247670AE904',
     rtokenLens: '0xe49aA049DA204E6dFF4A5AcdbD3935ec782F541f',
     balanceOf: '0xe18a821ea1f1796A0797CEa01A3f86ebEab0f9B6',
     curveRouterCall: '0x8cE5ee761fF619c889F007CB4D708178E87C11D8',

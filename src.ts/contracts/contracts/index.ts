@@ -31,8 +31,6 @@ import type * as iStargateRouterSol from "./IStargateRouter.sol";
 export type { iStargateRouterSol };
 import type * as preventTamperingSol from "./PreventTampering.sol";
 export type { preventTamperingSol };
-import type * as selfDestructSol from "./SelfDestruct.sol";
-export type { selfDestructSol };
 import type * as zapperSol from "./Zapper.sol";
 export type { zapperSol };
 import type * as weiroll from "./weiroll";

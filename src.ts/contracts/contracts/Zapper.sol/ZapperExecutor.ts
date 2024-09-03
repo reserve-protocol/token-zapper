@@ -33,7 +33,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
     "add(uint256,uint256)": FunctionFragment;
     "assertEqual(uint256,uint256)": FunctionFragment;
     "assertLarger(uint256,uint256)": FunctionFragment;
-    "deployCodehash()": FunctionFragment;
     "execute(bytes32[],bytes[],address[])": FunctionFragment;
     "fpMul(uint256,uint256,uint256)": FunctionFragment;
     "mintMaxRToken(address,address,address)": FunctionFragment;
@@ -46,7 +45,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
       | "add"
       | "assertEqual"
       | "assertLarger"
-      | "deployCodehash"
       | "execute"
       | "fpMul"
       | "mintMaxRToken"
@@ -65,10 +63,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "assertLarger",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "deployCodehash",
-    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "execute",
@@ -114,10 +108,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "assertLarger",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "deployCodehash",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
@@ -177,8 +167,6 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    deployCodehash(overrides?: CallOverrides): Promise<[string]>;
-
     execute(
       commands: PromiseOrValue<BytesLike>[],
       state: PromiseOrValue<BytesLike>[],
@@ -232,8 +220,6 @@ export interface ZapperExecutor extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  deployCodehash(overrides?: CallOverrides): Promise<string>;
-
   execute(
     commands: PromiseOrValue<BytesLike>[],
     state: PromiseOrValue<BytesLike>[],
@@ -286,8 +272,6 @@ export interface ZapperExecutor extends BaseContract {
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    deployCodehash(overrides?: CallOverrides): Promise<string>;
 
     execute(
       commands: PromiseOrValue<BytesLike>[],
@@ -345,8 +329,6 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    deployCodehash(overrides?: CallOverrides): Promise<BigNumber>;
-
     execute(
       commands: PromiseOrValue<BytesLike>[],
       state: PromiseOrValue<BytesLike>[],
@@ -400,8 +382,6 @@ export interface ZapperExecutor extends BaseContract {
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
-
-    deployCodehash(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     execute(
       commands: PromiseOrValue<BytesLike>[],

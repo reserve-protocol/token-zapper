@@ -39,4 +39,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ]
     })
 };
+func.tags = ['zapper']
 export default func;

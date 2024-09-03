@@ -24,20 +24,20 @@ import type {
 
 export interface TestPreventTamperingInterface extends utils.Interface {
   functions: {
-    "deployCodehash()": FunctionFragment;
+    "markedRevertOnCodeHashChangeDontRevert()": FunctionFragment;
     "shouldNotRevert()": FunctionFragment;
     "shouldRevert()": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "deployCodehash"
+      | "markedRevertOnCodeHashChangeDontRevert"
       | "shouldNotRevert"
       | "shouldRevert"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "deployCodehash",
+    functionFragment: "markedRevertOnCodeHashChangeDontRevert",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -50,7 +50,7 @@ export interface TestPreventTamperingInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "deployCodehash",
+    functionFragment: "markedRevertOnCodeHashChangeDontRevert",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -92,7 +92,9 @@ export interface TestPreventTampering extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    deployCodehash(overrides?: CallOverrides): Promise<[string]>;
+    markedRevertOnCodeHashChangeDontRevert(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     shouldNotRevert(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -103,7 +105,9 @@ export interface TestPreventTampering extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  deployCodehash(overrides?: CallOverrides): Promise<string>;
+  markedRevertOnCodeHashChangeDontRevert(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   shouldNotRevert(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -114,7 +118,9 @@ export interface TestPreventTampering extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    deployCodehash(overrides?: CallOverrides): Promise<string>;
+    markedRevertOnCodeHashChangeDontRevert(
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     shouldNotRevert(overrides?: CallOverrides): Promise<void>;
 
@@ -124,7 +130,9 @@ export interface TestPreventTampering extends BaseContract {
   filters: {};
 
   estimateGas: {
-    deployCodehash(overrides?: CallOverrides): Promise<BigNumber>;
+    markedRevertOnCodeHashChangeDontRevert(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
 
     shouldNotRevert(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -136,7 +144,9 @@ export interface TestPreventTampering extends BaseContract {
   };
 
   populateTransaction: {
-    deployCodehash(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    markedRevertOnCodeHashChangeDontRevert(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
 
     shouldNotRevert(
       overrides?: Overrides & { from?: PromiseOrValue<string> }

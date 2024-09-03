@@ -25,4 +25,12 @@ describe('PreventSelfDestruct', () => {
       )
     }
   })
+  it('should not revert2', async () => {
+    const TestPreventTampering = await ethers.getContractFactory(
+      'TestPreventTampering'
+    )
+    const testPreventTampering = await TestPreventTampering.deploy()
+    await testPreventTampering.deployed()
+    await testPreventTampering.markedRevertOnCodeHashChangeDontRevert()
+  })
 })

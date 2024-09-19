@@ -212,6 +212,9 @@ export const createConcurrentStreamingSeacher = (
         'toTransaction',
         result.toTransaction(toTxArgs)
       )
+      if (tx == null) {
+        return
+      }
       const inVal = parseFloat(tx.inputValueUSD.format())
       const dustVal = parseFloat(tx.stats.dust.valueUSD.format())
       const outVal = parseFloat(tx.stats.valueUSD.format()) // Total out (output + dust), excluding gas fees

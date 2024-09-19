@@ -1,4 +1,4 @@
-import { InterningCache } from '../../src.ts/base/InterningCache'
+import { InterningCache } from '../../../src.ts/base/InterningCache'
 
 class TestEntity {
   constructor(public id: string) {}
@@ -56,7 +56,7 @@ describe('InterningCache', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     // Trigger cache collection
-    eval("%CollectGarbage('all')");
+    eval("%CollectGarbage('all')")
     cache.collect()
 
     expect(cache.size).toBe(0)

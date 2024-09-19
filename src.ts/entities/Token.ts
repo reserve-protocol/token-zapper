@@ -184,6 +184,10 @@ export class TokenQuantity {
       : 1
   }
 
+  public asNumber() {
+    return parseFloat(this.format())
+  }
+
   public sub(other: TokenQuantity) {
     return new TokenQuantity(this.token, this.amount - other.amount)
   }

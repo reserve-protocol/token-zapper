@@ -5,7 +5,7 @@ import {
   defaultConfig,
   RetryLoopException,
   retryLoop,
-} from '../../src.ts/base/controlflow'
+} from '../../../src.ts/base/controlflow'
 
 describe('controlflow', () => {
   describe('wait', () => {

@@ -2,12 +2,6 @@ import { loadCompV2Deployment } from '../action/CTokens'
 import { LidoDeployment } from '../action/Lido'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
-import { Token, TokenQuantity } from '../entities/Token'
-import {
-  BasketTokenSourcingRuleApplication,
-  PostTradeAction,
-} from '../searcher/BasketTokenSourcingRules'
-import { SwapPath, SwapPaths, SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'

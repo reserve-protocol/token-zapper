@@ -155,7 +155,7 @@ export const generateAllPermutations = async function (
   return valuedTrades.map((i) => i.trades)
 }
 const sortZaps = (
-  searcher: Searcher<EthereumUniverse | BaseUniverse | ArbitrumUniverse>,
+  searcher: Searcher<any>,
   txes: {
     searchResult: BaseSearcherResult
     tx: ZapTransaction
@@ -183,8 +183,8 @@ const sortZaps = (
     timeTaken: Date.now() - startTime,
   }
 }
-export const createConcurrentStreamingSeacher = (
-  searcher: Searcher<EthereumUniverse | BaseUniverse | ArbitrumUniverse>,
+export const createConcurrentStreamingEvaluator = (
+  searcher: Searcher<any>,
   toTxArgs: ToTransactionArgs
 ) => {
   const emitDebugLog = searcher.debugLog

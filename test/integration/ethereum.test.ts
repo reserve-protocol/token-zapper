@@ -128,6 +128,21 @@ const makeMintTestCase = (
     output: output,
   }
 }
+
+
+const makeZapIntoYieldPositionTestCase = (
+  input: number,
+  inputToken: Address,
+  rToken: Address,
+  output: Address,
+) => {
+  return {
+    input,
+    inputToken,
+    rToken,
+    output: output,
+  }
+}
 const testUser = Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 const issueanceCases = [
   makeMintTestCase(10000, t.USDC, rTokens.eUSD),
@@ -163,9 +178,14 @@ const redeemCases = [
   makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
 
   makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
+  makeMintTestCase(10000, rTokens.hyUSD, t.USDe),
   makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
 
   makeMintTestCase(5, rTokens.dgnETH, t.WETH),
+]
+
+const zapIntoYieldPositionCases = [
+  makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens.dgnETH, t.sdgnETH),
 ]
 
 const INPUT_MUL = process.env.INPUT_MULTIPLIER
@@ -199,10 +219,6 @@ beforeAll(async () => {
 
 const log = console.log
 describe('ethereum zapper', () => {
-  beforeAll(() => {
-    console.log = () => {}
-  })
-
   for (const issueance of issueanceCases) {
     const testCaseName = `using ${getSymbol.get(
       issueance.inputToken
@@ -262,9 +278,47 @@ describe('ethereum zapper', () => {
       )
     })
   }
+  
+  for (const zapIntoYieldPosition of zapIntoYieldPositionCases) {
+    const testCaseName = `zap ${getSymbol.get(
+      zapIntoYieldPosition.inputToken
+    )!} via ${getSymbol.get(zapIntoYieldPosition.rToken)!} into ${getSymbol.get(zapIntoYieldPosition.output)!} yield position`
+    describe(testCaseName, () => {
+      it(
+        'produces an output',
+        async () => {
+          expect.assertions(1)
+          await universe.initialized
+          const input = universe.tokens
+            .get(zapIntoYieldPosition.inputToken)
+            ?.from(zapIntoYieldPosition.input * INPUT_MUL)
+          const rToken = universe.tokens.get(zapIntoYieldPosition.rToken)
+          const output = universe.tokens.get(zapIntoYieldPosition.output)
+          let result = 'failed'
+
+          try {
+            await universe.searcher.zapIntoRTokenYieldPosition(
+              input!,
+              rToken!,
+              output!,
+              testUser,
+              {
+                enableTradeZaps: false,
+              }
+            )
+            result = 'success'
+          } catch (e) {
+            log(`${testCaseName} = ${e.message}`)
+          }
+          expect(result).toBe('success')
+        },
+        15 * 1000
+      )
+    })
+  }
 })
 
 afterAll(() => {
   console.log = log
-  ;(universe.provider as WebSocketProvider).websocket.close()
+    ; (universe.provider as WebSocketProvider).websocket.close()
 })

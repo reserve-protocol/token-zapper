@@ -143,8 +143,8 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       basketUnit,
       this as any
     )
-    // console.log(precursorTokens.precursorToTradeFor.join(', '))
-    // console.log(precursorTokens.describe().join('\n'))
+    this.debugLog(precursorTokens.precursorToTradeFor.join(', '))
+    this.debugLog(precursorTokens.describe().join('\n'))
 
     const generateInputToPrecursorTradeMeasurement = this.perf.begin(
       'generateInputToPrecursorTrade',
@@ -386,7 +386,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
 
     const allOptions = await this.perf.measurePromise(
       'generateAllPermutations',
-      generateAllPermutations(this.universe as any, multiTrades, precursorSet),
+      generateAllPermutations(this, multiTrades, precursorSet),
       rToken.symbol
     )
 
@@ -692,7 +692,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       return await generatePermutation(permutableTrades.map((i) => i.path))
     } else {
       const allposibilities = await generateAllPermutations(
-        this.universe as any,
+        this,
         permutableTrades,
         new Set([outputToken])
       )
@@ -867,7 +867,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     let inputTokenQuantity = userInput
     if (inputIsNative) {
       if (this.universe.commonTokens.ERC20GAS == null) {
-        console.log('No wrapped native token. (Like WETH) has been defined.')
+        this.debugLog('No wrapped native token. (Like WETH) has been defined.')
         throw new Error(
           'No wrapped native token. (Like WETH) has been defined. Cannot execute search'
         )
@@ -877,7 +877,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
 
     const rTokenActions = this.universe.wrappedTokens.get(rToken)
     if (rTokenActions == null) {
-      console.log('RToken has no mint/burn actions')
+      this.debugLog('RToken has no mint/burn actions')
       throw new Error('RToken has no mint/burn actions')
     }
 
@@ -1095,8 +1095,10 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       if (inValue != 0 && outValue != 0) {
         const ratio = outValue / inValue
         if (ratio < rejectRatio) {
-          console.log(path.toString())
-          console.log(
+
+
+          this.debugLog(path.toString())
+          this.debugLog(
             `Found trade: ${input} ${inValue} -> ${path.outputs.join(
               ', '
             )} outValue: ${outValue}, price impact: ${ratio}! rejectRatio: ${rejectRatio}`
@@ -1125,5 +1127,10 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         slippage,
       }).catch((e) => {}),
     ])
+  }
+  debugLog(...args: any[]) {
+    if (process.env.DEV) {
+      console.log(...args)
+    }
   }
 }

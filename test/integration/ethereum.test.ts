@@ -10,7 +10,7 @@ import {
   ethereumConfig,
   makeCustomRouterSimulator,
   setupEthereumZapper,
-  Universe
+  Universe,
 } from '../../src.ts/index'
 dotenv.config()
 
@@ -21,7 +21,7 @@ if (process.env.MAINNET_PROVIDER == null) {
 
 /** !!
  * To run the integration test suite you'll need to run the simulator locally.
- * 
+ *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
 if (process.env.SIM_URL == null) {
@@ -88,7 +88,7 @@ export const ethWhales = {
     '0x3154cf16ccdb4c6d922629664174b904d80f2c35',
   // degeneth
   '0x005f893ecd7bf9667195642f7649da8163e23658':
-    '0x021cf6b7ebb8c8efcf21396eb4c94658976172c7',
+    '0x5bdd1fa233843bfc034891be8a6769e58f1e1346',
 
   // pxeth
   '0x04c154b66cb340f3ae24111cc767e0184ed00cc6':
@@ -142,7 +142,7 @@ const issueanceCases = [
 
   makeMintTestCase(5, t.WETH, rTokens.dgnETH),
   // makeMintTestCase(5, t.apxETH, rTokens.dgnETH),
-];
+]
 
 const redeemCases = [
   makeMintTestCase(10000, rTokens.eUSD, t.USDC),
@@ -160,12 +160,16 @@ const redeemCases = [
   makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
 
   makeMintTestCase(5, rTokens.dgnETH, t.WETH),
-];
+]
 
-
+const INPUT_MUL = process.env.INPUT_MULTIPLIER
+  ? parseFloat(process.env.INPUT_MULTIPLIER)
+  : 1.0
+if (isNaN(INPUT_MUL)) {
+  throw new Error('INPUT_MUL must be a number')
+}
 let universe: Universe
 beforeAll(async () => {
-
   const provider = getProvider(process.env.MAINNET_PROVIDER!)
 
   universe = await Universe.createWithConfig(
@@ -179,83 +183,82 @@ beforeAll(async () => {
       await setupEthereumZapper(uni)
     },
     {
-      simulateZapFn: makeCustomRouterSimulator(
-        process.env.SIM_URL!,
-        ethWhales
-      )
+      simulateZapFn: makeCustomRouterSimulator(process.env.SIM_URL!, ethWhales),
     }
   )
 
   await universe.initialized
   return universe
-}, 5000);
-
+}, 5000)
 
 const log = console.log
 describe('ethereum zapper', () => {
   beforeAll(() => {
-    console.log = () => { }
+    console.log = () => {}
   })
 
   for (const issueance of issueanceCases) {
-    const testCaseName = `using ${getSymbol.get(issueance.inputToken)!} issue ${getSymbol.get(issueance.output)!}`;
+    const testCaseName = `using ${getSymbol.get(
+      issueance.inputToken
+    )!} issue ${getSymbol.get(issueance.output)!}`
     describe(testCaseName, () => {
-      it("produces an output", async () => {
-        expect.assertions(1);
-        await universe.initialized
-        const input = universe.tokens
-          .get(issueance.inputToken)
-          ?.from(issueance.input)
-        const output = universe.tokens.get(issueance.output)
-        let result = "failed"
+      it(
+        'produces an output',
+        async () => {
+          expect.assertions(1)
+          await universe.initialized
+          const input = universe.tokens
+            .get(issueance.inputToken)
+            ?.from(issueance.input * INPUT_MUL)
+          const output = universe.tokens.get(issueance.output)
+          let result = 'failed'
 
-        try {
-          await universe.zap(
-            input!,
-            output!,
-            testUser,
-            {
+          try {
+            await universe.zap(input!, output!, testUser, {
               enableTradeZaps: false,
-            }
-          );
-          result = "success"
-        } catch (e) {
-          log(`${testCaseName} = ${e.message}`)
-        }
-        expect(result).toBe("success");
-      }, 15 * 1000);
+            })
+            result = 'success'
+          } catch (e) {
+            log(`${testCaseName} = ${e.message}`)
+          }
+          expect(result).toBe('success')
+        },
+        15 * 1000
+      )
     })
   }
 
   for (const redeem of redeemCases) {
-    const testCaseName = `redeem ${getSymbol.get(redeem.inputToken)!} for ${getSymbol.get(redeem.output)!}`;
+    const testCaseName = `redeem ${getSymbol.get(
+      redeem.inputToken
+    )!} for ${getSymbol.get(redeem.output)!}`
     describe(testCaseName, () => {
-      it("produces an output", async () => {
-        expect.assertions(1);
-        await universe.initialized
-        const input = universe.tokens
-          .get(redeem.inputToken)
-          ?.from(redeem.input)
-        const output = universe.tokens.get(redeem.output)
-        let result = "failed"
+      it(
+        'produces an output',
+        async () => {
+          expect.assertions(1)
+          await universe.initialized
+          const input = universe.tokens
+            .get(redeem.inputToken)
+            ?.from(redeem.input * INPUT_MUL)
+          const output = universe.tokens.get(redeem.output)
+          let result = 'failed'
 
-        try {
-          await universe.redeem(
-            input!,
-            output!,
-            testUser
-          );
-          result = "success"
-        } catch (e) {
-          log(`${testCaseName} = ${e.message}`)
-        }
-        expect(result).toBe("success");
-      }, 15 * 1000);
+          try {
+            await universe.redeem(input!, output!, testUser)
+            result = 'success'
+          } catch (e) {
+            log(`${testCaseName} = ${e.message}`)
+          }
+          expect(result).toBe('success')
+        },
+        15 * 1000
+      )
     })
   }
 })
 
 afterAll(() => {
-  console.log = log;
-  (universe.provider as WebSocketProvider).websocket.close();
+  console.log = log
+  ;(universe.provider as WebSocketProvider).websocket.close()
 })

@@ -45,7 +45,7 @@ export const resolveTradeConflicts = async (
 
       inTrades = inTrades.filter((i) => !trades.includes(i))
 
-      // console.log(
+      // emitDebugLog(
       //   `Found two uni trades ${trades.length} ${swapDesc.join(
       //     ', '
       //   )} trading on the same pool as the firs step: ${pool}`
@@ -87,7 +87,7 @@ export const resolveTradeConflicts = async (
           const newInput = outputToken.from(total < prTrade ? total : prTrade)
           total -= prTrade
 
-          // console.log(
+          // emitDebugLog(
           //   `Finding new trade ${newInput} -> ${nextTrade.outputToken[0]}`
           // )
           const newNextTrade = await uniDex.swap(
@@ -96,7 +96,7 @@ export const resolveTradeConflicts = async (
             nextTrade.outputToken[0],
             searcher.defaultInternalTradeSlippage
           )
-          // console.log(newNextTrade.steps[0].action.toString())
+          // emitDebugLog(newNextTrade.steps[0].action.toString())
           newTrades.push(newNextTrade)
         })
       )
@@ -105,16 +105,17 @@ export const resolveTradeConflicts = async (
     }
     return inTrades
   } catch (e: any) {
-    // console.log(e)
-    // console.log(e.stack)
+    // emitDebugLog(e)
+    // emitDebugLog(e.stack)
     throw e
   }
 }
 export const generateAllPermutations = async function (
-  universe: UniverseWithERC20GasTokenDefined,
+  searcher: Searcher<any>,
   arr: MultiChoicePath[],
   precursorTokens: Set<Token>
 ): Promise<SwapPath[][]> {
+  const universe = searcher.universe
   function combos(
     list: MultiChoicePath[],
     n: number = 0,
@@ -154,6 +155,7 @@ export const generateAllPermutations = async function (
   return valuedTrades.map((i) => i.trades)
 }
 const sortZaps = (
+  searcher: Searcher<EthereumUniverse | BaseUniverse | ArbitrumUniverse>,
   txes: {
     searchResult: BaseSearcherResult
     tx: ZapTransaction
@@ -161,17 +163,18 @@ const sortZaps = (
   allQuotes: BaseSearcherResult[],
   startTime: number
 ) => {
+  const emitDebugLog = searcher.debugLog
   let failed = txes
   if (txes.length === 0) {
-    console.log(`All ${txes.length}/${allQuotes.length} potential zaps failed`)
+    emitDebugLog(`All ${txes.length}/${allQuotes.length} potential zaps failed`)
     throw new Error('No zaps found')
   }
 
   txes.sort((l, r) => -l.tx.compare(r.tx))
 
-  console.log(`${txes.length} / ${allQuotes.length} passed simulation:`)
+  emitDebugLog(`${txes.length} / ${allQuotes.length} passed simulation:`)
   for (const tx of txes) {
-    console.log(tx.tx.stats.toString())
+    emitDebugLog(tx.tx.stats.toString())
   }
   return {
     failed,
@@ -184,6 +187,7 @@ export const createConcurrentStreamingSeacher = (
   searcher: Searcher<EthereumUniverse | BaseUniverse | ArbitrumUniverse>,
   toTxArgs: ToTransactionArgs
 ) => {
+  const emitDebugLog = searcher.debugLog
   const abortController = new AbortController()
   const results: {
     tx: ZapTransaction
@@ -222,16 +226,16 @@ export const createConcurrentStreamingSeacher = (
 
       // Reject if the dust is too high
       if (inVal * maxAcceptableDustPercentable < dustVal) {
-        console.log(tx.stats.toString())
-        console.log(tx.stats.dust.toString())
-        // console.log(printPlan(tx.planner, tx.universe).join('\n'))
-        console.log('Large amount of dust')
+        emitDebugLog(tx.stats.toString())
+        emitDebugLog(tx.stats.dust.toString())
+        // emitDebugLog(printPlan(tx.planner, tx.universe).join('\n'))
+        emitDebugLog('Large amount of dust')
         return
       }
       // Reject if the zap looses too much value
       if (inToOutRatio < maxAcceptableValueLossForRejectingZap) {
-        console.log(tx.stats.toString())
-        console.log('Low in to out ratio')
+        emitDebugLog(tx.stats.toString())
+        emitDebugLog('Low in to out ratio')
         return
       }
       results.push({
@@ -243,7 +247,7 @@ export const createConcurrentStreamingSeacher = (
         abortController.abort()
       }
     } catch (e: any) {
-      // console.log(e)
+      // emitDebugLog(e)
     }
   }
 
@@ -257,6 +261,7 @@ export const createConcurrentStreamingSeacher = (
     }),
     getResults: (startTime: number) => {
       return sortZaps(
+        searcher,
         results.map((i) => ({
           searchResult: i.searchResult,
           tx: i.tx,
@@ -297,7 +302,7 @@ const willPathsHaveAddressConflicts = (
           continue
         }
         if (addressesInUse.has(addr)) {
-          // console.log('Address conflict', addr.toString())
+          // emitDebugLog('Address conflict', addr.toString())
           conflicts.add(addr)
         }
         addressesInUse.add(addr)

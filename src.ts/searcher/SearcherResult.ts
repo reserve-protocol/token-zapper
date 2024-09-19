@@ -48,6 +48,7 @@ import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { SimulateParams } from '../configuration/ZapSimulation'
 import { Config } from '../configuration/ChainConfiguration'
 import { Searcher, Universe } from '..'
+import { FEE_SCALE } from '../base/constants'
 
 const zapperInterface = Zapper__factory.createInterface()
 
@@ -57,7 +58,7 @@ class Step {
     readonly action: BaseAction,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) { }
+  ) {}
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -88,7 +89,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-        InteractionConvention.PayBeforeCall
+          InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -198,8 +199,7 @@ export abstract class BaseSearcherResult {
   }
 
   async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
-    const resp = await this.universe.simulateZapFn(opts);
-
+    const resp = await this.universe.simulateZapFn(opts)
 
     // If the response starts with a pointer to the first location of the output tuple
     // when we know if can be decoded by the zapper interface
@@ -218,13 +218,15 @@ export abstract class BaseSearcherResult {
     //   to: opts.to,
     //   from: opts.from,
     // })
-    // console.log(
-    //   `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
-    // )
+    this.searcher.debugLog(
+      `Running simulation for: ${this.userInput} -> ${this.outputToken}`
+    )
 
     // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
-    console.log(resp)
+    if (process.env.DEBUG_SIMULATION) {
+      this.searcher.debugLog(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
+    }
     // Try and decode the error message
     if (resp.startsWith('0xef3dcb2f')) {
       // uint, address, _, uint, bytes...
@@ -240,6 +242,7 @@ export abstract class BaseSearcherResult {
       const errorMsg = Buffer.from(errorMsgCharsInHex, 'hex').toString()
 
       const msg = `${cmdIdx}: failed calling '${addr}'. Error: '${errorMsg}'`
+      this.searcher.debugLog(msg)
 
       throw new Error(msg)
     } else if (resp.startsWith('0x08c379a0')) {
@@ -249,6 +252,7 @@ export abstract class BaseSearcherResult {
         10 + 64 + 64 + errorMsgLen * 2
       )
       const msg = Buffer.from(errorMsgCharsInHex, 'hex').toString()
+      this.searcher.debugLog(msg)
       if (msg.includes('LPStakingTime')) {
         console.error('Stargate staking contract out of funds.. Aborting')
         throw new ThirdPartyIssue('Stargate out of funds')
@@ -256,6 +260,8 @@ export abstract class BaseSearcherResult {
 
       throw new Error(msg)
     } else {
+      this.searcher.debugLog(resp)
+
       if (resp.length / 128 > 100) {
         throw new Error('Failed to decode response')
       }
@@ -402,7 +408,7 @@ export abstract class BaseSearcherResult {
         outputTokenOutput.amount === 1n
           ? 1n
           : outputTokenOutput.amount -
-          outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
+            outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
       tokenOut: this.outputToken.address.address,
       tokens: this.potentialResidualTokens.map((i) => i.address.address),
     }
@@ -416,8 +422,8 @@ export abstract class BaseSearcherResult {
     return this.inputIsNative
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -445,7 +451,9 @@ export abstract class BaseSearcherResult {
     return tx
   }
 
-  abstract toTransaction(options: ToTransactionArgs): Promise<ZapTransaction | null>
+  abstract toTransaction(
+    options: ToTransactionArgs
+  ): Promise<ZapTransaction | null>
 
   async createZapTransaction(options: ToTransactionArgs) {
     const emitIdContract = Contract.createLibrary(
@@ -646,13 +654,13 @@ export class RedeemZap extends BaseSearcherResult {
         let input =
           prev == null
             ? step.inputs.map((t) =>
-              plannerUtils.erc20.balanceOf(
-                this.universe,
-                this.planner,
-                t.token,
-                executorAddress
+                plannerUtils.erc20.balanceOf(
+                  this.universe,
+                  this.planner,
+                  t.token,
+                  executorAddress
+                )
               )
-            )
             : [prev]
         if (input == null) {
           throw new Error('MISSING INPUT')
@@ -679,19 +687,31 @@ export class RedeemZap extends BaseSearcherResult {
     const tradesToGenerate = allSupportDynamicInput
       ? this.parts.tradesToOutput
       : [
-        ...this.parts.tradesToOutput.filter((i) => !i.supportsDynamicInput),
-        ...this.parts.tradesToOutput.filter((i) => i.supportsDynamicInput),
-      ]
+          ...this.parts.tradesToOutput.filter((i) => !i.supportsDynamicInput),
+          ...this.parts.tradesToOutput.filter((i) => i.supportsDynamicInput),
+        ]
 
-    const tradeInputs = new Map<Token, Value>()
     for (const path of tradesToGenerate) {
       for (const step of path.steps) {
         await this.checkIfSearchIsAborted()
-        const input = path.inputs.map(
-          (t) =>
-            tradeInputs.get(t.token) ??
-            encodeArg(t.amount, ParamType.from('uint256'))
+        const dynInput = step.action.supportsDynamicInput
+        const input = path.inputs.map((t) =>
+          dynInput
+            ? plannerUtils.erc20.balanceOf(
+                this.universe,
+                this.planner,
+                t.token,
+                executorAddress
+              )
+            : encodeArg(
+                t.amount -
+                  (t.amount *
+                    this.universe.config.defaultInternalTradeSlippage) /
+                    FEE_SCALE,
+                ParamType.from('uint256')
+              )
         )
+
         const outputs = await step.action
           .planWithOutput(
             this.universe,
@@ -859,9 +879,9 @@ export class MintZap extends BaseSearcherResult {
       const tradesToGenerate = allSupportDynamicInput
         ? allTrades
         : [
-          ...allTrades.filter((i) => !i.supportsDynamicInput),
-          ...allTrades.filter((i) => i.supportsDynamicInput),
-        ]
+            ...allTrades.filter((i) => !i.supportsDynamicInput),
+            ...allTrades.filter((i) => i.supportsDynamicInput),
+          ]
 
       for (const trade of tradesToGenerate) {
         const current = splitTrades.get(trade.outputs[0].token)

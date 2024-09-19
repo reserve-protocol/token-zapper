@@ -22,7 +22,7 @@ abstract class CurveFactoryCryptoPoolBase extends Action(
   'CurveFactoryCryptoPool'
 ) {
   public get outputSlippage(): bigint {
-    return 1n
+    return 15n
   }
   gasEstimate(): bigint {
     return 10000000n
@@ -182,6 +182,10 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
         : [new Approval(pool.underlying[tokenIndex], pool.address)]
     )
   }
+
+  get outputSlippage() {
+    return 30n
+  }
   toString(): string {
     return `CurveFactoryCryptoPool.addLiquidity(${this.inputToken.join(
       ', '
@@ -196,7 +200,7 @@ class CurveFactoryCryptoPoolRemoveLiquidityAction extends Action(
     return 100000n
   }
   get outputSlippage() {
-    return 1n
+    return 30n
   }
   async plan(
     planner: Planner,

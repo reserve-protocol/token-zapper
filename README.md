@@ -20,20 +20,19 @@ import {
   createParaswap,
   setupEthereumZapper,
   ethereumConfig,
-  Universe
+  Universe,
 } from '@reserve-protocol/token-zapper'
 ```
 
 ```typescript
-
 const zapperState = await Universe.createWithConfig(
   provider,
   ethereumConfig,
   async (uni) => {
-    uni.addTradeVenue(createKyberswap('Kyber', uni));
-    uni.addTradeVenue(createParaswap('paraswap', uni));
+    uni.addTradeVenue(createKyberswap('Kyber', uni))
+    uni.addTradeVenue(createParaswap('paraswap', uni))
 
-    await setupEthereumZapper(uni);
+    await setupEthereumZapper(uni)
   }
 )
 
@@ -53,12 +52,12 @@ provider.on('block', async (blockNumber) => {
 After this setup, you can use the zapper to find a way to zap into an rToken, or zap redeem it into something else
 
 ```typescript
-const yourAddress = "0x....."
+const yourAddress = '0x.....'
 const zapTx = await zapperState.zap(
   zapperState.commonTokens.USDC.from(1000.0),
   zapperState.rTokens.eUSD,
   yourAddress
-);
+)
 
 // const zapTx = await zapperState.redeem(
 //  zapperState.rTokens.eUSD.from(1000.0),
@@ -67,7 +66,7 @@ const zapTx = await zapperState.zap(
 // );
 
 // You can get an overview of the zap transaction by describing it:
-console.log(zapTx.describe().join("\n"));
+console.log(zapTx.describe().join('\n'))
 ```
 
 ```
@@ -149,7 +148,7 @@ Transaction {
 
    cmd 19:
    [0x6d92...66Bb]:delegate.emitId(id: uint256 = 73443953353315612315869871934451295356890389189147558801315526084051218930036);
-  
+
    ... // More commands to collect any leftover dust.
 
   ],
@@ -159,25 +158,20 @@ Transaction {
 To execute your zap you just need to use the parametres in the zapTx:
 
 ```typescript
-const {
-  to,
-  data,
-  value
-} = zapTx.transaction.tx;
+const { to, data, value } = zapTx.transaction.tx
 
 const signer = new ethers.Wallet([YOUR_PRIVATE_KEY], provider)
 const { to, data, value } = zapTx.transaction.tx
 const resp = await signer.sendTransaction({
   to,
   data,
-  value
+  value,
 })
-console.log("Tx pending, hash: ", resp.hash);
+console.log('Tx pending, hash: ', resp.hash)
 const receipt = await resp.wait(1)
-console.log("Your zap was" + receipt.status === 1 ? "successfull!" : "reverted")
+console.log('Your zap was' + receipt.status === 1 ? 'successfull!' : 'reverted')
 
-console.log("See it here: https://etherscan.io/tx/" + resp.hash);
-
+console.log('See it here: https://etherscan.io/tx/' + resp.hash)
 ```
 
 ## Running unit tests
@@ -205,13 +199,12 @@ npm run arbi:integration
 Specific cases can be run by using a `testPathPattern` flag, e.g.
 
 ```
-npm run eth:integration -- -t "issue" # runs all issueance tests
-npm run eth:integration -- -t "redeem" # runs all redemption tests
+npm run integration:eth -- -t "issue" # runs all issueance tests
+npm run integration:eth -- -t "redeem" # runs all redemption tests
 
-npm run eth:integration -- -t "issue eUSD" # run issueance tests for eUSD
-npm run eth:integration -- -t "redeem eUSD" # run redemption tests for eUSD
+npm run integration:eth -- -t "issue eUSD" # run issueance tests for eUSD
+npm run integration:eth -- -t "redeem eUSD" # run redemption tests for eUSD
 ```
-
 
 ## Contributing
 

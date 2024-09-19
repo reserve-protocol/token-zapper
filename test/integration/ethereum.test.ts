@@ -192,7 +192,7 @@ beforeAll(async () => {
 
 
 const log = console.log
-describe('ethereum', () => {
+describe('ethereum zapper', () => {
   beforeAll(() => {
     console.log = () => { }
   })

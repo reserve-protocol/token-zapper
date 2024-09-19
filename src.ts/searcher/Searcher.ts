@@ -9,6 +9,7 @@ import { EthereumUniverse } from '../configuration/ethereum'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { bfs } from '../exchange-graph/BFS'
+import { op } from '../tx-gen/libs/encodeOps'
 import {
   BasketTokenSourcingRuleApplication,
   type PostTradeAction,
@@ -16,7 +17,8 @@ import {
 import {
   MultiChoicePath,
   chunkifyIterable,
-  createConcurrentStreamingSeacher,
+  createConcurrentStreamingEvaluator,
+
   generateAllPermutations,
   resolveTradeConflicts,
 } from './MultiChoicePath'
@@ -181,21 +183,21 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r), this.universe.usd.zero)
       : precursorTokenBasket
-          .map((p) => p.into(inputQuantity.token))
-          .reduce((l, r) => l.add(r))
+        .map((p) => p.into(inputQuantity.token))
+        .reduce((l, r) => l.add(r))
 
     // console.log(`sum: ${quoteSum}, ${precursorTokensPrices.join(', ')}`)
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
-          input: inputQuantity.mul(
-            precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
-          ),
-          output: token,
-        }))
+        input: inputQuantity.mul(
+          precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
+        ),
+        output: token,
+      }))
       : precursorTokenBasket.map((qty) => ({
-          output: qty.token,
-          input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
-        }))
+        output: qty.token,
+        input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
+      }))
     const total = inputPrTrade.reduce(
       (l, r) => l.add(r.input),
       inputQuantity.token.zero
@@ -246,7 +248,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
             multiTrades.push(potentialSwaps)
 
             return
-          } catch (e) {}
+          } catch (e) { }
         }
       })
     )
@@ -430,8 +432,8 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
               try {
                 await onResult(out)
                 resultsProduced += 1
-              } catch (e: any) {}
-            } catch (e: any) {}
+              } catch (e: any) { }
+            } catch (e: any) { }
 
             if (resultsProduced > this.minResults) {
               if (Date.now() > endTime) {
@@ -530,7 +532,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     await this.universe.initialized
     this.checkIfSimulationSupported()
 
-    const controller = createConcurrentStreamingSeacher(this as any, toTxArgs)
+    const controller = createConcurrentStreamingEvaluator(this, toTxArgs)
 
     void Promise.all([
       this.findRTokenIntoSingleTokenZapViaRedeem__(
@@ -552,8 +554,8 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         controller.onResult,
         controller.abortController.signal,
         start
-      ).catch(() => {}),
-    ]).catch(() => {})
+      ).catch(() => { }),
+    ]).catch(() => { })
     await controller.resultReadyPromise
     return controller.getResults(start)
   }
@@ -778,7 +780,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           if (results >= 2) {
             ownController.abort()
           }
-        } catch (e) {}
+        } catch (e) { }
       },
       tolerance
     )
@@ -795,6 +797,20 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     return this.config.defaultInternalTradeSlippage
   }
 
+  public async zapIntoRTokenYieldPosition(
+    userInput: TokenQuantity,
+    rToken: Token,
+    yieldPosition: Token,
+    userAddress: Address,
+    opts?: Omit<ToTransactionArgs, 'endPosition'>
+  ) {
+    return await this.zapIntoRToken(userInput, rToken, userAddress, {
+      ...opts,
+      enableTradeZaps: false,
+      endPosition: yieldPosition,
+    });
+  }
+
   public async zapIntoRToken(
     userInput: TokenQuantity,
     rToken: Token,
@@ -807,7 +823,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     await this.universe.initialized
     this.checkIfSimulationSupported()
 
-    const controller = createConcurrentStreamingSeacher(this as any, toTxArgs)
+    const controller = createConcurrentStreamingEvaluator(this, toTxArgs)
 
     const errors: Error[] = []
     const mintZap = this.findSingleInputToRTokenZap_(
@@ -817,6 +833,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       slippage,
       controller.onResult,
       controller.abortController.signal,
+      toTxArgs.endPosition,
       start
     ).catch((e) => {
       // console.log(e)
@@ -825,16 +842,16 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     const doTrades = opts?.enableTradeZaps !== false
     const tradeZap = doTrades
       ? this.findTokenZapViaTrade(
-          userInput,
-          rToken,
-          userAddress,
-          slippage,
-          controller.onResult,
-          controller.abortController.signal,
-          start
-        ).catch((e) => {
-          errors.push(e)
-        })
+        userInput,
+        rToken,
+        userAddress,
+        slippage,
+        controller.onResult,
+        controller.abortController.signal,
+        start
+      ).catch((e) => {
+        errors.push(e)
+      })
       : Promise.resolve()
     void Promise.all([mintZap, tradeZap]).then(() => {
       if (!controller.abortController.signal.aborted) {
@@ -861,6 +878,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     slippage: bigint,
     onResult: (result: MintZap) => Promise<void>,
     abort: AbortSignal,
+    endPosition: Token = rToken,
     startTime: number = Date.now()
   ) {
     const inputIsNative = userInput.token === this.universe.nativeToken
@@ -904,9 +922,71 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           rTokenActions.mint,
         ]).quote(
           mintAction.inputToken.map((token) => tradingBalances.get(token)),
-          signerAddress
+          endPosition !== rToken ? this.config.addresses.executorAddress : signerAddress
         )
         await rTokenMint.exchange(tradingBalances)
+
+        if (endPosition !== rToken) {
+          const lastSteps = await this.findSingleInputTokenSwap(
+            true,
+            tradingBalances.get(rToken),
+            endPosition,
+            signerAddress,
+            slippage,
+            abort,
+            2
+          )
+
+          for (const lastStep of lastSteps.paths) {
+            const lastMintBals = tradingBalances.clone()
+
+            await lastStep.exchange(lastMintBals)
+
+
+            const outputReordered = [
+              lastMintBals.get(endPosition),
+              ...lastMintBals
+                .toTokenQuantities()
+                .filter((i) => i.token !== endPosition),
+            ]
+            const updatedMinting = new SwapPaths(
+              this.universe,
+              inputQuantityToBasketTokens.trading.outputs,
+              [
+                ...inputQuantityToBasketTokens.minting.swapPaths,
+                rTokenMint,
+              ],
+              rTokenMint.outputs,
+              rTokenMint.outputValue,
+              this.universe.execAddress
+            )
+
+            const full = new SwapPaths(
+              this.universe,
+              [inputTokenQuantity],
+              [
+                ...inputQuantityToBasketTokens.trading.swapPaths,
+                ...updatedMinting.swapPaths,
+                lastStep
+              ],
+              outputReordered,
+              lastStep.outputValue,
+              signerAddress
+            )
+
+
+            const parts = {
+              trading: inputQuantityToBasketTokens.trading,
+              minting: updatedMinting,
+              outputMint: lastStep,
+              full,
+            }
+
+            await onResult(new MintZap(this, userInput, parts, signerAddress, endPosition, startTime, abort))
+          }
+          return;
+        }
+
 
         const outputReordered = [
           tradingBalances.get(rToken),
@@ -931,7 +1011,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         const parts = {
           trading: inputQuantityToBasketTokens.trading,
           minting: inputQuantityToBasketTokens.minting,
-          rTokenMint,
+          outputMint: rTokenMint,
           full,
         }
 
@@ -1120,12 +1200,12 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         destination,
         emitResult,
         maxHops
-      ).catch((e) => {}),
+      ).catch((e) => { }),
       this.externalQuoters_(input, output, emitResult, {
         dynamicInput,
         abort,
         slippage,
-      }).catch((e) => {}),
+      }).catch((e) => { }),
     ])
   }
   debugLog(...args: any[]) {

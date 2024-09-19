@@ -1,4 +1,5 @@
 import { type PermitTransferFrom } from '@uniswap/permit2-sdk';
+import { Token } from '../entities/Token';
 
 export type ToTransactionArgs = Partial<{
   returnDust: boolean;
@@ -12,4 +13,7 @@ export type ToTransactionArgs = Partial<{
   };
 
   enableTradeZaps?: boolean;
+
+
+  endPosition?: Token
 }>;

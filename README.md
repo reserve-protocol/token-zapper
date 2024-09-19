@@ -16,18 +16,25 @@ To use the library, import it in your TypeScript file:
 
 ```typescript
 import {
-  fromProvider
+  createKyberswap,
+  createParaswap,
+  setupEthereumZapper,
+  ethereumConfig,
+  Universe
 } from '@reserve-protocol/token-zapper'
 ```
 
 ```typescript
 
-// The fromProvider<1> in the fromProvider method, specifies the chainId. 
-//   1 for ethereum mainnet
-//   8453 for base
-//   42161 for arbitrum
-const zapperState = await fromProvider<1>(
-  provider
+const zapperState = await Universe.createWithConfig(
+  provider,
+  ethereumConfig,
+  async (uni) => {
+    uni.addTradeVenue(createKyberswap('Kyber', uni));
+    uni.addTradeVenue(createParaswap('paraswap', uni));
+
+    await setupEthereumZapper(uni);
+  }
 )
 
 // Zapper loads asynchroniously, you can wait the initialized promise to wait for it to fully bootstrap
@@ -65,63 +72,86 @@ console.log(zapTx.describe().join("\n"));
 
 ```
 Transaction {
-  zap: 100000.0 USDC (99995.0 USD) -> 31.282717305975456267 ETH+ (98273.98377038 USD) (+ $183.56379896 USD D.) @ fee: 25.61216338 USD,
-  dust: [0.021474740048719004 rETH (73.52053689 USD), 0.000000000000000001 stETH (0.0 stETH), 0.030485670541067423 wstETH (110.04326207 USD)],
-  fees: 0.00828157863717086 ETH (25.61216338 USD) (3070865 wei)
+  zap: 100000.0 USDC (99994.9 USD) -> 99975.562425696744803293 eUSD (99982.60831839 USD) (+ $3.32644885 USD D.) @ fee: 190.26955838 USD,
+  dust: [0.275168033561621409 sDAI (0.30517785 USD), 0.342538 saEthUSDC (0.372217 USD), 109.77683024 cUSDT (2.649054 USD)],
+  fees: 0.078302891451912498 ETH (190.26955838 USD) (2992017 wei)
   program: [
-   cmd 0: // Curve,swap=33259.3 USDC -> 10.707839131756914597 frxETH
-   amt_frxETH: uint256 = [curve-router-caller]:delegate.exchange(
-      amountIn: uint256 = 33259300000,
-      _expected: uint256 = 10600760740439345452,
-      router: address = [0x99a5...788f],
-      encodedRouterCall: bytes = [len=1666]0x000000000000000000000000a0b86991...00000000000000000000000000000000
+   cmd 0: // paraswap,router=0xDEF171Fe48CF0115B1d80b88dc8eAB59176FEe57,swap=25004.574996 USDC -> 24999.063581 USDT,pools=0x3416cF6C708Da44DB2624D63ea0AAef7113527C6
+   [this].rawCall(
+      to: address = [0xDEF1...Ee57],
+      value: uint256 = 0,
+      data: bytes = [len=1346]0xa6886da9000000000000000000000000...00000000000000000000000000000000
    );
 
    cmd 1:
-   bal_frxETH: uint256 = [tok=frxETH].balanceOf(account: address = [this]);
+   bal_USDT: uint256 = [tok=USDT].balanceOf(account: address = [this]);
 
-   cmd 2: // UniV3.exactInput(33377.2 USDC -> [USDC -> 0x8ad5...e6D8 -> WETH -> WETH -> 0xa4e0...9613 -> rETH] -> 9.699320281516622756 rETH)
-   b: uint256 = [0x32F5...17A9]:delegate.exactInput(
-      amountIn: uint256 = 33377200000,
-      _expected: uint256 = 9675132450390646140,
+   cmd 2: // UniV3.exactInputSingle(USDC -> 0x6c6Bc977E13Df9b0de53b251522280BB72383700 -> DAI)
+   c: uint256 = [0x32F5...17A9]:delegate.exactInputSingle(
+      amountIn: uint256 = 25002200000,
+      _expected: uint256 = 24994195970138374460306,
       router: address = [0x68b3...Fc45],
-      recipient: address = [this],
-      path: bytes = [len=258]0xa0b86991c6218b36c1d19d4a2e9eb0ce...00000000000000000000000000000000
+      encodedRouterCall: bytes = [len=514]0x000000000000000000000000a0b86991...00000000000000000000000000000000
    );
 
-   cmd 3: // Enso(33363.5 USDC, enso,lido, 10.743417369406715664 stETH)
-   d: bytes[] = [0x80Eb...fB8E].routeSingle(
-      tokenIn: address = [tok=USDC],
-      amountIn: uint256 = 33363500000,
-      commands: bytes32[] = (bytes32[]),
-      state: bytes[] = (bytes[])
-   );
+   cmd 3:
+   bal_USDC: uint256 = [tok=USDC].balanceOf(account: address = [this]);
 
    cmd 4:
-   bal_stETH: uint256 = [tok=stETH].balanceOf(account: address = [this]);
+   bal_DAI: uint256 = [tok=DAI].balanceOf(account: address = [this]);
 
    cmd 5:
-   bal_frxETH: uint256 = [tok=frxETH].balanceOf(account: address = [this]);
+   bal_USDT: uint256 = [tok=USDT].balanceOf(account: address = [this]);
 
    cmd 6:
-   bal_rETH: uint256 = [tok=rETH].balanceOf(account: address = [this]);
+   e: uint256 = [tok=sDAI].deposit(assets: uint256 = bal_DAI, receiver: address = [this]);
 
    cmd 7:
-   bal_stETH: uint256 = [tok=stETH].balanceOf(account: address = [this]);
+   bal_sDAI: uint256 = [tok=sDAI].balanceOf(account: address = [this]);
 
-   cmd 8:
-   f: uint256 = [tok=sfrxETH].deposit(assets: uint256 = bal_frxETH, receiver: address = [this]);
+   cmd 8: // 50.000349999774905% USDC
+   frac_saEthUSDC: uint256 = [this]:delegate.fpMul(a: uint256 = bal_USDC, b: uint256 = 500003499997749068, scale: uint256 = 1000000000000000000);
 
-   cmd 9:
-   bal_sfrxETH: uint256 = [tok=sfrxETH].balanceOf(account: address = [this]);
+   cmd 9: // IStaticATokenV3LM.deposit(24996.762481 USDC) # -> 23002.466853 saEthUSDC
+   g: uint256 = [tok=saEthUSDC].deposit(
+      assets: uint256 = frac_saEthUSDC,
+      receiver: address = [this],
+      referralCode: uint16 = 0,
+      depositToAave: bool = true
+   );
 
    cmd 10:
-   h: uint256 = [tok=wstETH].wrap(_stETHAmount: uint256 = bal_stETH);
+   bal_saEthUSDC: uint256 = [tok=saEthUSDC].balanceOf(account: address = [this]);
 
    cmd 11:
-   [this]:delegate.mintMaxRToken(facade: address = [0x81b9...eB3C], token: address = [tok=ETH+], recipient: address = [0x..yourAddress]);
+   bal_USDC: uint256 = [tok=USDC].balanceOf(account: address = [this]);
 
-   [...] // More commands to collect any leftover dust. (In the future we hope to reduce it or at least unwrap the returned tokens)
+   cmd 12:
+   [tok=cUSDCv3].supplyTo(dst: address = [this], asset: address = [tok=USDC], amount: uint256 = bal_USDC);
+
+   cmd 13:
+   bal_cUSDCv3: uint256 = [tok=cUSDCv3].balanceOf(account: address = [this]);
+
+   cmd 14:
+   [tok=wcUSDCv3].deposit(amount: uint256 = bal_cUSDCv3);
+
+   cmd 15:
+   bal_wcUSDCv3: uint256 = [tok=wcUSDCv3].balanceOf(account: address = [this]);
+
+   cmd 16:
+   i: uint256 = [tok=cUSDT].mint(mintAmount: uint256 = bal_USDT);
+
+   cmd 17:
+   bal_cUSDT: uint256 = [balanceOf].balanceOf(token: address = [tok=cUSDT], account: address = [this]);
+
+   cmd 18:
+   [this]:delegate.mintMaxRToken(facade: address = [0x81b9...eB3C], token: address = [tok=eUSD], recipient: address = [0x6845...0824]);
+
+   cmd 19:
+   [0x6d92...66Bb]:delegate.emitId(id: uint256 = 73443953353315612315869871934451295356890389189147558801315526084051218930036);
+  
+   ... // More commands to collect any leftover dust.
+
   ],
 }
 ```

@@ -1,17 +1,15 @@
 import * as dotenv from 'dotenv'
 import { ethers, providers } from 'ethers'
 
-import { createParaswap } from '../../src.ts/aggregators/Paraswap'
 import {
   Address,
-  createEnso,
-  createKyberswap,
   ethereumConfig,
+  createKyberswap,
+  createParaswap,
   setupEthereumZapper,
   Universe
 } from '../../src.ts/index'
 import { WebSocketProvider } from '@ethersproject/providers'
-import { assetAddressToUint } from '@paraswap/sdk/dist/methods/nftOrders/buildOrder'
 dotenv.config()
 
 if (process.env.MAINNET_PROVIDER == null) {
@@ -147,7 +145,6 @@ beforeAll(async () => {
       routerDeadline: 2500,
     },
     async (uni) => {
-      // uni.addTradeVenue(createEnso('enso', uni, 1))
       uni.addTradeVenue(createKyberswap('Kyber', uni))
       uni.addTradeVenue(createParaswap('paraswap', uni))
 
@@ -174,7 +171,7 @@ describe('ethereum zaps', () => {
         let ratio = 0;
         let result = "failed"
         try {
-          const zap = await universe.searcher.zapIntoRToken(
+          const zap = await universe.zap(
             input!,
             output!,
             testUser,
@@ -184,8 +181,8 @@ describe('ethereum zaps', () => {
             }
           );
 
-          const ratioQty = zap.bestZapTx.tx.stats.output.price.div(
-            zap.bestZapTx.tx.stats.input.price
+          const ratioQty = zap.stats.output.price.div(
+            zap.stats.input.price
           )
           ratio = ratioQty.asNumber();
           result = "success"

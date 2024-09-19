@@ -278,7 +278,7 @@ describe('ethereum zapper', () => {
       )
     })
   }
-  
+
   for (const zapIntoYieldPosition of zapIntoYieldPositionCases) {
     const testCaseName = `zap ${getSymbol.get(
       zapIntoYieldPosition.inputToken
@@ -289,6 +289,8 @@ describe('ethereum zapper', () => {
         async () => {
           expect.assertions(1)
           await universe.initialized
+          await universe.updateBlockState(await universe.provider.getBlockNumber(), (await universe.provider.getGasPrice()).toBigInt())
+
           const input = universe.tokens
             .get(zapIntoYieldPosition.inputToken)
             ?.from(zapIntoYieldPosition.input * INPUT_MUL)

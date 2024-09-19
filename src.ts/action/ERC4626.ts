@@ -13,7 +13,7 @@ export class ERC4626TokenVault {
   constructor(
     public readonly shareToken: Token,
     public readonly underlying: Token
-  ) {}
+  ) { }
 
   get address(): Address {
     return this.shareToken.address
@@ -26,7 +26,7 @@ export const ERC4626DepositAction = (proto: string) =>
       return this.slippage
     }
     public get returnsOutput(): boolean {
-      return false
+      return true
     }
     async plan(
       planner: Planner,
@@ -40,10 +40,10 @@ export const ERC4626DepositAction = (proto: string) =>
           this.universe.provider
         )
       )
-      planner.add(
+      const out = planner.add(
         lib.deposit(inputs[0] || predicted[0].amount, destination.address)
       )
-      return null
+      return [out!];
     }
     gasEstimate() {
       return BigInt(200000n)
@@ -69,7 +69,7 @@ export const ERC4626DepositAction = (proto: string) =>
         [underlying],
         [shareToken],
         InteractionConvention.ApprovalRequired,
-        DestinationOptions.Callee,
+        DestinationOptions.Recipient,
         [new Approval(underlying, shareToken.address)]
       )
       this.inst = IERC4626__factory.connect(

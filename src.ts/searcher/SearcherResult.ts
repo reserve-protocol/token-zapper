@@ -49,6 +49,7 @@ import { SimulateParams } from '../configuration/ZapSimulation'
 import { Config } from '../configuration/ChainConfiguration'
 import { Searcher, Universe } from '..'
 import { FEE_SCALE } from '../base/constants'
+import { MintRTokenAction } from '../action/RTokens'
 
 const zapperInterface = Zapper__factory.createInterface()
 
@@ -455,7 +456,7 @@ export abstract class BaseSearcherResult {
     options: ToTransactionArgs
   ): Promise<ZapTransaction | null>
 
-  async createZapTransaction(options: ToTransactionArgs) {
+  async createZapTransaction(options: ToTransactionArgs, fullyConsumed: Set<Token> = new Set()) {
     const emitIdContract = Contract.createLibrary(
       EmitId__factory.connect(
         this.universe.config.addresses.emitId.address,
@@ -479,6 +480,9 @@ export abstract class BaseSearcherResult {
       let dust = this.potentialResidualTokens.map((qty) => qty)
       if (options.returnDust === true) {
         for (const tok of dust) {
+          if (fullyConsumed.has(tok)) {
+            continue
+          }
           const balanceOfDust = plannerUtils.erc20.balanceOf(
             this.universe,
             this.planner,
@@ -824,16 +828,26 @@ export class MintZap extends BaseSearcherResult {
   async toTransaction(
     options: ToTransactionArgs = {}
   ): Promise<ZapTransaction | null> {
+    const fullyConsumed = new Set<Token>()
+
     try {
       const totalUsedInMinting = new TokenAmounts()
       const numberOfUsers = new DefaultMap<Token, number>(() => 0)
       const totalUsers = new DefaultMap<Token, number>(() => 0)
+
+      const rTokenInputs = new Set<Token>()
       for (const mintPath of this.parts.minting.swapPaths) {
         for (const step of mintPath.steps) {
+
           totalUsedInMinting.addQtys(step.inputs)
+
           for (const { token } of step.inputs) {
             numberOfUsers.set(token, numberOfUsers.get(token) + 1)
             totalUsers.set(token, totalUsers.get(token) + 1)
+            if (step.action instanceof MintRTokenAction) {
+              rTokenInputs.add(token)
+            }
+
           }
         }
       }
@@ -893,6 +907,7 @@ export class MintZap extends BaseSearcherResult {
         )
       }
 
+
       for (const trade of tradesToGenerate) {
         for (const step of trade.steps) {
           await this.checkIfSearchIsAborted()
@@ -905,6 +920,7 @@ export class MintZap extends BaseSearcherResult {
             ParamType.fromString('uint256'),
             defaultAbiCoder.encode(['uint256'], [tradeInput.amount])
           )
+
 
           const users = splitTrades.get(inputToken)
           const previousTradeGeneratingThisInput = trades.get(inputToken)
@@ -937,6 +953,7 @@ export class MintZap extends BaseSearcherResult {
                 this.universe.config.addresses.executorAddress,
                 'LAST?'
               )
+              fullyConsumed.add(inputToken)
             }
           }
 
@@ -976,6 +993,9 @@ export class MintZap extends BaseSearcherResult {
           ].map((i) => i.token)
         ),
       ]) {
+        if (trades.has(input)) {
+          continue
+        }
         trades.set(
           input,
           plannerUtils.erc20.balanceOf(
@@ -988,6 +1008,25 @@ export class MintZap extends BaseSearcherResult {
       }
       for (const mintPath of this.parts.minting.swapPaths) {
         for (const step of mintPath.steps) {
+          if (step.action instanceof MintRTokenAction) {
+            await step.action
+              .plan(
+                this.planner,
+                step.inputs.map(i => encodeArg(i.amount, ParamType.from('uint256'))),
+                this.universe.config.addresses.executorAddress
+              )
+              .catch((a) => {
+                console.log(`${step.action.toString()}.plan failed`)
+                throw a
+              })
+            trades.set(step.action.outputToken[0], plannerUtils.erc20.balanceOf(
+              this.universe,
+              this.planner,
+              step.action.outputToken[0],
+              this.universe.config.addresses.executorAddress
+            ))
+            continue
+          }
           await this.checkIfSearchIsAborted()
           const inputToken = step.inputs[0].token
           let actionInput = trades.get(inputToken)
@@ -999,14 +1038,17 @@ export class MintZap extends BaseSearcherResult {
           const inputQty = step.inputs[0]
           const usersLeft = numberOfUsers.get(inputToken)
           const usersTotal = totalUsers.get(inputToken)
+
           if (usersTotal != 1) {
             if (usersLeft === 1) {
+
               actionInput = plannerUtils.erc20.balanceOf(
                 this.universe,
                 this.planner,
                 inputToken,
                 this.universe.config.addresses.executorAddress
               )
+              fullyConsumed.add(inputToken)
             } else {
               const fraction =
                 parseFloat(inputQty.format()) / parseFloat(total.format())
@@ -1022,10 +1064,11 @@ export class MintZap extends BaseSearcherResult {
               )!
               numberOfUsers.set(inputToken, usersLeft - 1)
             }
+          } else {
+            fullyConsumed.add(inputToken)
           }
           const result = await step.action
-            .planWithOutput(
-              this.universe,
+            .plan(
               this.planner,
               [actionInput],
               this.universe.config.addresses.executorAddress,
@@ -1035,11 +1078,32 @@ export class MintZap extends BaseSearcherResult {
               console.log(`${step.action.toString()}.plan failed`)
               throw a
             })
-          if (result.length !== step.outputs.length) {
-            throw new Error('MINT MUST GENERATE ALL OUTPUTS')
-          }
           for (let i = 0; i < step.outputs.length; i++) {
-            trades.set(step.outputs[i].token, result[i])
+            const outTok = step.outputs[i].token;
+            if (result) {
+              trades.set(outTok, result[i])
+            } else {
+              if (rTokenInputs.has(outTok)) {
+                continue
+              }
+              const usersLeft = numberOfUsers.get(outTok) ?? 0;
+              if (!fullyConsumed.has(outTok) && usersLeft !== 0) {
+
+                trades.set(outTok, plannerUtils.erc20.balanceOf(
+                  this.universe,
+                  this.planner,
+                  outTok,
+                  this.universe.config.addresses.executorAddress
+                ))
+              }
+            }
+          }
+
+          if (result) {
+            if (result.length !== step.outputs.length) {
+              throw new Error('MINT MUST GENERATE ALL OUTPUTS')
+            }
+
           }
         }
       }
@@ -1054,16 +1118,20 @@ export class MintZap extends BaseSearcherResult {
             let out = trades.get(i.token);
             if (out == null) {
               if (step.action.supportsDynamicInput) {
+                fullyConsumed.add(i.token)
                 out = plannerUtils.erc20.balanceOf(this.universe, this.planner, i.token, thisAddr)
               } else {
                 out = encodeArg(i.amount, ParamType.from('uint256'))
               }
+            } else {
+              fullyConsumed.add(i.token)
             }
             return out
           }),
           destAddr,
           step.inputs
         )
+
         if (destAddr !== thisAddr) {
           continue
         }
@@ -1078,6 +1146,9 @@ export class MintZap extends BaseSearcherResult {
       console.log(e.stack)
       throw e
     }
-    return await this.createZapTransaction(options)
+    if (this.parts.outputMint.proceedsOptions === DestinationOptions.Recipient) {
+      fullyConsumed.add(this.outputToken)
+    }
+    return await this.createZapTransaction(options, fullyConsumed)
   }
 }

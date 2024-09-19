@@ -806,6 +806,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
   ) {
     return await this.zapIntoRToken(userInput, rToken, userAddress, {
       ...opts,
+      enableTradeZaps: false,
       endPosition: yieldPosition,
     });
   }
@@ -926,7 +927,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         await rTokenMint.exchange(tradingBalances)
 
         if (endPosition !== rToken) {
-          const lastStep = await this.findSingleInputTokenSwap(
+          const lastSteps = await this.findSingleInputTokenSwap(
             true,
             tradingBalances.get(rToken),
             endPosition,
@@ -935,10 +936,8 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
             abort,
             2
           )
-          const outTokenSet = new Set([endPosition])
-          const paths = await generateAllPermutations(this, [lastStep], outTokenSet)
 
-          for (const lastStep of paths.flat()) {
+          for (const lastStep of lastSteps.paths) {
             const lastMintBals = tradingBalances.clone()
 
             await lastStep.exchange(lastMintBals)
@@ -984,8 +983,8 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
             }
 
             await onResult(new MintZap(this, userInput, parts, signerAddress, endPosition, startTime, abort))
-            continue;
           }
+          return;
         }
 
 

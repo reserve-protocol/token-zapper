@@ -182,7 +182,7 @@ console.log("See it here: https://etherscan.io/tx/" + resp.hash);
 
 ## Running unit tests
 
-You can run the unit tests by running `npm run test-unit`
+You can run the unit tests by running `npm run test:unit`
 
 ## Running integration tests
 
@@ -194,6 +194,23 @@ To run the simulator clone [repo](https://github.com/jankjr/revm-router-simulato
 
 Then set the `SIM_URL` environment variable to the URL of the simulator, e.g. `http://localhost:7777`
 
+After an appropriate simulator is running, you can run the integration tests by running:
+
+```
+npm run eth:integration
+npm run base:integration
+npm run arbi:integration
+```
+
+Specific cases can be run by using a `testPathPattern` flag, e.g.
+
+```
+npm run eth:integration -- -t "issue" # runs all issueance tests
+npm run eth:integration -- -t "redeem" # runs all redemption tests
+
+npm run eth:integration -- -t "issue eUSD" # run issueance tests for eUSD
+npm run eth:integration -- -t "redeem eUSD" # run redemption tests for eUSD
+```
 
 
 ## Contributing

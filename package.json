@@ -106,7 +106,9 @@
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
     },
-    "extensionsToTreatAsEsm": [".ts"],
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
     "transform": {
       ".ts": [
         "ts-jest",
@@ -137,8 +139,8 @@
     "build:typechain": "rm -rf contracts/artifacts/ && rm -rf contracts/cache/ && rm -rf src/contracts && cd contracts/ && npx hardhat compile",
     "build:esm": "tsc --project tsconfig.esm.json && cp -r src.ts/configuration/data/ lib.esm/configuration/data",
     "build:commonjs": "tsc --project tsconfig.commonjs.json && cp -r src.ts/configuration/data/ lib.commonjs/configuration/data",
-    "test-unit": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --testPathPattern 'test/unit'",
-    "test-integration": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration'",
+    "test:unit": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --testPathPattern 'test/unit'",
+    "eth:integration": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration'",
     "format": "npm run prettier:fix",
     "curve:all": "npm run curve:mainnet && npm run curve:base && npm run curve:arbitrum",
     "curve:mainnet": "curl https://api.curve.fi/v1/getPools/big/ethereum | jq > src.ts/configuration/data/ethereum/curvePoolList.json",

@@ -4,6 +4,7 @@ import { ethers } from 'ethers'
 import { WebSocketProvider } from '@ethersproject/providers'
 import {
   Address,
+  createEnso,
   createKyberswap,
   createParaswap,
   ethereumConfig,
@@ -143,6 +144,24 @@ const issueanceCases = [
   // makeMintTestCase(5, t.apxETH, rTokens.dgnETH),
 ];
 
+const redeemCases = [
+  makeMintTestCase(10000, rTokens.eUSD, t.USDC),
+  makeMintTestCase(10000, rTokens.eUSD, t.DAI),
+  makeMintTestCase(10000, rTokens.eUSD, t.USDT),
+
+  makeMintTestCase(10000, rTokens.USD3, t.USDC),
+  makeMintTestCase(10000, rTokens.USD3, t.DAI),
+
+  makeMintTestCase(5, rTokens['ETH+'], t.WETH),
+  makeMintTestCase(5, rTokens['ETH+'], t.reth),
+  makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
+
+  makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
+  makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
+
+  makeMintTestCase(5, rTokens.dgnETH, t.WETH),
+];
+
 
 let universe: Universe
 beforeAll(async () => {
@@ -151,15 +170,11 @@ beforeAll(async () => {
 
   universe = await Universe.createWithConfig(
     provider,
-    {
-      ...ethereumConfig,
-      searcherMaxRoutesToProduce: 1,
-      routerDeadline: 3500,
-    },
+    ethereumConfig,
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))
       uni.addTradeVenue(createParaswap('paraswap', uni))
-      // uni.addTradeVenue(createEnso('enso', uni, 1))
+      uni.addTradeVenue(createEnso('enso', uni, 1))
 
       await setupEthereumZapper(uni)
     },
@@ -181,10 +196,11 @@ describe('ethereum', () => {
   beforeAll(() => {
     console.log = () => { }
   })
+
   for (const issueance of issueanceCases) {
-    const testCaseName = `issue ${getSymbol.get(issueance.output)!}`;
+    const testCaseName = `using ${getSymbol.get(issueance.inputToken)!} issue ${getSymbol.get(issueance.output)!}`;
     describe(testCaseName, () => {
-      it(`using ${getSymbol.get(issueance.inputToken)!}`, async () => {
+      it("produces an output", async () => {
         expect.assertions(1);
         await universe.initialized
         const input = universe.tokens
@@ -205,10 +221,36 @@ describe('ethereum', () => {
           result = "success"
         } catch (e) {
           log(`${testCaseName} = ${e.message}`)
-          result = "failed"
         }
         expect(result).toBe("success");
-      }, 5000);
+      }, 15 * 1000);
+    })
+  }
+
+  for (const redeem of redeemCases) {
+    const testCaseName = `redeem ${getSymbol.get(redeem.inputToken)!} for ${getSymbol.get(redeem.output)!}`;
+    describe(testCaseName, () => {
+      it("produces an output", async () => {
+        expect.assertions(1);
+        await universe.initialized
+        const input = universe.tokens
+          .get(redeem.inputToken)
+          ?.from(redeem.input)
+        const output = universe.tokens.get(redeem.output)
+        let result = "failed"
+
+        try {
+          await universe.redeem(
+            input!,
+            output!,
+            testUser
+          );
+          result = "success"
+        } catch (e) {
+          log(`${testCaseName} = ${e.message}`)
+        }
+        expect(result).toBe("success");
+      }, 15 * 1000);
     })
   }
 })

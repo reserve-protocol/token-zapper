@@ -30,6 +30,12 @@ if (process.env.SIM_URL == null) {
 }
 
 export const ethWhales = {
+  // stETH
+  '0xae7ab96520de3a18e5e111b5eaab095312d7fe84':
+    '0x93c4b944d05dfe6df7645a86cd2206016c51564d',
+  // USDe
+  '0x4c9edd5852cd905f086c759e8383e09bff1e68b3':
+    '0x88a1493366d48225fc3cefbdae9ebb23e323ade3',
   '0x320623b8e4ff03373931769a31fc52a4e78b5d70':
     '0x0774df07205a5e9261771b19afa62b6e757f7ef8', // rsr
   // wsteth
@@ -92,7 +98,7 @@ export const ethWhales = {
 
   // pxeth
   '0x04c154b66cb340f3ae24111cc767e0184ed00cc6':
-    '0x684566c9ffcac7f6a04c3a9997000d2d58c00824',
+    '0x40e93a52f6af9fcd3b476aedadd7feabd9f7aba8',
 }
 
 const getProvider = (url: string) => {
@@ -132,16 +138,16 @@ const issueanceCases = [
   makeMintTestCase(10000, t.DAI, rTokens.USD3),
 
   makeMintTestCase(5, t.WETH, rTokens['ETH+']),
-  // makeMintTestCase(5, t.steth, rTokens['ETH+']),
+  makeMintTestCase(5, t.steth, rTokens['ETH+']),
   makeMintTestCase(5, t.reth, rTokens['ETH+']),
   makeMintTestCase(5, t.frxeth, rTokens['ETH+']),
 
   makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
-  // makeMintTestCase(10000, t.USDe, rTokens.hyUSD),
+  makeMintTestCase(10000, t.USDe, rTokens.hyUSD),
   makeMintTestCase(10000, t.DAI, rTokens.hyUSD),
 
   makeMintTestCase(5, t.WETH, rTokens.dgnETH),
-  // makeMintTestCase(5, t.apxETH, rTokens.dgnETH),
+  makeMintTestCase(5, t.pxETH, rTokens.dgnETH),
 ]
 
 const redeemCases = [

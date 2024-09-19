@@ -180,6 +180,21 @@ console.log("See it here: https://etherscan.io/tx/" + resp.hash);
 
 ```
 
+## Running unit tests
+
+You can run the unit tests by running `npm run test-unit`
+
+## Running integration tests
+
+There is also an integration test suite, but it requires some setup to run.
+
+The simulator uses the block diff rpc to sync the state of the simulator, this is an expensive operation when using node providers, so it is highly recommended to do so against a private RPC node. We recommend using [reth](https://reth.rs/) for this, but geth based nodes are supported.
+
+To run the simulator clone [repo](https://github.com/jankjr/revm-router-simulator), compile it and run it locally.
+
+Then set the `SIM_URL` environment variable to the URL of the simulator, e.g. `http://localhost:7777`
+
+
 
 ## Contributing
 

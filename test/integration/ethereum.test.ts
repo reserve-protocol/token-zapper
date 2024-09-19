@@ -1,23 +1,28 @@
 import * as dotenv from 'dotenv'
-import { ethers, providers } from 'ethers'
+import { ethers } from 'ethers'
 
+import { WebSocketProvider } from '@ethersproject/providers'
 import {
   Address,
-  ethereumConfig,
   createKyberswap,
   createParaswap,
+  ethereumConfig,
+  makeCustomRouterSimulator,
   setupEthereumZapper,
-  createEnso,
-  Universe,
-  makeCustomRouterSimulator
+  Universe
 } from '../../src.ts/index'
-import { WebSocketProvider } from '@ethersproject/providers'
 dotenv.config()
 
 if (process.env.MAINNET_PROVIDER == null) {
   console.log('MAINNET_PROVIDER not set, skipping tests')
   process.exit(0)
 }
+
+/** !!
+ * To run the integration test suite you'll need to run the simulator locally.
+ * 
+ * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
+ */
 if (process.env.SIM_URL == null) {
   console.log('SIM_URL not set, skipping simulation tests')
   process.exit(0)

@@ -247,7 +247,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
       [currentQuote.input.token],
       [currentQuote.outputWithSlippage.token],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Callee,
+      DestinationOptions.Recipient,
       [new Approval(currentQuote.input.token, currentQuote.to)]
     )
     this.createdBlock = universe.currentBlock

@@ -71,85 +71,48 @@ console.log(zapTx.describe().join('\n'))
 
 ```
 Transaction {
-  zap: 100000.0 USDC (99994.9 USD) -> 99975.562425696744803293 eUSD (99982.60831839 USD) (+ $3.32644885 USD D.) @ fee: 190.26955838 USD,
-  dust: [0.275168033561621409 sDAI (0.30517785 USD), 0.342538 saEthUSDC (0.372217 USD), 109.77683024 cUSDT (2.649054 USD)],
-  fees: 0.078302891451912498 ETH (190.26955838 USD) (2992017 wei)
+  zap: 100000.0 USDC (99995.0 USD) -> 99963.528513787400022714 eUSD (99970.38454138 USD) (+ $16.55167255 USD D.) @ fee: 128.34777376 USD,
+  dust: [0.049995 USDC (0.049992 USD), 8.535761783034029767 sDAI (9.47060155 USD), 3.352562 saEthUSDC (3.643343 USD), 3.086402 wcUSDCv3 (3.387736 USD)],
+  fees: 0.050437687161628416 ETH (128.34777376 USD) (2997536 wei)
   program: [
-   cmd 0: // paraswap,router=0xDEF171Fe48CF0115B1d80b88dc8eAB59176FEe57,swap=25004.574996 USDC -> 24999.063581 USDT,pools=0x3416cF6C708Da44DB2624D63ea0AAef7113527C6
-   [this].rawCall(
-      to: address = [0xDEF1...Ee57],
-      value: uint256 = 0,
-      data: bytes = [len=1346]0xa6886da9000000000000000000000000...00000000000000000000000000000000
-   );
+   // UniV3.exactInputSingle(USDC -> 0x6c6Bc977E13Df9b0de53b251522280BB72383700 -> DAI)
+   cmd 0: j: uint256 = uniV3Router:delegate.exactInputSingle(
+      amountIn = 25008600000,
+      _expected = 25000348245652762919291,
+      router = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45,
+      encodedRouterCall = [len=514]0x000000000000000000000000a0b86991...00000000000000000000000000000000
+   )
 
-   cmd 1:
-   bal_USDT: uint256 = [tok=USDT].balanceOf(account: address = [this]);
+   // Curve,swap=24997.5 USDC -> 24993.40646 USDT,pools=0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7, 0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490, 0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B, 0x4e0915C88bC70750D68C481540F081fEFaF22273, 0x99a58482BD75cbab83b27EC03CA68fF489b5788f
+   cmd 1: amt_USDT: uint256 = curveRouterCall:delegate.exchange(
+      amountIn = 24997500000,
+      _expected = 24493538331,
+      router = 0x99a58482BD75cbab83b27EC03CA68fF489b5788f,
+      encodedRouterCall = [len=1666]0x000000000000000000000000a0b86991...00000000000000000000000000000000
+   )
 
-   cmd 2: // UniV3.exactInputSingle(USDC -> 0x6c6Bc977E13Df9b0de53b251522280BB72383700 -> DAI)
-   c: uint256 = [0x32F5...17A9]:delegate.exactInputSingle(
-      amountIn: uint256 = 25002200000,
-      _expected: uint256 = 24994195970138374460306,
-      router: address = [0x68b3...Fc45],
-      encodedRouterCall: bytes = [len=514]0x000000000000000000000000a0b86991...00000000000000000000000000000000
-   );
+   cmd 2: q: uint256 = sDAI.deposit(assets = j, receiver = this)
 
-   cmd 3:
-   bal_USDC: uint256 = [tok=USDC].balanceOf(account: address = [this]);
+   // IStaticATokenV3LM.deposit(24997.049987 USDC) # -> 23000.840107 saEthUSDC
+   cmd 3: r: uint256 = saEthUSDC.deposit(assets = 24997049987, receiver = this, referralCode = 0, depositToAave = true)
 
-   cmd 4:
-   bal_DAI: uint256 = [tok=DAI].balanceOf(account: address = [this]);
+   cmd 4: cUSDCv3.supplyTo(dst = this, asset = USDC, amount = 24996800018)
 
-   cmd 5:
-   bal_USDT: uint256 = [tok=USDT].balanceOf(account: address = [this]);
+   cmd 5: bal_cUSDCv3: uint256 = cUSDCv3.balanceOf(account = this)
 
-   cmd 6:
-   e: uint256 = [tok=sDAI].deposit(assets: uint256 = bal_DAI, receiver: address = [this]);
+   cmd 6: wcUSDCv3.deposit(amount = bal_cUSDCv3)
 
-   cmd 7:
-   bal_sDAI: uint256 = [tok=sDAI].balanceOf(account: address = [this]);
+   cmd 7: s: uint256 = cUSDT.mint(mintAmount = amt_USDT)
 
-   cmd 8: // 50.000349999774905% USDC
-   frac_saEthUSDC: uint256 = [this]:delegate.fpMul(a: uint256 = bal_USDC, b: uint256 = 500003499997749068, scale: uint256 = 1000000000000000000);
+   cmd 8: bal_saEthUSDC: uint256 = saEthUSDC.balanceOf(account = this)
 
-   cmd 9: // IStaticATokenV3LM.deposit(24996.762481 USDC) # -> 23002.466853 saEthUSDC
-   g: uint256 = [tok=saEthUSDC].deposit(
-      assets: uint256 = frac_saEthUSDC,
-      receiver: address = [this],
-      referralCode: uint16 = 0,
-      depositToAave: bool = true
-   );
+   cmd 9: bal_wcUSDCv3: uint256 = wcUSDCv3.balanceOf(account = this)
 
-   cmd 10:
-   bal_saEthUSDC: uint256 = [tok=saEthUSDC].balanceOf(account: address = [this]);
+   cmd 10: bal_cUSDT: uint256 = balanceOf.balanceOf(token = cUSDT, account = this)
 
-   cmd 11:
-   bal_USDC: uint256 = [tok=USDC].balanceOf(account: address = [this]);
+   cmd 11: this:delegate.mintMaxRToken(facade = oldFacade, token = eUSD, recipient = 0x684566C9FFcAC7F6A04C3a9997000d2d58C00824)
 
-   cmd 12:
-   [tok=cUSDCv3].supplyTo(dst: address = [this], asset: address = [tok=USDC], amount: uint256 = bal_USDC);
-
-   cmd 13:
-   bal_cUSDCv3: uint256 = [tok=cUSDCv3].balanceOf(account: address = [this]);
-
-   cmd 14:
-   [tok=wcUSDCv3].deposit(amount: uint256 = bal_cUSDCv3);
-
-   cmd 15:
-   bal_wcUSDCv3: uint256 = [tok=wcUSDCv3].balanceOf(account: address = [this]);
-
-   cmd 16:
-   i: uint256 = [tok=cUSDT].mint(mintAmount: uint256 = bal_USDT);
-
-   cmd 17:
-   bal_cUSDT: uint256 = [balanceOf].balanceOf(token: address = [tok=cUSDT], account: address = [this]);
-
-   cmd 18:
-   [this]:delegate.mintMaxRToken(facade: address = [0x81b9...eB3C], token: address = [tok=eUSD], recipient: address = [0x6845...0824]);
-
-   cmd 19:
-   [0x6d92...66Bb]:delegate.emitId(id: uint256 = 73443953353315612315869871934451295356890389189147558801315526084051218930036);
-
-   ... // More commands to collect any leftover dust.
+   cmd 12: emitId:delegate.emitId(id = 91849448683435942315573679291164280168546435124101316263424399347329429050949)
 
   ],
 }
@@ -201,9 +164,11 @@ Specific cases can be run by using a `testPathPattern` flag, e.g.
 ```
 npm run integration:eth -- -t "issue" # runs all issueance tests
 npm run integration:eth -- -t "redeem" # runs all redemption tests
+npm run integration:eth -- -t "yield position" # runs all zap into yield position tests
 
 npm run integration:eth -- -t "issue eUSD" # run issueance tests for eUSD
 npm run integration:eth -- -t "redeem eUSD" # run redemption tests for eUSD
+npm run integration:eth -- -t "yield position sdgnETH" # run zap into yield position tests for sdgnETH
 ```
 
 ## Contributing

@@ -190,7 +190,7 @@ export class CurveSwap extends Action('Curve') {
     const [quoteWithout] = await this.quote(predicted)
 
     const minOut = quoteWithout.amount - quoteWithout.amount / 50n
-    planner.add(
+    const out = planner.add(
       curveRouterCallLib.exchange(
         inputs[0] ?? predicted[0].amount,
         minOut,
@@ -202,8 +202,11 @@ export class CurveSwap extends Action('Curve') {
       ].join(', ')}`,
       `amt_${this.outputToken[0].symbol}`
     )
+    if (out == null) {
+      throw new Error(`Unexpected null return from curveRouterCallLib.exchange`)
+    }
 
-    return this.outputBalanceOf(this.universe, planner)
+    return [out]
   }
   private estimate?: bigint
   gasEstimate() {

@@ -47,7 +47,7 @@ export const arbiWhales = {
   [arbiTokens.dai]: '0x2d070ed1321871841245d8ee5b84bd2712644322',
   [arbiTokens.wbtc]: '0x47c031236e19d024b42f8ae6780e44a573170703',
   [arbiTokens.weth]: '0xc3e5607cd4ca0d5fe51e09b60ed97a0ae6f874dd',
-  [arbiTokens.knox]: '0x0acacb4f6db7708a5451b835acd39dfebac4eeb5',
+  [arbiTokens.knox]: '0x86ea1191a219989d2da3a85c949a12a92f8ed3db',
   [arbiTokens.usdm]: '0x426c4966fc76bf782a663203c023578b744e4c5e',
   [arbiTokens.arb]: '0xf3fc178157fb3c87548baa86f9d24ba38e649b588',
 }

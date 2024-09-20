@@ -1105,24 +1105,27 @@ const formatAddress = (address: string, universe: Universe): string => {
       : Address.from(address)
 
   if (universe.tokens.has(addr)) {
-    return `[tok=${universe.tokens.get(addr)!.symbol}]`
+    return universe.tokens.get(addr)!.symbol
   }
   if (universe.config.addresses.executorAddress === addr) {
-    return `[this]`
+    return 'this'
   }
-  if (universe.config.addresses.facadeAddress === addr) {
-    return `[facade]`
-  }
-  if (universe.config.addresses.balanceOf === addr) {
-    return `[balanceOf]`
-  }
-  if (universe.config.addresses.curveRouterCall === addr) {
-    return `[curve-router-caller]`
+  const addrObj = Address.from(
+    address.length === 66 ? '0x' + address.slice(26, 66) : address
+  )
+  const aliases = Object.entries(universe.config.addresses)
+  const alias = aliases.find((e) => e[1] === addrObj)
+
+  if (alias) {
+    if (alias[0].endsWith('Address')) {
+      return alias[0].slice(0, -7)
+    }
+    return alias[0]
   }
   if (addr === Address.ZERO) {
-    return `[${0x0}]`
+    return `address(0)`
   }
-  return `[${addr.toShortString()}]`
+  return addr.toString()
 }
 const formatValue = (value: Value, universe: Universe): string => {
   if (value instanceof ReturnValue) {
@@ -1193,10 +1196,10 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
       callFlags = ':static'
     }
     const comment = plan.comments[i]
+
+    let prefix = `cmd ${i}:`
     if (comment != null) {
-      out.push(`cmd ${i}: // ${comment}`)
-    } else {
-      out.push(`cmd ${i}:`)
+      out.push(`// ${comment}`)
     }
 
     const addr = formatAddress(step.call.contract.address, universe)
@@ -1206,10 +1209,8 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
     for (let i = 0; i < step.call.args.length; i++) {
       const value = step.call.args[i]
       const paramName = step.call.fragment.inputs[i].name
-      const paramType = step.call.fragment.inputs[i].type
-      formattedArgs.push(
-        paramName + ': ' + paramType + ' = ' + formatValue(value, universe)
-      )
+      // const paramType = step.call.fragment.inputs[i].type
+      formattedArgs.push(paramName + ' = ' + formatValue(value, universe))
     }
 
     let valueParms = ''
@@ -1228,8 +1229,8 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
 
     const finalStr =
       retVal == null
-        ? formatted + ';'
-        : `${retVal.name}: ${retVal.param.type} = ${formatted};`
+        ? `${prefix} ${formatted}`
+        : `${prefix} ${retVal.name}: ${retVal.param.type} = ${formatted}`
     out.push(...finalStr.split('\n'))
 
     out.push('')

@@ -297,6 +297,9 @@ export class Universe<const UniverseConf extends Config = Config> {
 
     const rtokenDeployment = await RTokenDeployment.load(this, facade, rToken)
     this.rTokenDeployments.set(rToken, rtokenDeployment)
+    this.rTokensInfo.addresses.add(rToken.address)
+    this.rTokensInfo.tokens.add(rToken)
+    return rToken
   }
 
   public getRTokenDeployment(token: Token) {

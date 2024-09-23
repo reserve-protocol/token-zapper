@@ -18,7 +18,7 @@ import {
   RTokenLens,
   RTokenLens__factory,
 } from '../contracts'
-import { Planner, Value } from '../tx-gen/Planner'
+import { Contract, Planner, Value } from '../tx-gen/Planner'
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction
@@ -29,6 +29,10 @@ export class RTokenDeployment {
   }
 
   private block: number
+
+  public async supply() {
+    return (await this.contracts.rToken.totalSupply()).toBigInt()
+  }
   public async unitBasket() {
     if (
       Math.abs(this.block - this.universe.currentBlock) >
@@ -165,23 +169,26 @@ abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
 
 export class MintRTokenAction extends ReserveRTokenBase {
   action = 'issue'
-  async plan(planner: Planner, _: Value[], destination: Address) {
-    // for (const token of this.inputToken) {
-    //   const bal = this.genUtils.erc20.balanceOf(
-    //     this.universe,
-    //     planner,
-    //     token,
-    //     this.universe.execAddress
-    //   )
-    //   planner.add(this.universe.weirollZapperExec.assertLarger(bal, 0))
-    // }
-    planner.add(
-      this.universe.weirollZapperExec.mintMaxRToken(
-        this.universe.config.addresses.oldFacadeAddress.address,
-        this.address.address,
-        destination.address
+  async plan(planner: Planner, _: Value[], destination: Address, predictedInput: TokenQuantity[]) {
+
+    const totalSupply = await this.rTokenDeployment.contracts.rToken.totalSupply();
+    if (totalSupply.isZero()) {
+      const quote = (await this.quote(predictedInput))[0]
+      planner.add(
+        Contract.createContract(this.rTokenDeployment.contracts.rToken).issueTo(
+          destination.address,
+          quote.amount
+        )
       )
-    )
+    } else {
+      planner.add(
+        this.universe.weirollZapperExec.mintMaxRToken(
+          this.universe.config.addresses.oldFacadeAddress.address,
+          this.address.address,
+          destination.address
+        )
+      )
+    }
     return null
   }
   get universe() {
@@ -262,6 +269,18 @@ export class BurnRTokenAction extends ReserveRTokenBase {
   }
 
   async quote_([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const supply = await this.rTokenDeployment.supply();
+
+    if (supply === 0n) {
+      const [erc20s, amts] = await this.rTokenDeployment.contracts.basketHandler.callStatic.quote(amountIn.amount, 0);
+      return amts.map((amt, i) => {
+        const output = this.outputToken.find((tok) => tok.address.address === erc20s[i])
+        if (output == null) {
+          throw new Error('Failed to find output token')
+        }
+        return output.from(amt)
+      })
+    }
     const basket = this.rTokenDeployment.basket
     const out = await this.rTokenDeployment.contracts.rTokenLens.callStatic
       .redeem(

@@ -1,0 +1,3689 @@
+{
+  "success": true,
+  "data": {
+    "poolData": [
+      {
+        "id": "0",
+        "address": "0x7f90122BF0700F9E7e1F688fe926940E8839F353",
+        "coinsAddresses": [
+          "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+          "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "6",
+          "6",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1017272917648111925",
+        "amplificationCoefficient": "2000",
+        "totalSupply": "11848121348963825918764329",
+        "name": "Curve.fi USDC/USDT",
+        "assetType": "0",
+        "priceOracle": null,
+        "implementation": "",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "4164541410264"
+          },
+          {
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usdPrice": 0.999451,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT",
+            "poolBalance": "7888549384987"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/2pool/swap",
+            "https://arbitrum.curve.fi/2pool"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/2pool/deposit",
+            "https://arbitrum.curve.fi/2pool/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/2pool/withdraw",
+            "https://arbitrum.curve.fi/2pool/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x7f90122BF0700F9E7e1F688fe926940E8839F353",
+        "usdTotal": 12048759.981638642,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 12048759.981638642,
+        "gaugeAddress": "0xce5f24b7a95e9cba7df4b54e911b4a3dc8cdaf6f",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0xce5f24b7a95e9cba7df4b54e911b4a3dc8cdaf6f",
+            "tokenPrice": 1.021,
+            "name": "Arbitrum",
+            "symbol": "ARB",
+            "decimals": "18",
+            "apy": 5.13923364152752,
+            "metaData": {
+              "rate": "12429996982941338",
+              "periodFinish": 1715524610
+            },
+            "tokenAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548"
+          }
+        ],
+        "gaugeCrvApy": [
+          0.0004756449925129126,
+          0.0011891124812822816
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "main"
+      },
+      {
+        "id": "1",
+        "address": "0x3E01dD8a5E1fb3481F0F589056b428Fc308AF0Fb",
+        "coinsAddresses": [
+          "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+          "0xDBf31dF14B66535aF65AaC99C32e9eA844e14501",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "8",
+          "8",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1001725468508916985",
+        "amplificationCoefficient": "200",
+        "totalSupply": "7062984912407207603",
+        "name": "Curve.fi WBTC/renBTC",
+        "assetType": "0",
+        "priceOracle": null,
+        "implementation": "",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+            "usdPrice": 61344,
+            "decimals": "8",
+            "isBasePoolLpToken": false,
+            "symbol": "WBTC",
+            "poolBalance": "299001434"
+          },
+          {
+            "address": "0xDBf31dF14B66535aF65AaC99C32e9eA844e14501",
+            "usdPrice": 61293,
+            "decimals": "8",
+            "isBasePoolLpToken": false,
+            "symbol": "renBTC",
+            "poolBalance": "408558980"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/ren/swap",
+            "https://arbitrum.curve.fi/ren"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/ren/deposit",
+            "https://arbitrum.curve.fi/ren/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/ren/withdraw",
+            "https://arbitrum.curve.fi/ren/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x3E01dD8a5E1fb3481F0F589056b428Fc308AF0Fb",
+        "usdTotal": 433837.49528436,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 433837.49528436,
+        "gaugeAddress": "0xdb3fd1bfc67b5d4325cb31c04e0cae52f1787fd6",
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "main"
+      },
+      {
+        "id": "2",
+        "address": "0x960ea3e3C7FB317332d990873d354E18d7645590",
+        "coinsAddresses": [
+          "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+          "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+          "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "6",
+          "8",
+          "18",
+          "0"
+        ],
+        "virtualPrice": "1048469949907197496",
+        "amplificationCoefficient": "1707629",
+        "totalSupply": "954863354173789970809",
+        "name": "Curve.fi USD-BTC-ETH",
+        "assetType": "0",
+        "lpTokenAddress": "0x8e0B8c8BB9db49a46697F3a5Bb8A308e744821D2",
+        "priceOracle": 61349.66111258182,
+        "priceOracles": [
+          61349.66111258182,
+          2983.120642226774
+        ],
+        "symbol": "crv3crypto",
+        "implementation": "",
+        "zapAddress": "0xf97c707024ef0dd3e77a0824555a46b622bfb500",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usdPrice": 0.999451,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT",
+            "poolBalance": "566196008484"
+          },
+          {
+            "address": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+            "usdPrice": 61344,
+            "decimals": "8",
+            "isBasePoolLpToken": false,
+            "symbol": "WBTC",
+            "poolBalance": "930858063"
+          },
+          {
+            "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "usdPrice": 2982.15,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "WETH",
+            "poolBalance": "190377898060666138163"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/tricrypto/swap",
+            "https://arbitrum.curve.fi/tricrypto"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/tricrypto/deposit",
+            "https://arbitrum.curve.fi/tricrypto/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/tricrypto/withdraw",
+            "https://arbitrum.curve.fi/tricrypto/withdraw"
+          ]
+        },
+        "usdTotal": 1704646.185743678,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 1704646.185743678,
+        "gaugeAddress": "0x555766f3da968ecbefa690ffd49a2ac02f47aa5f",
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "main"
+      },
+      {
+        "id": "3",
+        "address": "0x30dF229cefa463e991e29D42DB0bae2e122B2AC7",
+        "coinsAddresses": [
+          "0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A",
+          "0x7f90122BF0700F9E7e1F688fe926940E8839F353",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1020936328429622658",
+        "amplificationCoefficient": "2000",
+        "underlyingDecimals": [
+          "18",
+          "6",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "totalSupply": "8236987955499283224199823",
+        "name": "Curve.fi Factory USD Metapool: MIM",
+        "assetType": "0",
+        "priceOracle": null,
+        "implementation": "",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A",
+            "usdPrice": 0.982278,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "MIM",
+            "poolBalance": "7808291316218044942083362"
+          },
+          {
+            "address": "0x7f90122BF0700F9E7e1F688fe926940E8839F353",
+            "usdPrice": 1.0107390959989988,
+            "decimals": "18",
+            "isBasePoolLpToken": true,
+            "symbol": "2CRV",
+            "poolBalance": "596585389368896035375278"
+          }
+        ],
+        "poolUrls": {
+          "swap": [],
+          "deposit": [],
+          "withdraw": []
+        },
+        "lpTokenAddress": "0x30dF229cefa463e991e29D42DB0bae2e122B2AC7",
+        "usdTotal": 8272904.954648957,
+        "isMetaPool": true,
+        "basePoolAddress": "0x7f90122BF0700F9E7e1F688fe926940E8839F353",
+        "underlyingCoins": [
+          {
+            "address": "0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A",
+            "usdPrice": 0.982278,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "MIM",
+            "poolBalance": "7808291316218044942083362"
+          },
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "209696076332"
+          },
+          {
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usdPrice": 0.999451,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT",
+            "poolBalance": "397210086543"
+          }
+        ],
+        "usdTotalExcludingBasePool": 7669912.777512028,
+        "gaugeAddress": "0xc34b86090ceecbb1db1e3687cdf3f1b14dce709b",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "main"
+      },
+      {
+        "id": "4",
+        "address": "0xC9B8a3FDECB9D5b218d02555a8Baf332E5B740d5",
+        "coinsAddresses": [
+          "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+          "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "6",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1015778139861925109",
+        "amplificationCoefficient": "200",
+        "totalSupply": "3975006648793519715667522",
+        "name": "Curve.fi Factory Plain Pool: FRAXBP",
+        "assetType": "0",
+        "priceOracle": null,
+        "implementation": "",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+            "usdPrice": 0.998071,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FRAX",
+            "poolBalance": "2433580927632111313718844"
+          },
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "1604585758015"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-41/swap",
+            "https://arbitrum.curve.fi/factory-v2-41"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-41/deposit",
+            "https://arbitrum.curve.fi/factory-v2-41/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-41/withdraw",
+            "https://arbitrum.curve.fi/factory-v2-41/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xC9B8a3FDECB9D5b218d02555a8Baf332E5B740d5",
+        "usdTotal": 4033472.3080377094,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 4033472.3080377094,
+        "gaugeAddress": "0x95285ea6ff14f80a2fd3989a6bab993bd6b5fa13",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          177.17389169358557,
+          442.93472923396394
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "main"
+      },
+      {
+        "id": "5",
+        "address": "0x6eB2dc694eB516B16Dc9FBc678C60052BbdD7d80",
+        "coinsAddresses": [
+          "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+          "0x5979D7b546E38E414F7E9822514be443A4800529",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1040040511133807689",
+        "amplificationCoefficient": "50",
+        "totalSupply": "104502393902100843464",
+        "name": "Curve.fi ETH/wstETH",
+        "assetType": "0",
+        "lpTokenAddress": "0xDbcD16e622c95AcB2650b38eC799f76BFC557a0b",
+        "priceOracle": null,
+        "symbol": "wstETHCRV",
+        "implementation": "",
+        "assetTypeName": "eth",
+        "coins": [
+          {
+            "address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "usdPrice": 2983.46,
+            "poolBalance": "52420007647624099931",
+            "decimals": 18,
+            "symbol": "ETH",
+            "isBasePoolLpToken": false
+          },
+          {
+            "address": "0x5979D7b546E38E414F7E9822514be443A4800529",
+            "usdPrice": 3471.0788947630335,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "wstETH",
+            "poolBalance": "48256401697556326118"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/wsteth/swap",
+            "https://arbitrum.curve.fi/wsteth"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/wsteth/deposit",
+            "https://arbitrum.curve.fi/wsteth/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/wsteth/withdraw",
+            "https://arbitrum.curve.fi/wsteth/withdraw"
+          ]
+        },
+        "usdTotal": 323894.7734859754,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 323894.7734859754,
+        "gaugeAddress": "0x098ef55011b6b8c99845128114a9d9159777d697",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x098ef55011b6b8c99845128114a9d9159777d697",
+            "tokenPrice": 1.87,
+            "name": "Lido DAO Token",
+            "symbol": "LDO",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "1240079365079365",
+              "periodFinish": 1687774470
+            },
+            "tokenAddress": "0x13Ad51ed4F1B7e9Dc168d8a00cB3f4dDD85EfA60"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "main"
+      },
+      {
+        "id": "factory-v2-0",
+        "address": "0x30dF229cefa463e991e29D42DB0bae2e122B2AC7",
+        "coinsAddresses": [
+          "0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A",
+          "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1020936328429622658",
+        "amplificationCoefficient": "2000",
+        "underlyingDecimals": [
+          "18",
+          "6",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "totalSupply": "8236987955499283224199823",
+        "name": "Curve.fi Factory USD Metapool: MIM",
+        "assetType": "0",
+        "implementationAddress": "0x09672362833d8f703D5395ef3252D4Bfa51c15ca",
+        "symbol": "MIM3CRV-f",
+        "priceOracle": null,
+        "implementation": "metausd",
+        "zapAddress": "0x7544fe3d184b6b55d6b36c3fca1157ee0ba30287",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A",
+            "usdPrice": 0.982278,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "MIM",
+            "poolBalance": "7808291316218044942083362"
+          },
+          {
+            "address": "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+            "usdPrice": 1.0107390959989988,
+            "decimals": "18",
+            "isBasePoolLpToken": true,
+            "symbol": "2CRV",
+            "poolBalance": "596585389368896035375278"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-0/swap",
+            "https://arbitrum.curve.fi/factory/0"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-0/deposit",
+            "https://arbitrum.curve.fi/factory/0/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-0/withdraw",
+            "https://arbitrum.curve.fi/factory/0/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x30dF229cefa463e991e29D42DB0bae2e122B2AC7",
+        "usdTotal": 8272904.954648957,
+        "isMetaPool": true,
+        "basePoolAddress": "0x7f90122BF0700F9E7e1F688fe926940E8839F353",
+        "underlyingCoins": [
+          {
+            "address": "0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A",
+            "usdPrice": 0.982278,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "MIM",
+            "poolBalance": "7808291316218044942083362"
+          },
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "209696076332"
+          },
+          {
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usdPrice": 0.999451,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT",
+            "poolBalance": "397210086543"
+          }
+        ],
+        "usdTotalExcludingBasePool": 7669912.777512028,
+        "gaugeAddress": "0xc34b86090ceecbb1db1e3687cdf3f1b14dce709b",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-13",
+        "address": "0x2ce5Fd6f6F4a159987eac99FF5158B7B62189Acf",
+        "coinsAddresses": [
+          "0x641441c631e2F909700d2f41FD87F0aA6A6b4EDb",
+          "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1012135025786482038",
+        "amplificationCoefficient": "100",
+        "underlyingDecimals": [
+          "18",
+          "6",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "totalSupply": "76936533739222156556340",
+        "name": "Curve.fi Factory USD Metapool: dForce",
+        "assetType": "0",
+        "implementationAddress": "0x09672362833d8f703D5395ef3252D4Bfa51c15ca",
+        "symbol": "USX2CRV3CRV-f",
+        "priceOracle": null,
+        "implementation": "metausd",
+        "zapAddress": "0x7544fe3d184b6b55d6b36c3fca1157ee0ba30287",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0x641441c631e2F909700d2f41FD87F0aA6A6b4EDb",
+            "usdPrice": 0.9345401934953226,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "USX",
+            "poolBalance": "61630585524090987107526"
+          },
+          {
+            "address": "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+            "usdPrice": 1.0107390959989988,
+            "decimals": "18",
+            "isBasePoolLpToken": true,
+            "symbol": "2CRV",
+            "poolBalance": "16153984684982464622471"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-13/swap",
+            "https://arbitrum.curve.fi/factory/13"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-13/deposit",
+            "https://arbitrum.curve.fi/factory/13/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-13/withdraw",
+            "https://arbitrum.curve.fi/factory/13/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x2ce5Fd6f6F4a159987eac99FF5158B7B62189Acf",
+        "usdTotal": 73923.72319819487,
+        "isMetaPool": true,
+        "basePoolAddress": "0x7f90122BF0700F9E7e1F688fe926940E8839F353",
+        "underlyingCoins": [
+          {
+            "address": "0x641441c631e2F909700d2f41FD87F0aA6A6b4EDb",
+            "usdPrice": 0.9345401934953226,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "USX",
+            "poolBalance": "61630585524090987107526"
+          },
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "5678025754"
+          },
+          {
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usdPrice": 0.999451,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT",
+            "poolBalance": "10755418703"
+          }
+        ],
+        "usdTotalExcludingBasePool": 57596.25932091402,
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-19",
+        "address": "0x59bF0545FCa0E5Ad48E13DA269faCD2E8C886Ba4",
+        "coinsAddresses": [
+          "0x64343594Ab9b56e99087BfA6F2335Db24c2d1F17",
+          "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1006017699407731297",
+        "amplificationCoefficient": "100",
+        "totalSupply": "1153939964014462509262355",
+        "name": "Curve.fi Factory Plain Pool: VST+FRAX",
+        "assetType": "0",
+        "implementationAddress": "0x0100fBf414071977B19fC38e6fc7c32FE444F5C9",
+        "symbol": "VSTFRAX-f",
+        "priceOracle": null,
+        "implementation": "plain2optimized",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0x64343594Ab9b56e99087BfA6F2335Db24c2d1F17",
+            "usdPrice": 0.9999321874185446,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "VST",
+            "poolBalance": "515747478845074324833555"
+          },
+          {
+            "address": "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+            "usdPrice": 0.998071,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FRAX",
+            "poolBalance": "645208903756504886205397"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-19/swap",
+            "https://arbitrum.curve.fi/factory/19"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-19/deposit",
+            "https://arbitrum.curve.fi/factory/19/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-19/withdraw",
+            "https://arbitrum.curve.fi/factory/19/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x59bF0545FCa0E5Ad48E13DA269faCD2E8C886Ba4",
+        "usdTotal": 1159676.8004583134,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 1159676.8004583134,
+        "gaugeAddress": "0xf2ddf89c04d702369ab9ef8399edb99a76e951ce",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-37",
+        "address": "0xfC78eAFf2E8290D3d608B689e93ec6954E21B6C2",
+        "coinsAddresses": [
+          "0x93FC1235119c554576D8AB23583371fc25B803ee",
+          "0xaE6aab43C4f3E0cea4Ab83752C278f8dEbabA689",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1000468228654692030",
+        "amplificationCoefficient": "100",
+        "totalSupply": "3940330772706936893311900",
+        "name": "Curve.fi Factory Plain Pool: Loopfi pDF",
+        "assetType": "3",
+        "implementationAddress": "0x0100fBf414071977B19fC38e6fc7c32FE444F5C9",
+        "symbol": "pDFDF-f",
+        "priceOracle": null,
+        "implementation": "plain2optimized",
+        "assetTypeName": "other",
+        "coins": [
+          {
+            "address": "0x93FC1235119c554576D8AB23583371fc25B803ee",
+            "usdPrice": 0.032649305047943264,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "pDF",
+            "poolBalance": "3763154682992151821738059"
+          },
+          {
+            "address": "0xaE6aab43C4f3E0cea4Ab83752C278f8dEbabA689",
+            "usdPrice": 0.04295918,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "DF",
+            "poolBalance": "243041148519343983458373"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-37/swap",
+            "https://arbitrum.curve.fi/factory/37"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-37/deposit",
+            "https://arbitrum.curve.fi/factory/37/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-37/withdraw",
+            "https://arbitrum.curve.fi/factory/37/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xfC78eAFf2E8290D3d608B689e93ec6954E21B6C2",
+        "usdTotal": 133305.2336342562,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 133305.2336342562,
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-41",
+        "address": "0xC9B8a3FDECB9D5b218d02555a8Baf332E5B740d5",
+        "coinsAddresses": [
+          "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+          "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "6",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1015778139861925109",
+        "amplificationCoefficient": "200",
+        "totalSupply": "3975006648793519715667522",
+        "name": "Curve.fi Factory Plain Pool: FRAXBP",
+        "assetType": "0",
+        "implementationAddress": "0x54e8A25d0Ac0E4945b697C80b8372445FEA17A62",
+        "symbol": "FRAXBP-f",
+        "priceOracle": null,
+        "implementation": "plain2basic",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+            "usdPrice": 0.998071,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FRAX",
+            "poolBalance": "2433580927632111313718844"
+          },
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "1604585758015"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-41/swap",
+            "https://arbitrum.curve.fi/factory/41"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-41/deposit",
+            "https://arbitrum.curve.fi/factory/41/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-41/withdraw",
+            "https://arbitrum.curve.fi/factory/41/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xC9B8a3FDECB9D5b218d02555a8Baf332E5B740d5",
+        "usdTotal": 4033472.3080377094,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 4033472.3080377094,
+        "gaugeAddress": "0x95285ea6ff14f80a2fd3989a6bab993bd6b5fa13",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          177.5835155022,
+          443.9587887555
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-74",
+        "address": "0xd92Be5A1c565Db5256cDD537B875ED46111Bd8b0",
+        "coinsAddresses": [
+          "0xb1781BF9C582A71269c6098E4155Ea8b15B35305",
+          "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1007220852026514170",
+        "amplificationCoefficient": "200",
+        "underlyingDecimals": [
+          "18",
+          "6",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "totalSupply": "100214105885238981614885",
+        "name": "Curve.fi Factory USD Metapool: volt-2usd",
+        "assetType": "0",
+        "implementationAddress": "0x09672362833d8f703D5395ef3252D4Bfa51c15ca",
+        "symbol": "VOLT2USD3CRV-f",
+        "priceOracle": null,
+        "implementation": "metausd",
+        "zapAddress": "0x7544fe3d184b6b55d6b36c3fca1157ee0ba30287",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0xb1781BF9C582A71269c6098E4155Ea8b15B35305",
+            "usdPrice": 0.9661668554247999,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "VOLT",
+            "poolBalance": "80474766201352750668499"
+          },
+          {
+            "address": "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+            "usdPrice": 1.0107390959989988,
+            "decimals": "18",
+            "isBasePoolLpToken": true,
+            "symbol": "2CRV",
+            "poolBalance": "20248620474780193847193"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-74/swap",
+            "https://arbitrum.curve.fi/factory/74"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-74/deposit",
+            "https://arbitrum.curve.fi/factory/74/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-74/withdraw",
+            "https://arbitrum.curve.fi/factory/74/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xd92Be5A1c565Db5256cDD537B875ED46111Bd8b0",
+        "usdTotal": 98218.1241557131,
+        "isMetaPool": true,
+        "basePoolAddress": "0x7f90122BF0700F9E7e1F688fe926940E8839F353",
+        "underlyingCoins": [
+          {
+            "address": "0xb1781BF9C582A71269c6098E4155Ea8b15B35305",
+            "usdPrice": 0.9661668554247999,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "VOLT",
+            "poolBalance": "80474766201352750668499"
+          },
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "7117264922"
+          },
+          {
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usdPrice": 0.999451,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT",
+            "poolBalance": "13481651469"
+          }
+        ],
+        "usdTotalExcludingBasePool": 77752.05180180694,
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-83",
+        "address": "0x741aEa6c7707b39Bd950da945f84D6b8bA455D48",
+        "coinsAddresses": [
+          "0xEB466342C4d449BC9f53A865D5Cb90586f405215",
+          "0xC9B8a3FDECB9D5b218d02555a8Baf332E5B740d5",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "6",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1005492074292699886",
+        "amplificationCoefficient": "200",
+        "underlyingDecimals": [
+          "6",
+          "18",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "totalSupply": "20026642669394308570257",
+        "name": "Curve.fi Factory USD Metapool: axlUSDCFRAXBP",
+        "assetType": "0",
+        "implementationAddress": "0x8DEb66a4A40E370355bEe35f12E55Fe9c755d686",
+        "symbol": "axlFRAX3CRV-f",
+        "priceOracle": null,
+        "implementation": "metausd-factory-v2-41",
+        "zapAddress": "0x58ac91f5be7dc0c35b24b96b19bac55fbb8e705e",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0xEB466342C4d449BC9f53A865D5Cb90586f405215",
+            "usdPrice": 0.9884594391127945,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "axlUSDC",
+            "poolBalance": "8425711739"
+          },
+          {
+            "address": "0xC9B8a3FDECB9D5b218d02555a8Baf332E5B740d5",
+            "usdPrice": 1.0147083173463207,
+            "decimals": "18",
+            "isBasePoolLpToken": true,
+            "symbol": "FRAXBP-f",
+            "poolBalance": "11530361588882661967194"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-83/swap",
+            "https://arbitrum.curve.fi/factory/83"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-83/deposit",
+            "https://arbitrum.curve.fi/factory/83/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-83/withdraw",
+            "https://arbitrum.curve.fi/factory/83/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x741aEa6c7707b39Bd950da945f84D6b8bA455D48",
+        "usdTotal": 20028.428105907806,
+        "isMetaPool": true,
+        "basePoolAddress": "0xC9B8a3FDECB9D5b218d02555a8Baf332E5B740d5",
+        "underlyingCoins": [
+          {
+            "address": "0xEB466342C4d449BC9f53A865D5Cb90586f405215",
+            "usdPrice": 0.9884594391127945,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "axlUSDC",
+            "poolBalance": "8425711739"
+          },
+          {
+            "address": "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+            "usdPrice": 0.998071,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FRAX",
+            "poolBalance": "7059124809243635061121"
+          },
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "4654446049"
+          }
+        ],
+        "usdTotalExcludingBasePool": 8328.47429965803,
+        "gaugeAddress": "0x4c1227ecc3f99a3e510db26fba72f7a1cbf50586",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          null,
+          null
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-98",
+        "address": "0x755D6688AD74661Add2FB29212ef9153D40fcA46",
+        "coinsAddresses": [
+          "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+          "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "8",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1002511942381695176",
+        "amplificationCoefficient": "100",
+        "totalSupply": "19330401410390092546",
+        "name": "Curve.fi Factory Plain Pool: 2BTC",
+        "assetType": "2",
+        "implementationAddress": "0x73Ec37618683C274D0bBf5f5726aA856B2BDAB81",
+        "symbol": "2BTC-f",
+        "priceOracle": 0.9997094624677392,
+        "implementation": "plain2basicema",
+        "assetTypeName": "btc",
+        "coins": [
+          {
+            "address": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+            "usdPrice": 61344,
+            "decimals": "8",
+            "isBasePoolLpToken": false,
+            "symbol": "WBTC",
+            "poolBalance": "954407679"
+          },
+          {
+            "address": "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+            "usdPrice": 61326.177265620994,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "tBTC",
+            "poolBalance": "9834903086275324484"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-98/swap",
+            "https://arbitrum.curve.fi/factory/98"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-98/deposit",
+            "https://arbitrum.curve.fi/factory/98/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-98/withdraw",
+            "https://arbitrum.curve.fi/factory/98/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x755D6688AD74661Add2FB29212ef9153D40fcA46",
+        "usdTotal": 1188608.8566648834,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 1188608.8566648834,
+        "gaugeAddress": "0xd6dacdcb438f048cf90e53415872cdb3fcc95421",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          44.493131897798975,
+          111.23282974449744
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-117",
+        "address": "0xb34a7d1444a707349Bc7b981B7F2E1f20F81F013",
+        "coinsAddresses": [
+          "0xe80772Eaf6e2E18B651F160Bc9158b2A5caFCA65",
+          "0xC9B8a3FDECB9D5b218d02555a8Baf332E5B740d5",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "6",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1016003795198181981",
+        "amplificationCoefficient": "100",
+        "underlyingDecimals": [
+          "6",
+          "18",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "totalSupply": "1886081159010742751118418",
+        "name": "Curve.fi Factory USD Metapool: Overnight",
+        "assetType": "0",
+        "implementationAddress": "0x3edE9b145F82e9e46C03f8A8F67B77aEE847b632",
+        "symbol": "USD+FRAX3CRV-f",
+        "priceOracle": null,
+        "implementation": "metausdbalances-factory-v2-41",
+        "zapAddress": "0x58ac91f5be7dc0c35b24b96b19bac55fbb8e705e",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0xe80772Eaf6e2E18B651F160Bc9158b2A5caFCA65",
+            "usdPrice": 1.000702242104792,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USD+",
+            "poolBalance": "851185864960"
+          },
+          {
+            "address": "0xC9B8a3FDECB9D5b218d02555a8Baf332E5B740d5",
+            "usdPrice": 1.0147083173463207,
+            "decimals": "18",
+            "isBasePoolLpToken": true,
+            "symbol": "FRAXBP-f",
+            "poolBalance": "1048653734682578038585772"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-117/swap",
+            "https://arbitrum.curve.fi/factory/117"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-117/deposit",
+            "https://arbitrum.curve.fi/factory/117/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-117/withdraw",
+            "https://arbitrum.curve.fi/factory/117/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xb34a7d1444a707349Bc7b981B7F2E1f20F81F013",
+        "usdTotal": 1915861.2701120726,
+        "isMetaPool": true,
+        "basePoolAddress": "0xC9B8a3FDECB9D5b218d02555a8Baf332E5B740d5",
+        "underlyingCoins": [
+          {
+            "address": "0xe80772Eaf6e2E18B651F160Bc9158b2A5caFCA65",
+            "usdPrice": 1.000702242104792,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USD+",
+            "poolBalance": "851185864960"
+          },
+          {
+            "address": "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+            "usdPrice": 0.998071,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FRAX",
+            "poolBalance": "642007411280249148894089"
+          },
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "423308687615"
+          }
+        ],
+        "usdTotalExcludingBasePool": 851783.6035133788,
+        "gaugeAddress": "0x4645e6476d3a5595be9efd39426cc10586a8393d",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x4645e6476d3a5595be9efd39426cc10586a8393d",
+            "tokenPrice": 57.89,
+            "name": "OVN",
+            "symbol": "OVN",
+            "decimals": "18",
+            "apy": 23.634267983282406,
+            "metaData": {
+              "rate": "248015873015873",
+              "periodFinish": 1715264096
+            },
+            "tokenAddress": "0xA3d1a8DEB97B111454B294E2324EfAD13a9d8396"
+          },
+          {
+            "gaugeAddress": "0x4645e6476d3a5595be9efd39426cc10586a8393d",
+            "tokenPrice": 4.2,
+            "name": "Frax Share",
+            "symbol": "FXS",
+            "decimals": "18",
+            "apy": 2.8578316787524054,
+            "metaData": {
+              "rate": "413359788359788",
+              "periodFinish": 1715378276
+            },
+            "tokenAddress": "0x9d2F299715D94d8A7E6F5eaa8E654E8c74a988A7"
+          }
+        ],
+        "gaugeCrvApy": [
+          0.07591056766203745,
+          0.18977641915509363
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-123",
+        "address": "0x1E2ebe2FffA7C9Fa83486188F7C19F9acD1BB990",
+        "coinsAddresses": [
+          "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+          "0xdce765f021410B3266aA0053c93Cb4535F1e12e0",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "6",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1001029534628062405",
+        "amplificationCoefficient": "100",
+        "totalSupply": "2738105604637584846983892",
+        "name": "Curve.fi Factory Plain Pool: peUSD/USDC",
+        "assetType": "0",
+        "implementationAddress": "0x73Ec37618683C274D0bBf5f5726aA856B2BDAB81",
+        "symbol": "peUSDUSDC-f",
+        "priceOracle": 0.9080023941796088,
+        "implementation": "plain2basicema",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "298915657454"
+          },
+          {
+            "address": "0xdce765f021410B3266aA0053c93Cb4535F1e12e0",
+            "usdPrice": 0.9080023941796088,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "peUSD",
+            "poolBalance": "2463261931116649546984240"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-123/swap",
+            "https://arbitrum.curve.fi/factory/123"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-123/deposit",
+            "https://arbitrum.curve.fi/factory/123/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-123/withdraw",
+            "https://arbitrum.curve.fi/factory/123/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x1E2ebe2FffA7C9Fa83486188F7C19F9acD1BB990",
+        "usdTotal": 2535563.388399404,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 2535563.388399404,
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-138",
+        "address": "0xD2239B95890018a8f52fFD17d7F94C3A82f05389",
+        "coinsAddresses": [
+          "0x1DD6b5F9281c6B4f043c02A83a46c2772024636c",
+          "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1003488185696028477",
+        "amplificationCoefficient": "1000",
+        "underlyingDecimals": [
+          "18",
+          "6",
+          "6",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "totalSupply": "6681678347784606889899996",
+        "name": "Curve.fi Factory USD Metapool: Lumi Finance USD",
+        "assetType": "0",
+        "implementationAddress": "0xBE175115BF33E12348ff77CcfEE4726866A0Fbd5",
+        "symbol": "LUAUSD3CRV-f",
+        "priceOracle": null,
+        "implementation": "metausdbalances",
+        "zapAddress": "0x7544fe3d184b6b55d6b36c3fca1157ee0ba30287",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0x1DD6b5F9281c6B4f043c02A83a46c2772024636c",
+            "usdPrice": 0.9930488138415048,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "LUAUSD",
+            "poolBalance": "3566736998327138447901352"
+          },
+          {
+            "address": "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+            "usdPrice": 1.0107390959989988,
+            "decimals": "18",
+            "isBasePoolLpToken": true,
+            "symbol": "2CRV",
+            "poolBalance": "3084975489628837940041824"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-138/swap",
+            "https://arbitrum.curve.fi/factory/138"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-138/deposit",
+            "https://arbitrum.curve.fi/factory/138/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-138/withdraw",
+            "https://arbitrum.curve.fi/factory/138/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xD2239B95890018a8f52fFD17d7F94C3A82f05389",
+        "usdTotal": 6660049.283039896,
+        "isMetaPool": true,
+        "basePoolAddress": "0x7f90122BF0700F9E7e1F688fe926940E8839F353",
+        "underlyingCoins": [
+          {
+            "address": "0x1DD6b5F9281c6B4f043c02A83a46c2772024636c",
+            "usdPrice": 0.9930488138415048,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "LUAUSD",
+            "poolBalance": "3566736998327138447901352"
+          },
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "1084349813596"
+          },
+          {
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usdPrice": 0.999451,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT",
+            "poolBalance": "2053994957060"
+          }
+        ],
+        "usdTotalExcludingBasePool": 3541943.9454733743,
+        "gaugeAddress": "0x721cac0f4715a29acd76752408636e8a49222c11",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x721cac0f4715a29acd76752408636e8a49222c11",
+            "tokenPrice": null,
+            "name": "Lumi Finance Token Option",
+            "symbol": "LUAOP",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "4691413865752356",
+              "periodFinish": 1713320291
+            },
+            "tokenAddress": "0x15B6eC24f59Fea164C6e235941Aa00fB0d4A32f6"
+          },
+          {
+            "gaugeAddress": "0x721cac0f4715a29acd76752408636e8a49222c11",
+            "tokenPrice": null,
+            "name": "Lumi Finance Group",
+            "symbol": "LUAG",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "0",
+              "periodFinish": 0
+            },
+            "tokenAddress": "0xCb55d61E6299597C39FEeC3D4036E727aFBe11bE"
+          },
+          {
+            "gaugeAddress": "0x721cac0f4715a29acd76752408636e8a49222c11",
+            "tokenPrice": null,
+            "name": "Lumiterra Governance Point",
+            "symbol": "LUAG PTS",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "0",
+              "periodFinish": 0
+            },
+            "tokenAddress": "0xD6E2F5acdf5B524D4d893EeCB26a82F3BeB47749"
+          },
+          {
+            "gaugeAddress": "0x721cac0f4715a29acd76752408636e8a49222c11",
+            "tokenPrice": null,
+            "name": "Lumiterra Governance Point",
+            "symbol": "LUAG PTS",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "1033399470899470899",
+              "periodFinish": 1715827197
+            },
+            "tokenAddress": "0x0BdEaECEB007cDFe51abCFf87fDf9302160c8716"
+          },
+          {
+            "gaugeAddress": "0x721cac0f4715a29acd76752408636e8a49222c11",
+            "tokenPrice": null,
+            "name": "LUA Balancing Token",
+            "symbol": "LUAB",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "4950061295216642",
+              "periodFinish": 1715827197
+            },
+            "tokenAddress": "0xd4519f4A905c4B6794a146A3852e4f74ceb66f17"
+          }
+        ],
+        "gaugeCrvApy": [
+          0.020709152584566612,
+          0.05177288146141653
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-140",
+        "address": "0x1DeB3b1cA6afca0FF9C5cE9301950dC98Ac0D523",
+        "coinsAddresses": [
+          "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+          "0x178412e79c25968a32e89b11f63B33F733770c2A",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1003698235579461376",
+        "amplificationCoefficient": "1200",
+        "totalSupply": "1282819419078685856983",
+        "name": "Curve.fi Factory Plain Pool: frxETH/WETH",
+        "assetType": "1",
+        "implementationAddress": "0x73Ec37618683C274D0bBf5f5726aA856B2BDAB81",
+        "symbol": "frxETHWETH-f",
+        "priceOracle": 0.9962667795881149,
+        "implementation": "plain2basicema",
+        "assetTypeName": "eth",
+        "coins": [
+          {
+            "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "usdPrice": 2982.15,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "WETH",
+            "poolBalance": "208831429871460041312"
+          },
+          {
+            "address": "0x178412e79c25968a32e89b11f63B33F733770c2A",
+            "usdPrice": 2971.016976748697,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "frxETH",
+            "poolBalance": "1079182279718682919288"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-140/swap",
+            "https://arbitrum.curve.fi/factory/140"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-140/deposit",
+            "https://arbitrum.curve.fi/factory/140/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-140/withdraw",
+            "https://arbitrum.curve.fi/factory/140/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x1DeB3b1cA6afca0FF9C5cE9301950dC98Ac0D523",
+        "usdTotal": 3829035.522641742,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 3829035.522641742,
+        "gaugeAddress": "0x46fec59eb30c2d610917ebf4ce5114f7425b2c4a",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          15.416156544042577,
+          38.54039136010644
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "factory-v2-145",
+        "address": "0x4E0E24D515614CDf460aE4e8Ac7CA48025D9B425",
+        "coinsAddresses": [
+          "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+          "0x3EbBBD6F3320CFa4BEdae7500120bAe900f8126B",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1000001532654455548",
+        "amplificationCoefficient": "10",
+        "totalSupply": "11092168325819019967",
+        "name": "Curve.fi Factory Plain Pool: dpxETH/ETH",
+        "assetType": "0",
+        "implementationAddress": "0x73Ec37618683C274D0bBf5f5726aA856B2BDAB81",
+        "symbol": "dpxETH-ETH-f",
+        "priceOracle": 1.0000026430885087,
+        "implementation": "plain2basicema",
+        "assetTypeName": "usd",
+        "coins": [
+          {
+            "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "usdPrice": 2982.15,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "WETH",
+            "poolBalance": "5546173286562632204"
+          },
+          {
+            "address": "0x3EbBBD6F3320CFa4BEdae7500120bAe900f8126B",
+            "usdPrice": 2982.1578820863965,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "dpxETH",
+            "poolBalance": "5546012039824141238"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-145/swap",
+            "https://arbitrum.curve.fi/factory/145"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-145/deposit",
+            "https://arbitrum.curve.fi/factory/145/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-v2-145/withdraw",
+            "https://arbitrum.curve.fi/factory/145/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x4E0E24D515614CDf460aE4e8Ac7CA48025D9B425",
+        "usdTotal": 33078.604185230375,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 33078.604185230375,
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory",
+        "factory": true
+      },
+      {
+        "id": "crypto-0",
+        "address": "0x960ea3e3C7FB317332d990873d354E18d7645590",
+        "coinsAddresses": [
+          "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+          "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+          "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000"
+        ],
+        "decimals": [
+          "6",
+          "8",
+          "18",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "virtualPrice": "1048469949907197496",
+        "amplificationCoefficient": "1707629",
+        "lpTokenAddress": "0x8e0B8c8BB9db49a46697F3a5Bb8A308e744821D2",
+        "priceOracle": 61349.66111258182,
+        "priceOracles": [
+          61349.66111258182,
+          2983.120642226774
+        ],
+        "name": "Curve.fi USD-BTC-ETH",
+        "symbol": "crv3crypto",
+        "totalSupply": "954863354173789970809",
+        "implementation": "",
+        "zapAddress": "0xf97c707024ef0dd3e77a0824555a46b622bfb500",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usdPrice": 0.999942,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT",
+            "poolBalance": "566196008484"
+          },
+          {
+            "address": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+            "usdPrice": 61364,
+            "decimals": "8",
+            "isBasePoolLpToken": false,
+            "symbol": "WBTC",
+            "poolBalance": "930858063"
+          },
+          {
+            "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "usdPrice": 2984.73,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "WETH",
+            "poolBalance": "190377898060666138163"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/tricrypto/swap",
+            "https://arbitrum.curve.fi/tricrypto"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/tricrypto/deposit",
+            "https://arbitrum.curve.fi/tricrypto/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/tricrypto/withdraw",
+            "https://arbitrum.curve.fi/tricrypto/withdraw"
+          ]
+        },
+        "usdTotal": 1705601.53457344,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 1705601.53457344,
+        "gaugeAddress": "0x555766f3da968ecbefa690ffd49a2ac02f47aa5f",
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "crypto"
+      },
+      {
+        "id": "factory-twocrypto-3",
+        "address": "0x5f0985A8aAd85e82fD592a23Cc0501e4345fb18c",
+        "coinsAddresses": [
+          "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+          "0x179F38f78346F5942E95C5C59CB1da7F55Cf7CAd"
+        ],
+        "decimals": [
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1017048138398653795",
+        "amplificationCoefficient": "400000",
+        "name": "FXN/ETH",
+        "symbol": "FXNETH",
+        "totalSupply": "52258956195790923713",
+        "implementationAddress": "0x04Fd6beC7D45EFA99a27D29FB94b55c56dD07223",
+        "priceOracle": 0.04497112501473712,
+        "implementation": "twocrypto-optimized",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "usdPrice": 2984.73,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "WETH",
+            "poolBalance": "11182349390267988171"
+          },
+          {
+            "address": "0x179F38f78346F5942E95C5C59CB1da7F55Cf7CAd",
+            "usdPrice": 134.22666596523632,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FXN",
+            "poolBalance": "252603096852167156302"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-twocrypto-3/swap",
+            "https://arbitrum.curve.fi/factory-twocrypto-3"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-twocrypto-3/deposit",
+            "https://arbitrum.curve.fi/factory-twocrypto-3/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-twocrypto-3/withdraw",
+            "https://arbitrum.curve.fi/factory-twocrypto-3/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x5f0985A8aAd85e82fD592a23Cc0501e4345fb18c",
+        "usdTotal": 67282.36519857465,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 67282.36519857465,
+        "gaugeAddress": "0x2a1a064348b1ad9ca8b983016606ea84eca8c620",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x2a1a064348b1ad9ca8b983016606ea84eca8c620",
+            "tokenPrice": 134.22666596523632,
+            "name": "FXN Token",
+            "symbol": "FXN",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "33068783068783",
+              "periodFinish": 1714035815
+            },
+            "tokenAddress": "0x179F38f78346F5942E95C5C59CB1da7F55Cf7CAd"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-twocrypto",
+        "factory": true
+      },
+      {
+        "id": "factory-tricrypto-2",
+        "address": "0xF7Fed8Ae0c5B78c19Aadd68b700696933B0Cefd9",
+        "coinsAddresses": [
+          "0xc608Dfb90A430Df79a8a1eDBC8be7f1A0Eb4E763",
+          "0x55380fe7A1910dFf29A47B622057ab4139DA42C5",
+          "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1001219592917808963",
+        "amplificationCoefficient": "1707629",
+        "name": "fETH/ETH/xETH",
+        "symbol": "fxETH",
+        "totalSupply": "5452771862758373547622",
+        "implementationAddress": "0xd7E72f3615aa65b92A4DBdC211E296a35512988B",
+        "priceOracle": 2.2182813604667326,
+        "priceOracles": [
+          2.2182813604667326,
+          2939.4902911558997
+        ],
+        "implementation": "tricrypto-1",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0xc608Dfb90A430Df79a8a1eDBC8be7f1A0Eb4E763",
+            "usdPrice": 1.0146072556395918,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "fETH",
+            "poolBalance": "102411798112406062187983"
+          },
+          {
+            "address": "0x55380fe7A1910dFf29A47B622057ab4139DA42C5",
+            "usdPrice": 2.2506765525760746,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "xETH",
+            "poolBalance": "45914237527304233550909"
+          },
+          {
+            "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "usdPrice": 2984.73,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "WETH",
+            "poolBalance": "34603178801238770341"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-2/swap",
+            "https://arbitrum.curve.fi/factory-tricrypto-2"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-2/deposit",
+            "https://arbitrum.curve.fi/factory-tricrypto-2/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-2/withdraw",
+            "https://arbitrum.curve.fi/factory-tricrypto-2/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xF7Fed8Ae0c5B78c19Aadd68b700696933B0Cefd9",
+        "usdTotal": 310526.99712347775,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 310526.99712347775,
+        "gaugeAddress": "0x5839337bf070fea56595a5027e83cd7126b23884",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x5839337bf070fea56595a5027e83cd7126b23884",
+            "tokenPrice": null,
+            "name": "FXN Token",
+            "symbol": "FXN",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "0",
+              "periodFinish": 0
+            },
+            "tokenAddress": "0x365AccFCa291e7D3914637ABf1F7635dB165Bb09"
+          },
+          {
+            "gaugeAddress": "0x5839337bf070fea56595a5027e83cd7126b23884",
+            "tokenPrice": null,
+            "name": "FXN Token",
+            "symbol": "FXN",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "0",
+              "periodFinish": 0
+            },
+            "tokenAddress": "0x179F38f78346F5942E95C5C59CB1da7F55Cf7CAd"
+          }
+        ],
+        "gaugeCrvApy": [
+          0.0016844240146606576,
+          0.004211060036651644
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": true
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-tricrypto",
+        "factory": true
+      },
+      {
+        "id": "factory-tricrypto-9",
+        "address": "0x82670f35306253222F8a165869B28c64739ac62e",
+        "coinsAddresses": [
+          "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+          "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+          "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+        ],
+        "decimals": [
+          "18",
+          "8",
+          "18"
+        ],
+        "virtualPrice": "1006684883153343996",
+        "amplificationCoefficient": "540000",
+        "name": "Tricrypto-crvUSD",
+        "symbol": "3c-crvUSD",
+        "totalSupply": "3678996614494589527975",
+        "implementationAddress": "0xd7E72f3615aa65b92A4DBdC211E296a35512988B",
+        "priceOracle": 61618.97952204509,
+        "priceOracles": [
+          61618.97952204509,
+          2999.607123811786
+        ],
+        "implementation": "tricrypto-1",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+            "usdPrice": 0.9996864124700652,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "2095378060469599766465255"
+          },
+          {
+            "address": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+            "usdPrice": 61364,
+            "decimals": "8",
+            "isBasePoolLpToken": false,
+            "symbol": "WBTC",
+            "poolBalance": "3447014004"
+          },
+          {
+            "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "usdPrice": 2984.73,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "WETH",
+            "poolBalance": "703254212867532764509"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-9/swap",
+            "https://arbitrum.curve.fi/factory-tricrypto-9"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-9/deposit",
+            "https://arbitrum.curve.fi/factory-tricrypto-9/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-9/withdraw",
+            "https://arbitrum.curve.fi/factory-tricrypto-9/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x82670f35306253222F8a165869B28c64739ac62e",
+        "usdTotal": 6308970.596226009,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 6308970.596226009,
+        "gaugeAddress": "0x23194e30e54d713c6954ebcd2d5bdcd0171ee2c4",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x23194e30e54d713c6954ebcd2d5bdcd0171ee2c4",
+            "tokenPrice": 0.9996864124700652,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "16534391534391534",
+              "periodFinish": 1706051054
+            },
+            "tokenAddress": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5"
+          },
+          {
+            "gaugeAddress": "0x23194e30e54d713c6954ebcd2d5bdcd0171ee2c4",
+            "tokenPrice": 1.021,
+            "name": "Arbitrum",
+            "symbol": "ARB",
+            "decimals": "18",
+            "apy": 6.454151831884753,
+            "metaData": {
+              "rate": "12429996982941338",
+              "periodFinish": 1715524610
+            },
+            "tokenAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": true
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-tricrypto",
+        "factory": true
+      },
+      {
+        "id": "factory-tricrypto-10",
+        "address": "0x7142ccf2C2092fE82b05Ef5659252c92413369B5",
+        "coinsAddresses": [
+          "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+          "0xF12132857fb45b1F1342420EaAF818509F850468",
+          "0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1305229098090371383",
+        "amplificationCoefficient": "2700000",
+        "name": "CURVEBOBR Pool",
+        "symbol": "BobrPool",
+        "totalSupply": "896770617350596603292",
+        "implementationAddress": "0xd7E72f3615aa65b92A4DBdC211E296a35512988B",
+        "priceOracle": 213.28757436508272,
+        "priceOracles": [
+          213.28757436508272,
+          0.43625258949325
+        ],
+        "implementation": "tricrypto-1",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+            "usdPrice": 0.9996864124700652,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "5310420590919928269483"
+          },
+          {
+            "address": "0xF12132857fb45b1F1342420EaAF818509F850468",
+            "usdPrice": 213.22069004147178,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "BobrCRV",
+            "poolBalance": "24851403645404312514"
+          },
+          {
+            "address": "0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978",
+            "usdPrice": 0.43611578612128316,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "CRV",
+            "poolBalance": "12151188812856051365138"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-10/swap",
+            "https://arbitrum.curve.fi/factory-tricrypto-10"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-10/deposit",
+            "https://arbitrum.curve.fi/factory-tricrypto-10/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-10/withdraw",
+            "https://arbitrum.curve.fi/factory-tricrypto-10/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x7142ccf2C2092fE82b05Ef5659252c92413369B5",
+        "usdTotal": 15906.914004443019,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 15906.914004443019,
+        "gaugeAddress": "0xd889439f2918f52d07aa5ace784cc46382483361",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0xd889439f2918f52d07aa5ace784cc46382483361",
+            "tokenPrice": 213.22069004147178,
+            "name": "CURVEBOBR",
+            "symbol": "BobrCRV",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "2491129687500",
+              "periodFinish": 1711919878
+            },
+            "tokenAddress": "0xF12132857fb45b1F1342420EaAF818509F850468"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": true
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-tricrypto",
+        "factory": true
+      },
+      {
+        "id": "factory-tricrypto-14",
+        "address": "0x845C8bc94610807fCbaB5dd2bc7aC9DAbaFf3c55",
+        "coinsAddresses": [
+          "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+          "0x912CE59144191C1204E64559FE8253a0e49E6548",
+          "0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1013668553650877441",
+        "amplificationCoefficient": "2700000",
+        "name": "TriCRV-ARBITRUM",
+        "symbol": "crvUSDARBCRV",
+        "totalSupply": "763659429739130925035569",
+        "implementationAddress": "0xd7E72f3615aa65b92A4DBdC211E296a35512988B",
+        "priceOracle": 1.0240654999479535,
+        "priceOracles": [
+          1.0240654999479535,
+          0.43688322559048437
+        ],
+        "implementation": "tricrypto-1",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+            "usdPrice": 0.9996864124700652,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "592891138608093018954999"
+          },
+          {
+            "address": "0x912CE59144191C1204E64559FE8253a0e49E6548",
+            "usdPrice": 1.0237443657773333,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "ARB",
+            "poolBalance": "577207637936935967150004"
+          },
+          {
+            "address": "0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978",
+            "usdPrice": 0.4367462244589015,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "CRV",
+            "poolBalance": "1355436082418231346464660"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-14/swap",
+            "https://arbitrum.curve.fi/factory-tricrypto-14"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-14/deposit",
+            "https://arbitrum.curve.fi/factory-tricrypto-14/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-14/withdraw",
+            "https://arbitrum.curve.fi/factory-tricrypto-14/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x845C8bc94610807fCbaB5dd2bc7aC9DAbaFf3c55",
+        "usdTotal": 1775599.8740535248,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 1775599.8740535248,
+        "gaugeAddress": "0xb08fef57bfcc5f7bf0ef69c0c090849d497c8f8a",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0xb08fef57bfcc5f7bf0ef69c0c090849d497c8f8a",
+            "tokenPrice": 0.9996864124700652,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "8267195767195767",
+              "periodFinish": 1710194345
+            },
+            "tokenAddress": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5"
+          },
+          {
+            "gaugeAddress": "0xb08fef57bfcc5f7bf0ef69c0c090849d497c8f8a",
+            "tokenPrice": 1.0237443657773333,
+            "name": "Arbitrum",
+            "symbol": "ARB",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "30897934044150567",
+              "periodFinish": 1715192962
+            },
+            "tokenAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": true
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-tricrypto",
+        "factory": true
+      },
+      {
+        "id": "factory-tricrypto-17",
+        "address": "0x96AAf8F6a2e3F45aaF548B753A0E004211e0Ad63",
+        "coinsAddresses": [
+          "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+          "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+          "0xDc8B6B6bEab4d5034aE91B7A1cf7D05A41f0d239"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1017274229642312746",
+        "amplificationCoefficient": "2700000",
+        "name": "GMAC/crvUSD/ETH",
+        "symbol": "TriGemach",
+        "totalSupply": "2276712730174546473565",
+        "implementationAddress": "0xd7E72f3615aa65b92A4DBdC211E296a35512988B",
+        "priceOracle": 2993.41790699648,
+        "priceOracles": [
+          2993.41790699648,
+          0.002116717038327162
+        ],
+        "implementation": "tricrypto-1",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+            "usdPrice": 0.9996864124700652,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "4282723975083248765366"
+          },
+          {
+            "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "usdPrice": 2984.73,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "WETH",
+            "poolBalance": "1432925202694694366"
+          },
+          {
+            "address": "0xDc8B6B6bEab4d5034aE91B7A1cf7D05A41f0d239",
+            "usdPrice": 0.002116053262259542,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "GMAC",
+            "poolBalance": "2024391642980130817371418"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-17/swap",
+            "https://arbitrum.curve.fi/factory-tricrypto-17"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-17/deposit",
+            "https://arbitrum.curve.fi/factory-tricrypto-17/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-17/withdraw",
+            "https://arbitrum.curve.fi/factory-tricrypto-17/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x96AAf8F6a2e3F45aaF548B753A0E004211e0Ad63",
+        "usdTotal": 12841.996346708504,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 12841.996346708504,
+        "gaugeAddress": "0xda9a503e67a075af2c3ea840256b02891535471a",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          239.42076284561645,
+          598.5519071140411
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": true
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-tricrypto",
+        "factory": true
+      },
+      {
+        "id": "factory-tricrypto-20",
+        "address": "0xB85246768Cfea42b0c935265Db798C9Ae457646f",
+        "coinsAddresses": [
+          "0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978",
+          "0x75289388d50364c3013583d97bd70cED0e183e32",
+          "0x62d5a59E0d67c0381aAd53B201B4A1B8Dcd2C833"
+        ],
+        "decimals": [
+          "18",
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1000683802444698221",
+        "amplificationCoefficient": "270000000",
+        "name": "CRV/asdCRV/vsdCRV",
+        "symbol": "VASDCRV",
+        "totalSupply": "506823176329673105429332",
+        "implementationAddress": "0x1f7C86AffE5bCF7a1D74a8c8E2ef9E03BF31c1BD",
+        "priceOracle": 1.3291233742094233,
+        "priceOracles": [
+          1.3291233742094233,
+          1.010283543101239
+        ],
+        "implementation": "",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978",
+            "usdPrice": 0.439664,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "CRV",
+            "poolBalance": "892753965673858205735288"
+          },
+          {
+            "address": "0x75289388d50364c3013583d97bd70cED0e183e32",
+            "usdPrice": 0.5843676991984119,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "asdCRV",
+            "poolBalance": "291603931460627507600297"
+          },
+          {
+            "address": "0x62d5a59E0d67c0381aAd53B201B4A1B8Dcd2C833",
+            "usdPrice": 0.4441853036940631,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "vsdCRV",
+            "poolBalance": "378663593554011513422460"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-20/swap",
+            "https://arbitrum.curve.fi/factory-tricrypto-20"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-20/deposit",
+            "https://arbitrum.curve.fi/factory-tricrypto-20/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-tricrypto-20/withdraw",
+            "https://arbitrum.curve.fi/factory-tricrypto-20/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xB85246768Cfea42b0c935265Db798C9Ae457646f",
+        "usdTotal": 731112.5013695634,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 731112.5013695634,
+        "gaugeAddress": "0x25e822b65a58ce1a53dbc327d4fa489351fb1df0",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x25e822b65a58ce1a53dbc327d4fa489351fb1df0",
+            "tokenPrice": 1.0237443657773333,
+            "name": "Arbitrum",
+            "symbol": "ARB",
+            "decimals": "18",
+            "apy": 66.78707637585288,
+            "metaData": {
+              "rate": "15117390352488731",
+              "periodFinish": 1715351016
+            },
+            "tokenAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548"
+          }
+        ],
+        "gaugeCrvApy": [
+          7.0443061858196225,
+          17.610765464549058
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-tricrypto",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-0",
+        "address": "0x73aF1150F265419Ef8a5DB41908B700C32D49135",
+        "coinsAddresses": [
+          "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+          "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+        ],
+        "decimals": [
+          "18",
+          "6"
+        ],
+        "virtualPrice": "1001989529131460968",
+        "amplificationCoefficient": "1000",
+        "totalSupply": "3974293521070254118474165",
+        "name": "crvUSD/USDT",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "crvUSDT",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+            "usdPrice": 0.999685880547979,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "3165316313008453711710089"
+          },
+          {
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usdPrice": 0.999942,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT",
+            "poolBalance": "817941956657"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-0/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-0"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-0/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-0/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-0/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-0/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x73aF1150F265419Ef8a5DB41908B700C32D49135",
+        "usdTotal": 3982216.541606252,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 3982216.541606252,
+        "gaugeAddress": "0x030786336bc7833d4325404a25fe451e4fde9807",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x030786336bc7833d4325404a25fe451e4fde9807",
+            "tokenPrice": 0.999685880547979,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "8267195767195767",
+              "periodFinish": 1706051148
+            },
+            "tokenAddress": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5"
+          },
+          {
+            "gaugeAddress": "0x030786336bc7833d4325404a25fe451e4fde9807",
+            "tokenPrice": 1.021,
+            "name": "Arbitrum",
+            "symbol": "ARB",
+            "decimals": "18",
+            "apy": 10.431407651355116,
+            "metaData": {
+              "rate": "12429996982941338",
+              "periodFinish": 1715524610
+            },
+            "tokenAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-1",
+        "address": "0x3aDf984c937FA6846E5a24E0A68521Bdaf767cE1",
+        "coinsAddresses": [
+          "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+          "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"
+        ],
+        "decimals": [
+          "18",
+          "6"
+        ],
+        "virtualPrice": "1001777660123710971",
+        "amplificationCoefficient": "1000",
+        "totalSupply": "4474331884118097720990083",
+        "name": "crvUSD/USDC.e",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "crvUSDC.e",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+            "usdPrice": 0.999685880547979,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "3610414960945227714474158"
+          },
+          {
+            "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC.e",
+            "poolBalance": "873200192753"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-1/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-1"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-1/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-1/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-1/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-1/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x3aDf984c937FA6846E5a24E0A68521Bdaf767cE1",
+        "usdTotal": 4482481.052129128,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 4482481.052129128,
+        "gaugeAddress": "0x7ae49935b8bc11023e5b04d86a44055f999fca31",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x7ae49935b8bc11023e5b04d86a44055f999fca31",
+            "tokenPrice": 0.999685880547979,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "8267195767195767",
+              "periodFinish": 1706051137
+            },
+            "tokenAddress": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5"
+          },
+          {
+            "gaugeAddress": "0x7ae49935b8bc11023e5b04d86a44055f999fca31",
+            "tokenPrice": 1.021,
+            "name": "Arbitrum",
+            "symbol": "ARB",
+            "decimals": "18",
+            "apy": 8.928666032224992,
+            "metaData": {
+              "rate": "12429996982941338",
+              "periodFinish": 1715524610
+            },
+            "tokenAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-2",
+        "address": "0xec090cf6DD891D2d014beA6edAda6e05E025D93d",
+        "coinsAddresses": [
+          "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+          "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+        ],
+        "decimals": [
+          "18",
+          "6"
+        ],
+        "virtualPrice": "1002252551863249831",
+        "amplificationCoefficient": "1000",
+        "totalSupply": "5497515956827320017229944",
+        "name": "crvUSD/USDC",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "crvUSDC",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+            "usdPrice": 0.999685880547979,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "4466925778802908392044683"
+          },
+          {
+            "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC",
+            "poolBalance": "1044699317648"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-2/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-2"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-2/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-2/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-2/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-2/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xec090cf6DD891D2d014beA6edAda6e05E025D93d",
+        "usdTotal": 5510221.948173052,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 5510221.948173052,
+        "gaugeAddress": "0xb12600d06753df7c706225c901e6c1346a654d0b",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0xb12600d06753df7c706225c901e6c1346a654d0b",
+            "tokenPrice": 0.999685880547979,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "8267195767195767",
+              "periodFinish": 1706051158
+            },
+            "tokenAddress": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5"
+          },
+          {
+            "gaugeAddress": "0xb12600d06753df7c706225c901e6c1346a654d0b",
+            "tokenPrice": 1.021,
+            "name": "Arbitrum",
+            "symbol": "ARB",
+            "decimals": "18",
+            "apy": 7.5201942606038745,
+            "metaData": {
+              "rate": "12429996982941338",
+              "periodFinish": 1715524610
+            },
+            "tokenAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-3",
+        "address": "0xE920eEdAff6c3BEd1Ef61010B64d46986634E908",
+        "coinsAddresses": [
+          "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+          "0xC4C98e6feccfc0f5DD8CBEa9DCFedcFa8425eD97"
+        ],
+        "decimals": [
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1012477167798167154",
+        "amplificationCoefficient": "150",
+        "totalSupply": "212392665175602647864857",
+        "name": "FRAXFXB20241231",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "FXB241231",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+            "usdPrice": 0.998987,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FRAX",
+            "poolBalance": "30017929148861966848395"
+          },
+          {
+            "address": "0xC4C98e6feccfc0f5DD8CBEa9DCFedcFa8425eD97",
+            "usdPrice": 0.9303570244226259,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FXB_20241231",
+            "poolBalance": "191590855855304073805255"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-3/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-3"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-3/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-3/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-3/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-3/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xE920eEdAff6c3BEd1Ef61010B64d46986634E908",
+        "usdTotal": 208235.4195467591,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 208235.4195467591,
+        "gaugeAddress": "0x05824d6d4de8a0ede4e12b98387a4f035a67ee68",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-4",
+        "address": "0x946adc524BD312D036776798c46ceDD948DD0A0f",
+        "coinsAddresses": [
+          "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+          "0xe3f7c2e873d8F73bCa7961E2D2e18Bbde2Bda7Ec"
+        ],
+        "decimals": [
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1008990184989758671",
+        "amplificationCoefficient": "30",
+        "totalSupply": "688898328452296277819142",
+        "name": "FRAXFXB20261231",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "FXB261231",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+            "usdPrice": 0.998987,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FRAX",
+            "poolBalance": "114984431191024875395681"
+          },
+          {
+            "address": "0xe3f7c2e873d8F73bCa7961E2D2e18Bbde2Bda7Ec",
+            "usdPrice": 0.7890186332757332,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FXB_20261231",
+            "poolBalance": "654473301425323243828499"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-4/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-4"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-4/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-4/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-4/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-4/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x946adc524BD312D036776798c46ceDD948DD0A0f",
+        "usdTotal": 631259.5817682939,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 631259.5817682939,
+        "gaugeAddress": "0xa2617a26f9f528fa7b0e47fc2e66fcc04c6682e9",
+        "gaugeRewards": [],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-7",
+        "address": "0x2FE7AE43591E534C256A1594D326e5779E302Ff4",
+        "coinsAddresses": [
+          "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+          "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F"
+        ],
+        "decimals": [
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1000794697015895083",
+        "amplificationCoefficient": "1000",
+        "totalSupply": "5143798901129130774803795",
+        "name": "crvUSD/Frax",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "crvUSDFRAX",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+            "usdPrice": 0.999685880547979,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "3492504363352648696109137"
+          },
+          {
+            "address": "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F",
+            "usdPrice": 0.998987,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "FRAX",
+            "poolBalance": "1655757278270894415282629"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-7/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-7"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-7/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-7/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-7/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-7/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x2FE7AE43591E534C256A1594D326e5779E302Ff4",
+        "usdTotal": 5145487.295943858,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 5145487.295943858,
+        "gaugeAddress": "0x059e0db6bf882f5fe680dc5409c7adeb99753736",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x059e0db6bf882f5fe680dc5409c7adeb99753736",
+            "tokenPrice": 1.021,
+            "name": "Arbitrum",
+            "symbol": "ARB",
+            "decimals": "18",
+            "apy": 7.778172201380891,
+            "metaData": {
+              "rate": "12429996982941338",
+              "periodFinish": 1715524610
+            },
+            "tokenAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548"
+          },
+          {
+            "gaugeAddress": "0x059e0db6bf882f5fe680dc5409c7adeb99753736",
+            "tokenPrice": 0.999685880547979,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "8267195767195767",
+              "periodFinish": 1705529568
+            },
+            "tokenAddress": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5"
+          }
+        ],
+        "gaugeCrvApy": [
+          0.2675949961509235,
+          0.6689874903773088
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-11",
+        "address": "0x4070C044ABc8d9d22447DFE4B032405970878d06",
+        "coinsAddresses": [
+          "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+          "0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A"
+        ],
+        "decimals": [
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1001401644041893799",
+        "amplificationCoefficient": "2000",
+        "totalSupply": "4024628558628830135718223",
+        "name": "MIM/crvUSD",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "MIMcrvUSD",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+            "usdPrice": 0.999685880547979,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "341549432812564324286698"
+          },
+          {
+            "address": "0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A",
+            "usdPrice": 0.982347,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "MIM",
+            "poolBalance": "3690958214982867738113066"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-11/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-11"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-11/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-11/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-11/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-11/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x4070C044ABc8d9d22447DFE4B032405970878d06",
+        "usdTotal": 3967243.875105666,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 3967243.875105666,
+        "gaugeAddress": "0xd2ce52833a2a70cf6255c6374bc44525a0fb93d8",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0xd2ce52833a2a70cf6255c6374bc44525a0fb93d8",
+            "tokenPrice": 0.999685880547979,
+            "name": "Curve.Fi USD Stablecoin",
+            "symbol": "crvUSD",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "8267195767195767",
+              "periodFinish": 1705796338
+            },
+            "tokenAddress": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5"
+          },
+          {
+            "gaugeAddress": "0xd2ce52833a2a70cf6255c6374bc44525a0fb93d8",
+            "tokenPrice": 1.021,
+            "name": "Arbitrum",
+            "symbol": "ARB",
+            "decimals": "18",
+            "apy": 0,
+            "metaData": {
+              "rate": "6111543470198656",
+              "periodFinish": 1715082965
+            },
+            "tokenAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-15",
+        "address": "0x1446999B0b0E4f7aDA6Ee73f2Ae12a2cfdc5D9E7",
+        "coinsAddresses": [
+          "0xe80772Eaf6e2E18B651F160Bc9158b2A5caFCA65",
+          "0xb1084db8D3C05CEbd5FA9335dF95EE4b8a0edc30"
+        ],
+        "decimals": [
+          "6",
+          "6"
+        ],
+        "virtualPrice": "1023705817432521604",
+        "amplificationCoefficient": "100",
+        "totalSupply": "7557497876941018752797721",
+        "name": "Overnight max stable yield",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "USD++",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0xe80772Eaf6e2E18B651F160Bc9158b2A5caFCA65",
+            "usdPrice": 1.001255295496374,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USD+",
+            "poolBalance": "3855513306565"
+          },
+          {
+            "address": "0xb1084db8D3C05CEbd5FA9335dF95EE4b8a0edc30",
+            "usdPrice": 1.0007887105286728,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT+",
+            "poolBalance": "3881141655576"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-15/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-15"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-15/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-15/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-15/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-15/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x1446999B0b0E4f7aDA6Ee73f2Ae12a2cfdc5D9E7",
+        "usdTotal": 7744555.867917964,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 7744555.867917964,
+        "gaugeAddress": "0xd68089d9daa2da7888b7ef54158480e09ecc3580",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0xd68089d9daa2da7888b7ef54158480e09ecc3580",
+            "tokenPrice": 57.89,
+            "name": "OVN",
+            "symbol": "OVN",
+            "decimals": "18",
+            "apy": 29.325579008992992,
+            "metaData": {
+              "rate": "1240079365079365",
+              "periodFinish": 1715264136
+            },
+            "tokenAddress": "0xA3d1a8DEB97B111454B294E2324EfAD13a9d8396"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-30",
+        "address": "0x4bD135524897333bec344e50ddD85126554E58B4",
+        "coinsAddresses": [
+          "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+          "0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C"
+        ],
+        "decimals": [
+          "6",
+          "18"
+        ],
+        "virtualPrice": "1004405470197366308",
+        "amplificationCoefficient": "1500",
+        "totalSupply": "3013627684247267385870398",
+        "name": "USDC/USDM",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "usdc-usdm",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC",
+            "poolBalance": "1731359835630"
+          },
+          {
+            "address": "0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C",
+            "usdPrice": 1.000097,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "USDM",
+            "poolBalance": "1295565637707638330897147"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-30/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-30"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-30/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-30/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-30/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-30/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x4bD135524897333bec344e50ddD85126554E58B4",
+        "usdTotal": 3027051.1432044962,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 3027051.1432044962,
+        "gaugeAddress": "0xbdbb71914ddb650f96449b54d2ca15132be56aca",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0xbdbb71914ddb650f96449b54d2ca15132be56aca",
+            "tokenPrice": 1.000097,
+            "name": "Mountain Protocol USD",
+            "symbol": "USDM",
+            "decimals": "18",
+            "apy": 7.494133895328348,
+            "metaData": {
+              "rate": "7192460317460317",
+              "periodFinish": 1715708762
+            },
+            "tokenAddress": "0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-39",
+        "address": "0xeC9C5703B5CBc2d23574EEDE451E941304AC61a5",
+        "coinsAddresses": [
+          "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+          "0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf"
+        ],
+        "decimals": [
+          "6",
+          "6"
+        ],
+        "virtualPrice": "1004576482225433390",
+        "amplificationCoefficient": "100",
+        "totalSupply": "10001793022974501951889",
+        "name": "USDC/cUSDCv3",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "USDC/cUSDC",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC",
+            "poolBalance": "7824708951"
+          },
+          {
+            "address": "0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf",
+            "usdPrice": 1.022227,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "cUSDCv3",
+            "poolBalance": "2244804111"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-39/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-39"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-39/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-39/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-39/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-39/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0xeC9C5703B5CBc2d23574EEDE451E941304AC61a5",
+        "usdTotal": 10119.408322975196,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 10119.408322975196,
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": false,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-41",
+        "address": "0x8958AE46De6b33293DDdc6cDfbe36900f4631851",
+        "coinsAddresses": [
+          "0x870908873b6f940E025A7C6879678cB82eC6C9B6",
+          "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5"
+        ],
+        "decimals": [
+          "18",
+          "18"
+        ],
+        "virtualPrice": "1000987410536055674",
+        "amplificationCoefficient": "1000",
+        "totalSupply": "351288696896068754918802",
+        "name": "zunUSD/crvUSD",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "ZUNCRVUSD",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x870908873b6f940E025A7C6879678cB82eC6C9B6",
+            "usdPrice": 0.9997624200823617,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "zunUSD",
+            "poolBalance": "137055733086178043868035"
+          },
+          {
+            "address": "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",
+            "usdPrice": 0.999685880547979,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "crvUSD",
+            "poolBalance": "214588804594891682041822"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-41/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-41"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-41/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-41/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-41/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-41/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x8958AE46De6b33293DDdc6cDfbe36900f4631851",
+        "usdTotal": 351544.5694735821,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 351544.5694735821,
+        "gaugeAddress": "0x5c5480a5c90eacb8f31028f0f0ea9a716d04028d",
+        "gaugeRewards": [
+          {
+            "gaugeAddress": "0x5c5480a5c90eacb8f31028f0f0ea9a716d04028d",
+            "tokenPrice": 0.9997624200823617,
+            "name": "Zunami USD",
+            "symbol": "zunUSD",
+            "decimals": "18",
+            "apy": 43.14502836108678,
+            "metaData": {
+              "rate": "4810694046861311",
+              "periodFinish": 1715681317
+            },
+            "tokenAddress": "0x870908873b6f940E025A7C6879678cB82eC6C9B6"
+          }
+        ],
+        "gaugeCrvApy": [
+          0,
+          0
+        ],
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-44",
+        "address": "0x7D22EA8877256437CC56075B856A714404Fe5343",
+        "coinsAddresses": [
+          "0x33C88D4caC6aC34F77020915a2a88cd0417dC069",
+          "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+        ],
+        "decimals": [
+          "6",
+          "6"
+        ],
+        "virtualPrice": "1000010514679855002",
+        "amplificationCoefficient": "100",
+        "totalSupply": "12876785227023209753886",
+        "name": "USSD/USDT",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "USSD/USDT",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0x33C88D4caC6aC34F77020915a2a88cd0417dC069",
+            "usdPrice": 0.999168044892,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USSD",
+            "poolBalance": "6559423605"
+          },
+          {
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usdPrice": 0.999942,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDT",
+            "poolBalance": "6317519522"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-44/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-44"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-44/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-44/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-44/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-44/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x7D22EA8877256437CC56075B856A714404Fe5343",
+        "usdTotal": 12871.119564894008,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 12871.119564894008,
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      },
+      {
+        "id": "factory-stable-ng-52",
+        "address": "0x1c34204FCFE5314Dcf53BE2671C02c35DB58B4e3",
+        "coinsAddresses": [
+          "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+          "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"
+        ],
+        "decimals": [
+          "6",
+          "18"
+        ],
+        "virtualPrice": "1000078611936202598",
+        "amplificationCoefficient": "200",
+        "totalSupply": "19622131158192684755936",
+        "name": "USDE/USDC",
+        "implementationAddress": "0xf6841C27fe35ED7069189aFD5b81513578AFD7FF",
+        "symbol": "USDEUSDC",
+        "implementation": "plainstableng",
+        "assetTypeName": "unknown",
+        "coins": [
+          {
+            "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+            "usdPrice": 1,
+            "decimals": "6",
+            "isBasePoolLpToken": false,
+            "symbol": "USDC",
+            "poolBalance": "10131903048"
+          },
+          {
+            "address": "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
+            "usdPrice": 0.999924,
+            "decimals": "18",
+            "isBasePoolLpToken": false,
+            "symbol": "USDe",
+            "poolBalance": "9491822633986818061550"
+          }
+        ],
+        "poolUrls": {
+          "swap": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-52/swap",
+            "https://arbitrum.curve.fi/factory-stable-ng-52"
+          ],
+          "deposit": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-52/deposit",
+            "https://arbitrum.curve.fi/factory-stable-ng-52/deposit"
+          ],
+          "withdraw": [
+            "https://curve.fi/#/arbitrum/pools/factory-stable-ng-52/withdraw",
+            "https://arbitrum.curve.fi/factory-stable-ng-52/withdraw"
+          ]
+        },
+        "lpTokenAddress": "0x1c34204FCFE5314Dcf53BE2671C02c35DB58B4e3",
+        "usdTotal": 19623.004303466638,
+        "isMetaPool": false,
+        "usdTotalExcludingBasePool": 19623.004303466638,
+        "usesRateOracle": false,
+        "isBroken": false,
+        "hasMethods": {
+          "exchange_received": true,
+          "exchange_extended": false
+        },
+        "blockchainId": "arbitrum",
+        "registryId": "factory-stable-ng",
+        "factory": true
+      }
+    ],
+    "tvl": 97355334.95360121
+  },
+  "generatedTimeMs": 1715244653198
+}

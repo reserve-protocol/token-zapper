@@ -546,7 +546,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       ).catch((e) => {
         console.log(e)
       }),
-      this.findTokenZapViaTrade(
+      opts?.enableTradeZaps === false ? Promise.resolve() : this.findTokenZapViaTrade(
         rTokenQuantity,
         output,
         signerAddress,

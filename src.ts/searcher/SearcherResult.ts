@@ -1027,7 +1027,8 @@ export class MintZap extends BaseSearcherResult {
               step.inputs.map((i) =>
                 encodeArg(i.amount, ParamType.from('uint256'))
               ),
-              this.universe.config.addresses.executorAddress
+              this.universe.config.addresses.executorAddress,
+              step.inputs
             )
             for (const input of step.action.inputToken) {
               const usersTotal = totalUsers.get(input)

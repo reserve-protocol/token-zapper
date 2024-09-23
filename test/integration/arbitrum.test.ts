@@ -5,6 +5,7 @@ import { WebSocketProvider } from '@ethersproject/providers'
 import {
   Address,
   arbiConfig,
+  ArbitrumUniverse,
   createEnso,
   createKyberswap,
   createParaswap,
@@ -94,7 +95,7 @@ const redeemCases = [
   makeMintTestCase(10000, rTokens.KNOX, t.WETH),
 ]
 
-let universe: Universe
+let universe: ArbitrumUniverse
 beforeAll(async () => {
   const provider = getProvider(process.env.ARBITRUM_PROVIDER!)
 
@@ -123,7 +124,7 @@ beforeAll(async () => {
 const log = console.log
 describe('arbitrum zapper', () => {
   beforeAll(() => {
-    console.log = () => {}
+    console.log = () => { }
   })
 
   for (const issueance of issueanceCases) {
@@ -187,7 +188,29 @@ describe('arbitrum zapper', () => {
   }
 })
 
+describe("Edge cases", () => {
+  it(
+    'Mint an rToken with 0 supply',
+    async () => {
+      expect.assertions(1)
+      await universe.initialized
+      const input = universe.commonTokens.USDC.from(10.0)
+      const output = await universe.defineRToken(Address.from('0x635f80eea9df5936772165740120e677878b55a6'))
+
+      let result = 'failed'
+      try {
+        await universe.zap(input, output, testUser)
+        result = 'success'
+      } catch (e) {
+        log(`'Mint an rToken with 0 supply' = ${e.message}`)
+      }
+      expect(result).toBe('success')
+    },
+    15 * 1000
+  )
+})
+
 afterAll(() => {
   console.log = log
-  ;(universe.provider as WebSocketProvider).websocket.close()
+    ; (universe.provider as WebSocketProvider).websocket.close()
 })

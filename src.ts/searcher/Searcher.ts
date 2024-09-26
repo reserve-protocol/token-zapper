@@ -635,7 +635,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
 
     const controller = createConcurrentStreamingEvaluator(this, toTxArgs)
 
-    await Promise.all([
+    void Promise.all([
       this.findRTokenIntoSingleTokenZapViaRedeem__(
         rTokenQuantity,
         output,
@@ -968,7 +968,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           errors.push(e)
         })
       : Promise.resolve()
-    await Promise.all([mintZap, tradeZap])
+    void Promise.all([mintZap, tradeZap])
     await controller.resultReadyPromise
 
     try {

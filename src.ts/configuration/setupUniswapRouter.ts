@@ -510,7 +510,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
         type: SwapType.SWAP_ROUTER_02,
       },
       {
-        protocols: [Protocol.V2, Protocol.V3],
+        protocols: [Protocol.V3],
       }
     )
 

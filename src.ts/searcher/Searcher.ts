@@ -275,6 +275,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     generateInputToPrecursorTradeMeasurementSetup()
 
     multiTrades = []
+    this.debugLog('Generating trades')
     await Promise.all(
       inputPrTrade.map(async ({ input, output }) => {
         if (
@@ -289,8 +290,12 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
             if (abortSignal.aborted) {
               return
             }
+            const mustBeDynamic = firstTrade != null;
+            if (mustBeDynamic) {
+              this.debugLog('Must be dynamic')
+            }
             const potentialSwaps = await this.findSingleInputTokenSwap(
-              firstTrade != null,
+              mustBeDynamic,
               input,
               output,
               this.universe.config.addresses.executorAddress,
@@ -326,6 +331,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         }
       })
     )
+    this.debugLog('Generated trades')
 
     generateInputToPrecursorTradeMeasurement()
 
@@ -453,6 +459,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       precursorTokens.precursorToTradeFor.length == 1 &&
       precursorTokens.precursorToTradeFor[0].token === inputQuantity.token
     ) {
+      this.debugLog('No trades needed, using precursor token')
       return await onResult(
         await generateIssueancePlan(
           await resolveTradeConflicts(this, abortSignal, [])
@@ -526,8 +533,12 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
               try {
                 await onResult(out)
                 resultsProduced += 1
-              } catch (e: any) {}
-            } catch (e: any) {}
+              } catch (e: any) {
+                console.log(e)
+              }
+            } catch (e: any) {
+              console.log(e)
+            }
 
             if (resultsProduced > this.minResults) {
               if (Date.now() > endTime) {
@@ -1241,7 +1252,9 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       async (path) => {
         out.push(path)
       }
-    )
+    ).catch((e) => {
+      console.log(e)
+    })
     if (out.length === 0) {
       throw new Error(
         `findSingleInputTokenSwap: No swaps found for ${input.token} -> ${output}`

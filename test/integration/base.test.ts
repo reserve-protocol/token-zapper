@@ -117,7 +117,7 @@ beforeAll(async () => {
     baseConfig,
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))
-      uni.addTradeVenue(createParaswap('paraswap', uni))
+      // uni.addTradeVenue(createParaswap('paraswap', uni))
       uni.addTradeVenue(createEnso('enso', uni, 1))
 
       await setupBaseZapper(uni)

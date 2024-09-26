@@ -428,9 +428,10 @@ export const setupAerodromeRouter = async (universe: Universe) => {
       }
       const inpValue = parseFloat(inputValue.format())
 
+      const startTime = Date.now()
       const outputs: AerodromePath[] = []
       await Promise.all(
-        toEvaluate.slice(0, 75).map(async (route) => {
+        toEvaluate.slice(0, 40).map(async (route) => {
           try {
             if (outputs.length > 2) {
               return null
@@ -453,21 +454,22 @@ export const setupAerodromeRouter = async (universe: Universe) => {
               return null
             }
             const ratio = parseFloat(outputValue.format()) / inpValue
-            if (ratio > 0.98) {
+            if (ratio > 0.95) {
               return outputs.push(AerodromePath.from(route, parts))
             }
             const id = computeIdFromRoute(route)
             badRoutes.add(id)
             return null!
           } catch (e) {
-            console.log(e)
             return null;
           }
         })
       )
 
+      universe.searcher.debugLog(`Aerodrome generated out: ${outputs.length} ${Date.now() - startTime}ms`)
+
       if (outputs.length == 0) {
-        throw new Error('No results')
+        throw new Error('No results, aborting')
       }
 
       const outAction = new AerodromeRouterSwap(

@@ -106,14 +106,14 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     universe.addIntegration('aerodrome', await setupAerodromeRouter(universe))
   )
 
-  // universe.preferredRTokenInputToken.set(
-  //   universe.rTokens.bsd,
-  //   universe.commonTokens.WETH
-  // )
-  // universe.preferredRTokenInputToken.set(
-  //   universe.rTokens.hyUSD,
-  //   universe.commonTokens.USDC
-  // )
+  universe.preferredRTokenInputToken.set(
+    universe.rTokens.bsd,
+    universe.commonTokens.WETH
+  )
+  universe.preferredRTokenInputToken.set(
+    universe.rTokens.hyUSD,
+    universe.commonTokens.USDC
+  )
 
   // Set up stargate
   await setupStargate(

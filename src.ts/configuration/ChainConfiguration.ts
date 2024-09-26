@@ -9,7 +9,7 @@ const defaultSearcherOptions = {
   searcherMinRoutesToProduce: 4,
   searcherMaxRoutesToProduce: 8,
   searchConcurrency: 4,
-  defaultInternalTradeSlippage: 75n,
+  defaultInternalTradeSlippage: 30n,
   maxSearchTimeMs: 7500,
 
   // These parameters will reject zaps that have successfully simulated

@@ -1,4 +1,4 @@
-import { Universe } from '..'
+import { Universe } from '../Universe'
 import { RouterAction } from '../action/RouterAction'
 import { Token, TokenQuantity } from '../entities/Token'
 import { SwapPath } from '../searcher/Swap'
@@ -53,20 +53,17 @@ export class DexRouter {
       throw new Error('Too many concurrent swaps')
     }
     this.pending++
-    const out = this.swap_(abort, input, output, slippage)
+    const out = this.swap_(abort, input, output, slippage);
     this.cache.set(key, {
       path: out,
       timestamp: this.currentBlock,
     })
 
-    out.catch(() => {
+    return out.finally(() => {
+      this.pending--
       if (this.cache.get(key)?.path === out) {
         this.cache.delete(key)
       }
-    })
-
-    return out.finally(() => {
-      this.pending--
     })
   }
 

@@ -11,6 +11,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  *      2. The asset is the only asset for that ERC20
  *      3. The asset can be priced in the UoA, usually via an oracle
  */
+
+ struct Price {
+    uint192 low; // {UoA/tok}
+    uint192 high; // {UoA/tok}
+}
+
 interface IAssetRegistry  {
     function refresh() external;
+
+    function toAsset(address asset) external view returns (IAsset);
+}
+
+interface IAsset {
+    function price() external view returns (Price memory);
 }

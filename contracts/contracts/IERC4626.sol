@@ -5,3 +5,8 @@ import { IERC4626 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626
 interface IStakedEthenaUSD is IERC4626 {
     function cooldownShares(uint256 shares) external;
 }
+
+
+interface ETHTokenVault is IERC4626 {
+    function deposit(address receiver) payable external returns (uint256);
+}

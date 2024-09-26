@@ -194,7 +194,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       )
       firstTrade = (
         await this.findSingleInputTokenSwap(
-          false,
+          true,
           initialTrade.input,
           initialTrade.output,
           this.universe.execAddress,
@@ -290,12 +290,8 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
             if (abortSignal.aborted) {
               return
             }
-            const mustBeDynamic = firstTrade != null;
-            if (mustBeDynamic) {
-              this.debugLog('Must be dynamic')
-            }
             const potentialSwaps = await this.findSingleInputTokenSwap(
-              mustBeDynamic,
+              false,
               input,
               output,
               this.universe.config.addresses.executorAddress,
@@ -639,7 +635,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
 
     const controller = createConcurrentStreamingEvaluator(this, toTxArgs)
 
-    void Promise.all([
+    await Promise.all([
       this.findRTokenIntoSingleTokenZapViaRedeem__(
         rTokenQuantity,
         output,
@@ -662,7 +658,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
             controller.abortController.signal,
             start
           ).catch(() => {}),
-    ]).catch(() => {})
+    ])
     await controller.resultReadyPromise
     return controller.getResults(start)
   }
@@ -720,7 +716,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       unwrapTokenQtys
         .filter((qty) => qty.token !== outputToken)
         .map(async (qty) => {
-          for (let i = 2; i <= 3; i++) {
+          for (let i = 1; i <= 3; i++) {
             const potentialSwaps = await this.findSingleInputTokenSwap(
               true,
               qty,
@@ -956,7 +952,6 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       toTxArgs.endPosition,
       start
     ).catch((e) => {
-      // console.log(e)
       errors.push(e)
     })
     const doTrades = opts?.enableTradeZaps !== false
@@ -973,12 +968,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           errors.push(e)
         })
       : Promise.resolve()
-    void Promise.all([mintZap, tradeZap]).then(() => {
-      if (!controller.abortController.signal.aborted) {
-        // If both trading and minting failed for unknown reasons without producing any results abort the search
-        controller.abortController.abort()
-      }
-    })
+    await Promise.all([mintZap, tradeZap])
     await controller.resultReadyPromise
 
     try {
@@ -1059,7 +1049,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
             signerAddress,
             slippage,
             abort,
-            2
+            1
           )
 
           for (const lastStep of lastSteps.paths) {
@@ -1106,17 +1096,19 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
               full,
             }
 
-            await onResult(
-              new MintZap(
-                this,
-                userInput,
-                parts,
-                signerAddress,
-                endPosition,
-                startTime,
-                abort
+            try {
+              await onResult(
+                new MintZap(
+                  this,
+                  userInput,
+                  parts,
+                  signerAddress,
+                  endPosition,
+                  startTime,
+                  abort
+                )
               )
-            )
+            } catch (e) {}
           }
           return
         }
@@ -1328,7 +1320,9 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           return
         }
       }
-      await onResult(path)
+      try {
+        await onResult(path)
+      } catch (e) {}
     }
     await Promise.all([
       this.internalQuoter(

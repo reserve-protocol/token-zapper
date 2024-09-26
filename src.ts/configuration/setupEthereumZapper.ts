@@ -1,4 +1,5 @@
 import { loadCompV2Deployment } from '../action/CTokens'
+import { ETHTokenVaultDepositAction } from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
@@ -130,11 +131,35 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     })
   )
 
-  universe.preferredRTokenInputToken.set(universe.rTokens['ETH+'], commonTokens.WETH)
-  universe.preferredRTokenInputToken.set(universe.rTokens["dgnETH"], commonTokens.WETH)
-  universe.preferredRTokenInputToken.set(universe.rTokens.eUSD, commonTokens.USDC)
-  universe.preferredRTokenInputToken.set(universe.rTokens.USD3, commonTokens.USDC)
-  universe.preferredRTokenInputToken.set(universe.rTokens.hyUSD, commonTokens.USDC)
+  universe.preferredRTokenInputToken.set(
+    universe.rTokens['ETH+'],
+    commonTokens.WETH
+  )
+  universe.preferredRTokenInputToken.set(
+    universe.rTokens['dgnETH'],
+    commonTokens.WETH
+  )
+  universe.preferredRTokenInputToken.set(
+    universe.rTokens.eUSD,
+    commonTokens.USDC
+  )
+  universe.preferredRTokenInputToken.set(
+    universe.rTokens.USD3,
+    commonTokens.USDC
+  )
+  universe.preferredRTokenInputToken.set(
+    universe.rTokens.hyUSD,
+    commonTokens.USDC
+  )
+
+  universe.addAction(
+    new (ETHTokenVaultDepositAction('ETHX'))(
+      universe,
+      universe.nativeToken,
+      universe.commonTokens.ETHx,
+      1n
+    )
+  )
 
   // universe.tokenFromTradeSpecialCases.set(
   //   commonTokens.pxETH,

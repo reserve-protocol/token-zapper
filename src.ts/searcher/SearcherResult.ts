@@ -1189,18 +1189,16 @@ export class MintZap extends BaseSearcherResult {
       for (const input of rTokenInputs) {
         fullyConsumed.delete(input)
       }
+
+      if (
+        this.parts.outputMint.proceedsOptions === DestinationOptions.Recipient
+      ) {
+        fullyConsumed.add(this.outputToken)
+      }
+
+      return await this.createZapTransaction(options, fullyConsumed)
     } catch (e: any) {
-      console.log('ToTransaction failed:')
-      console.log(e.stack)
-      throw e
+      return null;
     }
-
-    if (
-      this.parts.outputMint.proceedsOptions === DestinationOptions.Recipient
-    ) {
-      fullyConsumed.add(this.outputToken)
-    }
-
-    return await this.createZapTransaction(options, fullyConsumed)
   }
 }

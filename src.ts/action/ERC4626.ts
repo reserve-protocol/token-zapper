@@ -2,7 +2,12 @@ import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { BlockCache } from '../base/BlockBasedCache'
-import { IERC4626, IStakedEthenaUSD__factory } from '../contracts'
+import {
+  ETHTokenVault,
+  ETHTokenVault__factory,
+  IERC4626,
+  IStakedEthenaUSD__factory,
+} from '../contracts'
 
 import { IERC4626__factory } from '../contracts/factories/@openzeppelin/contracts/interfaces/IERC4626__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
@@ -13,12 +18,79 @@ export class ERC4626TokenVault {
   constructor(
     public readonly shareToken: Token,
     public readonly underlying: Token
-  ) { }
+  ) {}
 
   get address(): Address {
     return this.shareToken.address
   }
 }
+
+export const ETHTokenVaultDepositAction = (proto: string) =>
+  class ETHTokenVaultDepositAction extends Action(proto) {
+    public get supportsDynamicInput(): boolean {
+      return true
+    }
+    get outputSlippage() {
+      return this.slippage
+    }
+    public get returnsOutput(): boolean {
+      return true
+    }
+    async plan(
+      planner: Planner,
+      inputs: Value[],
+      destination: Address,
+      predicted: TokenQuantity[]
+    ) {
+      const lib = this.gen.Contract.createContract(this.inst)
+      const out = planner.add(
+        lib
+          .deposit(destination.address)
+          .withValue(inputs[0] || predicted[0].amount)
+      )
+      return [out!]
+    }
+    gasEstimate() {
+      return BigInt(200000n)
+    }
+
+    public async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
+      const x = (await this.inst.callStatic.previewDeposit(amountIn)).toBigInt()
+      return [this.outputToken[0].fromBigInt(x)]
+    }
+    public readonly inst: ETHTokenVault
+    public readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
+    async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+      return await this.quoteCache.get(amountIn.amount)
+    }
+    constructor(
+      readonly universe: Universe,
+      readonly underlying: Token,
+      readonly shareToken: Token,
+      readonly slippage: bigint
+    ) {
+      super(
+        shareToken.address,
+        [underlying],
+        [shareToken],
+        InteractionConvention.ApprovalRequired,
+        DestinationOptions.Recipient,
+        [new Approval(underlying, shareToken.address)]
+      )
+      this.inst = ETHTokenVault__factory.connect(
+        this.shareToken.address.address,
+        this.universe.provider
+      )
+      this.quoteCache = this.universe.createCache<bigint, TokenQuantity[]>(
+        async (a) => await this._quote(a),
+        1
+      )
+    }
+
+    toString(): string {
+      return `ETHTokenVaultDeposit(${this.shareToken.toString()})`
+    }
+  }
 
 export const ERC4626DepositAction = (proto: string) =>
   class ERC4626DepositAction extends Action(proto) {
@@ -46,7 +118,7 @@ export const ERC4626DepositAction = (proto: string) =>
       const out = planner.add(
         lib.deposit(inputs[0] || predicted[0].amount, destination.address)
       )
-      return [out!];
+      return [out!]
     }
     gasEstimate() {
       return BigInt(200000n)

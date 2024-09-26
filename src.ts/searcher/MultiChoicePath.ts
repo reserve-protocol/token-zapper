@@ -194,6 +194,7 @@ export const createConcurrentStreamingEvaluator = (
   }[] = []
 
   setTimeout(() => {
+    searcher.debugLog('Aborting search: searcher.config.maxSearchTimeMs')
     abortController.abort()
   }, searcher.config.maxSearchTimeMs ?? 10000)
 
@@ -211,10 +212,7 @@ export const createConcurrentStreamingEvaluator = (
     seen.add(id)
     allCandidates.push(result)
     try {
-      const tx = await searcher.perf.measurePromise(
-        'toTransaction',
-        result.toTransaction(toTxArgs)
-      )
+      const tx = await result.toTransaction(toTxArgs);
       if (tx == null) {
         return
       }
@@ -259,7 +257,7 @@ export const createConcurrentStreamingEvaluator = (
         }
       }
     } catch (e: any) {
-      emitDebugLog(e)
+      // emitDebugLog(e)
     }
   }
 

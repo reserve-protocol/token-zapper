@@ -18,6 +18,9 @@ const defaultSearcherOptions = {
 
   // total output value = output token value + dust value
   zapMaxDustProduced: 2, // 0.02 or 2% of total output value
+
+  largeZapThreshold: 300000,
+  largeZapSearchTime: 5000,
 }
 
 export type SearcherOptions = typeof defaultSearcherOptions & {

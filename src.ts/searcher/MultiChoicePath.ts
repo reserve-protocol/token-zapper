@@ -129,7 +129,9 @@ export const generateAllPermutations = async function (
   const allCombos = combos(arr)
 
   const withoutComflicts = allCombos.filter(
-    (paths) => willPathsHaveAddressConflicts(searcher.debugLog, universe, paths).length === 0
+    (paths) =>
+      willPathsHaveAddressConflicts(searcher.debugLog, universe, paths)
+        .length === 0
   )
   const valuedTrades = await Promise.all(
     withoutComflicts.map(async (trades) => {
@@ -226,7 +228,7 @@ export const createConcurrentStreamingEvaluator = (
         emitDebugLog('Large amount of dust')
         emitDebugLog(tx.stats.toString())
         emitDebugLog(tx.stats.dust.toString())
-        emitDebugLog("Planner:")
+        emitDebugLog('Planner:')
         emitDebugLog(printPlan(tx.planner, tx.universe).join('\n'))
         return
       }
@@ -244,17 +246,19 @@ export const createConcurrentStreamingEvaluator = (
       if (toTxArgs.minSearchTime != null) {
         const elapsed = Date.now() - startTime
         if (elapsed > toTxArgs.minSearchTime) {
-          emitDebugLog("Aborting search")
+          emitDebugLog('Aborting search: elapsed > toTxArgs.minSearchTime')
           abortController.abort()
-          return;
+          return
+        }
+      } else {
+        if (resCount >= searcher.config.searcherMinRoutesToProduce) {
+          emitDebugLog(
+            'Aborting search: searcher.config.searcherMinRoutesToProduce'
+          )
+          abortController.abort()
         }
       }
-      if (resCount >= searcher.config.searcherMinRoutesToProduce) {
-        emitDebugLog("Aborting search")
-        abortController.abort()
-      }
     } catch (e: any) {
-
       emitDebugLog(e)
     }
   }
@@ -294,7 +298,7 @@ const noConflictAddrs = new Set([
   Address.from('0x99a58482BD75cbab83b27EC03CA68fF489b5788f'),
   Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
   Address.from('0x79c58f70905F734641735BC61e45c19dD9Ad60bC'),
-  Address.from('0x1aEbD5aC3F0d1baEa82E3e49BeAF4ec901f67205')
+  Address.from('0x1aEbD5aC3F0d1baEa82E3e49BeAF4ec901f67205'),
 ])
 const willPathsHaveAddressConflicts = (
   emitDebugLog: (...args: any[]) => void,

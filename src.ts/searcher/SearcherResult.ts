@@ -206,9 +206,6 @@ export abstract class BaseSearcherResult {
   }
 
   async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
-    this.searcher.debugLog(
-      `Running simulation for: ${this.userInput} -> ${this.outputToken}`
-    )
     const resp = await this.universe.simulateZapFn(opts)
 
     if (process.env.DEBUG_SIMULATION) {
@@ -1179,7 +1176,6 @@ export class MintZap extends BaseSearcherResult {
     ) {
       fullyConsumed.add(this.outputToken)
     }
-    console.log("fullyConsumed", [...fullyConsumed].join(', '))
     return await this.createZapTransaction(options, fullyConsumed)
   }
 }

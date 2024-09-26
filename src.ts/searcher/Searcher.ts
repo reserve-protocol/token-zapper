@@ -9,7 +9,6 @@ import { EthereumUniverse } from '../configuration/ethereum'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { bfs } from '../exchange-graph/BFS'
-import { op } from '../tx-gen/libs/encodeOps'
 import {
   BasketTokenSourcingRuleApplication,
   type PostTradeAction,
@@ -66,7 +65,10 @@ export const findPrecursorTokenSet = async (
     input: TokenQuantity
     output: Token
   } = null
-  if (inputIsStableCoin && !rTokenIsStableCoin || !inputIsStableCoin && rTokenIsStableCoin) {
+  if (
+    (inputIsStableCoin && !rTokenIsStableCoin) ||
+    (!inputIsStableCoin && rTokenIsStableCoin)
+  ) {
     const preferredToken = universe.preferredRTokenInputToken.get(rToken)
     if (preferredToken != null) {
       inputToken = preferredToken
@@ -315,7 +317,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
               continue
             }
             multiTrades.push(potentialSwaps)
-            return;
+            return
           } catch (e) {
             console.log(e)
           }
@@ -907,8 +909,14 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     const invalue = parseFloat(
       (await this.fairPrice(userInput))?.toString() ?? '0'
     )
-    if (invalue > 199999 && toTxArgs.minSearchTime == null) {
-      toTxArgs.minSearchTime = 5000
+    if (
+      invalue > this.universe.config.largeZapThreshold &&
+      toTxArgs.minSearchTime == null
+    ) {
+      toTxArgs.minSearchTime = this.config.largeZapSearchTime
+      this.debugLog(
+        `Large zap detected (invalue=${invalue} > threshold=${this.universe.config.largeZapThreshold}), searcher will not race to produce result, exploring for at least ${toTxArgs.minSearchTime}ms`
+      )
     }
 
     const controller = createConcurrentStreamingEvaluator(this, toTxArgs)

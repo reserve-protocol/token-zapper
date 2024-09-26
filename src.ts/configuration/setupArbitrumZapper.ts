@@ -115,6 +115,11 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
     universe.addIntegration('uniswapV3', await setupUniswapRouter(universe))
   )
 
+  universe.preferredRTokenInputToken.set(
+    universe.rTokens.KNOX,
+    universe.commonTokens.USDC
+  )
+
   await Promise.all(
     PROTOCOL_CONFIGS.erc4626.map(async ([addr, proto]) => {
       const vault = await setupERC4626(universe, {

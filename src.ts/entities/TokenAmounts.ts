@@ -41,7 +41,7 @@ export class TokenAmounts {
   }
 
   hasBalance(inputs: TokenQuantity[]) {
-    return inputs.every((i) => this.get(i.token).gte(i))
+    return inputs.every((i) => this.tokenBalances.has(i.token) ? this.get(i.token).gte(i) : i.token.zero.gte(i))
   }
 
   exchange(

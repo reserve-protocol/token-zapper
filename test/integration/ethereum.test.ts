@@ -49,7 +49,7 @@ export const ethWhales = {
     '0x78bb3aec3d855431bd9289fd98da13f9ebb7ef15',
   // frxeth
   '0x5e8422345238f34275888049021821e8e08caa1f':
-    '0x4d9f9d15101eec665f77210cb999639f760f831e',
+    '0x36cb65c1967a0fb0eee11569c51c2f2aa1ca6f6d',
   // weth
   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2':
     '0x8eb8a3b98659cce290402893d0123abb75e3ab28',

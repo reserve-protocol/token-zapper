@@ -298,8 +298,24 @@ export abstract class BaseSearcherResult {
       })
     )
 
+    const currentBalances = TokenAmounts.fromQuantities(
+      await Promise.all(
+        this.potentialResidualTokens.map((token) =>
+          this.searcher.universe.approvalsStore.queryBalance(
+            token,
+            this.universe.config.addresses.executorAddress,
+            this.searcher.universe
+          )
+        )
+      )
+    )
+
     const dustQuantities = zapperResult.dust
-      .map((qty, index) => this.potentialResidualTokens[index].from(qty))
+      .map((qty, index) =>
+        this.potentialResidualTokens[index]
+          .from(qty)
+          .sub(currentBalances.get(this.potentialResidualTokens[index]))
+      )
       .filter((i) => i.token !== this.outputToken && i.amount !== 0n)
 
     const amount = zapperResult.amountOut.toBigInt()
@@ -1109,7 +1125,11 @@ export class MintZap extends BaseSearcherResult {
             }
           }
 
-          if (!generateSplit && !rTokenInputs.has(inputToken) && step.action.approvals.length === 1) {
+          if (
+            !generateSplit &&
+            !rTokenInputs.has(inputToken) &&
+            step.action.approvals.length === 1
+          ) {
             fullyConsumed.add(inputToken)
           }
           const result = await step.action
@@ -1166,16 +1186,21 @@ export class MintZap extends BaseSearcherResult {
           }
         }
       }
+      for (const input of rTokenInputs) {
+        fullyConsumed.delete(input)
+      }
     } catch (e: any) {
       console.log('ToTransaction failed:')
       console.log(e.stack)
       throw e
     }
+
     if (
       this.parts.outputMint.proceedsOptions === DestinationOptions.Recipient
     ) {
       fullyConsumed.add(this.outputToken)
     }
+
     return await this.createZapTransaction(options, fullyConsumed)
   }
 }

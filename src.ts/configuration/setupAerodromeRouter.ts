@@ -71,7 +71,7 @@ class AerodromePath {
   }
   static from(route: SwapRouteStep[], amts: BigNumber[]) {
     const steps: AerodromePathStep[] = []
-    for (let i = 0; i < steps.length; i++) {
+    for (let i = 0; i < route.length; i++) {
       const step = route[i]
       const input = step.tokenIn.from(amts[i].toBigInt())
       const output = step.tokenOut.from(amts[i + 1].toBigInt())
@@ -418,7 +418,9 @@ export const setupAerodromeRouter = async (universe: Universe) => {
         }
       }
 
-      const toEvaluate = shuffle(routes).slice(0, 20)
+      const toEvaluate = routes.filter(i => i.length !== 0);
+
+      universe.searcher.debugLog(`Aerodrome: Evaluating ${toEvaluate.length} routes`)
 
       const inputValue = await universe.fairPrice(input)
       if (inputValue == null || inputValue.amount === 0n) {
@@ -428,33 +430,39 @@ export const setupAerodromeRouter = async (universe: Universe) => {
 
       const outputs: AerodromePath[] = []
       await Promise.all(
-        toEvaluate.map(async (route) => {
-          if (outputs.length > 10) {
-            return
+        toEvaluate.slice(0, 75).map(async (route) => {
+          try {
+            if (outputs.length > 2) {
+              return null
+            }
+            const routeStruct = route.map((step) => step.intoRouteStruct());
+            const parts = await routerInst.getAmountsOut(
+              input.amount,
+              routeStruct
+            )
+            const outRoute = AerodromePath.from(route, parts)
+            if (outRoute.output.amount === 0n) {
+              return null
+            }
+            if (outputs.length > 2) {
+              return null
+            }
+            const outputValue =
+              (await universe.fairPrice(outRoute.output)) ?? universe.usd.zero
+            if (outputValue.amount === 0n) {
+              return null
+            }
+            const ratio = parseFloat(outputValue.format()) / inpValue
+            if (ratio < 0.95) {
+              return outputs.push(AerodromePath.from(route, parts))
+            }
+            const id = computeIdFromRoute(route)
+            badRoutes.add(id)
+            return null!
+          } catch (e) {
+            console.log(e)
+            return null;
           }
-          const parts = await routerInst.getAmountsOut(
-            input.amount,
-            route.map((step) => step.intoRouteStruct())
-          )
-          const outRoute = AerodromePath.from(route, parts)
-          if (outRoute.output.amount === 0n) {
-            return
-          }
-          if (outputs.length > 10) {
-            return
-          }
-          const outputValue =
-            (await universe.fairPrice(outRoute.output)) ?? universe.usd.zero
-          if (outputValue.amount === 0n) {
-            return
-          }
-          const ratio = parseFloat(outputValue.format()) / inpValue
-          if (ratio < 0.95) {
-            return outputs.push(AerodromePath.from(route, parts))
-          }
-          const id = computeIdFromRoute(route)
-          badRoutes.add(id)
-          return null!
         })
       )
 

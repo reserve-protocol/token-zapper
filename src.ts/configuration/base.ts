@@ -30,7 +30,7 @@ export const baseConfig = makeConfig(
   RTOKENS,
   {
     emitId: "0xC7a942301d92024321995f7f748C2B0687a1Cb60",
-    facadeAddress: ethers.constants.AddressZero,
+    facadeAddress: "0xEb2071e9B542555E90E6e4E1F83fa17423583991",
     oldFacadeAddress: '0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF',
     zapperAddress: '0xaA560D5C2Fade67CF6836Ab793e56A79F09d4282',
     executorAddress: '0x560740052F380669c90811f711f80B21306d4713',

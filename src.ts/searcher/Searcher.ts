@@ -200,7 +200,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           this.universe.execAddress,
           this.defaultInternalTradeSlippage,
           AbortSignal.timeout(this.config.routerDeadline),
-          2
+          1
         )
       ).path
 
@@ -212,7 +212,9 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     }
 
     const balancesBeforeTrading = new TokenAmounts()
+    this.debugLog('tradeforPrecursorsInput', tradeforPrecursorsInput.toString())
     balancesBeforeTrading.add(tradeforPrecursorsInput)
+    this.debugLog('balancesBeforeTrading', balancesBeforeTrading.toString())
 
     /**
      * PHASE 2: Trade inputQuantity into precursor set
@@ -282,13 +284,13 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           return
         }
 
-        for (let i = 1; i <= 4; i++) {
+        for (let i = 1; i <= 3; i++) {
           try {
             if (abortSignal.aborted) {
               return
             }
             const potentialSwaps = await this.findSingleInputTokenSwap(
-              firstTrade == null,
+              firstTrade != null,
               input,
               output,
               this.universe.config.addresses.executorAddress,
@@ -446,6 +448,17 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       },
       rToken.symbol
     )
+
+    if (
+      precursorTokens.precursorToTradeFor.length == 1 &&
+      precursorTokens.precursorToTradeFor[0].token === inputQuantity.token
+    ) {
+      return await onResult(
+        await generateIssueancePlan(
+          await resolveTradeConflicts(this, abortSignal, [])
+        )
+      )
+    }
     if (multiTrades.length === 0) {
       this.debugLog('No trades found')
       return

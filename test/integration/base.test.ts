@@ -37,13 +37,13 @@ export const baseWhales = {
     '0xcdac0d6c6c59727a65f871236188350531885c43', // usdc
 
   '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22':
-    '0xcf3d55c10db69f28fd1a75bd73f3d8a2d9c595ad', // cbeth
+    '0x3bf93770f2d4a794c3d9ebefbaebae2a8f09a5e5', // cbeth
 
   '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca':
     '0x0b25c51637c43decd6cc1c1e3da4518d54ddb528', // usdbc
 
   '0x50c5725949a6f0c72e6c4a641f24049a917db0cb':
-    '0x927860797d07b1c46fbbe7f6f73d45c7e1bfbb27', // dai
+    '0x73b06d8d18de422e269645eace15400de7462417', // dai
 
   '0x4200000000000000000000000000000000000006':
     '0xcdac0d6c6c59727a65f871236188350531885c43', // weth

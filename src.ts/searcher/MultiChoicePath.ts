@@ -193,10 +193,18 @@ export const createConcurrentStreamingEvaluator = (
     searchResult: BaseSearcherResult
   }[] = []
 
-  setTimeout(() => {
+  let pending: Promise<any>[] = []
+  const waitTime = searcher.config.maxSearchTimeMs ?? 10000
+  searcher.debugLog(`Waiting for ${waitTime}ms`)
+  setTimeout(async () => {
     searcher.debugLog('Aborting search: searcher.config.maxSearchTimeMs')
     abortController.abort()
-  }, searcher.config.maxSearchTimeMs ?? 10000)
+    for (const p of pending) {
+      try {
+        await p
+      } catch (e) {}
+    }
+  }, waitTime)
 
   const allCandidates: BaseSearcherResult[] = []
   const seen: Set<string> = new Set()
@@ -212,7 +220,9 @@ export const createConcurrentStreamingEvaluator = (
     seen.add(id)
     allCandidates.push(result)
     try {
-      const tx = await result.toTransaction(toTxArgs);
+      const txPromise = result.toTransaction(toTxArgs)
+      pending.push(txPromise)
+      const tx = await txPromise
       if (tx == null) {
         return
       }

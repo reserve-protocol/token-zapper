@@ -194,13 +194,13 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       )
       firstTrade = (
         await this.findSingleInputTokenSwap(
-          true,
+          false,
           initialTrade.input,
           initialTrade.output,
           this.universe.execAddress,
           this.defaultInternalTradeSlippage,
           AbortSignal.timeout(this.config.routerDeadline),
-          1
+          2
         )
       ).path
 
@@ -494,14 +494,14 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       this.maxConcurrency,
       abortSignal
     )
-    const prRound = this.config.routerDeadline / 2
+    const prRound = Math.floor(this.config.routerDeadline / 4)
     const endTime = Date.now() + prRound
     for (const candidates of candidateChunks) {
       let resultsProduced = 0
       if (abortSignal.aborted) {
         break
       }
-      const maxWaitTime = AbortSignal.timeout(prRound + 1000)
+      const maxWaitTime = AbortSignal.timeout(prRound)
 
       const p = new Promise((resolve) => {
         abortSignal.addEventListener('abort', () => {

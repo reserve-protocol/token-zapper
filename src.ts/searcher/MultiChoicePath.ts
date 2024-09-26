@@ -1,21 +1,17 @@
 import { Universe } from '../Universe'
 import { DestinationOptions, InteractionConvention } from '../action/Action'
 import { Address } from '../base/Address'
+import { DefaultMap } from '../base/DefaultMap'
 import { Config } from '../configuration/ChainConfiguration'
+import { UniswapRouterAction } from '../configuration/setupUniswapRouter'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
+import { printPlan } from '../tx-gen/Planner'
+import { Searcher } from './Searcher'
 import { BaseSearcherResult } from './SearcherResult'
 import { SingleSwap, SwapPath, SwapPaths } from './Swap'
 import { ToTransactionArgs } from './ToTransactionArgs'
-import { type UniverseWithERC20GasTokenDefined } from './UniverseWithERC20GasTokenDefined'
 import { ZapTransaction } from './ZapTransaction'
-import { Searcher } from './Searcher'
-import { DefaultMap } from '../base/DefaultMap'
-import { UniswapRouterAction } from '../configuration/setupUniswapRouter'
-import { EthereumUniverse } from '../configuration/ethereum'
-import { BaseUniverse } from '../configuration/base'
-import { ArbitrumUniverse } from '../configuration/arbitrum'
-import { printPlan } from '../tx-gen/Planner'
 
 export const resolveTradeConflicts = async (
   searcher: Searcher<any>,
@@ -133,7 +129,7 @@ export const generateAllPermutations = async function (
   const allCombos = combos(arr)
 
   const withoutComflicts = allCombos.filter(
-    (paths) => willPathsHaveAddressConflicts(universe, paths).length === 0
+    (paths) => willPathsHaveAddressConflicts(searcher.debugLog, universe, paths).length === 0
   )
   const valuedTrades = await Promise.all(
     withoutComflicts.map(async (trades) => {
@@ -187,6 +183,7 @@ export const createConcurrentStreamingEvaluator = (
   searcher: Searcher<any>,
   toTxArgs: ToTransactionArgs
 ) => {
+  const startTime = Date.now()
   const emitDebugLog = searcher.debugLog
   const abortController = new AbortController()
   const results: {
@@ -226,10 +223,11 @@ export const createConcurrentStreamingEvaluator = (
 
       // Reject if the dust is too high
       if (inVal * maxAcceptableDustPercentable < dustVal) {
+        emitDebugLog('Large amount of dust')
         emitDebugLog(tx.stats.toString())
         emitDebugLog(tx.stats.dust.toString())
-        // emitDebugLog(printPlan(tx.planner, tx.universe).join('\n'))
-        emitDebugLog('Large amount of dust')
+        emitDebugLog("Planner:")
+        emitDebugLog(printPlan(tx.planner, tx.universe).join('\n'))
         return
       }
       // Reject if the zap looses too much value
@@ -243,11 +241,21 @@ export const createConcurrentStreamingEvaluator = (
         searchResult: result,
       })
       const resCount = results.length
+      if (toTxArgs.minSearchTime != null) {
+        const elapsed = Date.now() - startTime
+        if (elapsed > toTxArgs.minSearchTime) {
+          emitDebugLog("Aborting search")
+          abortController.abort()
+          return;
+        }
+      }
       if (resCount >= searcher.config.searcherMinRoutesToProduce) {
+        emitDebugLog("Aborting search")
         abortController.abort()
       }
     } catch (e: any) {
-      // emitDebugLog(e)
+
+      emitDebugLog(e)
     }
   }
 
@@ -283,9 +291,13 @@ const noConflictAddrs = new Set([
   Address.from('0x010224949cCa211Fb5dDfEDD28Dc8Bf9D2990368'),
   Address.from('0x6352a56caadC4F1E25CD6c75970Fa768A3304e64'),
   Address.from('0x179dC3fb0F2230094894317f307241A52CdB38Aa'),
-  Address.from('0x99a58482BD75cbab83b27EC03CA68fF489b5788f')
+  Address.from('0x99a58482BD75cbab83b27EC03CA68fF489b5788f'),
+  Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
+  Address.from('0x79c58f70905F734641735BC61e45c19dD9Ad60bC'),
+  Address.from('0x1aEbD5aC3F0d1baEa82E3e49BeAF4ec901f67205')
 ])
 const willPathsHaveAddressConflicts = (
+  emitDebugLog: (...args: any[]) => void,
   universe: Universe,
   paths: SwapPath[]
 ) => {

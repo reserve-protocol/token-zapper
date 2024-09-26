@@ -18,7 +18,6 @@ import {
   MultiChoicePath,
   chunkifyIterable,
   createConcurrentStreamingEvaluator,
-
   generateAllPermutations,
   resolveTradeConflicts,
 } from './MultiChoicePath'
@@ -52,17 +51,38 @@ export const findPrecursorTokenSet = async (
   const specialRules = universe.precursorTokenSourcingSpecialCases
   const basketTokenApplications: BasketTokenSourcingRuleApplication[] = []
 
+  const inputTokenPrice = await searcher.fairPrice(userInputQuantity.token.one)
+  const rTokenPrice = await searcher.fairPrice(rToken.one)
+  if (inputTokenPrice == null || rTokenPrice == null) {
+    searcher.debugLog('Failed to get fair price for input/output token')
+    throw new Error('Failed to get fair price for input/output token')
+  }
+
+  const inputIsStableCoin = Math.abs(1 - inputTokenPrice.asNumber()) < 0.1
+  const rTokenIsStableCoin = Math.abs(1 - rTokenPrice.asNumber()) < 0.1
+
+  let inputToken = userInputQuantity.token
+  let initialTrade: null | {
+    input: TokenQuantity
+    output: Token
+  } = null
+  if (inputIsStableCoin && !rTokenIsStableCoin || !inputIsStableCoin && rTokenIsStableCoin) {
+    const preferredToken = universe.preferredRTokenInputToken.get(rToken)
+    if (preferredToken != null) {
+      inputToken = preferredToken
+      initialTrade = {
+        input: userInputQuantity,
+        output: inputToken,
+      }
+    }
+  }
+
   const recourseOn = async (
     qty: TokenQuantity
   ): Promise<BasketTokenSourcingRuleApplication> => {
     const tokenSourcingRule = specialRules.get(qty.token)
     if (tokenSourcingRule != null) {
-      return await tokenSourcingRule(
-        userInputQuantity.token,
-        qty,
-        searcher,
-        unitBasket
-      )
+      return await tokenSourcingRule(inputToken, qty, searcher, unitBasket)
     }
 
     const acts = universe.wrappedTokens.get(qty.token)
@@ -89,7 +109,10 @@ export const findPrecursorTokenSet = async (
   const out = BasketTokenSourcingRuleApplication.fromBranches(
     basketTokenApplications
   )
-  return out
+  return {
+    rules: out,
+    initialTrade,
+  }
 }
 
 export class Searcher<const SearcherUniverse extends Universe<Config>> {
@@ -128,6 +151,8 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     basketUnit: TokenQuantity[],
     internalTradeSlippage: bigint,
     onResult: (result: {
+      inputQuantity: TokenQuantity
+      firstTrade: SwapPath | null
       trading: SwapPaths
       minting: SwapPaths
     }) => Promise<void>,
@@ -138,13 +163,14 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     /**
      * PHASE 1: Compute precursor set
      */
-    const precursorTokens = await findPrecursorTokenSet(
-      this.universe as any,
-      inputQuantity,
-      rToken,
-      basketUnit,
-      this as any
-    )
+    const { rules: precursorTokens, initialTrade } =
+      await findPrecursorTokenSet(
+        this.universe as any,
+        inputQuantity,
+        rToken,
+        basketUnit,
+        this as any
+      )
     this.debugLog(precursorTokens.precursorToTradeFor.join(', '))
     this.debugLog(precursorTokens.describe().join('\n'))
 
@@ -156,6 +182,35 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       'generateInputToPrecursorTradeSetup',
       rToken.symbol
     )
+
+    let firstTrade: SwapPath | null = null
+    let tradeforPrecursorsInput = inputQuantity
+    if (initialTrade != null) {
+      this.debugLog(
+        'Finding initial trade: ',
+        `${initialTrade.input} -> ${initialTrade.output}`
+      )
+      firstTrade = (
+        await this.findSingleInputTokenSwap(
+          false,
+          initialTrade.input,
+          initialTrade.output,
+          this.universe.execAddress,
+          this.defaultInternalTradeSlippage,
+          AbortSignal.timeout(this.config.routerDeadline),
+          2
+        )
+      ).path
+
+      tradeforPrecursorsInput = firstTrade.outputs[0]
+      this.debugLog(
+        'Finding initial trade: ',
+        `${initialTrade.input} -> ${tradeforPrecursorsInput}`
+      )
+    }
+
+    const balancesBeforeTrading = new TokenAmounts()
+    balancesBeforeTrading.add(tradeforPrecursorsInput)
 
     /**
      * PHASE 2: Trade inputQuantity into precursor set
@@ -183,32 +238,33 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r), this.universe.usd.zero)
       : precursorTokenBasket
-        .map((p) => p.into(inputQuantity.token))
-        .reduce((l, r) => l.add(r))
+          .map((p) => p.into(tradeforPrecursorsInput.token))
+          .reduce((l, r) => l.add(r))
 
     // console.log(`sum: ${quoteSum}, ${precursorTokensPrices.join(', ')}`)
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
-        input: inputQuantity.mul(
-          precursorTokensPrices[i].div(quoteSum).into(inputQuantity.token)
-        ),
-        output: token,
-      }))
+          input: tradeforPrecursorsInput.mul(
+            precursorTokensPrices[i]
+              .div(quoteSum)
+              .into(tradeforPrecursorsInput.token)
+          ),
+          output: token,
+        }))
       : precursorTokenBasket.map((qty) => ({
-        output: qty.token,
-        input: inputQuantity.mul(qty.into(inputQuantity.token).div(quoteSum)),
-      }))
+          output: qty.token,
+          input: tradeforPrecursorsInput.mul(
+            qty.into(tradeforPrecursorsInput.token).div(quoteSum)
+          ),
+        }))
     const total = inputPrTrade.reduce(
       (l, r) => l.add(r.input),
-      inputQuantity.token.zero
+      tradeforPrecursorsInput.token.zero
     )
-    const leftOver = inputQuantity.sub(total)
+    const leftOver = tradeforPrecursorsInput.sub(total)
     if (leftOver.amount > 0n) {
       inputPrTrade[0].input = inputPrTrade[0].input.add(leftOver)
     }
-
-    const balancesBeforeTrading = new TokenAmounts()
-    balancesBeforeTrading.add(inputQuantity)
 
     let multiTrades: MultiChoicePath[] = []
 
@@ -230,7 +286,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
               return
             }
             const potentialSwaps = await this.findSingleInputTokenSwap(
-              true,
+              firstTrade == null,
               input,
               output,
               this.universe.config.addresses.executorAddress,
@@ -243,12 +299,26 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
               potentialSwaps.paths.length === 0 ||
               !balancesBeforeTrading.hasBalance(potentialSwaps.inputs)
             ) {
+              this.debugLog('skipping trade')
+              this.debugLog(
+                JSON.stringify({
+                  'potentialSwaps == null': potentialSwaps == null,
+                  'potentialSwaps.paths.length === 0':
+                    potentialSwaps.paths.length === 0,
+                  '!balancesBeforeTrading.hasBalance(potentialSwaps.inputs)':
+                    !balancesBeforeTrading.hasBalance(potentialSwaps.inputs),
+                  'potentialSwaps.inputs': potentialSwaps.inputs.join(', '),
+                  balancesBeforeTrading: balancesBeforeTrading.toString(),
+                })
+              )
+
               continue
             }
             multiTrades.push(potentialSwaps)
-
-            return
-          } catch (e) { }
+            return;
+          } catch (e) {
+            console.log(e)
+          }
         }
       })
     )
@@ -347,9 +417,11 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           )
           const tradingOutputs = postTradeBalances.toTokenQuantities()
           return {
+            inputQuantity: tradeforPrecursorsInput,
+            firstTrade: firstTrade,
             trading: new SwapPaths(
               this.universe,
-              [inputQuantity],
+              [tradeforPrecursorsInput],
               tradeInputToTokenSet,
               tradingOutputs,
               tradeValueOut,
@@ -372,6 +444,10 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       },
       rToken.symbol
     )
+    if (multiTrades.length === 0) {
+      this.debugLog('No trades found')
+      return
+    }
 
     const tradesWithOptions = multiTrades.filter((i) => i.hasMultipleChoices)
     if (tradesWithOptions.length === 0) {
@@ -386,6 +462,8 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       precursorTokens.precursorToTradeFor.map((i) => i.token)
     )
 
+    this.debugLog('precursorSet', [...precursorSet].join(', '))
+
     const allOptions = await this.perf.measurePromise(
       'generateAllPermutations',
       generateAllPermutations(this, multiTrades, precursorSet),
@@ -393,13 +471,14 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     )
 
     const aborter = new AbortController()
-    const prRound = this.config.routerDeadline / 2
-    const endTime = Date.now() + prRound
-    for (const candidates of chunkifyIterable(
+    const candidateChunks = chunkifyIterable(
       allOptions,
       this.maxConcurrency,
       abortSignal
-    )) {
+    )
+    const prRound = this.config.routerDeadline / 2
+    const endTime = Date.now() + prRound
+    for (const candidates of candidateChunks) {
       let resultsProduced = 0
       if (abortSignal.aborted) {
         break
@@ -432,8 +511,8 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
               try {
                 await onResult(out)
                 resultsProduced += 1
-              } catch (e: any) { }
-            } catch (e: any) { }
+              } catch (e: any) {}
+            } catch (e: any) {}
 
             if (resultsProduced > this.minResults) {
               if (Date.now() > endTime) {
@@ -546,16 +625,18 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       ).catch((e) => {
         console.log(e)
       }),
-      opts?.enableTradeZaps === false ? Promise.resolve() : this.findTokenZapViaTrade(
-        rTokenQuantity,
-        output,
-        signerAddress,
-        toTxArgs.internalTradeSlippage,
-        controller.onResult,
-        controller.abortController.signal,
-        start
-      ).catch(() => { }),
-    ]).catch(() => { })
+      opts?.enableTradeZaps === false
+        ? Promise.resolve()
+        : this.findTokenZapViaTrade(
+            rTokenQuantity,
+            output,
+            signerAddress,
+            toTxArgs.internalTradeSlippage,
+            controller.onResult,
+            controller.abortController.signal,
+            start
+          ).catch(() => {}),
+    ]).catch(() => {})
     await controller.resultReadyPromise
     return controller.getResults(start)
   }
@@ -780,7 +861,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           if (results >= 2) {
             ownController.abort()
           }
-        } catch (e) { }
+        } catch (e) {}
       },
       tolerance
     )
@@ -808,7 +889,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       ...opts,
       enableTradeZaps: false,
       endPosition: yieldPosition,
-    });
+    })
   }
 
   public async zapIntoRToken(
@@ -822,6 +903,13 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     const slippage = toTxArgs.internalTradeSlippage
     await this.universe.initialized
     this.checkIfSimulationSupported()
+
+    const invalue = parseFloat(
+      (await this.fairPrice(userInput))?.toString() ?? '0'
+    )
+    if (invalue > 199999 && toTxArgs.minSearchTime == null) {
+      toTxArgs.minSearchTime = 5000
+    }
 
     const controller = createConcurrentStreamingEvaluator(this, toTxArgs)
 
@@ -842,16 +930,16 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     const doTrades = opts?.enableTradeZaps !== false
     const tradeZap = doTrades
       ? this.findTokenZapViaTrade(
-        userInput,
-        rToken,
-        userAddress,
-        slippage,
-        controller.onResult,
-        controller.abortController.signal,
-        start
-      ).catch((e) => {
-        errors.push(e)
-      })
+          userInput,
+          rToken,
+          userAddress,
+          slippage,
+          controller.onResult,
+          controller.abortController.signal,
+          start
+        ).catch((e) => {
+          errors.push(e)
+        })
       : Promise.resolve()
     void Promise.all([mintZap, tradeZap]).then(() => {
       if (!controller.abortController.signal.aborted) {
@@ -904,7 +992,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     const unitBasket = await mintAction.rTokenDeployment
       .unitBasket()
       .catch((e) => {
-        // console.log(e)
+        this.debugLog(e)
         throw e
       })
     await this.findSingleInputToBasketGivenBasketUnit(
@@ -915,6 +1003,9 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       async (inputQuantityToBasketTokens) => {
         const tradingBalances = new TokenAmounts()
         tradingBalances.add(inputTokenQuantity)
+        if (inputQuantityToBasketTokens.firstTrade != null) {
+          await inputQuantityToBasketTokens.firstTrade.exchange(tradingBalances)
+        }
         await inputQuantityToBasketTokens.trading.exchange(tradingBalances)
         await inputQuantityToBasketTokens.minting.exchange(tradingBalances)
 
@@ -922,7 +1013,9 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           rTokenActions.mint,
         ]).quote(
           mintAction.inputToken.map((token) => tradingBalances.get(token)),
-          endPosition !== rToken ? this.config.addresses.executorAddress : signerAddress
+          endPosition !== rToken
+            ? this.config.addresses.executorAddress
+            : signerAddress
         )
         await rTokenMint.exchange(tradingBalances)
 
@@ -942,7 +1035,6 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
 
             await lastStep.exchange(lastMintBals)
 
-
             const outputReordered = [
               lastMintBals.get(endPosition),
               ...lastMintBals
@@ -952,10 +1044,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
             const updatedMinting = new SwapPaths(
               this.universe,
               inputQuantityToBasketTokens.trading.outputs,
-              [
-                ...inputQuantityToBasketTokens.minting.swapPaths,
-                rTokenMint,
-              ],
+              [...inputQuantityToBasketTokens.minting.swapPaths, rTokenMint],
               rTokenMint.outputs,
               rTokenMint.outputValue,
               this.universe.execAddress
@@ -965,28 +1054,40 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
               this.universe,
               [inputTokenQuantity],
               [
+                ...(inputQuantityToBasketTokens.firstTrade
+                  ? [inputQuantityToBasketTokens.firstTrade]
+                  : []),
                 ...inputQuantityToBasketTokens.trading.swapPaths,
                 ...updatedMinting.swapPaths,
-                lastStep
+                lastStep,
               ],
               outputReordered,
               lastStep.outputValue,
               signerAddress
             )
 
-
             const parts = {
+              setup: inputQuantityToBasketTokens.firstTrade,
               trading: inputQuantityToBasketTokens.trading,
               minting: updatedMinting,
               outputMint: lastStep,
               full,
             }
 
-            await onResult(new MintZap(this, userInput, parts, signerAddress, endPosition, startTime, abort))
+            await onResult(
+              new MintZap(
+                this,
+                userInput,
+                parts,
+                signerAddress,
+                endPosition,
+                startTime,
+                abort
+              )
+            )
           }
-          return;
+          return
         }
-
 
         const outputReordered = [
           tradingBalances.get(rToken),
@@ -999,6 +1100,9 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
           this.universe,
           [inputTokenQuantity],
           [
+            ...(inputQuantityToBasketTokens.firstTrade
+              ? [inputQuantityToBasketTokens.firstTrade]
+              : []),
             ...inputQuantityToBasketTokens.trading.swapPaths,
             ...inputQuantityToBasketTokens.minting.swapPaths,
             rTokenMint,
@@ -1009,6 +1113,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         )
 
         const parts = {
+          setup: inputQuantityToBasketTokens.firstTrade,
           trading: inputQuantityToBasketTokens.trading,
           minting: inputQuantityToBasketTokens.minting,
           outputMint: rTokenMint,
@@ -1175,8 +1280,6 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       if (inValue != 0 && outValue != 0) {
         const ratio = outValue / inValue
         if (ratio < rejectRatio) {
-
-
           this.debugLog(path.toString())
           this.debugLog(
             `Found trade: ${input} ${inValue} -> ${path.outputs.join(
@@ -1200,12 +1303,16 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         destination,
         emitResult,
         maxHops
-      ).catch((e) => { }),
+      ).catch((e) => {
+        console.log(e)
+      }),
       this.externalQuoters_(input, output, emitResult, {
         dynamicInput,
         abort,
         slippage,
-      }).catch((e) => { }),
+      }).catch((e) => {
+        console.log(e)
+      }),
     ])
   }
   debugLog(...args: any[]) {

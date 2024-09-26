@@ -59,6 +59,7 @@ import { solidityPack } from 'ethers/lib/utils'
 import NodeCache from 'node-cache'
 import { RouterAction } from '../action/RouterAction'
 import { SwapPlan } from '../searcher/Swap'
+import { Protocol } from '@uniswap/router-sdk'
 
 class UniswapPool {
   public constructor(
@@ -162,7 +163,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
   async planV3Trade(
     planner: Planner,
     trade: UniswapTrade,
-    input: Value | bigint
+    input: Value | bigint,
   ): Promise<Value> {
     const v3CalLRouterLib = this.gen.Contract.createLibrary(
       UniV3RouterCall__factory.connect(
@@ -170,7 +171,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
         this.universe.provider
       )
     )
-    const minOut = this.outputQty.amount
+    const minOut = this.outputQty.amount - this.outputQty.amount / 20n;
     if (trade.swaps.length === 1) {
       const route = trade.swaps[0]
       const exactInputSingleParams = {
@@ -211,7 +212,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
           this.currentQuote.to.address,
           encoded
         ),
-        `UniV3.exactInputSingle(${route})`
+        `UniV3.exactInputSingle(${trade.input} -> ${trade.output})`
       )!
     }
     const path = encodeRouteToPath(this.currentQuote)
@@ -498,7 +499,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
     if (abort.aborted) {
       throw new Error('Aborted')
     }
-    const route = await legacy.route(
+    const route = await router.route(
       inp,
       outp,
       TradeType.EXACT_INPUT,
@@ -507,10 +508,10 @@ export const setupUniswapRouter = async (universe: Universe) => {
         slippageTolerance: slip,
         deadline: Math.floor(Date.now() / 1000 + 10000),
         type: SwapType.SWAP_ROUTER_02,
+      },
+      {
+        protocols: [Protocol.V2, Protocol.V3],
       }
-      // {
-      //   protocols: [Protocol.V3],
-      // }
     )
 
     if (route == null || route.methodParameters == null) {

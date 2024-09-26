@@ -102,35 +102,6 @@
     "semi": false,
     "singleQuote": true
   },
-  "jest": {
-    "moduleNameMapper": {
-      "^(\\.{1,2}/.*)\\.js$": "$1"
-    },
-    "extensionsToTreatAsEsm": [
-      ".ts"
-    ],
-    "transform": {
-      ".ts": [
-        "ts-jest",
-        {
-          "tsconfig": "tsconfig.test.json",
-          "isolatedModules": true,
-          "useESM": true
-        }
-      ]
-    },
-    "testEnvironment": "node",
-    "transformIgnorePatterns": [
-      ".json",
-      "node_modules",
-      "build"
-    ],
-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.ts$",
-    "moduleFileExtensions": [
-      "js",
-      "ts"
-    ]
-  },
   "scripts": {
     "clean": "rm -rf dist/ lib.esm/ lib.commonjs/ types/",
     "build:types": "tsc --project tsconfig.types.json",

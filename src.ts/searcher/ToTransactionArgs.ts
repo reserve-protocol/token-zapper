@@ -13,6 +13,7 @@ export type ToTransactionArgs = Partial<{
   };
 
   enableTradeZaps?: boolean;
+  minSearchTime?: number;
 
 
   endPosition?: Token

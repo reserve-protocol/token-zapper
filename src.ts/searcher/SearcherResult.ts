@@ -39,6 +39,7 @@ import {
   Contract,
   LiteralValue,
   Planner,
+  ReturnValue,
   Value,
   encodeArg,
   printPlan,
@@ -52,7 +53,9 @@ import { FEE_SCALE } from '../base/constants'
 import { MintRTokenAction } from '../action/RTokens'
 
 const zapperInterface = Zapper__factory.createInterface()
-
+const needsZeroedOutFirst = new Set([
+  Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7'),
+])
 class Step {
   constructor(
     readonly inputs: TokenQuantity[],
@@ -176,6 +179,9 @@ export abstract class BaseSearcherResult {
     this.allApprovals = allApprovals
     this.commands = steps
     for (const step of steps) {
+      for (const token of step.action.approvals.map((i) => i.token).flat()) {
+        potentialResidualTokens.add(token)
+      }
       for (const qty of step.inputs) {
         if (qty.token === this.universe.nativeToken) {
           continue
@@ -200,8 +206,16 @@ export abstract class BaseSearcherResult {
   }
 
   async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
+    this.searcher.debugLog(
+      `Running simulation for: ${this.userInput} -> ${this.outputToken}`
+    )
     const resp = await this.universe.simulateZapFn(opts)
 
+    if (process.env.DEBUG_SIMULATION) {
+      this.searcher.debugLog(
+        printPlan(this.planner, this.universe).join('\n') + '\n\n\n'
+      )
+    }
     // If the response starts with a pointer to the first location of the output tuple
     // when we know if can be decoded by the zapper interface
     if (
@@ -212,24 +226,10 @@ export abstract class BaseSearcherResult {
       return zapperInterface.decodeFunctionResult('zapERC20', resp)
         .out as ZapperOutputStructOutput
     }
-    // console.log({
-    //   block: this.blockNumber,
-    //   data: opts.data,
-    //   value: opts.value,
-    //   to: opts.to,
-    //   from: opts.from,
-    // })
-    this.searcher.debugLog(
-      `Running simulation for: ${this.userInput} -> ${this.outputToken}`
-    )
+    let errorMsg = ''
 
     // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
 
-    if (process.env.DEBUG_SIMULATION) {
-      this.searcher.debugLog(
-        printPlan(this.planner, this.universe).join('\n') + '\n\n\n'
-      )
-    }
     // Try and decode the error message
     if (resp.startsWith('0xef3dcb2f')) {
       // uint, address, _, uint, bytes...
@@ -242,12 +242,11 @@ export abstract class BaseSearcherResult {
         10 + 64 * 4,
         10 + 64 * 4 + errorMsgLen * 2
       )
-      const errorMsg = Buffer.from(errorMsgCharsInHex, 'hex').toString()
+      const errorMsg2 = Buffer.from(errorMsgCharsInHex, 'hex').toString()
 
-      const msg = `${cmdIdx}: failed calling '${addr}'. Error: '${errorMsg}'`
-      this.searcher.debugLog(msg)
+      const msg = `${cmdIdx}: failed calling '${addr}'. Error: '${errorMsg2}'`
 
-      throw new Error(msg)
+      errorMsg = msg
     } else if (resp.startsWith('0x08c379a0')) {
       const errorMsgLen = Number(BigInt('0x' + resp.slice(10 + 64)))
       const errorMsgCharsInHex = resp.slice(
@@ -255,30 +254,31 @@ export abstract class BaseSearcherResult {
         10 + 64 + 64 + errorMsgLen * 2
       )
       const msg = Buffer.from(errorMsgCharsInHex, 'hex').toString()
-      this.searcher.debugLog(msg)
       if (msg.includes('LPStakingTime')) {
-        console.error('Stargate staking contract out of funds.. Aborting')
-        throw new ThirdPartyIssue('Stargate out of funds')
+        errorMsg = 'Stargate out of funds'
+      } else {
+        errorMsg = msg
       }
-
-      throw new Error(msg)
     } else {
-      this.searcher.debugLog(resp)
+      errorMsg = `Unknown error: '${resp}`
 
       if (resp.length / 128 > 100) {
-        throw new Error('Failed to decode response')
-      }
-      // Try and randomly see if we can find something that looks like a string 🙃
-      for (let i = 10; i < resp.length; i += 128) {
-        const len = BigInt('0x' + resp.slice(i, i + 64))
-        if (len != 0n && len < 256n) {
-          const data = resp.slice(i + 64, i + 64 + Number(len) * 2)
-          const msg = Buffer.from(data, 'hex').toString()
-          throw new Error(msg)
+      } else {
+        // Try and randomly see if we can find something that looks like a string 🙃
+        for (let i = 10; i < resp.length; i += 128) {
+          const len = BigInt('0x' + resp.slice(i, i + 64))
+          if (len != 0n && len < 256n) {
+            const data = resp.slice(i + 64, i + 64 + Number(len) * 2)
+            const msg = Buffer.from(data, 'hex').toString()
+            errorMsg = msg
+          }
         }
       }
-      throw new Error(`Failed for unknown reasons: '${resp}`)
     }
+    this.searcher.debugLog('Simulation failed with:')
+    this.searcher.debugLog(errorMsg)
+
+    throw new Error(errorMsg)
   }
 
   protected async simulateAndParse(options: ToTransactionArgs, data: string) {
@@ -391,6 +391,9 @@ export abstract class BaseSearcherResult {
           this.universe.provider
         )
       )
+      if (needsZeroedOutFirst.has(approval.token.address)) {
+        this.planner.add(token.approve(approval.spender.address, 0))
+      }
       this.planner.add(
         token.approve(approval.spender.address, constants.MaxUint256)
       )
@@ -479,7 +482,6 @@ export abstract class BaseSearcherResult {
       const data = this.encodeCall(options, params)
       const tx = this.encodeTx(data, 3000000n)
       await this.checkIfSearchIsAborted()
-      // console.log(params)
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
       let dust = this.potentialResidualTokens.map((qty) => qty)
@@ -809,6 +811,7 @@ export class MintZap extends BaseSearcherResult {
     readonly searcher: Searcher<Universe<Config>>,
     readonly userInput: TokenQuantity,
     readonly parts: {
+      setup: SwapPath | null
       trading: SwapPaths
       minting: SwapPaths
       outputMint: SwapPath
@@ -837,29 +840,57 @@ export class MintZap extends BaseSearcherResult {
 
     try {
       const totalUsedInMinting = new TokenAmounts()
-      const numberOfUsers = new DefaultMap<Token, number>(() => 0)
+      const totalUsedAsInputs = new TokenAmounts()
+      const actionsUsingThisInputExcludingRTokenMint = new DefaultMap<
+        Token,
+        Set<SingleSwap>
+      >(() => new Set())
       const totalUsers = new DefaultMap<Token, number>(() => 0)
 
       const rTokenInputs = new Set<Token>()
-      for (const mintPath of this.parts.minting.swapPaths) {
-        for (const step of mintPath.steps) {
-          totalUsedInMinting.addQtys(step.inputs)
 
-          for (const { token } of step.inputs) {
-            numberOfUsers.set(token, numberOfUsers.get(token) + 1)
+      for (const paths of [
+        ...this.parts.minting.swapPaths,
+        this.parts.outputMint,
+      ]) {
+        for (const step of paths.steps) {
+          totalUsedInMinting.addQtys(step.inputs)
+        }
+      }
+      for (const paths of this.parts.full.swapPaths) {
+        for (const step of paths.steps) {
+          for (const qty of step.inputs) {
+            const token = qty.token
+            totalUsedAsInputs.add(qty)
+
             totalUsers.set(token, totalUsers.get(token) + 1)
             if (step.action instanceof MintRTokenAction) {
               rTokenInputs.add(token)
+            } else {
+              actionsUsingThisInputExcludingRTokenMint.get(token).add(step)
             }
           }
         }
       }
       const mintingBalances = new TokenAmounts()
-      if (totalUsedInMinting.tokenBalances.has(this.userInput.token)) {
-        mintingBalances.tokenBalances.set(this.userInput.token, this.userInput)
+
+      if (this.parts.setup != null) {
+        if (
+          totalUsedInMinting.tokenBalances.has(this.parts.setup.inputs[0].token)
+        ) {
+          mintingBalances.tokenBalances.set(
+            this.userInput.token,
+            this.parts.setup.inputs[0]
+          )
+        }
+      } else {
+        if (totalUsedInMinting.tokenBalances.has(this.userInput.token)) {
+          mintingBalances.tokenBalances.set(
+            this.userInput.token,
+            this.userInput
+          )
+        }
       }
-      const tradingBalances = new TokenAmounts()
-      tradingBalances.add(this.userInput)
 
       const trades = new Map<Token, Value>()
       await this.setupApprovals()
@@ -869,23 +900,6 @@ export class MintZap extends BaseSearcherResult {
           this.universe.config.addresses.executorAddress.address,
           this.universe.provider
         )
-      )
-
-      const allBalanceValues = new Map<Token, Value>()
-      allBalanceValues.set(
-        this.userInput.token,
-        encodeArg(this.userInput.amount, ParamType.from('uint256'))
-      )
-      const tradeBalanceValues = new Map<Token, Value>()
-      tradeBalanceValues.set(
-        this.userInput.token,
-        encodeArg(this.userInput.amount, ParamType.from('uint256'))
-      )
-
-      const splitTrades = new DefaultMap<Token, number>(() => 0)
-      const splitTradesUsed = new DefaultMap<Token, number>(() => 0)
-      const splitTradesTotal = new DefaultMap<Token, TokenQuantity>(
-        (t) => t.zero
       )
 
       const allTrades = this.parts.trading.swapPaths
@@ -900,16 +914,38 @@ export class MintZap extends BaseSearcherResult {
             ...allTrades.filter((i) => i.supportsDynamicInput),
           ]
 
-      for (const trade of tradesToGenerate) {
-        const current = splitTrades.get(trade.outputs[0].token)
-        const curretAmtUsed = splitTradesTotal.get(trade.outputs[0].token)
-        splitTrades.set(trade.outputs[0].token, current + 1)
-        splitTradesTotal.set(
-          trade.outputs[0].token,
-          curretAmtUsed.add(trade.outputs[0])
+      const dynamicTradeInputSplits = new Map<Token, Value>()
+      if (this.parts.setup != null) {
+        this.planner.addComment(
+          'Setup section: change the input to make searcher results better'
         )
+        let input = [
+          new LiteralValue(
+            ParamType.fromString('uint256'),
+            defaultAbiCoder.encode(
+              ['uint256'],
+              [this.parts.setup.inputs[0].amount]
+            )
+          ),
+        ]
+        for (let i = 0; i < this.parts.setup.inputs.length; i++) {
+          const step = this.parts.setup.steps[i]
+          let output = await step.action.planWithOutput(
+            this.universe,
+            this.planner,
+            input,
+            this.universe.config.addresses.executorAddress,
+            this.parts.setup.inputs
+          )
+          for (let j = 0; j < step.outputs.length; j++) {
+            const outputValue = output[j]
+            dynamicTradeInputSplits.set(step.action.outputToken[j], outputValue)
+            trades.set(step.action.outputToken[j], outputValue)
+          }
+        }
       }
 
+      this.planner.addComment('Trading section: input to precursor set')
       for (const trade of tradesToGenerate) {
         for (const step of trade.steps) {
           await this.checkIfSearchIsAborted()
@@ -923,51 +959,62 @@ export class MintZap extends BaseSearcherResult {
             defaultAbiCoder.encode(['uint256'], [tradeInput.amount])
           )
 
-          const users = splitTrades.get(inputToken)
-          const previousTradeGeneratingThisInput = trades.get(inputToken)
+          const qtyKnownAtCompileTime = inputToken === this.inputToken
+          const supportsDynamicInput = step.action.supportsDynamicInput
 
-          let dontGenerateBalanceOf = inputToken === this.inputToken
-          if (users >= 2) {
-            if (
-              !dontGenerateBalanceOf &&
-              previousTradeGeneratingThisInput != null
-            ) {
-              inputsVal = previousTradeGeneratingThisInput
-            }
-            splitTradesUsed.set(inputToken, splitTradesUsed.get(inputToken) + 1)
+          const usersLeft =
+            actionsUsingThisInputExcludingRTokenMint.get(inputToken).size
+          actionsUsingThisInputExcludingRTokenMint.get(inputToken).delete(step)
 
-            // If we're still sharing with others, split the input
-            if (splitTradesUsed.get(inputToken) !== users) {
-              const total = splitTradesTotal.get(inputToken)
-              const fraction = step.inputs[0].div(total).asNumber()
-              const bnFact = parseEther(fraction.toFixed(18)).toBigInt()
+          const needsToSplit = usersLeft > 1
 
-              inputsVal = dontGenerateBalanceOf
-                ? inputsVal
-                : this.planner.add(
-                    zapperLib.fpMul(inputsVal, bnFact, ONE_Val),
-                    `${fraction.toFixed(
-                      2
-                    )}% of ${inputToken} into ${step.action.toString()}`,
-                    `split_${step.outputs[0].token.symbol}`
-                  )!
+          // If we're still sharing with others, split the input
+          if (!qtyKnownAtCompileTime) {
+            if (needsToSplit) {
+              const dynValue =
+                dynamicTradeInputSplits.get(inputToken) ??
+                plannerUtils.erc20.balanceOf(
+                  this.universe,
+                  this.planner,
+                  inputToken,
+                  this.universe.config.addresses.executorAddress
+                )
+              dynamicTradeInputSplits.set(inputToken, dynValue)
+
+              if (supportsDynamicInput) {
+                const total = totalUsedAsInputs
+                  .get(inputToken)
+                  .add(totalUsedInMinting.get(inputToken))
+                const fractionTokenQty = step.inputs[0].div(total)
+                const fraction = fractionTokenQty.toScaled(ONE)
+
+                inputsVal = this.planner.add(
+                  zapperLib.fpMul(dynValue, fraction, ONE_Val),
+                  `${(fractionTokenQty.asNumber() * 100).toFixed(
+                    2
+                  )}% of ${inputToken} into ${step.action.toString()}`,
+                  `split_${step.outputs[0].token.symbol}`
+                )!
+              }
             } else {
-              // Last user gets to use the rest
-              inputsVal = dontGenerateBalanceOf
-                ? inputsVal
-                : plannerUtils.erc20.balanceOf(
-                    this.universe,
-                    this.planner,
-                    inputToken,
-                    this.universe.config.addresses.executorAddress
-                  )
-              fullyConsumed.add(inputToken)
+              if (supportsDynamicInput) {
+                // Last user gets to use the rest
+                inputsVal = plannerUtils.erc20.balanceOf(
+                  this.universe,
+                  this.planner,
+                  inputToken,
+                  this.universe.config.addresses.executorAddress
+                )
+              }
             }
           }
 
+          if (!needsToSplit && !rTokenInputs.has(inputToken)) {
+            fullyConsumed.add(inputToken)
+          }
+
           const outputs = await step.action
-            .planWithOutput(
-              this.universe,
+            .plan(
               this.planner,
               [inputsVal],
               this.universe.config.addresses.executorAddress,
@@ -978,47 +1025,21 @@ export class MintZap extends BaseSearcherResult {
               console.log(a.stack)
               throw a
             })
-          if (outputs == null || outputs.length === 0) {
-            throw new Error(
-              'TRADES MUST GENERATE OUTPUTS: ' + step.action.toString()
-            )
-          }
 
-          step.inputs.forEach((input, i) => {
-            tradingBalances.sub(input)
-          })
           step.outputs.forEach((output, i) => {
-            tradingBalances.add(output)
-            trades.set(output.token, outputs[i])
+            const actionOut = outputs != null ? outputs[i] : null
+            const usersLeft = actionsUsingThisInputExcludingRTokenMint.get(
+              output.token
+            ).size
+            if (usersLeft <= 1 && actionOut) {
+              trades.set(output.token, actionOut)
+            }
           })
         }
       }
-      for (const input of [
-        ...new Set(
-          [
-            ...this.parts.minting.inputs,
-            ...(this.parts.minting.swapPaths[0]?.inputs ?? []),
-          ].map((i) => i.token)
-        ),
-      ]) {
-        if (trades.has(input)) {
-          continue
-        }
+      dynamicTradeInputSplits.clear()
 
-        if (input === this.inputToken) {
-          continue
-        }
-
-        trades.set(
-          input,
-          plannerUtils.erc20.balanceOf(
-            this.universe,
-            this.planner,
-            input,
-            this.universe.config.addresses.executorAddress
-          )
-        )
-      }
+      this.planner.addComment('Minting section: precusor set to basket')
       for (const mintPath of this.parts.minting.swapPaths) {
         for (const step of mintPath.steps) {
           if (step.action instanceof MintRTokenAction) {
@@ -1030,15 +1051,6 @@ export class MintZap extends BaseSearcherResult {
               this.universe.config.addresses.executorAddress,
               step.inputs
             )
-            for (const input of step.action.inputToken) {
-              const usersTotal = totalUsers.get(input)
-              if (usersTotal <= 1) {
-                fullyConsumed.add(input)
-                continue
-              }
-              const usersLeft = numberOfUsers.get(input)
-              numberOfUsers.set(input, usersLeft - 1)
-            }
             for (const outputToken of step.action.outputToken) {
               trades.set(
                 outputToken,
@@ -1052,46 +1064,55 @@ export class MintZap extends BaseSearcherResult {
             }
             continue
           }
-          await this.checkIfSearchIsAborted()
-          const inputToken = step.inputs[0].token
-          let actionInput =
-            trades.get(inputToken) ??
-            encodeArg(step.inputs[0].amount, ParamType.from('uint256'))
+          const inputToken = step.action.inputToken[0]
+          const supportsDynamicInput = step.action.supportsDynamicInput
+          let actionInput = encodeArg(
+            step.inputs[0].amount,
+            ParamType.from('uint256')
+          )
 
           const total = totalUsedInMinting.get(inputToken)
 
           const inputQty = step.inputs[0]
-          const usersLeft = numberOfUsers.get(inputToken)
-          const usersTotal = totalUsers.get(inputToken)
-
-          const dontGenerateBalanceOf = inputToken === this.inputToken
-          if (usersTotal != 1) {
-            if (usersLeft === 1) {
-              if (!dontGenerateBalanceOf) {
-                actionInput = plannerUtils.erc20.balanceOf(
+          const usersLeft =
+            actionsUsingThisInputExcludingRTokenMint.get(inputToken).size
+          actionsUsingThisInputExcludingRTokenMint.get(inputToken).delete(step)
+          const generateSplit = usersLeft > 1
+          const amountIsKnowStatically = inputToken === this.inputToken
+          if (!amountIsKnowStatically) {
+            if (!generateSplit) {
+              actionInput = plannerUtils.erc20.balanceOf(
+                this.universe,
+                this.planner,
+                inputToken,
+                this.universe.config.addresses.executorAddress
+              )
+            } else {
+              const dynValue =
+                dynamicTradeInputSplits.get(inputToken) ??
+                plannerUtils.erc20.balanceOf(
                   this.universe,
                   this.planner,
                   inputToken,
                   this.universe.config.addresses.executorAddress
                 )
-              }
-              fullyConsumed.add(inputToken)
-            } else {
+              dynamicTradeInputSplits.set(inputToken, dynValue)
+
               const fraction = inputQty.div(total).asNumber()
               const bnFact = parseEther(fraction.toFixed(18)).toBigInt()
-              if (!dontGenerateBalanceOf) {
+              if (amountIsKnowStatically) {
                 actionInput = this.planner.add(
-                  zapperLib.fpMul(actionInput, bnFact, ONE_Val),
+                  zapperLib.fpMul(dynValue, bnFact, ONE_Val),
                   `${(fraction * 100).toFixed(
                     2
                   )}% of ${inputToken} into ${step.action.toString()}`,
                   `frac_${step.outputs[0].token.symbol}`
                 )!
               }
-
-              numberOfUsers.set(inputToken, usersLeft - 1)
             }
-          } else {
+          }
+
+          if (!generateSplit && !rTokenInputs.has(inputToken) && step.action.approvals.length === 1) {
             fullyConsumed.add(inputToken)
           }
           const result = await step.action
@@ -1105,35 +1126,11 @@ export class MintZap extends BaseSearcherResult {
               console.log(`${step.action.toString()}.plan failed`)
               throw a
             })
-          for (let i = 0; i < step.outputs.length; i++) {
-            const outTok = step.outputs[i].token
-            if (outTok === this.inputToken) {
-              continue
-            }
-            if (result) {
-              trades.set(outTok, result[i])
-            } else {
-              if (rTokenInputs.has(outTok)) {
-                continue
-              }
-              const usersLeft = numberOfUsers.get(outTok) ?? 0
-              if (!fullyConsumed.has(outTok) && usersLeft !== 0) {
-                trades.set(
-                  outTok,
-                  plannerUtils.erc20.balanceOf(
-                    this.universe,
-                    this.planner,
-                    outTok,
-                    this.universe.config.addresses.executorAddress
-                  )
-                )
-              }
-            }
-          }
-
           if (result) {
-            if (result.length !== step.outputs.length) {
-              throw new Error('MINT MUST GENERATE ALL OUTPUTS')
+            for (let i = 0; i < step.outputs.length; i++) {
+              const outTok = step.outputs[i].token
+
+              trades.set(outTok, result[i])
             }
           }
         }
@@ -1145,13 +1142,12 @@ export class MintZap extends BaseSearcherResult {
         const destAddr = step.action.outputToken.includes(this.outputToken)
           ? this.signer
           : thisAddr
-        const out = await step.action.plan(
+        await step.action.plan(
           this.planner,
           step.inputs.map((i) => {
             let out = trades.get(i.token)
             if (out == null) {
               if (step.action.supportsDynamicInput) {
-                fullyConsumed.add(i.token)
                 out = plannerUtils.erc20.balanceOf(
                   this.universe,
                   this.planner,
@@ -1161,21 +1157,15 @@ export class MintZap extends BaseSearcherResult {
               } else {
                 out = encodeArg(i.amount, ParamType.from('uint256'))
               }
-            } else {
-              fullyConsumed.add(i.token)
             }
             return out
           }),
           destAddr,
           step.inputs
         )
-
-        if (destAddr !== thisAddr) {
-          continue
-        }
-        for (let i = 0; i < step.outputs.length; i++) {
-          if (out) {
-            trades.set(step.outputs[i].token, out[i])
+        if (!(step.action instanceof MintRTokenAction)) {
+          for (const inputToken of step.action.inputToken) {
+            fullyConsumed.add(inputToken)
           }
         }
       }
@@ -1189,6 +1179,7 @@ export class MintZap extends BaseSearcherResult {
     ) {
       fullyConsumed.add(this.outputToken)
     }
+    console.log("fullyConsumed", [...fullyConsumed].join(', '))
     return await this.createZapTransaction(options, fullyConsumed)
   }
 }

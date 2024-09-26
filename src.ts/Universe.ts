@@ -90,11 +90,12 @@ export class Universe<const UniverseConf extends Config = Config> {
       }
     }
   }
-  public createCache<Key, Result>(
-    fetch: (key: Key) => Promise<Result>,
-    ttl: number = this.config.requoteTolerance
-  ): BlockCache<Key, Result> {
-    const cache = new BlockCache(fetch, ttl, this.currentBlock)
+  public createCache<Input, Result, Key=Input>(
+    fetch: (key: Input) => Promise<Result>,
+    ttl: number = this.config.requoteTolerance,
+    keyFn?: (key: Input) => Key
+  ): BlockCache<Input, Result, Key> {
+    const cache = new BlockCache<Input, Result, Key>(fetch, ttl, this.currentBlock, keyFn as any)
     this.caches.push(cache)
     return cache
   }
@@ -283,6 +284,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
   }
 
+  public preferredRTokenInputToken = new Map<Token, Token>()
+
   public readonly integrations: Integrations = {}
   private readonly rTokenDeployments = new Map<Token, RTokenDeployment>()
   public async defineRToken(rTokenAddress: Address) {
@@ -321,12 +324,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     return value!
   }
 
-  async refresh(entity: Address) {
-    const refreshable = this.refreshableEntities.get(entity)
-    if (refreshable == null) {
-      return
-    }
-    await refreshable.refresh(this.currentBlock)
+  public async balanceOf(token: Token, account: Address) {
+    return await this.approvalsStore.queryBalance(token, account, this)
   }
 
   private readonly blockState = {

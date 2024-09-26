@@ -453,7 +453,7 @@ export const setupAerodromeRouter = async (universe: Universe) => {
               return null
             }
             const ratio = parseFloat(outputValue.format()) / inpValue
-            if (ratio < 0.95) {
+            if (ratio > 0.98) {
               return outputs.push(AerodromePath.from(route, parts))
             }
             const id = computeIdFromRoute(route)
@@ -466,13 +466,9 @@ export const setupAerodromeRouter = async (universe: Universe) => {
         })
       )
 
-      outputs.sort((a, b) => a.compare(b))
-
       if (outputs.length == 0) {
         throw new Error('No results')
       }
-      console.log('Aerodrome generated out:')
-      console.log(outputs.map((i) => `  ${i}`).join('\n'))
 
       const outAction = new AerodromeRouterSwap(
         universe,

@@ -49,7 +49,7 @@ export const ethWhales = {
     '0x78bb3aec3d855431bd9289fd98da13f9ebb7ef15',
   // frxeth
   '0x5e8422345238f34275888049021821e8e08caa1f':
-    '0x4d9f9d15101eec665f77210cb999639f760f831e',
+    '0x36cb65c1967a0fb0eee11569c51c2f2aa1ca6f6d',
   // weth
   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2':
     '0x8eb8a3b98659cce290402893d0123abb75e3ab28',
@@ -116,7 +116,7 @@ const getSymbol = new Map(
     .concat(Object.entries(ethereumConfig.addresses.rTokens))
     .map(([k, v]) => [v, k])
 )
-getSymbol.set(Address.from("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"), "ETH")
+getSymbol.set(Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'), 'ETH')
 
 const makeMintTestCase = (
   input: number,
@@ -130,12 +130,11 @@ const makeMintTestCase = (
   }
 }
 
-
 const makeZapIntoYieldPositionTestCase = (
   input: number,
   inputToken: Address,
   rToken: Address,
-  output: Address,
+  output: Address
 ) => {
   return {
     input,
@@ -153,7 +152,11 @@ const issueanceCases = [
   makeMintTestCase(10000, t.USDC, rTokens.USD3),
   makeMintTestCase(10000, t.DAI, rTokens.USD3),
 
-  makeMintTestCase(5, Address.from("0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"), rTokens['ETH+']),
+  makeMintTestCase(
+    5,
+    Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
+    rTokens['ETH+']
+  ),
   makeMintTestCase(5, t.WETH, rTokens['ETH+']),
   makeMintTestCase(5, t.steth, rTokens['ETH+']),
   makeMintTestCase(5, t.reth, rTokens['ETH+']),
@@ -189,6 +192,7 @@ const redeemCases = [
 
 const zapIntoYieldPositionCases = [
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens.dgnETH, t.sdgnETH),
+  makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens['ETH+'], t['ETH+ETH-f']),
 ]
 
 const INPUT_MUL = process.env.INPUT_MULTIPLIER
@@ -285,14 +289,19 @@ describe('ethereum zapper', () => {
   for (const zapIntoYieldPosition of zapIntoYieldPositionCases) {
     const testCaseName = `zap ${getSymbol.get(
       zapIntoYieldPosition.inputToken
-    )!} via ${getSymbol.get(zapIntoYieldPosition.rToken)!} into ${getSymbol.get(zapIntoYieldPosition.output)!} yield position`
+    )!} via ${getSymbol.get(zapIntoYieldPosition.rToken)!} into ${getSymbol.get(
+      zapIntoYieldPosition.output
+    )!} yield position`
     describe(testCaseName, () => {
       it(
         'produces an output',
         async () => {
           expect.assertions(1)
           await universe.initialized
-          await universe.updateBlockState(await universe.provider.getBlockNumber(), (await universe.provider.getGasPrice()).toBigInt())
+          await universe.updateBlockState(
+            await universe.provider.getBlockNumber(),
+            (await universe.provider.getGasPrice()).toBigInt()
+          )
 
           const input = universe.tokens
             .get(zapIntoYieldPosition.inputToken)
@@ -325,5 +334,5 @@ describe('ethereum zapper', () => {
 
 afterAll(() => {
   console.log = log
-    ; (universe.provider as WebSocketProvider).websocket.close()
+  ;(universe.provider as WebSocketProvider).websocket.close()
 })

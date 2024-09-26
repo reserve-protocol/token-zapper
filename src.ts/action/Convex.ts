@@ -34,7 +34,7 @@ export class ConvexDepositAndStake extends Action('Convex') {
         this.universe.provider
       )
     )
-    planner.add(lib.deposit(inputs[0], destination.address))
+    planner.add(lib.deposit(inputs[0], destination.address), "ConvexDepositAndStake.deposit")
     return [inputs[0]]
   }
   toString(): string {

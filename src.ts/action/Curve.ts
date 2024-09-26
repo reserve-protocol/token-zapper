@@ -187,9 +187,9 @@ export class CurveSwap extends Action('Curve') {
       )
     )
 
-    const [quoteWithout] = await this.quote(predicted)
+    const [quoteWithout] = await this.quoteWithSlippage(predicted)
 
-    const minOut = quoteWithout.amount - quoteWithout.amount / 50n
+    const minOut = quoteWithout.amount;
     const out = planner.add(
       curveRouterCallLib.exchange(
         inputs[0] ?? predicted[0].amount,

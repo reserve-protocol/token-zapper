@@ -70,6 +70,13 @@ export class LiteralValue implements Value {
   }
 }
 
+export class TupleLiteral implements Value {
+  constructor(
+    public readonly param: ParamType,
+    public readonly values: Value[]
+  ) {}
+}
+
 export class ReturnValue implements Value {
   readonly param: ParamType
   readonly command: Command // Function call we want the return value of
@@ -135,24 +142,35 @@ export class FunctionCall {
   readonly flags: CommandFlags
   /** An ethers.js Fragment that describes the function being called. */
   readonly fragment: FunctionFragment
-  /** An array of arguments to the function. */
-  readonly args: Value[]
+
   /** If the call type is a call-with-value, this property holds the value that will be passed. */
   readonly callvalue?: Value
+  readonly args: Value[]
 
   /** @hidden */
   constructor(
     contract: Contract,
     flags: CommandFlags,
     fragment: FunctionFragment,
-    args: Value[],
+    public readonly inArgs: Value[],
     callvalue?: Value
   ) {
     this.contract = contract
     this.flags = flags
     this.fragment = fragment
-    this.args = args
     this.callvalue = callvalue
+
+    this.args = []
+    const emitArg = (arg: Value) => {
+      if (arg instanceof TupleLiteral) {
+        for (const value of arg.values) {
+          emitArg(value)
+        }
+      } else {
+        this.args.push(arg)
+      }
+    }
+    inArgs.forEach(emitArg)
   }
 
   /**
@@ -228,12 +246,28 @@ function isDynamicType(param?: ParamType): boolean {
   return ['string', 'bytes'].includes(param.baseType)
 }
 
-function abiEncodeSingle(param: ParamType, value: any): LiteralValue {
-  if (isDynamicType(param)) {
+function abiEncodeSingle(
+  param: ParamType,
+  value: any
+): LiteralValue | TupleLiteral {
+  const isDyn = isDynamicType(param)
+  if (isDyn) {
     return new LiteralValue(
       param,
       hexDataSlice(defaultAbiCoder.encode([param], [value]), 32)
     )
+  }
+  if (param.type === 'tuple') {
+    const components = Object.values(value).map((v, i) =>
+      encodeArg(v, param.components[i])
+    )
+    return new TupleLiteral(param, components)
+  }
+  if (param.baseType === 'array') {
+    const components = Object.values(value).map((v) =>
+      encodeArg(v, param.arrayChildren)
+    )
+    return new TupleLiteral(param, components)
   }
   return new LiteralValue(param, defaultAbiCoder.encode([param], [value]))
 }
@@ -515,6 +549,20 @@ export class Planner {
   commands: Command[]
   comments: (string | undefined)[] = []
   returnVals = new Map<Command, ReturnValue>()
+
+  headerComments: string[] = [];
+  globalComments = new Map<Command, string[]>();
+
+  addComment(comment: string) {
+    if (this.commands.length === 0) {
+      this.headerComments.push(comment);
+      return;
+    }
+    const comments = this.globalComments.get(this.commands[this.commands.length - 1]) ?? [];
+    comments.push(comment);
+    this.globalComments.set(this.commands[this.commands.length - 1], comments);
+  }
+  
 
   constructor() {
     this.state = new StateValue()
@@ -920,176 +968,6 @@ export class Planner {
   }
 }
 
-const makeTokenUsersTracker = () =>
-  new DefaultMap<
-    Token,
-    {
-      inputsNeedSplit: boolean
-      users: SwapPath[]
-      total: number
-      fractionFor: (user: SwapPath) => {
-        fraction: number
-        quantity: TokenQuantity
-      }
-      addUser: (user: SwapPath) => void
-    }
-  >((token: Token) => {
-    const state = {
-      users: [] as SwapPath[],
-      total: 0 as number,
-    }
-    const fractionFor = (user: SwapPath) => {
-      const userStats =
-        state.users.length === 0
-          ? undefined
-          : user.inputs.find((input) => input.token === token)
-      if (userStats === undefined) {
-        return {
-          fraction: 0,
-          quantity: token.zero,
-        }
-      }
-      if (state.users.length === 1) {
-        return {
-          fraction: 1,
-          quantity: userStats,
-        }
-      }
-      const userInput = parseFloat(userStats.format())
-      const total = state.total
-
-      const fraction = userInput / total
-
-      return {
-        fraction,
-        quantity: token.from(
-          BigInt((fraction * total).toFixed(token.decimals))
-        ),
-      }
-    }
-    return {
-      get total() {
-        return state.total
-      },
-      get users() {
-        return state.users
-      },
-      get inputsNeedSplit() {
-        return state.users.length <= 1
-      },
-      fractionFor,
-      addUser: (user: SwapPath) => {
-        const inpToken = user.inputs.find((input) => input.token === token)
-        if (inpToken === undefined) {
-          throw new Error('Token not found in user')
-        }
-        state.users.push(user)
-        state.total += parseFloat(
-          user.inputs.find((input) => input.token === token)!.format()
-        )
-      },
-    }
-  })
-
-export class StatefullPlanner {
-  public readonly balanceValues: Map<Token, Value> = new DefaultMap(() =>
-    encodeArg(0, ParamType.from('uint256'))
-  )
-  public readonly predictedTokenBalances: TokenAmounts = new TokenAmounts()
-  public readonly tokensHeldByExecutor: Set<Token> = new Set()
-
-  private constructor(
-    public readonly planner: Planner,
-    public readonly universe: Universe,
-    public readonly phases: SwapPaths[],
-    public readonly userInput: TokenQuantity
-  ) {
-    this.addInputQuantity(userInput)
-  }
-
-  public static create(
-    planner: Planner,
-    universe: Universe,
-    phases: SwapPaths[],
-    userInput: TokenQuantity
-  ) {
-    return new StatefullPlanner(planner, universe, phases, userInput)
-  }
-
-  private addInputQuantity(value: TokenQuantity) {
-    this.predictedTokenBalances.add(value)
-    this.balanceValues.set(
-      value.token,
-      encodeArg(
-        this.predictedTokenBalances.get(value.token)!.amount,
-        ParamType.from('uint256')
-      )
-    )
-  }
-  generatePlan(userInput: TokenQuantity) {
-    this.predictedTokenBalances.add(userInput)
-    this.tokensHeldByExecutor.add(userInput.token)
-    let initialBalances = new TokenAmounts()
-    initialBalances.add(userInput)
-
-    let workingBalances = initialBalances.clone()
-    const phases = this.phases.map((phase) => {
-      const out = this.analyzePhase(phase, workingBalances)
-      workingBalances = out.balancesPostPhase.clone()
-      return out
-    })
-
-    const finalBalances = workingBalances.clone()
-  }
-
-  private tokenUsers = new DefaultMap<Token, Set<SingleSwap>>(() => new Set())
-
-  private analyzePath(path: SwapPath) {
-    const needs = new TokenAmounts()
-    const produces = new TokenAmounts()
-    for (const input of path.steps[0].inputs) {
-      needs.add(input)
-    }
-    for (const output of path.steps[0].outputs) {
-      produces.add(output)
-    }
-    for (const step of path.steps) {
-      for (const inpt of step.inputs) {
-        this.tokenUsers.get(inpt.token).add(step)
-      }
-    }
-    return {
-      needs,
-      produces,
-    }
-  }
-
-  private analyzePhase(phase: SwapPaths, initialBalances?: TokenAmounts) {
-    const balancesPostPhase = initialBalances?.clone() ?? new TokenAmounts()
-    const needs = new TokenAmounts()
-    const produces = new TokenAmounts()
-
-    phase.swapPaths.map((path) => {
-      const { needs: pathNeeds, produces: pathProduces } =
-        this.analyzePath(path)
-      needs.addAll(pathNeeds)
-      produces.addAll(pathProduces)
-      return {
-        needs: pathNeeds,
-        produces: pathProduces,
-        path,
-      }
-    })
-    balancesPostPhase.subAll(needs)
-    balancesPostPhase.addAll(produces)
-    return {
-      balancesPostPhase,
-      needs,
-      produces,
-    }
-  }
-}
-
 const formatBytes = (bytes: string): string => {
   if (bytes.length < 64) {
     return bytes
@@ -1128,7 +1006,9 @@ const formatAddress = (address: string, universe: Universe): string => {
   return addr.toString()
 }
 const formatValue = (value: Value, universe: Universe): string => {
-  if (value instanceof ReturnValue) {
+  if (value instanceof TupleLiteral) {
+    return `(${value.values.map((i) => formatValue(i, universe)).join(', ')})`
+  } else if (value instanceof ReturnValue) {
     return value.name
   } else if (value instanceof LiteralValue) {
     if (value.param.type === 'string') {
@@ -1179,6 +1059,10 @@ const formatValue = (value: Value, universe: Universe): string => {
 export const printPlan = (plan: Planner, universe: Universe): string[] => {
   const out: string[] = []
 
+  for (const comment of plan.headerComments) {
+    out.push(`// ${comment}`)
+  }
+
   for (let i = 0; i < plan.commands.length; i++) {
     const step = plan.commands[i]
 
@@ -1206,8 +1090,8 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
     const methodName = step.call.fragment.name
     let formattedArgs: string[] = []
 
-    for (let i = 0; i < step.call.args.length; i++) {
-      const value = step.call.args[i]
+    for (let i = 0; i < step.call.inArgs.length; i++) {
+      const value = step.call.inArgs[i]
       const paramName = step.call.fragment.inputs[i].name
       // const paramType = step.call.fragment.inputs[i].type
       formattedArgs.push(paramName + ' = ' + formatValue(value, universe))
@@ -1226,14 +1110,23 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
     const formatted = `${addr}${callFlags}.${methodName}${valueParms}(${argsArray})`
 
     const retVal = plan.returnVals.get(step)
-
+    const sighash = step.call.fragment.format('sighash')
     const finalStr =
       retVal == null
-        ? `${prefix} ${formatted}`
-        : `${prefix} ${retVal.name}: ${retVal.param.type} = ${formatted}`
+        ? `${prefix} ${formatted} # sighash: ${sighash}`
+        : `${prefix} ${retVal.name}: ${
+            retVal.param.type
+          } = ${formatted} # sighash: ${step.call.contract.interface.getSighash(
+            step.call.fragment
+          )}`
     out.push(...finalStr.split('\n'))
 
     out.push('')
+
+    const postCommandComments = plan.globalComments.get(step) ?? []
+    for (const comment of postCommandComments) {
+      out.push(`// ${comment}`)
+    }
   }
 
   return out

@@ -11,6 +11,8 @@ import {
 } from '../contracts'
 import { TRADE_SLIPPAGE_DENOMINATOR } from '../base/constants'
 import { SwapPlan } from '../searcher/Swap'
+import { defaultAbiCoder, ParamType } from '@ethersproject/abi'
+import { formatEther } from 'ethers/lib/utils'
 
 export enum InteractionConvention {
   PayBeforeCall,
@@ -35,9 +37,12 @@ const useSpecialCaseBalanceOf = new Set<Address>([
   // Address.from('0x9Ba021B0a9b958B5E75cE9f6dff97C7eE52cb3E6'),
   // Address.from('0x78Fc2c2eD1A4cDb5402365934aE5648aDAd094d0'),
   // Address.from('0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7'),
-  
 ])
-
+export const ONE = 10n ** 18n
+export const ONE_Val = new gen.LiteralValue(
+  ParamType.fromString('uint256'),
+  defaultAbiCoder.encode(['uint256'], [ONE])
+)
 export const plannerUtils = {
   planForwardERC20(
     universe: Universe,
@@ -50,6 +55,31 @@ export const plannerUtils = {
       return
     }
     plannerUtils.erc20.transfer(universe, planner, amount, token, destination)
+  },
+  fraction: (
+    uni: Universe,
+    planner: gen.Planner,
+    input: gen.Value,
+    fraction: bigint,
+    comment: string,
+    name?: string
+  ) => {
+    return planner.add(
+      uni.weirollZapperExec.fpMul(input, fraction, ONE_Val),
+      `${(parseFloat(formatEther(fraction)) * 100).toFixed(2)}% ${comment}`,
+      name
+    )!
+  },
+
+  sub: (
+    uni: Universe,
+    planner: gen.Planner,
+    a: gen.Value | bigint,
+    b: gen.Value | bigint,
+    comment: string,
+    name?: string
+  ) => {
+    return planner.add(uni.weirollZapperExec.sub(a, b, ONE_Val), comment, name)!
   },
   erc20: {
     transfer(

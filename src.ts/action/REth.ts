@@ -98,7 +98,7 @@ export class ETHToRETH extends RocketPoolBase {
     return 'swapTo'
   }
   public get outputSlippage(): bigint {
-    return 0n
+    return 30n
   }
   async plan(
     planner: Planner,
@@ -180,14 +180,14 @@ export class WETHToRETH extends RocketPoolBase {
     return 'swapTo'
   }
   public get outputSlippage(): bigint {
-    return 0n
+    return 30n
   }
   async plan(
     planner: Planner,
     [input]: Value[],
     _: Address,
     [inputPrecomputed]: TokenQuantity[]
-  ): Promise<Value[]> {
+  ) {
     // We want to avoid running the optimiseToREth on-chain.
     // So rather we precompute it during searching and convert the split into two fractions
     const {
@@ -239,7 +239,7 @@ export class WETHToRETH extends RocketPoolBase {
         'RocketPool: ETH -> RETH'
       )
     }
-    return this.outputBalanceOf(this.universe, planner)
+    return null;
   }
 
   gasEstimate(): bigint {
@@ -263,6 +263,12 @@ export class WETHToRETH extends RocketPoolBase {
       []
     )
   }
+  public get supportsDynamicInput(): boolean {
+    return true
+  }
+  public get returnsOutput(): boolean {
+    return false
+  }
 }
 
 export class RETHToWETH extends RocketPoolBase {
@@ -270,14 +276,21 @@ export class RETHToWETH extends RocketPoolBase {
     return 'swapFrom'
   }
   public get outputSlippage(): bigint {
-    return 0n
+    return 30n
+  }
+
+  public get supportsDynamicInput(): boolean {
+    return true
+  }
+  public get returnsOutput(): boolean {
+    return false
   }
   async plan(
     planner: Planner,
     [input_]: Value[],
     _: Address,
     [inputPrecomputed]: TokenQuantity[]
-  ): Promise<Value[]> {
+  ) {
     const input = input_ ?? inputPrecomputed.amount
     const zapperLib = this.gen.Contract.createContract(
       ZapperExecutor__factory.connect(
@@ -336,7 +349,7 @@ export class RETHToWETH extends RocketPoolBase {
       'RocketPool: ETH -> WETH'
     )
 
-    return this.outputBalanceOf(this.universe, planner)
+    return null
   }
   gasEstimate(): bigint {
     return this.router.gasEstimate()
@@ -366,14 +379,20 @@ export class RETHToETH extends RocketPoolBase {
     return 'swapFrom'
   }
   public get outputSlippage(): bigint {
-    return 0n
+    return 30n
+  }
+  public get supportsDynamicInput(): boolean {
+    return true
+  }
+  public get returnsOutput(): boolean {
+    return false
   }
   async plan(
     planner: Planner,
     [input_]: Value[],
     _: Address,
     [inputPrecomputed]: TokenQuantity[]
-  ): Promise<Value[]> {
+  ) {
     const input = input_ ?? inputPrecomputed.amount
     const zapperLib = this.gen.Contract.createContract(
       ZapperExecutor__factory.connect(
@@ -409,7 +428,7 @@ export class RETHToETH extends RocketPoolBase {
       routerLib.swapFrom(input0, input1, aout, aout, input),
       'RocketPool: RETH -> ETH'
     )
-    return this.outputBalanceOf(this.universe, planner)
+    return null
   }
   gasEstimate(): bigint {
     return this.router.gasEstimate()

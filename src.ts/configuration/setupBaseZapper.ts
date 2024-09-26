@@ -6,7 +6,6 @@ import { setupStargate } from './setupStargate'
 import { setupStargateWrapper } from './setupStargateWrapper'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
-import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
 import { setupCompoundV3 } from './setupCompV3'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupUniswapRouter } from './setupUniswapRouter'
@@ -106,6 +105,15 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   universe.addTradeVenue(
     universe.addIntegration('aerodrome', await setupAerodromeRouter(universe))
   )
+
+  // universe.preferredRTokenInputToken.set(
+  //   universe.rTokens.bsd,
+  //   universe.commonTokens.WETH
+  // )
+  // universe.preferredRTokenInputToken.set(
+  //   universe.rTokens.hyUSD,
+  //   universe.commonTokens.USDC
+  // )
 
   // Set up stargate
   await setupStargate(

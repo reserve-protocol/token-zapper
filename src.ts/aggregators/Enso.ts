@@ -69,7 +69,6 @@ const getEnsoQuote_ = async (
     })
   ).json()
   // console.log(reqUrl)
-  // console.log(quote)
 
   if (quote.tx?.data == null) {
     // console.log(reqUrl)
@@ -132,6 +131,9 @@ const getEnsoQuote_ = async (
           return !tok || universe.lpTokens.has(tok)
         })
     )
+
+    // console.log(cmds);
+    // console.log(state);
 
     const parsed = {
       ...quote,

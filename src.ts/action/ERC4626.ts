@@ -22,6 +22,9 @@ export class ERC4626TokenVault {
 
 export const ERC4626DepositAction = (proto: string) =>
   class ERC4626DepositAction extends Action(proto) {
+    public get supportsDynamicInput(): boolean {
+      return true
+    }
     get outputSlippage() {
       return this.slippage
     }

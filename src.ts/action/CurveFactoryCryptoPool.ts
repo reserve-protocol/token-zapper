@@ -154,7 +154,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
       planner,
       input,
       quote.tradeFraction,
-      ` of ${this.inputToken} into ${quote.subTrade.action.toString()}`,
+      ` of ${amountIn} into ${quote.subTrade.action.toString()}`,
       `input_trade`
     )
 
@@ -171,7 +171,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
       planner,
       input,
       ONE - quote.tradeFraction,
-      ` of ${this.inputToken} into ${this}`,
+      ` of ${amountIn} into ${this}`,
       `input_lpdeposit`
     )
 
@@ -231,7 +231,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
 
       const tradeQty = amountIn.sub(amountQty)
 
-      tradeFraction = ONE - fractionToken1.amount
+      tradeFraction = fractionToken1.amount
 
       const paths = await this.universe.searcher.findSingleInputTokenSwap(
         true,
@@ -246,10 +246,10 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
 
       amounts = [amountQty, subTrade.outputs[0]]
     } else {
-      const amountQty = amountIn.mul(fractionToken0)
+      const amountQty = amountIn.mul(fractionToken1)
       const tradeQty = amountIn.sub(amountQty)
 
-      tradeFraction = ONE - fractionToken0.amount
+      tradeFraction = fractionToken0.amount
 
       const paths = await this.universe.searcher.findSingleInputTokenSwap(
         true,

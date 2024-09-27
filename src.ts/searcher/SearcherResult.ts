@@ -311,7 +311,7 @@ export abstract class BaseSearcherResult {
           .from(qty)
           .sub(currentBalances.get(this.potentialResidualTokens[index]))
       )
-      .filter((i) => i.token !== this.outputToken && i.amount < 1000n)
+      .filter((i) => i.token !== this.outputToken && i.amount > 1000n)
 
     const amount = zapperResult.amountOut.toBigInt()
 
@@ -700,7 +700,6 @@ export class RedeemZap extends BaseSearcherResult {
       for (const step of path.steps) {
         const dynInput = step.action.supportsDynamicInput
         const stepInputQty = step.inputs[0]
-        const stepOutput = step.outputs[0].token
         const stepInput = stepInputQty.token
         let input = unwrapBalances.get(stepInput)
 
@@ -785,7 +784,7 @@ export class MintZap extends BaseSearcherResult {
 
     try {
       const totalUsedInMinting = new TokenAmounts()
-      const totalUsedAsInputs = new TokenAmounts()
+      const totalUsedInTrading = new TokenAmounts()
       const actionsUsingThisInputExcludingRTokenMint = new DefaultMap<
         Token,
         Set<SingleSwap>
@@ -804,7 +803,7 @@ export class MintZap extends BaseSearcherResult {
       }
       for (const paths of this.parts.trading.swapPaths) {
         for (const step of paths.steps) {
-          totalUsedAsInputs.addQtys(step.inputs)
+          totalUsedInTrading.addQtys(step.inputs)
         }
       }
       for (const paths of this.parts.full.swapPaths) {
@@ -932,7 +931,7 @@ export class MintZap extends BaseSearcherResult {
               dynamicTradeInputSplits.set(inputToken, dynValue)
 
               if (supportsDynamicInput) {
-                const total = totalUsedAsInputs
+                const total = totalUsedInTrading
                   .get(inputToken)
                   .add(totalUsedInMinting.get(inputToken))
                 const fractionTokenQty = step.inputs[0].div(total)

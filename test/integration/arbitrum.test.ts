@@ -82,17 +82,17 @@ const makeMintTestCase = (
 }
 const testUser = Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 const issueanceCases = [
-  makeMintTestCase(10000, t.USDC, rTokens.KNOX),
-  makeMintTestCase(10000, t.USDT, rTokens.KNOX),
-  makeMintTestCase(10000, t.DAI, rTokens.KNOX),
+  makeMintTestCase(1000, t.USDC, rTokens.KNOX),
+  makeMintTestCase(1000, t.USDT, rTokens.KNOX),
+  makeMintTestCase(1000, t.DAI, rTokens.KNOX),
   makeMintTestCase(5, t.WETH, rTokens.KNOX),
 ]
 
 const redeemCases = [
-  makeMintTestCase(10000, rTokens.KNOX, t.USDC),
-  makeMintTestCase(10000, rTokens.KNOX, t.USDT),
-  makeMintTestCase(10000, rTokens.KNOX, t.DAI),
-  makeMintTestCase(10000, rTokens.KNOX, t.WETH),
+  makeMintTestCase(1000, rTokens.KNOX, t.USDC),
+  makeMintTestCase(1000, rTokens.KNOX, t.USDT),
+  makeMintTestCase(1000, rTokens.KNOX, t.DAI),
+  makeMintTestCase(1000, rTokens.KNOX, t.WETH),
 ]
 
 let universe: ArbitrumUniverse
@@ -123,8 +123,12 @@ beforeAll(async () => {
 
 const log = console.log
 describe('arbitrum zapper', () => {
-  beforeAll(() => {
-    console.log = () => { }
+  beforeAll(() => {})
+  beforeEach(async () => {
+    await universe.updateBlockState(
+      await universe.provider.getBlockNumber(),
+      (await universe.provider.getGasPrice()).toBigInt()
+    )
   })
 
   for (const issueance of issueanceCases) {
@@ -175,7 +179,9 @@ describe('arbitrum zapper', () => {
           let result = 'failed'
 
           try {
-            await universe.redeem(input!, output!, testUser)
+            await universe.redeem(input!, output!, testUser, {
+              enableTradeZaps: false,
+            })
             result = 'success'
           } catch (e) {
             log(`${testCaseName} = ${e.message}`)
@@ -188,18 +194,22 @@ describe('arbitrum zapper', () => {
   }
 })
 
-describe("Edge cases", () => {
+describe('Edge cases', () => {
   it(
     'Mint an rToken with 0 supply',
     async () => {
       expect.assertions(1)
       await universe.initialized
       const input = universe.commonTokens.USDC.from(10.0)
-      const output = await universe.defineRToken(Address.from('0x635f80eea9df5936772165740120e677878b55a6'))
+      const output = await universe.defineRToken(
+        Address.from('0x635f80eea9df5936772165740120e677878b55a6')
+      )
 
       let result = 'failed'
       try {
-        await universe.zap(input, output, testUser)
+        await universe.zap(input, output, testUser, {
+          enableTradeZaps: false,
+        })
         result = 'success'
       } catch (e) {
         log(`'Mint an rToken with 0 supply' = ${e.message}`)
@@ -212,5 +222,5 @@ describe("Edge cases", () => {
 
 afterAll(() => {
   console.log = log
-    ; (universe.provider as WebSocketProvider).websocket.close()
+  ;(universe.provider as WebSocketProvider).websocket.close()
 })

@@ -16,6 +16,7 @@ import {
   CachingTokenProviderWithFallback,
   CachingV2PoolProvider,
   CachingV3PoolProvider,
+  CachingV4PoolProvider,
   CurrencyAmount,
   EIP1559GasPriceProvider,
   EthEstimateGasSimulator,
@@ -33,6 +34,7 @@ import {
   V2PoolProvider,
   V3PoolProvider,
   V3RouteWithValidQuote,
+  V4PoolProvider,
 } from '@uniswap/smart-order-router'
 import { Universe } from '../Universe'
 import {
@@ -359,6 +361,12 @@ export const setupUniswapRouter = async (universe: Universe) => {
     new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
   )
 
+  const v4PoolProvider = new CachingV4PoolProvider(
+    universe.chainId,
+    new V4PoolProvider(universe.chainId, multicall),
+    new NodeJSCache(new NodeCache({ stdTTL: 360, useClones: false }))
+  )
+
   const portionProvider = new PortionProvider()
 
   const ethEstimateGasSimulator = new EthEstimateGasSimulator(
@@ -366,6 +374,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
     universe.provider,
     v2PoolProvider,
     v3PoolProvider,
+    v4PoolProvider,
     portionProvider
   )
 
@@ -421,7 +430,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
             if (abort.aborted) {
               throw new Error('Aborted')
             }
-            const addr = Address.from(v3Route.poolAddresses[index])
+            const addr = Address.from(v3Route.poolIdentifiers[index])
             const prev = pools.get(addr)
             if (prev) {
               return prev

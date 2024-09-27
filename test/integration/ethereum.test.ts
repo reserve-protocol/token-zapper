@@ -226,6 +226,12 @@ beforeAll(async () => {
 
 const log = console.log
 describe('ethereum zapper', () => {
+  beforeEach(async () => {
+    await universe.updateBlockState(
+      await universe.provider.getBlockNumber(),
+      (await universe.provider.getGasPrice()).toBigInt()
+    )
+  })
   for (const issueance of issueanceCases) {
     const testCaseName = `using ${getSymbol.get(
       issueance.inputToken

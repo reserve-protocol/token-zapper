@@ -64,6 +64,9 @@ export const plannerUtils = {
     comment: string,
     name?: string
   ) => {
+    if (input instanceof gen.LiteralValue) {
+      return gen.encodeArg(BigInt(input.value) * fraction / ONE, ParamType.from('uint256'))
+    }
     return planner.add(
       uni.weirollZapperExec.fpMul(input, fraction, ONE_Val),
       `${(parseFloat(formatEther(fraction)) * 100).toFixed(2)}% ${comment}`,
@@ -193,7 +196,7 @@ export abstract class BaseAction {
     public _interactionConvention: InteractionConvention,
     public _proceedsOptions: DestinationOptions,
     public _approvals: Approval[]
-  ) {}
+  ) { }
 
   public async intoSwapPath(universe: Universe, qty: TokenQuantity) {
     return await new SwapPlan(universe, [this]).quote(
@@ -212,7 +215,7 @@ export abstract class BaseAction {
     return outputs.map((output) => {
       return output.token.from(
         output.amount -
-          (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
+        (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
       )
     })
   }

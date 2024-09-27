@@ -109,7 +109,8 @@ export const resolveTradeConflicts = async (
 export const generateAllPermutations = async function (
   searcher: Searcher<any>,
   arr: MultiChoicePath[],
-  precursorTokens: Set<Token>
+  precursorTokens: Set<Token>,
+  signer: Address
 ): Promise<SwapPath[][]> {
   const universe = searcher.universe
   function combos(
@@ -130,7 +131,7 @@ export const generateAllPermutations = async function (
 
   const withoutComflicts = allCombos.filter(
     (paths) =>
-      willPathsHaveAddressConflicts(searcher.debugLog, universe, paths)
+      willPathsHaveAddressConflicts(searcher.debugLog, universe, paths, signer)
         .length === 0
   )
   const valuedTrades = await Promise.all(
@@ -196,15 +197,6 @@ export const createConcurrentStreamingEvaluator = (
   let pending: Promise<any>[] = []
   const waitTime = searcher.config.maxSearchTimeMs ?? 10000
   searcher.debugLog(`Waiting for ${waitTime}ms`)
-  setTimeout(async () => {
-    searcher.debugLog('Aborting search: searcher.config.maxSearchTimeMs')
-    abortController.abort()
-    for (const p of pending) {
-      try {
-        await p
-      } catch (e) {}
-    }
-  }, waitTime)
 
   const allCandidates: BaseSearcherResult[] = []
   const seen: Set<string> = new Set()
@@ -251,6 +243,9 @@ export const createConcurrentStreamingEvaluator = (
         searchResult: result,
       })
       const resCount = results.length
+      if (abortController.signal.aborted) {
+        return
+      }
       if (toTxArgs.minSearchTime != null) {
         const elapsed = Date.now() - startTime
         if (elapsed > toTxArgs.minSearchTime) {
@@ -270,12 +265,45 @@ export const createConcurrentStreamingEvaluator = (
       // emitDebugLog(e)
     }
   }
+  const resultsReadyController = new AbortController()
+  let finishing = false
+  abortController.signal.addEventListener('abort', async () => {
+    if (finishing) {
+      return
+    }
+    finishing = true
+    searcher.debugLog('Search completed. Returning results')
+    for (const p of pending) {
+      try {
+        await Promise.race([
+          p,
+          new Promise((resolve) =>
+            AbortSignal.timeout(1000).addEventListener('abort', resolve)
+          ),
+        ])
+      } catch (e) {}
+    }
+    resultsReadyController.abort()
+  })
+  setTimeout(async () => {
+    if (abortController.signal.aborted) {
+      return
+    }
+    searcher.debugLog('Aborting search: searcher.config.maxSearchTimeMs')
+    abortController.abort()
+  }, waitTime)
 
   return {
     abortController,
+    finishedSearching: () => {
+      if (abortController.signal.aborted) {
+        return
+      }
+      abortController.abort()
+    },
     onResult,
     resultReadyPromise: new Promise((resolve) => {
-      abortController.signal.addEventListener('abort', () => {
+      resultsReadyController.signal.addEventListener('abort', () => {
         resolve(null)
       })
     }),
@@ -307,11 +335,25 @@ const noConflictAddrs = new Set([
   Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
   Address.from('0x79c58f70905F734641735BC61e45c19dD9Ad60bC'),
   Address.from('0x1aEbD5aC3F0d1baEa82E3e49BeAF4ec901f67205'),
+  Address.from('0x0000000000001fF3684f28c67538d4D072C22734'),
+  Address.from('0x45FaE8D0D2acE73544baab452f9020925AfCCC75'),
+  Address.from('0xb6911f80B1122f41C19B299a69dCa07100452bf9'),
+  Address.from('0xFB5e6d0c1DfeD2BA000fBC040Ab8DF3615AC329c'),
+  Address.from('0xba12222222228d8ba445958a75a0704d566bf2c8'),
+  Address.from('0x2f5e87c9312fa29aed5c179e456625d79015299c'),
+  Address.from('0xc6962004f452be9203591991d15f6b388e09e8d0'),
+  Address.from('0xae1ec28d6225dce2ff787dcb8ce11cf6d3ae064f'),
+  Address.from('0x70d95587d40a2caf56bd97485ab3eec10bee6336')
+  // Address.from('0x7fCDC35463E3770c2fB992716Cd070B63540b947')
+  // Address.from('0xcc065Eb6460272481216757293FFC54A061bA60e')
+  // Address.from('0x389938CF14Be379217570D8e4619E51fBDafaa21')
+  // Address.from('0x2e50e3e18c19C7d80B81888a961A13aEE49b962E')
 ])
 const willPathsHaveAddressConflicts = (
   emitDebugLog: (...args: any[]) => void,
   universe: Universe,
-  paths: SwapPath[]
+  paths: SwapPath[],
+  signer: Address
 ) => {
   const addressesInUse = new Set<Address>()
   const conflicts = new Set<Address>()
@@ -320,13 +362,14 @@ const willPathsHaveAddressConflicts = (
     for (const step of path.steps) {
       for (const addr of step.action.addressesInUse) {
         if (
+          addr === signer ||
           noConflictAddrs.has(addr) ||
           universe.commonTokensInfo.addresses.has(addr)
         ) {
           continue
         }
         if (addressesInUse.has(addr)) {
-          // emitDebugLog('Address conflict', addr.toString())
+          emitDebugLog('Address conflict', addr.toString())
           conflicts.add(addr)
         }
         addressesInUse.add(addr)

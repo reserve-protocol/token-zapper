@@ -213,6 +213,9 @@ export const makeCustomRouterSimulator = (
       },
       body: encodedBody,
     })
+    if (resp.status !== 200) {
+      throw new Error(`Failed to simulate zap, status ${resp.status}`)
+    }
     const results = await resp.json()
     const resultOfZap = results[results.length - 1]
     if (resultOfZap.error) {

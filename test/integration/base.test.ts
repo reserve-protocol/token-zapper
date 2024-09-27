@@ -139,6 +139,12 @@ describe('base zapper', () => {
   beforeAll(() => {
     console.log = () => {}
   })
+  beforeEach(async () => {
+    await universe.updateBlockState(
+      await universe.provider.getBlockNumber(),
+      (await universe.provider.getGasPrice()).toBigInt()
+    )
+  })
 
   for (const issueance of issueanceCases) {
     const testCaseName = `using ${getSymbol.get(

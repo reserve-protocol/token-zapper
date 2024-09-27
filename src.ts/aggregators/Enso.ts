@@ -167,30 +167,15 @@ const getEnsoQuote = async (
   slippage: bigint,
   retries = 2
 ) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await getEnsoQuote_(
-        abort,
-        universe,
-        quantityIn,
-        tokenOut,
-        recipient,
-        slippage,
-        universe
-      )
-    } catch (e: any) {
-      // console.log(
-      //   'Enso failed to quote ' +
-      //     quantityIn.toString() +
-      //     ' -> ' +
-      //     tokenOut +
-      //     '  retrying...'
-      // )
-      // console.log(e.message)
-      continue
-    }
-  }
-  throw new Error('Failed to get enso quote')
+  return await getEnsoQuote_(
+    abort,
+    universe,
+    quantityIn,
+    tokenOut,
+    recipient,
+    slippage,
+    universe
+  )
 }
 type ParsedQuote = Awaited<ReturnType<typeof getEnsoQuote>>
 
@@ -208,7 +193,7 @@ class EnsoAction extends Action('Enso') {
     return this.request.addresesInUse
   }
   get outputSlippage() {
-    return 0n
+    return 30n
   }
   async plan(
     planner: Planner,
@@ -225,7 +210,7 @@ class EnsoAction extends Action('Enso') {
       this.request.tx.data.commands,
       this.request.tx.data.state
     )
-    planner.add(routeSingleCall, this.toString())
+    planner.add(routeSingleCall, `EnsoRouter.routeSingle(${this.request.quantityIn} -> ${this.request.quantityOut})`)
     return null
   }
   public outputQuantity: TokenQuantity[] = []
@@ -252,9 +237,7 @@ class EnsoAction extends Action('Enso') {
     return this.request.quantityOut
   }
   toString() {
-    return `Enso(${this.inputQty} => ${this.outputQty}, pools=${[
-      ...this.addressesInUse,
-    ].join(', ')})`
+    return `Enso(${this.inputQty} => ${this.outputQty})`
   }
 
   async quote([_]: TokenQuantity[]): Promise<TokenQuantity[]> {

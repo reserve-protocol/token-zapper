@@ -128,7 +128,7 @@ const fetchSwap = async (
       sender: universe.execAddress.address,
       recipient: recipient.address,
       skipSimulateTx: true,
-      slippageTolerance: Number(slippage) / 10,
+      slippageTolerance: Number(slippage),
       source: 'register',
     }),
     headers: {
@@ -159,7 +159,7 @@ const getQuoteAndSwap = async (
     control.abort()
   }, universe.config.routerDeadline)
   const req = await fetchRoute(control.signal, universe, quantityIn, tokenOut)
-  const swap = await fetchSwap(control.signal, universe, req, dest, slippage)
+  const swap = await fetchSwap(control.signal, universe, req, dest, slippage*10n)
 
   const addrs = new Set(
     req.data.routeSummary.route
@@ -221,7 +221,7 @@ class KyberAction extends Action('Kyberswap') {
     return this.request.addresesInUse
   }
   get outputSlippage() {
-    return 0n
+    return 30n
   }
 
   async plan(

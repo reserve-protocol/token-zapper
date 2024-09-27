@@ -62,7 +62,7 @@ class Step {
     readonly action: BaseAction,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) {}
+  ) { }
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -93,7 +93,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-          InteractionConvention.PayBeforeCall
+        InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -206,6 +206,9 @@ export abstract class BaseSearcherResult {
   }
 
   async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
+    if (this.abortSignal.aborted) {
+      throw new Error('Aborted')
+    }
     const resp = await this.universe.simulateZapFn(opts)
 
     if (process.env.DEBUG_SIMULATION) {
@@ -257,7 +260,7 @@ export abstract class BaseSearcherResult {
         errorMsg = msg
       }
     } else {
-      errorMsg = `Unknown error: '${resp}`
+      errorMsg = `Unknown error: ${resp}`
 
       if (resp.length / 128 > 100) {
       } else {
@@ -279,24 +282,16 @@ export abstract class BaseSearcherResult {
   }
 
   protected async simulateAndParse(options: ToTransactionArgs, data: string) {
-    // console.log(
-    //   `STARTIG_INITIAL_SIMULATION: ${this.userInput} -> ${this.outputToken}`
-    // )
-    // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
-
-    const zapperResult = await this.universe.perf.measurePromise(
-      'Zap Simulation',
-      this.simulate({
-        to: this.universe.config.addresses.zapperAddress.address,
-        from: this.signer.address,
-        data,
-        value: this.value,
-        setup: {
-          inputTokenAddress: this.inputToken.address.address,
-          userBalanceAndApprovalRequirements: this.userInput.amount,
-        },
-      })
-    )
+    const zapperResult = await this.simulate({
+      to: this.universe.config.addresses.zapperAddress.address,
+      from: this.signer.address,
+      data,
+      value: this.value,
+      setup: {
+        inputTokenAddress: this.inputToken.address.address,
+        userBalanceAndApprovalRequirements: this.userInput.amount,
+      },
+    })
 
     const currentBalances = TokenAmounts.fromQuantities(
       await Promise.all(
@@ -316,7 +311,7 @@ export abstract class BaseSearcherResult {
           .from(qty)
           .sub(currentBalances.get(this.potentialResidualTokens[index]))
       )
-      .filter((i) => i.token !== this.outputToken && i.amount !== 0n)
+      .filter((i) => i.token !== this.outputToken && i.amount < 1000n)
 
     const amount = zapperResult.amountOut.toBigInt()
 
@@ -427,7 +422,7 @@ export abstract class BaseSearcherResult {
         outputTokenOutput.amount === 1n
           ? 1n
           : outputTokenOutput.amount -
-            outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
+          outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
       tokenOut: this.outputToken.address.address,
       tokens: this.potentialResidualTokens.map((i) => i.address.address),
     }
@@ -441,8 +436,8 @@ export abstract class BaseSearcherResult {
     return this.inputIsNative
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -493,7 +488,7 @@ export abstract class BaseSearcherResult {
         returnDust: false,
       })
       const data = this.encodeCall(options, params)
-      const tx = this.encodeTx(data, 3000000n)
+      const tx = this.encodeTx(data, 1000000n)
       await this.checkIfSearchIsAborted()
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
@@ -567,11 +562,10 @@ export abstract class BaseSearcherResult {
       if (this.abortSignal.aborted) {
         return null
       }
-      // console.log(`${this.userInput} -> ${this.outputToken}`)
       if (e instanceof ThirdPartyIssue) {
         throw e
       }
-      throw e
+      return null
     }
   }
 }
@@ -644,173 +638,111 @@ export class RedeemZap extends BaseSearcherResult {
   ): Promise<ZapTransaction | null> {
     await this.setupApprovals()
 
-    const unwrapBalances = new Map<Token, Value>()
-    await this.checkIfSearchIsAborted()
-    const outputs = await this.parts.rtokenRedemption.steps[0].action
-      .planWithOutput(
-        this.universe,
-        this.planner,
-        [encodeArg(this.userInput.amount, ParamType.fromString('uint256'))],
-        this.universe.config.addresses.executorAddress,
-        [this.userInput]
-      )
-      .catch((a: any) => {
-        console.log(
-          `${this.parts.rtokenRedemption.steps[0].action.toString()}.plan failed`
-        )
-        console.log(a.stack)
-        throw a
-      })
+    const fullyConsumed = new Set<Token>()
+    const redeemStep = this.parts.rtokenRedemption.steps[0]
 
-    if (outputs == null) {
-      throw new Error('MISSING OUTPUTS')
+    fullyConsumed.add(redeemStep.inputs[0].token)
+    const outputs = await redeemStep.action.planWithOutput(
+      this.universe,
+      this.planner,
+      [encodeArg(this.userInput.amount, ParamType.fromString('uint256'))],
+      this.universe.config.addresses.executorAddress,
+      [this.userInput]
+    )
+
+    const unwrapBalances = new Map<Token, Value>()
+    for (let i = 0; i < outputs.length; i++) {
+      unwrapBalances.set(redeemStep.outputs[i].token, outputs[i])
     }
-    const outputTokens = this.parts.rtokenRedemption.steps[0].action.outputToken
-    for (let i = 0; i < outputTokens.length; i++) {
-      unwrapBalances.set(outputTokens[i], outputs[i])
-    }
-    const executorAddress = this.universe.config.addresses.executorAddress
-    const tradeOutputs = new Map<Token, Value | null>()
+    const executorAddress = this.universe.execAddress
+
+    const outToken = this.outputToken
+
     for (const unwrapBasketTokenPath of this.parts.tokenBasketUnwrap) {
       for (const step of unwrapBasketTokenPath.steps) {
-        await this.checkIfSearchIsAborted()
-        const prev = unwrapBalances.get(step.inputs[0].token)
-        let input =
-          prev == null
-            ? step.inputs.map((t) =>
-                plannerUtils.erc20.balanceOf(
-                  this.universe,
-                  this.planner,
-                  t.token,
-                  executorAddress
-                )
-              )
-            : [prev]
+        const dest =
+          outToken === step.action.outputToken[0]
+            ? this.signer
+            : executorAddress
+        let input = unwrapBalances.get(step.inputs[0].token)
         if (input == null) {
-          throw new Error('MISSING INPUT')
+          input = step.action.supportsDynamicInput
+            ? plannerUtils.erc20.balanceOf(
+              this.universe,
+              this.planner,
+              step.inputs[0].token,
+              executorAddress
+            )
+            : encodeArg(step.inputs[0].amount, ParamType.from('uint256'))
         }
-        const size = await step.action
-          .plan(this.planner, input, executorAddress, step.inputs)
-          .catch((a) => {
-            console.log(`${step.action.toString()}.plan failed`)
-            console.log(a.stack)
-            throw a
-          })
-        if (size != null) {
-          for (let i = 0; i < step.outputs.length; i++) {
-            unwrapBalances.set(step.outputs[i].token, size[i])
-          }
+        if (step.action.supportsDynamicInput) {
+          fullyConsumed.add(step.inputs[0].token)
+        }
+
+        const result = await step.action.plan(
+          this.planner,
+          [input],
+          dest,
+          step.inputs
+        )
+        if (step.action.outputToken[0] === outToken) {
+          continue
+        }
+        if (result != null) {
+          unwrapBalances.set(step.action.outputToken[0], result[0])
         }
       }
     }
 
-    const allSupportDynamicInput = this.parts.tradesToOutput.every(
-      (i) => i.supportsDynamicInput
-    )
-
-    const tradesToGenerate = allSupportDynamicInput
-      ? this.parts.tradesToOutput
-      : [
-          ...this.parts.tradesToOutput.filter((i) => !i.supportsDynamicInput),
-          ...this.parts.tradesToOutput.filter((i) => i.supportsDynamicInput),
-        ]
+    const tradesToGenerate = this.parts.tradesToOutput
 
     for (const path of tradesToGenerate) {
       for (const step of path.steps) {
-        await this.checkIfSearchIsAborted()
         const dynInput = step.action.supportsDynamicInput
-        const input = path.inputs.map((t) =>
-          dynInput
+        const stepInputQty = step.inputs[0]
+        const stepOutput = step.outputs[0].token
+        const stepInput = stepInputQty.token
+        let input = unwrapBalances.get(stepInput)
+
+        if (input == null) {
+          input = dynInput
             ? plannerUtils.erc20.balanceOf(
-                this.universe,
-                this.planner,
-                t.token,
-                executorAddress
-              )
+              this.universe,
+              this.planner,
+              stepInput,
+              executorAddress
+            )
             : encodeArg(
-                t.amount -
-                  (t.amount *
-                    this.universe.config.defaultInternalTradeSlippage) /
-                    FEE_SCALE,
-                ParamType.from('uint256')
-              )
-        )
-
-        const outputs = await step.action
-          .planWithOutput(
-            this.universe,
-            this.planner,
-            input,
-            executorAddress,
-            step.inputs
-          )
-          .catch((a) => {
-            console.log(`${step.action.toString()}.plan failed`)
-            console.log(a.stack)
-            throw a
-          })
-        for (let i = 0; i < step.outputs.length; i++) {
-          tradeOutputs.set(step.outputs[i].token, outputs[i])
+              stepInputQty.amount - stepInputQty.amount / 1000000n,
+              ParamType.from('uint256')
+            )
         }
+
+        await step.action.plan(
+          this.planner,
+          [input],
+          this.signer,
+          step.inputs
+        )
       }
     }
 
-    const outs = new Set<Token>()
+    const bal = plannerUtils.erc20.balanceOf(
+      this.universe,
+      this.planner,
+      outToken,
+      executorAddress
+    )
+    plannerUtils.planForwardERC20(
+      this.universe,
+      this.planner,
+      outToken,
+      bal,
+      this.signer
+    )
+    fullyConsumed.add(outToken)
 
-    for (const [token] of unwrapBalances) {
-      tradeOutputs.delete(token)
-      outs.add(token)
-      const out = plannerUtils.erc20.balanceOf(
-        this.universe,
-        this.planner,
-        token,
-        executorAddress
-      )
-      plannerUtils.planForwardERC20(
-        this.universe,
-        this.planner,
-        token,
-        out,
-        this.signer
-      )
-    }
-    for (const [token] of tradeOutputs) {
-      if (outs.has(token)) {
-        continue
-      }
-      outs.add(token)
-
-      const out = plannerUtils.erc20.balanceOf(
-        this.universe,
-        this.planner,
-        token,
-        executorAddress
-      )
-      plannerUtils.planForwardERC20(
-        this.universe,
-        this.planner,
-        token,
-        out,
-        this.signer
-      )
-    }
-    if (!outs.has(this.outputToken)) {
-      const out = plannerUtils.erc20.balanceOf(
-        this.universe,
-        this.planner,
-        this.outputToken,
-        executorAddress
-      )
-      plannerUtils.planForwardERC20(
-        this.universe,
-        this.planner,
-        this.outputToken,
-        out,
-        this.signer
-      )
-    }
-
-    return this.createZapTransaction(options)
+    return this.createZapTransaction(options, fullyConsumed)
   }
 }
 
@@ -870,11 +802,15 @@ export class MintZap extends BaseSearcherResult {
           totalUsedInMinting.addQtys(step.inputs)
         }
       }
+      for (const paths of this.parts.trading.swapPaths) {
+        for (const step of paths.steps) {
+          totalUsedAsInputs.addQtys(step.inputs)
+        }
+      }
       for (const paths of this.parts.full.swapPaths) {
         for (const step of paths.steps) {
           for (const qty of step.inputs) {
             const token = qty.token
-            totalUsedAsInputs.add(qty)
 
             totalUsers.set(token, totalUsers.get(token) + 1)
             if (step.action instanceof MintRTokenAction) {
@@ -923,9 +859,9 @@ export class MintZap extends BaseSearcherResult {
       const tradesToGenerate = allSupportDynamicInput
         ? allTrades
         : [
-            ...allTrades.filter((i) => !i.supportsDynamicInput),
-            ...allTrades.filter((i) => i.supportsDynamicInput),
-          ]
+          ...allTrades.filter((i) => !i.supportsDynamicInput),
+          ...allTrades.filter((i) => i.supportsDynamicInput),
+        ]
 
       const dynamicTradeInputSplits = new Map<Token, Value>()
       if (this.parts.setup != null) {
@@ -959,6 +895,7 @@ export class MintZap extends BaseSearcherResult {
       }
 
       this.planner.addComment('Trading section: input to precursor set')
+      this.planner.addComment(`Expected input balances ${this.parts.trading.inputs.join(', ')}`)
       for (const trade of tradesToGenerate) {
         for (const step of trade.steps) {
           await this.checkIfSearchIsAborted()
@@ -1016,7 +953,8 @@ export class MintZap extends BaseSearcherResult {
                   this.universe,
                   this.planner,
                   inputToken,
-                  this.universe.config.addresses.executorAddress
+                  this.universe.config.addresses.executorAddress,
+                  `Rest of ${inputToken} into ${step.action.toString()}`
                 )
               }
             }
@@ -1044,7 +982,7 @@ export class MintZap extends BaseSearcherResult {
             const usersLeft = actionsUsingThisInputExcludingRTokenMint.get(
               output.token
             ).size
-            if (usersLeft <= 1 && actionOut) {
+            if (usersLeft === 1 && actionOut) {
               trades.set(output.token, actionOut)
             }
           })
@@ -1053,6 +991,7 @@ export class MintZap extends BaseSearcherResult {
       dynamicTradeInputSplits.clear()
 
       this.planner.addComment('Minting section: precusor set to basket')
+      this.planner.addComment(`Expected input balances ${this.parts.trading.outputs.join(', ')}`)
       for (const mintPath of this.parts.minting.swapPaths) {
         for (const step of mintPath.steps) {
           if (step.action instanceof MintRTokenAction) {
@@ -1078,7 +1017,6 @@ export class MintZap extends BaseSearcherResult {
             continue
           }
           const inputToken = step.action.inputToken[0]
-          const supportsDynamicInput = step.action.supportsDynamicInput
           let actionInput = encodeArg(
             step.inputs[0].amount,
             ParamType.from('uint256')
@@ -1091,7 +1029,7 @@ export class MintZap extends BaseSearcherResult {
             actionsUsingThisInputExcludingRTokenMint.get(inputToken).size
           actionsUsingThisInputExcludingRTokenMint.get(inputToken).delete(step)
           const generateSplit = usersLeft > 1
-          const amountIsKnowStatically = inputToken === this.inputToken
+          const amountIsKnowStatically = inputToken === this.inputToken && this.parts.setup == null
           if (!amountIsKnowStatically) {
             if (!generateSplit) {
               actionInput = plannerUtils.erc20.balanceOf(
@@ -1113,15 +1051,13 @@ export class MintZap extends BaseSearcherResult {
 
               const fraction = inputQty.div(total).asNumber()
               const bnFact = parseEther(fraction.toFixed(18)).toBigInt()
-              if (amountIsKnowStatically) {
-                actionInput = this.planner.add(
-                  zapperLib.fpMul(dynValue, bnFact, ONE_Val),
-                  `${(fraction * 100).toFixed(
-                    2
-                  )}% of ${inputToken} into ${step.action.toString()}`,
-                  `frac_${step.outputs[0].token.symbol}`
-                )!
-              }
+              actionInput = this.planner.add(
+                zapperLib.fpMul(dynValue, bnFact, ONE_Val),
+                `${(fraction * 100).toFixed(
+                  2
+                )}% of ${inputToken} into ${step.action.toString()}`,
+                `frac_${step.outputs[0].token.symbol}`
+              )!
             }
           }
 
@@ -1198,7 +1134,7 @@ export class MintZap extends BaseSearcherResult {
 
       return await this.createZapTransaction(options, fullyConsumed)
     } catch (e: any) {
-      return null;
+      return null
     }
   }
 }

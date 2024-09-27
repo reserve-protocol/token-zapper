@@ -79,12 +79,12 @@ class CryptoFactoryPoolSwapBurn extends CurveFactoryCryptoPoolBase {
       this.outputToken[0].from(
         (bal0.toBigInt() *
           ((amount.amount * amount.token.scale) / totalSupply.toBigInt())) /
-          amount.token.scale
+        amount.token.scale
       ),
       this.outputToken[1].from(
         (bal1.toBigInt() *
           ((amount.amount * amount.token.scale) / totalSupply.toBigInt())) /
-          amount.token.scale
+        amount.token.scale
       ),
     ]
   }
@@ -180,6 +180,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
         ? [actionInput, tradeOutput]
         : [tradeOutput, actionInput]
 
+
     return [
       planner.add(
         poolInst.add_liquidity(
@@ -188,8 +189,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
           false,
           destination.address
         ),
-        `CurveFactoryCryptoPool.addLiquidity(${quote.amounts.join(', ')}) -> ${
-          quote.output
+        `CurveFactoryCryptoPool.addLiquidity(${quote.amounts.join(', ')}) -> ${quote.output
         }`
       )!,
     ]
@@ -231,7 +231,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
 
       const tradeQty = amountIn.sub(amountQty)
 
-      tradeFraction = fractionToken1.amount
+      tradeFraction = ONE - fractionToken1.amount
 
       const paths = await this.universe.searcher.findSingleInputTokenSwap(
         true,
@@ -249,7 +249,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
       const amountQty = amountIn.mul(fractionToken0)
       const tradeQty = amountIn.sub(amountQty)
 
-      tradeFraction = fractionToken0.amount
+      tradeFraction = ONE - fractionToken0.amount
 
       const paths = await this.universe.searcher.findSingleInputTokenSwap(
         true,
@@ -276,7 +276,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
       subTrade,
       output: lpOut,
       tradeFraction,
-      amounts: [],
+      amounts
     }
   }
 
@@ -495,9 +495,8 @@ export class CurveFactoryCryptoPool {
   }
 
   toString(): string {
-    return `CurveFactoryCryptoPool(addr=${this.pool.address}, lp=${
-      this.lpToken
-    }, coins=[${this.underlying.join(', ')}])`
+    return `CurveFactoryCryptoPool(addr=${this.pool.address}, lp=${this.lpToken
+      }, coins=[${this.underlying.join(', ')}])`
   }
 }
 

@@ -35,7 +35,7 @@ class ParaswapAction extends Action('Paraswap') {
     return this.request.addresesInUse
   }
   get outputSlippage() {
-    return 0n
+    return 30n
   }
 
   async plan(

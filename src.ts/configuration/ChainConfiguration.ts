@@ -5,11 +5,11 @@ import { SimulateZapTransactionFunction } from './ZapSimulation'
 
 const defaultSearcherOptions = {
   requoteTolerance: 1,
-  routerDeadline: 4000,
-  searcherMinRoutesToProduce: 2,
+  routerDeadline: 5000,
+  searcherMinRoutesToProduce: 4,
   searcherMaxRoutesToProduce: 8,
   searchConcurrency: 8,
-  defaultInternalTradeSlippage: 30n,
+  defaultInternalTradeSlippage: 50n,
   maxSearchTimeMs: 10000,
 
   // These parameters will reject zaps that have successfully simulated

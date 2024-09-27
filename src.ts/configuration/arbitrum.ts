@@ -64,8 +64,7 @@ export const arbiConfig = makeConfig(
   {
     blocktime: 250,
     blockGasLimit: 1125899906842624n,
-    requoteTolerance: 4,
-    searchConcurrency: 4,
+    requoteTolerance: 24,
   }
 )
 

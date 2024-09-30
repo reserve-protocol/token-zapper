@@ -137,7 +137,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addPreferredRTokenInputToken(
     universe.rTokens['dgnETH'],
-    universe.nativeToken
+    commonTokens.WETH
   )
 
   universe.addPreferredRTokenInputToken(

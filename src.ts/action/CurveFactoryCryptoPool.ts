@@ -204,6 +204,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
   }
 
   private async quoteInner(amountIn: TokenQuantity) {
+    // console.log(amountIn)
     const [token0, token1] = this.pool.allPoolTokens
 
     const lpTokenSupply = this.pool.lpToken.from(

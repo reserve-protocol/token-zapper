@@ -115,7 +115,7 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
     universe.addIntegration('uniswapV3', await setupUniswapRouter(universe))
   )
 
-  universe.preferredRTokenInputToken.set(
+  universe.addPreferredRTokenInputToken(
     universe.rTokens.KNOX,
     universe.commonTokens.USDC
   )

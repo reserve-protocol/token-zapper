@@ -282,7 +282,15 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
   }
 
-  public preferredRTokenInputToken = new Map<Token, Token>()
+  public preferredRTokenInputToken = new DefaultMap<Token, Set<Token>>(() => new Set())
+  public preferredToken = new Map<Token, Token>()
+  public addPreferredRTokenInputToken(token: Token, inputToken: Token) {
+    this.preferredRTokenInputToken.get(token).add(inputToken)
+    if (!this.preferredToken.has(token)) {
+      this.preferredToken.set(token, inputToken)
+    }
+  }
+  
 
   public readonly integrations: Integrations = {}
   private readonly rTokenDeployments = new Map<Token, RTokenDeployment>()

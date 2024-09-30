@@ -250,9 +250,10 @@ describe('ethereum zapper', () => {
           let result = 'failed'
 
           try {
-            await universe.zap(input!, output!, testUser, {
+            const zap = await universe.zap(input!, output!, testUser, {
               enableTradeZaps: false,
             })
+            console.log(`Issueance: ${zap}`)
             result = 'success'
           } catch (e) {
             log(`${testCaseName} = ${e.message}`)
@@ -281,8 +282,9 @@ describe('ethereum zapper', () => {
           let result = 'failed'
 
           try {
-            await universe.redeem(input!, output!, testUser)
+            const zap =await universe.redeem(input!, output!, testUser)
             result = 'success'
+            console.log(`Redeem: ${zap}`)
           } catch (e) {
             log(`${testCaseName} = ${e.message}`)
           }
@@ -318,7 +320,7 @@ describe('ethereum zapper', () => {
           let result = 'failed'
 
           try {
-            await universe.searcher.zapIntoRTokenYieldPosition(
+            const zap = await universe.searcher.zapIntoRTokenYieldPosition(
               input!,
               rToken!,
               output!,
@@ -327,6 +329,7 @@ describe('ethereum zapper', () => {
                 enableTradeZaps: false,
               }
             )
+            console.log(`Yield position zap: ${zap}`)
             result = 'success'
           } catch (e) {
             log(`${testCaseName} = ${e.message}`)

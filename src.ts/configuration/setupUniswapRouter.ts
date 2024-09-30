@@ -69,7 +69,7 @@ class UniswapPool {
     public readonly token0: Token,
     public readonly token1: Token,
     public readonly fee: number
-  ) { }
+  ) {}
 
   toString() {
     return `(${this.token0}.${this.fee}.${this.token1})`
@@ -80,11 +80,12 @@ class UniswapStep {
     public readonly pool: UniswapPool,
     public readonly tokenIn: Token,
     public readonly tokenOut: Token
-  ) { }
+  ) {}
 
   toString() {
-    return `${this.tokenIn} -> ${this.pool.address.toString()} -> ${this.tokenOut
-      }`
+    return `${this.tokenIn} -> ${this.pool.address.toString()} -> ${
+      this.tokenOut
+    }`
   }
 }
 export class UniswapTrade {
@@ -96,7 +97,7 @@ export class UniswapTrade {
     public readonly swaps: UniswapStep[],
     public readonly addresses: Set<Address>,
     public readonly outputWithSlippage: TokenQuantity
-  ) { }
+  ) {}
 
   toString() {
     return `${this.input} -> [${this.swaps.join(' -> ')}] -> ${this.output}`
@@ -164,7 +165,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
   async planV3Trade(
     planner: Planner,
     trade: UniswapTrade,
-    input: Value | bigint,
+    input: Value | bigint
   ): Promise<Value> {
     const v3CalLRouterLib = this.gen.Contract.createLibrary(
       UniV3RouterCall__factory.connect(
@@ -172,7 +173,7 @@ export class UniswapRouterAction extends Action('Uniswap') {
         this.universe.provider
       )
     )
-    const minOut = this.outputQty.amount - this.outputQty.amount / 20n;
+    const minOut = this.outputQty.amount - this.outputQty.amount / 20n
     if (trade.swaps.length === 1) {
       const route = trade.swaps[0]
       const exactInputSingleParams = {
@@ -507,30 +508,28 @@ export const setupUniswapRouter = async (universe: Universe) => {
     if (abort.aborted) {
       throw new Error('Aborted')
     }
-    const route = universe.chainId === 1 ? await alphaRouter.route(
-      inp,
-      outp,
-      TradeType.EXACT_INPUT,
-      {
-        recipient: universe.execAddress.address,
-        slippageTolerance: slip,
-        deadline: Math.floor(Date.now() / 1000 + 10000),
-        type: SwapType.SWAP_ROUTER_02,
-      },
-      {
-        protocols: [Protocol.V3],
-      }
-    ) : await legacy.route(
-      inp,
-      outp,
-      TradeType.EXACT_INPUT,
-      {
-        recipient: universe.execAddress.address,
-        slippageTolerance: slip,
-        deadline: Math.floor(Date.now() / 1000 + 10000),
-        type: SwapType.SWAP_ROUTER_02,
-      },
-    )
+    const route =
+      universe.chainId === 1
+        ? await alphaRouter.route(
+            inp,
+            outp,
+            TradeType.EXACT_INPUT,
+            {
+              recipient: universe.execAddress.address,
+              slippageTolerance: slip,
+              deadline: Math.floor(Date.now() / 1000 + 10000),
+              type: SwapType.SWAP_ROUTER_02,
+            },
+            {
+              protocols: [Protocol.V3],
+            }
+          )
+        : await legacy.route(inp, outp, TradeType.EXACT_INPUT, {
+            recipient: universe.execAddress.address,
+            slippageTolerance: slip,
+            deadline: Math.floor(Date.now() / 1000 + 10000),
+            type: SwapType.SWAP_ROUTER_02,
+          })
 
     if (route == null || route.methodParameters == null) {
       throw new Error('Failed to find route')
@@ -546,27 +545,30 @@ export const setupUniswapRouter = async (universe: Universe) => {
   out = new DexRouter(
     'uniswap',
     async (abort, input, output, slippage) => {
-      for (let i = 0 ; i < 3 ; i++) {
-        try {
-          const route = await computeRoute(abort, input, output, slippage)
-          if (
-            route.output.amount <= 1000n ||
-            route.outputWithSlippage.amount <= 1000n
-          ) {
-            throw new Error('No output')
-          }
-          const plan = await new SwapPlan(universe, [
-            new UniswapRouterAction(route, universe, out),
-          ]).quote([input], universe.execAddress)
-          if (plan.outputs[0].amount === 0n) {
-            throw new Error('No output')
-          }
-          return plan
-        } catch (e: any) {
-          await new Promise(resolve => setTimeout(resolve, 500))
+      try {
+        const route = await computeRoute(abort, input, output, slippage)
+        if (
+          route.output.amount <= 1000n ||
+          route.outputWithSlippage.amount <= 1000n
+        ) {
+          throw new Error(`Low output route.output.amount=${route.output.amount}, route.outputWithSlippage.amount=${route.outputWithSlippage.amount}`)
         }
+        const plan = await new SwapPlan(universe, [
+          new UniswapRouterAction(route, universe, out),
+        ]).quote([input], universe.execAddress)
+        if (plan.outputs[0].amount <= 1000n) {
+          throw new Error(
+            `Low output plan.outputs[0].amount=${plan.outputs[0].amount}`
+          )
+        }
+        return plan
+      } catch (e: any) {
+        universe.searcher.debugLog(
+          `Failed to find route for ${input} -> ${output}: ${e.message}`
+        )
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        throw new Error(e)
       }
-      throw new Error('Failed to find route') 
     },
     true
   )

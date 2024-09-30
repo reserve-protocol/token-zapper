@@ -66,6 +66,7 @@ export const COMMON_TOKENS = {
 
   sdgnETH: '0x5bdd1fa233843bfc034891be8a6769e58f1e1346',
   'ETH+ETH-f': '0xe8a5677171c87fCB65b76957f2852515B404C7b1',
+  'mooConvexETH+': '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0',
 } as const
 
 export const RTOKENS = {

@@ -22,6 +22,7 @@ export * as weiroll from "./weiroll";
 export * as weirollHelpers from "./weiroll-helpers";
 export { EnsoRouter__factory } from "./EnsoRouter__factory";
 export { IBasketHandler__factory } from "./IBasketHandler__factory";
+export { IBeefyVaultV7__factory } from "./IBeefyVaultV7__factory";
 export { IChainLinkFeedRegistry__factory } from "./IChainLinkFeedRegistry__factory";
 export { IEACAggregatorProxy__factory } from "./IEACAggregatorProxy__factory";
 export { IFacade__factory } from "./IFacade__factory";

@@ -193,6 +193,7 @@ const redeemCases = [
 const zapIntoYieldPositionCases = [
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens.dgnETH, t.sdgnETH),
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens['ETH+'], t['ETH+ETH-f']),
+  makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens['ETH+'], t['mooConvexETH+']),
 ]
 
 const INPUT_MUL = process.env.INPUT_MULTIPLIER
@@ -222,7 +223,7 @@ beforeAll(async () => {
 
   await universe.initialized
   return universe
-}, 5000)
+}, 20000)
 
 const log = console.log
 describe('ethereum zapper', () => {

@@ -41,6 +41,7 @@ import type * as weirollHelpers from "./weiroll-helpers";
 export type { weirollHelpers };
 export type { EnsoRouter } from "./EnsoRouter";
 export type { IBasketHandler } from "./IBasketHandler";
+export type { IBeefyVaultV7 } from "./IBeefyVaultV7";
 export type { IChainLinkFeedRegistry } from "./IChainLinkFeedRegistry";
 export type { IEACAggregatorProxy } from "./IEACAggregatorProxy";
 export type { IFacade } from "./IFacade";

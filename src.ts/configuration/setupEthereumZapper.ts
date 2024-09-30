@@ -1,3 +1,4 @@
+import { BeefyVaultV7DepositAction } from '../action/BeefyVaultV7'
 import { loadCompV2Deployment } from '../action/CTokens'
 import { ETHTokenVaultDepositAction } from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
@@ -160,6 +161,8 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       1n
     )
   )
+
+  universe.addAction(new BeefyVaultV7DepositAction(universe, universe.commonTokens['ETH+ETH-f'], universe.commonTokens['mooConvexETH+'], universe.commonTokens['mooConvexETH+'].address))
 
   // universe.tokenFromTradeSpecialCases.set(
   //   commonTokens.pxETH,

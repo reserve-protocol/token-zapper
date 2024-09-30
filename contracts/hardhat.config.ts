@@ -20,6 +20,7 @@ const config: HardhatUserConfig = {
     local: {
       url: 'http://127.0.0.1:8545/',
     },
+    /*
     mainnet: {
       url: process.env.PROVIDER!,
       accounts: [process.env.PRIVATE_KEY_DEPLOYER!],
@@ -32,6 +33,7 @@ const config: HardhatUserConfig = {
       url: "https://mainnet.base.org",
       accounts: [process.env.PRIVATE_KEY_DEPLOYER!],
     },
+    */
   },
   namedAccounts: {
     deployer: {

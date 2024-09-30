@@ -121,9 +121,7 @@ beforeAll(async () => {
   return universe
 }, 5000)
 
-const log = console.log
 describe('arbitrum zapper', () => {
-  beforeAll(() => {})
   beforeEach(async () => {
     await universe.updateBlockState(
       await universe.provider.getBlockNumber(),
@@ -148,12 +146,13 @@ describe('arbitrum zapper', () => {
           let result = 'failed'
 
           try {
-            await universe.zap(input!, output!, testUser, {
+            const zap = await universe.zap(input!, output!, testUser, {
               enableTradeZaps: false,
             })
+            console.log(`Issueance: ${zap}`)
             result = 'success'
           } catch (e) {
-            log(`${testCaseName} = ${e.message}`)
+            console.log(`${testCaseName} = ${e.message}`)
           }
           expect(result).toBe('success')
         },
@@ -179,12 +178,13 @@ describe('arbitrum zapper', () => {
           let result = 'failed'
 
           try {
-            await universe.redeem(input!, output!, testUser, {
+            const zap = await universe.redeem(input!, output!, testUser, {
               enableTradeZaps: false,
             })
+            console.log(`Redeem: ${zap}`)
             result = 'success'
           } catch (e) {
-            log(`${testCaseName} = ${e.message}`)
+            console.log(`${testCaseName} = ${e.message}`)
           }
           expect(result).toBe('success')
         },
@@ -211,9 +211,7 @@ describe('Edge cases', () => {
           enableTradeZaps: false,
         })
         result = 'success'
-      } catch (e) {
-        log(`'Mint an rToken with 0 supply' = ${e.message}`)
-      }
+      } catch (e) {}
       expect(result).toBe('success')
     },
     15 * 1000
@@ -221,6 +219,5 @@ describe('Edge cases', () => {
 })
 
 afterAll(() => {
-  console.log = log
   ;(universe.provider as WebSocketProvider).websocket.close()
 })

@@ -211,7 +211,7 @@ beforeAll(async () => {
 
   universe = await Universe.createWithConfig(
     provider,
-    ethereumConfig,
+    { ...ethereumConfig, searcherMinRoutesToProduce: 1 },
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))
       uni.addTradeVenue(createParaswap('paraswap', uni))
@@ -228,7 +228,6 @@ beforeAll(async () => {
   return universe
 }, 5000)
 
-const log = console.log
 describe('ethereum zapper', () => {
   beforeEach(async () => {
     await universe.updateBlockState(
@@ -253,13 +252,11 @@ describe('ethereum zapper', () => {
           let result = 'failed'
 
           try {
-            const zap = await universe.zap(input!, output!, testUser, {
-              enableTradeZaps: false,
-            })
+            const zap = await universe.zap(input!, output!, testUser)
             console.log(`Issueance: ${zap}`)
             result = 'success'
           } catch (e) {
-            log(`${testCaseName} = ${e.message}`)
+            console.log(`${testCaseName} = ${e.message}`)
           }
           expect(result).toBe('success')
         },
@@ -289,7 +286,7 @@ describe('ethereum zapper', () => {
             result = 'success'
             console.log(`Redeem: ${zap}`)
           } catch (e) {
-            log(`${testCaseName} = ${e.message}`)
+            console.log(`${testCaseName} = ${e.message}`)
           }
           expect(result).toBe('success')
         },
@@ -327,15 +324,12 @@ describe('ethereum zapper', () => {
               input!,
               rToken!,
               output!,
-              testUser,
-              {
-                enableTradeZaps: false,
-              }
+              testUser
             )
             console.log(`Yield position zap: ${zap}`)
             result = 'success'
           } catch (e) {
-            log(`${testCaseName} = ${e.message}`)
+            console.log(`${testCaseName} = ${e.message}`)
           }
           expect(result).toBe('success')
         },
@@ -346,6 +340,5 @@ describe('ethereum zapper', () => {
 })
 
 afterAll(() => {
-  console.log = log
   ;(universe.provider as WebSocketProvider).websocket.close()
 })

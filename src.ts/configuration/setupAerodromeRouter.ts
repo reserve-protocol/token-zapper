@@ -16,8 +16,9 @@ import {
   InteractionConvention,
 } from '../action/Action'
 import { Approval } from '../base/Approval'
-import { Planner, Value } from '../tx-gen/Planner'
+import { isDynamicType, Planner, Value } from '../tx-gen/Planner'
 import { SwapPlan } from '../searcher/Swap'
+import { ParamType } from '@ethersproject/abi'
 
 const shuffle = <T>(arr: T[]): T[] => {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -101,34 +102,59 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
     inputs: Value[],
     _: Address,
     predicted: TokenQuantity[]
-  ): Promise<Value[]> {
-    const lib = this.gen.Contract.createContract(
-      IAerodromeRouter__factory.connect(
-        this.router.address,
-        this.universe.provider
-      )
+  ) {
+    const contract = IAerodromeRouter__factory.connect(
+      this.router.address,
+      this.universe.provider
     )
 
-    const [minOut] = await this.quoteWithSlippage(predicted)
-    planner.add(
-      lib.swapExactTokensForTokens(
-        inputs[0] ?? predicted[0].amount,
-        minOut.amount,
-        this.path.steps.map((step) => step.step.intoRouteStruct()),
+    const encodedSteps = this.path.steps.map((step) =>
+      step.step.intoRouteStruct()
+    )
+
+    const lib = this.gen.Contract.createContract(contract)
+    
+    const encodedCall = contract.interface.encodeFunctionData(
+      'swapExactTokensForTokens',
+      [
+        predicted[0].amount,
+        predicted[0].amount,
+        encodedSteps,
         this.universe.execAddress.address,
-        Date.now() + 1000 * 60 * 10
+        Math.floor(Date.now() / 1000 + 50000),
+      ]
+    )
+
+    planner.add(
+      this.universe.weirollZapperExec.rawCall(
+        this.router.address,
+        0,
+        encodedCall
       ),
       this.toString()
-    )!
+    )
+    return null
 
-    return this.outputBalanceOf(this.universe, planner)
+    // const [minOut] = await this.quoteWithSlippage(predicted)
+    // planner.add(
+    //   lib.swapExactTokensForTokens(
+    //     inputs[0],
+    //     minOut.amount - minOut.amount / 20n,
+    //     this.path.steps.map((step) => step.step.intoRouteStruct()),
+    //     this.universe.execAddress.address,
+    //     Math.floor(Date.now() / 1000 + 50000)
+    //   ),
+    //   this.toString()
+    // )!
+
+    // return this.outputBalanceOf(this.universe, planner)
   }
 
   public get returnsOutput() {
-    return true
+    return false
   }
   public get supportsDynamicInput() {
-    return true
+    return false
   }
   public get oneUsePrZap() {
     return true
@@ -418,9 +444,11 @@ export const setupAerodromeRouter = async (universe: Universe) => {
         }
       }
 
-      const toEvaluate = routes.filter(i => i.length !== 0);
+      const toEvaluate = routes.filter((i) => i.length !== 0)
 
-      universe.searcher.debugLog(`Aerodrome: Evaluating ${toEvaluate.length} routes`)
+      universe.searcher.debugLog(
+        `Aerodrome: Evaluating ${toEvaluate.length} routes`
+      )
 
       const inputValue = await universe.fairPrice(input)
       if (inputValue == null || inputValue.amount === 0n) {
@@ -436,7 +464,7 @@ export const setupAerodromeRouter = async (universe: Universe) => {
             if (outputs.length > 2) {
               return null
             }
-            const routeStruct = route.map((step) => step.intoRouteStruct());
+            const routeStruct = route.map((step) => step.intoRouteStruct())
             const parts = await routerInst.getAmountsOut(
               input.amount,
               routeStruct
@@ -461,12 +489,14 @@ export const setupAerodromeRouter = async (universe: Universe) => {
             badRoutes.add(id)
             return null!
           } catch (e) {
-            return null;
+            return null
           }
         })
       )
 
-      universe.searcher.debugLog(`Aerodrome generated out: ${outputs.length} ${Date.now() - startTime}ms`)
+      universe.searcher.debugLog(
+        `Aerodrome generated out: ${outputs.length} ${Date.now() - startTime}ms`
+      )
 
       if (outputs.length == 0) {
         throw new Error('No results, aborting')

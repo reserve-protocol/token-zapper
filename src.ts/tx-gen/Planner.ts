@@ -230,7 +230,7 @@ export class FunctionCall {
  */
 export type ContractFunction = (...args: Array<any>) => FunctionCall
 
-function isDynamicType(param?: ParamType): boolean {
+export function isDynamicType(param?: ParamType): boolean {
   if (typeof param === 'undefined') return false
   if (param.baseType === 'array') {
     // Fixed length arrays are only dynamic if the child type is dynamic

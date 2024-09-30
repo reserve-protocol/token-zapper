@@ -93,19 +93,24 @@ const testUser = Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 const issueanceCases = [
   makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
   makeMintTestCase(10000, t.USDbC, rTokens.hyUSD),
+  makeMintTestCase(5, t.WETH, rTokens.hyUSD),
 
   makeMintTestCase(5, t.WETH, rTokens.bsd),
   makeMintTestCase(5, t.wstETH, rTokens.bsd),
   makeMintTestCase(5, t.cbETH, rTokens.bsd),
+  makeMintTestCase(10000, t.USDC, rTokens.bsd),
+  makeMintTestCase(10000, t.USDbC, rTokens.bsd),
 ]
 
 const redeemCases = [
   makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
   makeMintTestCase(10000, rTokens.hyUSD, t.USDbC),
+  makeMintTestCase(10000, rTokens.hyUSD, t.WETH),
 
   makeMintTestCase(5, rTokens.bsd, t.WETH),
   makeMintTestCase(5, rTokens.bsd, t.wstETH),
   makeMintTestCase(5, rTokens.bsd, t.cbETH),
+  makeMintTestCase(5, rTokens.bsd, t.USDC),
 ]
 
 let universe: Universe
@@ -134,11 +139,7 @@ beforeAll(async () => {
   return universe
 }, 5000)
 
-const log = console.log
 describe('base zapper', () => {
-  beforeAll(() => {
-    console.log = () => {}
-  })
   beforeEach(async () => {
     await universe.updateBlockState(
       await universe.provider.getBlockNumber(),
@@ -163,13 +164,12 @@ describe('base zapper', () => {
           let result = 'failed'
 
           try {
-            await universe.zap(input!, output!, testUser, {
+            const zap = await universe.zap(input!, output!, testUser, {
               enableTradeZaps: false,
             })
+            console.log(`Issueance: ${zap}`)
             result = 'success'
-          } catch (e) {
-            log(`${testCaseName} = ${e.message}`)
-          }
+          } catch (e) {}
           expect(result).toBe('success')
         },
         15 * 1000
@@ -194,11 +194,10 @@ describe('base zapper', () => {
           let result = 'failed'
 
           try {
-            await universe.redeem(input!, output!, testUser)
+            const zap = await universe.redeem(input!, output!, testUser)
+            console.log(`Redeem: ${zap}`)
             result = 'success'
-          } catch (e) {
-            log(`${testCaseName} = ${e.message}`)
-          }
+          } catch (e) {}
           expect(result).toBe('success')
         },
         15 * 1000
@@ -208,6 +207,5 @@ describe('base zapper', () => {
 })
 
 afterAll(() => {
-  console.log = log
   ;(universe.provider as WebSocketProvider).websocket.close()
 })

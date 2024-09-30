@@ -103,14 +103,16 @@ export const findPrecursorTokenSet = async (
     (!inputIsStableCoin && rTokenIsStableCoin)
   const preferredTokenSet = universe.preferredRTokenInputToken.get(rToken)
   const preferredToken = universe.preferredToken.get(rToken)
-  const nonMainnetRule =
-    preferredToken != null &&
-    universe.chainId !== 1 &&
-    !precursorSet.precursorToTradeFor.find((i) => preferredToken === i.token)
+
+  searcher.debugLog(
+    `pegDiffers=${pegDiffers}, preferredToken=${preferredToken}`
+  )
   if (
     precursorSet.precursorToTradeFor.length > 1 &&
     preferredToken != null &&
-    (pegDiffers || nonMainnetRule) &&
+    (pegDiffers ||
+      (universe.chainId !== 1 &&
+        !preferredTokenSet.has(userInputQuantity.token))) &&
     !preferredTokenSet.has(userInputQuantity.token)
   ) {
     precursorSet = await computePrecursorSet(preferredToken)
@@ -190,6 +192,74 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     this.debugLog(precursorTokens.precursorToTradeFor.join(', '))
     this.debugLog(precursorTokens.describe().join('\n'))
 
+    let firstTrade: MultiChoicePath | null = null
+    if (initialTrade != null) {
+      this.debugLog(
+        'Finding initial trade: ',
+        `${initialTrade.input} -> ${initialTrade.output}`
+      )
+      firstTrade = await this.findSingleInputTokenSwap(
+        false,
+        initialTrade.input,
+        initialTrade.output,
+        this.universe.execAddress,
+        this.defaultInternalTradeSlippage,
+        AbortSignal.timeout(this.config.routerDeadline),
+        1
+      )
+    }
+
+    const tradeforPrecursorsInputs: {
+      tradeForPrecursorsInput: TokenQuantity
+      trade: SwapPath | null
+    }[] = firstTrade?.paths.map((i) => ({
+      tradeForPrecursorsInput: i.outputs[0],
+      trade: i,
+    })) ?? [
+      {
+        tradeForPrecursorsInput: inputQuantity,
+        trade: null,
+      },
+    ]
+
+    await Promise.all(
+      tradeforPrecursorsInputs.map(async (option) => {
+        const {
+          tradeForPrecursorsInput: tradeforPrecursorsInput,
+          trade: firstTrade,
+        } = option
+
+        await this.createZapMintOption(
+          tradeforPrecursorsInput,
+          firstTrade,
+          rToken,
+          internalTradeSlippage,
+          signerAddress,
+          onResult,
+          abortSignal,
+          precursorTokens
+        ).catch((e) => {
+          console.log(e)
+        })
+      })
+    )
+  }
+
+  async createZapMintOption(
+    tradeforPrecursorsInput: TokenQuantity,
+    firstTrade: SwapPath | null,
+    rToken: Token,
+    internalTradeSlippage: bigint,
+    signerAddress: Address,
+    onResult: (result: {
+      inputQuantity: TokenQuantity
+      firstTrade: SwapPath | null
+      trading: SwapPaths
+      minting: SwapPaths
+    }) => Promise<void>,
+    abortSignal: AbortSignal,
+    precursorTokens: Awaited<ReturnType<typeof findPrecursorTokenSet>>['rules']
+  ) {
     const generateInputToPrecursorTradeMeasurement = this.perf.begin(
       'generateInputToPrecursorTrade',
       rToken.symbol
@@ -198,38 +268,10 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       'generateInputToPrecursorTradeSetup',
       rToken.symbol
     )
-
-    let firstTrade: SwapPath | null = null
-    let tradeforPrecursorsInput = inputQuantity
-    if (initialTrade != null) {
-      this.debugLog(
-        'Finding initial trade: ',
-        `${initialTrade.input} -> ${initialTrade.output}`
-      )
-      firstTrade = (
-        await this.findSingleInputTokenSwap(
-          false,
-          initialTrade.input,
-          initialTrade.output,
-          this.universe.execAddress,
-          this.defaultInternalTradeSlippage,
-          AbortSignal.timeout(this.config.routerDeadline),
-          1
-        )
-      ).path
-
-      tradeforPrecursorsInput = firstTrade.outputs[0]
-      this.debugLog(
-        'Finding initial trade: ',
-        `${initialTrade.input} -> ${tradeforPrecursorsInput}`
-      )
-    }
-
     const balancesBeforeTrading = new TokenAmounts()
     this.debugLog('tradeforPrecursorsInput', tradeforPrecursorsInput.toString())
     balancesBeforeTrading.add(tradeforPrecursorsInput)
     this.debugLog('balancesBeforeTrading', balancesBeforeTrading.toString())
-
     /**
      * PHASE 2: Trade inputQuantity into precursor set
      */
@@ -288,7 +330,6 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
 
     generateInputToPrecursorTradeMeasurementSetup()
 
-    multiTrades = []
     this.debugLog('Generating trades')
     await Promise.all(
       inputPrTrade.map(async ({ input, output }) => {
@@ -702,8 +743,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       this.universe.chainId !== 1 &&
       preferredOutput != null &&
       !unwrapTokenQtys.find((i) => outputToken === i.token)
-    const inputAndOutputArePeggedDifferently =
-      rTokenIsStable !== outputIsStable || nonMainnetRule
+    const inputAndOutputArePeggedDifferently = rTokenIsStable !== outputIsStable
 
     this.debugLog(`unwrapTokenQtys=${unwrapTokenQtys.join(', ')}`)
     const tradeToPreferredOutputThenOutput = async (preferredOutput: Token) => {
@@ -795,13 +835,21 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
           })
       )
 
-    const trades =
+    const tradeIndirectlyFirst =
       unwrapTokenQtys.length > 1 &&
       (inputAndOutputArePeggedDifferently || nonMainnetRule) &&
       preferredOutput != null &&
-      !preferredOutputs.has(preferredOutput)
-        ? await tradeToPreferredOutputThenOutput(preferredOutput)
-        : await tradeDirectly()
+      !preferredOutputs.has(output)
+    const trades = tradeIndirectlyFirst
+      ? await tradeToPreferredOutputThenOutput(preferredOutput).catch(
+          async () => await tradeDirectly()
+        )
+      : await tradeDirectly().catch(async (e) => {
+          if (preferredOutput) {
+            return await tradeToPreferredOutputThenOutput(preferredOutput)
+          }
+          throw e
+        })
 
     const permutableTrades = trades.filter((i) => i.paths.length !== 0)
 
@@ -1262,6 +1310,9 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       .map((i) => i.convertToSingularPaths())
       .flat()
       .filter((plan) => {
+        if (plan == null || plan.steps.length === 0) {
+          return false
+        }
         if (plan.steps.length > maxHops) {
           return false
         }

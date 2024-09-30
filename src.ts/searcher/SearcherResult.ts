@@ -62,7 +62,7 @@ class Step {
     readonly action: BaseAction,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) { }
+  ) {}
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -93,7 +93,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-        InteractionConvention.PayBeforeCall
+          InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -211,11 +211,6 @@ export abstract class BaseSearcherResult {
     }
     const resp = await this.universe.simulateZapFn(opts)
 
-    if (process.env.DEBUG_SIMULATION) {
-      this.searcher.debugLog(
-        printPlan(this.planner, this.universe).join('\n') + '\n\n\n'
-      )
-    }
     // If the response starts with a pointer to the first location of the output tuple
     // when we know if can be decoded by the zapper interface
     if (
@@ -225,6 +220,11 @@ export abstract class BaseSearcherResult {
     ) {
       return zapperInterface.decodeFunctionResult('zapERC20', resp)
         .out as ZapperOutputStructOutput
+    }
+    if (process.env.DEBUG_SIMULATION) {
+      this.searcher.debugLog(
+        printPlan(this.planner, this.universe).join('\n') + '\n\n\n'
+      )
     }
     let errorMsg = ''
 
@@ -422,7 +422,7 @@ export abstract class BaseSearcherResult {
         outputTokenOutput.amount === 1n
           ? 1n
           : outputTokenOutput.amount -
-          outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
+            outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
       tokenOut: this.outputToken.address.address,
       tokens: this.potentialResidualTokens.map((i) => i.address.address),
     }
@@ -436,8 +436,8 @@ export abstract class BaseSearcherResult {
     return this.inputIsNative
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -668,11 +668,11 @@ export class RedeemZap extends BaseSearcherResult {
         if (input == null) {
           input = step.action.supportsDynamicInput
             ? plannerUtils.erc20.balanceOf(
-              this.universe,
-              this.planner,
-              step.inputs[0].token,
-              executorAddress
-            )
+                this.universe,
+                this.planner,
+                step.inputs[0].token,
+                executorAddress
+              )
             : encodeArg(step.inputs[0].amount, ParamType.from('uint256'))
         }
         if (step.action.supportsDynamicInput) {
@@ -706,23 +706,18 @@ export class RedeemZap extends BaseSearcherResult {
         if (input == null) {
           input = dynInput
             ? plannerUtils.erc20.balanceOf(
-              this.universe,
-              this.planner,
-              stepInput,
-              executorAddress
-            )
+                this.universe,
+                this.planner,
+                stepInput,
+                executorAddress
+              )
             : encodeArg(
-              stepInputQty.amount - stepInputQty.amount / 1000000n,
-              ParamType.from('uint256')
-            )
+                stepInputQty.amount - stepInputQty.amount / 1000000n,
+                ParamType.from('uint256')
+              )
         }
 
-        await step.action.plan(
-          this.planner,
-          [input],
-          this.signer,
-          step.inputs
-        )
+        await step.action.plan(this.planner, [input], this.signer, step.inputs)
       }
     }
 
@@ -858,9 +853,9 @@ export class MintZap extends BaseSearcherResult {
       const tradesToGenerate = allSupportDynamicInput
         ? allTrades
         : [
-          ...allTrades.filter((i) => !i.supportsDynamicInput),
-          ...allTrades.filter((i) => i.supportsDynamicInput),
-        ]
+            ...allTrades.filter((i) => !i.supportsDynamicInput),
+            ...allTrades.filter((i) => i.supportsDynamicInput),
+          ]
 
       const dynamicTradeInputSplits = new Map<Token, Value>()
       if (this.parts.setup != null) {
@@ -894,7 +889,9 @@ export class MintZap extends BaseSearcherResult {
       }
 
       this.planner.addComment('Trading section: input to precursor set')
-      this.planner.addComment(`Expected input balances ${this.parts.trading.inputs.join(', ')}`)
+      this.planner.addComment(
+        `Expected input balances ${this.parts.trading.inputs.join(', ')}`
+      )
       for (const trade of tradesToGenerate) {
         for (const step of trade.steps) {
           await this.checkIfSearchIsAborted()
@@ -990,7 +987,9 @@ export class MintZap extends BaseSearcherResult {
       dynamicTradeInputSplits.clear()
 
       this.planner.addComment('Minting section: precusor set to basket')
-      this.planner.addComment(`Expected input balances ${this.parts.trading.outputs.join(', ')}`)
+      this.planner.addComment(
+        `Expected input balances ${this.parts.trading.outputs.join(', ')}`
+      )
       for (const mintPath of this.parts.minting.swapPaths) {
         for (const step of mintPath.steps) {
           if (step.action instanceof MintRTokenAction) {
@@ -1028,7 +1027,8 @@ export class MintZap extends BaseSearcherResult {
             actionsUsingThisInputExcludingRTokenMint.get(inputToken).size
           actionsUsingThisInputExcludingRTokenMint.get(inputToken).delete(step)
           const generateSplit = usersLeft > 1
-          const amountIsKnowStatically = inputToken === this.inputToken && this.parts.setup == null
+          const amountIsKnowStatically =
+            inputToken === this.inputToken && this.parts.setup == null
           if (!amountIsKnowStatically) {
             if (!generateSplit) {
               actionInput = plannerUtils.erc20.balanceOf(

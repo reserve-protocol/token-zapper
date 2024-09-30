@@ -320,6 +320,10 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
 
               continue
             }
+            this.debugLog(`${input} -> ${output}: ${potentialSwaps.paths.length} options`)
+            for (const path of potentialSwaps.paths) {
+              this.debugLog(`  ${path}`)
+            }
             multiTrades.push(potentialSwaps)
             return
           } catch (e) {
@@ -478,36 +482,31 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     )
 
     this.debugLog('precursorSet', [...precursorSet].join(', '))
+    this.debugLog(`multiTrades=${multiTrades.map(i => i.paths.length).join(', ')}`)
 
     const allOptions = await this.perf.measurePromise(
       'generateAllPermutations',
       generateAllPermutations(this, multiTrades, precursorSet, signerAddress),
       rToken.symbol
     )
+    this.debugLog(`allOptions=${allOptions.length}`)
 
-    const aborter = new AbortController()
-    const candidateChunks = chunkifyIterable(
+
+    const candidateChunks = [...chunkifyIterable(
       allOptions,
       this.maxConcurrency,
       abortSignal
-    )
-    const prRound = Math.floor(250)
+    )]
+
+    const last = candidateChunks[candidateChunks.length - 1]
     for (const candidates of candidateChunks) {
-      let resultsProduced = 0
+      const maxWaitTime = AbortSignal.timeout(250)
       if (abortSignal.aborted) {
         break
       }
-      const maxWaitTime = AbortSignal.timeout(prRound)
-
       const p = new Promise((resolve) => {
-        abortSignal.addEventListener('abort', () => {
-          resolve(null)
-        })
-        aborter.signal.addEventListener('abort', () => {
-          resolve(null)
-        })
         maxWaitTime.addEventListener('abort', () => {
-          if (resultsProduced != 0) {
+          if (candidates !== last) {
             resolve(null)
           }
         })
@@ -516,18 +515,10 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
       await Promise.race([
         await Promise.all(
           candidates.map(async (paths) => {
-            let out
             try {
-              const pathWithResolvedTradeConflicts =
-                await resolveTradeConflicts(this, abortSignal, paths)
-              out = await generateIssueancePlan(pathWithResolvedTradeConflicts)
+              const pathWithResolvedTradeConflicts = await resolveTradeConflicts(this, abortSignal, paths)
+              await onResult(await generateIssueancePlan(pathWithResolvedTradeConflicts))
 
-              try {
-                await onResult(out)
-                resultsProduced += 1
-              } catch (e: any) {
-                console.log(e)
-              }
             } catch (e: any) {
               console.log(e)
             }
@@ -703,13 +694,26 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
         redeemSwapPaths.push(basketTokenToOutput)
       }
     }
+    const rTokenPrice = await this.fairPrice(rToken.one)
+    if (rTokenPrice == null) {
+      this.debugLog('Failed to quote rToken price')
+      throw new Error('Failed to quote rToken price')
+    }
+
+    const rTokenIsStable = Math.abs(1 - rTokenPrice.asNumber()) < 0.1
+    const outputPrice = await this.fairPrice(output.one)
+    if (outputPrice == null) {
+      this.debugLog('Failed to quote output price')
+      throw new Error('Failed to quote output price')
+    }
+    const outputIsStable = Math.abs(1 - outputPrice.asNumber()) < 0.1
+    const inputAndOutputArePeggedDifferently = rTokenIsStable !== outputIsStable
 
     const unwrapTokenQtys = tokenAmounts.toTokenQuantities()
-    const preferredOutput = this.universe.preferredRTokenInputToken.get(rToken) ?? output;
-    const outputNotPreferredExit = preferredOutput !== output;
+    const preferredOutput = this.universe.preferredRTokenInputToken.get(rToken)
 
     this.debugLog(`unwrapTokenQtys=${unwrapTokenQtys.join(', ')}`)
-    const tradeToPreferredOutputThenOutput = async () => {
+    const tradeToPreferredOutputThenOutput = async (preferredOutput: Token) => {
       const preferredTokenQty = unwrapTokenQtys.find((i) => i.token === preferredOutput) ?? preferredOutput.zero
       const tradeForPreferredOut = (await Promise.all(
         unwrapTokenQtys.map(async (qty) => {
@@ -780,7 +784,7 @@ export class Searcher<const SearcherUniverse extends Universe<Config>> {
     );
 
 
-    const trades = outputNotPreferredExit ? await tradeToPreferredOutputThenOutput() : await tradeDirectly();
+    const trades = (inputAndOutputArePeggedDifferently && preferredOutput != null) ? await tradeToPreferredOutputThenOutput(preferredOutput) : await tradeDirectly();
 
     const permutableTrades = trades.filter((i) => i.paths.length !== 0)
 

@@ -8,14 +8,14 @@ git diff-index --quiet HEAD -- || {
 }
 
 # Read current version
-current_version=$(awk -F \" '/"version": ".+"/ { print $4; exit; }' package.json)
+current_version=$(awk -F \" '/^  "version": ".+",/ { print $4; exit; }' package.json)
 
 # Ask user for new version and message
 read -p "New version (current: $current_version): " new_version
 read -p "Tag message: " tag_message
 
 # Update package.json with new version
-sed -i '' "s/\($current_version\).*/$new_version\",/" package.json
+sed -i '' "s/^\(  \"$current_version\",\).*/$new_version\",/" package.json
 
 if npm install; then
   echo "package.json and package.lock updated"

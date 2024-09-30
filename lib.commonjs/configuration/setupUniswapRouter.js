@@ -1,0 +1,350 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.setupUniswapRouter = exports.UniswapRouterAction = exports.UniswapTrade = void 0;
+const tslib_1 = require("tslib");
+const sdk_core_1 = require("@uniswap/sdk-core");
+const v3_sdk_1 = require("@uniswap/v3-sdk");
+const default_token_list_1 = tslib_1.__importDefault(require("@uniswap/default-token-list"));
+const smart_order_router_1 = require("@uniswap/smart-order-router");
+const Action_1 = require("../action/Action");
+const DexAggregator_1 = require("../aggregators/DexAggregator");
+const Address_1 = require("../base/Address");
+const Approval_1 = require("../base/Approval");
+const constants_1 = require("../base/constants");
+const contracts_1 = require("../contracts");
+const Planner_1 = require("../tx-gen/Planner");
+const abi_1 = require("@ethersproject/abi");
+const portion_provider_1 = require("@uniswap/smart-order-router/build/main/providers/portion-provider");
+const token_fee_fetcher_1 = require("@uniswap/smart-order-router/build/main/providers/token-fee-fetcher");
+const ethers_1 = require("ethers");
+const utils_1 = require("ethers/lib/utils");
+const node_cache_1 = tslib_1.__importDefault(require("node-cache"));
+const RouterAction_1 = require("../action/RouterAction");
+const Swap_1 = require("../searcher/Swap");
+const router_sdk_1 = require("@uniswap/router-sdk");
+class UniswapPool {
+    address;
+    token0;
+    token1;
+    fee;
+    constructor(address, token0, token1, fee) {
+        this.address = address;
+        this.token0 = token0;
+        this.token1 = token1;
+        this.fee = fee;
+    }
+    toString() {
+        return `(${this.token0}.${this.fee}.${this.token1})`;
+    }
+}
+class UniswapStep {
+    pool;
+    tokenIn;
+    tokenOut;
+    constructor(pool, tokenIn, tokenOut) {
+        this.pool = pool;
+        this.tokenIn = tokenIn;
+        this.tokenOut = tokenOut;
+    }
+    toString() {
+        return `${this.tokenIn} -> ${this.pool.address.toString()} -> ${this.tokenOut}`;
+    }
+}
+class UniswapTrade {
+    to;
+    gasEstimate;
+    input;
+    output;
+    swaps;
+    addresses;
+    outputWithSlippage;
+    constructor(to, gasEstimate, input, output, swaps, addresses, outputWithSlippage) {
+        this.to = to;
+        this.gasEstimate = gasEstimate;
+        this.input = input;
+        this.output = output;
+        this.swaps = swaps;
+        this.addresses = addresses;
+        this.outputWithSlippage = outputWithSlippage;
+    }
+    toString() {
+        return `${this.input} -> [${this.swaps.join(' -> ')}] -> ${this.output}`;
+    }
+}
+exports.UniswapTrade = UniswapTrade;
+function encodeRouteToPath(route) {
+    const firstInputToken = route.input.token;
+    const { path, types } = route.swaps.reduce(({ inputToken, path, types, }, step, index) => {
+        const outputToken = step.tokenOut;
+        if (index === 0) {
+            return {
+                inputToken: outputToken,
+                types: ['address', 'uint24', 'address'],
+                path: [
+                    inputToken.address.address,
+                    step.pool.fee,
+                    outputToken.address.address,
+                ],
+            };
+        }
+        else {
+            return {
+                inputToken: outputToken,
+                types: [...types, 'uint24', 'address'],
+                path: [...path, step.pool.fee, outputToken.address.address],
+            };
+        }
+    }, { inputToken: firstInputToken, path: [], types: [] });
+    return (0, utils_1.solidityPack)(types, path);
+}
+class UniswapRouterAction extends (0, Action_1.Action)('Uniswap') {
+    currentQuote;
+    universe;
+    dex;
+    get oneUsePrZap() {
+        return true;
+    }
+    get returnsOutput() {
+        return true;
+    }
+    get supportsDynamicInput() {
+        return true;
+    }
+    get outputSlippage() {
+        return 0n;
+    }
+    async planV3Trade(planner, trade, input) {
+        const v3CalLRouterLib = this.gen.Contract.createLibrary(contracts_1.UniV3RouterCall__factory.connect(this.universe.config.addresses.uniV3Router.address, this.universe.provider));
+        const minOut = this.outputQty.amount - this.outputQty.amount / 20n;
+        if (trade.swaps.length === 1) {
+            const route = trade.swaps[0];
+            const exactInputSingleParams = {
+                tokenIn: this.inputToken[0].address.address,
+                tokenOut: this.outputToken[0].address.address,
+                fee: route.pool.fee,
+                recipient: this.universe.execAddress.address,
+                amountIn: 0,
+                amountOutMinimum: minOut,
+                sqrtPriceLimitX96: 0,
+            };
+            const encoded = ethers_1.utils.defaultAbiCoder.encode([
+                'address',
+                'address',
+                'uint24',
+                'address',
+                'uint256',
+                'uint256',
+                'uint160',
+            ], [
+                exactInputSingleParams.tokenIn,
+                exactInputSingleParams.tokenOut,
+                exactInputSingleParams.fee,
+                exactInputSingleParams.recipient,
+                0,
+                0,
+                exactInputSingleParams.sqrtPriceLimitX96,
+            ]);
+            return planner.add(v3CalLRouterLib.exactInputSingle(input, minOut, this.currentQuote.to.address, encoded), `UniV3.exactInputSingle(${trade.input} -> ${trade.output})`);
+        }
+        const path = encodeRouteToPath(this.currentQuote);
+        return planner.add(v3CalLRouterLib.exactInput(input, minOut, this.currentQuote.to.address, this.universe.execAddress.address, (0, v3_sdk_1.toHex)(path)), `UniV3.exactInput(${trade})`);
+    }
+    async plan(planner, [input], _, [staticInput]) {
+        let inp = input ?? (0, Planner_1.encodeArg)(staticInput.amount, abi_1.ParamType.from('uint256'));
+        return [await this.planV3Trade(planner, this.currentQuote, inp)];
+    }
+    createdBlock;
+    constructor(currentQuote, universe, dex) {
+        super(currentQuote.to, [currentQuote.input.token], [currentQuote.outputWithSlippage.token], Action_1.InteractionConvention.ApprovalRequired, Action_1.DestinationOptions.Recipient, [new Approval_1.Approval(currentQuote.input.token, currentQuote.to)]);
+        this.currentQuote = currentQuote;
+        this.universe = universe;
+        this.dex = dex;
+        this.createdBlock = universe.currentBlock;
+    }
+    get inputQty() {
+        return this.currentQuote.input;
+    }
+    get outputQty() {
+        return this.currentQuote.outputWithSlippage;
+    }
+    toString() {
+        return `UniRouter(${this.currentQuote})`;
+    }
+    get addressesInUse() {
+        return this.currentQuote.addresses;
+    }
+    async quote([input]) {
+        // if (
+        //   Math.abs(this.createdBlock - this.universe.currentBlock) >
+        //   this.universe.config.requoteTolerance
+        // ) {
+        //   this.currentQuote = await this.reQuote(input)
+        // }
+        return [this.outputQty];
+    }
+    get route() {
+        return this.currentQuote;
+    }
+    gasEstimate() {
+        const out = this.currentQuote.gasEstimate;
+        return out === 0n ? 300000n : out;
+    }
+}
+exports.UniswapRouterAction = UniswapRouterAction;
+const ourTokenToUni = (universe, token) => {
+    if (token.address.address === constants_1.GAS_TOKEN_ADDRESS) {
+        return sdk_core_1.Ether.onChain(universe.chainId);
+    }
+    return new sdk_core_1.Token(universe.chainId, token.address.address, token.decimals, token.symbol, token.name);
+};
+const uniTokenToOurs = async (universe, token) => {
+    if (token.isNative) {
+        return universe.nativeToken;
+    }
+    return await universe.getToken(Address_1.Address.from(token.address));
+};
+const uniAmtTokenToOurs = async (universe, token) => {
+    const ourToken = await uniTokenToOurs(universe, token.currency);
+    const out = token.toFixed(ourToken.decimals);
+    return ourToken.fromDecimal(out);
+};
+const tokenQtyToCurrencyAmt = (universe, qty) => {
+    const uniToken = ourTokenToUni(universe, qty.token);
+    return smart_order_router_1.CurrencyAmount.fromRawAmount(uniToken, qty.amount.toString());
+};
+const setupUniswapRouter = async (universe) => {
+    const tokenCache = new smart_order_router_1.NodeJSCache(new node_cache_1.default({ stdTTL: 3600, useClones: false }));
+    await universe.provider.getNetwork();
+    const multicall = new smart_order_router_1.UniswapMulticallProvider(universe.chainId, universe.provider, Number(universe.config.blockGasLimit));
+    const tokenProviderOnChain = new smart_order_router_1.TokenProvider(universe.chainId, multicall);
+    const cachingTokenProvider = new smart_order_router_1.CachingTokenProviderWithFallback(universe.chainId, tokenCache, await smart_order_router_1.CachingTokenListProvider.fromTokenList(universe.chainId, default_token_list_1.default, tokenCache), tokenProviderOnChain);
+    const tokenFeeFetcher = new token_fee_fetcher_1.OnChainTokenFeeFetcher(universe.chainId, universe.provider);
+    const tokenPropertiesProvider = new smart_order_router_1.TokenPropertiesProvider(universe.chainId, new smart_order_router_1.NodeJSCache(new node_cache_1.default({ stdTTL: 360, useClones: false })), tokenFeeFetcher);
+    const v2PoolProvider = new smart_order_router_1.CachingV2PoolProvider(universe.chainId, new smart_order_router_1.V2PoolProvider(universe.chainId, multicall, tokenPropertiesProvider), new smart_order_router_1.NodeJSCache(new node_cache_1.default({ stdTTL: 360, useClones: false })));
+    const v3PoolProvider = new smart_order_router_1.CachingV3PoolProvider(universe.chainId, new smart_order_router_1.V3PoolProvider(universe.chainId, multicall), new smart_order_router_1.NodeJSCache(new node_cache_1.default({ stdTTL: 360, useClones: false })));
+    const v4PoolProvider = new smart_order_router_1.CachingV4PoolProvider(universe.chainId, new smart_order_router_1.V4PoolProvider(universe.chainId, multicall), new smart_order_router_1.NodeJSCache(new node_cache_1.default({ stdTTL: 360, useClones: false })));
+    const portionProvider = new portion_provider_1.PortionProvider();
+    const ethEstimateGasSimulator = new smart_order_router_1.EthEstimateGasSimulator(universe.chainId, universe.provider, v2PoolProvider, v3PoolProvider, v4PoolProvider, portionProvider);
+    const gasPriceCache = new smart_order_router_1.NodeJSCache(new node_cache_1.default({ stdTTL: 15, useClones: true }));
+    const gasPriceProvider = new smart_order_router_1.CachingGasStationProvider(universe.chainId, new smart_order_router_1.OnChainGasPriceProvider(universe.chainId, new smart_order_router_1.EIP1559GasPriceProvider(universe.provider), new smart_order_router_1.LegacyGasPriceProvider(universe.provider)), gasPriceCache);
+    const legacy = new smart_order_router_1.LegacyRouter({
+        chainId: universe.chainId,
+        multicall2Provider: multicall,
+        poolProvider: v3PoolProvider,
+        quoteProvider: new smart_order_router_1.OnChainQuoteProvider(universe.chainId, universe.provider, multicall),
+        tokenProvider: cachingTokenProvider,
+    });
+    const alphaRouter = new smart_order_router_1.AlphaRouter({
+        chainId: universe.chainId,
+        multicall2Provider: multicall,
+        provider: universe.provider,
+        simulator: ethEstimateGasSimulator,
+        gasPriceProvider: gasPriceProvider,
+        tokenProvider: cachingTokenProvider,
+    });
+    const pools = new Map();
+    const parseRoute = async (abort, route, inputTokenQuantity, slippage) => {
+        const routes = route.route;
+        const steps = await Promise.all(routes.map(async (v3Route) => {
+            if (abort.aborted) {
+                throw new Error('Aborted');
+            }
+            const stepPools = await Promise.all(v3Route.route.pools.map(async (pool, index) => {
+                if (abort.aborted) {
+                    throw new Error('Aborted');
+                }
+                const addr = Address_1.Address.from(v3Route.poolIdentifiers[index]);
+                const prev = pools.get(addr);
+                if (prev) {
+                    return prev;
+                }
+                const token0 = await universe.getToken(Address_1.Address.from(pool.token0.address));
+                const token1 = await universe.getToken(Address_1.Address.from(pool.token1.address));
+                const poolInst = new UniswapPool(addr, token0, token1, pool.fee);
+                pools.set(addr, poolInst);
+                return poolInst;
+            }));
+            const steps = [];
+            for (let i = 0; i < stepPools.length; i++) {
+                const tokenIn = await uniTokenToOurs(universe, v3Route.route.tokenPath[i]);
+                const tokenOut = await uniTokenToOurs(universe, v3Route.route.tokenPath[i + 1]);
+                steps.push(new UniswapStep(stepPools[i], tokenIn, tokenOut));
+            }
+            return steps;
+        }));
+        if (steps.length !== 1) {
+            throw new Error(`We don't support univ3 with splits yet. Got ${steps.length} paths`);
+        }
+        const outputWithoutSlippage = await uniAmtTokenToOurs(universe, route.trade.outputAmount);
+        const outputWithSlippage = await uniAmtTokenToOurs(universe, route.trade.minimumAmountOut(new sdk_core_1.Percent(Number(slippage), Number(constants_1.TRADE_SLIPPAGE_DENOMINATOR))));
+        if (outputWithSlippage.amount === 0n) {
+            throw new Error('No output');
+        }
+        return new UniswapTrade(Address_1.Address.from(route.methodParameters.to), route.estimatedGasUsed.toBigInt(), inputTokenQuantity, outputWithoutSlippage, steps[0], new Set(steps[0].map((i) => i.pool.address)), outputWithSlippage);
+    };
+    const computeRoute = async (abort, input, output, slippage) => {
+        const inp = tokenQtyToCurrencyAmt(universe, input);
+        const outp = ourTokenToUni(universe, output);
+        const slip = new sdk_core_1.Percent(Number(slippage), Number(constants_1.TRADE_SLIPPAGE_DENOMINATOR));
+        if (abort.aborted) {
+            throw new Error('Aborted');
+        }
+        const route = universe.chainId === 1
+            ? await alphaRouter.route(inp, outp, sdk_core_1.TradeType.EXACT_INPUT, {
+                recipient: universe.execAddress.address,
+                slippageTolerance: slip,
+                deadline: Math.floor(Date.now() / 1000 + 10000),
+                type: smart_order_router_1.SwapType.SWAP_ROUTER_02,
+            }, {
+                protocols: [router_sdk_1.Protocol.V3],
+            })
+            : await legacy.route(inp, outp, sdk_core_1.TradeType.EXACT_INPUT, {
+                recipient: universe.execAddress.address,
+                slippageTolerance: slip,
+                deadline: Math.floor(Date.now() / 1000 + 10000),
+                type: smart_order_router_1.SwapType.SWAP_ROUTER_02,
+            });
+        if (route == null || route.methodParameters == null) {
+            throw new Error('Failed to find route');
+        }
+        if (abort.aborted) {
+            throw new Error('Aborted');
+        }
+        const parsedRoute = await parseRoute(abort, route, input, slippage);
+        return parsedRoute;
+    };
+    let out;
+    out = new DexAggregator_1.DexRouter('uniswap', async (abort, input, output, slippage) => {
+        try {
+            const route = await computeRoute(abort, input, output, slippage);
+            if (route.output.amount <= 1000n ||
+                route.outputWithSlippage.amount <= 1000n) {
+                throw new Error(`Low output route.output.amount=${route.output.amount}, route.outputWithSlippage.amount=${route.outputWithSlippage.amount}`);
+            }
+            const plan = await new Swap_1.SwapPlan(universe, [
+                new UniswapRouterAction(route, universe, out),
+            ]).quote([input], universe.execAddress);
+            if (plan.outputs[0].amount <= 1000n) {
+                throw new Error(`Low output plan.outputs[0].amount=${plan.outputs[0].amount}`);
+            }
+            return plan;
+        }
+        catch (e) {
+            universe.searcher.debugLog(`Failed to find route for ${input} -> ${output}: ${e.message}`);
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            throw new Error(e);
+        }
+    }, true);
+    const routerAddr = Address_1.Address.from((0, sdk_core_1.SWAP_ROUTER_02_ADDRESSES)(universe.chainId));
+    return new DexAggregator_1.TradingVenue(universe, out, async (inputToken, outputToken) => {
+        try {
+            await computeRoute(AbortSignal.timeout(universe.config.routerDeadline), inputToken.one, outputToken, universe.config.defaultInternalTradeSlippage);
+        }
+        catch (e) {
+            return null;
+        }
+        return new RouterAction_1.RouterAction(out, universe, routerAddr, inputToken, outputToken, universe.config.defaultInternalTradeSlippage);
+    });
+};
+exports.setupUniswapRouter = setupUniswapRouter;
+//# sourceMappingURL=setupUniswapRouter.js.map

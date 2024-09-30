@@ -162,6 +162,7 @@ const issueanceCases = [
   makeMintTestCase(5, t.reth, rTokens['ETH+']),
   makeMintTestCase(5, t.frxeth, rTokens['ETH+']),
   makeMintTestCase(5, t.sfrxeth, rTokens['ETH+']),
+  makeMintTestCase(10000, t.USDC, rTokens['ETH+']),
 
   makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
   makeMintTestCase(10000, t.USDe, rTokens.hyUSD),
@@ -169,6 +170,7 @@ const issueanceCases = [
 
   makeMintTestCase(5, t.WETH, rTokens.dgnETH),
   makeMintTestCase(5, t.pxETH, rTokens.dgnETH),
+  makeMintTestCase(10000, t.USDC, rTokens.dgnETH),
 ]
 
 const redeemCases = [
@@ -182,12 +184,14 @@ const redeemCases = [
   makeMintTestCase(5, rTokens['ETH+'], t.WETH),
   makeMintTestCase(5, rTokens['ETH+'], t.reth),
   makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
+  makeMintTestCase(5, rTokens['ETH+'], t.USDC),
 
   makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
   makeMintTestCase(10000, rTokens.hyUSD, t.USDe),
   makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
 
   makeMintTestCase(5, rTokens.dgnETH, t.WETH),
+  makeMintTestCase(5, rTokens.dgnETH, t.USDC),
 ]
 
 const zapIntoYieldPositionCases = [
@@ -281,7 +285,7 @@ describe('ethereum zapper', () => {
           let result = 'failed'
 
           try {
-            const zap =await universe.redeem(input!, output!, testUser)
+            const zap = await universe.redeem(input!, output!, testUser)
             result = 'success'
             console.log(`Redeem: ${zap}`)
           } catch (e) {

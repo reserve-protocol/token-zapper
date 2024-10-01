@@ -1118,7 +1118,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
             signerAddress,
             slippage,
             abort,
-            1
+            3
           )
 
           for (const lastStep of lastSteps.paths) {

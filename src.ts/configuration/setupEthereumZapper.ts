@@ -3,6 +3,8 @@ import { ETHTokenVaultDepositAction } from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
+import { TokenQuantity } from '../entities/Token'
+import { SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
@@ -161,14 +163,32 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     commonTokens.USDC
   )
 
-  universe.addAction(
-    new (ETHTokenVaultDepositAction('ETHX'))(
-      universe,
-      universe.nativeToken,
-      universe.commonTokens.ETHx,
-      1n
-    )
+  const depositToETHX = new (ETHTokenVaultDepositAction('ETHX'))(
+    universe,
+    universe.commonTokens.ETHx,
+    Address.from('0xcf5EA1b38380f6aF39068375516Daf40Ed70D299'),
+    1n
   )
+  universe.addAction(depositToETHX)
+
+  universe.tokenTradeSpecialCases.set(
+    universe.commonTokens.ETHx,
+    async (input: TokenQuantity, dest: Address) => {
+      if (input.token === universe.wrappedNativeToken) {
+        return await new SwapPlan(universe, [depositToETHX]).quote(
+          [input],
+          dest
+        )
+      }
+      return null
+    }
+  )
+
+  universe.addSingleTokenPriceOracle({
+    token: universe.commonTokens.ETHx,
+    oracleAddress: Address.from('0xC5f8c4aB091Be1A899214c0C3636ca33DcA0C547'),
+    priceToken: universe.commonTokens.WETH,
+  })
 
   // universe.tokenFromTradeSpecialCases.set(
   //   commonTokens.pxETH,

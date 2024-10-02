@@ -7,6 +7,7 @@ import {
   ETHTokenVault__factory,
   IERC4626,
   IStakedEthenaUSD__factory,
+  IWrappedNative__factory,
 } from '../contracts'
 
 import { IERC4626__factory } from '../contracts/factories/@openzeppelin/contracts/interfaces/IERC4626__factory'
@@ -43,10 +44,16 @@ export const ETHTokenVaultDepositAction = (proto: string) =>
       predicted: TokenQuantity[]
     ) {
       const lib = this.gen.Contract.createContract(this.inst)
+      const weth = this.gen.Contract.createContract(
+        IWrappedNative__factory.connect(
+          this.universe.wrappedNativeToken.address.address,
+          this.universe.provider
+        )
+      )
+      planner.add(weth.withdraw(inputs[0]))
       const out = planner.add(
-        lib
-          .deposit(destination.address)
-          .withValue(inputs[0] || predicted[0].amount)
+        lib.deposit(destination.address).withValue(inputs[0]),
+        `${proto}.deposit{value:${predicted[0]}}(${destination.address})`
       )
       return [out!]
     }
@@ -65,20 +72,20 @@ export const ETHTokenVaultDepositAction = (proto: string) =>
     }
     constructor(
       readonly universe: Universe,
-      readonly underlying: Token,
       readonly shareToken: Token,
+      readonly vaultAddress: Address,
       readonly slippage: bigint
     ) {
       super(
         shareToken.address,
-        [underlying],
+        [universe.wrappedNativeToken],
         [shareToken],
         InteractionConvention.ApprovalRequired,
         DestinationOptions.Recipient,
-        [new Approval(underlying, shareToken.address)]
+        [new Approval(universe.wrappedNativeToken, shareToken.address)]
       )
       this.inst = ETHTokenVault__factory.connect(
-        this.shareToken.address.address,
+        vaultAddress.address,
         this.universe.provider
       )
       this.quoteCache = this.universe.createCache<bigint, TokenQuantity[]>(

@@ -1115,7 +1115,32 @@ export class MintZap extends BaseSearcherResult {
           destAddr,
           step.inputs
         )
-        if (!(step.action instanceof MintRTokenAction)) {
+        if (step.action.proceedsOptions === DestinationOptions.Callee) {
+          for (const actionOut of step.action.outputToken) {
+            if (actionOut !== this.outputToken) {
+              continue
+            }
+            // Forward the output token to the destination
+            plannerUtils.erc20.transfer(
+              this.universe,
+              this.planner,
+              plannerUtils.erc20.balanceOf(
+                this.universe,
+                this.planner,
+                actionOut,
+                this.universe.execAddress,
+                `${this.outputToken} balance`
+              ),
+              actionOut,
+              this.signer
+            )
+            fullyConsumed.add(actionOut)
+          }
+        }
+        if (
+          !(step.action instanceof MintRTokenAction) &&
+          step.action.supportsDynamicInput
+        ) {
           for (const inputToken of step.action.inputToken) {
             fullyConsumed.add(inputToken)
           }

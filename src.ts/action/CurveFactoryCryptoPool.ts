@@ -22,6 +22,8 @@ import {
 } from './Action'
 import { SingleSwap, SwapPath } from '../searcher/Swap'
 import { BlockCache } from '../base/BlockBasedCache'
+import { TokenAmounts } from '../entities/TokenAmounts'
+import { MultiChoicePath } from '../searcher/MultiChoicePath'
 
 abstract class CurveFactoryCryptoPoolBase extends Action(
   'CurveFactoryCryptoPool'
@@ -79,12 +81,12 @@ class CryptoFactoryPoolSwapBurn extends CurveFactoryCryptoPoolBase {
       this.outputToken[0].from(
         (bal0.toBigInt() *
           ((amount.amount * amount.token.scale) / totalSupply.toBigInt())) /
-        amount.token.scale
+          amount.token.scale
       ),
       this.outputToken[1].from(
         (bal1.toBigInt() *
           ((amount.amount * amount.token.scale) / totalSupply.toBigInt())) /
-        amount.token.scale
+          amount.token.scale
       ),
     ]
   }
@@ -125,7 +127,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
   'CurveFactoryCryptoPool'
 ) {
   gasEstimate(): bigint {
-    return 385_000n
+    return 685_000n
   }
   public get returnsOutput(): boolean {
     return true
@@ -180,7 +182,6 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
         ? [actionInput, tradeOutput]
         : [tradeOutput, actionInput]
 
-
     return [
       planner.add(
         poolInst.add_liquidity(
@@ -189,7 +190,8 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
           false,
           destination.address
         ),
-        `CurveFactoryCryptoPool.addLiquidity(${quote.amounts.join(', ')}) -> ${quote.output
+        `CurveFactoryCryptoPool.addLiquidity(${quote.amounts.join(', ')}) -> ${
+          quote.output
         }`
       )!,
     ]
@@ -204,18 +206,8 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
   }
 
   private async quoteInner(amountIn: TokenQuantity) {
-    // console.log(amountIn)
-    const [token0, token1] = this.pool.allPoolTokens
-
-    const lpTokenSupply = this.pool.lpToken.from(
-      await this.pool.lpTokenInstance.totalSupply()
-    )
-
-    const balanceToken0 = token0.from(await this.pool.poolInstance.balances(0))
-    const balanceToken1 = token1.from(await this.pool.poolInstance.balances(1))
-
-    const tok0PrLpToken = lpTokenSupply.into(token0).div(balanceToken0)
-    const tok1PrLpToken = lpTokenSupply.into(token1).div(balanceToken1)
+    const { token0, tok0PrLpToken, token1, tok1PrLpToken } =
+      await this.pool.calcTokenAmountsPrLp()
 
     let total = tok0PrLpToken.add(tok1PrLpToken.into(token0))
     const fractionToken0 = tok0PrLpToken.div(total)
@@ -228,7 +220,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
       Math.floor(this.universe.config.routerDeadline / 4)
     )
     if (this.tokenIndex === 0) {
-      const amountQty = amountIn.mul(fractionToken0)
+      const amountQty = amountIn.sub(amountIn.token.wei).mul(fractionToken0)
 
       const tradeQty = amountIn.sub(amountQty)
 
@@ -247,7 +239,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
 
       amounts = [amountQty, subTrade.outputs[0]]
     } else {
-      const amountQty = amountIn.mul(fractionToken1)
+      const amountQty = amountIn.sub(amountIn.token.wei).mul(fractionToken1)
       const tradeQty = amountIn.sub(amountQty)
 
       tradeFraction = fractionToken0.amount
@@ -277,7 +269,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
       subTrade,
       output: lpOut,
       tradeFraction,
-      amounts
+      amounts,
     }
   }
 
@@ -340,42 +332,106 @@ class CurveFactoryCryptoPoolRemoveLiquidityAction extends Action(
   'CurveFactoryCryptoPool'
 ) {
   gasEstimate(): bigint {
-    return 100000n
+    return 600_000n
+  }
+  get supportsDynamicInput() {
+    return true
+  }
+  get oneUsePrZap() {
+    return true
+  }
+  get returnsOutput() {
+    return true
   }
   get outputSlippage() {
-    return 30n
+    return 0n
+  }
+  get addressesInUse() {
+    return this.pool.addressesInUse
   }
   async plan(
     planner: Planner,
-    inputs: Value[],
+    [lpTokenQtyValue]: Value[],
     _: Address,
-    predicted: TokenQuantity[]
+    [lpTokenQty]: TokenQuantity[]
   ): Promise<Value[]> {
     const lib = this.gen.Contract.createContract(this.pool.poolInstance)
-    const mintOutQuote = await this.quoteWithSlippage(predicted)
-    const input =
-      inputs[0] ?? encodeArg(predicted[0].amount, ParamType.from('uint256'))
-    return [
-      planner.add(
-        lib.remove_liquidity_one_coin(
-          input,
-          this.tokenIndex,
-          mintOutQuote[0].amount,
-          false
-        ),
-        `CurveFactoryCryptoPool.removeLiquidity: ${predicted.join(
-          ', '
-        )} -> ${mintOutQuote.join(', ')}`
-      )!,
+    const mintOutQuote = await this.cache.get(lpTokenQty)
+    planner.add(
+      lib.remove_liquidity(
+        lpTokenQtyValue,
+        mintOutQuote.lpBurnOutputs.map((i) => i.amount - i.amount / 1000n),
+        false
+      ),
+      `CurveFactoryCryptoPool.removeLiquidity(${lpTokenQty}) -> ${mintOutQuote.output}`
+    )
+
+    let tradeInput = [
+      this.genUtils.erc20.balanceOf(
+        this.pool.universe,
+        planner,
+        mintOutQuote.subTrade.path.inputs[0].token,
+        this.pool.universe.execAddress,
+        `Redeem ${this.inputToken} result`
+      ),
     ]
+    for (const step of mintOutQuote.subTrade.path.steps) {
+      tradeInput = await step.action.planWithOutput(
+        this.pool.universe,
+        planner,
+        tradeInput,
+        this.pool.universe.execAddress,
+        mintOutQuote.subTrade.path.inputs
+      )
+    }
+
+    return tradeInput
   }
 
-  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const out = await this.pool.poolInstance.callStatic.calc_withdraw_one_coin(
-      amountsIn.amount,
-      this.tokenIndex
+  private async quoteInner(lpTokenQty: TokenQuantity) {
+    const { token0, tok0PrLpToken, token1, tok1PrLpToken } =
+      await this.pool.calcTokenAmountsPrLp()
+
+    const qtyTok0 = lpTokenQty.sub(lpTokenQty.token.wei).into(token0).mul(tok0PrLpToken)
+    const qtyTok1 = lpTokenQty.sub(lpTokenQty.token.wei).into(token1).mul(tok1PrLpToken)
+
+
+    const [qtyToKeep, qtyToTrade] =
+      qtyTok0.token === this.outputToken[0]
+        ? [qtyTok0, qtyTok1]
+        : [qtyTok1, qtyTok0]
+    const outputToken = qtyToKeep.token
+
+    const quote = await this.pool.universe.searcher.findSingleInputTokenSwap(
+      true,
+      qtyToTrade,
+      outputToken,
+      this.pool.universe.execAddress,
+      this.pool.universe.config.defaultInternalTradeSlippage,
+      AbortSignal.timeout(this.pool.universe.config.routerDeadline),
+      2
     )
-    return [this.outputToken[0].from(BigNumber.from(out))]
+    const outputQty = quote.outputs[0].add(qtyToKeep)
+    return {
+      subTrade: quote,
+      output: [outputQty],
+      lpBurnOutputs: [qtyTok0, qtyTok1],
+    }
+  }
+
+  private cache: BlockCache<
+    TokenQuantity,
+    {
+      subTrade: MultiChoicePath
+      output: TokenQuantity[]
+      lpBurnOutputs: TokenQuantity[]
+    },
+    bigint
+  >
+
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const quote = await this.cache.get(amountsIn)
+    return quote.output
   }
   constructor(
     public readonly universe: Universe,
@@ -389,6 +445,12 @@ class CurveFactoryCryptoPoolRemoveLiquidityAction extends Action(
       InteractionConvention.None,
       DestinationOptions.Callee,
       []
+    )
+
+    this.cache = this.pool.universe.createCache(
+      async (qty) => await this.quoteInner(qty),
+      1,
+      (qty) => qty.amount
     )
   }
   toString(): string {
@@ -411,22 +473,38 @@ export class CurveFactoryCryptoPool {
     return this.pool
   }
 
+  public async calcTokenAmountsPrLp() {
+    const [token0, token1] = this.allPoolTokens
+
+    const lpTokenSupply = this.lpToken.from(
+      await this.lpTokenInstance.totalSupply()
+    )
+
+    const balanceToken0 = token0.from(await this.poolInstance.balances(0))
+    const balanceToken1 = token1.from(await this.poolInstance.balances(1))
+
+    const tok0PrLpToken = balanceToken0.div(lpTokenSupply.into(token0))
+    const tok1PrLpToken = balanceToken1.div(lpTokenSupply.into(token1))
+
+    return {
+      token0,
+      token1,
+      tok0PrLpToken,
+      tok1PrLpToken,
+    }
+  }
+
   public readonly poolInstance: Contract & {
-    remove_liquidity_one_coin: (
-      _amount: BigNumberish,
-      i: BigNumberish,
-      use_eth: boolean,
-      receiver: string
-    ) => Promise<BigNumber>
+    remove_liquidity: (
+      amount: BigNumberish,
+      amounts: [BigNumberish, BigNumberish],
+      use_eth: boolean
+    ) => Promise<[BigNumber, BigNumber]>
     add_liquidity: (
       amounts: [BigNumberish, BigNumberish],
       min_amount: BigNumberish,
       use_eth: boolean
     ) => Promise<BigNumber[]>
-    calc_withdraw_one_coin: (
-      token_amount: BigNumberish,
-      i: BigNumberish
-    ) => Promise<BigNumber>
     calc_token_amount: (
       amounts: [BigNumberish, BigNumberish]
     ) => Promise<BigNumber>
@@ -439,12 +517,15 @@ export class CurveFactoryCryptoPool {
     return this.underlying
   }
 
+  public readonly addressesInUse: Set<Address>
+
   public constructor(
     public readonly universe: Universe,
     public readonly pool: Address,
     public readonly lpToken: Token,
     public readonly underlying: Token[]
   ) {
+    this.addressesInUse = new Set([pool])
     this.actions = underlying.map((_, index) => ({
       remove: new CurveFactoryCryptoPoolRemoveLiquidityAction(
         universe,
@@ -496,8 +577,9 @@ export class CurveFactoryCryptoPool {
   }
 
   toString(): string {
-    return `CurveFactoryCryptoPool(addr=${this.pool.address}, lp=${this.lpToken
-      }, coins=[${this.underlying.join(', ')}])`
+    return `CurveFactoryCryptoPool(addr=${this.pool.address}, lp=${
+      this.lpToken
+    }, coins=[${this.underlying.join(', ')}])`
   }
 }
 

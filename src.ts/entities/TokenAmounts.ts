@@ -33,6 +33,7 @@ export class TokenAmounts {
   add(qty: TokenQuantity) {
     const b = this.tokenBalances.get(qty.token)
     this.tokenBalances.set(qty.token, b.add(qty))
+    return this
   }
 
   sub(qty: TokenQuantity) {

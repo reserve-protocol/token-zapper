@@ -238,9 +238,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
           onResult,
           abortSignal,
           precursorTokens
-        ).catch((e) => {
-          console.log(e)
-        })
+        ).catch(() => {})
       })
     )
   }
@@ -340,53 +338,58 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
           return
         }
         this.debugLog(`Finding trade for: ${input} -> ${output}`)
-
-        for (let i = 1; i <= 3; i++) {
-          try {
-            if (abortSignal.aborted) {
-              return
-            }
-            const potentialSwaps = await this.findSingleInputTokenSwap(
+        const options: SwapPath[] = []
+        try {
+          const potentialSwaps = await Promise.all([
+            this.findSingleInputTokenSwap(
               true,
               input,
               output,
               this.universe.config.addresses.executorAddress,
               internalTradeSlippage,
               abortSignal,
-              i
-            )
-            if (
-              potentialSwaps == null ||
-              potentialSwaps.paths.length === 0 ||
-              !balancesBeforeTrading.hasBalance(potentialSwaps.inputs)
-            ) {
-              this.debugLog('skipping trade')
-              this.debugLog(
-                JSON.stringify({
-                  'potentialSwaps == null': potentialSwaps == null,
-                  'potentialSwaps.paths.length === 0':
-                    potentialSwaps.paths.length === 0,
-                  '!balancesBeforeTrading.hasBalance(potentialSwaps.inputs)':
-                    !balancesBeforeTrading.hasBalance(potentialSwaps.inputs),
-                  'potentialSwaps.inputs': potentialSwaps.inputs.join(', '),
-                  balancesBeforeTrading: balancesBeforeTrading.toString(),
-                })
-              )
+              1
+            ).catch(() => null),
+            this.findSingleInputTokenSwap(
+              true,
+              input,
+              output,
+              this.universe.config.addresses.executorAddress,
+              internalTradeSlippage,
+              abortSignal,
+              2,
+              true
+            ).catch(() => null),
+            this.findSingleInputTokenSwap(
+              true,
+              input,
+              output,
+              this.universe.config.addresses.executorAddress,
+              internalTradeSlippage,
+              abortSignal,
+              3,
+              true
+            ).catch(() => null),
+          ])
 
+          for (const option of potentialSwaps) {
+            if (option == null) {
               continue
             }
-            this.debugLog(
-              `${input} -> ${output}: ${potentialSwaps.paths.length} options`
-            )
-            for (const path of potentialSwaps.paths) {
-              this.debugLog(`  ${path}`)
-            }
-            multiTrades.push(potentialSwaps)
-            return
-          } catch (e) {
-            console.log(e)
+            options.push(...option.paths)
           }
+        } catch (e: any) {}
+        if (options.length === 0) {
+          throw new Error(`Failed to find trade for ${input} -> ${output}`)
         }
+        const potentialSwaps = new MultiChoicePath(this.universe, options)
+        this.debugLog(
+          `${input} -> ${output}: ${potentialSwaps.paths.length} options`
+        )
+        for (const path of potentialSwaps.paths) {
+          this.debugLog(`  ${path}`)
+        }
+        multiTrades.push(potentialSwaps)
       })
     )
     this.debugLog('Generated trades')
@@ -435,6 +438,10 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
 
                 balances.exchange(actionInput, mintExec.outputs)
               } catch (e) {
+                console.log(parent.toString())
+                console.log(
+                  tradeAction.inputAsFractionOfCurrentBalance.toString()
+                )
                 console.error(tradingBalances.toString())
                 console.error(
                   tradeInputToTokenSet
@@ -814,7 +821,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         unwrapTokenQtys
           .filter((qty) => qty.token !== outputToken)
           .map(async (qty) => {
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 2; i <= 3; i++) {
               const potentialSwaps = await this.findSingleInputTokenSwap(
                 true,
                 qty,
@@ -1166,7 +1173,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
             signerAddress,
             slippage,
             abort,
-            1
+            3
           )
 
           for (const lastStep of lastSteps.paths) {
@@ -1225,7 +1232,9 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
                   abort
                 )
               )
-            } catch (e) {}
+            } catch (e) {
+              console.log(e)
+            }
           }
           return
         }
@@ -1350,7 +1359,8 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     destination: Address,
     slippage: bigint,
     abort: AbortSignal,
-    maxHops: number
+    maxHops: number,
+    internalOnly?: boolean
   ): Promise<MultiChoicePath> {
     const out: SwapPath[] = []
     await this.findSingleInputTokenSwap_(
@@ -1363,7 +1373,9 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       dynamicInput,
       async (path) => {
         out.push(path)
-      }
+      },
+      0.9,
+      internalOnly
     ).catch((e) => {
       console.log(e)
     })
@@ -1396,7 +1408,8 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     maxHops: number,
     dynamicInput: boolean,
     onResult: (result: SwapPath) => Promise<void>,
-    rejectRatio: number = 0.9
+    rejectRatio: number = 0.9,
+    internalOnly: boolean = false
   ): Promise<void> {
     const inputTokenSpecialCase = this.universe.tokenFromTradeSpecialCases.get(
       input.token
@@ -1442,7 +1455,9 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       }
       try {
         await onResult(path)
-      } catch (e) {}
+      } catch (e) {
+        console.log(e)
+      }
     }
     await Promise.all([
       this.internalQuoter(
@@ -1454,13 +1469,15 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       ).catch((e) => {
         console.log(e)
       }),
-      this.externalQuoters_(input, output, emitResult, {
-        dynamicInput,
-        abort,
-        slippage,
-      }).catch((e) => {
-        console.log(e)
-      }),
+      internalOnly
+        ? Promise.resolve()
+        : this.externalQuoters_(input, output, emitResult, {
+            dynamicInput,
+            abort,
+            slippage,
+          }).catch((e) => {
+            console.log(e)
+          }),
     ])
   }
   debugLog(...args: any[]) {

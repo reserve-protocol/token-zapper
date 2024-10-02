@@ -1110,10 +1110,11 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
     const formatted = `${addr}${callFlags}.${methodName}${valueParms}(${argsArray})`
 
     const retVal = plan.returnVals.get(step)
-    const sighash = step.call.fragment.format('sighash')
     const finalStr =
       retVal == null
-        ? `${prefix} ${formatted} # sighash: ${sighash}`
+        ? `${prefix} ${formatted} # sighash: ${step.call.contract.interface.getSighash(
+          step.call.fragment
+        )}`
         : `${prefix} ${retVal.name}: ${
             retVal.param.type
           } = ${formatted} # sighash: ${step.call.contract.interface.getSighash(

@@ -183,12 +183,10 @@ export class SwapPaths {
     if (paths.length === 0) {
       throw new Error('Invalid SwapPaths, no paths')
     }
-    const inputs = TokenAmounts.fromQuantities(
-      paths.map((i) => i.inputs).flat()
-    )
-    const outputs = TokenAmounts.fromQuantities(
-      paths.map((i) => i.outputs).flat()
-    )
+    const allInputs = paths.map((i) => i.inputs).flat()
+    const inputs = TokenAmounts.fromQuantities(allInputs)
+    const allOutputs = paths.map((i) => i.outputs).flat()
+    const outputs = TokenAmounts.fromQuantities(allOutputs)
     const outputValue = paths
       .map((i) => i.outputValue)
       .reduce((l, r) => l.add(r))

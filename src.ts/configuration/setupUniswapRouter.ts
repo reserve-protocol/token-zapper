@@ -522,6 +522,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
             },
             {
               protocols: [Protocol.V3],
+              debugRouting: true,
             }
           )
         : await legacy.route(inp, outp, TradeType.EXACT_INPUT, {
@@ -551,7 +552,9 @@ export const setupUniswapRouter = async (universe: Universe) => {
           route.output.amount <= 1000n ||
           route.outputWithSlippage.amount <= 1000n
         ) {
-          throw new Error(`Low output route.output.amount=${route.output.amount}, route.outputWithSlippage.amount=${route.outputWithSlippage.amount}`)
+          throw new Error(
+            `Low output route.output.amount=${route.output.amount}, route.outputWithSlippage.amount=${route.outputWithSlippage.amount}`
+          )
         }
         const plan = await new SwapPlan(universe, [
           new UniswapRouterAction(route, universe, out),

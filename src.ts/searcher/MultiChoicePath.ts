@@ -129,11 +129,15 @@ export const generateAllPermutations = async function (
 
   const allCombos = combos(arr)
 
-  const withoutComflicts = allCombos.filter(
+  let withoutComflicts = allCombos.filter(
     (paths) =>
       willPathsHaveAddressConflicts(searcher.debugLog, universe, paths, signer)
         .length === 0
   )
+  if (withoutComflicts.length < 16) {
+    withoutComflicts = allCombos
+    searcher.debugLog('Skipping conflict check - too few paths')
+  }
   const valuedTrades = await Promise.all(
     withoutComflicts.map(async (trades) => {
       const netOut = universe.usd.zero
@@ -369,7 +373,6 @@ const willPathsHaveAddressConflicts = (
           continue
         }
         if (addressesInUse.has(addr)) {
-          // emitDebugLog('Address conflict', addr.toString())
           conflicts.add(addr)
         }
         addressesInUse.add(addr)

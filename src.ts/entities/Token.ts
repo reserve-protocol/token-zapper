@@ -28,6 +28,7 @@ import { BigNumberish } from 'ethers'
 export class Token {
   public readonly zero: TokenQuantity
   public readonly one: TokenQuantity
+  public readonly wei: TokenQuantity
 
   private constructor(
     public readonly address: Address,
@@ -38,6 +39,7 @@ export class Token {
   ) {
     this.zero = this.fromBigInt(0n)
     this.one = this.fromBigInt(scale)
+    this.wei = this.fromBigInt(1n)
   }
 
   static createToken(

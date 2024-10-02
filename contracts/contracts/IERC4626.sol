@@ -7,6 +7,7 @@ interface IStakedEthenaUSD is IERC4626 {
 }
 
 
-interface ETHTokenVault is IERC4626 {
-    function deposit(address receiver) payable external returns (uint256);
+interface ETHTokenVault {
+    function deposit(address receiver) external payable returns (uint256);
+    function previewDeposit(uint256 amount) external view returns (uint256);
 }

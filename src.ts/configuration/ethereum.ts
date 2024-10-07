@@ -274,6 +274,9 @@ export const PROTOCOL_CONFIGS = {
       '0xfbd1a538f5707c0d67a16ca4e3fc711b80bd931a',
       '0x27F2f159Fe990Ba83D57f39Fd69661764BEbf37a', // <- latest
       // ^ wrapped cUSDCV3
+
+      // wrapped cUSDTV3
+      '0xbeD348315d7327Cd81d26338c11976674825bb14'
     ],
   },
 }

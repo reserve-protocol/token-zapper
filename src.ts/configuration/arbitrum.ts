@@ -46,7 +46,7 @@ export const arbiConfig = makeConfig(
   COMMON_TOKENS,
   RTOKENS,
   {
-    emitId: "0x66BC6029408a5dEB3ffacA6835119af963bB408a",
+    emitId: '0x66BC6029408a5dEB3ffacA6835119af963bB408a',
     facadeAddress: reserveAddresses.FACADE_ADDRESS,
     oldFacadeAddress: reserveAddresses.FACADE_ADDRESS,
     wrappedNative: COMMON_TOKENS.WETH,
@@ -106,9 +106,11 @@ export const PROTOCOL_CONFIGS = {
       comets: [
         '0xA5EDBDD9646f8dFF606d7448e414884C7d905dCA', // USDC.e
         '0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf', // USDC
+        '0xd98Be00b5D27fc98112BdE293e487f8D4cA57d07',
       ],
       wrappers: [
         '0xd54804250e9c561aea9dee34e9cf2342f767acc5', // (wcUSDCv3)
+        '0x870fb8352B99Fd5Ed5C0AB18d458dA5933aA5266', // (wcUSDTv3)
       ],
     },
     erc4626: [['0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812', 'wUSDM']],

@@ -1,13 +1,13 @@
 export { Address } from './base/Address'
 export { Token, TokenQuantity } from './entities/Token'
 
-export { ArbitrumUniverse, arbiConfig } from './configuration/arbitrum'
+export { ArbitrumUniverse, arbiConfig, PROTOCOL_CONFIGS as arbiProtocolConfigs } from './configuration/arbitrum'
 export { setupArbitrumZapper } from './configuration/setupArbitrumZapper'
 
-export { BaseUniverse, baseConfig } from './configuration/base'
+export { BaseUniverse, baseConfig, PROTOCOL_CONFIGS as baseProtocolConfigs } from './configuration/base'
 export { setupBaseZapper } from './configuration/setupBaseZapper'
 
-export { ethereumConfig } from './configuration/ethereum'
+export { ethereumConfig, PROTOCOL_CONFIGS as ethereumProtocolConfigs } from './configuration/ethereum'
 export { setupEthereumZapper } from './configuration/setupEthereumZapper'
 
 import { ArbitrumUniverse, arbiConfig } from './configuration/arbitrum'
@@ -20,7 +20,7 @@ import { EthereumUniverse, ethereumConfig } from './configuration/ethereum'
 import { setupEthereumZapper } from './configuration/setupEthereumZapper'
 
 import { loadTokens } from './configuration/loadTokens'
-import { makeConfig } from './configuration/ChainConfiguration'
+import { makeConfig, convertAddressObject } from './configuration/ChainConfiguration'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import {
   ChainId,

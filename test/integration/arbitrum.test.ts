@@ -13,6 +13,7 @@ import {
   setupArbitrumZapper,
   Universe,
 } from '../../src.ts/index'
+import { createZapTestCase } from '../createZapTestCase'
 dotenv.config()
 
 if (process.env.ARBITRUM_PROVIDER == null) {
@@ -137,24 +138,17 @@ describe('arbitrum zapper', () => {
       it(
         'produces an output',
         async () => {
-          expect.assertions(1)
-          await universe.initialized
-          const input = universe.tokens
-            .get(issueance.inputToken)
-            ?.from(issueance.input)
-          const output = universe.tokens.get(issueance.output)
-          let result = 'failed'
-
-          try {
-            const zap = await universe.zap(input!, output!, testUser, {
-              enableTradeZaps: false,
-            })
-            console.log(`Issueance: ${zap}`)
-            result = 'success'
-          } catch (e) {
-            console.log(`${testCaseName} = ${e.message}`)
-          }
-          expect(result).toBe('success')
+          await createZapTestCase(
+            'Issueance',
+            testUser,
+            universe,
+            testCaseName,
+            {
+              token: issueance.inputToken,
+              amount: issueance.input,
+            },
+            issueance.output
+          )
         },
         15 * 1000
       )
@@ -169,24 +163,17 @@ describe('arbitrum zapper', () => {
       it(
         'produces an output',
         async () => {
-          expect.assertions(1)
-          await universe.initialized
-          const input = universe.tokens
-            .get(redeem.inputToken)
-            ?.from(redeem.input)
-          const output = universe.tokens.get(redeem.output)
-          let result = 'failed'
-
-          try {
-            const zap = await universe.redeem(input!, output!, testUser, {
-              enableTradeZaps: false,
-            })
-            console.log(`Redeem: ${zap}`)
-            result = 'success'
-          } catch (e) {
-            console.log(`${testCaseName} = ${e.message}`)
-          }
-          expect(result).toBe('success')
+          await createZapTestCase(
+            'Redeem',
+            testUser,
+            universe,
+            testCaseName,
+            {
+              token: redeem.inputToken,
+              amount: redeem.input,
+            },
+            redeem.output
+          )
         },
         15 * 1000
       )

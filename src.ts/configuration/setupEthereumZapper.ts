@@ -107,11 +107,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.addTradeVenue(uniswap)
 
   // Set up RETH
-  const reth = universe.addIntegration(
-    'rocketpool',
-    await setupRETH(universe, PROTOCOL_CONFIGS.rocketPool)
-  )
-  universe.addTradeVenue(reth)
+  await setupRETH(universe, PROTOCOL_CONFIGS.rocketPool)
 
   // Set up Lido
   universe.addIntegration(

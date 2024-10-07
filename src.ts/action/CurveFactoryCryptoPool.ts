@@ -56,7 +56,7 @@ class CryptoFactoryPoolSwapMint extends CurveFactoryCryptoPoolBase {
   }
   constructor(public readonly pool: CurveFactoryCryptoPool) {
     super(
-      pool.pool,
+      pool.lpToken.address,
       pool.underlying,
       [pool.lpToken],
       InteractionConvention.ApprovalRequired,
@@ -296,7 +296,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
     public readonly tokenIndex: number
   ) {
     super(
-      pool.pool,
+      pool.underlying[tokenIndex].address,
       [pool.underlying[tokenIndex]],
       [pool.lpToken],
       InteractionConvention.ApprovalRequired,
@@ -392,9 +392,14 @@ class CurveFactoryCryptoPoolRemoveLiquidityAction extends Action(
     const { token0, tok0PrLpToken, token1, tok1PrLpToken } =
       await this.pool.calcTokenAmountsPrLp()
 
-    const qtyTok0 = lpTokenQty.sub(lpTokenQty.token.wei).into(token0).mul(tok0PrLpToken)
-    const qtyTok1 = lpTokenQty.sub(lpTokenQty.token.wei).into(token1).mul(tok1PrLpToken)
-
+    const qtyTok0 = lpTokenQty
+      .sub(lpTokenQty.token.wei)
+      .into(token0)
+      .mul(tok0PrLpToken)
+    const qtyTok1 = lpTokenQty
+      .sub(lpTokenQty.token.wei)
+      .into(token1)
+      .mul(tok1PrLpToken)
 
     const [qtyToKeep, qtyToTrade] =
       qtyTok0.token === this.outputToken[0]
@@ -439,7 +444,7 @@ class CurveFactoryCryptoPoolRemoveLiquidityAction extends Action(
     public readonly tokenIndex: number
   ) {
     super(
-      pool.pool,
+      pool.underlying[tokenIndex].address,
       [pool.lpToken],
       [pool.underlying[tokenIndex]],
       InteractionConvention.None,

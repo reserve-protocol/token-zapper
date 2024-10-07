@@ -8,17 +8,23 @@ import {
   createKyberswap,
   createParaswap,
   ethereumConfig,
+  ethereumProtocolConfigs,
   makeCustomRouterSimulator,
   setupEthereumZapper,
   Universe,
 } from '../../src.ts/index'
+import { createZapTestCase } from '../createZapTestCase'
+import { convertAddressObject } from '../../src.ts/configuration/ChainConfiguration'
+import {
+  createActionTestCase,
+  makeIntegrationtestCase,
+} from '../createActionTestCase'
 dotenv.config()
 
 if (process.env.MAINNET_PROVIDER == null) {
   console.log('MAINNET_PROVIDER not set, skipping tests')
   process.exit(0)
 }
-
 /** !!
  * To run the integration test suite you'll need to run the simulator locally.
  *
@@ -108,10 +114,14 @@ const getProvider = (url: string) => {
   return new ethers.providers.JsonRpcProvider(url)
 }
 
-const t = ethereumConfig.addresses.commonTokens
+const t = {
+  ...ethereumConfig.addresses.commonTokens,
+  ...convertAddressObject(ethereumProtocolConfigs.compV3.comets),
+  ...convertAddressObject(ethereumProtocolConfigs.convex.wrappers),
+}
 const rTokens = ethereumConfig.addresses.rTokens
 
-const getSymbol = new Map(
+export const getSymbol = new Map(
   Object.entries(ethereumConfig.addresses.commonTokens)
     .concat(Object.entries(ethereumConfig.addresses.rTokens))
     .map(([k, v]) => [v, k])
@@ -143,7 +153,9 @@ const makeZapIntoYieldPositionTestCase = (
     output: output,
   }
 }
-const testUser = Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
+export const testUser = Address.from(
+  '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
+)
 const issueanceCases = [
   makeMintTestCase(10000, t.USDC, rTokens.eUSD),
   makeMintTestCase(10000, t.DAI, rTokens.eUSD),
@@ -194,6 +206,21 @@ const redeemCases = [
   makeMintTestCase(5, rTokens.dgnETH, t.USDC),
 ]
 
+const individualIntegrations = [
+  makeIntegrationtestCase('CompoundV2', 1000, t.USDC, t.cUSDC, 1),
+  makeIntegrationtestCase('CompoundV2', 1000, t.USDT, t.cUSDT, 1),
+  makeIntegrationtestCase('sDAI', 1000, t.DAI, t.sDAI, 1),
+
+  makeIntegrationtestCase('CompoundV3', 1000, t.USDC, t.CUSDCV3, 2),
+  makeIntegrationtestCase('CompoundV3', 1000, t.USDT, t.CUSDTV3, 2),
+  makeIntegrationtestCase('Lido', 10, t.WETH, t.wsteth, 3),
+  makeIntegrationtestCase('Lido', 10, t.WETH, t.steth, 2),
+  makeIntegrationtestCase('Lido', 10, t.wsteth, t.steth, 1),
+
+  makeIntegrationtestCase('Reth', 10, t.WETH, t.reth, 2),
+  makeIntegrationtestCase('ETHx', 10, t.WETH, t.ETHx, 2),
+]
+
 const zapIntoYieldPositionCases = [
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens.dgnETH, t.sdgnETH),
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens['ETH+'], t['ETH+ETH-f']),
@@ -205,13 +232,18 @@ const INPUT_MUL = process.env.INPUT_MULTIPLIER
 if (isNaN(INPUT_MUL)) {
   throw new Error('INPUT_MUL must be a number')
 }
-let universe: Universe
+export let universe: Universe
 beforeAll(async () => {
   const provider = getProvider(process.env.MAINNET_PROVIDER!)
 
   universe = await Universe.createWithConfig(
     provider,
-    { ...ethereumConfig, searcherMinRoutesToProduce: 1 },
+    {
+      ...ethereumConfig,
+      searcherMinRoutesToProduce: 1,
+      routerDeadline: 3000,
+      searchConcurrency: 2,
+    },
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))
       uni.addTradeVenue(createParaswap('paraswap', uni))
@@ -235,6 +267,13 @@ describe('ethereum zapper', () => {
       (await universe.provider.getGasPrice()).toBigInt()
     )
   })
+
+  describe('actions', () => {
+    for (const testCase of individualIntegrations) {
+      createActionTestCase(universe, getSymbol, testUser, testCase)
+    }
+  })
+
   for (const issueance of issueanceCases) {
     const testCaseName = `using ${getSymbol.get(
       issueance.inputToken
@@ -243,22 +282,17 @@ describe('ethereum zapper', () => {
       it(
         'produces an output',
         async () => {
-          expect.assertions(1)
-          await universe.initialized
-          const input = universe.tokens
-            .get(issueance.inputToken)
-            ?.from(issueance.input * INPUT_MUL)
-          const output = universe.tokens.get(issueance.output)
-          let result = 'failed'
-
-          try {
-            const zap = await universe.zap(input!, output!, testUser)
-            console.log(`Issueance: ${zap}`)
-            result = 'success'
-          } catch (e) {
-            console.log(`${testCaseName} = ${e.message}`)
-          }
-          expect(result).toBe('success')
+          await createZapTestCase(
+            'Issueance',
+            testUser,
+            universe,
+            testCaseName,
+            {
+              token: issueance.inputToken,
+              amount: issueance.input * INPUT_MUL,
+            },
+            issueance.output
+          )
         },
         15 * 1000
       )
@@ -273,22 +307,17 @@ describe('ethereum zapper', () => {
       it(
         'produces an output',
         async () => {
-          expect.assertions(1)
-          await universe.initialized
-          const input = universe.tokens
-            .get(redeem.inputToken)
-            ?.from(redeem.input * INPUT_MUL)
-          const output = universe.tokens.get(redeem.output)
-          let result = 'failed'
-
-          try {
-            const zap = await universe.redeem(input!, output!, testUser)
-            result = 'success'
-            console.log(`Redeem: ${zap}`)
-          } catch (e) {
-            console.log(`${testCaseName} = ${e.message}`)
-          }
-          expect(result).toBe('success')
+          await createZapTestCase(
+            'Redeem',
+            testUser,
+            universe,
+            testCaseName,
+            {
+              token: redeem.inputToken,
+              amount: redeem.input * INPUT_MUL,
+            },
+            redeem.output
+          )
         },
         15 * 1000
       )

@@ -86,6 +86,9 @@ const ONE = 10n ** 18n
 
 abstract class RocketPoolBase extends Action('Rocketpool') {
   abstract get action(): string
+  public get supportsDynamicInput(): boolean {
+    return true
+  }
   toString(): string {
     return `RocketpoolRouter.${this.action}(${this.inputToken.join(
       ', '
@@ -97,6 +100,9 @@ export class ETHToRETH extends RocketPoolBase {
   get action(): string {
     return 'swapTo'
   }
+  public get returnsOutput(): boolean {
+    return false
+  }
   public get outputSlippage(): bigint {
     return 30n
   }
@@ -105,7 +111,7 @@ export class ETHToRETH extends RocketPoolBase {
     [input_]: Value[],
     _: Address,
     [inputPrecomputed]: TokenQuantity[]
-  ): Promise<Value[]> {
+  ) {
     const input = input_ ?? inputPrecomputed.amount
     // We want to avoid running the optimiseToREth on-chain.
     // So rather we precompute it during searching and convert the split into two fractions
@@ -119,12 +125,7 @@ export class ETHToRETH extends RocketPoolBase {
     const routerLib = this.gen.Contract.createContract(
       this.router.routerInstance
     )
-    const zapperLib = this.gen.Contract.createContract(
-      ZapperExecutor__factory.connect(
-        this.universe.config.addresses.zapperAddress.address,
-        this.universe.provider
-      )
-    )
+    const zapperLib = this.universe.weirollZapperExec
     if (f0 !== 0n && f1 !== 0n) {
       // Using a helper library we
       const input0 = planner.add(
@@ -138,18 +139,18 @@ export class ETHToRETH extends RocketPoolBase {
         'frac1'
       )
       planner.add(
-        routerLib.swapTo(input0, input1, aout, aout).withValue(input),
+        routerLib.swapTo(input0, input1, 0, 0).withValue(input),
         'RocketPool: ETH -> RETH'
       )
     } else {
       planner.add(
         routerLib
-          .swapTo(f0 !== 0n ? input : 0, f1 !== 0n ? input : 0, aout, aout)
+          .swapTo(f0 !== 0n ? input : 0, f1 !== 0n ? input : 0, 0, 0)
           .withValue(input),
         'RocketPool: ETH -> RETH'
       )
     }
-    return this.outputBalanceOf(this.universe, planner)
+    return null
   }
 
   gasEstimate(): bigint {
@@ -182,6 +183,9 @@ export class WETHToRETH extends RocketPoolBase {
   public get outputSlippage(): bigint {
     return 30n
   }
+  public get returnsOutput(): boolean {
+    return false
+  }
   async plan(
     planner: Planner,
     [input]: Value[],
@@ -201,12 +205,7 @@ export class WETHToRETH extends RocketPoolBase {
     const routerLib = this.gen.Contract.createContract(
       this.router.routerInstance
     )
-    const zapperLib = this.gen.Contract.createContract(
-      ZapperExecutor__factory.connect(
-        this.universe.config.addresses.zapperAddress.address,
-        this.universe.provider
-      )
-    )
+    const zapperLib = this.universe.weirollZapperExec
     const wethlib = this.gen.Contract.createContract(
       IWrappedNative__factory.connect(
         this.universe.wrappedNativeToken.address.address,
@@ -239,7 +238,7 @@ export class WETHToRETH extends RocketPoolBase {
         'RocketPool: ETH -> RETH'
       )
     }
-    return null;
+    return null
   }
 
   gasEstimate(): bigint {
@@ -255,7 +254,7 @@ export class WETHToRETH extends RocketPoolBase {
     public readonly router: IRouter
   ) {
     super(
-      router.reth.address,
+      universe.wrappedNativeToken.address,
       [universe.wrappedNativeToken],
       [router.reth],
       InteractionConvention.None,
@@ -265,9 +264,6 @@ export class WETHToRETH extends RocketPoolBase {
   }
   public get supportsDynamicInput(): boolean {
     return true
-  }
-  public get returnsOutput(): boolean {
-    return false
   }
 }
 
@@ -292,12 +288,7 @@ export class RETHToWETH extends RocketPoolBase {
     [inputPrecomputed]: TokenQuantity[]
   ) {
     const input = input_ ?? inputPrecomputed.amount
-    const zapperLib = this.gen.Contract.createContract(
-      ZapperExecutor__factory.connect(
-        this.universe.config.addresses.zapperAddress.address,
-        this.universe.provider
-      )
-    )
+    const zapperLib = this.universe.weirollZapperExec
     // We want to avoid running the optimiseToREth on-chain.
     // So rather we precompute it during searching and convert the split into two fractions
     const {
@@ -364,7 +355,7 @@ export class RETHToWETH extends RocketPoolBase {
     public readonly router: IRouter
   ) {
     super(
-      router.reth.address,
+      universe.wrappedNativeToken.address,
       [router.reth],
       [universe.wrappedNativeToken],
       InteractionConvention.ApprovalRequired,
@@ -394,12 +385,7 @@ export class RETHToETH extends RocketPoolBase {
     [inputPrecomputed]: TokenQuantity[]
   ) {
     const input = input_ ?? inputPrecomputed.amount
-    const zapperLib = this.gen.Contract.createContract(
-      ZapperExecutor__factory.connect(
-        this.universe.config.addresses.zapperAddress.address,
-        this.universe.provider
-      )
-    )
+    const zapperLib = this.universe.weirollZapperExec
     // We want to avoid running the optimiseToREth on-chain.
     // So rather we precompute it during searching and convert the split into two fractions
     const {
@@ -443,7 +429,7 @@ export class RETHToETH extends RocketPoolBase {
     public readonly router: IRouter
   ) {
     super(
-      router.reth.address,
+      universe.nativeToken.address,
       [router.reth],
       [universe.nativeToken],
       InteractionConvention.ApprovalRequired,

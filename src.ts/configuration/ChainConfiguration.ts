@@ -27,7 +27,7 @@ export type SearcherOptions = typeof defaultSearcherOptions & {
   simulateZapTransaction?: SimulateZapTransactionFunction
 }
 
-const convertAddressObject = <const T extends Record<string, unknown>>(
+export const convertAddressObject = <const T extends Record<string, unknown>>(
   obj: T
 ) =>
   Object.fromEntries(

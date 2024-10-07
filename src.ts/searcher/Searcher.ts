@@ -357,17 +357,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
               this.universe.config.addresses.executorAddress,
               internalTradeSlippage,
               abortSignal,
-              2,
-              true
-            ).catch(() => null),
-            this.findSingleInputTokenSwap(
-              true,
-              input,
-              output,
-              this.universe.config.addresses.executorAddress,
-              internalTradeSlippage,
-              abortSignal,
-              3,
+              5,
               true
             ).catch(() => null),
           ])
@@ -766,20 +756,19 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
             if (qty.token === preferredOutput) {
               return null
             }
-            for (let i = 1; i <= 3; i++) {
-              const potentialSwaps = await this.findSingleInputTokenSwap(
-                true,
-                qty,
-                preferredOutput,
-                this.universe.config.addresses.executorAddress,
-                this.universe.config.defaultInternalTradeSlippage,
-                AbortSignal.timeout(this.universe.config.routerDeadline),
-                i
-              ).catch(() => null)
+            const potentialSwaps = await this.findSingleInputTokenSwap(
+              true,
+              qty,
+              preferredOutput,
+              this.universe.config.addresses.executorAddress,
+              this.universe.config.defaultInternalTradeSlippage,
+              AbortSignal.timeout(this.universe.config.routerDeadline),
+              3,
+              false
+            ).catch(() => null)
 
-              if (potentialSwaps != null) {
-                return potentialSwaps
-              }
+            if (potentialSwaps != null) {
+              return potentialSwaps
             }
             throw Error(
               'Failed to find trade for: ' + qty + ' -> ' + preferredOutput
@@ -798,7 +787,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
 
       this.debugLog(`Last trade: ${outSum} -> ${output}`)
 
-      for (let i = 1; i <= 3; i++) {
+      for (let i = 1; i <= 4; i++) {
         const lastTrade = await this.findSingleInputTokenSwap(
           true,
           outSum,
@@ -821,7 +810,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         unwrapTokenQtys
           .filter((qty) => qty.token !== outputToken)
           .map(async (qty) => {
-            for (let i = 2; i <= 3; i++) {
+            for (let i = 1; i <= 4; i++) {
               const potentialSwaps = await this.findSingleInputTokenSwap(
                 true,
                 qty,
@@ -1036,6 +1025,67 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     })
   }
 
+  public async debugZapIntoToken(
+    userInput: TokenQuantity,
+    output: Token,
+    signerAddress: Address,
+    opts?: ToTransactionArgs & {
+      maxHops?: number
+    }
+  ) {
+    const startTime = Date.now()
+    const toTxArgs = Object.assign({ ...this.defaultSearcherOpts }, opts)
+    const slippage = toTxArgs.internalTradeSlippage
+    await this.universe.initialized
+    const controller = createConcurrentStreamingEvaluator(this, toTxArgs)
+
+    const errors: Error[] = []
+    const onResult = async (path: SwapPath) => {
+      const zap = new ZapViaATrade(
+        this,
+        userInput,
+        path.intoSwapPaths(this.universe),
+        signerAddress,
+        output,
+        startTime,
+        controller.abortController.signal
+      )
+      try {
+        await controller.onResult(zap)
+      } catch (e) {
+        if (e instanceof Error) {
+          errors.push(e)
+        } else {
+          this.debugLog(e)
+        }
+      }
+    }
+    await this.findSingleInputTokenSwap_(
+      userInput,
+      output,
+      signerAddress,
+      slippage,
+      controller.abortController.signal,
+      opts?.maxHops ?? 3,
+      false,
+      onResult,
+      0.9,
+      true
+    )
+    controller.finishedSearching()
+
+    await controller.resultReadyPromise
+
+    try {
+      return controller.getResults(startTime)
+    } catch (e) {
+      for (const err of errors) {
+        console.log(err)
+      }
+      throw e
+    }
+  }
+
   public async zapIntoRToken(
     userInput: TokenQuantity,
     rToken: Token,
@@ -1172,8 +1222,9 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
             endPosition,
             signerAddress,
             slippage,
-            abort,
-            3
+            AbortSignal.timeout(this.universe.config.routerDeadline),
+            4,
+            true
           )
 
           for (const lastStep of lastSteps.paths) {
@@ -1328,18 +1379,14 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         if (plan.inputs.length !== 1) {
           return false
         }
-        if (
-          plan.steps.some(
-            (i) => i.inputToken.length !== 1 || i.outputToken.length !== 1
-          )
-        ) {
+        if (plan.steps.at(-1)!.outputToken.length !== 1) {
           return false
         }
-        if (
-          new Set(plan.steps.map((i) => i.address)).size !== plan.steps.length
-        ) {
-          return false
-        }
+        // if (
+        //   new Set(plan.steps.map((i) => i.address)).size !== plan.steps.length
+        // ) {
+        //   return false
+        // }
 
         return true
       })
@@ -1466,9 +1513,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         destination,
         emitResult,
         maxHops
-      ).catch((e) => {
-        console.log(e)
-      }),
+      ).catch(() => {}),
       internalOnly
         ? Promise.resolve()
         : this.externalQuoters_(input, output, emitResult, {

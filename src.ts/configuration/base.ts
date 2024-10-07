@@ -29,8 +29,8 @@ export const baseConfig = makeConfig(
   COMMON_TOKENS,
   RTOKENS,
   {
-    emitId: "0xC7a942301d92024321995f7f748C2B0687a1Cb60",
-    facadeAddress: "0xEb2071e9B542555E90E6e4E1F83fa17423583991",
+    emitId: '0xC7a942301d92024321995f7f748C2B0687a1Cb60',
+    facadeAddress: '0xEb2071e9B542555E90E6e4E1F83fa17423583991',
     oldFacadeAddress: '0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF',
     zapperAddress: '0xaA560D5C2Fade67CF6836Ab793e56A79F09d4282',
     executorAddress: '0x560740052F380669c90811f711f80B21306d4713',
@@ -42,7 +42,7 @@ export const baseConfig = makeConfig(
     ethBalanceOf: '0x858b62D160788864c65222d7a3777a19B370Abd8',
     uniV3Router: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
-    curveCryptoFactoryHelper: ethers.constants.AddressZero
+    curveCryptoFactoryHelper: ethers.constants.AddressZero,
   },
   {
     blocktime: 2000,
@@ -82,16 +82,16 @@ export const PROTOCOL_CONFIGS = {
     ],
   },
   compV3: {
-    comets: [
-      '0xb125E6687d4313864e53df431d5425969c15Eb2F',
-      '0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf',
-      '0x46e6b214b524310239732D51387075E0e70970bf', // WETH
-    ],
+    comets: {
+      CUSDCV3: '0xb125E6687d4313864e53df431d5425969c15Eb2F',
+      CUSDbCV3: '0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf',
+      CWETHV3: '0x46e6b214b524310239732D51387075E0e70970bf', // WETH
+    },
     wrappers: [
       '0xbC0033679AEf41Fb9FeB553Fdf55a8Bb2fC5B29e',
       '0xa8d818C719c1034E731Feba2088F4F011D44ACB3',
       '0xa694f7177c6c839c951c74c797283b35d0a486c8',
-      '0x53f1Df4E5591Ae35Bf738742981669c3767241FA'
+      '0x53f1Df4E5591Ae35Bf738742981669c3767241FA',
     ],
   },
   stargate: {

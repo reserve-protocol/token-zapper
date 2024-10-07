@@ -574,37 +574,69 @@ export class ZapViaATrade extends BaseSearcherResult {
   async toTransaction(
     options: ToTransactionArgs = {}
   ): Promise<ZapTransaction | null> {
-    await this.setupApprovals().catch((a) => {
-      throw a
-    })
+    await this.setupApprovals()
+    const fullyConsumed = new Set<Token>()
 
+    let inputs: Value[] | null = [
+      encodeArg(this.userInput.amount, ParamType.from('uint256')),
+    ]
     for (const step of this.swaps.swapPaths[0].steps) {
       await this.checkIfSearchIsAborted()
-      await step.action
-        .plan(this.planner, [], this.signer, [this.userInput])
-        .catch((a: any) => {
-          console.log(`${step.action.toString()}.plan failed`)
-          console.log(a.stack)
-          throw a
-        })
+      const sendingToSigner =
+        step.action.proceedsOptions === DestinationOptions.Recipient &&
+        step.outputs.length === 1 &&
+        step.outputs[0].token === this.outputToken
+      const dest = sendingToSigner ? this.signer : this.universe.execAddress
+      if (step.supportsDynamicInput) {
+        step.action.inputToken.forEach((token) => fullyConsumed.add(token))
+        if (inputs == null) {
+          inputs = step.action.inputToken.map((token) =>
+            plannerUtils.erc20.balanceOf(
+              this.universe,
+              this.planner,
+              token,
+              this.universe.execAddress
+            )
+          )
+        }
+      }
+
+      inputs =
+        inputs ??
+        step.inputs.map((token) =>
+          encodeArg(token.amount, ParamType.from('uint256'))
+        )
+
+      const outputs = await step.action.plan(this.planner, inputs, dest, [
+        this.userInput,
+      ])
+      if (sendingToSigner) {
+        for (const token of step.action.outputToken) {
+          fullyConsumed.add(token)
+        }
+        continue
+      }
+      inputs = outputs
     }
-    for (const token of this.potentialResidualTokens) {
+    if (!fullyConsumed.has(this.outputToken)) {
       const out = plannerUtils.erc20.balanceOf(
         this.universe,
         this.planner,
-        token,
-        this.universe.config.addresses.executorAddress
+        this.outputToken,
+        this.universe.config.addresses.executorAddress,
+        `Output token balance`,
+        'out_balance'
       )
       plannerUtils.planForwardERC20(
         this.universe,
         this.planner,
-        token,
+        this.outputToken,
         out,
         this.signer
       )
     }
 
-    return this.createZapTransaction(options)
+    return this.createZapTransaction(options, fullyConsumed)
   }
 }
 

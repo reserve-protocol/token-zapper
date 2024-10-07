@@ -1,212 +1,14 @@
 import { Universe } from '../Universe'
-import {
-  Action,
-  DestinationOptions,
-  InteractionConvention,
-} from '../action/Action'
+import { MintCometWrapperAction, BurnCometWrapperAction, MintCometAction, BurnCometAction } from '../action/CompoundV3'
 import { Address } from '../base/Address'
-import { Approval } from '../base/Approval'
 import {
   IComet__factory,
   ICusdcV3Wrapper,
   ICusdcV3Wrapper__factory,
 } from '../contracts'
-import { TokenQuantity, type Token } from '../entities/Token'
-import { Contract, Planner, Value } from '../tx-gen/Planner'
+import { type Token } from '../entities/Token'
+import { Contract } from '../tx-gen/Planner'
 
-export abstract class BaseCometAction extends Action('CompV3') {
-  public get outputSlippage(): bigint {
-    return 0n
-  }
-  get returnsOutput() {
-    return false
-  }
-  toString(): string {
-    return `${this.protocol}.${this.actionName}(${this.inputToken.join(
-      ', '
-    )} -> ${this.outputToken.join(', ')})`
-  }
-  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.outputToken[0].from(amountsIn.into(this.outputToken[0]).amount - 1n),
-    ]
-  }
-  get receiptToken() {
-    return this.outputToken[0]
-  }
-  get universe() {
-    return this.comet.universe
-  }
-
-  gasEstimate() {
-    return BigInt(250000n)
-  }
-  constructor(
-    public readonly mainAddress: Address,
-    public readonly comet: Comet,
-    public readonly actionName: string,
-    opts: {
-      inputToken: Token[]
-      outputToken: Token[]
-      interaction: InteractionConvention
-      destination: DestinationOptions
-      approvals: Approval[]
-    }
-  ) {
-    super(
-      mainAddress,
-      opts.inputToken,
-      opts.outputToken,
-      opts.interaction,
-      opts.destination,
-      opts.approvals
-    )
-  }
-  async plan(
-    planner: Planner,
-    [input]: Value[],
-    destination: Address,
-    [predicted]: TokenQuantity[]
-  ) {
-    this.planAction(planner, destination, input, predicted)
-    return null
-  }
-  abstract planAction(
-    planner: Planner,
-    destination: Address,
-    input: Value,
-    predicted: TokenQuantity
-  ): void
-}
-class MintCometAction extends BaseCometAction {
-  constructor(comet: Comet) {
-    super(comet.comet.address, comet, 'supply', {
-      inputToken: [comet.borrowToken],
-      outputToken: [comet.comet],
-      interaction: InteractionConvention.ApprovalRequired,
-      destination: DestinationOptions.Callee,
-      approvals: [new Approval(comet.borrowToken, comet.comet.address)],
-    })
-  }
-  planAction(
-    planner: Planner,
-    destination: Address,
-    input: Value | null,
-    predicted: TokenQuantity
-  ) {
-    planner.add(
-      this.comet.cometLibrary.supplyTo(
-        destination.address,
-        this.comet.borrowToken.address.address,
-        input ?? predicted.amount
-      )
-    )
-  }
-}
-
-class MintCometWrapperAction extends BaseCometAction {
-  constructor(public readonly cometWrapper: CometWrapper) {
-    super(cometWrapper.wrapperToken.address, cometWrapper.comet, 'deposit', {
-      inputToken: [cometWrapper.cometToken],
-      outputToken: [cometWrapper.wrapperToken],
-      interaction: InteractionConvention.ApprovalRequired,
-      destination: DestinationOptions.Callee,
-      approvals: [
-        new Approval(
-          cometWrapper.cometToken,
-          cometWrapper.wrapperToken.address
-        ),
-      ],
-    })
-  }
-
-  toString(): string {
-    return `CometWrapper.${this.actionName}(${this.inputToken.join(
-      ', '
-    )} -> ${this.outputToken.join(', ')})`
-  }
-
-  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.outputToken[0].from(
-        await this.cometWrapper.cometWrapperInst.convertDynamicToStatic(
-          amountsIn.amount
-        )
-      ),
-    ]
-  }
-
-  planAction(
-    planner: Planner,
-    _: Address,
-    input: Value | null,
-    predicted: TokenQuantity
-  ) {
-    planner.add(
-      this.cometWrapper.cometWrapperLibrary.deposit(input ?? predicted.amount)
-    )
-  }
-}
-class BurnCometAction extends BaseCometAction {
-  constructor(comet: Comet) {
-    super(comet.comet.address, comet, 'burn', {
-      inputToken: [comet.comet],
-      outputToken: [comet.borrowToken],
-      interaction: InteractionConvention.None,
-      destination: DestinationOptions.Callee,
-      approvals: [],
-    })
-  }
-  planAction(
-    planner: Planner,
-    destination: Address,
-    input: Value | null,
-    predicted: TokenQuantity
-  ) {
-    planner.add(
-      this.comet.cometLibrary.withdraw(
-        this.comet.borrowToken.address.address,
-        input ?? predicted.amount
-      )
-    )
-  }
-}
-class BurnCometWrapperAction extends BaseCometAction {
-  constructor(public readonly cometWrapper: CometWrapper) {
-    super(cometWrapper.wrapperToken.address, cometWrapper.comet, 'withdraw', {
-      inputToken: [cometWrapper.wrapperToken],
-      outputToken: [cometWrapper.cometToken],
-      interaction: InteractionConvention.None,
-      destination: DestinationOptions.Callee,
-      approvals: [],
-    })
-  }
-
-  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [
-      this.outputToken[0].from(
-        await this.cometWrapper.cometWrapperInst.convertStaticToDynamic(
-          amountsIn.amount
-        )
-      ),
-    ]
-  }
-
-  planAction(
-    planner: Planner,
-    _: Address,
-    input: Value | null,
-    predicted: TokenQuantity
-  ) {
-    const amt = planner.add(
-      this.cometWrapper.cometWrapperLibrary.convertStaticToDynamic(
-        input ?? predicted.amount
-      )
-    )
-
-    planner.add(this.cometWrapper.cometWrapperLibrary.withdraw(amt))
-  }
-}
 class CometAssetInfo {
   public constructor(
     readonly offset: number,
@@ -249,7 +51,7 @@ class CometAssetInfo {
     return `CometAssetInfo(${this.asset},priceFeed:${this.priceFeed})`
   }
 }
-class CometWrapper {
+export class CometWrapper {
   public readonly mintAction
   public readonly burnAction
 
@@ -295,7 +97,7 @@ class CometWrapper {
     return new CometWrapper(cometWrapperInst, comet, wrapperToken)
   }
 }
-class Comet {
+export class Comet {
   get universe() {
     return this.compound.universe
   }
@@ -410,7 +212,7 @@ export class CompoundV3Deployment {
   }
 }
 interface CompV3Config {
-  comets: string[]
+  comets: Record<string, string>,
   wrappers: string[]
 }
 export const setupCompoundV3 = async (
@@ -419,7 +221,7 @@ export const setupCompoundV3 = async (
   config: CompV3Config
 ) => {
   const [comets, wrappers] = await Promise.all([
-    Promise.all(config.comets.map((i) => universe.getToken(Address.from(i)))),
+    Promise.all(Object.values(config.comets).map((i) => universe.getToken(Address.from(i)))),
     Promise.all(config.wrappers.map((i) => universe.getToken(Address.from(i)))),
   ])
   return await CompoundV3Deployment.load(protocolName, universe, {

@@ -39,7 +39,7 @@ export class LidoDeployment {
   public readonly actions: {
     stake: {
       eth: BaseStETHAction
-      weth: BaseAction
+      // weth: BaseAction
     }
     wrap: {
       steth: BaseWSTETHAction
@@ -86,18 +86,18 @@ export class LidoDeployment {
     const wrap = new STETHToWSTETH(this)
     const unwrap = new WSTETHToSTETH(this)
     const stake = new ETHToSTETH(this)
-    const unwrapWeth = new WithdrawAction(universe, universe.wrappedNativeToken)
+    // const unwrapWeth = new WithdrawAction(universe, universe.wrappedNativeToken)
 
-    const stakeFromWETH = new (unwrapWeth.combine(stake))(universe)
+    // const stakeFromWETH = new (unwrapWeth.combine(stake))(universe)
 
     universe.defineMintable(wrap, unwrap, true)
     universe.addAction(stake, steth.address)
-    universe.addAction(stakeFromWETH, steth.address)
+    // universe.addAction(stakeFromWETH, steth.address)
 
     this.actions = {
       stake: {
         eth: stake,
-        weth: stakeFromWETH,
+        // weth: stakeFromWETH,
       },
       wrap: {
         steth: wrap,
@@ -155,21 +155,20 @@ abstract class BaseLidoAction extends Action('Lido.Base') {
     return true
   }
   get returnsOutput() {
-    return true
+    return false
   }
   async plan(
     planner: gen.Planner,
     inputs: gen.Value[],
     _: Address,
-    predicted: TokenQuantity[]
+    __: TokenQuantity[]
   ) {
-    const input =
-      inputs[0] ?? gen.encodeArg(predicted[0].amount, ParamType.from('uint256'))
+    const input = inputs[0]
     const out = planner.add(this.planAction(input))
     if (out == null) {
       throw new Error('Failed to plan action')
     }
-    return [out]
+    return null
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -200,7 +199,7 @@ abstract class BaseStETHAction extends BaseLidoAction {
     readonly output: Token
   ) {
     super(
-      lido.steth.address,
+      output.address,
       [input],
       [output],
       InteractionConvention.None,
@@ -213,6 +212,18 @@ abstract class BaseStETHAction extends BaseLidoAction {
 class ETHToSTETH extends BaseStETHAction {
   get actionName() {
     return 'submit'
+  }
+  get outputSlippage() {
+    return 0n
+  }
+  get returnsOutput() {
+    return false
+  }
+  get supportsDynamicInput() {
+    return true
+  }
+  get oneUsePrZap() {
+    return false
   }
   planAction(input: gen.Value) {
     return this.lido.weiroll.stethInstance
@@ -253,7 +264,7 @@ abstract class BaseWSTETHAction extends BaseLidoAction {
     readonly output: Token
   ) {
     super(
-      lido.steth.address,
+      output.address,
       [input],
       [output],
       input === lido.steth

@@ -1,7 +1,5 @@
 import { REthRouter } from '../action/REth'
-import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { Address } from '../base/Address'
-import { SwapPlan } from '../searcher/Swap'
 import { type EthereumUniverse } from './ethereum'
 
 export const setupRETH = async (
@@ -26,28 +24,8 @@ export const setupRETH = async (
     rethRouter.mintViaETH,
     rethRouter.mintViaWETH,
   ]
+  for (const action of actions) {
+    universe.addAction(action, reth.address)
+  }
 
-  const rocketPoolRouter = new DexRouter(
-    'RocketpoolRouter:swapTo',
-    async (abort, input, output) => {
-      for (const action of actions) {
-        if (
-          action.outputToken[0] != output ||
-          action.inputToken[0] != input.token
-        ) {
-          continue
-        }
-        return await new SwapPlan(universe, [action]).quote(
-          [input],
-          universe.execAddress
-        )
-      }
-      throw new Error('Unsupported')
-    },
-    true,
-    new Set([reth, universe.wrappedNativeToken, universe.nativeToken]),
-    new Set([reth, universe.wrappedNativeToken, universe.nativeToken])
-  )
-
-  return new TradingVenue(universe, rocketPoolRouter)
 }

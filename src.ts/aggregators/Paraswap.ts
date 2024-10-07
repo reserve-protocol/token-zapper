@@ -45,7 +45,7 @@ class ParaswapAction extends Action('Paraswap') {
     predicted: TokenQuantity[]
   ) {
     const minOut = await this.quoteWithSlippage(predicted)
-    const zapperLib = this.universe.weirollZapperExecContract
+    const zapperLib = this.universe.weirollZapperExec
     planner.add(
       zapperLib.rawCall(
         this.request.request.tx.to,

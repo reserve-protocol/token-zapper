@@ -112,8 +112,6 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
       step.step.intoRouteStruct()
     )
 
-    const lib = this.gen.Contract.createContract(contract)
-    
     const encodedCall = contract.interface.encodeFunctionData(
       'swapExactTokensForTokens',
       [
@@ -126,7 +124,7 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
     )
 
     planner.add(
-      this.universe.weirollZapperExec.rawCall(
+      this.universe.weirollZapperExecContract.rawCall(
         this.router.address,
         0,
         encodedCall

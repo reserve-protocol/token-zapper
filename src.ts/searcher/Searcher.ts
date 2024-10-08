@@ -1,6 +1,8 @@
+import { Block } from '@ethersproject/providers'
 import { Universe } from '..'
 import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
+import { BlockCache } from '../base/BlockBasedCache'
 import { simulationUrls } from '../base/constants'
 import { ArbitrumUniverse } from '../configuration/arbitrum'
 import { BaseUniverse } from '../configuration/base'
@@ -135,6 +137,31 @@ export const findPrecursorTokenSet = async (
 export class Searcher<SearcherUniverse extends Universe<Config>> {
   private readonly defaultSearcherOpts
 
+  private internalQuoerCache: BlockCache<
+    {
+      input: TokenQuantity
+      output: Token
+      maxHops: number
+      destination: Address
+    },
+    SwapPath[],
+    string
+  >
+
+  private externalQuoteCache: BlockCache<
+    {
+      input: TokenQuantity
+      output: Token
+      abort: AbortSignal
+      dynamicInput: boolean
+      slippage: bigint
+      onResult: (result: SwapPath) => Promise<void>
+      destination: Address
+    },
+    SwapPath[],
+    string
+  >
+
   // private readonly rTokenUnitBasketCache: BlockCache<Token, BasketTokenSourcingRuleApplication>
   constructor(public readonly universe: SearcherUniverse) {
     this.defaultSearcherOpts = {
@@ -143,6 +170,102 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       maxIssueance: true,
       returnDust: true,
     }
+    this.externalQuoteCache = this.universe.createCache(
+      async ({ input, output, slippage, abort, dynamicInput, onResult }) => {
+        const out: SwapPath[] = []
+        await await this.universe.swaps(
+          input,
+          output,
+          async (res) => {
+            out.push(res)
+            try {
+              await onResult(res)
+            } catch (e) {}
+          },
+          {
+            slippage,
+            dynamicInput,
+            abort,
+          }
+        )
+        return out
+      },
+      this.config.requoteTolerance,
+      (inp) => `${inp.input}->${inp.output}:${inp.slippage}:${inp.destination}`
+    )
+    this.internalQuoerCache = this.universe.createCache(
+      async ({
+        maxHops,
+        input,
+        output,
+        destination,
+      }: {
+        input: TokenQuantity
+        output: Token
+        maxHops: number
+        destination: Address
+      }) => {
+        const context = `${maxHops}:${input.token}->${output}`
+        const internalQuoterPerf = this.perf.begin('internalQuoter', context)
+        const bfsResult = this.perf.measure(
+          'bfs',
+          () =>
+            bfs(
+              this.universe,
+              this.universe.graph,
+              input.token,
+              output,
+              maxHops
+            ),
+          context
+        )
+        const allPlans = bfsResult.steps
+          .map((i) => i.convertToSingularPaths())
+          .flat()
+
+        const swapPlans = allPlans.filter((plan) => {
+          if (plan == null || plan.steps.length === 0) {
+            return false
+          }
+          if (plan.inputs.length !== 1) {
+            return false
+          }
+          if (
+            plan.steps.some(
+              (i) => i.inputToken.length !== 1 || i.outputToken.length !== 1
+            )
+          ) {
+            return false
+          }
+          if (
+            new Set(plan.steps.map((i) => i.address)).size !== plan.steps.length
+          ) {
+            return false
+          }
+
+          return true
+        })
+        // this.debugLog(
+        //   `Found ${swapPlans.length}/${allPlans.length} trades: for ${input.token} -> ${output}`
+        // )
+        // for (const plan of swapPlans) {
+        //   console.log('  ' + plan.toString())
+        // }
+        const res = await Promise.all(
+          swapPlans.map(async (plan) => {
+            try {
+              return await plan.quote([input], destination)
+            } catch (e) {
+              return null
+            }
+          })
+        )
+        internalQuoterPerf()
+        return res.filter((i) => i != null) as SwapPath[]
+      },
+      this.config.requoteTolerance,
+      (inp) => `${inp.input}->${inp.output}:${inp.maxHops}`
+    )
 
     // rTokenUnitBasketCache = universe.createCache(
     //   (token) =>
@@ -787,22 +910,18 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
 
       this.debugLog(`Last trade: ${outSum} -> ${output}`)
 
-      for (let i = 1; i <= 4; i++) {
-        const lastTrade = await this.findSingleInputTokenSwap(
+      return [
+        ...tradeForPreferredOut,
+        await this.findSingleInputTokenSwap(
           true,
           outSum,
           output,
           signerAddress,
           this.universe.config.defaultInternalTradeSlippage,
           AbortSignal.timeout(this.universe.config.routerDeadline),
-          i
-        ).catch(() => null)
-
-        if (lastTrade != null) {
-          return [...tradeForPreferredOut, lastTrade]
-        }
-      }
-      throw new Error('Failed to find trade for: ' + outSum + ' -> ' + output)
+          3
+        ),
+      ]
     }
 
     const tradeDirectly = async () =>
@@ -1337,7 +1456,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     )
   }
 
-  async externalQuoters_(
+  private async externalQuoters_(
     input: TokenQuantity,
     output: Token,
     onResult: (path: SwapPath) => Promise<void>,
@@ -1347,7 +1466,27 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       slippage: bigint
     }
   ) {
-    await this.universe.swaps(input, output, onResult, opts)
+    const inp = {
+      input,
+      output,
+      abort: opts.abort,
+      dynamicInput: opts.dynamicInput,
+      slippage: opts.slippage,
+      destination: this.universe.execAddress,
+      onResult,
+    }
+    const isCached = this.externalQuoteCache.has(inp)
+    const out = await this.externalQuoteCache.get(inp)
+    if (!isCached) {
+      return
+    }
+    await Promise.all(
+      out.map(async (res) => {
+        try {
+          await onResult(res)
+        } catch (e) {}
+      })
+    )
   }
 
   async internalQuoter(
@@ -1357,46 +1496,21 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     onResult: (result: SwapPath) => Promise<void>,
     maxHops: number = 2
   ): Promise<void> {
-    const context = `${maxHops}:${input.token}->${output}`
-    const internalQuoterPerf = this.perf.begin('internalQuoter', context)
-    const bfsResult = this.perf.measure(
-      'bfs',
-      () =>
-        bfs(this.universe, this.universe.graph, input.token, output, maxHops),
-      context
-    )
-
-    const swapPlans = bfsResult.steps
-      .map((i) => i.convertToSingularPaths())
-      .flat()
-      .filter((plan) => {
-        if (plan == null || plan.steps.length === 0) {
-          return false
-        }
-        if (plan.steps.length > maxHops) {
-          return false
-        }
-        if (plan.inputs.length !== 1) {
-          return false
-        }
-        if (plan.steps.at(-1)!.outputToken.length !== 1) {
-          return false
-        }
-        // if (
-        //   new Set(plan.steps.map((i) => i.address)).size !== plan.steps.length
-        // ) {
-        //   return false
-        // }
-
-        return true
-      })
-
+    const swapPlans = await this.internalQuoerCache.get({
+      input,
+      output,
+      maxHops,
+      destination,
+    })
     await Promise.all(
       swapPlans.map(async (plan) => {
-        await onResult(await plan.quote([input], destination))
+        try {
+          await onResult(plan)
+        } catch (e) {
+          // console.log(e)
+        }
       })
     )
-    internalQuoterPerf()
   }
 
   async findSingleInputTokenSwap(
@@ -1437,9 +1551,14 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
   public tokenPrices = new Map<Token, TokenQuantity>()
   public async fairPrice(qty: TokenQuantity) {
     const out = await this.universe.fairPrice(qty)
+
     if (out != null) {
+      const qtyAsToken = qty.into(out.token)
+      if (qtyAsToken.amount === 0n) {
+        return out.token.zero
+      }
       const unitPrice =
-        qty.amount === qty.token.scale ? out : out.div(qty.into(out.token))
+        qty.amount === qty.token.scale ? out : out.div(qtyAsToken)
       this.tokenPrices.set(qty.token, unitPrice)
     }
 

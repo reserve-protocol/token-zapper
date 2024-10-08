@@ -1,7 +1,7 @@
 import { Address, Universe } from '../src.ts'
 
 export const createActionTestCase = (
-  universe: Universe,
+  getUniverse: () => Universe,
   getSymbol: Map<Address, string>,
   testUser: Address,
   testCase: {
@@ -18,6 +18,7 @@ export const createActionTestCase = (
   )!} into ${getSymbol.get(testCase.output)!}`
   it(testName, async () => {
     expect.assertions(1)
+    const universe = getUniverse()
     await universe.initialized
     const input = universe.tokens.get(testCase.input)?.from(testCase.qty)
     const output = universe.tokens.get(testCase.output)

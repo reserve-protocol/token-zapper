@@ -546,6 +546,9 @@ export const setupUniswapRouter = async (universe: Universe) => {
   out = new DexRouter(
     'uniswap',
     async (abort, input, output, slippage) => {
+      if (universe.lpTokens.has(input.token) || universe.lpTokens.has(output)) {
+        throw new Error('Unsupported token')
+      }
       try {
         const route = await computeRoute(abort, input, output, slippage)
         if (
@@ -569,7 +572,6 @@ export const setupUniswapRouter = async (universe: Universe) => {
         universe.searcher.debugLog(
           `Failed to find route for ${input} -> ${output}: ${e.message}`
         )
-        await new Promise((resolve) => setTimeout(resolve, 500))
         throw new Error(e)
       }
     },

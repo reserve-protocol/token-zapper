@@ -56,7 +56,7 @@ class CryptoFactoryPoolSwapMint extends CurveFactoryCryptoPoolBase {
   }
   constructor(public readonly pool: CurveFactoryCryptoPool) {
     super(
-      pool.lpToken.address,
+      pool.pool,
       pool.underlying,
       [pool.lpToken],
       InteractionConvention.ApprovalRequired,
@@ -296,7 +296,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
     public readonly tokenIndex: number
   ) {
     super(
-      pool.underlying[tokenIndex].address,
+      pool.pool,
       [pool.underlying[tokenIndex]],
       [pool.lpToken],
       InteractionConvention.ApprovalRequired,
@@ -444,7 +444,7 @@ class CurveFactoryCryptoPoolRemoveLiquidityAction extends Action(
     public readonly tokenIndex: number
   ) {
     super(
-      pool.underlying[tokenIndex].address,
+      pool.pool,
       [pool.lpToken],
       [pool.underlying[tokenIndex]],
       InteractionConvention.None,

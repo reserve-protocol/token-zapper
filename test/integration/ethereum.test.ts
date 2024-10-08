@@ -258,7 +258,7 @@ beforeAll(async () => {
 
   await universe.initialized
   return universe
-}, 5000)
+}, 7500)
 
 describe('ethereum zapper', () => {
   beforeEach(async () => {
@@ -270,7 +270,7 @@ describe('ethereum zapper', () => {
 
   describe('actions', () => {
     for (const testCase of individualIntegrations) {
-      createActionTestCase(universe, getSymbol, testUser, testCase)
+      createActionTestCase(() => universe, getSymbol, testUser, testCase)
     }
   })
 

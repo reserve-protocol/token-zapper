@@ -8,7 +8,7 @@ export class BlockCache<Input, Result extends NonNullable<any>, Key=Input> {
 
   private cache = new Map<Key, { result: Promise<Result>; time: number }>()
 
-  get(key: Input): Promise<Result> {
+  public get(key: Input): Promise<Result> {
     const k = this.keyFn(key);
     let out = this.cache.get(k)
     if (out == null) {
@@ -17,6 +17,11 @@ export class BlockCache<Input, Result extends NonNullable<any>, Key=Input> {
       this.cache.set(k, out)
     }
     return out.result
+  }
+
+  public has(key: Input) {
+    const a = this.cache.get(this.keyFn(key))
+    return a != null
   }
 
   public onBlock(block: number) {

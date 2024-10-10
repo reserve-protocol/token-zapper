@@ -5,12 +5,12 @@ import { SimulateZapTransactionFunction } from './ZapSimulation'
 
 const defaultSearcherOptions = {
   requoteTolerance: 1,
-  routerDeadline: 5000,
-  searcherMinRoutesToProduce: 4,
+  routerDeadline: 4000,
+  searcherMinRoutesToProduce: 2,
   searcherMaxRoutesToProduce: 8,
   searchConcurrency: 8,
   defaultInternalTradeSlippage: 50n,
-  maxSearchTimeMs: 10000,
+  maxSearchTimeMs: 12000,
 
   // These parameters will reject zaps that have successfully simulated
   // but even if it produced a valid result, the result should be within some bounds
@@ -20,7 +20,7 @@ const defaultSearcherOptions = {
   zapMaxDustProduced: 2, // 0.02 or 2% of total output value
 
   largeZapThreshold: 300000,
-  largeZapSearchTime: 5000,
+  largeZapSearchTime: 6000,
 }
 
 export type SearcherOptions = typeof defaultSearcherOptions & {

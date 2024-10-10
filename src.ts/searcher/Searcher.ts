@@ -345,25 +345,28 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       },
     ]
 
-    await Promise.all(
-      tradeforPrecursorsInputs.map(async (option) => {
-        const {
-          tradeForPrecursorsInput: tradeforPrecursorsInput,
-          trade: firstTrade,
-        } = option
+    for (const option of tradeforPrecursorsInputs) {
+      if (abortSignal.aborted) {
+        break
+      }
+      const {
+        tradeForPrecursorsInput: tradeforPrecursorsInput,
+        trade: firstTrade,
+      } = option
 
-        await this.createZapMintOption(
-          tradeforPrecursorsInput,
-          firstTrade,
-          rToken,
-          internalTradeSlippage,
-          signerAddress,
-          onResult,
-          abortSignal,
-          precursorTokens
-        ).catch(() => {})
+      await this.createZapMintOption(
+        tradeforPrecursorsInput,
+        firstTrade,
+        rToken,
+        internalTradeSlippage,
+        signerAddress,
+        onResult,
+        abortSignal,
+        precursorTokens
+      ).catch(e => {
+        console.log("this.createZapMintOption", e)
       })
-    )
+    }
   }
 
   async createZapMintOption(

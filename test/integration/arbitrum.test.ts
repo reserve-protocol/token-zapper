@@ -102,7 +102,7 @@ beforeAll(async () => {
 
   universe = await Universe.createWithConfig(
     provider,
-    arbiConfig,
+    { ...arbiConfig, searcherMaxRoutesToProduce: 1 },
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))
       uni.addTradeVenue(createParaswap('paraswap', uni))
@@ -198,7 +198,7 @@ describe('Edge cases', () => {
           enableTradeZaps: false,
         })
         result = 'success'
-      } catch (e) {}
+      } catch (e) { }
       expect(result).toBe('success')
     },
     15 * 1000
@@ -206,5 +206,5 @@ describe('Edge cases', () => {
 })
 
 afterAll(() => {
-  ;(universe.provider as WebSocketProvider).websocket.close()
+  ; (universe.provider as WebSocketProvider).websocket.close()
 })

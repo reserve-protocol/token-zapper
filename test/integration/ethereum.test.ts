@@ -183,6 +183,7 @@ const issueanceCases = [
   makeMintTestCase(5, t.WETH, rTokens.dgnETH),
   makeMintTestCase(5, t.pxETH, rTokens.dgnETH),
   makeMintTestCase(10000, t.USDC, rTokens.dgnETH),
+  makeMintTestCase(10000, t.USDT, rTokens.dgnETH),
 ]
 
 const redeemCases = [
@@ -241,8 +242,8 @@ beforeAll(async () => {
     {
       ...ethereumConfig,
       searcherMinRoutesToProduce: 1,
-      routerDeadline: 3000,
-      searchConcurrency: 2,
+      routerDeadline: 5000,
+      searchConcurrency: 4,
     },
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))

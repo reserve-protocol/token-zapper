@@ -206,9 +206,9 @@ export abstract class BaseSearcherResult {
   }
 
   async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
-    if (this.abortSignal.aborted) {
-      throw new Error('Aborted')
-    }
+    // if (this.abortSignal.aborted) {
+    //   throw new Error('Aborted')
+    // }
     const resp = await this.universe.simulateZapFn(opts)
 
     // If the response starts with a pointer to the first location of the output tuple
@@ -560,11 +560,13 @@ export abstract class BaseSearcherResult {
       )
     } catch (e: any) {
       if (this.abortSignal.aborted) {
+        this.searcher.debugLog(e)
         return null
       }
       if (e instanceof ThirdPartyIssue) {
         throw e
       }
+      this.searcher.debugLog(e)
       return null
     }
   }

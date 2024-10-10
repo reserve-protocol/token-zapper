@@ -266,7 +266,7 @@ export const createConcurrentStreamingEvaluator = (
         }
       }
     } catch (e: any) {
-      // emitDebugLog(e)
+      emitDebugLog(e)
     }
   }
   const resultsReadyController = new AbortController()
@@ -277,15 +277,25 @@ export const createConcurrentStreamingEvaluator = (
     }
     finishing = true
     searcher.debugLog('Search completed. Returning results')
+
+    const delta = Date.now() - startTime
+    const remaining = Math.max(waitTime - delta, 0)
+    let timeoutIn = 500
+    if (results.length === 0) {
+      timeoutIn = Math.max(remaining + 2500, 2500)
+    }
+    searcher.debugLog(`Waiting, there is ${remaining}ms out of ${waitTime}ms allocated, cancelling pending in ${timeoutIn}ms`)
     for (const p of pending) {
       try {
         await Promise.race([
           p,
           new Promise((resolve) =>
-            AbortSignal.timeout(1000).addEventListener('abort', resolve)
+            AbortSignal.timeout(timeoutIn).addEventListener('abort', resolve)
           ),
         ])
-      } catch (e) {}
+      } catch (e) {
+        emitDebugLog(e)
+      }
     }
     resultsReadyController.abort()
   })
@@ -347,7 +357,7 @@ const noConflictAddrs = new Set([
   Address.from('0x2f5e87c9312fa29aed5c179e456625d79015299c'),
   Address.from('0xc6962004f452be9203591991d15f6b388e09e8d0'),
   Address.from('0xae1ec28d6225dce2ff787dcb8ce11cf6d3ae064f'),
-  Address.from('0x70d95587d40a2caf56bd97485ab3eec10bee6336')
+  Address.from('0x70d95587d40a2caf56bd97485ab3eec10bee6336'),
   // Address.from('0x7fCDC35463E3770c2fB992716Cd070B63540b947')
   // Address.from('0xcc065Eb6460272481216757293FFC54A061bA60e')
   // Address.from('0x389938CF14Be379217570D8e4619E51fBDafaa21')

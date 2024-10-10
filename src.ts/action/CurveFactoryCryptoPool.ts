@@ -217,7 +217,7 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
     let amounts: [TokenQuantity, TokenQuantity]
     let tradeFraction: bigint
     const abort = AbortSignal.timeout(
-      Math.floor(this.universe.config.routerDeadline / 4)
+      this.universe.config.routerDeadline
     )
     if (this.tokenIndex === 0) {
       const amountQty = amountIn.sub(amountIn.token.wei).mul(fractionToken0)

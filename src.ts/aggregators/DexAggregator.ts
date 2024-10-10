@@ -12,20 +12,17 @@ export class DexRouter {
     }
   > = new Map()
 
-
   constructor(
     public readonly name: string,
     private readonly swap_: SwapSignature,
     public readonly dynamicInput: boolean,
     public readonly supportedInputTokens = new Set<Token>(),
     public readonly supportedOutputTokens = new Set<Token>()
-  ) { }
+  ) {}
 
   private maxConcurrency = Infinity
   private pending = 0
-  public withMaxConcurrency(
-    concurrency: number
-  ) {
+  public withMaxConcurrency(concurrency: number) {
     this.maxConcurrency = concurrency
     return this
   }
@@ -38,13 +35,11 @@ export class DexRouter {
       }
     }
   }
-  public readonly swap: SwapSignature = (
-    abort,
-    input,
-    output,
-    slippage
-  ) => {
-    const key = `${input.amount}.${input.token.address.address}.${output.address.address}.${slippage}`
+  public readonly swap: SwapSignature = (abort, input, output, slippage) => {
+    const start = Date.now()
+    const key = `${input.amount}.${
+      input.token
+    }:${input.token.address.toShortString()}.${output}:${output.address.toShortString()}.${slippage}`
     const prev = this.cache.get(key)
     if (prev != null) {
       return prev.path
@@ -53,22 +48,35 @@ export class DexRouter {
       throw new Error('Too many concurrent swaps')
     }
     this.pending++
-    const out = this.swap_(abort, input, output, slippage);
+    const out = this.swap_(abort, input, output, slippage).catch((e) => {
+
+      const end = Date.now()
+      const delta = end - start;
+      if (this.cache.get(key)?.path === out) {
+        this.cache.delete(key)
+      }
+      throw e
+    })
     this.cache.set(key, {
       path: out,
       timestamp: this.currentBlock,
     })
 
     return out.finally(() => {
-      this.pending--
-      if (this.cache.get(key)?.path === out) {
-        this.cache.delete(key)
+      const end = Date.now()
+      const delta = end - start;
+      if (delta > 2500) {
+        console.log(`${this.name}: ${key} took ${end - start}ms to execute`)
       }
+      this.pending--
     })
   }
 
   supportsSwap(inputTokenQty: TokenQuantity, output: Token) {
-    if (this.supportedInputTokens.size === 0 && this.supportedOutputTokens.size === 0) {
+    if (
+      this.supportedInputTokens.size === 0 &&
+      this.supportedOutputTokens.size === 0
+    ) {
       return true
     }
     if (
@@ -104,8 +112,7 @@ export class TradingVenue {
       src: Token,
       dst: Token
     ) => Promise<RouterAction | null>
-  ) { }
-
+  ) {}
 
   get supportsDynamicInput() {
     return this.router.dynamicInput
@@ -119,10 +126,7 @@ export class TradingVenue {
     return this.createTradeEdge_ != null
   }
 
-  canCreateEdgeBetween(
-    tokenA: Token,
-    tokenB: Token
-  ) {
+  canCreateEdgeBetween(tokenA: Token, tokenB: Token) {
     if (this.router.supportedInputTokens.size !== 0) {
       if (!this.router.supportedInputTokens.has(tokenA)) {
         return false

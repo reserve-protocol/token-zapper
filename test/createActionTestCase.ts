@@ -1,4 +1,5 @@
 import { Address, Universe } from '../src.ts'
+import { logger } from '../src.ts/logger.ts'
 
 export const createActionTestCase = (
   getUniverse: () => Universe,
@@ -33,10 +34,10 @@ export const createActionTestCase = (
           maxHops: testCase.maxHops,
         }
       )
-      console.log(`Action ${testName}: ${zap.bestZapTx.tx}`)
+      logger.info(`Action ${testName}: ${zap.bestZapTx.tx}`)
       result = 'success'
     } catch (e) {
-      console.log(`${testName} = ${e.message}`)
+      logger.error(`${testName} = ${e.message}`)
     }
     expect(result).toBe('success')
   })

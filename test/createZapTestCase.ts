@@ -1,4 +1,5 @@
 import { Universe, Address } from '../src.ts'
+import { logger } from '../src.ts/logger.ts'
 
 export const createZapTestCase = async (
   type: 'Redeem' | 'Issueance',
@@ -22,10 +23,10 @@ export const createZapTestCase = async (
       type === 'Issueance'
         ? await universe.zap(input!, output!, testUser)
         : await universe.redeem(input!, output!, testUser)
-    console.log(`${type}: ${zap}`)
+    logger.info(`${type}: ${zap}`)
     result = 'success'
   } catch (e) {
-    console.log(`${testCaseName} = ${e.message}`)
+    logger.error(`${testCaseName} = ${e.message}`)
   }
   expect(result).toBe('success')
 }

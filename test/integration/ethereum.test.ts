@@ -2,6 +2,8 @@ import * as dotenv from 'dotenv'
 import { ethers } from 'ethers'
 
 import { WebSocketProvider } from '@ethersproject/providers'
+import { createSimulator } from '@slot0/forky'
+import { convertAddressObject, makeFromForky } from '../../src.ts/configuration/ChainConfiguration'
 import {
   Address,
   createEnso,
@@ -9,16 +11,15 @@ import {
   createParaswap,
   ethereumConfig,
   ethereumProtocolConfigs,
-  makeCustomRouterSimulator,
   setupEthereumZapper,
-  Universe,
+  Universe
 } from '../../src.ts/index'
-import { createZapTestCase } from '../createZapTestCase'
-import { convertAddressObject } from '../../src.ts/configuration/ChainConfiguration'
+import { logger } from '../../src.ts/logger'
 import {
   createActionTestCase,
   makeIntegrationtestCase,
 } from '../createActionTestCase'
+import { createZapTestCase } from '../createZapTestCase'
 dotenv.config()
 
 if (process.env.MAINNET_PROVIDER == null) {
@@ -237,6 +238,11 @@ export let universe: Universe
 beforeAll(async () => {
   const provider = getProvider(process.env.MAINNET_PROVIDER!)
 
+  const simulator = await createSimulator(
+    process.env.MAINNET_PROVIDER!,
+    "Reth"
+  )
+
   universe = await Universe.createWithConfig(
     provider,
     {
@@ -253,7 +259,11 @@ beforeAll(async () => {
       await setupEthereumZapper(uni)
     },
     {
-      simulateZapFn: makeCustomRouterSimulator(process.env.SIM_URL!, ethWhales),
+      simulateZapFn: makeFromForky(
+        simulator,
+        ethWhales,
+        logger
+      )
     }
   )
 
@@ -356,10 +366,10 @@ describe('ethereum zapper', () => {
               output!,
               testUser
             )
-            console.log(`Yield position zap: ${zap}`)
+            logger.info(`Yield position zap: ${zap}`)
             result = 'success'
           } catch (e) {
-            console.log(`${testCaseName} = ${e.message}`)
+            logger.info(`${testCaseName} = ${e.message}`)
           }
           expect(result).toBe('success')
         },
@@ -370,5 +380,5 @@ describe('ethereum zapper', () => {
 })
 
 afterAll(() => {
-  ;(universe.provider as WebSocketProvider).websocket.close()
+  ; (universe.provider as WebSocketProvider).websocket.close()
 })

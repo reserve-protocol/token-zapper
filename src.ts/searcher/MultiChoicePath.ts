@@ -198,7 +198,7 @@ export const createConcurrentStreamingEvaluator = (
     searchResult: BaseSearcherResult
   }[] = []
 
-  let pending: Promise<any>[] = []
+  let pending = new Set<Promise<any>>()
   const waitTime = searcher.config.maxSearchTimeMs ?? 10000
   searcher.debugLog(`Waiting for ${waitTime}ms`)
 
@@ -217,7 +217,10 @@ export const createConcurrentStreamingEvaluator = (
     allCandidates.push(result)
     try {
       const txPromise = result.toTransaction(toTxArgs)
-      pending.push(txPromise)
+      pending.add(txPromise)
+      txPromise.finally(() => {
+        pending.delete(txPromise)
+      })
       const tx = await txPromise
       if (tx == null) {
         return
@@ -277,26 +280,21 @@ export const createConcurrentStreamingEvaluator = (
     }
     finishing = true
     searcher.debugLog('Search completed. Returning results')
-
-    const delta = Date.now() - startTime
-    const remaining = Math.max(waitTime - delta, 0)
-    let timeoutIn = 500
-    if (results.length === 0) {
-      timeoutIn = Math.max(remaining + 2500, 2500)
+    if (pending.size === 0 || results.length >= 1) {
+      resultsReadyController.abort()
+      return
     }
-    searcher.debugLog(`Waiting, there is ${remaining}ms out of ${waitTime}ms allocated, cancelling pending in ${timeoutIn}ms`)
-    for (const p of pending) {
-      try {
-        await Promise.race([
-          p,
-          new Promise((resolve) =>
-            AbortSignal.timeout(timeoutIn).addEventListener('abort', resolve)
-          ),
-        ])
-      } catch (e) {
+    searcher.debugLog(`Waiting 2500ms for the last ${pending.size} pending`)
+    const timeout = new Promise((resolve) =>
+      AbortSignal.timeout(2500).addEventListener('abort', resolve)
+    )
+    await Promise.race([
+      timeout,
+      Promise.all([...pending].map(p => p.catch(e => {
         emitDebugLog(e)
-      }
-    }
+        return null
+      })))
+    ])
     resultsReadyController.abort()
   })
   setTimeout(async () => {

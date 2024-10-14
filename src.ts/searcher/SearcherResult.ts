@@ -282,6 +282,7 @@ export abstract class BaseSearcherResult {
   }
 
   protected async simulateAndParse(options: ToTransactionArgs, data: string) {
+    const addresesToPreload = this.swaps.swapPaths.map(i => i.steps.map(i => [...i.action.addressesInUse])).flat(2);
     const zapperResult = await this.simulate({
       to: this.universe.config.addresses.zapperAddress.address,
       from: this.signer.address,
@@ -291,6 +292,7 @@ export abstract class BaseSearcherResult {
         inputTokenAddress: this.inputToken.address.address,
         userBalanceAndApprovalRequirements: this.userInput.amount,
       },
+      addresesToPreload: addresesToPreload.map(i => i.address)
     })
 
     const currentBalances = TokenAmounts.fromQuantities(

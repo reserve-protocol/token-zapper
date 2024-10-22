@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv'
 import { ethers } from 'ethers'
 
 import { WebSocketProvider } from '@ethersproject/providers'
+import { createSimulator } from '@slot0/forky'
 import {
   Address,
   baseConfig,
@@ -12,6 +13,8 @@ import {
   Universe,
 } from '../../src.ts/index'
 import { createZapTestCase } from '../createZapTestCase'
+import { makeFromForky } from '../../src.ts/configuration/ZapSimulation'
+import { logger } from '../../src.ts/logger'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -117,6 +120,8 @@ let universe: Universe
 beforeAll(async () => {
   const provider = getProvider(process.env.BASE_PROVIDER!)
 
+  const simulator = await createSimulator(process.env.BASE_PROVIDER!, 'Reth')
+
   universe = await Universe.createWithConfig(
     provider,
     baseConfig,
@@ -128,10 +133,7 @@ beforeAll(async () => {
       await setupBaseZapper(uni)
     },
     {
-      simulateZapFn: makeCustomRouterSimulator(
-        process.env.SIM_URL!,
-        baseWhales
-      ),
+      simulateZapFn: makeFromForky(simulator, baseWhales, logger)
     }
   )
 

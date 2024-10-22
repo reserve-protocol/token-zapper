@@ -106,25 +106,30 @@ export const findPrecursorTokenSet = async (
   const preferredTokenSet = universe.preferredRTokenInputToken.get(rToken)
   const preferredToken = universe.preferredToken.get(rToken)
 
-  searcher.debugLog(
-    `pegDiffers=${pegDiffers}, preferredToken=${preferredToken}`
-  )
-  if (
-    precursorSet.precursorToTradeFor.length > 1 &&
-    preferredToken != null &&
-    (pegDiffers ||
-      (universe.chainId !== 1 &&
-        !preferredTokenSet.has(userInputQuantity.token))) &&
-    !preferredTokenSet.has(userInputQuantity.token)
-  ) {
-    precursorSet = await computePrecursorSet(preferredToken)
+  const inputPartOfPrecursor = precursorSet.precursorToTradeFor.find(t => t.token === userInputQuantity.token) != null
 
-    return {
-      rules: precursorSet,
-      initialTrade: {
-        input: userInputQuantity,
-        output: preferredToken,
-      },
+  if (!inputPartOfPrecursor) {
+    searcher.debugLog(
+      `pegDiffers=${pegDiffers}, preferredToken=${preferredToken}`
+    )
+    if (
+      
+      precursorSet.precursorToTradeFor.length > 1 &&
+      preferredToken != null &&
+      (pegDiffers ||
+        (universe.chainId !== 1 &&
+          !preferredTokenSet.has(userInputQuantity.token))) &&
+      !preferredTokenSet.has(userInputQuantity.token)
+    ) {
+      precursorSet = await computePrecursorSet(preferredToken)
+
+      return {
+        rules: precursorSet,
+        initialTrade: {
+          input: userInputQuantity,
+          output: preferredToken,
+        },
+      }
     }
   }
 

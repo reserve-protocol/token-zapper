@@ -3,7 +3,10 @@ import { ethers } from 'ethers'
 
 import { WebSocketProvider } from '@ethersproject/providers'
 import { createSimulator } from '@slot0/forky'
-import { convertAddressObject, makeFromForky } from '../../src.ts/configuration/ChainConfiguration'
+import {
+  convertAddressObject,
+  makeFromForky,
+} from '../../src.ts/configuration/ChainConfiguration'
 import {
   Address,
   createEnso,
@@ -12,7 +15,7 @@ import {
   ethereumConfig,
   ethereumProtocolConfigs,
   setupEthereumZapper,
-  Universe
+  Universe,
 } from '../../src.ts/index'
 import { logger } from '../../src.ts/logger'
 import {
@@ -238,10 +241,7 @@ export let universe: Universe
 beforeAll(async () => {
   const provider = getProvider(process.env.MAINNET_PROVIDER!)
 
-  const simulator = await createSimulator(
-    process.env.MAINNET_PROVIDER!,
-    "Reth"
-  )
+  const simulator = await createSimulator(process.env.MAINNET_PROVIDER!, 'Reth')
 
   universe = await Universe.createWithConfig(
     provider,
@@ -259,11 +259,7 @@ beforeAll(async () => {
       await setupEthereumZapper(uni)
     },
     {
-      simulateZapFn: makeFromForky(
-        simulator,
-        ethWhales,
-        logger
-      )
+      simulateZapFn: makeFromForky(simulator, ethWhales, logger),
     }
   )
 
@@ -380,5 +376,5 @@ describe('ethereum zapper', () => {
 })
 
 afterAll(() => {
-  ; (universe.provider as WebSocketProvider).websocket.close()
+  ;(universe.provider as WebSocketProvider).websocket.close()
 })

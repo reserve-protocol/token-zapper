@@ -1,5 +1,8 @@
 import { loadCompV2Deployment } from '../action/CTokens'
-import { ETHTokenVaultDepositAction } from '../action/ERC4626'
+import {
+  ERC4626DepositAction,
+  ETHTokenVaultDepositAction,
+} from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
@@ -167,6 +170,15 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToETHX)
 
+  const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
+    universe,
+    universe.commonTokens.USDe,
+    universe.commonTokens.sUSDe,
+    1n
+  )
+
+  universe.addAction(depositTosUSDe)
+
   universe.tokenTradeSpecialCases.set(
     universe.commonTokens.ETHx,
     async (input: TokenQuantity, dest: Address) => {
@@ -185,6 +197,23 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     oracleAddress: Address.from('0xC5f8c4aB091Be1A899214c0C3636ca33DcA0C547'),
     priceToken: universe.commonTokens.WETH,
   })
+
+  universe.defineYieldPositionZap(
+    universe.commonTokens.sdgnETH,
+    universe.rTokens.dgnETH
+  )
+
+  universe.defineYieldPositionZap(
+    universe.commonTokens['ETH+ETH-f'],
+    universe.rTokens['ETH+']
+  )
+
+  universe.defineYieldPositionZap(
+    await universe.getToken(
+      Address.from(PROTOCOL_CONFIGS.convex.wrappers['stkcvxETH+ETH-f'])
+    ),
+    universe.rTokens['ETH+']
+  )
 
   // universe.tokenFromTradeSpecialCases.set(
   //   commonTokens.pxETH,

@@ -14,6 +14,9 @@ import {
   Universe,
 } from '../../src.ts/index'
 import { createZapTestCase } from '../createZapTestCase'
+import { makeFromForky } from '../../src.ts/configuration/ZapSimulation'
+import { createSimulator } from '@slot0/forky'
+import { logger } from '../../src.ts/logger'
 dotenv.config()
 
 if (process.env.ARBITRUM_PROVIDER == null) {
@@ -100,6 +103,10 @@ let universe: ArbitrumUniverse
 beforeAll(async () => {
   const provider = getProvider(process.env.ARBITRUM_PROVIDER!)
 
+  const simulator = await createSimulator(
+    process.env.ARBITRUM_PROVIDER!,
+    'Reth'
+  )
   universe = await Universe.createWithConfig(
     provider,
     { ...arbiConfig, searcherMaxRoutesToProduce: 1 },
@@ -111,10 +118,7 @@ beforeAll(async () => {
       await setupArbitrumZapper(uni)
     },
     {
-      simulateZapFn: makeCustomRouterSimulator(
-        process.env.SIM_URL!,
-        arbiWhales
-      ),
+      simulateZapFn: makeFromForky(simulator, arbiWhales, logger),
     }
   )
 
@@ -198,7 +202,7 @@ describe('Edge cases', () => {
           enableTradeZaps: false,
         })
         result = 'success'
-      } catch (e) { }
+      } catch (e) {}
       expect(result).toBe('success')
     },
     15 * 1000
@@ -206,5 +210,5 @@ describe('Edge cases', () => {
 })
 
 afterAll(() => {
-  ; (universe.provider as WebSocketProvider).websocket.close()
+  ;(universe.provider as WebSocketProvider).websocket.close()
 })

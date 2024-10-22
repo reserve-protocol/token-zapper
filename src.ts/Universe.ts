@@ -68,6 +68,11 @@ export type Integrations = Partial<{
 }>
 export class Universe<const UniverseConf extends Config = Config> {
   private emitter = new EventEmitter()
+  private yieldPositionZaps: Map<Token, Token> = new Map();
+  public defineYieldPositionZap(yieldPosition: Token, rTokenInput: Token) {
+    this.yieldPositionZaps.set(yieldPosition, rTokenInput)
+  }
+  
   public _finishResolving: () => void = () => {}
   public initialized: Promise<void> = new Promise((resolve) => {
     this._finishResolving = resolve

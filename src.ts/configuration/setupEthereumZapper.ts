@@ -236,6 +236,4 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   //     }
   //   }
   // )
-
-  console.log('Etheruem zapper setup complete')
 }

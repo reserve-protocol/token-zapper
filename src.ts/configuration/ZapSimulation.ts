@@ -590,7 +590,6 @@ export const makeFromForky = (
     const setupTime = Date.now() - startTimeSetup
 
     const startTime = Date.now()
-    logger.info(`Starting simulation. (Setup ${setupTime}ms)`)
     lastSubmission = Date.now()
     const timeSinceLastSubmission = Date.now() - lastSubmission
     if (timeSinceLastSubmission < 10) {
@@ -606,7 +605,6 @@ export const makeFromForky = (
       (log) => { }
     )
 
-    logger.info(`Simulation completed ${Date.now() - startTime}ms`)
     // console.log(
     //   JSON.stringify(simulationResult.accessList,null,2)
     // )

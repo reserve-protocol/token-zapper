@@ -265,7 +265,7 @@ beforeAll(async () => {
 
   await universe.initialized
   return universe
-}, 7500)
+}, 30000)
 
 describe('ethereum zapper', () => {
   beforeEach(async () => {

@@ -164,7 +164,7 @@ class AerodromeRouterSwap extends Action('Aerodrome') {
     return BigInt(200000n) * BigInt(this.path.steps.length)
   }
 
-  async quote([]: TokenQuantity[]): Promise<TokenQuantity[]> {
+  async quote(): Promise<TokenQuantity[]> {
     return Promise.resolve([this.path.output])
   }
   get outputSlippage() {
@@ -276,13 +276,13 @@ export const setupAerodromeRouter = async (universe: Universe) => {
   ])
 
   console.log('Aerodrome: Loading pools')
-  let pools = await Promise.all(
+  const pools = await Promise.all(
     (
       await sugarInst.forSwaps(1000, 0)
     ).map(async ({ token0, token1, lp, poolType, poolFee, factory }) => {
       const [tok0, tok1, poolToken] = await Promise.all([
-        await universe.getToken(Address.from(token0)),
-        await universe.getToken(Address.from(token1)),
+        universe.getToken(Address.from(token0)),
+        universe.getToken(Address.from(token1)),
         universe.getToken(Address.from(lp)).catch(() => null),
       ])
       if (tok0 == null || tok1 == null) {

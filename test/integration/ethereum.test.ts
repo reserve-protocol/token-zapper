@@ -225,6 +225,13 @@ const individualIntegrations = [
 
   makeIntegrationtestCase('Reth', 10, t.WETH, t.reth, 2),
   makeIntegrationtestCase('ETHx', 10, t.WETH, t.ETHx, 2),
+  makeIntegrationtestCase(
+    'mooConvexETH+',
+    10,
+    t['mooConvexETH+'],
+    t['ETH+ETH-f'],
+    2
+  ),
 ]
 
 const zapIntoYieldPositionCases = [

@@ -100,6 +100,8 @@ export type { IAssetRegistry } from "./contracts/IAssetRegistry.sol/IAssetRegist
 export { IAssetRegistry__factory } from "./factories/contracts/IAssetRegistry.sol/IAssetRegistry__factory";
 export type { IBasketHandler } from "./contracts/IBasketHandler";
 export { IBasketHandler__factory } from "./factories/contracts/IBasketHandler__factory";
+export type { IBeefyVault } from "./contracts/IBeefyVault";
+export { IBeefyVault__factory } from "./factories/contracts/IBeefyVault__factory";
 export type { IChainLinkFeedRegistry } from "./contracts/IChainLinkFeedRegistry";
 export { IChainLinkFeedRegistry__factory } from "./factories/contracts/IChainLinkFeedRegistry__factory";
 export type { CEther } from "./contracts/ICToken.sol/CEther";

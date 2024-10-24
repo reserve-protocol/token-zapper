@@ -170,6 +170,14 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToETHX)
 
+  const depositToMoo = new (ETHTokenVaultDepositAction('MooConvexETH+'))(
+    universe,
+    universe.commonTokens['mooConvexETH+'],
+    universe.commonTokens['mooConvexETH+'].address,
+    1n
+  )
+  universe.addAction(depositToMoo)
+
   const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
     universe,
     universe.commonTokens.USDe,

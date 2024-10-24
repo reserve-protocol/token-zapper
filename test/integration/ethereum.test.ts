@@ -385,5 +385,5 @@ describe('ethereum zapper', () => {
 })
 
 afterAll(() => {
-  ;(universe.provider as WebSocketProvider).websocket.close()
+  ;(provider as WebSocketProvider).websocket.close()
 })

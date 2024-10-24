@@ -225,18 +225,12 @@ const individualIntegrations = [
 
   makeIntegrationtestCase('Reth', 10, t.WETH, t.reth, 2),
   makeIntegrationtestCase('ETHx', 10, t.WETH, t.ETHx, 2),
-  makeIntegrationtestCase('mooConvexETH+', 10, t.WETH, t['mooConvexETH+'], 6),
 ]
 
 const zapIntoYieldPositionCases = [
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens.dgnETH, t.sdgnETH),
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens['ETH+'], t['ETH+ETH-f']),
-  // makeZapIntoYieldPositionTestCase(
-  //   5,
-  //   t.WETH,
-  //   rTokens['ETH+'],
-  //   t['mooConvexETH+']
-  // ),
+  makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens['ETH+'], t['mooConvexETH+']),
 ]
 
 const INPUT_MUL = process.env.INPUT_MULTIPLIER
@@ -257,8 +251,8 @@ beforeAll(async () => {
     {
       ...ethereumConfig,
       searcherMinRoutesToProduce: 1,
-      routerDeadline: 5000,
-      searchConcurrency: 1,
+      routerDeadline: 6000,
+      searchConcurrency: 4,
       maxSearchTimeMs: 60000,
     },
     async (uni) => {

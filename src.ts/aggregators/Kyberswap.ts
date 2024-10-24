@@ -286,31 +286,31 @@ class KyberAction extends Action('Kyberswap') {
 
 const disabledPairs = createDisabledParisTable()
 
-disabledPairs.define(
-  1,
-  '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-  '0xdac17f958d2ee523a2206206994597c13d831ec7'
-)
-disabledPairs.define(
-  1,
-  '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
-)
-disabledPairs.define(
-  1,
-  '0x6b175474e89094c44da98b954eedeac495271d0f',
-  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
-)
-disabledPairs.define(
-  1,
-  '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-  '0x04C154b66CB340F3Ae24111CC767e0184Ed00Cc6'
-)
-disabledPairs.define(
-  1,
-  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  '0xdac17f958d2ee523a2206206994597c13d831ec7'
-)
+// disabledPairs.define(
+//   1,
+//   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+//   '0xdac17f958d2ee523a2206206994597c13d831ec7'
+// )
+// disabledPairs.define(
+//   1,
+//   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+//   '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
+// )
+// disabledPairs.define(
+//   1,
+//   '0x6b175474e89094c44da98b954eedeac495271d0f',
+//   '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
+// )
+// disabledPairs.define(
+//   1,
+//   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+//   '0x04C154b66CB340F3Ae24111CC767e0184Ed00Cc6'
+// )
+// disabledPairs.define(
+//   1,
+//   '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+//   '0xdac17f958d2ee523a2206206994597c13d831ec7'
+// )
 
 export const createKyberswap = (aggregatorName: string, universe: Universe) => {
   if (idToSlug[universe.chainId] == null) {
@@ -320,13 +320,6 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
   const dex = new DexRouter(
     aggregatorName,
     async (abort, input, output, slippage) => {
-      if (universe.rTokensInfo.tokens.has(output)) {
-        throw new Error('Kyberswap: Output token is RToken')
-      }
-      if (universe.rTokensInfo.tokens.has(input.token)) {
-        throw new Error('Kyberswap: Input token is RToken')
-      }
-
       if (disabledPairs.isDisabled(universe.chainId, input, output)) {
         throw new Error('Kyberswap: Pair disabled')
       }

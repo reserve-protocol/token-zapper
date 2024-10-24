@@ -11,7 +11,7 @@ export class BeefyDepositAction extends Action('Beefy') {
     this.mooToken.address
     const lib = this.gen.Contract.createContract(
       IBeefyVault__factory.connect(
-        this.mooToken.address.toString(),
+        this.mooToken.address.address,
         this.universe.provider
       )
     )
@@ -22,7 +22,7 @@ export class BeefyDepositAction extends Action('Beefy') {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const rate = await IBeefyVault__factory.connect(
-      this.mooToken.address.toString(),
+      this.mooToken.address.address,
       this.universe.provider
     ).callStatic.getPricePerFullShare()
     return [
@@ -41,7 +41,7 @@ export class BeefyDepositAction extends Action('Beefy') {
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    readonly mooToken: Token
+    public readonly mooToken: Token
   ) {
     super(
       mooToken.address,

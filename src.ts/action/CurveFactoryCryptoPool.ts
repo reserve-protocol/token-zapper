@@ -20,9 +20,8 @@ import {
   ONE,
   ONE_Val,
 } from './Action'
-import { SingleSwap, SwapPath } from '../searcher/Swap'
+import { SingleSwap } from '../searcher/Swap'
 import { BlockCache } from '../base/BlockBasedCache'
-import { TokenAmounts } from '../entities/TokenAmounts'
 import { MultiChoicePath } from '../searcher/MultiChoicePath'
 
 abstract class CurveFactoryCryptoPoolBase extends Action(

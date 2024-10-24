@@ -227,6 +227,12 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         const allPlans = bfsResult.steps
           .map((i) => i.convertToSingularPaths())
           .flat()
+        this.debugLog(
+          `Found potential ${allPlans.length} trades: for ${input.token} -> ${output}`
+        )
+        for (const plan of allPlans) {
+          this.debugLog('  ' + plan.toString())
+        }
 
         const swapPlans = allPlans.filter((plan) => {
           if (plan == null || plan.steps.length === 0) {
@@ -250,17 +256,18 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
 
           return true
         })
-        // this.debugLog(
-        //   `Found ${swapPlans.length}/${allPlans.length} trades: for ${input.token} -> ${output}`
-        // )
-        // for (const plan of swapPlans) {
-        //   console.log('  ' + plan.toString())
-        // }
+        this.debugLog(
+          `Found ${swapPlans.length}/${allPlans.length} trades: for ${input.token} -> ${output}`
+        )
+        for (const plan of swapPlans) {
+          this.debugLog('  ' + plan.toString())
+        }
         const res = await Promise.all(
           swapPlans.map(async (plan) => {
             try {
               return await plan.quote([input], destination)
             } catch (e) {
+              this.debugLog(e)
               return null
             }
           })

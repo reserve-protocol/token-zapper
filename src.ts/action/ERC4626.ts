@@ -53,6 +53,7 @@ export const ETHTokenVaultDepositAction = (proto: string) =>
       planner.add(weth.withdraw(inputs[0]))
       const out = planner.add(
         lib.deposit(destination.address).withValue(inputs[0]),
+        "deposit",
         `${proto}.deposit{value:${predicted[0]}}(${destination.address})`
       )
       return [out!]

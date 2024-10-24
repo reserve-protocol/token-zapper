@@ -5,6 +5,7 @@ import { WebSocketProvider } from '@ethersproject/providers'
 import { createSimulator } from '@slot0/forky'
 import {
   convertAddressObject,
+  createRPCProviderUsingSim,
   makeFromForky,
 } from '../../src.ts/configuration/ChainConfiguration'
 import {
@@ -238,13 +239,14 @@ if (isNaN(INPUT_MUL)) {
   throw new Error('INPUT_MUL must be a number')
 }
 export let universe: Universe
+const provider = getProvider(process.env.MAINNET_PROVIDER!)
 beforeAll(async () => {
-  const provider = getProvider(process.env.MAINNET_PROVIDER!)
-
   const simulator = await createSimulator(process.env.MAINNET_PROVIDER!, 'Reth')
 
   universe = await Universe.createWithConfig(
-    provider,
+    await createRPCProviderUsingSim(provider, simulator, {
+      queryAccessList: true,
+    }),
     {
       ...ethereumConfig,
       searcherMinRoutesToProduce: 1,
@@ -270,8 +272,8 @@ beforeAll(async () => {
 describe('ethereum zapper', () => {
   beforeEach(async () => {
     await universe.updateBlockState(
-      await universe.provider.getBlockNumber(),
-      (await universe.provider.getGasPrice()).toBigInt()
+      await provider.getBlockNumber(),
+      (await provider.getGasPrice()).toBigInt()
     )
   })
 

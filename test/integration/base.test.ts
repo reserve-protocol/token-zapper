@@ -8,12 +8,14 @@ import {
   baseConfig,
   createEnso,
   createKyberswap,
-  makeCustomRouterSimulator,
   setupBaseZapper,
   Universe,
 } from '../../src.ts/index'
 import { createZapTestCase } from '../createZapTestCase'
-import { makeFromForky } from '../../src.ts/configuration/ZapSimulation'
+import {
+  createRPCProviderUsingSim,
+  makeFromForky,
+} from '../../src.ts/configuration/ZapSimulation'
 import { logger } from '../../src.ts/logger'
 dotenv.config()
 
@@ -117,13 +119,15 @@ const redeemCases = [
 ]
 
 let universe: Universe
-beforeAll(async () => {
-  const provider = getProvider(process.env.BASE_PROVIDER!)
+const provider = getProvider(process.env.BASE_PROVIDER!)
 
+beforeAll(async () => {
   const simulator = await createSimulator(process.env.BASE_PROVIDER!, 'Reth')
 
   universe = await Universe.createWithConfig(
-    provider,
+    await createRPCProviderUsingSim(provider, simulator, {
+      queryAccessList: true,
+    }),
     baseConfig,
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))
@@ -133,19 +137,18 @@ beforeAll(async () => {
       await setupBaseZapper(uni)
     },
     {
-      simulateZapFn: makeFromForky(simulator, baseWhales, logger)
+      simulateZapFn: makeFromForky(simulator, baseWhales, logger),
     }
   )
 
   await universe.initialized
   return universe
 }, 5000)
-
 describe('base zapper', () => {
   beforeEach(async () => {
     await universe.updateBlockState(
-      await universe.provider.getBlockNumber(),
-      (await universe.provider.getGasPrice()).toBigInt()
+      await provider.getBlockNumber(),
+      (await provider.getGasPrice()).toBigInt()
     )
   })
 

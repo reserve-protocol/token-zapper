@@ -13,9 +13,7 @@ import {
   createSimulatorThatUsesOneOfReservesCallManyProxies,
   type Config,
 } from './configuration/ChainConfiguration'
-import { Refreshable } from './entities/Refreshable'
 import {
-  PricedTokenQuantity,
   Token,
   type TokenQuantity,
 } from './entities/Token'
@@ -105,7 +103,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     return cache
   }
 
-  public readonly refreshableEntities = new Map<Address, Refreshable>()
   public readonly tokens = new Map<Address, Token>()
   public readonly lpTokens = new Map<Token, LPToken>()
 
@@ -662,6 +659,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       simulateZapFn?: SimulateZapTransactionFunction
     }> = {}
   ) {
+
     const network = await provider.getNetwork()
     let simulateZapFunction = opts.simulateZapFn
 

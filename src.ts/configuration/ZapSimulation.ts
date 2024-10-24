@@ -7,7 +7,6 @@ import { Interface } from 'ethers/lib/utils'
 
 import { hexlify } from 'ethers/lib/utils'
 import {
-  AccessList,
   type ForkySimulator,
   type OnLogFn,
   type SimulatorFork,
@@ -83,15 +82,15 @@ export type SimulateZapTransactionFunction = (
  */
 export const createSimulateZapTransactionUsingProvider =
   (provider: providers.JsonRpcProvider): SimulateZapTransactionFunction =>
-    async (input: SimulateParams): Promise<string> => {
-      const data = await provider.call({
-        to: input.to,
-        from: input.from,
-        data: input.data,
-        value: input.value,
-      })
-      return data
-    }
+  async (input: SimulateParams): Promise<string> => {
+    const data = await provider.call({
+      to: input.to,
+      from: input.from,
+      data: input.data,
+      value: input.value,
+    })
+    return data
+  }
 
 // Default implementation of the simulation function, using the provider
 // It works well for zaps that zaps using ETH as the input
@@ -168,8 +167,8 @@ export const makeCustomRouterSimulator = (
     if (whale == null) {
       console.log(
         'No whale for token ' +
-        input.setup.inputTokenAddress +
-        ', so will not fund the sender with funds'
+          input.setup.inputTokenAddress +
+          ', so will not fund the sender with funds'
       )
     }
 
@@ -185,15 +184,15 @@ export const makeCustomRouterSimulator = (
       moveFunds:
         whale != null
           ? [
-            {
-              owner: whale,
-              token: input.setup.inputTokenAddress,
-              spender: input.from,
-              quantity:
-                '0x' +
-                input.setup.userBalanceAndApprovalRequirements.toString(16),
-            },
-          ]
+              {
+                owner: whale,
+                token: input.setup.inputTokenAddress,
+                spender: input.from,
+                quantity:
+                  '0x' +
+                  input.setup.userBalanceAndApprovalRequirements.toString(16),
+              },
+            ]
           : [],
       transactions: [
         {
@@ -285,11 +284,11 @@ export const preloadSimulator = async (
 }
 
 const defaultLogger: ILoggerType = {
-  log: (...args: any[]) => { },
-  info: (...args: any[]) => { },
-  debug: (...args: any[]) => { },
+  log: (...args: any[]) => {},
+  info: (...args: any[]) => {},
+  debug: (...args: any[]) => {},
   error: (...args: any[]) => console.log(args.join(' ')),
-  warn: (...args: any[]) => { },
+  warn: (...args: any[]) => {},
 }
 
 let lastSubmission = 0
@@ -315,7 +314,7 @@ export const makeFromForky = (
         data,
         value: 0n,
       },
-      () => { }
+      () => {}
     )
 
     if (res.receipt.status != 1) {
@@ -366,7 +365,8 @@ export const makeFromForky = (
 
     if (reads.length > 1) {
       logger.debug(
-        `Found ${reads.length
+        `Found ${
+          reads.length
         } candidate storage slots for ${inputToken}: ${reads.join(
           ', '
         )}. Trying to narrow it down to ${currentValue}`
@@ -459,7 +459,7 @@ export const makeFromForky = (
         data,
         value: 0n,
       },
-      () => { }
+      () => {}
     )
 
     if (result.receipt.status != 1) {
@@ -489,7 +489,7 @@ export const makeFromForky = (
         data,
         value: 0n,
       },
-      () => { }
+      () => {}
     )
 
     if (res.receipt.status != 1) {
@@ -520,7 +520,7 @@ export const makeFromForky = (
         data,
         value: 0n,
       },
-      () => { }
+      () => {}
     )
 
     if (res.receipt.status != 1) {
@@ -540,7 +540,8 @@ export const makeFromForky = (
 
     if (input.setup.inputTokenAddress === ethers.constants.AddressZero) {
       logger.debug(
-        `Input is ETH, setting balance of ${input.from} to ${input.setup.userBalanceAndApprovalRequirements + 10n * ONE_ETH
+        `Input is ETH, setting balance of ${input.from} to ${
+          input.setup.userBalanceAndApprovalRequirements + 10n * ONE_ETH
         }`
       )
       await fork.setBalance(input.from, input.value + 10n * ONE_ETH)
@@ -593,7 +594,7 @@ export const makeFromForky = (
     lastSubmission = Date.now()
     const timeSinceLastSubmission = Date.now() - lastSubmission
     if (timeSinceLastSubmission < 10) {
-      await wait(Math.floor((10 - timeSinceLastSubmission + Math.random() * 10)))
+      await wait(Math.floor(10 - timeSinceLastSubmission + Math.random() * 10))
     }
     const simulationResult = await fork.commitTx(
       {
@@ -602,7 +603,7 @@ export const makeFromForky = (
         data: input.data,
         value: input.value,
       },
-      (log) => { }
+      (log) => {}
     )
 
     // console.log(
@@ -616,10 +617,11 @@ export const createRPCProviderUsingSim = async (
   originalProvider: JsonRpcProvider,
   sim: ForkySimulator,
   opts: {
-    chainId: number
-    onLog: OnLogFn
+    queryAccessList?: boolean
+    onLog?: OnLogFn
   }
 ) => {
+  const chainId = hexlify(BigInt((await originalProvider.getNetwork()).chainId))
   const simulateTx = async (tx: TransactionRequest) => {
     const self = await sim.fork()
     const txData = {
@@ -628,7 +630,7 @@ export const createRPCProviderUsingSim = async (
       data: tx.data == null ? '0x' : hexlify(tx.data),
       value: tx.value == null ? 0n : BigInt(tx.value.toString()),
     }
-    const out = await self.simulateTx(txData, () => { })
+    const out = await self.simulateTx(txData, () => {})
     return out
   }
   const createFork = (block: number) => {
@@ -644,17 +646,36 @@ export const createRPCProviderUsingSim = async (
     await sim.onBlock(blockNumber)
   })
 
+  const accessListFetched = new Set<string>()
+
   const handlers = {
     eth_call: async ([tx, _, __]: [TransactionRequest, string, any]) => {
-      const res = await simulateTx(tx)
-      const out = res.execResult.returnValue
-      return out
+      if (opts.queryAccessList) {
+        const key = tx.data + tx.to! + tx.from
+
+        if (!accessListFetched.has(key)) {
+          accessListFetched.add(key)
+          ;(async (ttx: TransactionRequest) => {
+            try {
+              const res: {
+                accessList: {
+                  address: string
+                  storageKeys: string[]
+                }[]
+              } = await originalProvider.send('eth_createAccessList', [tx])
+              ttx.accessList = res.accessList
+              await simulateTx(ttx)
+            } catch (e) {}
+          })({ ...tx })
+        }
+      }
+      return await originalProvider.send('eth_call', [tx])
     },
     eth_blockNumber: async () => {
       return currentBlock
     },
     eth_chainId: async () => {
-      return hexlify(BigInt(opts.chainId))
+      return chainId
     },
     eth_gasPrice: async () => {
       return 1n

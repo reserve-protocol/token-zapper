@@ -1,3 +1,4 @@
+import { BeefyDepositAction } from '../action/Beefy'
 import { loadCompV2Deployment } from '../action/CTokens'
 import {
   ERC4626DepositAction,
@@ -170,11 +171,10 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToETHX)
 
-  const depositToMoo = new (ETHTokenVaultDepositAction('MooConvexETH+'))(
+  const depositToMoo = new BeefyDepositAction(
     universe,
-    universe.commonTokens['mooConvexETH+'],
-    universe.commonTokens['mooConvexETH+'].address,
-    1n
+    commonTokens['ETH+ETH-f'],
+    commonTokens['mooConvexETH+']
   )
   universe.addAction(depositToMoo)
 

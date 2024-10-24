@@ -2,19 +2,31 @@ import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { IBeefyVault__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 
 export class BeefyDepositAction extends Action('Beefy') {
-  async plan(planner: Planner, inputs: Value[], destination: Address) {
+  async plan(planner: Planner, inputs: Value[]) {
     const lib = this.gen.Contract.createContract(
-      IBeefyVault__factory.connect(this.router.address, this.universe.provider)
+      IBeefyVault__factory.connect(
+        this.inputToken[0].address.toString(),
+        this.universe.provider
+      )
     )
-    planner.add(lib.addLiquidity(this.poolId, inputs[0], destination.address))
+    planner.add(lib.deposit(inputs[0]))
 
-    return this.outputBalanceOf(this.universe, planner)
+    return null
+  }
+
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const rate = await IBeefyVault__factory.connect(
+      this.inputToken[0].address.toString(),
+      this.universe.provider
+    ).callStatic.getPricePerFullShare()
+    return [
+      this.mooToken.from((amountsIn.amount * rate.toBigInt()) / 10n ** 18n),
+    ]
   }
 
   gasEstimate() {
@@ -25,17 +37,10 @@ export class BeefyDepositAction extends Action('Beefy') {
     return 1n
   }
 
-  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    // getPricePerFullShare()
-    return [this.mooToken.from(amountsIn.amount)]
-  }
-
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    readonly mooToken: Token,
-    readonly poolId: number,
-    readonly router: Address
+    readonly mooToken: Token
   ) {
     super(
       mooToken.address,
@@ -43,7 +48,7 @@ export class BeefyDepositAction extends Action('Beefy') {
       [mooToken],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      [new Approval(underlying, router)]
+      [new Approval(underlying, mooToken.address)]
     )
   }
 

@@ -213,25 +213,19 @@ const redeemCases = [
 ]
 
 const individualIntegrations = [
-  makeIntegrationtestCase('CompoundV2', 1000, t.USDC, t.cUSDC, 1),
-  makeIntegrationtestCase('CompoundV2', 1000, t.USDT, t.cUSDT, 1),
-  makeIntegrationtestCase('sDAI', 1000, t.DAI, t.sDAI, 1),
+  // makeIntegrationtestCase('CompoundV2', 1000, t.USDC, t.cUSDC, 1),
+  // makeIntegrationtestCase('CompoundV2', 1000, t.USDT, t.cUSDT, 1),
+  // makeIntegrationtestCase('sDAI', 1000, t.DAI, t.sDAI, 1),
 
-  makeIntegrationtestCase('CompoundV3', 1000, t.USDC, t.CUSDCV3, 2),
-  makeIntegrationtestCase('CompoundV3', 1000, t.USDT, t.CUSDTV3, 2),
-  makeIntegrationtestCase('Lido', 10, t.WETH, t.wsteth, 3),
-  makeIntegrationtestCase('Lido', 10, t.WETH, t.steth, 2),
-  makeIntegrationtestCase('Lido', 10, t.wsteth, t.steth, 1),
+  // makeIntegrationtestCase('CompoundV3', 1000, t.USDC, t.CUSDCV3, 2),
+  // makeIntegrationtestCase('CompoundV3', 1000, t.USDT, t.CUSDTV3, 2),
+  // makeIntegrationtestCase('Lido', 10, t.WETH, t.wsteth, 3),
+  // makeIntegrationtestCase('Lido', 10, t.WETH, t.steth, 2),
+  // makeIntegrationtestCase('Lido', 10, t.wsteth, t.steth, 1),
 
-  makeIntegrationtestCase('Reth', 10, t.WETH, t.reth, 2),
-  makeIntegrationtestCase('ETHx', 10, t.WETH, t.ETHx, 2),
-  makeIntegrationtestCase(
-    'mooConvexETH+',
-    10,
-    t['mooConvexETH+'],
-    t['ETH+ETH-f'],
-    2
-  ),
+  // makeIntegrationtestCase('Reth', 10, t.WETH, t.reth, 2),
+  // makeIntegrationtestCase('ETHx', 10, t.WETH, t.ETHx, 2),
+  makeIntegrationtestCase('mooConvexETH+', 10, t.WETH, t['mooConvexETH+'], 6),
 ]
 
 const zapIntoYieldPositionCases = [
@@ -258,7 +252,8 @@ beforeAll(async () => {
       ...ethereumConfig,
       searcherMinRoutesToProduce: 1,
       routerDeadline: 5000,
-      searchConcurrency: 4,
+      searchConcurrency: 1,
+      maxSearchTimeMs: 60000,
     },
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))

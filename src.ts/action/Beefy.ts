@@ -8,9 +8,10 @@ import { Planner, Value } from '../tx-gen/Planner'
 
 export class BeefyDepositAction extends Action('Beefy') {
   async plan(planner: Planner, inputs: Value[]) {
+    this.mooToken.address
     const lib = this.gen.Contract.createContract(
       IBeefyVault__factory.connect(
-        this.inputToken[0].address.toString(),
+        this.mooToken.address.toString(),
         this.universe.provider
       )
     )
@@ -21,7 +22,7 @@ export class BeefyDepositAction extends Action('Beefy') {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const rate = await IBeefyVault__factory.connect(
-      this.inputToken[0].address.toString(),
+      this.mooToken.address.toString(),
       this.universe.provider
     ).callStatic.getPricePerFullShare()
     return [

@@ -104,14 +104,16 @@ export const findPrecursorTokenSet = async (
   const preferredTokenSet = universe.preferredRTokenInputToken.get(rToken)
   const preferredToken = universe.preferredToken.get(rToken)
 
-  const inputPartOfPrecursor = precursorSet.precursorToTradeFor.find(t => t.token === userInputQuantity.token) != null
+  const inputPartOfPrecursor =
+    precursorSet.precursorToTradeFor.find(
+      (t) => t.token === userInputQuantity.token
+    ) != null
 
   if (!inputPartOfPrecursor) {
     searcher.debugLog(
       `pegDiffers=${pegDiffers}, preferredToken=${preferredToken}`
     )
     if (
-      
       precursorSet.precursorToTradeFor.length > 1 &&
       preferredToken != null &&
       (pegDiffers ||
@@ -366,8 +368,8 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         onResult,
         abortSignal,
         precursorTokens
-      ).catch(e => {
-        console.log("this.createZapMintOption", e)
+      ).catch((e) => {
+        console.log('this.createZapMintOption', e)
       })
     }
   }
@@ -453,7 +455,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       inputPrTrade[0].input = inputPrTrade[0].input.add(leftOver)
     }
 
-    let multiTrades: MultiChoicePath[] = []
+    const multiTrades: MultiChoicePath[] = []
 
     generateInputToPrecursorTradeMeasurementSetup()
 
@@ -535,7 +537,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
             parent: TokenAmounts,
             tradeAction: PostTradeAction
           ) => {
-            let subBranchBalances = parent.multiplyFractions(
+            const subBranchBalances = parent.multiplyFractions(
               tradeAction.inputAsFractionOfCurrentBalance,
               false
             )
@@ -1500,7 +1502,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     output: Token,
     destination: Address,
     onResult: (result: SwapPath) => Promise<void>,
-    maxHops: number = 2
+    maxHops = 2
   ): Promise<void> {
     const swapPlans = await this.internalQuoerCache.get({
       input,
@@ -1580,8 +1582,8 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     maxHops: number,
     dynamicInput: boolean,
     onResult: (result: SwapPath) => Promise<void>,
-    rejectRatio: number = 0.9,
-    internalOnly: boolean = false
+    rejectRatio = 0.9,
+    internalOnly = false
   ): Promise<void> {
     const inputTokenSpecialCase = this.universe.tokenFromTradeSpecialCases.get(
       input.token

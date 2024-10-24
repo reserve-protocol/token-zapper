@@ -57,45 +57,49 @@ export class BeefyDepositAction extends Action('Beefy') {
   }
 }
 
-// export class StargateWithdrawAction extends Action('Stargate') {
-//   async plan(planner: Planner, inputs: Value[], destination: Address) {
-//     const lib = this.gen.Contract.createContract(
-//       IStargateRouter__factory.connect(
-//         this.router.address,
-//         this.universe.provider
-//       )
-//     )
-//     const out = planner.add(
-//       lib.instantRedeemLocal(this.poolId, inputs[0], destination.address)
-//     )!
+export class BeefyWithdrawAction extends Action('Beefy') {
+  async plan(planner: Planner, inputs: Value[]) {
+    const lib = this.gen.Contract.createContract(
+      IBeefyVault__factory.connect(
+        this.inputToken[0].address.toString(),
+        this.universe.provider
+      )
+    )
+    planner.add(lib.withdraw(inputs[0]))
 
-//     return [out!]
-//   }
-//   gasEstimate() {
-//     return BigInt(200000n)
-//   }
+    return null
+  }
 
-//   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-//     return [this.underlying.from(amountsIn.amount)]
-//   }
+  gasEstimate() {
+    return BigInt(200000n)
+  }
 
-//   constructor(
-//     readonly universe: Universe,
-//     readonly underlying: Token,
-//     readonly stargateToken: Token,
-//     readonly poolId: number,
-//     readonly router: Address
-//   ) {
-//     super(
-//       stargateToken.address,
-//       [stargateToken],
-//       [underlying],
-//       InteractionConvention.ApprovalRequired,
-//       DestinationOptions.Recipient,
-//       []
-//     )
-//   }
-//   toString(): string {
-//     return `StargateWithdraw(${this.stargateToken.toString()})`
-//   }
-// }
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const rate = await IBeefyVault__factory.connect(
+      this.inputToken[0].address.toString(),
+      this.universe.provider
+    ).callStatic.getPricePerFullShare()
+
+    return [
+      this.underlying.from((amountsIn.amount * 10n ** 18n) / rate.toBigInt()),
+    ]
+  }
+
+  constructor(
+    readonly universe: Universe,
+    readonly underlying: Token,
+    readonly mooToken: Token
+  ) {
+    super(
+      mooToken.address,
+      [mooToken],
+      [underlying],
+      InteractionConvention.ApprovalRequired,
+      DestinationOptions.Recipient,
+      []
+    )
+  }
+  toString(): string {
+    return `BeefyWithdraw(${this.mooToken.toString()})`
+  }
+}

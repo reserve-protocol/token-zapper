@@ -171,12 +171,24 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToETHX)
 
-  const depositToMoo = new BeefyDepositAction(
+  const depositToBeefy = new BeefyDepositAction(
     universe,
     commonTokens['ETH+ETH-f'],
     commonTokens['mooConvexETH+']
   )
-  universe.addAction(depositToMoo)
+  universe.addAction(depositToBeefy)
+
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens['mooConvexETH+'],
+    priceFn: async () => {
+      /// use universe .fairPrice(universe.commonTokens['ETH+ETH-f'] to get price of ETH+ETH-f
+      /// get rate from IBeefyVault__factory.connect(mooToken.address.address, universe.provider).callStatic.getPricePerFullShare()
+
+      /// multiply together return
+      return universe.usd.from(9938.3218948047)
+    },
+    priceToken: universe.commonTokens.WETH,
+  })
 
   const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
     universe,

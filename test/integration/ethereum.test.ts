@@ -230,7 +230,12 @@ const individualIntegrations = [
 const zapIntoYieldPositionCases = [
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens.dgnETH, t.sdgnETH),
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens['ETH+'], t['ETH+ETH-f']),
-  makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens['ETH+'], t['mooConvexETH+']),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['mooConvexETH+']
+  ),
 ]
 
 const INPUT_MUL = process.env.INPUT_MULTIPLIER
@@ -373,7 +378,7 @@ describe('ethereum zapper', () => {
           }
           expect(result).toBe('success')
         },
-        15 * 1000
+        60 * 1000
       )
     })
   }

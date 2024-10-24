@@ -2,7 +2,6 @@ import * as dotenv from 'dotenv'
 import { ethers } from 'ethers'
 
 import { WebSocketProvider } from '@ethersproject/providers'
-import { createSimulator } from '@slot0/forky'
 import {
   Address,
   baseConfig,
@@ -12,10 +11,7 @@ import {
   Universe,
 } from '../../src.ts/index'
 import { createZapTestCase } from '../createZapTestCase'
-import {
-  createRPCProviderUsingSim,
-  makeFromForky,
-} from '../../src.ts/configuration/ZapSimulation'
+import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
 import { logger } from '../../src.ts/logger'
 dotenv.config()
 
@@ -29,8 +25,8 @@ if (process.env.BASE_PROVIDER == null) {
  *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
-if (process.env.SIM_URL == null) {
-  console.log('SIM_URL not set, skipping simulation tests')
+if (process.env.SIMULATE_URL == null) {
+  console.log('SIMULATE_URL not set, skipping simulation tests')
   process.exit(0)
 }
 
@@ -122,12 +118,8 @@ let universe: Universe
 const provider = getProvider(process.env.BASE_PROVIDER!)
 
 beforeAll(async () => {
-  const simulator = await createSimulator(process.env.BASE_PROVIDER!, 'Reth')
-
   universe = await Universe.createWithConfig(
-    await createRPCProviderUsingSim(provider, simulator, {
-      queryAccessList: true,
-    }),
+    provider,
     baseConfig,
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))
@@ -137,7 +129,10 @@ beforeAll(async () => {
       await setupBaseZapper(uni)
     },
     {
-      simulateZapFn: makeFromForky(simulator, baseWhales, logger),
+      simulateZapFn: makeCustomRouterSimulator(
+        process.env.SIMULATE_URL!,
+        baseWhales
+      ),
     }
   )
 

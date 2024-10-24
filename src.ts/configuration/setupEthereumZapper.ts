@@ -212,6 +212,18 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     }
   )
 
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens['mooConvexETH+'],
+    priceFn: async () => {
+      /// use universe .fairPrice(universe.commonTokens['ETH+ETH-f'] to get price of ETH+ETH-f
+      /// get rate from IBeefyVault__factory.connect(mooToken.address.address, universe.provider).callStatic.getPricePerFullShare()
+
+      /// multiply together return
+      return universe.usd.from(9938.3218948047)
+    },
+    priceToken: universe.commonTokens.WETH,
+  })
+
   universe.addSingleTokenPriceOracle({
     token: universe.commonTokens.ETHx,
     oracleAddress: Address.from('0xC5f8c4aB091Be1A899214c0C3636ca33DcA0C547'),

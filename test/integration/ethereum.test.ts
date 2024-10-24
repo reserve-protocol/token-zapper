@@ -2,11 +2,9 @@ import * as dotenv from 'dotenv'
 import { ethers } from 'ethers'
 
 import { WebSocketProvider } from '@ethersproject/providers'
-import { createSimulator } from '@slot0/forky'
 import {
   convertAddressObject,
-  createRPCProviderUsingSim,
-  makeFromForky,
+  makeCustomRouterSimulator,
 } from '../../src.ts/configuration/ChainConfiguration'
 import {
   Address,
@@ -35,8 +33,8 @@ if (process.env.MAINNET_PROVIDER == null) {
  *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
-if (process.env.SIM_URL == null) {
-  console.log('SIM_URL not set, skipping simulation tests')
+if (process.env.SIMULATE_URL == null) {
+  console.log('SIMULATE_URL not set, skipping simulation tests')
   process.exit(0)
 }
 
@@ -247,17 +245,13 @@ if (isNaN(INPUT_MUL)) {
 export let universe: Universe
 const provider = getProvider(process.env.MAINNET_PROVIDER!)
 beforeAll(async () => {
-  const simulator = await createSimulator(process.env.MAINNET_PROVIDER!, 'Reth')
-
   universe = await Universe.createWithConfig(
-    await createRPCProviderUsingSim(provider, simulator, {
-      queryAccessList: true,
-    }),
+    provider,
     {
       ...ethereumConfig,
       searcherMinRoutesToProduce: 1,
       routerDeadline: 6000,
-      searchConcurrency: 4,
+      searchConcurrency: 1,
       maxSearchTimeMs: 60000,
     },
     async (uni) => {
@@ -268,7 +262,10 @@ beforeAll(async () => {
       await setupEthereumZapper(uni)
     },
     {
-      simulateZapFn: makeFromForky(simulator, ethWhales, logger),
+      simulateZapFn: makeCustomRouterSimulator(
+        process.env.SIMULATE_URL!,
+        ethWhales
+      ),
     }
   )
 

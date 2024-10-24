@@ -9,13 +9,11 @@ import {
   createEnso,
   createKyberswap,
   createParaswap,
-  makeCustomRouterSimulator,
   setupArbitrumZapper,
   Universe,
 } from '../../src.ts/index'
 import { createZapTestCase } from '../createZapTestCase'
-import { makeFromForky } from '../../src.ts/configuration/ZapSimulation'
-import { createSimulator } from '@slot0/forky'
+import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
 import { logger } from '../../src.ts/logger'
 dotenv.config()
 
@@ -29,8 +27,8 @@ if (process.env.ARBITRUM_PROVIDER == null) {
  *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
-if (process.env.SIM_URL == null) {
-  console.log('SIM_URL not set, skipping simulation tests')
+if (process.env.SIMULATE_URL == null) {
+  console.log('SIMULATE_URL not set, skipping simulation tests')
   process.exit(0)
 }
 
@@ -103,10 +101,6 @@ let universe: ArbitrumUniverse
 beforeAll(async () => {
   const provider = getProvider(process.env.ARBITRUM_PROVIDER!)
 
-  const simulator = await createSimulator(
-    process.env.ARBITRUM_PROVIDER!,
-    'Reth'
-  )
   universe = await Universe.createWithConfig(
     provider,
     { ...arbiConfig, searcherMaxRoutesToProduce: 1 },
@@ -118,7 +112,7 @@ beforeAll(async () => {
       await setupArbitrumZapper(uni)
     },
     {
-      simulateZapFn: makeFromForky(simulator, arbiWhales, logger),
+      simulateZapFn: makeCustomRouterSimulator(process.env.SIMULATE_URL!, arbiWhales),
     }
   )
 

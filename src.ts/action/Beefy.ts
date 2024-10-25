@@ -62,7 +62,7 @@ export class BeefyWithdrawAction extends Action('Beefy') {
   async plan(planner: Planner, inputs: Value[]) {
     const lib = this.gen.Contract.createContract(
       IBeefyVault__factory.connect(
-        this.inputToken[0].address.toString(),
+        this.mooToken.address.address,
         this.universe.provider
       )
     )
@@ -77,7 +77,7 @@ export class BeefyWithdrawAction extends Action('Beefy') {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const rate = await IBeefyVault__factory.connect(
-      this.inputToken[0].address.toString(),
+      this.mooToken.address.address,
       this.universe.provider
     ).callStatic.getPricePerFullShare()
 

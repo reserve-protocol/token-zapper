@@ -1,3 +1,4 @@
+import { ONE } from '../action/Action'
 import { BeefyDepositAction } from '../action/Beefy'
 import { loadCompV2Deployment } from '../action/CTokens'
 import {
@@ -7,6 +8,7 @@ import {
 import { LidoDeployment } from '../action/Lido'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
+import { IBeefyVault__factory } from '../contracts'
 import { TokenQuantity } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
@@ -178,18 +180,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToBeefy)
 
-  universe.addSingleTokenPriceSource({
-    token: universe.commonTokens['mooConvexETH+'],
-    priceFn: async () => {
-      /// use universe .fairPrice(universe.commonTokens['ETH+ETH-f'] to get price of ETH+ETH-f
-      /// get rate from IBeefyVault__factory.connect(mooToken.address.address, universe.provider).callStatic.getPricePerFullShare()
-
-      /// multiply together return
-      return universe.usd.from(9938.3218948047)
-    },
-    priceToken: universe.commonTokens.WETH,
-  })
-
   const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
     universe,
     universe.commonTokens.USDe,
@@ -215,11 +205,15 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['mooConvexETH+'],
     priceFn: async () => {
-      /// use universe .fairPrice(universe.commonTokens['ETH+ETH-f'] to get price of ETH+ETH-f
-      /// get rate from IBeefyVault__factory.connect(mooToken.address.address, universe.provider).callStatic.getPricePerFullShare()
-
-      /// multiply together return
-      return universe.usd.from(9938.3218948047)
+      const lpPrice =
+        (
+          await universe.fairPrice(universe.commonTokens['ETH+ETH-f'].one)
+        )?.toScaled(ONE) || 1n
+      const rate = await IBeefyVault__factory.connect(
+        universe.commonTokens['mooConvexETH+'].address.address,
+        universe.provider
+      ).callStatic.getPricePerFullShare()
+      return universe.usd.from((lpPrice * rate.toBigInt()) / ONE)
     },
     priceToken: universe.commonTokens.WETH,
   })

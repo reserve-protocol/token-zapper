@@ -9,11 +9,12 @@ import {
   createEnso,
   createKyberswap,
   createParaswap,
-  makeCustomRouterSimulator,
   setupArbitrumZapper,
   Universe,
 } from '../../src.ts/index'
 import { createZapTestCase } from '../createZapTestCase'
+import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
+import { logger } from '../../src.ts/logger'
 dotenv.config()
 
 if (process.env.ARBITRUM_PROVIDER == null) {
@@ -26,8 +27,8 @@ if (process.env.ARBITRUM_PROVIDER == null) {
  *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
-if (process.env.SIM_URL == null) {
-  console.log('SIM_URL not set, skipping simulation tests')
+if (process.env.SIMULATE_URL == null) {
+  console.log('SIMULATE_URL not set, skipping simulation tests')
   process.exit(0)
 }
 
@@ -111,10 +112,7 @@ beforeAll(async () => {
       await setupArbitrumZapper(uni)
     },
     {
-      simulateZapFn: makeCustomRouterSimulator(
-        process.env.SIM_URL!,
-        arbiWhales
-      ),
+      simulateZapFn: makeCustomRouterSimulator(process.env.SIMULATE_URL!, arbiWhales),
     }
   )
 
@@ -198,7 +196,7 @@ describe('Edge cases', () => {
           enableTradeZaps: false,
         })
         result = 'success'
-      } catch (e) { }
+      } catch (e) {}
       expect(result).toBe('success')
     },
     15 * 1000
@@ -206,5 +204,5 @@ describe('Edge cases', () => {
 })
 
 afterAll(() => {
-  ; (universe.provider as WebSocketProvider).websocket.close()
+  ;(universe.provider as WebSocketProvider).websocket.close()
 })

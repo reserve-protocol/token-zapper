@@ -17,11 +17,11 @@ import { createDisabledParisTable } from './createDisabledParisTable'
 
 const disabledPairs = createDisabledParisTable()
 
-disabledPairs.define(
-  1,
-  '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-  '0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8'
-)
+// disabledPairs.define(
+//   1,
+//   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+//   '0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8'
+// )
 export interface EnsoQuote {
   gas: string
   amountOut: string

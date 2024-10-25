@@ -2,8 +2,10 @@ import * as dotenv from 'dotenv'
 import { ethers } from 'ethers'
 
 import { WebSocketProvider } from '@ethersproject/providers'
-import { createSimulator } from '@slot0/forky'
-import { convertAddressObject, makeFromForky } from '../../src.ts/configuration/ChainConfiguration'
+import {
+  convertAddressObject,
+  makeCustomRouterSimulator,
+} from '../../src.ts/configuration/ChainConfiguration'
 import {
   Address,
   createEnso,
@@ -12,7 +14,7 @@ import {
   ethereumConfig,
   ethereumProtocolConfigs,
   setupEthereumZapper,
-  Universe
+  Universe,
 } from '../../src.ts/index'
 import { logger } from '../../src.ts/logger'
 import {
@@ -31,8 +33,8 @@ if (process.env.MAINNET_PROVIDER == null) {
  *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
-if (process.env.SIM_URL == null) {
-  console.log('SIM_URL not set, skipping simulation tests')
+if (process.env.SIMULATE_URL == null) {
+  console.log('SIMULATE_URL not set, skipping simulation tests')
   process.exit(0)
 }
 
@@ -226,6 +228,12 @@ const individualIntegrations = [
 const zapIntoYieldPositionCases = [
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens.dgnETH, t.sdgnETH),
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens['ETH+'], t['ETH+ETH-f']),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['mooConvexETH+']
+  ),
 ]
 
 const INPUT_MUL = process.env.INPUT_MULTIPLIER
@@ -235,21 +243,16 @@ if (isNaN(INPUT_MUL)) {
   throw new Error('INPUT_MUL must be a number')
 }
 export let universe: Universe
+const provider = getProvider(process.env.MAINNET_PROVIDER!)
 beforeAll(async () => {
-  const provider = getProvider(process.env.MAINNET_PROVIDER!)
-
-  const simulator = await createSimulator(
-    process.env.MAINNET_PROVIDER!,
-    "Reth"
-  )
-
   universe = await Universe.createWithConfig(
     provider,
     {
       ...ethereumConfig,
       searcherMinRoutesToProduce: 1,
-      routerDeadline: 5000,
-      searchConcurrency: 4,
+      routerDeadline: 6000,
+      searchConcurrency: 1,
+      maxSearchTimeMs: 60000,
     },
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))
@@ -259,23 +262,22 @@ beforeAll(async () => {
       await setupEthereumZapper(uni)
     },
     {
-      simulateZapFn: makeFromForky(
-        simulator,
-        ethWhales,
-        logger
-      )
+      simulateZapFn: makeCustomRouterSimulator(
+        process.env.SIMULATE_URL!,
+        ethWhales
+      ),
     }
   )
 
   await universe.initialized
   return universe
-}, 7500)
+}, 30000)
 
 describe('ethereum zapper', () => {
   beforeEach(async () => {
     await universe.updateBlockState(
-      await universe.provider.getBlockNumber(),
-      (await universe.provider.getGasPrice()).toBigInt()
+      await provider.getBlockNumber(),
+      (await provider.getGasPrice()).toBigInt()
     )
   })
 
@@ -373,12 +375,12 @@ describe('ethereum zapper', () => {
           }
           expect(result).toBe('success')
         },
-        15 * 1000
+        60 * 1000
       )
     })
   }
 })
 
 afterAll(() => {
-  ; (universe.provider as WebSocketProvider).websocket.close()
+  ;(provider as WebSocketProvider).websocket.close()
 })

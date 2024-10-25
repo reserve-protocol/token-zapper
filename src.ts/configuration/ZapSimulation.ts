@@ -2,20 +2,24 @@ import { defaultAbiCoder } from '@ethersproject/abi/lib/abi-coder'
 import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
 import { BigNumber, constants, providers } from 'ethers'
 
-import * as ethers from "ethers";
-import { Interface } from "ethers/lib/utils";
+import * as ethers from 'ethers'
+import { Interface } from 'ethers/lib/utils'
 
-import { hexlify } from "ethers/lib/utils";
-import { AccessList, type ForkySimulator, type OnLogFn, type SimulatorFork } from "@slot0/forky";
+import { hexlify } from 'ethers/lib/utils'
+import {
+  type ForkySimulator,
+  type OnLogFn,
+  type SimulatorFork,
+} from '@slot0/forky'
 
 import { simulationUrls } from '../base/constants'
 // import abi from '../../contracts/artifacts/contracts/Zapper.sol/ZapperExecutor.json'
 // const byteCode = abi.deployedBytecode
 import { Config } from '../configuration/ChainConfiguration'
-import { JsonRpcProvider, TransactionRequest } from '@ethersproject/providers';
-import { Universe } from '../Universe';
-import { logger } from '../logger';
-import { wait } from '../base/controlflow';
+import { JsonRpcProvider, TransactionRequest } from '@ethersproject/providers'
+import { Universe } from '../Universe'
+import { logger } from '../logger'
+import { wait } from '../base/controlflow'
 export interface SimulateParams {
   // Zapper address on the chain
   to: string
@@ -78,15 +82,15 @@ export type SimulateZapTransactionFunction = (
  */
 export const createSimulateZapTransactionUsingProvider =
   (provider: providers.JsonRpcProvider): SimulateZapTransactionFunction =>
-    async (input: SimulateParams): Promise<string> => {
-      const data = await provider.call({
-        to: input.to,
-        from: input.from,
-        data: input.data,
-        value: input.value,
-      })
-      return data
-    }
+  async (input: SimulateParams): Promise<string> => {
+    const data = await provider.call({
+      to: input.to,
+      from: input.from,
+      data: input.data,
+      value: input.value,
+    })
+    return data
+  }
 
 // Default implementation of the simulation function, using the provider
 // It works well for zaps that zaps using ETH as the input
@@ -163,8 +167,8 @@ export const makeCustomRouterSimulator = (
     if (whale == null) {
       console.log(
         'No whale for token ' +
-        input.setup.inputTokenAddress +
-        ', so will not fund the sender with funds'
+          input.setup.inputTokenAddress +
+          ', so will not fund the sender with funds'
       )
     }
 
@@ -180,15 +184,15 @@ export const makeCustomRouterSimulator = (
       moveFunds:
         whale != null
           ? [
-            {
-              owner: whale,
-              token: input.setup.inputTokenAddress,
-              spender: input.from,
-              quantity:
-                '0x' +
-                input.setup.userBalanceAndApprovalRequirements.toString(16),
-            },
-          ]
+              {
+                owner: whale,
+                token: input.setup.inputTokenAddress,
+                spender: input.from,
+                quantity:
+                  '0x' +
+                  input.setup.userBalanceAndApprovalRequirements.toString(16),
+              },
+            ]
           : [],
       transactions: [
         {
@@ -243,19 +247,17 @@ export const makeCustomRouterSimulator = (
 
 export type ILoggerType = typeof logger
 
-
 const erc20Interface = new Interface([
-  "function balanceOf(address account) external view returns (uint256)",
-  "function transfer(address to, uint256 amount) external returns (bool)",
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function allowance(address owner, address spender) external view returns (uint256)",
-]);
-const ONE_ETH = 10n ** 18n;
+  'function balanceOf(address account) external view returns (uint256)',
+  'function transfer(address to, uint256 amount) external returns (bool)',
+  'function approve(address spender, uint256 amount) external returns (bool)',
+  'function allowance(address owner, address spender) external view returns (uint256)',
+])
+const ONE_ETH = 10n ** 18n
 export const preloadSimulator = async (
   universe: Universe,
   simulator: ForkySimulator
 ) => {
-
   const preloadedAddresses = [
     ...new Set([
       ...[...universe.rTokensInfo.addresses],
@@ -271,25 +273,25 @@ export const preloadSimulator = async (
       universe.config.addresses.curveStableSwapNGHelper,
       universe.execAddress,
       universe.zapperAddress,
-    ])
-  ].map(i => i.address)
-  universe.searcher.debugLog(`Preloading ${preloadedAddresses.length} addresses`)
-  for (let i = 0; i < preloadedAddresses.length; i += 10) {
-    await simulator.preload(preloadedAddresses.slice(i, i + 10))
-    await wait(500)
-  }
+    ]),
+  ].map((i) => i.address)
+  universe.searcher.debugLog(
+    `Preloading ${preloadedAddresses.length} addresses`
+  )
+  await simulator.preload(preloadedAddresses)
 
   return preloadedAddresses
 }
 
 const defaultLogger: ILoggerType = {
-  log: (...args: any[]) => { },
-  info: (...args: any[]) => { },
-  debug: (...args: any[]) => { },
-  error: (...args: any[]) => console.log(args.join(" ")),
-  warn: (...args: any[]) => { },
+  log: (...args: any[]) => {},
+  info: (...args: any[]) => {},
+  debug: (...args: any[]) => {},
+  error: (...args: any[]) => console.log(args.join(' ')),
+  warn: (...args: any[]) => {},
 }
 
+let lastSubmission = 0
 export const makeFromForky = (
   simulator: ForkySimulator,
   whales: Record<string, string> = {},
@@ -304,43 +306,50 @@ export const makeFromForky = (
     token: string,
     owner: string
   ) => {
-    const data = erc20Interface.encodeFunctionData("balanceOf", [
-      owner
-    ]);
-    const res = await fork.commitTx({
-      to: token,
-      from: owner,
-      data,
-      value: 0n,
-    }, () => { });
+    const data = erc20Interface.encodeFunctionData('balanceOf', [owner])
+    const res = await fork.commitTx(
+      {
+        to: token,
+        from: owner,
+        data,
+        value: 0n,
+      },
+      () => {}
+    )
 
     if (res.receipt.status != 1) {
-      logger.error(`(owner=${owner}) ${token}.balanceOf(${owner}) failed`);
-      return null;
+      logger.error(`(owner=${owner}) ${token}.balanceOf(${owner}) failed`)
+      return null
     }
-    const balance = BigInt(res.execResult.returnValue);
-    logger.debug(`(owner=${owner}) ${token}.balanceOf(${owner}) => ${balance}`);
+    const balance = BigInt(res.execResult.returnValue)
+    logger.debug(`(owner=${owner}) ${token}.balanceOf(${owner}) => ${balance}`)
     return {
       balance: balance,
-      accessList: res.accessList
-    };
+      accessList: res.accessList,
+    }
   }
 
   const setERC20BalanceUsingStorage = async (
     fork: SimulatorFork,
     input: SimulateParams
   ) => {
-    const bal = await getERC20Balance(fork, input.setup.inputTokenAddress, input.from);
-    const inputToken = input.setup.inputTokenAddress.toLowerCase();
+    const bal = await getERC20Balance(
+      fork,
+      input.setup.inputTokenAddress,
+      input.from
+    )
+    const inputToken = input.setup.inputTokenAddress.toLowerCase()
 
     if (bal == null) {
-      logger.error(`Failed to simulate ${inputToken}.balanceOf(${input.from})`);
+      logger.error(`Failed to simulate ${inputToken}.balanceOf(${input.from})`)
       return false
     }
-    const { balance, accessList } = bal;
-    const currentValue = BigInt(bal.balance);
+    const { balance, accessList } = bal
+    const currentValue = BigInt(bal.balance)
     if (currentValue > input.setup.userBalanceAndApprovalRequirements) {
-      logger.debug(`Will not set balance of ${input.from} for ${inputToken}: Current balance ${currentValue} is greater than expected ${input.setup.userBalanceAndApprovalRequirements}`);
+      logger.debug(
+        `Will not set balance of ${input.from} for ${inputToken}: Current balance ${currentValue} is greater than expected ${input.setup.userBalanceAndApprovalRequirements}`
+      )
       return false
     }
 
@@ -350,22 +359,31 @@ export const makeFromForky = (
     const readSlotFind = accessList.find(([contract]) => {
       return contract.toLowerCase() === inputToken
     })
-    let reads = ((readSlotFind != null ? (readSlotFind[1] ?? []) : []).map(i => BigInt(i))).filter(i => i < 100000n)
+    let reads = (readSlotFind != null ? readSlotFind[1] ?? [] : [])
+      .map((i) => BigInt(i))
+      .filter((i) => i < 100000n)
 
     if (reads.length > 1) {
-      logger.debug(`Found ${reads.length} candidate storage slots for ${inputToken}: ${reads.join(', ')}. Trying to narrow it down to ${currentValue}`)
+      logger.debug(
+        `Found ${
+          reads.length
+        } candidate storage slots for ${inputToken}: ${reads.join(
+          ', '
+        )}. Trying to narrow it down to ${currentValue}`
+      )
 
-      const values = await Promise.all(reads.map(async (index) => {
-        return [
-          index,
-          await fork.getStorageAt(inputToken, index)
-        ] as const
-      }))
+      const values = await Promise.all(
+        reads.map(async (index) => {
+          return [index, await fork.getStorageAt(inputToken, index)] as const
+        })
+      )
       const exact = values.filter(([_, value]) => value === currentValue)
       reads = exact.length !== 0 ? exact.map(([index, _]) => index) : reads
     }
     if (reads.length === 0) {
-      logger.error(`Failed to set balance of ${input.from} for ${inputToken}: No slot found`);
+      logger.error(
+        `Failed to set balance of ${input.from} for ${inputToken}: No slot found`
+      )
       return null
     }
     for (const readSlot of reads) {
@@ -374,60 +392,85 @@ export const makeFromForky = (
         inputToken,
         BigInt(readSlot),
         input.setup.userBalanceAndApprovalRequirements
-      );
-      const newBalance = (await getERC20Balance(fork, inputToken, input.from))?.balance;
+      )
+      const newBalance = (await getERC20Balance(fork, inputToken, input.from))
+        ?.balance
       if (newBalance != null) {
-        if ((newBalance !== balance || newBalance === input.setup.userBalanceAndApprovalRequirements)) {
-          logger.debug(`Updated balance of ${input.from} using ${readSlot}: Balance changed from ${currentValue} to ${newBalance}`);
+        if (
+          newBalance !== balance ||
+          newBalance === input.setup.userBalanceAndApprovalRequirements
+        ) {
+          logger.debug(
+            `Updated balance of ${input.from} using ${readSlot}: Balance changed from ${currentValue} to ${newBalance}`
+          )
           if (newBalance < input.setup.userBalanceAndApprovalRequirements) {
-            logger.error(`Failed to edit balance of ${input.from} for ${inputToken}: Expected ${input.setup.userBalanceAndApprovalRequirements} but got ${newBalance}`);
+            logger.error(
+              `Failed to edit balance of ${input.from} for ${inputToken}: Expected ${input.setup.userBalanceAndApprovalRequirements} but got ${newBalance}`
+            )
           }
-          return BigInt(readSlot);
+          return BigInt(readSlot)
         }
         if (newBalance === currentValue) {
-          logger.debug(`fork.revertTo: Editing slot ${readSlot} did not change balance, reverting change just in case`);
+          logger.debug(
+            `fork.revertTo: Editing slot ${readSlot} did not change balance, reverting change just in case`
+          )
         }
       } else {
-        logger.debug(`fork.revertTo: Editing slot ${readSlot} caused, balanceOf(${input.from}) to revert`);
+        logger.debug(
+          `fork.revertTo: Editing slot ${readSlot} caused, balanceOf(${input.from}) to revert`
+        )
       }
       await fork.revertTo(id)
     }
-    logger.debug(`Failed to set balance of ${input.from} for ${inputToken}: No slot found`);
-    return null;
+    logger.debug(
+      `Failed to set balance of ${input.from} for ${inputToken}: No slot found`
+    )
+    return null
   }
-
 
   const moveFundsUsingERC20Abi = async (
     fork: SimulatorFork,
     input: SimulateParams,
-    whale: string,
+    whale: string
   ) => {
-    const inputToken = input.setup.inputTokenAddress.toLowerCase();
-    const bal = await getERC20Balance(fork, inputToken, input.from);
+    const inputToken = input.setup.inputTokenAddress.toLowerCase()
+    const bal = await getERC20Balance(fork, inputToken, input.from)
     if (bal == null) {
-      logger.error(`Failed to get balance of ${input.from} for ${inputToken}`);
-      return;
+      logger.error(`Failed to get balance of ${input.from} for ${inputToken}`)
+      return
     }
 
     if (bal.balance > input.setup.userBalanceAndApprovalRequirements) {
-      logger.info(`Will not move funds from ${whale} to ${input.from} for ${inputToken}: Current balance ${bal.balance} is greater than expected ${input.setup.userBalanceAndApprovalRequirements}`);
-      return;
+      logger.info(
+        `Will not move funds from ${whale} to ${input.from} for ${inputToken}: Current balance ${bal.balance} is greater than expected ${input.setup.userBalanceAndApprovalRequirements}`
+      )
+      return
     }
-    const data = erc20Interface.encodeFunctionData("transfer", [input.from, input.setup.userBalanceAndApprovalRequirements]);
-    await fork.setBalance(whale, ONE_ETH * 10n);
+    const data = erc20Interface.encodeFunctionData('transfer', [
+      input.from,
+      input.setup.userBalanceAndApprovalRequirements,
+    ])
+    await fork.setBalance(whale, ONE_ETH * 10n)
 
-    const result = await fork.commitTx({
-      to: input.setup.inputTokenAddress,
-      from: whale,
-      data,
-      value: 0n,
-    }, () => { });
+    const result = await fork.commitTx(
+      {
+        to: input.setup.inputTokenAddress,
+        from: whale,
+        data,
+        value: 0n,
+      },
+      () => {}
+    )
 
     if (result.receipt.status != 1) {
-      console.log(result);
-      throw new Error(`Failed to move funds from ${whale} to ${input.from} for ${input.setup.inputTokenAddress}`);
+      console.log(result)
+      throw new Error(
+        `Failed to move funds from ${whale} to ${input.from} for ${input.setup.inputTokenAddress}`
+      )
     } else {
-      logger.debug(`Moved funds from ${whale} to ${input.from} for ${input.setup.inputTokenAddress}`);
+      logger.debug(
+        `Moved funds from ${whale} to ${input.from} for ${input.setup.inputTokenAddress}`
+      )
     }
   }
 
@@ -438,22 +481,25 @@ export const makeFromForky = (
     spender: string,
     amount: bigint
   ) => {
-
-    const data = erc20Interface.encodeFunctionData("approve", [
-      spender,
-      amount
-    ]);
-    const res = await fork.commitTx({
-      to: token,
-      from: owner,
-      data,
-      value: 0n,
-    }, () => { });
+    const data = erc20Interface.encodeFunctionData('approve', [spender, amount])
+    const res = await fork.commitTx(
+      {
+        to: token,
+        from: owner,
+        data,
+        value: 0n,
+      },
+      () => {}
+    )
 
     if (res.receipt.status != 1) {
-      logger.error(`(owner=${owner}) ${token}.approve(${spender}, ${amount}) failed`);
+      logger.error(
+        `(owner=${owner}) ${token}.approve(${spender}, ${amount}) failed`
+      )
     } else {
-      logger.debug(`(owner=${owner}) ${token}.approve(${spender}, ${amount}) succeeded`);
+      logger.debug(
+        `(owner=${owner}) ${token}.approve(${spender}, ${amount}) succeeded`
+      )
     }
   }
 
@@ -463,66 +509,103 @@ export const makeFromForky = (
     owner: string,
     spender: string
   ) => {
-
-    const data = erc20Interface.encodeFunctionData("allowance", [
+    const data = erc20Interface.encodeFunctionData('allowance', [
       owner,
-      spender
-    ]);
-    const res = await fork.commitTx({
-      to: token,
-      from: owner,
-      data,
-      value: 0n,
-    }, () => { });
+      spender,
+    ])
+    const res = await fork.commitTx(
+      {
+        to: token,
+        from: owner,
+        data,
+        value: 0n,
+      },
+      () => {}
+    )
 
     if (res.receipt.status != 1) {
-      logger.error(`(owner=${owner}) ${token}.allowance(${spender}) failed`);
-      return null;
+      logger.error(`(owner=${owner}) ${token}.allowance(${spender}) failed`)
+      return null
     }
-    const allowance = BigInt(res.execResult.returnValue);
-    logger.debug(`(owner=${owner}) ${token}.allowance(${spender}) succeeded: ${allowance}`);
-    return allowance;
+    const allowance = BigInt(res.execResult.returnValue)
+    logger.debug(
+      `(owner=${owner}) ${token}.allowance(${spender}) succeeded: ${allowance}`
+    )
+    return allowance
   }
 
   return async (input: SimulateParams) => {
-    const fork = await simulator.fork();
+    const fork = await simulator.fork()
     const startTimeSetup = Date.now()
 
     if (input.setup.inputTokenAddress === ethers.constants.AddressZero) {
-      logger.debug(`Input is ETH, setting balance of ${input.from} to ${input.setup.userBalanceAndApprovalRequirements + 10n * ONE_ETH}`);
-      await fork.setBalance(input.from, input.value + 10n * ONE_ETH);
+      logger.debug(
+        `Input is ETH, setting balance of ${input.from} to ${
+          input.setup.userBalanceAndApprovalRequirements + 10n * ONE_ETH
+        }`
+      )
+      await fork.setBalance(input.from, input.value + 10n * ONE_ETH)
     } else {
-      await fork.setBalance(input.from, 10n * ONE_ETH);
-      const whale = whales[input.setup.inputTokenAddress.toLowerCase()];
+      await fork.setBalance(input.from, 10n * ONE_ETH)
+      const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
       if (whale != null) {
         try {
-          await moveFundsUsingERC20Abi(fork, input, whale);
+          // logger.info(`Moving funds from ${whale} to ${input.from} for ${input.setup.inputTokenAddress}`);
+          await moveFundsUsingERC20Abi(fork, input, whale)
         } catch (e) {
           console.log(e)
-          console.log(`Failed to move funds from ${whale} to ${input.from} for ${input.setup.inputTokenAddress}, trying to edit storage instead`);
-          await setERC20BalanceUsingStorage(fork, input);
+          console.log(
+            `Failed to move funds from ${whale} to ${input.from} for ${input.setup.inputTokenAddress}, trying to edit storage instead`
+          )
+          await setERC20BalanceUsingStorage(fork, input)
         }
       } else {
-        await setERC20BalanceUsingStorage(fork, input);
+        await setERC20BalanceUsingStorage(fork, input)
       }
-      const currentAllowance = await getAllowance(fork, input.setup.inputTokenAddress, input.from, input.to);
-      if (currentAllowance == null || currentAllowance < input.setup.userBalanceAndApprovalRequirements) {
-        await setAllowance(fork, input.setup.inputTokenAddress, input.from, input.to, 0n);
-        await setAllowance(fork, input.setup.inputTokenAddress, input.from, input.to, input.setup.userBalanceAndApprovalRequirements);
+      const currentAllowance = await getAllowance(
+        fork,
+        input.setup.inputTokenAddress,
+        input.from,
+        input.to
+      )
+      if (
+        currentAllowance == null ||
+        currentAllowance < input.setup.userBalanceAndApprovalRequirements
+      ) {
+        await setAllowance(
+          fork,
+          input.setup.inputTokenAddress,
+          input.from,
+          input.to,
+          0n
+        )
+        await setAllowance(
+          fork,
+          input.setup.inputTokenAddress,
+          input.from,
+          input.to,
+          input.setup.userBalanceAndApprovalRequirements
+        )
       }
     }
     const setupTime = Date.now() - startTimeSetup
 
     const startTime = Date.now()
-    logger.info(`Starting simulation. (Setup ${setupTime}ms)`)
-    const simulationResult = await fork.commitTx({
-      to: input.to,
-      from: input.from,
-      data: input.data,
-      value: input.value,
-    }, log => { })
+    lastSubmission = Date.now()
+    const timeSinceLastSubmission = Date.now() - lastSubmission
+    if (timeSinceLastSubmission < 10) {
+      await wait(Math.floor(10 - timeSinceLastSubmission + Math.random() * 10))
+    }
+    const simulationResult = await fork.commitTx(
+      {
+        to: input.to,
+        from: input.from,
+        data: input.data,
+        value: input.value,
+      },
+      (log) => {}
+    )
 
-    logger.info(`Simulation completed ${Date.now() - startTime}ms`)
     // console.log(
     //   JSON.stringify(simulationResult.accessList,null,2)
     // )
@@ -534,63 +617,83 @@ export const createRPCProviderUsingSim = async (
   originalProvider: JsonRpcProvider,
   sim: ForkySimulator,
   opts: {
-    chainId: number;
-    onLog: OnLogFn;
+    queryAccessList?: boolean
+    onLog?: OnLogFn
   }
 ) => {
+  const chainId = hexlify(BigInt((await originalProvider.getNetwork()).chainId))
   const simulateTx = async (tx: TransactionRequest) => {
-    const self = await sim.fork();
+    const self = await sim.fork()
     const txData = {
       to: tx.to!,
-      from: tx.from ?? "0x0000000000000000000000000000000000000000",
-      data: tx.data == null ? "0x" : hexlify(tx.data),
+      from: tx.from ?? '0x0000000000000000000000000000000000000000',
+      data: tx.data == null ? '0x' : hexlify(tx.data),
       value: tx.value == null ? 0n : BigInt(tx.value.toString()),
-    };
-    const out = await self.simulateTx(txData, () => { });
-    return out;
-  };
+    }
+    const out = await self.simulateTx(txData, () => {})
+    return out
+  }
   const createFork = (block: number) => {
     return {
       block,
-      fork: sim.fork()
+      fork: sim.fork(),
     }
   }
-  let latestGetterFork = createFork(await originalProvider.getBlockNumber());
+  let latestGetterFork = createFork(await originalProvider.getBlockNumber())
   let currentBlock = latestGetterFork.block
-  originalProvider.on("block", async (blockNumber) => {
-    currentBlock = blockNumber;
-    await sim.onBlock(blockNumber);
-  });
+  originalProvider.on('block', async (blockNumber) => {
+    currentBlock = blockNumber
+    await sim.onBlock(blockNumber)
+  })
+
+  const accessListFetched = new Set<string>()
 
   const handlers = {
     eth_call: async ([tx, _, __]: [TransactionRequest, string, any]) => {
-      const res = await simulateTx(tx);
-      const out = res.execResult.returnValue;
-      return out;
+      if (opts.queryAccessList) {
+        const key = tx.data + tx.to! + tx.from
+
+        if (!accessListFetched.has(key)) {
+          accessListFetched.add(key)
+          ;(async (ttx: TransactionRequest) => {
+            try {
+              const res: {
+                accessList: {
+                  address: string
+                  storageKeys: string[]
+                }[]
+              } = await originalProvider.send('eth_createAccessList', [tx])
+              ttx.accessList = res.accessList
+              await simulateTx(ttx)
+            } catch (e) {}
+          })({ ...tx })
+        }
+      }
+      return await originalProvider.send('eth_call', [tx])
     },
     eth_blockNumber: async () => {
-      return currentBlock;
+      return currentBlock
     },
     eth_chainId: async () => {
-      return hexlify(BigInt(opts.chainId));
+      return chainId
     },
     eth_gasPrice: async () => {
-      return 1n;
+      return 1n
     },
-  };
+  }
 
   class BoundProvider extends JsonRpcProvider {
     constructor() {
-      super(originalProvider.connection.url);
+      super(originalProvider.connection.url)
     }
     async send(method: keyof typeof handlers, params: Array<any> = []) {
       if (handlers[method] == null) {
-        return await originalProvider.send(method, params);
+        return await originalProvider.send(method, params)
       }
-      const out = await handlers[method](params as any);
-      return out;
+      const out = await handlers[method](params as any)
+      return out
     }
   }
 
-  return new BoundProvider();
-};
+  return new BoundProvider()
+}

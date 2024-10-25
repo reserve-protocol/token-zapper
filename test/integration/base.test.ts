@@ -7,11 +7,12 @@ import {
   baseConfig,
   createEnso,
   createKyberswap,
-  makeCustomRouterSimulator,
   setupBaseZapper,
   Universe,
 } from '../../src.ts/index'
 import { createZapTestCase } from '../createZapTestCase'
+import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
+import { logger } from '../../src.ts/logger'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -24,8 +25,8 @@ if (process.env.BASE_PROVIDER == null) {
  *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
-if (process.env.SIM_URL == null) {
-  console.log('SIM_URL not set, skipping simulation tests')
+if (process.env.SIMULATE_URL == null) {
+  console.log('SIMULATE_URL not set, skipping simulation tests')
   process.exit(0)
 }
 
@@ -114,9 +115,9 @@ const redeemCases = [
 ]
 
 let universe: Universe
-beforeAll(async () => {
-  const provider = getProvider(process.env.BASE_PROVIDER!)
+const provider = getProvider(process.env.BASE_PROVIDER!)
 
+beforeAll(async () => {
   universe = await Universe.createWithConfig(
     provider,
     baseConfig,
@@ -129,7 +130,7 @@ beforeAll(async () => {
     },
     {
       simulateZapFn: makeCustomRouterSimulator(
-        process.env.SIM_URL!,
+        process.env.SIMULATE_URL!,
         baseWhales
       ),
     }
@@ -138,12 +139,11 @@ beforeAll(async () => {
   await universe.initialized
   return universe
 }, 5000)
-
 describe('base zapper', () => {
   beforeEach(async () => {
     await universe.updateBlockState(
-      await universe.provider.getBlockNumber(),
-      (await universe.provider.getGasPrice()).toBigInt()
+      await provider.getBlockNumber(),
+      (await provider.getGasPrice()).toBigInt()
     )
   })
 

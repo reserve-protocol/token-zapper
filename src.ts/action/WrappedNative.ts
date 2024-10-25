@@ -7,8 +7,6 @@ import { IWrappedNative__factory } from '../contracts/factories/contracts/IWrapp
 import * as gen from '../tx-gen/Planner'
 import { Address } from '..'
 
-const iWrappedNativeIFace = IWrappedNative__factory.createInterface()
-
 export class DepositAction extends Action("WETH") {
   
   gasEstimate(): bigint {

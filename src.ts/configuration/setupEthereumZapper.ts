@@ -1,8 +1,14 @@
+import { ONE } from '../action/Action'
+import { BeefyDepositAction } from '../action/Beefy'
 import { loadCompV2Deployment } from '../action/CTokens'
-import { ETHTokenVaultDepositAction } from '../action/ERC4626'
+import {
+  ERC4626DepositAction,
+  ETHTokenVaultDepositAction,
+} from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
+import { IBeefyVault__factory } from '../contracts'
 import { TokenQuantity } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
@@ -167,6 +173,22 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToETHX)
 
+  const depositToBeefy = new BeefyDepositAction(
+    universe,
+    commonTokens['ETH+ETH-f'],
+    commonTokens['mooConvexETH+']
+  )
+  universe.addAction(depositToBeefy)
+
+  const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
+    universe,
+    universe.commonTokens.USDe,
+    universe.commonTokens.sUSDe,
+    1n
+  )
+
+  universe.addAction(depositTosUSDe)
+
   universe.tokenTradeSpecialCases.set(
     universe.commonTokens.ETHx,
     async (input: TokenQuantity, dest: Address) => {
@@ -180,11 +202,44 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     }
   )
 
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens['mooConvexETH+'],
+    priceFn: async () => {
+      const lpPrice =
+        (
+          await universe.fairPrice(universe.commonTokens['ETH+ETH-f'].one)
+        )?.toScaled(ONE) || 1n
+      const rate = await IBeefyVault__factory.connect(
+        universe.commonTokens['mooConvexETH+'].address.address,
+        universe.provider
+      ).callStatic.getPricePerFullShare()
+      return universe.usd.from((lpPrice * rate.toBigInt()) / ONE)
+    },
+    priceToken: universe.commonTokens.WETH,
+  })
+
   universe.addSingleTokenPriceOracle({
     token: universe.commonTokens.ETHx,
     oracleAddress: Address.from('0xC5f8c4aB091Be1A899214c0C3636ca33DcA0C547'),
     priceToken: universe.commonTokens.WETH,
   })
+
+  universe.defineYieldPositionZap(
+    universe.commonTokens.sdgnETH,
+    universe.rTokens.dgnETH
+  )
+
+  universe.defineYieldPositionZap(
+    universe.commonTokens['ETH+ETH-f'],
+    universe.rTokens['ETH+']
+  )
+
+  universe.defineYieldPositionZap(
+    await universe.getToken(
+      Address.from(PROTOCOL_CONFIGS.convex.wrappers['stkcvxETH+ETH-f'])
+    ),
+    universe.rTokens['ETH+']
+  )
 
   // universe.tokenFromTradeSpecialCases.set(
   //   commonTokens.pxETH,
@@ -207,6 +262,4 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   //     }
   //   }
   // )
-
-  console.log('Etheruem zapper setup complete')
 }

@@ -1,5 +1,5 @@
 import { Address } from '../base/Address'
-import { type Token, type TokenQuantity } from '../entities/Token'
+import { TokenQuantity, type Token } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Approval } from '../base/Approval'
 import * as gen from '../tx-gen/Planner'
@@ -16,21 +16,29 @@ import { formatEther } from 'ethers/lib/utils'
 import { constants } from 'ethers'
 
 export enum InteractionConvention {
+  // The action requires callee to send tokens to the contract before calling it
+  // UniswapV2 Pool's for example
   PayBeforeCall,
+
+  // The action requires the callee to call the contract
+  // UniswapV3 Pool's do this
   CallbackBased,
+
+  // The action requires the caller to approve the contract
+  // Most contracts taking ERC20 token inputs work like this
   ApprovalRequired,
+
+  // The action does not require any interaction with the contract
+  // Burning tokens or contracts using ETH as input do this
   None,
 }
 
 export enum DestinationOptions {
+  // The contract supports a destination address
   Recipient,
-  Callee,
-}
 
-export enum EdgeType {
-  MINT,
-  BURN,
-  SWAP,
+  // The contract sends funds back to the caller
+  Callee,
 }
 
 const useSpecialCaseBalanceOf = new Set<Address>([
@@ -187,17 +195,76 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
+  get isMultiInput() {
+    return this.inputToken.length !== 1
+  }
+  get isMultiOutput() {
+    return this.outputToken.length !== 1
+  }
+
+  /**
+   * Signals to the transaction generator wether or the input of this action
+   * gets statically baked into the transaction. This is only really relevant if
+   * the planner does a .rawCall(...)
+   */
   public get supportsDynamicInput() {
     return true
   }
+
+  /**
+   * Signals that the action is only used once per zap. This is relevant for
+   * Trades and other actions where interacting with a contract changes the 'price'
+   *
+   * Uses the 'addressesInUse' to determine if conflicts occur
+   */
   public get oneUsePrZap() {
     return false
   }
+
+  /**
+   * See @oneUsePrZap
+   */
+  public get addressesInUse(): Set<Address> {
+    return new Set([])
+  }
+
+  /**
+   * Signals that the action returns the result of the operation.
+   * Some contracts do not return anything, or return a value that we can not use
+   * in this case return a null in the planner and return false in this method.
+   */
   public get returnsOutput() {
     return true
   }
-  public get addressesInUse(): Set<Address> {
-    return new Set([])
+
+  /**
+   * Returns the proportion of the input tokens that is used in this action.
+   * This is used by token basket type tokens or LP tokens.
+   *
+   * If the action takes a single input this should not be ovewritten.
+   */
+  public async inputProportions() {
+    if (this.inputToken.length !== this.inputToken.length) {
+      throw new Error(
+        `${this}: Unimplemented output token proportions, for multi-input action`
+      )
+    }
+    return [this.inputToken[0].one]
+  }
+
+  /**
+   * Returns the proportion of the output tokens that is used in this action.
+   * This is used by token basket type tokens or LP tokens.
+   *
+   * If the action produces a single output this should not be ovewritten.
+   */
+  public async outputProportions() {
+    if (this.outputToken.length !== 1) {
+      throw new Error(
+        `${this}: Unimplemented output token proportions, for multi-output action`
+      )
+    }
+    return [this.outputToken[0].one]
   }
 
   outputBalanceOf(universe: Universe, planner: gen.Planner) {
@@ -217,6 +284,10 @@ export abstract class BaseAction {
     return 'Unknown'
   }
 
+  /**
+   * The interaction convention of the action.
+   * See @InteractionConvention for more information
+   */
   get interactionConvention(): InteractionConvention {
     return this._interactionConvention
   }
@@ -317,85 +388,6 @@ export abstract class BaseAction {
   public get outputSlippage() {
     return 0n
   }
-
-  public combine(other: BaseAction) {
-    const self = this
-
-    if (
-      !self.outputToken.every(
-        (token, index) => other.inputToken[index] === token
-      )
-    ) {
-      throw new Error('Cannot combine actions with mismatched tokens')
-    }
-    class CombinedAction extends BaseAction {
-      public get protocol(): string {
-        return `${self.protocol}.${other.protocol}`
-      }
-      toString(): string {
-        return `${self.toString()}  -> ${other.toString()}`
-      }
-
-      public async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-        const out = await self.quote(amountsIn)
-        return await other.quote(out)
-      }
-
-      get supportsDynamicInput() {
-        return self.supportsDynamicInput && other.supportsDynamicInput
-      }
-
-      get oneUsePrZap() {
-        return self.oneUsePrZap && other.oneUsePrZap
-      }
-
-      get addressesInUse() {
-        return new Set([...self.addressesInUse, ...other.addressesInUse])
-      }
-
-      get returnsOutput() {
-        return other.returnsOutput
-      }
-
-      get outputSlippage() {
-        return self.outputSlippage + other.outputSlippage
-      }
-
-      public gasEstimate(): bigint {
-        return self.gasEstimate() + other.gasEstimate() + 10000n
-      }
-
-      public async plan(
-        planner: gen.Planner,
-        inputs: gen.Value[],
-        destination: Address,
-        predicted: TokenQuantity[]
-      ): Promise<null | gen.Value[]> {
-        const out = await self.planWithOutput(
-          this.universe,
-          planner,
-          inputs,
-          destination,
-          predicted
-        )
-
-        return other.plan(planner, out, destination, predicted)
-      }
-
-      constructor(public readonly universe: Universe) {
-        super(
-          self.address,
-          self.inputToken,
-          other.outputToken,
-          self.interactionConvention,
-          other.proceedsOptions,
-          [...self.approvals, ...other.approvals]
-        )
-      }
-    }
-
-    return CombinedAction
-  }
 }
 
 class TradeEdgeAction extends BaseAction {
@@ -473,33 +465,6 @@ export const isMultiChoiceEdge = (
   edge: BaseAction
 ): edge is TradeEdgeAction => {
   return edge instanceof TradeEdgeAction
-}
-
-export const createMultiChoiceAction = (
-  universe: Universe,
-  choices: BaseAction[]
-) => {
-  if (choices.length === 0) {
-    throw new Error('Cannot create a TradeEdgeAction with no choices')
-  }
-  if (choices.length === 1) {
-    return choices[0]
-  }
-  if (
-    !choices.every(
-      (choice) =>
-        choice.inputToken.length === 1 &&
-        choice.outputToken.length === 1 &&
-        choice.inputToken[0] === choice.inputToken[0] &&
-        choice.outputToken[0] === choice.outputToken[0]
-    )
-  ) {
-    throw new Error(
-      'Add choices in a trade edge must produce the same input and output token'
-    )
-  }
-
-  return new TradeEdgeAction(universe, choices)
 }
 
 export const Action = (proto: string) => {

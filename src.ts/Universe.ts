@@ -1,7 +1,6 @@
 import { ethers } from 'ethers'
 
 import {
-  createMultiChoiceAction,
   type BaseAction as Action,
 } from './action/Action'
 import { LPToken } from './action/LPToken'
@@ -102,6 +101,25 @@ export class Universe<const UniverseConf extends Config = Config> {
     const cache = new BlockCache<Input, Result, Key>(fetch, ttl, this.currentBlock, keyFn as any)
     this.caches.push(cache)
     return cache
+  }
+
+  public createCachedProducer<Result>(
+    fetch: () => Promise<Result>,
+    ttl: number = this.config.requoteTolerance
+  ): () => Promise<Result> {
+    let lastFetch: number = 0
+    let lastResult: Promise<Result> | null = null
+    return async () => {
+      if (lastResult==null||Date.now() - lastFetch > ttl) {
+        lastFetch = Date.now()
+        lastResult = fetch()
+        void lastResult.catch(e => {
+          lastResult = null
+          throw e
+        });
+      }
+      return await lastResult
+    }
   }
 
   public readonly tokens = new Map<Address, Token>()
@@ -542,27 +560,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this.config.addresses.zapperAddress
   }
 
-  public async createTradeEdge(tokenIn: Token, tokenOut: Token) {
-    const edges: Action[] = []
-    for (const venue of this.tradeVenues) {
-      if (
-        !venue.supportsDynamicInput ||
-        !venue.supportsEdges ||
-        !venue.canCreateEdgeBetween(tokenIn, tokenOut)
-      ) {
-        continue
-      }
-      const edge = await venue.createTradeEdge(tokenIn, tokenOut)
-      if (edge != null) {
-        edges.push(edge)
-      }
-    }
-
-    if (edges.length === 0) {
-      throw new Error(`No trade edge found for ${tokenIn} -> ${tokenOut}`)
-    }
-    return createMultiChoiceAction(this, edges)
-  }
   public defineMintable(
     mint: Action,
     burn: Action,

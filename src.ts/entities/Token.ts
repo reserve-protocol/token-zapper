@@ -170,6 +170,18 @@ export class TokenQuantity {
     }
   }
 
+  public get isZero() {
+    return this.amount === 0n
+  }
+
+  public get isOne() {
+    return this.amount === this.token.scale;
+  }
+
+  public get isPositive() {
+    return this.amount > 0n
+  }
+
   public gte(other: TokenQuantity) {
     return this.amount >= other.amount
   }
@@ -235,6 +247,11 @@ export class TokenQuantity {
     return (
       formatUnits(this.amount, this.token.decimals) + ' ' + this.token.symbol
     )
+  }
+
+
+  public withPrice(price: TokenQuantity) {
+    return new PricedTokenQuantity(this, price)
   }
 
   public toScaled(scale: bigint) {

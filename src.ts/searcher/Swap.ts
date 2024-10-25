@@ -54,6 +54,73 @@ export class SingleSwap {
   }
 }
 
+class PathStats {
+  constructor(
+    public readonly outputValue: TokenQuantity,
+    public readonly txFee: TokenQuantity,
+    public readonly netValue: TokenQuantity,
+    public readonly gasUnits: bigint
+  ) {}
+}
+
+class BasePath {
+  get proceedsOptions(): DestinationOptions {
+    return this.steps.at(-1)!.proceedsOptions
+  }
+  get interactionConvention(): InteractionConvention {
+    return this.steps.at(0)!.interactionConvention
+  }
+  constructor(
+    public readonly stats: PathStats,
+    public readonly steps: SingleSwap[],
+    public readonly inputs: TokenQuantity[],
+    public readonly outputs: TokenQuantity[]
+  ) {}
+
+  get supportsDynamicInput() {
+    return this.steps[0].action.supportsDynamicInput
+  }
+  async exchange(tokenAmounts: TokenAmounts) {
+    tokenAmounts.exchange(this.inputs, this.outputs)
+  }
+
+  get gasUnits() {
+    return this.stats.gasUnits
+  }
+  get netValue() {
+    return this.stats.netValue
+  }
+  get txFee() {
+    return this.stats.txFee
+  }
+
+  public proportions() {
+    return this.outputs.map((i) => i.div(this.stats.outputValue.into(i.token)))
+  }
+}
+
+export class SwapPath1to1 extends BasePath {
+  constructor(
+    public readonly input: TokenQuantity,
+    steps: SingleSwap[],
+    public readonly output: TokenQuantity,
+    stats: PathStats
+  ) {
+    super(stats, steps, [input], [output])
+  }
+}
+
+export class SwapPath1toN extends BasePath {
+  constructor(
+    public readonly input: TokenQuantity,
+    steps: SingleSwap[],
+    outputs: TokenQuantity[],
+    stats: PathStats
+  ) {
+    super(stats, steps, [input], outputs)
+  }
+}
+
 /**
  * A SwapPath groups a set of SingleSwap's together. The output of one SingleSwap is the input of the next.
  * A SwapPath may be optimized, as long as the input's and output's remain the same.

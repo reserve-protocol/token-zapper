@@ -9,7 +9,7 @@ import { LidoDeployment } from '../action/Lido'
 import { StakeDAODepositAction } from '../action/StakeDAO'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
-import { IBeefyVault__factory } from '../contracts'
+import { IBeefyVault__factory, IGaugeStakeDAO__factory } from '../contracts'
 import { TokenQuantity } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
@@ -181,10 +181,16 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToBeefy)
 
+  const stakeDAOVault = await IGaugeStakeDAO__factory.connect(
+    commonTokens['sdETH+ETH-f'].address.address,
+    universe.provider
+  ).callStatic.vault()
+
   const depositToStakeDAO = new StakeDAODepositAction(
     universe,
     commonTokens['ETH+ETH-f'],
-    commonTokens['sdETH+ETH-f']
+    commonTokens['sdETH+ETH-f'],
+    Address.from(stakeDAOVault)
   )
   universe.addAction(depositToStakeDAO)
 

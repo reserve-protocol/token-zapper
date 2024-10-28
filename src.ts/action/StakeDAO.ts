@@ -4,18 +4,16 @@ import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { IGaugeStakeDAO__factory, IVaultStakeDAO__factory } from '../contracts'
+import { IVaultStakeDAO__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 
 export class StakeDAODepositAction extends Action('StakeDAO') {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    const vaultAddress = await IGaugeStakeDAO__factory.connect(
-      this.sdToken.address.address,
-      this.universe.provider
-    ).callStatic.vault()
-
     const lib = this.gen.Contract.createContract(
-      IVaultStakeDAO__factory.connect(vaultAddress, this.universe.provider)
+      IVaultStakeDAO__factory.connect(
+        this.vaultAddress.address,
+        this.universe.provider
+      )
     )
 
     planner.add(lib.deposit(destination.address, inputs[0], true))
@@ -38,7 +36,8 @@ export class StakeDAODepositAction extends Action('StakeDAO') {
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    public readonly sdToken: Token
+    public readonly sdToken: Token,
+    readonly vaultAddress: Address
   ) {
     super(
       sdToken.address,
@@ -46,7 +45,7 @@ export class StakeDAODepositAction extends Action('StakeDAO') {
       [sdToken],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      [new Approval(underlying, sdToken.address)]
+      [new Approval(underlying, vaultAddress)]
     )
   }
 
@@ -57,13 +56,11 @@ export class StakeDAODepositAction extends Action('StakeDAO') {
 
 export class StakeDAOWithdrawAction extends Action('StakeDAO') {
   async plan(planner: Planner, inputs: Value[]) {
-    const vaultAddress = await IGaugeStakeDAO__factory.connect(
-      this.sdToken.address.address,
-      this.universe.provider
-    ).callStatic.vault()
-
     const lib = this.gen.Contract.createContract(
-      IVaultStakeDAO__factory.connect(vaultAddress, this.universe.provider)
+      IVaultStakeDAO__factory.connect(
+        this.vaultAddress.address,
+        this.universe.provider
+      )
     )
 
     planner.add(lib.withdraw(inputs[0]))
@@ -82,7 +79,8 @@ export class StakeDAOWithdrawAction extends Action('StakeDAO') {
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    readonly sdToken: Token
+    readonly sdToken: Token,
+    readonly vaultAddress: Address
   ) {
     super(
       sdToken.address,

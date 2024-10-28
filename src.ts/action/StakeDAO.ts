@@ -9,7 +9,6 @@ import { Planner, Value } from '../tx-gen/Planner'
 
 export class StakeDAODepositAction extends Action('StakeDAO') {
   async plan(planner: Planner, inputs: Value[], destination: Address) {
-    this.sdToken.address
     const lib = this.gen.Contract.createContract(
       IVaultStakeDAO__factory.connect(
         this.sdToken.address.address,

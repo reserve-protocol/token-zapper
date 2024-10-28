@@ -8,7 +8,6 @@ import { Planner, Value } from '../tx-gen/Planner'
 
 export class BeefyDepositAction extends Action('Beefy') {
   async plan(planner: Planner, inputs: Value[]) {
-    this.mooToken.address
     const lib = this.gen.Contract.createContract(
       IBeefyVault__factory.connect(
         this.mooToken.address.address,

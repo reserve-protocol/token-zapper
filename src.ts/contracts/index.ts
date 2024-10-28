@@ -156,6 +156,8 @@ export type { IStargateRouter } from "./contracts/IStargateRouter.sol/IStargateR
 export { IStargateRouter__factory } from "./factories/contracts/IStargateRouter.sol/IStargateRouter__factory";
 export type { IStETH } from "./contracts/IStETH";
 export { IStETH__factory } from "./factories/contracts/IStETH__factory";
+export type { IVaultStakeDAO } from "./contracts/IVaultStakeDAO";
+export { IVaultStakeDAO__factory } from "./factories/contracts/IVaultStakeDAO__factory";
 export type { IWrappedNative } from "./contracts/IWrappedNative";
 export { IWrappedNative__factory } from "./factories/contracts/IWrappedNative__factory";
 export type { IWStETH } from "./contracts/IWStETH";

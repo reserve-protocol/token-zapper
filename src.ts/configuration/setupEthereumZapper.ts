@@ -6,6 +6,7 @@ import {
   ETHTokenVaultDepositAction,
 } from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
+import { StakeDAODepositAction } from '../action/Stakedao'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
 import { IBeefyVault__factory } from '../contracts'
@@ -180,6 +181,13 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToBeefy)
 
+  const depositToStakeDAO = new StakeDAODepositAction(
+    universe,
+    commonTokens['ETH+ETH-f'],
+    commonTokens['sdETH+ETH-f']
+  )
+  universe.addAction(depositToStakeDAO)
+
   const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
     universe,
     universe.commonTokens.USDe,
@@ -214,6 +222,14 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
         universe.provider
       ).callStatic.getPricePerFullShare()
       return universe.usd.from((lpPrice * rate.toBigInt()) / ONE)
+    },
+    priceToken: universe.commonTokens.WETH,
+  })
+
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens['sdETH+ETH-f'],
+    priceFn: async () => {
+      return universe.usd.from(5000) // TODO: get price from somewhere
     },
     priceToken: universe.commonTokens.WETH,
   })

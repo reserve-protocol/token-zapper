@@ -52,6 +52,7 @@ export type { IPermit2 } from "./IPermit2";
 export type { IRETHRouter } from "./IRETHRouter";
 export type { IRToken } from "./IRToken";
 export type { IStETH } from "./IStETH";
+export type { IVaultStakeDAO } from "./IVaultStakeDAO";
 export type { IWStETH } from "./IWStETH";
 export type { IWrappedNative } from "./IWrappedNative";
 export type { RTokenLens } from "./RTokenLens";

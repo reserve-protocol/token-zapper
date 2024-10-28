@@ -32,6 +32,7 @@ export { IPermit2__factory } from "./IPermit2__factory";
 export { IRETHRouter__factory } from "./IRETHRouter__factory";
 export { IRToken__factory } from "./IRToken__factory";
 export { IStETH__factory } from "./IStETH__factory";
+export { IVaultStakeDAO__factory } from "./IVaultStakeDAO__factory";
 export { IWStETH__factory } from "./IWStETH__factory";
 export { IWrappedNative__factory } from "./IWrappedNative__factory";
 export { RTokenLens__factory } from "./RTokenLens__factory";

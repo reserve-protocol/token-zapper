@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BlueOak-1.0.0
 pragma solidity 0.8.17;
 
-interface IGaugeStakeDAO {
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+interface IGaugeStakeDAO is IERC20 {
     function vault() external view returns (address);
 }
 

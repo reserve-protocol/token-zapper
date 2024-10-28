@@ -18,7 +18,7 @@ export class StakeDAODepositAction extends Action('StakeDAO') {
       IVaultStakeDAO__factory.connect(vaultAddress, this.universe.provider)
     )
 
-    planner.add(lib.deposit(destination, inputs[0], true))
+    planner.add(lib.deposit(destination.address, inputs[0], true))
 
     return null
   }

@@ -10,6 +10,7 @@ import { setupCompoundV3 } from './setupCompV3'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupAerodromeRouter } from './setupAerodromeRouter'
+import { setupERC4626 } from './setupERC4626'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   await loadBaseTokenList(universe)
@@ -119,6 +120,17 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   universe.addPreferredRTokenInputToken(
     universe.rTokens.hyUSD,
     universe.commonTokens.USDC
+  )
+
+  await Promise.all(
+    PROTOCOL_CONFIGS.erc4626.map(async ([addr, proto]) => {
+      const vault = await setupERC4626(universe, {
+        vaultAddress: addr,
+        protocol: proto,
+        slippage: 1n,
+      })
+      return vault
+    })
   )
 
   // Set up stargate

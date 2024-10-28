@@ -10,6 +10,9 @@ export const COMMON_TOKENS = {
   ERC20GAS: '0x4200000000000000000000000000000000000006',
   cbETH: '0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22',
   wstETH: '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452',
+
+  meUSD: '0xbb819D845b573B5D7C538F5b85057160cfb5f313',
+  eUSD: '0xCfA3Ef56d303AE4fAabA0592388F19d7C3399FB4'
 } as const
 
 export const RTOKENS = {
@@ -51,6 +54,8 @@ export const baseConfig = makeConfig(
   }
 )
 
+//
+
 export const PROTOCOL_CONFIGS = {
   usdPriceOracles: {
     '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913':
@@ -67,6 +72,7 @@ export const PROTOCOL_CONFIGS = {
     //   '0xf586d0728a47229e747d824a939000Cf21dEF5A0', // wsteth/USD
     // "": "0xccadc697c55bbb68dc5bcdf8d3cbe83cdd4e071e", // WBTC / USD
   },
+  erc4626: [['0xbb819D845b573B5D7C538F5b85057160cfb5f313', 'morpho']],
   ethPriceOracles: {
     '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22':
       '0x806b4ac04501c29769051e42783cf04dce41440b', // cbETH / ETH

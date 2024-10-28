@@ -1164,7 +1164,8 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     output: Token,
     signerAddress: Address,
     opts?: ToTransactionArgs & {
-      maxHops?: number
+      maxHops?: number,
+      useTrading?: boolean
     }
   ) {
     const startTime = Date.now()
@@ -1204,7 +1205,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       false,
       onResult,
       0.9,
-      true
+      opts?.useTrading !== true
     )
     controller.finishedSearching()
 

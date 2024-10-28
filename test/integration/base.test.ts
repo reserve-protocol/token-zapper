@@ -12,7 +12,10 @@ import {
 } from '../../src.ts/index'
 import { createZapTestCase } from '../createZapTestCase'
 import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
-import { logger } from '../../src.ts/logger'
+import {
+  createActionTestCase,
+  makeIntegrationtestCase,
+} from '../createActionTestCase'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -51,6 +54,9 @@ export const baseWhales = {
 
   '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452':
     '0x99cbc45ea5bb7ef3a5bc08fb1b7e56bb2442ef0d', // wsteth
+
+  '0xcfa3ef56d303ae4faaba0592388f19d7c3399fb4':
+    '0x5400dbb270c956e8985184335a1c62aca6ce1333',
 
   // rtokens
   '0xcc7ff230365bd730ee4b352cc2492cedac49383e':
@@ -113,6 +119,9 @@ const redeemCases = [
   makeMintTestCase(5, rTokens.bsd, t.cbETH),
   makeMintTestCase(5, rTokens.bsd, t.USDC),
 ]
+const individualIntegrations = [
+  makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
+]
 
 let universe: Universe
 const provider = getProvider(process.env.BASE_PROVIDER!)
@@ -139,12 +148,19 @@ beforeAll(async () => {
   await universe.initialized
   return universe
 }, 5000)
+
 describe('base zapper', () => {
   beforeEach(async () => {
     await universe.updateBlockState(
       await provider.getBlockNumber(),
       (await provider.getGasPrice()).toBigInt()
     )
+  })
+
+  describe('actions', () => {
+    for (const testCase of individualIntegrations) {
+      createActionTestCase(() => universe, getSymbol, testUser, testCase)
+    }
   })
 
   for (const issueance of issueanceCases) {

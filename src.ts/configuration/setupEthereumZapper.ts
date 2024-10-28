@@ -6,7 +6,7 @@ import {
   ETHTokenVaultDepositAction,
 } from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
-import { StakeDAODepositAction } from '../action/Stakedao'
+import { StakeDAODepositAction } from '../action/StakeDAO'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
 import { IBeefyVault__factory } from '../contracts'

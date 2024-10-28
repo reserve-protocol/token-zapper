@@ -23,7 +23,7 @@ import type {
   PromiseOrValue,
 } from "../../common";
 
-export interface IVaultInterface extends utils.Interface {
+export interface IVaultStakeDAOInterface extends utils.Interface {
   functions: {
     "deposit(address,uint256,bool)": FunctionFragment;
     "withdraw(uint256)": FunctionFragment;
@@ -50,12 +50,12 @@ export interface IVaultInterface extends utils.Interface {
   events: {};
 }
 
-export interface IVault extends BaseContract {
+export interface IVaultStakeDAO extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: IVaultInterface;
+  interface: IVaultStakeDAOInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

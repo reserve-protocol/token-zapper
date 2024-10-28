@@ -32,7 +32,7 @@ export class StakeDAODepositAction extends Action('StakeDAO') {
   }
 
   get outputSlippage() {
-    return 1n
+    return 0n
   }
 
   constructor(

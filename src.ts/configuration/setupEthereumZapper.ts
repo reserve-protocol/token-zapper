@@ -229,7 +229,11 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['sdETH+ETH-f'],
     priceFn: async () => {
-      return universe.usd.from(5000) // TODO: get price from somewhere
+      const lpPrice =
+        (
+          await universe.fairPrice(universe.commonTokens['ETH+ETH-f'].one)
+        )?.toScaled(ONE) || 1n
+      return universe.usd.from(lpPrice)
     },
     priceToken: universe.commonTokens.WETH,
   })

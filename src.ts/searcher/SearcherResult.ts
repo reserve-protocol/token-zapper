@@ -8,16 +8,20 @@ import {
   parseEther,
   randomBytes,
 } from 'ethers/lib/utils'
+import { Searcher, Universe } from '..'
 import {
   BaseAction,
   DestinationOptions,
   InteractionConvention,
   plannerUtils,
 } from '../action/Action'
+import { MintRTokenAction } from '../action/RTokens'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { DefaultMap } from '../base/DefaultMap'
 import { parseHexStringIntoBuffer } from '../base/utils'
+import { Config } from '../configuration/ChainConfiguration'
+import { SimulateParams } from '../configuration/ZapSimulation'
 import {
   EmitId__factory,
   IERC20__factory,
@@ -39,18 +43,12 @@ import {
   Contract,
   LiteralValue,
   Planner,
-  ReturnValue,
   Value,
   encodeArg,
-  printPlan,
+  printPlan
 } from '../tx-gen/Planner'
 import { ToTransactionArgs } from './ToTransactionArgs'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
-import { SimulateParams } from '../configuration/ZapSimulation'
-import { Config } from '../configuration/ChainConfiguration'
-import { Searcher, Universe } from '..'
-import { FEE_SCALE } from '../base/constants'
-import { MintRTokenAction } from '../action/RTokens'
 
 const zapperInterface = Zapper__factory.createInterface()
 const needsZeroedOutFirst = new Set([
@@ -282,7 +280,9 @@ export abstract class BaseSearcherResult {
   }
 
   protected async simulateAndParse(options: ToTransactionArgs, data: string) {
-    const addresesToPreload = this.swaps.swapPaths.map(i => i.steps.map(i => [...i.action.addressesInUse])).flat(2);
+    const addresesToPreload = this.swaps.swapPaths
+      .map((i) => i.steps.map((i) => [...i.action.addressesInUse]))
+      .flat(2)
     const zapperResult = await this.simulate({
       to: this.universe.config.addresses.zapperAddress.address,
       from: this.signer.address,
@@ -292,7 +292,7 @@ export abstract class BaseSearcherResult {
         inputTokenAddress: this.inputToken.address.address,
         userBalanceAndApprovalRequirements: this.userInput.amount,
       },
-      addresesToPreload: addresesToPreload.map(i => i.address)
+      addresesToPreload: addresesToPreload.map((i) => i.address),
     })
 
     const currentBalances = TokenAmounts.fromQuantities(
@@ -483,14 +483,13 @@ export abstract class BaseSearcherResult {
     )
 
     this.planner.add(emitIdContract.emitId(this.zapId))
-
+    const params = this.encodePayload(this.outputToken.from(1n), {
+      ...options,
+      returnDust: false,
+    })
+    const data = this.encodeCall(options, params)
     try {
-      const params = this.encodePayload(this.outputToken.from(1n), {
-        ...options,
-        returnDust: false,
-      })
-      const data = this.encodeCall(options, params)
-      const tx = this.encodeTx(data, 1000000n)
+      const tx = this.encodeTx(data, 10000000n)
       await this.checkIfSearchIsAborted()
       const result = await this.simulateAndParse(options, tx.data!.toString())
 
@@ -734,6 +733,10 @@ export class RedeemZap extends BaseSearcherResult {
 
     for (const path of tradesToGenerate) {
       for (const step of path.steps) {
+        const dest =
+          outToken === step.action.outputToken[0]
+            ? this.signer
+            : executorAddress
         const dynInput = step.action.supportsDynamicInput
         const stepInputQty = step.inputs[0]
         const stepInput = stepInputQty.token
@@ -753,7 +756,7 @@ export class RedeemZap extends BaseSearcherResult {
               )
         }
 
-        await step.action.plan(this.planner, [input], this.signer, step.inputs)
+        await step.action.plan(this.planner, [input], dest, step.inputs)
       }
     }
 

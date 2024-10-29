@@ -252,10 +252,8 @@ function abiEncodeSingle(
 ): LiteralValue | TupleLiteral {
   const isDyn = isDynamicType(param)
   if (isDyn) {
-    return new LiteralValue(
-      param,
-      hexDataSlice(defaultAbiCoder.encode([param], [value]), 32)
-    )
+    const encoded = hexDataSlice(defaultAbiCoder.encode([param], [value]), 32)
+    return new LiteralValue(param, encoded)
   }
   if (param.type === 'tuple') {
     const components = Object.values(value).map((v, i) =>
@@ -550,19 +548,19 @@ export class Planner {
   comments: (string | undefined)[] = []
   returnVals = new Map<Command, ReturnValue>()
 
-  headerComments: string[] = [];
-  globalComments = new Map<Command, string[]>();
+  headerComments: string[] = []
+  globalComments = new Map<Command, string[]>()
 
   addComment(comment: string) {
     if (this.commands.length === 0) {
-      this.headerComments.push(comment);
-      return;
+      this.headerComments.push(comment)
+      return
     }
-    const comments = this.globalComments.get(this.commands[this.commands.length - 1]) ?? [];
-    comments.push(comment);
-    this.globalComments.set(this.commands[this.commands.length - 1], comments);
+    const comments =
+      this.globalComments.get(this.commands[this.commands.length - 1]) ?? []
+    comments.push(comment)
+    this.globalComments.set(this.commands[this.commands.length - 1], comments)
   }
-  
 
   constructor() {
     this.state = new StateValue()
@@ -1113,8 +1111,8 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
     const finalStr =
       retVal == null
         ? `${prefix} ${formatted} # sighash: ${step.call.contract.interface.getSighash(
-          step.call.fragment
-        )}`
+            step.call.fragment
+          )}`
         : `${prefix} ${retVal.name}: ${
             retVal.param.type
           } = ${formatted} # sighash: ${step.call.contract.interface.getSighash(

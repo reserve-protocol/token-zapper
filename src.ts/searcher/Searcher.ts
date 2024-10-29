@@ -185,7 +185,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
             out.push(res)
             try {
               await onResult(res)
-            } catch (e) {}
+            } catch (e) { }
           },
           {
             slippage,
@@ -227,12 +227,14 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         const allPlans = bfsResult.steps
           .map((i) => i.convertToSingularPaths())
           .flat()
-        this.debugLog(
-          `Found potential ${allPlans.length} trades: for ${input.token} -> ${output}`
-        )
-        for (const plan of allPlans) {
-          this.debugLog('  ' + plan.toString())
-        }
+
+        allPlans.sort((l, r) => l.steps.length - r.steps.length)
+        // this.debugLog(
+        //   `Found potential ${allPlans.length} trades: for ${input.token} -> ${output}`
+        // )
+        // for (const plan of allPlans) {
+        //   this.debugLog('  ' + plan.toString())
+        // }
 
         const swapPlans = allPlans.filter((plan) => {
           if (plan == null || plan.steps.length === 0) {
@@ -265,9 +267,9 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         const res = await Promise.all(
           swapPlans.map(async (plan) => {
             try {
-              return await plan.quote([input], destination)
+              const out = await plan.quote([input], destination)
+              return out
             } catch (e) {
-              this.debugLog(e)
               return null
             }
           })
@@ -351,11 +353,11 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       tradeForPrecursorsInput: i.outputs[0],
       trade: i,
     })) ?? [
-      {
-        tradeForPrecursorsInput: inputQuantity,
-        trade: null,
-      },
-    ]
+        {
+          tradeForPrecursorsInput: inputQuantity,
+          trade: null,
+        },
+      ]
 
     for (const option of tradeforPrecursorsInputs) {
       if (abortSignal.aborted) {
@@ -434,25 +436,25 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     const quoteSum = everyTokenPriced
       ? precursorTokensPrices.reduce((l, r) => l.add(r), this.universe.usd.zero)
       : precursorTokenBasket
-          .map((p) => p.into(tradeforPrecursorsInput.token))
-          .reduce((l, r) => l.add(r))
+        .map((p) => p.into(tradeforPrecursorsInput.token))
+        .reduce((l, r) => l.add(r))
 
     // console.log(`sum: ${quoteSum}, ${precursorTokensPrices.join(', ')}`)
     const inputPrTrade = everyTokenPriced
       ? precursorTokenBasket.map(({ token }, i) => ({
-          input: tradeforPrecursorsInput.mul(
-            precursorTokensPrices[i]
-              .div(quoteSum)
-              .into(tradeforPrecursorsInput.token)
-          ),
-          output: token,
-        }))
+        input: tradeforPrecursorsInput.mul(
+          precursorTokensPrices[i]
+            .div(quoteSum)
+            .into(tradeforPrecursorsInput.token)
+        ),
+        output: token,
+      }))
       : precursorTokenBasket.map((qty) => ({
-          output: qty.token,
-          input: tradeforPrecursorsInput.mul(
-            qty.into(tradeforPrecursorsInput.token).div(quoteSum)
-          ),
-        }))
+        output: qty.token,
+        input: tradeforPrecursorsInput.mul(
+          qty.into(tradeforPrecursorsInput.token).div(quoteSum)
+        ),
+      }))
     const total = inputPrTrade.reduce(
       (l, r) => l.add(r.input),
       tradeforPrecursorsInput.token.zero
@@ -506,7 +508,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
             }
             options.push(...option.paths)
           }
-        } catch (e: any) {}
+        } catch (e: any) { }
         if (options.length === 0) {
           throw new Error(`Failed to find trade for ${input} -> ${output}`)
         }
@@ -794,14 +796,14 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       opts?.enableTradeZaps === false
         ? Promise.resolve()
         : this.findTokenZapViaTrade(
-            rTokenQuantity,
-            output,
-            signerAddress,
-            toTxArgs.internalTradeSlippage,
-            controller.onResult,
-            controller.abortController.signal,
-            start
-          ).catch(() => {}),
+          rTokenQuantity,
+          output,
+          signerAddress,
+          toTxArgs.internalTradeSlippage,
+          controller.onResult,
+          controller.abortController.signal,
+          start
+        ).catch(() => { }),
     ])
     void work.finally(() => {
       controller.finishedSearching()
@@ -972,14 +974,14 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       !preferredOutputs.has(output)
     const trades = tradeIndirectlyFirst
       ? await tradeToPreferredOutputThenOutput(preferredOutput).catch(
-          async () => await tradeDirectly()
-        )
+        async () => await tradeDirectly()
+      )
       : await tradeDirectly().catch(async (e) => {
-          if (preferredOutput) {
-            return await tradeToPreferredOutputThenOutput(preferredOutput)
-          }
-          throw e
-        })
+        if (preferredOutput) {
+          return await tradeToPreferredOutputThenOutput(preferredOutput)
+        }
+        throw e
+      })
 
     const permutableTrades = trades.filter((i) => i.paths.length !== 0)
 
@@ -1059,7 +1061,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
             path
           )
           await generatePermutation(resolveTrades)
-        } catch (e) {}
+        } catch (e) { }
       }
     }
   }
@@ -1128,7 +1130,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
           if (results >= 2) {
             ownController.abort()
           }
-        } catch (e) {}
+        } catch (e) { }
       },
       tolerance
     )
@@ -1164,7 +1166,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     output: Token,
     signerAddress: Address,
     opts?: ToTransactionArgs & {
-      maxHops?: number,
+      maxHops?: number
       useTrading?: boolean
     }
   ) {
@@ -1263,16 +1265,16 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     const doTrades = opts?.enableTradeZaps !== false
     const tradeZap = doTrades
       ? this.findTokenZapViaTrade(
-          userInput,
-          rToken,
-          userAddress,
-          slippage,
-          controller.onResult,
-          controller.abortController.signal,
-          start
-        ).catch((e) => {
-          errors.push(e)
-        })
+        userInput,
+        rToken,
+        userAddress,
+        slippage,
+        controller.onResult,
+        controller.abortController.signal,
+        start
+      ).catch((e) => {
+        errors.push(e)
+      })
       : Promise.resolve()
     void Promise.all([mintZap, tradeZap]).finally(() => {
       controller.finishedSearching()
@@ -1500,7 +1502,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       out.map(async (res) => {
         try {
           await onResult(res)
-        } catch (e) {}
+        } catch (e) { }
       })
     )
   }
@@ -1621,12 +1623,12 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       if (inValue != 0 && outValue != 0) {
         const ratio = outValue / inValue
         if (ratio < rejectRatio) {
-          this.debugLog(path.toString())
-          this.debugLog(
-            `Found trade: ${input} ${inValue} -> ${path.outputs.join(
-              ', '
-            )} outValue: ${outValue}, price impact: ${ratio}! rejectRatio: ${rejectRatio}`
-          )
+          // this.debugLog(path.toString())
+          // this.debugLog(
+          //   `Found trade: ${input} ${inValue} -> ${path.outputs.join(
+          //     ', '
+          //   )} outValue: ${outValue}, price impact: ${ratio}! rejectRatio: ${rejectRatio}`
+          // )
           // console.log('Rejecting', path.describe().join('\n'))
           dropped += 1
           return
@@ -1638,7 +1640,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       try {
         await onResult(path)
       } catch (e) {
-        console.log(e)
+        // console.log(e)
       }
     }
     await Promise.all([
@@ -1648,16 +1650,16 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         destination,
         emitResult,
         maxHops
-      ).catch(() => {}),
+      ).catch(() => { }),
       internalOnly
         ? Promise.resolve()
         : this.externalQuoters_(input, output, emitResult, {
-            dynamicInput,
-            abort,
-            slippage,
-          }).catch((e) => {
-            console.log(e)
-          }),
+          dynamicInput,
+          abort,
+          slippage,
+        }).catch((e) => {
+          console.log(e)
+        }),
     ])
   }
   debugLog(...args: any[]) {

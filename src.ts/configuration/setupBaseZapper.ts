@@ -11,6 +11,7 @@ import { setupAaveV3 } from './setupAaveV3'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupAerodromeRouter } from './setupAerodromeRouter'
 import { setupERC4626 } from './setupERC4626'
+import { createProtocolWithWrappers } from '../action/RewardableWrapper'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   await loadBaseTokenList(universe)
@@ -99,13 +100,25 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
   )
 
+  await universe.addSingleTokenPriceOracle({
+    token: universe.commonTokens.eUSD,
+    oracleAddress: Address.from('0x9b2C948dbA5952A1f5Ab6fA16101c1392b8da1ab'),
+    priceToken: universe.usd,
+  })
+
   universe.addTradeVenue(
     universe.addIntegration('uniswapV3', await setupUniswapRouter(universe))
   )
 
-  universe.addTradeVenue(
-    universe.addIntegration('aerodrome', await setupAerodromeRouter(universe))
-  )
+  await setupAerodromeRouter(universe)
+  const aerodromeWrappers = createProtocolWithWrappers(universe, 'aerodrome')
+
+  for (const wrapperAddress of Object.values(
+    PROTOCOL_CONFIGS.aerodrome.lpPoolWrappers
+  )) {
+    const wrapperToken = await universe.getToken(Address.from(wrapperAddress))
+    await aerodromeWrappers.addWrapper(wrapperToken)
+  }
 
   universe.addPreferredRTokenInputToken(
     universe.rTokens.bsd,

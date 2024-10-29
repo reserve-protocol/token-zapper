@@ -450,6 +450,150 @@ interface IAerodromeRouter {
     ) external view returns (uint256 ratio);
 }
 
+interface IMixedRouteQuoterV1 {
+    /// @notice Returns the amount out received for a given exact input swap without executing the swap
+    /// @param path The path of the swap, i.e. each token pair and the pool fee
+    /// @param amountIn The amount of the first token to swap
+    /// @return amountOut The amount of the last token that would be received
+    /// @return v3SqrtPriceX96AfterList List of the sqrt price after the swap for each v3 pool in the path, 0 for v2 pools
+    /// @return v3InitializedTicksCrossedList List of the initialized ticks that the swap crossed for each v3 pool in the path, 0 for v2 pools
+    /// @return v3SwapGasEstimate The estimate of the gas that the v3 swaps in the path consume
+    function quoteExactInput(bytes memory path, uint256 amountIn)
+        external
+        returns (
+            uint256 amountOut,
+            uint160[] memory v3SqrtPriceX96AfterList,
+            uint32[] memory v3InitializedTicksCrossedList,
+            uint256 v3SwapGasEstimate
+        );
+
+    struct QuoteExactInputSingleV3Params {
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        int24 tickSpacing;
+        uint160 sqrtPriceLimitX96;
+    }
+
+    struct QuoteExactInputSingleV2Params {
+        address tokenIn;
+        address tokenOut;
+        bool stable;
+        uint256 amountIn;
+    }
+
+    /// @notice Returns the amount out received for a given exact input but for a swap of a single pool
+    /// @param params The params for the quote, encoded as `QuoteExactInputSingleParams`
+    /// tokenIn The token being swapped in
+    /// tokenOut The token being swapped out
+    /// tickSpacing The tickSpacing of the token pool to consider for the pair
+    /// amountIn The desired input amount
+    /// sqrtPriceLimitX96 The price limit of the pool that cannot be exceeded by the swap
+    /// @return amountOut The amount of `tokenOut` that would be received
+    /// @return sqrtPriceX96After The sqrt price of the pool after the swap
+    /// @return initializedTicksCrossed The number of initialized ticks that the swap crossed
+    /// @return gasEstimate The estimate of the gas that the swap consumes
+    function quoteExactInputSingleV3(QuoteExactInputSingleV3Params memory params)
+        external
+        returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate);
+
+    /// @notice Returns the amount out received for a given exact input but for a swap of a single V2 pool
+    /// @param params The params for the quote, encoded as `QuoteExactInputSingleV2Params`
+    /// tokenIn The token being swapped in
+    /// tokenOut The token being swapped out
+    /// stable The boolean representing volatile (false) or stable (true)
+    /// amountIn The desired input amount
+    /// @return amountOut The amount of `tokenOut` that would be received
+    function quoteExactInputSingleV2(QuoteExactInputSingleV2Params memory params)
+        external
+        returns (uint256 amountOut);
+
+    /// @dev ExactOutput swaps are not supported by this new Quoter which is specialized for supporting routes
+    ///      crossing both V2 liquidity pairs and V3 pools.
+    /// @deprecated quoteExactOutputSingle and exactOutput. Use QuoterV2 instead.
+}
+
+interface IAerodromeFactory {
+    event SetFeeManager(address feeManager);
+    event SetPauser(address pauser);
+    event SetPauseState(bool state);
+    event SetVoter(address voter);
+    event PoolCreated(address indexed token0, address indexed token1, bool indexed stable, address pool, uint256);
+    event SetCustomFee(address indexed pool, uint256 fee);
+
+    error FeeInvalid();
+    error FeeTooHigh();
+    error InvalidPool();
+    error NotFeeManager();
+    error NotPauser();
+    error NotVoter();
+    error PoolAlreadyExists();
+    error SameAddress();
+    error ZeroFee();
+    error ZeroAddress();
+
+    /// @notice returns the number of pools created from this factory
+    function allPoolsLength() external view returns (uint256);
+
+    /// @notice Is a valid pool created by this factory.
+    /// @param .
+    function isPool(address pool) external view returns (bool);
+
+    /// @notice Support for v3-style pools which wraps around getPool(tokenA,tokenB,stable)
+    /// @dev fee is converted to stable boolean.
+    /// @param tokenA .
+    /// @param tokenB .
+    /// @param fee  1 if stable, 0 if volatile, else returns address(0)
+    function getPool(address tokenA, address tokenB, int24 fee) external view returns (address);
+
+    /// @dev Only called once to set to Voter.sol - Voter does not have a function
+    ///      to call this contract method, so once set it's immutable.
+    ///      This also follows convention of setVoterAndDistributor() in VotingEscrow.sol
+    /// @param _voter .
+    function setVoter(address _voter) external;
+
+    function setPauser(address _pauser) external;
+
+    function setPauseState(bool _state) external;
+
+    function setFeeManager(address _feeManager) external;
+
+    /// @notice Set default fee for stable and volatile pools.
+    /// @dev Throws if higher than maximum fee.
+    ///      Throws if fee is zero.
+    /// @param _stable Stable or volatile pool.
+    /// @param _fee .
+    function setFee(bool _stable, uint256 _fee) external;
+
+    /// @notice Set overriding fee for a pool from the default
+    /// @dev A custom fee of zero means the default fee will be used.
+    function setCustomFee(address _pool, uint256 _fee) external;
+
+    /// @notice Returns fee for a pool, as custom fees are possible.
+    function getFee(address _pool, bool _stable) external view returns (uint256);
+
+    /// @notice Create a pool given two tokens and if they're stable/volatile
+    /// @dev token order does not matter
+    /// @param tokenA .
+    /// @param tokenB .
+    /// @param stable .
+    function createPool(address tokenA, address tokenB, bool stable) external returns (address pool);
+
+    /// @notice Support for v3-style pools which wraps around createPool(tokena,tokenB,stable)
+    /// @dev fee is converted to stable boolean
+    /// @dev token order does not matter
+    /// @param tokenA .
+    /// @param tokenB .
+    /// @param fee 1 if stable, 0 if volatile, else revert
+    function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool);
+
+    function isPaused() external view returns (bool);
+
+    function voter() external view returns (address);
+
+    function implementation() external view returns (address);
+}
+
 struct SwapLp {
   address lp;
   int24 poolType;
@@ -461,4 +605,153 @@ struct SwapLp {
 
 interface IAerodromeSugar {
   function forSwaps(uint256 limit, uint256 offset) external view returns (SwapLp[]memory);
+}
+
+
+
+interface ISwapRouter {
+    struct ExactInputSingleParams {
+        address tokenIn;
+        address tokenOut;
+        int24 tickSpacing;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+        uint160 sqrtPriceLimitX96;
+    }
+
+    /// @notice Swaps `amountIn` of one token for as much as possible of another token
+    /// @param params The parameters necessary for the swap, encoded as `ExactInputSingleParams` in calldata
+    /// @return amountOut The amount of the received token
+    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);
+
+    struct ExactInputParams {
+        bytes path;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+    }
+
+    /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path
+    /// @param params The parameters necessary for the multi-hop swap, encoded as `ExactInputParams` in calldata
+    /// @return amountOut The amount of the received token
+    function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);
+}
+contract SlipstreamRouterCall {
+    function exactInputSingle(
+        uint256 amountIn,
+        uint256 _expected,
+        address router,
+        bytes calldata encodedRouterCall
+    ) external returns (uint256) {
+        (ISwapRouter.ExactInputSingleParams memory decodedCall) = abi.decode(
+            encodedRouterCall,
+            (ISwapRouter.ExactInputSingleParams)
+        );
+        decodedCall.amountIn = amountIn;
+        decodedCall.amountOutMinimum = _expected;
+        return ISwapRouter(router).exactInputSingle(decodedCall);
+    }
+
+    function exactInput(
+        uint256 amountIn,
+        uint256 _expected,
+        address router,
+        address recipient,
+        bytes memory path
+    ) external returns (uint256) {
+        ISwapRouter.ExactInputParams memory decodedCall = ISwapRouter.ExactInputParams({
+            path: path,
+            recipient: recipient,
+            deadline: block.timestamp + 1000,
+            amountIn: amountIn,
+            amountOutMinimum: _expected
+        });
+        decodedCall.amountIn = amountIn;
+        decodedCall.amountOutMinimum = _expected;
+        return ISwapRouter(router).exactInput(decodedCall);
+    }
+
+
+    struct State {
+        uint256 amountA;
+        uint256 amountB;
+        uint256 expectedA;
+        uint256 expectedB;
+
+        address tokenA;
+        address tokenB;
+        bool stable;
+        address dest;
+    }
+
+    function addLiquidityV2(
+        uint256 amountA,
+        uint256 amountB,
+        uint256 expectedA,
+        uint256 expectedB,
+        bytes memory encoding
+    ) external returns (uint256 amountOut) {
+        State memory state = State(amountA, amountB, expectedA, expectedB, address(0), address(0), false, address(0));
+
+        (address tokenA, address tokenB, bool stable, address dest, address router) = abi.decode(
+            encoding,
+            (address, address, bool, address, address)
+        );
+
+        state.tokenA = tokenA;
+        state.tokenB = tokenB;
+        state.stable = stable;
+        state.dest = dest;
+        
+        {
+            (, , uint256 liquidity) = IAerodromeRouter(router).addLiquidity(
+                state.tokenA,
+                state.tokenB,
+                state.stable,
+                state.amountA,
+                state.amountB,
+                state.expectedA,
+                state.expectedB,
+                state.dest,
+                block.timestamp + 1000
+            );
+
+            return liquidity;
+        }
+    }
+
+
+    function exactInputSingleV2(
+        uint256 amountIn,
+        uint256 expected,
+        IAerodromeRouter router,
+        address recipient,
+        bytes memory encoding
+    ) external returns (uint256 amountOut) {
+        (address tokenIn, address tokenOut, bool stable, address factory) = abi.decode(
+            encoding,
+            (address, address, bool, address)
+        );
+        IAerodromeRouter.Route[] memory routes = new IAerodromeRouter.Route[](1);
+
+        routes[0] = IAerodromeRouter.Route({
+            from: tokenIn,
+            to: tokenOut,
+            stable: stable,
+            factory: factory
+        });
+        
+        uint[] memory out = router.swapExactTokensForTokens(
+            amountIn,
+            expected,
+            routes,
+            recipient,
+            block.timestamp + 1000
+        );
+
+        return out[out.length - 1];
+    }
 }

@@ -105,7 +105,7 @@ export const bfs = (
   }
   openSet.push(OpenSetNode.createStart(start))
   for (let i = 0; i < 10000; i++) {
-    const node = openSet.pop()
+    const node = openSet.shift()
     if (node == null) {
       break
     }

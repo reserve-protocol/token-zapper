@@ -16,7 +16,6 @@ import {
   setupEthereumZapper,
   Universe,
 } from '../../src.ts/index'
-import { logger } from '../../src.ts/logger'
 import {
   createActionTestCase,
   makeIntegrationtestCase,
@@ -368,10 +367,10 @@ describe('ethereum zapper', () => {
               output!,
               testUser
             )
-            logger.info(`Yield position zap: ${zap}`)
+            console.info(`Yield position zap: ${zap}`)
             result = 'success'
           } catch (e) {
-            logger.info(`${testCaseName} = ${e.message}`)
+            console.info(`${testCaseName} = ${e.message}`)
           }
           expect(result).toBe('success')
         },

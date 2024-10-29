@@ -124,6 +124,25 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
   }
 
+  public createCachedProducer<Result>(
+    fetch: () => Promise<Result>,
+    ttl: number = this.config.requoteTolerance
+  ): () => Promise<Result> {
+    let lastFetch: number = 0
+    let lastResult: Promise<Result> | null = null
+    return async () => {
+      if (lastResult==null||Date.now() - lastFetch > ttl) {
+        lastFetch = Date.now()
+        lastResult = fetch()
+        void lastResult.catch(e => {
+          lastResult = null
+          throw e
+        });
+      }
+      return await lastResult
+    }
+  }
+
   public readonly precursorTokenSourcingSpecialCases = new Map<
     Token,
     SourcingRule
@@ -450,7 +469,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (action.addToGraph) {
       this.graph.addEdge(action)
     }
-    // console.log(`${action.inputToken.join(', ')} -> ${action.outputToken.join(', ')}`)
+    
     return this
   }
 

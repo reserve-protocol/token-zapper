@@ -246,7 +246,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
         universe.provider
       ).callStatic.getPricePerFullShare()
 
-      return universe.usd.from((lpPrice.toScaled(1n) * rate.toBigInt()) / ONE)
+      return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
     },
     priceToken: universe.usd,
   })
@@ -284,7 +284,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
         universe.provider
       ).callStatic.pricePerShare()
 
-      return universe.usd.from((lpPrice.toScaled(1n) * rate.toBigInt()) / ONE)
+      return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
     },
     priceToken: universe.usd,
   })

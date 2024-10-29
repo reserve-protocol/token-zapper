@@ -235,13 +235,17 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['sdETH+ETH-f'],
     priceFn: async () => {
-      const lpPrice =
-        (
-          await universe.fairPrice(universe.commonTokens['ETH+ETH-f'].one)
-        )?.toScaled(ONE) || 1n
-      return universe.usd.from(lpPrice)
+      const lpPrice = await universe.fairPrice(
+        universe.commonTokens['ETH+ETH-f'].one
+      )
+      if (lpPrice == null) {
+        throw Error(
+          `Failed to price ${universe.commonTokens['sdETH+ETH-f']}: Missing price for ETH+ETH-f`
+        )
+      }
+      return lpPrice
     },
-    priceToken: universe.commonTokens.WETH,
+    priceToken: universe.usd,
   })
 
   universe.addSingleTokenPriceOracle({

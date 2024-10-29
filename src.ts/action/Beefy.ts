@@ -95,7 +95,7 @@ export class BeefyWithdrawAction extends Action('Beefy') {
       [mooToken],
       [underlying],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

@@ -44,7 +44,7 @@ export class StakeDAODepositAction extends Action('StakeDAO') {
       [underlying],
       [sdToken],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Callee,
+      DestinationOptions.Recipient,
       [new Approval(underlying, vaultAddress)]
     )
   }
@@ -87,7 +87,7 @@ export class StakeDAOWithdrawAction extends Action('StakeDAO') {
       [sdToken],
       [underlying],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

@@ -95,7 +95,7 @@ export class YearnWithdrawAction extends Action('Yearn') {
       [yvToken],
       [underlying],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
+      DestinationOptions.Callee,
       []
     )
   }

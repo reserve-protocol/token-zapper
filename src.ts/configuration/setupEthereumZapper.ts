@@ -231,15 +231,22 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['mooConvexETH+'],
     priceFn: async () => {
-      const lpPrice =
-        (
-          await universe.fairPrice(universe.commonTokens['ETH+ETH-f'].one)
-        )?.toScaled(ONE) || 1n
+      const lpPrice = await universe.fairPrice(
+        universe.commonTokens['ETH+ETH-f'].one
+      )
+
+      if (lpPrice == null) {
+        throw Error(
+          `Failed to price ${universe.commonTokens['mooConvexETH+']}: Missing price for ETH+ETH-f`
+        )
+      }
+
       const rate = await IBeefyVault__factory.connect(
         universe.commonTokens['mooConvexETH+'].address.address,
         universe.provider
       ).callStatic.getPricePerFullShare()
-      return universe.usd.from((lpPrice * rate.toBigInt()) / 10n ** 28n)
+
+      return universe.usd.from((lpPrice.toScaled(1n) * rate.toBigInt()) / ONE)
     },
     priceToken: universe.commonTokens.WETH,
   })
@@ -263,15 +270,21 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['yvCurve-ETH+-f'],
     priceFn: async () => {
-      const lpPrice =
-        (
-          await universe.fairPrice(universe.commonTokens['ETH+ETH-f'].one)
-        )?.toScaled(ONE) || 1n
+      const lpPrice = await universe.fairPrice(
+        universe.commonTokens['ETH+ETH-f'].one
+      )
+
+      if (lpPrice == null) {
+        throw Error(
+          `Failed to price ${universe.commonTokens['yvCurve-ETH+-f']}: Missing price for ETH+ETH-f`
+        )
+      }
       const rate = await IVaultYearn__factory.connect(
         universe.commonTokens['yvCurve-ETH+-f'].address.address,
         universe.provider
       ).callStatic.pricePerShare()
-      return universe.usd.from((lpPrice * rate.toBigInt()) / 10n ** 28n)
+
+      return universe.usd.from((lpPrice.toScaled(1n) * rate.toBigInt()) / ONE)
     },
     priceToken: universe.commonTokens.WETH,
   })

@@ -230,7 +230,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
 
         allPlans.sort((l, r) => l.steps.length - r.steps.length)
 
-        
+
         // this.debugLog(
         //   `Found potential ${allPlans.length} trades: for ${input.token} -> ${output}`
         // )
@@ -270,6 +270,9 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
           swapPlans.map(async (plan) => {
             try {
               const out = await plan.quote([input], destination)
+              if (out.outputValue.amount <= 100n) {
+                return null;
+              }
               return out
             } catch (e) {
               return null

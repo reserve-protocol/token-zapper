@@ -239,7 +239,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
         universe.commonTokens['mooConvexETH+'].address.address,
         universe.provider
       ).callStatic.getPricePerFullShare()
-      return universe.usd.from((lpPrice * rate.toBigInt()) / ONE)
+      return universe.usd.from((lpPrice * rate.toBigInt()) / 10n ** 28n)
     },
     priceToken: universe.commonTokens.WETH,
   })
@@ -271,7 +271,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
         universe.commonTokens['yvCurve-ETH+-f'].address.address,
         universe.provider
       ).callStatic.pricePerShare()
-      return universe.usd.from((lpPrice * rate.toBigInt()) / ONE)
+      return universe.usd.from((lpPrice * rate.toBigInt()) / 10n ** 28n)
     },
     priceToken: universe.commonTokens.WETH,
   })

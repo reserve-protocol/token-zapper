@@ -228,7 +228,7 @@ const zapIntoYieldPositionCases = [
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens.dgnETH, t.sdgnETH),
   makeZapIntoYieldPositionTestCase(5, t.WETH, rTokens['ETH+'], t['ETH+ETH-f']),
   makeZapIntoYieldPositionTestCase(
-    5,
+    10,
     t.WETH,
     rTokens['ETH+'],
     t['mooConvexETH+']

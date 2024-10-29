@@ -69,6 +69,7 @@ export const COMMON_TOKENS = {
   'ETH+ETH-f': '0xe8a5677171c87fCB65b76957f2852515B404C7b1',
   'mooConvexETH+': '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0', // Beefy
   'sdETH+ETH-f': '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C', // StakeDAO
+  'yvCurve-ETH+-f': '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581', // Yearn
 } as const
 
 export const RTOKENS = {

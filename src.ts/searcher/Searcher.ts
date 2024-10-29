@@ -224,11 +224,13 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
             ),
           context
         )
-        const allPlans = bfsResult.steps
+        let allPlans = bfsResult.steps
           .map((i) => i.convertToSingularPaths())
           .flat()
 
         allPlans.sort((l, r) => l.steps.length - r.steps.length)
+
+        
         // this.debugLog(
         //   `Found potential ${allPlans.length} trades: for ${input.token} -> ${output}`
         // )
@@ -257,7 +259,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
           }
 
           return true
-        })
+        }).slice(0, 16)
         this.debugLog(
           `Found ${swapPlans.length}/${allPlans.length} trades: for ${input.token} -> ${output}`
         )

@@ -2,20 +2,20 @@ import * as dotenv from 'dotenv'
 import { ethers } from 'ethers'
 
 import { WebSocketProvider } from '@ethersproject/providers'
+import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
 import {
   Address,
   baseConfig,
   createEnso,
   createKyberswap,
   setupBaseZapper,
-  Universe,
+  Universe
 } from '../../src.ts/index'
-import { createZapTestCase } from '../createZapTestCase'
-import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
 import {
   createActionTestCase,
   makeIntegrationtestCase,
 } from '../createActionTestCase'
+import { createZapTestCase } from '../createZapTestCase'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -153,11 +153,17 @@ const provider = getProvider(process.env.BASE_PROVIDER!)
 beforeAll(async () => {
   universe = await Universe.createWithConfig(
     provider,
-    baseConfig,
+    {
+      ...baseConfig,
+      searcherMinRoutesToProduce: 1,
+      routerDeadline: 2000,
+      searchConcurrency: 32,
+      maxSearchTimeMs: 7000,
+    },
     async (uni) => {
-      // uni.addTradeVenue(createKyberswap('Kyber', uni))
+      uni.addTradeVenue(createKyberswap('Kyber', uni))
       // uni.addTradeVenue(createParaswap('paraswap', uni))
-      // uni.addTradeVenue(createEnso('enso', uni, 1))
+      uni.addTradeVenue(createEnso('enso', uni, 1))
 
       await setupBaseZapper(uni)
     },
@@ -282,5 +288,5 @@ describe('base zapper', () => {
 })
 
 afterAll(() => {
-  ;(universe.provider as WebSocketProvider).websocket.close()
+  ; (universe.provider as WebSocketProvider).websocket.close()
 })

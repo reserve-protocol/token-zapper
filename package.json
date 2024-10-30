@@ -9,6 +9,9 @@
   "keywords": [],
   "module": "./lib.esm/index.js",
   "sideEffects": false,
+  "files": [
+    "./types/**/*"
+  ],
   "types": "./types/index.d.ts",
   "author": "jan.demidov@reserve.org",
   "main": "./lib.commonjs/index.js",

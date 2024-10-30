@@ -243,6 +243,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       abort: AbortSignal
     }
   ) {
+    const tradeSize = await this.fairPrice(input)
     const wrapper = this.wrappedTokens.get(input.token)
     if (wrapper?.allowAggregatorSearcher === false) {
       return
@@ -250,8 +251,17 @@ export class Universe<const UniverseConf extends Config = Config> {
     const aggregators = this.getTradingVenues(input, output)
 
     const tradeName = `${input.token} -> ${output}`
+    const stopSearch = new AbortController()
+    const stopWork = new Promise((resolve) => {
+      stopSearch.signal.addEventListener('abort', () => {
+        resolve(null)
+      })
+    })
 
-    await Promise.all(
+    let results = 0;
+    const start = Date.now()
+    const tradeValue = tradeSize?.asNumber() ?? 0;
+    const work = Promise.all(
       shuffle(aggregators).map(async (venue) => {
         try {
           let inp = input
@@ -265,14 +275,44 @@ export class Universe<const UniverseConf extends Config = Config> {
             venue.router.swap(opts.abort, inp, output, opts.slippage),
             tradeName
           )
+          const outValue = res.outputValue.asNumber();
+          if (outValue >= tradeValue * 0.96) {
+            // IF trade does not loose more than 4% value, count the result
+            results += 1;
+          }
+
+
+          // For small trades, allow us to bail before the timeout
+          if (tradeSize && tradeSize.amount < 50000_00000000n) {
+            if (results >= this.config.routerMinResults) {
+              const delta = Date.now() - start
+
+              // We're essentially 
+              const toWait = delta > 2500 ? 500 : (2500 - delta) / 2 + 500;
+
+              setTimeout(() => {
+                if (!stopSearch.signal.aborted) {
+                  stopSearch.abort()
+                }
+              }, toWait)
+            }
+          }
+
+
+          if (stopSearch.signal.aborted || opts.abort.aborted) {
+            return;
+          }
           // console.log(`${venue.name} ok: ${res.steps[0].action.toString()}`)
           await onResult(res)
+
         } catch (e: any) {
           // console.log(`${venue.name} failed for case: ${tradeName}`)
           // console.log(e.message)
         }
       })
     )
+
+    await Promise.race([work, stopWork])
   }
 
   // Sentinel token used for pricing things

@@ -280,7 +280,6 @@ class ConvexStakingWrapper {
           this.universe.usd.zero
         )
       },
-      priceToken: this.universe.usd,
     })
 
     const pickBestPrecursorToken = (toks: Token[]): Token => {

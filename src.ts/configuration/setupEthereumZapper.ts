@@ -248,7 +248,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
       return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
     },
-    priceToken: universe.usd,
   })
 
   universe.addSingleTokenPriceSource({
@@ -264,7 +263,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       }
       return lpPrice
     },
-    priceToken: universe.usd,
   })
 
   universe.addSingleTokenPriceSource({
@@ -286,7 +284,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
       return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
     },
-    priceToken: universe.usd,
   })
 
   universe.addSingleTokenPriceOracle({

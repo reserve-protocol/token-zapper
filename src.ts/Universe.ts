@@ -129,7 +129,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     fetch: () => Promise<Result>,
     ttl: number = this.config.requoteTolerance
   ): () => Promise<Result> {
-    let lastFetch: number = 0
+    let lastFetch = 0
     let lastResult: Promise<Result> | null = null
     return async () => {
       if (lastResult == null || Date.now() - lastFetch > ttl) {
@@ -384,11 +384,12 @@ export class Universe<const UniverseConf extends Config = Config> {
     oracleAddress: Address
     priceToken: Token
   }) {
+    const { token, oracleAddress, priceToken = this.usd } = opts;
     const oracle = await PriceOracle.createSingleTokenOracleChainLinkLike(
       this,
-      opts.token,
-      opts.oracleAddress,
-      opts.priceToken
+      token,
+      oracleAddress,
+      priceToken
     )
     this.oracles.push(oracle)
     return oracle
@@ -396,12 +397,12 @@ export class Universe<const UniverseConf extends Config = Config> {
   public addSingleTokenPriceSource(opts: {
     token: Token
     priceFn: () => Promise<TokenQuantity>
-    priceToken: Token
   }) {
+    const { token, priceFn } = opts;
     const oracle = PriceOracle.createSingleTokenOracle(
       this,
-      opts.token,
-      opts.priceFn
+      token,
+      priceFn
     )
     this.oracles.push(oracle)
     return oracle

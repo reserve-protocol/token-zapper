@@ -2,45 +2,43 @@ import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
+import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { IBeefyVault__factory } from '../contracts'
+import { IVaultStakeDAO__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 
-abstract class BeefyBase extends Action('Beefy') {
+
+abstract class StakeDAOBase extends Action('StakeDAO') {
   abstract get actionName(): string;
 
   toString(): string {
-    return `Beefy.${this.actionName}(${this.inputToken.join(',')} => ${this.outputToken.join(',')}))`
+    return `StakeDAO.${this.actionName}(${this.inputToken.join(',')} => ${this.outputToken.join(',')}))`
   }
 }
 
-export class BeefyDepositAction extends BeefyBase {
+export class StakeDAODepositAction extends StakeDAOBase {
   public get actionName(): string {
     return 'deposit'
   }
-  async plan(planner: Planner, inputs: Value[]) {
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
-      IBeefyVault__factory.connect(
-        this.mooToken.address.address,
+      IVaultStakeDAO__factory.connect(
+        this.vaultAddress.address,
         this.universe.provider
       )
     )
-    planner.add(lib.deposit(inputs[0]), this.toString());
+
+    planner.add(lib.deposit(destination.address, inputs[0], true), this.toString());
 
     return null
   }
-  public get returnsOutput(): boolean {
-    return false
-  }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await IBeefyVault__factory.connect(
-      this.mooToken.address.address,
-      this.universe.provider
-    ).callStatic.getPricePerFullShare()
-    return [
-      this.mooToken.from((amountsIn.amount * rate.toBigInt()) / 10n ** 18n),
-    ]
+    return [this.sdToken.from(amountsIn.amount)]
+  }
+
+  public get returnsOutput(): boolean {
+    return false
   }
 
   gasEstimate() {
@@ -48,36 +46,38 @@ export class BeefyDepositAction extends BeefyBase {
   }
 
   get outputSlippage() {
-    return 1n
+    return 0n
   }
 
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    public readonly mooToken: Token
+    public readonly sdToken: Token,
+    readonly vaultAddress: Address
   ) {
     super(
-      mooToken.address,
+      sdToken.address,
       [underlying],
-      [mooToken],
+      [sdToken],
       InteractionConvention.ApprovalRequired,
-      DestinationOptions.Callee,
-      [new Approval(underlying, mooToken.address)]
+      DestinationOptions.Recipient,
+      [new Approval(underlying, vaultAddress)]
     )
   }
 }
 
-export class BeefyWithdrawAction extends BeefyBase {
+export class StakeDAOWithdrawAction extends StakeDAOBase {
   public get actionName(): string {
     return 'withdraw'
   }
   async plan(planner: Planner, inputs: Value[]) {
     const lib = this.gen.Contract.createContract(
-      IBeefyVault__factory.connect(
-        this.mooToken.address.address,
+      IVaultStakeDAO__factory.connect(
+        this.vaultAddress.address,
         this.universe.provider
       )
     )
+
     planner.add(lib.withdraw(inputs[0]), this.toString());
 
     return null
@@ -92,24 +92,18 @@ export class BeefyWithdrawAction extends BeefyBase {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await IBeefyVault__factory.connect(
-      this.mooToken.address.address,
-      this.universe.provider
-    ).callStatic.getPricePerFullShare()
-
-    return [
-      this.underlying.from((amountsIn.amount * 10n ** 18n) / rate.toBigInt()),
-    ]
+    return [this.sdToken.from(amountsIn.amount)]
   }
 
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    readonly mooToken: Token
+    readonly sdToken: Token,
+    readonly vaultAddress: Address
   ) {
     super(
-      mooToken.address,
-      [mooToken],
+      sdToken.address,
+      [sdToken],
       [underlying],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,

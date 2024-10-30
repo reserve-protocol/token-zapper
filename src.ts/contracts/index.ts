@@ -166,6 +166,10 @@ export type { TestPreventTampering } from "./contracts/PreventTampering.sol/Test
 export { TestPreventTampering__factory } from "./factories/contracts/PreventTampering.sol/TestPreventTampering__factory";
 export type { RTokenLens } from "./contracts/RTokenLens";
 export { RTokenLens__factory } from "./factories/contracts/RTokenLens__factory";
+export type { IGaugeStakeDAO } from "./contracts/StakeDAO.sol/IGaugeStakeDAO";
+export { IGaugeStakeDAO__factory } from "./factories/contracts/StakeDAO.sol/IGaugeStakeDAO__factory";
+export type { IVaultStakeDAO } from "./contracts/StakeDAO.sol/IVaultStakeDAO";
+export { IVaultStakeDAO__factory } from "./factories/contracts/StakeDAO.sol/IVaultStakeDAO__factory";
 export type { UniswapV2Pair } from "./contracts/UniswapV2Pair";
 export { UniswapV2Pair__factory } from "./factories/contracts/UniswapV2Pair__factory";
 export type { BalanceOf } from "./contracts/weiroll-helpers/BalanceOf";

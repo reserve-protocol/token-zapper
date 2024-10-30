@@ -13,6 +13,8 @@ const defaultSearcherOptions = {
 
   searchConcurrency: 32,
 
+  routerMinResults: 1,
+
   defaultInternalTradeSlippage: 50n,
 
   maxSearchTimeMs: 12000,

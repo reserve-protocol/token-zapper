@@ -13,6 +13,7 @@ export * as ierc4626Sol from "./IERC4626.sol";
 export * as iFrxEthFraxOracleSol from "./IFrxEthFraxOracle.sol";
 export * as iFrxMinterSol from "./IFrxMinter.sol";
 export * as irTokenZapperSol from "./IRTokenZapper.sol";
+export * as iRewardableErc20Sol from "./IRewardableERC20.sol";
 export * as isAtokenSol from "./ISAtoken.sol";
 export * as iStargadeWrapperSol from "./IStargadeWrapper.sol";
 export * as iStargateRouterSol from "./IStargateRouter.sol";

@@ -13,6 +13,7 @@ import { TRADE_SLIPPAGE_DENOMINATOR } from '../base/constants'
 import { SwapPlan } from '../searcher/Swap'
 import { defaultAbiCoder, ParamType } from '@ethersproject/abi'
 import { formatEther } from 'ethers/lib/utils'
+import { constants } from 'ethers'
 
 export enum InteractionConvention {
   PayBeforeCall,
@@ -43,6 +44,11 @@ export const ONE_Val = new gen.LiteralValue(
   ParamType.fromString('uint256'),
   defaultAbiCoder.encode(['uint256'], [ONE])
 )
+
+const needsZeroedOutFirst = new Set([
+  Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7'),
+])
+
 export const plannerUtils = {
   planForwardERC20(
     universe: Universe,
@@ -65,13 +71,41 @@ export const plannerUtils = {
     name?: string
   ) => {
     if (input instanceof gen.LiteralValue) {
-      return gen.encodeArg(BigInt(input.value) * fraction / ONE, ParamType.from('uint256'))
+      return gen.encodeArg(
+        (BigInt(input.value) * fraction) / ONE,
+        ParamType.from('uint256')
+      )
     }
     return planner.add(
       uni.weirollZapperExec.fpMul(input, fraction, ONE_Val),
       `${(parseFloat(formatEther(fraction)) * 100).toFixed(2)}% ${comment}`,
       name
     )!
+  },
+
+  approve: async (
+    universe: Universe,
+    planner: gen.Planner,
+    { token: input }: TokenQuantity,
+    spender: Address
+  ) => {
+    const allowance = (
+      await universe.approvalsStore.queryAllowance(
+        input,
+        universe.execAddress,
+        spender
+      )
+    ).toBigInt()
+    if (allowance >= constants.MaxUint256.toBigInt() / 2n) {
+      return
+    }
+    const token = gen.Contract.createContract(
+      IERC20__factory.connect(input.address.address, universe.provider)
+    )
+    if (needsZeroedOutFirst.has(input.address)) {
+      planner.add(token.approve(spender.address, 0))
+    }
+    planner.add(token.approve(spender.address, constants.MaxUint256))
   },
 
   sub: (
@@ -82,7 +116,13 @@ export const plannerUtils = {
     comment: string,
     name?: string
   ) => {
-    return planner.add(uni.weirollZapperExec.sub(a, b, ONE_Val), comment, name)!
+    if (a instanceof gen.LiteralValue && b instanceof gen.LiteralValue) {
+      return gen.encodeArg(
+        BigInt(a.value) - BigInt(b.value),
+        ParamType.from('uint256')
+      )
+    }
+    return planner.add(uni.weirollZapperExec.sub(a, b), comment, name)!
   },
   erc20: {
     transfer(
@@ -196,7 +236,7 @@ export abstract class BaseAction {
     public _interactionConvention: InteractionConvention,
     public _proceedsOptions: DestinationOptions,
     public _approvals: Approval[]
-  ) { }
+  ) {}
 
   public async intoSwapPath(universe: Universe, qty: TokenQuantity) {
     return await new SwapPlan(universe, [this]).quote(
@@ -215,7 +255,7 @@ export abstract class BaseAction {
     return outputs.map((output) => {
       return output.token.from(
         output.amount -
-        (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
+          (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
       )
     })
   }

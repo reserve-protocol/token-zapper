@@ -47,6 +47,7 @@ import { SwapPath } from './searcher/Swap'
 import { ToTransactionArgs } from './searcher/ToTransactionArgs'
 import { Contract } from './tx-gen/Planner'
 import { ZapperTokenQuantityPrice } from './oracles/ZapperAggregatorOracle'
+import winston from 'winston'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -70,8 +71,8 @@ export class Universe<const UniverseConf extends Config = Config> {
   public defineYieldPositionZap(yieldPosition: Token, rTokenInput: Token) {
     this.yieldPositionZaps.set(yieldPosition, rTokenInput)
   }
-  
-  public _finishResolving: () => void = () => {}
+
+  public _finishResolving: () => void = () => { }
   public initialized: Promise<void> = new Promise((resolve) => {
     this._finishResolving = resolve
   })
@@ -93,7 +94,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       }
     }
   }
-  public createCache<Input, Result, Key=Input>(
+  public createCache<Input, Result, Key = Input>(
     fetch: (key: Input) => Promise<Result>,
     ttl: number = this.config.requoteTolerance,
     keyFn?: (key: Input) => Key
@@ -121,6 +122,25 @@ export class Universe<const UniverseConf extends Config = Config> {
       units,
       txFee,
       txFeeUsd,
+    }
+  }
+
+  public createCachedProducer<Result>(
+    fetch: () => Promise<Result>,
+    ttl: number = this.config.requoteTolerance
+  ): () => Promise<Result> {
+    let lastFetch: number = 0
+    let lastResult: Promise<Result> | null = null
+    return async () => {
+      if (lastResult == null || Date.now() - lastFetch > ttl) {
+        lastFetch = Date.now()
+        lastResult = fetch()
+        void lastResult.catch(e => {
+          lastResult = null
+          throw e
+        });
+      }
+      return await lastResult
     }
   }
 
@@ -292,7 +312,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       this.preferredToken.set(token, inputToken)
     }
   }
-  
+
 
   public readonly integrations: Integrations = {}
   private readonly rTokenDeployments = new Map<Token, RTokenDeployment>()
@@ -450,7 +470,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (action.addToGraph) {
       this.graph.addEdge(action)
     }
-    // console.log(`${action.inputToken.join(', ')} -> ${action.outputToken.join(', ')}`)
+
     return this
   }
 
@@ -553,7 +573,20 @@ export class Universe<const UniverseConf extends Config = Config> {
     public readonly config: UniverseConf,
     public readonly approvalsStore: ApprovalsStore,
     public readonly loadToken: TokenLoader,
-    private readonly simulateZapFn_: SimulateZapTransactionFunction
+    private readonly simulateZapFn_: SimulateZapTransactionFunction,
+    public readonly logger: winston.Logger = winston.createLogger({
+      level: process.env.LOG_LEVEL ?? "info",
+      format: winston.format.json(),
+      silent: process.env.DEV !== '1',
+      transports: [
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple()
+          )
+        })
+      ]
+    })
   ) {
     const nativeToken = config.nativeToken
     this.nativeToken = Token.createToken(
@@ -654,6 +687,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     config: C,
     initialize: (universe: Universe<C>) => Promise<void>,
     opts: Partial<{
+      logger?: winston.Logger
       tokenLoader?: TokenLoader
       approvalsStore?: ApprovalsStore
       simulateZapFn?: SimulateZapTransactionFunction
@@ -675,7 +709,8 @@ export class Universe<const UniverseConf extends Config = Config> {
       config,
       opts.approvalsStore ?? new ApprovalsStore(provider),
       opts.tokenLoader ?? makeTokenLoader(provider),
-      simulateZapFunction
+      simulateZapFunction,
+      opts.logger
     )
     universe.oracles.push(new LPTokenPriceOracle(universe))
     await Promise.all(
@@ -762,7 +797,7 @@ function shuffle<T>(array: T[]): T[] {
   const out = [...array]
   for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[out[i], out[j]] = [out[j], out[i]]
+      ;[out[i], out[j]] = [out[j], out[i]]
   }
   return out
 }

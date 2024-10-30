@@ -318,6 +318,7 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
   }
 
   const dex = new DexRouter(
+    universe,
     aggregatorName,
     async (abort, input, output, slippage) => {
       if (disabledPairs.isDisabled(universe.chainId, input, output)) {

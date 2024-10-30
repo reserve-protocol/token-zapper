@@ -1,7 +1,6 @@
 import { Address } from '../base/Address'
 import { type Token } from '../entities/Token'
 import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
-import { ZapperTokenQuantityPrice } from '../oracles/ZapperAggregatorOracle'
 import { ArbitrumUniverse, PROTOCOL_CONFIGS } from './arbitrum'
 import { loadArbitrumTokenList } from './loadArbitrumTokenList'
 import { setupAaveV3 } from './setupAaveV3'

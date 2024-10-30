@@ -102,6 +102,7 @@ export const createParaswap = (aggregatorName: string, universe: Universe) => {
   })
 
   const router = new DexRouter(
+    universe,
     aggregatorName,
     async (abort, input, output, slippage) => {
       try {

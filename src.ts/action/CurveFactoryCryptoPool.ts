@@ -4,25 +4,23 @@ import { Approval } from '../base/Approval'
 
 import { ParamType } from '@ethersproject/abi'
 import { BigNumber, BigNumberish, Contract } from 'ethers'
+import { BlockCache } from '../base/BlockBasedCache'
 import {
-  CurveCryptoFactoryHelper__factory,
   IERC20,
-  IERC20__factory,
+  IERC20__factory
 } from '../contracts'
 import ABI from '../curve-js/src/constants/abis/factory-crypto/factory-crypto-pool-2.json'
 import { TokenQuantity, type Token } from '../entities/Token'
+import { MultiChoicePath } from '../searcher/MultiChoicePath'
+import { SingleSwap } from '../searcher/Swap'
 import { Planner, Value, encodeArg } from '../tx-gen/Planner'
 import {
   Action,
   BaseAction,
   DestinationOptions,
   InteractionConvention,
-  ONE,
-  ONE_Val,
+  ONE
 } from './Action'
-import { SingleSwap } from '../searcher/Swap'
-import { BlockCache } from '../base/BlockBasedCache'
-import { MultiChoicePath } from '../searcher/MultiChoicePath'
 
 abstract class CurveFactoryCryptoPoolBase extends Action(
   'CurveFactoryCryptoPool'

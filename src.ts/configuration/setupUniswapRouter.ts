@@ -317,6 +317,7 @@ const tokenQtyToCurrencyAmt = (
   return CurrencyAmount.fromRawAmount(uniToken, qty.amount.toString())
 }
 export const setupUniswapRouter = async (universe: Universe) => {
+  const logger = universe.logger.child({ name: "uniswap-router" })
   const tokenCache = new NodeJSCache<UniToken>(
     new NodeCache({ stdTTL: 3600, useClones: false })
   )
@@ -544,6 +545,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
   }
   let out!: DexRouter
   out = new DexRouter(
+    universe,
     'uniswap',
     async (abort, input, output, slippage) => {
       if (universe.lpTokens.has(input.token) || universe.lpTokens.has(output)) {
@@ -569,7 +571,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
         }
         return plan
       } catch (e: any) {
-        universe.searcher.debugLog(
+        logger.error(
           `Failed to find route for ${input} -> ${output}: ${e.message}`
         )
         throw new Error(e)

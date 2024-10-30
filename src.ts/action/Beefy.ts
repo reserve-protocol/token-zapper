@@ -6,7 +6,18 @@ import { Approval } from '../base/Approval'
 import { IBeefyVault__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 
-export class BeefyDepositAction extends Action('Beefy') {
+abstract class BeefyBase extends Action('Beefy') {
+  abstract get actionName(): string;
+
+  toString(): string {
+    return `Beefy.${this.actionName}(${this.inputToken.join(',')} => ${this.outputToken.join(',')}))`
+  }
+}
+
+export class BeefyDepositAction extends BeefyBase {
+  public get actionName(): string {
+    return 'deposit'
+  }
   async plan(planner: Planner, inputs: Value[]) {
     const lib = this.gen.Contract.createContract(
       IBeefyVault__factory.connect(
@@ -14,9 +25,12 @@ export class BeefyDepositAction extends Action('Beefy') {
         this.universe.provider
       )
     )
-    planner.add(lib.deposit(inputs[0]))
+    planner.add(lib.deposit(inputs[0]), this.toString());
 
     return null
+  }
+  public get returnsOutput(): boolean {
+    return false
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -51,13 +65,12 @@ export class BeefyDepositAction extends Action('Beefy') {
       [new Approval(underlying, mooToken.address)]
     )
   }
-
-  toString(): string {
-    return `BeefyDeposit(${this.mooToken.toString()})`
-  }
 }
 
-export class BeefyWithdrawAction extends Action('Beefy') {
+export class BeefyWithdrawAction extends BeefyBase {
+  public get actionName(): string {
+    return 'withdraw'
+  }
   async plan(planner: Planner, inputs: Value[]) {
     const lib = this.gen.Contract.createContract(
       IBeefyVault__factory.connect(
@@ -65,9 +78,13 @@ export class BeefyWithdrawAction extends Action('Beefy') {
         this.universe.provider
       )
     )
-    planner.add(lib.withdraw(inputs[0]))
+    planner.add(lib.withdraw(inputs[0]), this.toString());
 
     return null
+  }
+
+  public get returnsOutput(): boolean {
+    return false
   }
 
   gasEstimate() {
@@ -98,8 +115,5 @@ export class BeefyWithdrawAction extends Action('Beefy') {
       DestinationOptions.Callee,
       []
     )
-  }
-  toString(): string {
-    return `BeefyWithdraw(${this.mooToken.toString()})`
   }
 }

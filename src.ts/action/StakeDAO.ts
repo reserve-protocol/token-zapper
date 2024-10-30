@@ -7,7 +7,19 @@ import { Approval } from '../base/Approval'
 import { IVaultStakeDAO__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 
-export class StakeDAODepositAction extends Action('StakeDAO') {
+
+abstract class StakeDAOBase extends Action('StakeDAO') {
+  abstract get actionName(): string;
+
+  toString(): string {
+    return `StakeDAO.${this.actionName}(${this.inputToken.join(',')} => ${this.outputToken.join(',')}))`
+  }
+}
+
+export class StakeDAODepositAction extends StakeDAOBase {
+  public get actionName(): string {
+    return 'deposit'
+  }
   async plan(planner: Planner, inputs: Value[], destination: Address) {
     const lib = this.gen.Contract.createContract(
       IVaultStakeDAO__factory.connect(
@@ -16,13 +28,17 @@ export class StakeDAODepositAction extends Action('StakeDAO') {
       )
     )
 
-    planner.add(lib.deposit(destination.address, inputs[0], true))
+    planner.add(lib.deposit(destination.address, inputs[0], true), this.toString());
 
     return null
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [this.sdToken.from(amountsIn.amount)]
+  }
+
+  public get returnsOutput(): boolean {
+    return false
   }
 
   gasEstimate() {
@@ -48,13 +64,12 @@ export class StakeDAODepositAction extends Action('StakeDAO') {
       [new Approval(underlying, vaultAddress)]
     )
   }
-
-  toString(): string {
-    return `StakeDAODeposit(${this.sdToken.toString()})`
-  }
 }
 
-export class StakeDAOWithdrawAction extends Action('StakeDAO') {
+export class StakeDAOWithdrawAction extends StakeDAOBase {
+  public get actionName(): string {
+    return 'withdraw'
+  }
   async plan(planner: Planner, inputs: Value[]) {
     const lib = this.gen.Contract.createContract(
       IVaultStakeDAO__factory.connect(
@@ -63,9 +78,13 @@ export class StakeDAOWithdrawAction extends Action('StakeDAO') {
       )
     )
 
-    planner.add(lib.withdraw(inputs[0]))
+    planner.add(lib.withdraw(inputs[0]), this.toString());
 
     return null
+  }
+
+  public get returnsOutput(): boolean {
+    return false
   }
 
   gasEstimate() {
@@ -90,8 +109,5 @@ export class StakeDAOWithdrawAction extends Action('StakeDAO') {
       DestinationOptions.Callee,
       []
     )
-  }
-  toString(): string {
-    return `StakeDAOWithdraw(${this.sdToken.toString()})`
   }
 }

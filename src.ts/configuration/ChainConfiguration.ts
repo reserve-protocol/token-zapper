@@ -8,6 +8,7 @@ const defaultSearcherOptions = {
 
   // How long any individual trade may use
   routerDeadline: 2500,
+  routerMinResults: 1,
   searcherMinRoutesToProduce: 2,
   searcherMaxRoutesToProduce: 8,
 

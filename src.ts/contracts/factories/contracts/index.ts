@@ -7,7 +7,6 @@ export * as aerodromeSol from "./Aerodrome.sol";
 export * as compoundV3Sol from "./CompoundV3.sol";
 export * as convexSol from "./Convex.sol";
 export * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
-export * as fooSol from "./Foo.sol";
 export * as iAssetRegistrySol from "./IAssetRegistry.sol";
 export * as icTokenSol from "./ICToken.sol";
 export * as ierc4626Sol from "./IERC4626.sol";

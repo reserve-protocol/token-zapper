@@ -167,7 +167,7 @@ export const createParaswap = (aggregatorName: string, universe: Universe) => {
             },
             universe
           ),
-        ]).quote([input], universe.execAddress)
+        ]).quote([input])
         return out
       } catch (e) {
         throw e

@@ -221,7 +221,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       if (input.token === universe.wrappedNativeToken) {
         return await new SwapPlan(universe, [depositToETHX]).quote(
           [input],
-          dest
         )
       }
       return null

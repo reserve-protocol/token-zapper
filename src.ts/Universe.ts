@@ -110,7 +110,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     let lastFetch: number = 0
     let lastResult: Promise<Result> | null = null
     return async () => {
-      if (lastResult==null||Date.now() - lastFetch > ttl) {
+      if (lastResult == null || Date.now() - lastFetch > ttl) {
         lastFetch = Date.now()
         lastResult = fetch()
         void lastResult.catch(e => {
@@ -140,25 +140,6 @@ export class Universe<const UniverseConf extends Config = Config> {
       units,
       txFee,
       txFeeUsd,
-    }
-  }
-
-  public createCachedProducer<Result>(
-    fetch: () => Promise<Result>,
-    ttl: number = this.config.requoteTolerance
-  ): () => Promise<Result> {
-    let lastFetch = 0
-    let lastResult: Promise<Result> | null = null
-    return async () => {
-      if (lastResult == null || Date.now() - lastFetch > ttl) {
-        lastFetch = Date.now()
-        lastResult = fetch()
-        void lastResult.catch(e => {
-          lastResult = null
-          throw e
-        });
-      }
-      return await lastResult
     }
   }
 
@@ -317,6 +298,7 @@ export class Universe<const UniverseConf extends Config = Config> {
           }
 
 
+
           if (stopSearch.signal.aborted || opts.abort.aborted) {
             return;
           }
@@ -331,6 +313,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     )
 
     await Promise.race([work, stopWork])
+
   }
 
   // Sentinel token used for pricing things

@@ -138,7 +138,7 @@ export class RTokenDeployment {
       async ([input]: TokenQuantity[]) => {
         return await this.contracts.facade.callStatic
           .redeem(this.rToken.address.address, input.amount)
-          .then(async ([quantities]) =>
+          .then(async ([, quantities]) =>
             this.basket.map((token, i) => token.from(quantities[i]))
           )
       },

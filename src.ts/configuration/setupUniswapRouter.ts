@@ -563,7 +563,7 @@ export const setupUniswapRouter = async (universe: Universe) => {
         }
         const plan = await new SwapPlan(universe, [
           new UniswapRouterAction(route, universe, out),
-        ]).quote([input], universe.execAddress)
+        ]).quote([input])
         if (plan.outputs[0].amount <= 1000n) {
           throw new Error(
             `Low output plan.outputs[0].amount=${plan.outputs[0].amount}`

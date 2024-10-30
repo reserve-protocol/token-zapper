@@ -324,7 +324,7 @@ export const createEnso = (
           req,
           slippage
         ),
-      ]).quote([input], universe.execAddress)
+      ]).quote([input])
     },
     true
   ).withMaxConcurrency(4)

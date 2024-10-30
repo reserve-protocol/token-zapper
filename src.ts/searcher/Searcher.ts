@@ -238,6 +238,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         let allPlans = bfsResult.steps
           .map((i) => i.convertToSingularPaths())
           .flat()
+          .filter(i => i.steps.every(act => act.inputToken.length === 1 && act.inputToken.length === 1))
         if (allPlans.length === 0) {
           internalQuoterPerf();
           return []
@@ -249,9 +250,6 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         this.loggers.searching.info(
           `Found potential ${allPlans.length} trades: for ${input.token} -> ${output}`
         )
-        for (const plan of allPlans) {
-          this.loggers.searching.debug('  ' + plan.toString())
-        }
 
         const swapPlans = allPlans.filter((plan) => {
           if (plan == null || plan.steps.length === 0) {

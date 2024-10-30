@@ -337,7 +337,7 @@ export const createKyberswap = (aggregatorName: string, universe: Universe) => {
       }
       return await new SwapPlan(universe, [
         new KyberAction(req, universe),
-      ]).quote([input], universe.execAddress)
+      ]).quote([input])
     },
     false
   ).withMaxConcurrency(10)

@@ -5,10 +5,7 @@ import { Approval } from '../base/Approval'
 import { ParamType } from '@ethersproject/abi'
 import { BigNumber, BigNumberish, Contract } from 'ethers'
 import { BlockCache } from '../base/BlockBasedCache'
-import {
-  IERC20,
-  IERC20__factory
-} from '../contracts'
+import { IERC20, IERC20__factory } from '../contracts'
 import ABI from '../curve-js/src/constants/abis/factory-crypto/factory-crypto-pool-2.json'
 import { TokenQuantity, type Token } from '../entities/Token'
 import { MultiChoicePath } from '../searcher/MultiChoicePath'
@@ -19,7 +16,7 @@ import {
   BaseAction,
   DestinationOptions,
   InteractionConvention,
-  ONE
+  ONE,
 } from './Action'
 
 abstract class CurveFactoryCryptoPoolBase extends Action(
@@ -206,16 +203,14 @@ class CurveFactoryCryptoPoolAddLiquidityAction extends Action(
     const { token0, tok0PrLpToken, token1, tok1PrLpToken } =
       await this.pool.calcTokenAmountsPrLp()
 
-    let total = tok0PrLpToken.add(tok1PrLpToken.into(token0))
+    const total = tok0PrLpToken.add(tok1PrLpToken.into(token0))
     const fractionToken0 = tok0PrLpToken.div(total)
     const fractionToken1 = tok1PrLpToken.div(total.into(token1))
 
     let subTrade: SingleSwap | null = null
     let amounts: [TokenQuantity, TokenQuantity]
     let tradeFraction: bigint
-    const abort = AbortSignal.timeout(
-      this.universe.config.routerDeadline
-    )
+    const abort = AbortSignal.timeout(this.universe.config.routerDeadline)
     if (this.tokenIndex === 0) {
       const amountQty = amountIn.sub(amountIn.token.wei).mul(fractionToken0)
 
@@ -572,7 +567,6 @@ export class CurveFactoryCryptoPool {
         )
         return sum
       },
-      priceToken: universe.usd,
     })
 
     universe.defineMintable(mintable.mint, mintable.burn, true)

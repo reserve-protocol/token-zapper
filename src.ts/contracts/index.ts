@@ -194,6 +194,8 @@ export type { VM } from "./contracts/weiroll/VM";
 export { VM__factory } from "./factories/contracts/weiroll/VM__factory";
 export type { WrapperCompV3 } from "./contracts/WrapperCompV3";
 export { WrapperCompV3__factory } from "./factories/contracts/WrapperCompV3__factory";
+export type { IVaultYearn } from "./contracts/Yearn.sol/IVaultYearn";
+export { IVaultYearn__factory } from "./factories/contracts/Yearn.sol/IVaultYearn__factory";
 export type { Zapper } from "./contracts/Zapper.sol/Zapper";
 export { Zapper__factory } from "./factories/contracts/Zapper.sol/Zapper__factory";
 export type { ZapperExecutor } from "./contracts/Zapper.sol/ZapperExecutor";

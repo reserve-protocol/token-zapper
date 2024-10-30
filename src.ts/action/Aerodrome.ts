@@ -85,8 +85,9 @@ abstract class BaseV2AerodromeAction extends Action('BaseAerodromeStablePool') {
   }
 
   public toString(): string {
-    return `${this.protocol}.${this.actionName}(${this.pool.address
-      }, ${this.inputToken.join(', ')} => ${this.outputToken.join(', ')})`
+    return `${this.protocol}.${this.actionName}(${
+      this.pool.address
+    }, ${this.inputToken.join(', ')} => ${this.outputToken.join(', ')})`
   }
 }
 
@@ -134,7 +135,7 @@ class AeropoolAddLiquidity extends BaseV2AerodromeAction {
             destination.address,
             this.pool.context.router.address,
           ]
-        ),
+        )
       ),
       `${this.protocol}:${this.actionName}(${minAmounts.join(
         ', '
@@ -299,7 +300,6 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
     const [minAmount] = await this.quote(predictedInputs)
     const minOut = minAmount.amount - minAmount.amount / 10n
 
-
     const encoded = utils.defaultAbiCoder.encode(
       [
         'address',
@@ -426,7 +426,7 @@ class WrappedLpAdd extends BaseV2AerodromeAction {
         this.pool.universe,
         planner,
         input,
-        parseUnits("0.520", 18).toBigInt(),
+        parseUnits('0.520', 18).toBigInt(),
         `trade ${quote.inputs.join(', ')} -> ${quote.outputs.join(', ')}`,
         'trade_input'
       ),
@@ -512,7 +512,6 @@ class WrappedLpAdd extends BaseV2AerodromeAction {
 
     const cache = this.pool.universe.createCache(
       async ([amountIn]: TokenQuantity[]) => {
-
         const abort = AbortSignal.timeout(
           this.pool.universe.config.routerDeadline
         )
@@ -559,9 +558,9 @@ class WrappedLpAdd extends BaseV2AerodromeAction {
           amounts: (tokenIn === pool.token0
             ? [amountIn.scalarDiv(2n), quote.outputs[0]]
             : [quote.outputs[0], amountIn.scalarDiv(2n)]) as [
-              TokenQuantity,
-              TokenQuantity
-            ],
+            TokenQuantity,
+            TokenQuantity
+          ],
           output: liquidity,
         }
       },
@@ -707,16 +706,16 @@ class AerodromeStablePool {
     this.actions =
       this.poolType === AerodromePoolType.CL
         ? {
-          t0for1: new AeropoolSwapCL(this, this.token0, this.token1),
-          t1for0: new AeropoolSwapCL(this, this.token1, this.token0),
-        }
+            t0for1: new AeropoolSwapCL(this, this.token0, this.token1),
+            t1for0: new AeropoolSwapCL(this, this.token1, this.token0),
+          }
         : {
-          addLiquidity: new AeropoolAddLiquidity(this),
-          removeLiquidity: new AeropoolRemoveLiquidity(this),
+            addLiquidity: new AeropoolAddLiquidity(this),
+            removeLiquidity: new AeropoolRemoveLiquidity(this),
 
-          t0for1: new AeropoolSwap(this, [this.token0], [this.token1]),
-          t1for0: new AeropoolSwap(this, [this.token1], [this.token0]),
-        }
+            t0for1: new AeropoolSwap(this, [this.token0], [this.token1]),
+            t1for0: new AeropoolSwap(this, [this.token1], [this.token0]),
+          }
 
     if (
       this.poolType === AerodromePoolType.CL ||
@@ -815,7 +814,7 @@ class AerodromeStablePool {
       desiredInput
     )
 
-    let amountBOptimal = reserveB.token.from(
+    const amountBOptimal = reserveB.token.from(
       quoteLiquidity(desiredInput.amount, reserveA.amount, reserveB.amount)
     )
 
@@ -824,9 +823,9 @@ class AerodromeStablePool {
 
     const _totalSupply = (await this.totalSupply()).amount
 
-      ;[amount0, amount1] = D0FOR1
-        ? [desiredInput, amountBOptimal]
-        : [amountBOptimal, desiredInput]
+    ;[amount0, amount1] = D0FOR1
+      ? [desiredInput, amountBOptimal]
+      : [amountBOptimal, desiredInput]
 
     const A = (amount0.amount * _totalSupply) / res0.amount
     const B = (amount1.amount * _totalSupply) / res1.amount
@@ -901,9 +900,8 @@ class AerodromeStablePool {
               }
               return out
             },
-            priceToken: universe.usd,
           })
-        } catch (e) { }
+        } catch (e) {}
       }
     }
 

@@ -3,45 +3,29 @@ import { type Universe } from '../Universe'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 import { Approval } from '../base/Approval'
-import { IBeefyVault__factory } from '../contracts'
+import { IVaultYearn__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 
-abstract class BeefyBase extends Action('Beefy') {
-  abstract get actionName(): string
-
-  toString(): string {
-    return `Beefy.${this.actionName}(${this.inputToken.join(
-      ','
-    )} => ${this.outputToken.join(',')}))`
-  }
-}
-
-export class BeefyDepositAction extends BeefyBase {
-  public get actionName(): string {
-    return 'deposit'
-  }
+export class YearnDepositAction extends Action('Yearn') {
   async plan(planner: Planner, inputs: Value[]) {
     const lib = this.gen.Contract.createContract(
-      IBeefyVault__factory.connect(
-        this.mooToken.address.address,
+      IVaultYearn__factory.connect(
+        this.yvToken.address.address,
         this.universe.provider
       )
     )
-    planner.add(lib.deposit(inputs[0]), this.toString())
+    planner.add(lib.deposit(inputs[0]))
 
     return null
   }
-  public get returnsOutput(): boolean {
-    return false
-  }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await IBeefyVault__factory.connect(
-      this.mooToken.address.address,
+    const rate = await IVaultYearn__factory.connect(
+      this.yvToken.address.address,
       this.universe.provider
-    ).callStatic.getPricePerFullShare()
+    ).callStatic.pricePerShare()
     return [
-      this.mooToken.from((amountsIn.amount * rate.toBigInt()) / 10n ** 18n),
+      this.yvToken.from((amountsIn.amount * rate.toBigInt()) / 10n ** 18n),
     ]
   }
 
@@ -56,37 +40,34 @@ export class BeefyDepositAction extends BeefyBase {
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    public readonly mooToken: Token
+    public readonly yvToken: Token
   ) {
     super(
-      mooToken.address,
+      yvToken.address,
       [underlying],
-      [mooToken],
+      [yvToken],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      [new Approval(underlying, mooToken.address)]
+      [new Approval(underlying, yvToken.address)]
     )
+  }
+
+  toString(): string {
+    return `YearnDeposit(${this.yvToken.toString()})`
   }
 }
 
-export class BeefyWithdrawAction extends BeefyBase {
-  public get actionName(): string {
-    return 'withdraw'
-  }
+export class YearnWithdrawAction extends Action('Yearn') {
   async plan(planner: Planner, inputs: Value[]) {
     const lib = this.gen.Contract.createContract(
-      IBeefyVault__factory.connect(
-        this.mooToken.address.address,
+      IVaultYearn__factory.connect(
+        this.yvToken.address.address,
         this.universe.provider
       )
     )
-    planner.add(lib.withdraw(inputs[0]), this.toString())
+    planner.add(lib.withdraw(inputs[0]))
 
     return null
-  }
-
-  public get returnsOutput(): boolean {
-    return false
   }
 
   gasEstimate() {
@@ -94,10 +75,10 @@ export class BeefyWithdrawAction extends BeefyBase {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await IBeefyVault__factory.connect(
-      this.mooToken.address.address,
+    const rate = await IVaultYearn__factory.connect(
+      this.yvToken.address.address,
       this.universe.provider
-    ).callStatic.getPricePerFullShare()
+    ).callStatic.pricePerShare()
 
     return [
       this.underlying.from((amountsIn.amount * 10n ** 18n) / rate.toBigInt()),
@@ -107,15 +88,18 @@ export class BeefyWithdrawAction extends BeefyBase {
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    readonly mooToken: Token
+    readonly yvToken: Token
   ) {
     super(
-      mooToken.address,
-      [mooToken],
+      yvToken.address,
+      [yvToken],
       [underlying],
       InteractionConvention.None,
       DestinationOptions.Callee,
       []
     )
+  }
+  toString(): string {
+    return `YearnWithdraw(${this.yvToken.toString()})`
   }
 }

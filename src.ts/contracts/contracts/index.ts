@@ -37,6 +37,8 @@ import type * as preventTamperingSol from "./PreventTampering.sol";
 export type { preventTamperingSol };
 import type * as stakeDaoSol from "./StakeDAO.sol";
 export type { stakeDaoSol };
+import type * as yearnSol from "./Yearn.sol";
+export type { yearnSol };
 import type * as zapperSol from "./Zapper.sol";
 export type { zapperSol };
 import type * as weiroll from "./weiroll";

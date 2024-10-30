@@ -34,12 +34,12 @@ export const createProtocolWithWrappers = (
       public readonly output: Token,
       approval:
         | {
-          convention: InteractionConvention
-          spender: Address
-        }
+            convention: InteractionConvention
+            spender: Address
+          }
         | { convention: InteractionConvention.None } = {
-          convention: InteractionConvention.None,
-        }
+        convention: InteractionConvention.None,
+      }
     ) {
       super(
         address,
@@ -182,7 +182,6 @@ export const createProtocolWithWrappers = (
           }
           return out
         },
-        priceToken: universe.usd,
       })
       universe.addAction(deposit)
       universe.addAction(withdraw)

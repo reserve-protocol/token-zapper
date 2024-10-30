@@ -7,9 +7,14 @@ import {
 } from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
 import { StakeDAODepositAction } from '../action/StakeDAO'
+import { YearnDepositAction } from '../action/Yearn'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
-import { IBeefyVault__factory, IGaugeStakeDAO__factory } from '../contracts'
+import {
+  IBeefyVault__factory,
+  IGaugeStakeDAO__factory,
+  IVaultYearn__factory,
+} from '../contracts'
 import { TokenQuantity } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
@@ -194,6 +199,13 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToStakeDAO)
 
+  const depositToYearn = new YearnDepositAction(
+    universe,
+    commonTokens['ETH+ETH-f'],
+    commonTokens['yvCurve-ETH+-f']
+  )
+  universe.addAction(depositToYearn)
+
   const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
     universe,
     universe.commonTokens.USDe,
@@ -219,17 +231,23 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['mooConvexETH+'],
     priceFn: async () => {
-      const lpPrice =
-        (
-          await universe.fairPrice(universe.commonTokens['ETH+ETH-f'].one)
-        )?.toScaled(ONE) || 1n
+      const lpPrice = await universe.fairPrice(
+        universe.commonTokens['ETH+ETH-f'].one
+      )
+
+      if (lpPrice == null) {
+        throw Error(
+          `Failed to price ${universe.commonTokens['mooConvexETH+']}: Missing price for ETH+ETH-f`
+        )
+      }
+
       const rate = await IBeefyVault__factory.connect(
         universe.commonTokens['mooConvexETH+'].address.address,
         universe.provider
       ).callStatic.getPricePerFullShare()
-      return universe.usd.from((lpPrice * rate.toBigInt()) / ONE)
+
+      return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
     },
-    priceToken: universe.commonTokens.WETH,
   })
 
   universe.addSingleTokenPriceSource({
@@ -245,7 +263,27 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       }
       return lpPrice
     },
-    priceToken: universe.usd,
+  })
+
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens['yvCurve-ETH+-f'],
+    priceFn: async () => {
+      const lpPrice = await universe.fairPrice(
+        universe.commonTokens['ETH+ETH-f'].one
+      )
+
+      if (lpPrice == null) {
+        throw Error(
+          `Failed to price ${universe.commonTokens['yvCurve-ETH+-f']}: Missing price for ETH+ETH-f`
+        )
+      }
+      const rate = await IVaultYearn__factory.connect(
+        universe.commonTokens['yvCurve-ETH+-f'].address.address,
+        universe.provider
+      ).callStatic.pricePerShare()
+
+      return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
+    },
   })
 
   universe.addSingleTokenPriceOracle({

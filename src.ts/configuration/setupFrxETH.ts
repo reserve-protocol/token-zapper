@@ -250,7 +250,6 @@ export const setupFrxETH = async (
       const out = (await universe.fairPrice(weth)) ?? universe.usd.zero
       return out
     },
-    priceToken: universe.usd,
   })
 
   universe.addSingleTokenPriceSource({
@@ -261,6 +260,5 @@ export const setupFrxETH = async (
       const res = out[0].into(universe.usd).mul(i)
       return res
     },
-    priceToken: universe.usd,
   })
 }

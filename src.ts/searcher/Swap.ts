@@ -21,7 +21,7 @@ export class SingleSwap {
     public readonly inputs: TokenQuantity[],
     public readonly action: BaseAction,
     public readonly outputs: TokenQuantity[]
-  ) {}
+  ) { }
 
   get proceedsOptions() {
     return this.action.proceedsOptions
@@ -41,8 +41,8 @@ export class SingleSwap {
     return `SingleSwap(input: ${this.inputs
       .map((i) => i.formatWithSymbol())
       .join(', ')}, action: ${this.action}, output: ${this.outputs
-      .map((i) => i.formatWithSymbol())
-      .join(', ')})`
+        .map((i) => i.formatWithSymbol())
+        .join(', ')})`
   }
 
   describe() {
@@ -60,7 +60,7 @@ class PathStats {
     public readonly txFee: TokenQuantity,
     public readonly netValue: TokenQuantity,
     public readonly gasUnits: bigint
-  ) {}
+  ) { }
 }
 
 class BasePath {
@@ -75,7 +75,7 @@ class BasePath {
     public readonly steps: SingleSwap[],
     public readonly inputs: TokenQuantity[],
     public readonly outputs: TokenQuantity[]
-  ) {}
+  ) { }
 
   get supportsDynamicInput() {
     return this.steps[0].action.supportsDynamicInput
@@ -145,8 +145,7 @@ export class SwapPath {
       this.inputs,
       [this],
       this.outputs,
-      this.outputValue,
-      this.destination
+      this.outputValue
     )
   }
 
@@ -154,8 +153,7 @@ export class SwapPath {
     public readonly inputs: TokenQuantity[],
     public readonly steps: SingleSwap[],
     public readonly outputs: TokenQuantity[],
-    public readonly outputValue: TokenQuantity,
-    public readonly destination: Address
+    public readonly outputValue: TokenQuantity
   ) {
     if (steps.length === 0) {
       throw new Error('Invalid SwapPath, no steps')
@@ -187,8 +185,8 @@ export class SwapPath {
     return `SwapPath(input: ${this.inputs
       .map((i) => i.formatWithSymbol())
       .join(', ')}, steps: ${this.steps.join(', ')}, output: ${this.outputs
-      .map((i) => i.formatWithSymbol())
-      .join(', ')} (${this.outputValue.formatWithSymbol()}))`
+        .map((i) => i.formatWithSymbol())
+        .join(', ')} (${this.outputValue.formatWithSymbol()}))`
   }
 
   describe() {
@@ -208,7 +206,7 @@ export class SwapPath {
         }
       }
     }
-    out.push(`  outputs: ${this.outputs.join(', ')} -> ${this.destination}`)
+    out.push(`  outputs: ${this.outputs.join(', ')}`)
     out.push('}')
     return out
   }
@@ -242,9 +240,8 @@ export class SwapPaths {
     public readonly inputs: TokenQuantity[],
     public readonly swapPaths: SwapPath[],
     public readonly outputs: TokenQuantity[],
-    public readonly outputValue: TokenQuantity,
-    public readonly destination: Address
-  ) {}
+    public readonly outputValue: TokenQuantity
+  ) { }
 
   public static fromPaths(universe: Universe, paths: SwapPath[]) {
     if (paths.length === 0) {
@@ -257,14 +254,12 @@ export class SwapPaths {
     const outputValue = paths
       .map((i) => i.outputValue)
       .reduce((l, r) => l.add(r))
-    const destination = paths.at(-1)!.destination
     return new SwapPaths(
       universe,
       inputs.toTokenQuantities(),
       paths,
       outputs.toTokenQuantities(),
-      outputValue,
-      destination
+      outputValue
     )
   }
 
@@ -277,23 +272,22 @@ export class SwapPaths {
   }
 
   toShortString() {
-    return `SwapPaths(input:${this.inputs},output:${
-      this.outputs
-    },ops:[${this.swapPaths
-      .map((i) => {
-        return `[${i.inputs.join(', ')} => ${i.outputs.join(', ')}]`
-      })
-      .join(', ')}])`
+    return `SwapPaths(input:${this.inputs},output:${this.outputs
+      },ops:[${this.swapPaths
+        .map((i) => {
+          return `[${i.inputs.join(', ')} => ${i.outputs.join(', ')}]`
+        })
+        .join(', ')}])`
   }
 
   toString() {
     return `SwapPaths(input: ${this.inputs
       .map((i) => i.formatWithSymbol())
       .join(', ')}, swapPaths: ${this.swapPaths.join(
-      ', '
-    )}, output: ${this.outputs
-      .map((i) => i.formatWithSymbol())
-      .join(', ')} (${this.outputValue.formatWithSymbol()}))`
+        ', '
+      )}, output: ${this.outputs
+        .map((i) => i.formatWithSymbol())
+        .join(', ')} (${this.outputValue.formatWithSymbol()}))`
   }
 
   describe() {
@@ -337,16 +331,22 @@ export class SwapPaths {
 export class SwapPlan {
   constructor(
     readonly universe: Universe,
-    public readonly steps: BaseAction[]
-  ) {}
+    public readonly steps: BaseAction[],
+  ) { }
 
-  get inputs() {
+  public get inputs() {
     return this.steps[0].inputToken
+  }
+  public get outputs() {
+    return this.steps[this.steps.length - 1].outputToken
+  }
+
+  public async outputProportions() {
+    return await this.steps.at(-1)!.outputProportions()
   }
 
   public async quote(
-    input: TokenQuantity[],
-    destination: Address
+    input: TokenQuantity[]
   ): Promise<SwapPath> {
     if (input.length === 0) {
       throw new Error('Invalid input, no input tokens ' + this.toString())
@@ -358,11 +358,11 @@ export class SwapPlan {
       if (step.inputToken.length !== legAmount.length) {
         throw new Error(
           'Invalid input, input count does not match Action input length: ' +
-            step.inputToken.join(', ') +
-            ' vs ' +
-            legAmount.join(', ') +
-            ' ' +
-            this.toString()
+          step.inputToken.join(', ') +
+          ' vs ' +
+          legAmount.join(', ') +
+          ' ' +
+          this.toString()
         )
       }
 
@@ -380,7 +380,7 @@ export class SwapPlan {
       )
     ).reduce((l, r) => l.add(r))
 
-    return new SwapPath(input, swaps, legAmount, value, destination)
+    return new SwapPath(input, swaps, legAmount, value)
   }
 
   toString() {

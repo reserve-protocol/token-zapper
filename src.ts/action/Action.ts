@@ -258,7 +258,7 @@ export abstract class BaseAction {
    *
    * If the action produces a single output this should not be ovewritten.
    */
-  public async outputProportions() {
+  public async outputProportions(): Promise<TokenQuantity[]> {
     if (this.outputToken.length !== 1) {
       throw new Error(
         `${this}: Unimplemented output token proportions, for multi-output action`
@@ -307,12 +307,11 @@ export abstract class BaseAction {
     public _interactionConvention: InteractionConvention,
     public _proceedsOptions: DestinationOptions,
     public _approvals: Approval[]
-  ) {}
+  ) { }
 
   public async intoSwapPath(universe: Universe, qty: TokenQuantity) {
     return await new SwapPlan(universe, [this]).quote(
       [qty],
-      universe.execAddress
     )
   }
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
@@ -326,7 +325,7 @@ export abstract class BaseAction {
     return outputs.map((output) => {
       return output.token.from(
         output.amount -
-          (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
+        (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
       )
     })
   }

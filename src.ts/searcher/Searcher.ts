@@ -284,7 +284,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         const res = await Promise.all(
           swapPlans.map(async (plan) => {
             try {
-              const out = await plan.quote([input], destination)
+              const out = await plan.quote([input])
               if (out.outputValue.amount <= 100n) {
                 return null;
               }
@@ -580,7 +580,6 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
                   tradeAction.action,
                 ]).quote(
                   actionInput,
-                  this.universe.config.addresses.executorAddress
                 )
                 exchanges.push(mintExec)
                 precursorIntoUnitBasket.push(mintExec)
@@ -650,7 +649,6 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
               tradeInputToTokenSet,
               tradingOutputs,
               tradeValueOut,
-              this.universe.config.addresses.executorAddress
             ),
             minting: new SwapPaths(
               this.universe,
@@ -658,7 +656,6 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
               precursorIntoUnitBasket,
               tradingBalances.toTokenQuantities(),
               mintStepValueOut,
-              this.universe.config.addresses.executorAddress
             ),
           }
         } catch (e: any) {
@@ -734,7 +731,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     }
     const plan = new SwapPlan(this.universe, [mintBurnActions.burn])
     const swap = (
-      await plan.quote([qty], this.universe.config.addresses.executorAddress)
+      await plan.quote([qty])
     ).steps[0]
     return swap
   }
@@ -756,7 +753,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       const plan = new SwapPlan(this.universe, [mintBurnActions.burn])
       const [output, firstStep] = await Promise.all([
         mintBurnActions.burn.quoteWithSlippage([qty]),
-        plan.quote([qty], this.universe.config.addresses.executorAddress),
+        plan.quote([qty]),
       ])
       swapPlans.push(firstStep.steps[0])
       for (const underlyingQty of output) {
@@ -777,8 +774,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       [qty],
       swapPlans,
       output,
-      outputQuotes.reduce((l, r) => l.add(r), this.universe.usd.zero),
-      this.universe.config.addresses.executorAddress
+      outputQuotes.reduce((l, r) => l.add(r), this.universe.usd.zero)
     )
   }
 
@@ -862,8 +858,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       [rTokenQuantity],
       [redeemStep],
       redeemStep.outputs,
-      this.universe.usd.zero,
-      this.universe.config.addresses.executorAddress
+      this.universe.usd.zero
     )
     const tokenAmounts = new TokenAmounts()
     const redeemSwapPaths: SwapPath[] = []
@@ -1036,8 +1031,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         [rTokenQuantity],
         [redeem, ...redeemSwapPaths, ...underlyingToOutputTrades],
         postTradeBalances.toTokenQuantities(),
-        outputValue,
-        signerAddress
+        outputValue
       )
 
       const zap = new RedeemZap(
@@ -1350,7 +1344,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     await this.findSingleInputToBasketGivenBasketUnit(
       inputTokenQuantity,
       rToken,
-      unitBasket,
+      unitBasket.map(i => i.quantity),
       slippage,
       signerAddress,
       async (inputQuantityToBasketTokens) => {
@@ -1366,9 +1360,6 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
           rTokenActions.mint,
         ]).quote(
           mintAction.inputToken.map((token) => tradingBalances.get(token)),
-          endPosition !== rToken
-            ? this.config.addresses.executorAddress
-            : signerAddress
         )
         await rTokenMint.exchange(tradingBalances)
 
@@ -1401,7 +1392,6 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
               [...inputQuantityToBasketTokens.minting.swapPaths, rTokenMint],
               rTokenMint.outputs,
               rTokenMint.outputValue,
-              this.universe.execAddress
             )
 
             const full = new SwapPaths(
@@ -1417,7 +1407,6 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
               ],
               outputReordered,
               lastStep.outputValue,
-              signerAddress
             )
 
             const parts = {
@@ -1467,7 +1456,6 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
           ],
           outputReordered,
           rTokenMint.outputValue,
-          signerAddress
         )
 
         const parts = {

@@ -102,6 +102,10 @@ export type { ICurveStableSwapNG } from "./contracts/CurveStableSwapNG.sol/ICurv
 export { ICurveStableSwapNG__factory } from "./factories/contracts/CurveStableSwapNG.sol/ICurveStableSwapNG__factory";
 export type { EnsoRouter } from "./contracts/EnsoRouter";
 export { EnsoRouter__factory } from "./factories/contracts/EnsoRouter__factory";
+export type { IConcentratorVault } from "./contracts/Foo.sol/IConcentratorVault";
+export { IConcentratorVault__factory } from "./factories/contracts/Foo.sol/IConcentratorVault__factory";
+export type { VirtualERC20 } from "./contracts/Foo.sol/VirtualERC20";
+export { VirtualERC20__factory } from "./factories/contracts/Foo.sol/VirtualERC20__factory";
 export type { IAsset } from "./contracts/IAssetRegistry.sol/IAsset";
 export { IAsset__factory } from "./factories/contracts/IAssetRegistry.sol/IAsset__factory";
 export type { IAssetRegistry } from "./contracts/IAssetRegistry.sol/IAssetRegistry";

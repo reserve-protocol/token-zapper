@@ -1,13 +1,18 @@
 import { BaseAction } from '../action/Action'
+import { Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
 import { Token, TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
+import { Planner, Value } from '../tx-gen/Planner'
 import { Universe } from '../Universe'
-import { SwapPath, SwapPath1toN } from './Swap'
+import { SwapPath, SwapPath1toN, SwapPlan } from './Swap'
 
 class EvalContext {
   public readonly balances: TokenAmounts = new TokenAmounts()
-  public constructor() {}
+}
+class PlanContext extends EvalContext {
+  public readonly values: Map<Token, Value> = new Map()
+  public readonly planner: Planner = new Planner()
 }
 abstract class DagNode {
   protected consumers = new DefaultMap<Token, DagNode[]>(() => [])
@@ -15,7 +20,7 @@ abstract class DagNode {
   constructor(
     public readonly inputs: [number, Token][],
     public readonly outputs: [number, Token][]
-  ) {}
+  ) { }
 
   public forward(token: Token, next: DagNode) {
     this.consumers.get(token).push(next)
@@ -25,6 +30,15 @@ abstract class DagNode {
     context: EvalContext,
     inputs: TokenQuantity[]
   ): Promise<TokenQuantity[]> {
+    throw new Error('Method not implemented.')
+  }
+
+  public async plan(
+    context: PlanContext,
+    inputs: Value[],
+    destination: Address,
+    predictedInputs: TokenQuantity[]
+  ): Promise<Value | null> {
     throw new Error('Method not implemented.')
   }
 }
@@ -84,17 +98,63 @@ class EffectNode extends DagNode {
       inputs
     )
   }
+
+  public async plan(
+    planner: Planner,
+    inputs: Value[],
+    destination: Address,
+    predictedInputs: TokenQuantity[]
+  ): Promise<Value | null> {
+
+  }
 }
 
 class ActionNode extends DagNode {
-  constructor(public readonly path: SwapPath1toN) {
+  constructor(
+    public readonly actions: SwapPlan,
+    public readonly outputProportions: [number, Token][]
+  ) {
     super(
-      [[1, path.input.token]],
-      path.outputs.length === 1
-        ? [[1, path.outputs[0].token]]
-        : path.proportions().map((i) => [i.asNumber(), i.token])
+      [[1, actions.inputs[0]]],
+      outputProportions
     )
+
+    if (actions.inputs.length !== 1) {
+      throw new Error('ActionNode must have exactly one input')
+    }
   }
+
+  public async evaluate(
+    context: EvalContext,
+    inputs: TokenQuantity[]
+  ): Promise<TokenQuantity[]> {
+    if (inputs.length !== 1) {
+      throw new Error('ActionNode must have exactly one input')
+    }
+    const path = (await this.actions.quote(inputs));
+    const outputs = new Map<Token, TokenQuantity>()
+    await Promise.all(path.outputs.map(async (output) => {
+      const consumers = this.consumers.get(output.token)
+      if (consumers.length !== 1) {
+        throw new Error(`Each output token must have exactly one consumer. Got ${consumers.length} for ${output.token}`)
+      }
+      const out = await consumers[0].evaluate(context, [output]);
+      if (out.length !== 1) {
+        throw new Error(`Consumer must have exactly one output. Got ${out.length} for ${output.token}`)
+      }
+      outputs.set(output.token, out[0])
+    }))
+
+    const out = this.outputs.map(([_, token]) => {
+      const res = outputs.get(token);
+      if (res == null) {
+        throw new Error(`Failed to find output for ${token}`)
+      }
+      return res
+    })
+    return out;
+  }
+
 }
 
 class SplitNode extends DagNode {
@@ -142,7 +202,7 @@ class SearchContextConfig {
   constructor(
     public readonly userInput: TokenQuantity[],
     public readonly userOutput: TokenQuantity[]
-  ) {}
+  ) { }
 }
 
 const routeOutputToConsumers = (
@@ -309,24 +369,28 @@ class Dag {
    * Replaces the open set with a new set of actions. This will remove all the tokens from the open set, and replace it with a new set of tokens
    * the new set will be the inputs of the actions.
    */
-  public replaceOpenSet(tokenDerivations: SwapPath1toN[]) {
+  public async replaceOpenSet(tokenDerivations: SwapPlan[]) {
     const consumed = new Set<Token>()
     const openSet = this.openTokenSet
     this.openTokenSet = new Map()
+    for (const plan of tokenDerivations) {
+      if (plan.inputs.length !== 1) {
+        throw new Error(`Cannot replace set: plan must have exactly one input`)
+      }
+    }
     if (tokenDerivations.length !== openSet.size) {
       throw new Error(
         `Cannot replace set: expected ${openSet.size} derivations, got ${tokenDerivations.length}`
       )
     }
-    if (!tokenDerivations.every((i) => openSet.has(i.input.token))) {
+    if (!tokenDerivations.every(plan => openSet.has(plan.inputs[0]))) {
       throw new Error(
         `Cannot replace set: derivations must all have the same input token`
       )
     }
 
     for (const action of tokenDerivations) {
-      const outputTokens = action.outputs.map((i) => i.token)
-      for (const outputToken of outputTokens) {
+      for (const outputToken of action.outputs) {
         if (consumed.has(outputToken)) {
           throw new Error(
             `Cannot replace set: token ${outputToken} is already consumed`
@@ -339,9 +403,14 @@ class Dag {
           )
         }
       }
-      const actionNode = new ActionNode(action)
+
+      const proportions = action.outputs.length === 1 ? [
+        [1, action.outputs[0]] as [number, Token]
+      ] : await action.outputProportions().then(i => i.map(qty => [qty.asNumber(), qty.token] as [number, Token]))
+
+      const actionNode = new ActionNode(action, proportions)
       let outProportion = 0.0
-      for (const outToken of outputTokens) {
+      for (const outToken of action.outputs) {
         const consumers = openSet.get(outToken)!
         routeOutputToConsumers(actionNode, outToken, consumers.consumers)
         outProportion += consumers.proportion
@@ -350,7 +419,7 @@ class Dag {
         throw new Error(`Failed to find a route for ${action.toString()}`)
       }
 
-      this.openTokenSet.set(action.input.token, {
+      this.openTokenSet.set(action.inputs[0], {
         proportion: outProportion,
         consumers: [{ proportion: 1, consumer: actionNode }],
       })
@@ -368,21 +437,21 @@ class SearchContext {
 
 type TokenStrategies =
   | {
-      type: 'trade'
-      input: TokenQuantity
-      output: Token
-    }
+    type: 'trade'
+    input: TokenQuantity
+    output: Token
+  }
   | {
-      type: 'action'
-      amounts?: TokenQuantity[]
-      action: BaseAction
-    }
+    type: 'action'
+    amounts?: TokenQuantity[]
+    action: BaseAction
+  }
 
 export class OpenSetTokenStrategy {
   constructor(
     public readonly universe: Universe,
     public readonly token: Token
-  ) {}
+  ) { }
 
-  public addOption(fn: (context: SearchContext) => TokenStrategies) {}
+  public addOption(fn: (context: SearchContext) => TokenStrategies) { }
 }

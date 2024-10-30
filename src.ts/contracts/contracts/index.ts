@@ -13,6 +13,8 @@ import type * as convexSol from "./Convex.sol";
 export type { convexSol };
 import type * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
 export type { curveStableSwapNgSol };
+import type * as fooSol from "./Foo.sol";
+export type { fooSol };
 import type * as iAssetRegistrySol from "./IAssetRegistry.sol";
 export type { iAssetRegistrySol };
 import type * as icTokenSol from "./ICToken.sol";

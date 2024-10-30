@@ -7,10 +7,12 @@ import { IBeefyVault__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 
 abstract class BeefyBase extends Action('Beefy') {
-  abstract get actionName(): string;
+  abstract get actionName(): string
 
   toString(): string {
-    return `Beefy.${this.actionName}(${this.inputToken.join(',')} => ${this.outputToken.join(',')}))`
+    return `Beefy.${this.actionName}(${this.inputToken.join(
+      ','
+    )} => ${this.outputToken.join(',')}))`
   }
 }
 
@@ -25,7 +27,7 @@ export class BeefyDepositAction extends BeefyBase {
         this.universe.provider
       )
     )
-    planner.add(lib.deposit(inputs[0]), this.toString());
+    planner.add(lib.deposit(inputs[0]), this.toString())
 
     return null
   }
@@ -78,7 +80,7 @@ export class BeefyWithdrawAction extends BeefyBase {
         this.universe.provider
       )
     )
-    planner.add(lib.withdraw(inputs[0]), this.toString());
+    planner.add(lib.withdraw(inputs[0]), this.toString())
 
     return null
   }
@@ -111,7 +113,7 @@ export class BeefyWithdrawAction extends BeefyBase {
       mooToken.address,
       [mooToken],
       [underlying],
-      InteractionConvention.ApprovalRequired,
+      InteractionConvention.None,
       DestinationOptions.Callee,
       []
     )

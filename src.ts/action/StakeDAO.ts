@@ -7,12 +7,13 @@ import { Approval } from '../base/Approval'
 import { IVaultStakeDAO__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
 
-
 abstract class StakeDAOBase extends Action('StakeDAO') {
-  abstract get actionName(): string;
+  abstract get actionName(): string
 
   toString(): string {
-    return `StakeDAO.${this.actionName}(${this.inputToken.join(',')} => ${this.outputToken.join(',')}))`
+    return `StakeDAO.${this.actionName}(${this.inputToken.join(
+      ','
+    )} => ${this.outputToken.join(',')}))`
   }
 }
 
@@ -28,7 +29,10 @@ export class StakeDAODepositAction extends StakeDAOBase {
       )
     )
 
-    planner.add(lib.deposit(destination.address, inputs[0], true), this.toString());
+    planner.add(
+      lib.deposit(destination.address, inputs[0], true),
+      this.toString()
+    )
 
     return null
   }
@@ -78,7 +82,7 @@ export class StakeDAOWithdrawAction extends StakeDAOBase {
       )
     )
 
-    planner.add(lib.withdraw(inputs[0]), this.toString());
+    planner.add(lib.withdraw(inputs[0]), this.toString())
 
     return null
   }
@@ -105,7 +109,7 @@ export class StakeDAOWithdrawAction extends StakeDAOBase {
       sdToken.address,
       [sdToken],
       [underlying],
-      InteractionConvention.ApprovalRequired,
+      InteractionConvention.None,
       DestinationOptions.Callee,
       []
     )

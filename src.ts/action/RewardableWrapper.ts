@@ -63,8 +63,8 @@ export const createProtocolWithWrappers = (
   //     function withdraw(uint256 _amount, address _to) external;
   // }
   class RewardableERC20WrapperDeposit extends RewardableERC20Wrapper {
-    private readonly wrapperContract: IRewardableERC20Wrapper
-    private readonly wrapperWeiroll: gen.Contract
+    public readonly wrapperContract: IRewardableERC20Wrapper
+    public readonly wrapperWeiroll: gen.Contract
     get actionName(): string {
       return `Deposit${this.rewardableToken}For${this.wrappedRewardableToken}`
     }
@@ -113,8 +113,8 @@ export const createProtocolWithWrappers = (
     }
   }
   class RewardableERC20WrapperWithdraw extends RewardableERC20Wrapper {
-    private readonly wrapperContract: IRewardableERC20Wrapper
-    private readonly wrapperWeiroll: gen.Contract
+    public readonly wrapperContract: IRewardableERC20Wrapper
+    public readonly wrapperWeiroll: gen.Contract
     get actionName(): string {
       return `Withdraw${this.wrappedRewardableToken}For${this.rewardableToken}`
     }

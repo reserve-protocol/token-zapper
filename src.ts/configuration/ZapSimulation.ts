@@ -275,9 +275,6 @@ export const preloadSimulator = async (
       universe.zapperAddress,
     ]),
   ].map((i) => i.address)
-  universe.searcher.debugLog(
-    `Preloading ${preloadedAddresses.length} addresses`
-  )
   await simulator.preload(preloadedAddresses)
 
   return preloadedAddresses

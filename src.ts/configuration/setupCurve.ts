@@ -28,7 +28,7 @@ class CurveCoin {
   constructor(
     public readonly token: Token,
     public readonly isBasePoolLpToken: boolean
-  ) {}
+  ) { }
 
   public static async fromJson(
     universe: UniverseWithCommonBaseTokens,
@@ -223,7 +223,7 @@ const convertPoolListIntoMaps = async <
       }
       lpTokenToPoolAddress.set(pool.lpToken, pool.address)
     })
-  } catch (e) {}
+  } catch (e) { }
   return {
     poolInst,
     poolByPoolAddress,
@@ -368,6 +368,7 @@ export class CurveIntegration {
     outputTradeRestrictions.push(...lpTokens)
 
     const dex = new DexRouter(
+      universe,
       'curveRouter',
       async (_, input, output, slippage) => {
         return (

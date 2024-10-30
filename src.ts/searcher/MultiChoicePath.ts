@@ -41,12 +41,6 @@ export const resolveTradeConflicts = async (
 
       inTrades = inTrades.filter((i) => !trades.includes(i))
 
-      // emitDebugLog(
-      //   `Found two uni trades ${trades.length} ${swapDesc.join(
-      //     ', '
-      //   )} trading on the same pool as the firs step: ${pool}`
-      // )
-
       const actions = trades.map(
         (i) => i.steps[0].action as UniswapRouterAction
       )
@@ -83,16 +77,16 @@ export const resolveTradeConflicts = async (
           const newInput = outputToken.from(total < prTrade ? total : prTrade)
           total -= prTrade
 
-          // emitDebugLog(
-          //   `Finding new trade ${newInput} -> ${nextTrade.outputToken[0]}`
-          // )
+          searcher.loggers.searching.debug(
+            `Finding new trade ${newInput} -> ${nextTrade.outputToken[0]}`
+          )
           const newNextTrade = await uniDex.swap(
             abortSignal,
             newInput,
             nextTrade.outputToken[0],
             searcher.defaultInternalTradeSlippage
           )
-          // emitDebugLog(newNextTrade.steps[0].action.toString())
+          searcher.loggers.searching.debug(newNextTrade.steps[0].action.toString())
           newTrades.push(newNextTrade)
         })
       )
@@ -101,8 +95,6 @@ export const resolveTradeConflicts = async (
     }
     return inTrades
   } catch (e: any) {
-    // emitDebugLog(e)
-    // emitDebugLog(e.stack)
     throw e
   }
 }
@@ -131,13 +123,9 @@ export const generateAllPermutations = async function (
 
   let withoutComflicts = allCombos.filter(
     (paths) =>
-      willPathsHaveAddressConflicts(searcher.debugLog, universe, paths, signer)
+      willPathsHaveAddressConflicts(searcher, paths, signer)
         .length === 0
   )
-  if (withoutComflicts.length < 16) {
-    withoutComflicts = allCombos
-    searcher.debugLog('Skipping conflict check - too few paths')
-  }
   const valuedTrades = await Promise.all(
     withoutComflicts.map(async (trades) => {
       const netOut = universe.usd.zero
@@ -166,18 +154,17 @@ const sortZaps = (
   allQuotes: BaseSearcherResult[],
   startTime: number
 ) => {
-  const emitDebugLog = searcher.debugLog
   let failed = txes
   if (txes.length === 0) {
-    emitDebugLog(`All ${txes.length}/${allQuotes.length} potential zaps failed`)
+    searcher.loggers.searching.error(`All ${txes.length}/${allQuotes.length} potential zaps failed`)
     throw new Error('No zaps found')
   }
 
   txes.sort((l, r) => -l.tx.compare(r.tx))
 
-  emitDebugLog(`${txes.length} / ${allQuotes.length} passed simulation:`)
+  searcher.loggers.searching.debug(`${txes.length} / ${allQuotes.length} passed simulation:`)
   for (const tx of txes) {
-    emitDebugLog(tx.tx.stats.toString())
+    searcher.loggers.searching.debug(tx.tx.stats.toString())
   }
   return {
     failed,
@@ -191,7 +178,6 @@ export const createConcurrentStreamingEvaluator = (
   toTxArgs: ToTransactionArgs
 ) => {
   const startTime = Date.now()
-  const emitDebugLog = searcher.debugLog
   const abortController = new AbortController()
   const results: {
     tx: ZapTransaction
@@ -200,7 +186,7 @@ export const createConcurrentStreamingEvaluator = (
 
   let pending = new Set<Promise<any>>()
   const waitTime = searcher.config.maxSearchTimeMs ?? 10000
-  searcher.debugLog(`Waiting for ${waitTime}ms`)
+  searcher.loggers.searching.debug(`Waiting for ${waitTime}ms`)
 
   const allCandidates: BaseSearcherResult[] = []
   const seen: Set<string> = new Set()
@@ -232,17 +218,17 @@ export const createConcurrentStreamingEvaluator = (
 
       // Reject if the dust is too high
       if (inVal * maxAcceptableDustPercentable < dustVal) {
-        emitDebugLog('Large amount of dust')
-        emitDebugLog(tx.stats.toString())
-        emitDebugLog(tx.stats.dust.toString())
-        emitDebugLog('Planner:')
-        emitDebugLog(printPlan(tx.planner, tx.universe).join('\n'))
+        searcher.loggers.searching.debug('Large amount of dust')
+        searcher.loggers.searching.debug(tx.stats.toString())
+        searcher.loggers.searching.debug(tx.stats.dust.toString())
+        searcher.loggers.searching.debug('plan:')
+        searcher.loggers.searching.debug(printPlan(tx.planner, tx.universe).join('\n'))
         return
       }
       // Reject if the zap looses too much value
       if (inToOutRatio < maxAcceptableValueLossForRejectingZap) {
-        emitDebugLog(tx.stats.toString())
-        emitDebugLog('Low in to out ratio')
+        searcher.loggers.searching.debug(tx.stats.toString())
+        searcher.loggers.searching.debug('Low in to out ratio')
         return
       }
       results.push({
@@ -256,20 +242,20 @@ export const createConcurrentStreamingEvaluator = (
       if (toTxArgs.minSearchTime != null) {
         const elapsed = Date.now() - startTime
         if (elapsed > toTxArgs.minSearchTime) {
-          emitDebugLog('Aborting search: elapsed > toTxArgs.minSearchTime')
+          searcher.loggers.searching.debug('Aborting search: elapsed > toTxArgs.minSearchTime')
           abortController.abort()
           return
         }
       } else {
         if (resCount >= searcher.config.searcherMinRoutesToProduce) {
-          emitDebugLog(
+          searcher.loggers.searching.debug(
             'Aborting search: searcher.config.searcherMinRoutesToProduce'
           )
           abortController.abort()
         }
       }
     } catch (e: any) {
-      emitDebugLog(e)
+      searcher.loggers.searching.error(e)
     }
   }
   const resultsReadyController = new AbortController()
@@ -279,19 +265,19 @@ export const createConcurrentStreamingEvaluator = (
       return
     }
     finishing = true
-    searcher.debugLog('Search completed. Returning results')
+    searcher.loggers.searching.debug('Search completed. Returning results')
     if (pending.size === 0 || results.length >= 1) {
       resultsReadyController.abort()
       return
     }
-    searcher.debugLog(`Waiting 2500ms for the last ${pending.size} pending`)
+    searcher.loggers.searching.debug(`Waiting 2500ms for the last ${pending.size} pending`)
     const timeout = new Promise((resolve) =>
       AbortSignal.timeout(2500).addEventListener('abort', resolve)
     )
     await Promise.race([
       timeout,
       Promise.all([...pending].map(p => p.catch(e => {
-        emitDebugLog(e)
+        searcher.loggers.searching.error(`Pending tx gen task failed: ${e}`)
         return null
       })))
     ])
@@ -301,7 +287,7 @@ export const createConcurrentStreamingEvaluator = (
     if (abortController.signal.aborted) {
       return
     }
-    searcher.debugLog('Aborting search: searcher.config.maxSearchTimeMs')
+    searcher.loggers.searching.debug('Aborting search: searcher.config.maxSearchTimeMs')
     abortController.abort()
   }, waitTime)
 
@@ -362,33 +348,33 @@ const noConflictAddrs = new Set([
   // Address.from('0x2e50e3e18c19C7d80B81888a961A13aEE49b962E')
 ])
 const willPathsHaveAddressConflicts = (
-  emitDebugLog: (...args: any[]) => void,
-  universe: Universe,
+  searcher: Searcher<any>,
   paths: SwapPath[],
   signer: Address
 ) => {
-  const addressesInUse = new Set<Address>()
-  const conflicts = new Set<Address>()
+  return []
+  // const addressesInUse = new Set<Address>()
+  // const conflicts = new Set<Address>()
 
-  for (const path of paths) {
-    for (const step of path.steps) {
-      for (const addr of step.action.addressesInUse) {
-        if (
-          addr === signer ||
-          noConflictAddrs.has(addr) ||
-          universe.commonTokensInfo.addresses.has(addr)
-        ) {
-          continue
-        }
-        if (addressesInUse.has(addr)) {
-          conflicts.add(addr)
-        }
-        addressesInUse.add(addr)
-      }
-    }
-  }
+  // for (const path of paths) {
+  //   for (const step of path.steps) {
+  //     for (const addr of step.action.addressesInUse) {
+  //       if (
+  //         addr === signer ||
+  //         noConflictAddrs.has(addr) ||
+  //         searcher.universe.commonTokensInfo.addresses.has(addr)
+  //       ) {
+  //         continue
+  //       }
+  //       if (addressesInUse.has(addr)) {
+  //         conflicts.add(addr)
+  //       }
+  //       addressesInUse.add(addr)
+  //     }
+  //   }
+  // }
 
-  return [...conflicts]
+  // return [...conflicts]
 }
 export const chunkifyIterable = function* <T>(
   iterable: Iterable<T>,

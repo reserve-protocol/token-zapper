@@ -13,12 +13,13 @@ export class DexRouter {
   > = new Map()
 
   constructor(
+    private readonly universe: Universe,
     public readonly name: string,
     private readonly swap_: SwapSignature,
     public readonly dynamicInput: boolean,
     public readonly supportedInputTokens = new Set<Token>(),
     public readonly supportedOutputTokens = new Set<Token>()
-  ) {}
+  ) { }
 
   private maxConcurrency = Infinity
   private pending = 0
@@ -37,9 +38,8 @@ export class DexRouter {
   }
   public readonly swap: SwapSignature = (abort, input, output, slippage) => {
     const start = Date.now()
-    const key = `${input.amount}.${
-      input.token
-    }:${input.token.address.toShortString()}.${output}:${output.address.toShortString()}.${slippage}`
+    const key = `${input.amount}.${input.token
+      }:${input.token.address.toShortString()}.${output}:${output.address.toShortString()}.${slippage}`
     const prev = this.cache.get(key)
     if (prev != null) {
       return prev.path
@@ -48,28 +48,35 @@ export class DexRouter {
       throw new Error('Too many concurrent swaps')
     }
     this.pending++
-    const out = this.swap_(abort, input, output, slippage).catch((e) => {
 
-      const end = Date.now()
-      const delta = end - start;
+    const out = this.swap_(AbortSignal.timeout(15000), input, output, slippage).catch((e) => {
       if (this.cache.get(key)?.path === out) {
         this.cache.delete(key)
       }
       throw e
+    }).finally(() => {
+      const end = Date.now()
+      const delta = end - start;
+      if (delta > 2500) {
+        this.universe.logger.info(`${this.name}: ${key} took ${end - start}ms to execute`)
+      }
+      this.pending--
     })
     this.cache.set(key, {
       path: out,
       timestamp: this.currentBlock,
     })
 
-    return out.finally(() => {
-      const end = Date.now()
-      const delta = end - start;
-      if (delta > 2500) {
-        console.log(`${this.name}: ${key} took ${end - start}ms to execute`)
-      }
-      this.pending--
+    const abortPromise: Promise<SwapPath> = new Promise((_, reject) => {
+      abort.addEventListener('abort', () => {
+        reject(new Error('Aborted'))
+      })
     })
+
+    return Promise.race([
+      abortPromise,
+      out
+    ])
   }
 
   supportsSwap(inputTokenQty: TokenQuantity, output: Token) {
@@ -112,7 +119,7 @@ export class TradingVenue {
       src: Token,
       dst: Token
     ) => Promise<RouterAction | null>
-  ) {}
+  ) { }
 
   get supportsDynamicInput() {
     return this.router.dynamicInput

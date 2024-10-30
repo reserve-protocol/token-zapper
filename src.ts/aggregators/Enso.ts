@@ -284,6 +284,7 @@ export const createEnso = (
   retries = 2
 ) => {
   const dex = new DexRouter(
+    universe,
     aggregatorName,
     async (abort: AbortSignal, input, output, slippage) => {
       if (disabledPairs.isDisabled(universe.chainId, input, output)) {

@@ -36,7 +36,7 @@ if (process.env.SIMULATE_URL == null) {
   console.log('SIMULATE_URL not set, skipping simulation tests')
   process.exit(0)
 }
-
+const TEST_TIMEOUT = 60000;
 export const ethWhales = {
   // stETH
   '0xae7ab96520de3a18e5e111b5eaab095312d7fe84':
@@ -249,8 +249,6 @@ beforeAll(async () => {
     {
       ...ethereumConfig,
       searcherMinRoutesToProduce: 1,
-      routerDeadline: 6000,
-      searchConcurrency: 1,
       maxSearchTimeMs: 60000,
     },
     async (uni) => {
@@ -306,7 +304,7 @@ describe('ethereum zapper', () => {
             issueance.output
           )
         },
-        15 * 1000
+        TEST_TIMEOUT
       )
     })
   }
@@ -331,7 +329,7 @@ describe('ethereum zapper', () => {
             redeem.output
           )
         },
-        15 * 1000
+        TEST_TIMEOUT
       )
     })
   }
@@ -374,7 +372,7 @@ describe('ethereum zapper', () => {
           }
           expect(result).toBe('success')
         },
-        60 * 1000
+        TEST_TIMEOUT
       )
     })
   }

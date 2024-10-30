@@ -49,6 +49,7 @@ import {
 } from '../tx-gen/Planner'
 import { ToTransactionArgs } from './ToTransactionArgs'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
+import { Logger } from 'winston'
 
 const zapperInterface = Zapper__factory.createInterface()
 const needsZeroedOutFirst = new Set([
@@ -60,7 +61,7 @@ class Step {
     readonly action: BaseAction,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) {}
+  ) { }
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -91,7 +92,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-          InteractionConvention.PayBeforeCall
+        InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -112,7 +113,12 @@ export class ThirdPartyIssue extends Error {
   }
 }
 export abstract class BaseSearcherResult {
-  public readonly zapId: bigint = BigInt(hexlify(randomBytes(32)))
+  private readonly zapIdBytes = randomBytes(32);
+  public readonly zapId: bigint = BigInt(hexlify(this.zapIdBytes))
+  public readonly zapIdStr = Buffer.from(this.zapIdBytes).toString("base64")
+  public readonly txGenLogger: Logger;
+  public readonly simLogger: Logger;
+
   protected readonly planner = new Planner()
   public readonly blockNumber: number
   public readonly commands: Step[]
@@ -148,7 +154,6 @@ export abstract class BaseSearcherResult {
   }
 
   public universe: Universe<Config>
-
   constructor(
     public readonly searcher: Searcher<Universe<Config>>,
     readonly userInput: TokenQuantity,
@@ -158,6 +163,8 @@ export abstract class BaseSearcherResult {
     public readonly startTime: number,
     public readonly abortSignal: AbortSignal
   ) {
+    this.txGenLogger = searcher.loggers.txGen.child({ id: this.zapIdStr })
+    this.simLogger = searcher.loggers.simulation.child({ id: this.zapIdStr })
     this.universe = searcher.universe
     if (this.universe.commonTokens.ERC20GAS == null) {
       throw new Error('Unexpected: Missing wrapped gas token')
@@ -204,6 +211,7 @@ export abstract class BaseSearcherResult {
   }
 
   async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
+
     // if (this.abortSignal.aborted) {
     //   throw new Error('Aborted')
     // }
@@ -219,11 +227,7 @@ export abstract class BaseSearcherResult {
       return zapperInterface.decodeFunctionResult('zapERC20', resp)
         .out as ZapperOutputStructOutput
     }
-    if (process.env.DEBUG_SIMULATION) {
-      this.searcher.debugLog(
-        printPlan(this.planner, this.universe).join('\n') + '\n\n\n'
-      )
-    }
+
     let errorMsg = ''
 
     // console.log(printPlan(this.planner, this.universe).join('\n') + '\n\n\n')
@@ -273,8 +277,6 @@ export abstract class BaseSearcherResult {
         }
       }
     }
-    this.searcher.debugLog('Simulation failed with:')
-    this.searcher.debugLog(errorMsg)
 
     throw new Error(errorMsg)
   }
@@ -424,7 +426,7 @@ export abstract class BaseSearcherResult {
         outputTokenOutput.amount === 1n
           ? 1n
           : outputTokenOutput.amount -
-            outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
+          outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
       tokenOut: this.outputToken.address.address,
       tokens: this.potentialResidualTokens.map((i) => i.address.address),
     }
@@ -438,8 +440,8 @@ export abstract class BaseSearcherResult {
     return this.inputIsNative
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -481,17 +483,26 @@ export abstract class BaseSearcherResult {
         this.universe.provider
       )
     )
-
     this.planner.add(emitIdContract.emitId(this.zapId))
     const params = this.encodePayload(this.outputToken.from(1n), {
       ...options,
       returnDust: false,
     })
     const data = this.encodeCall(options, params)
+    this.simLogger.debug(
+      `SIMULATING PLAN FOR ${this.userInput} -> ${this.outputToken}:`
+    );
+    this.searcher.loggers.simulation.debug(
+      printPlan(this.planner, this.universe).join('\n')
+    )
+    const start = Date.now()
     try {
       const tx = this.encodeTx(data, 10000000n)
       await this.checkIfSearchIsAborted()
       const result = await this.simulateAndParse(options, tx.data!.toString())
+      this.searcher.loggers.simulation.debug(
+        `TX simulated successfully in ${Date.now() - start}ms`
+      )
 
       let dust = this.potentialResidualTokens.map((qty) => qty)
       if (options.returnDust === true) {
@@ -560,14 +571,15 @@ export abstract class BaseSearcherResult {
         stats
       )
     } catch (e: any) {
+      this.searcher.loggers.simulation.debug(
+        `TX failed simulation in ${Date.now() - start}ms: ${e}`
+      )
       if (this.abortSignal.aborted) {
-        this.searcher.debugLog(e)
         return null
       }
       if (e instanceof ThirdPartyIssue) {
         throw e
       }
-      this.searcher.debugLog(e)
       return null
     }
   }
@@ -703,11 +715,11 @@ export class RedeemZap extends BaseSearcherResult {
         if (input == null) {
           input = step.action.supportsDynamicInput
             ? plannerUtils.erc20.balanceOf(
-                this.universe,
-                this.planner,
-                step.inputs[0].token,
-                executorAddress
-              )
+              this.universe,
+              this.planner,
+              step.inputs[0].token,
+              executorAddress
+            )
             : encodeArg(step.inputs[0].amount, ParamType.from('uint256'))
         }
         if (step.action.supportsDynamicInput) {
@@ -745,15 +757,15 @@ export class RedeemZap extends BaseSearcherResult {
         if (input == null) {
           input = dynInput
             ? plannerUtils.erc20.balanceOf(
-                this.universe,
-                this.planner,
-                stepInput,
-                executorAddress
-              )
+              this.universe,
+              this.planner,
+              stepInput,
+              executorAddress
+            )
             : encodeArg(
-                stepInputQty.amount - stepInputQty.amount / 1000000n,
-                ParamType.from('uint256')
-              )
+              stepInputQty.amount - stepInputQty.amount / 1000000n,
+              ParamType.from('uint256')
+            )
         }
 
         await step.action.plan(this.planner, [input], dest, step.inputs)
@@ -892,9 +904,9 @@ export class MintZap extends BaseSearcherResult {
       const tradesToGenerate = allSupportDynamicInput
         ? allTrades
         : [
-            ...allTrades.filter((i) => !i.supportsDynamicInput),
-            ...allTrades.filter((i) => i.supportsDynamicInput),
-          ]
+          ...allTrades.filter((i) => !i.supportsDynamicInput),
+          ...allTrades.filter((i) => i.supportsDynamicInput),
+        ]
 
       const dynamicTradeInputSplits = new Map<Token, Value>()
       if (this.parts.setup != null) {

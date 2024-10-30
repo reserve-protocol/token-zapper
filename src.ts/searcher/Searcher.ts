@@ -1,3 +1,4 @@
+import { Logger } from 'winston'
 import { Universe } from '..'
 import { type MintRTokenAction } from '../action/RTokens'
 import { type Address } from '../base/Address'
@@ -91,7 +92,7 @@ export const findPrecursorTokenSet = async (
   const inputTokenPrice = await searcher.fairPrice(userInputQuantity.token.one)
   const rTokenPrice = await searcher.fairPrice(rToken.one)
   if (inputTokenPrice == null || rTokenPrice == null) {
-    searcher.debugLog('Failed to get fair price for input/output token')
+    searcher.loggers.searching.error('Failed to get fair price for input/output token')
     throw new Error('Failed to get fair price for input/output token')
   }
 
@@ -110,7 +111,7 @@ export const findPrecursorTokenSet = async (
     ) != null
 
   if (!inputPartOfPrecursor) {
-    searcher.debugLog(
+    searcher.loggers.searching.debug(
       `pegDiffers=${pegDiffers}, preferredToken=${preferredToken}`
     )
     if (
@@ -141,6 +142,11 @@ export const findPrecursorTokenSet = async (
 
 export class Searcher<SearcherUniverse extends Universe<Config>> {
   private readonly defaultSearcherOpts
+  public readonly loggers: {
+    searching: Logger,
+    txGen: Logger,
+    simulation: Logger
+  };
 
   private internalQuoerCache: BlockCache<
     {
@@ -175,10 +181,15 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
       maxIssueance: true,
       returnDust: true,
     }
+    this.loggers = {
+      searching: universe.logger.child({ name: "searcher", phase: "searching" }),
+      txGen: universe.logger.child({ name: "searcher", phase: "tx-gen" }),
+      simulation: universe.logger.child({ name: "searcher", phase: "simulation" }),
+    }
     this.externalQuoteCache = this.universe.createCache(
       async ({ input, output, slippage, abort, dynamicInput, onResult }) => {
         const out: SwapPath[] = []
-        await await this.universe.swaps(
+        await this.universe.swaps(
           input,
           output,
           async (res) => {
@@ -227,16 +238,20 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         let allPlans = bfsResult.steps
           .map((i) => i.convertToSingularPaths())
           .flat()
+        if (allPlans.length === 0) {
+          internalQuoterPerf();
+          return []
+        }
 
         allPlans.sort((l, r) => l.steps.length - r.steps.length)
 
 
-        // this.debugLog(
-        //   `Found potential ${allPlans.length} trades: for ${input.token} -> ${output}`
-        // )
-        // for (const plan of allPlans) {
-        //   this.debugLog('  ' + plan.toString())
-        // }
+        this.loggers.searching.info(
+          `Found potential ${allPlans.length} trades: for ${input.token} -> ${output}`
+        )
+        for (const plan of allPlans) {
+          this.loggers.searching.debug('  ' + plan.toString())
+        }
 
         const swapPlans = allPlans.filter((plan) => {
           if (plan == null || plan.steps.length === 0) {
@@ -260,11 +275,11 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
 
           return true
         }).slice(0, 16)
-        this.debugLog(
+        this.loggers.searching.info(
           `Found ${swapPlans.length}/${allPlans.length} trades: for ${input.token} -> ${output}`
         )
         for (const plan of swapPlans) {
-          this.debugLog('  ' + plan.toString())
+          this.loggers.searching.debug('  ' + plan.toString())
         }
         const res = await Promise.all(
           swapPlans.map(async (plan) => {
@@ -1668,8 +1683,6 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
     ])
   }
   debugLog(...args: any[]) {
-    if (process.env.DEV) {
-      console.log(...args)
-    }
+    this.loggers.searching.debug(args.join(' '))
   }
 }

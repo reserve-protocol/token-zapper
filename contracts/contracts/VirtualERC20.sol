@@ -8,9 +8,9 @@ interface IConcentratorVault {
 contract VirtualERC20 {
     IConcentratorVault public concentratorVault;
     uint256 public pid;
-    string private _name;
-    string private _symbol;
-    uint8 private _decimals;
+    string public _name;
+    string public _symbol;
+    uint8 public immutable _decimals;
 
     constructor(address _vaultAddress, uint256 _pid, string memory name_, string memory symbol_, uint8 decimals_) {
         concentratorVault = IConcentratorVault(_vaultAddress);
@@ -20,23 +20,14 @@ contract VirtualERC20 {
         _decimals = decimals_;
     }
 
-    function name() public view returns (string memory) {
-        return _name;
-    }
-
-    function symbol() public view returns (string memory) {
-        return _symbol;
-    }
-
-    function decimals() public view returns (uint8) {
-        return _decimals;
-    }
-
     function balanceOf(address account) public view returns (uint256) {
         return concentratorVault.getUserShare(pid, account);
     }
 
-    function transfer(address, uint256) public pure returns (bool) {
+    function transfer(address, uint256 amt) public pure returns (bool) {
+        if (amt == 0) {
+            return true;
+        }
         revert("VirtualERC20: Transfers not supported");
     }
 }

@@ -1,11 +1,22 @@
-export { Address } from './base/Address'
-export { Token, TokenQuantity } from './entities/Token'
+export * from './base/Address'
+export * from './base/DefaultMap'
+export * from './entities/Token'
 
 export { ArbitrumUniverse, arbiConfig, PROTOCOL_CONFIGS as arbiProtocolConfigs } from './configuration/arbitrum'
 export { setupArbitrumZapper } from './configuration/setupArbitrumZapper'
 
 export { BaseUniverse, baseConfig, PROTOCOL_CONFIGS as baseProtocolConfigs } from './configuration/base'
 export { setupBaseZapper } from './configuration/setupBaseZapper'
+
+export * from './aggregators/Paraswap'
+export * from './aggregators/Enso'
+export * from './aggregators/Kyberswap'
+export * from './configuration/ChainConfiguration'
+
+export * from './searcher/SearcherResult'
+export * from './searcher/ZapTransaction'
+export * from './searcher/Searcher'
+export * from './Universe'
 
 export { ethereumConfig, PROTOCOL_CONFIGS as ethereumProtocolConfigs } from './configuration/ethereum'
 export { setupEthereumZapper } from './configuration/setupEthereumZapper'
@@ -19,25 +30,21 @@ import { setupBaseZapper } from './configuration/setupBaseZapper'
 import { EthereumUniverse, ethereumConfig } from './configuration/ethereum'
 import { setupEthereumZapper } from './configuration/setupEthereumZapper'
 
+import { makeConfig } from './configuration/ChainConfiguration'
 import { loadTokens } from './configuration/loadTokens'
-import { makeConfig, convertAddressObject } from './configuration/ChainConfiguration'
+
 import { JsonRpcProvider } from '@ethersproject/providers'
+import { createEnso } from './aggregators/Enso'
+import { createKyberswap } from './aggregators/Kyberswap'
+import { createParaswap } from './aggregators/Paraswap'
 import {
-  ChainId,
   ChainIds,
   isChainIdSupported,
 } from './configuration/ReserveAddresses'
 import { Universe } from './Universe'
-import { createKyberswap } from './aggregators/Kyberswap'
-import { createEnso } from './aggregators/Enso'
-export { createParaswap } from './aggregators/Paraswap'
 
 export { type Config } from './configuration/ChainConfiguration'
-export {
-  makeCustomRouterSimulator,
-  createSimulateZapTransactionUsingProvider,
-  SimulateParams,
-} from './configuration/ZapSimulation'
+export * from './configuration/ZapSimulation'
 
 export const configuration = {
   utils: {
@@ -46,21 +53,16 @@ export const configuration = {
   makeConfig,
 }
 
-export { Searcher } from './searcher/Searcher'
-export { Universe } from './Universe'
 
-export { createKyberswap } from './aggregators/Kyberswap'
-export { createEnso } from './aggregators/Enso'
 
-const CHAIN_ID_TO_CONFIG: Record<
-  ChainId,
-  {
-    config: ReturnType<typeof makeConfig>
-    blockTime: number
-    setup: (uni: any) => Promise<void>
-    setupWithDexes: (uni: any) => Promise<void>
-  }
-> = {
+
+type IChainConfigType = {
+  config: ReturnType<typeof makeConfig>
+  blockTime: number
+  setup: (uni: any) => Promise<void>
+  setupWithDexes: (uni: any) => Promise<void>
+};
+export const CHAIN_ID_TO_CONFIG = {
   [ChainIds.Mainnet]: {
     config: ethereumConfig,
     blockTime: 12,
@@ -68,9 +70,10 @@ const CHAIN_ID_TO_CONFIG: Record<
     setupWithDexes: async (uni: EthereumUniverse) => {
       uni.addTradeVenue(createKyberswap('Kyberswap', uni))
       uni.addTradeVenue(createEnso('Enso', uni, 1))
+      uni.addTradeVenue(createParaswap('Paraswap', uni))
       await setupEthereumZapper(uni)
     },
-  },
+  } as IChainConfigType,
   [ChainIds.Arbitrum]: {
     config: arbiConfig,
     blockTime: 0.25,
@@ -78,9 +81,10 @@ const CHAIN_ID_TO_CONFIG: Record<
     setupWithDexes: async (uni: ArbitrumUniverse) => {
       uni.addTradeVenue(createKyberswap('Kyberswap', uni))
       uni.addTradeVenue(createEnso('Enso', uni, 1))
+      uni.addTradeVenue(createParaswap('Paraswap', uni))
       await setupArbitrumZapper(uni)
     },
-  },
+  } as IChainConfigType,
   [ChainIds.Base]: {
     config: baseConfig,
     blockTime: 2,
@@ -90,8 +94,8 @@ const CHAIN_ID_TO_CONFIG: Record<
       uni.addTradeVenue(createEnso('Enso', uni, 1))
       await setupBaseZapper(uni)
     },
-  },
-}
+  } as IChainConfigType,
+} as const
 
 type ChainIdToUni = {
   [ChainIds.Arbitrum]: ArbitrumUniverse

@@ -249,7 +249,7 @@ const zapIntoYieldPositionCases = [
     5,
     t.WETH,
     rTokens['ETH+'],
-    t['virtualERC20']
+    t['consETHETH-f']
   ),
 ]
 

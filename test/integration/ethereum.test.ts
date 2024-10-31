@@ -36,7 +36,7 @@ if (process.env.SIMULATE_URL == null) {
   console.log('SIMULATE_URL not set, skipping simulation tests')
   process.exit(0)
 }
-const TEST_TIMEOUT = 60000;
+const TEST_TIMEOUT = 60000
 export const ethWhales = {
   // stETH
   '0xae7ab96520de3a18e5e111b5eaab095312d7fe84':
@@ -244,6 +244,12 @@ const zapIntoYieldPositionCases = [
     t.WETH,
     rTokens['ETH+'],
     t['yvCurve-ETH+-f']
+  ),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['virtualERC20']
   ),
 ]
 

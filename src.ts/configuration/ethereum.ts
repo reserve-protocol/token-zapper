@@ -70,6 +70,7 @@ export const COMMON_TOKENS = {
   'mooConvexETH+': '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0', // Beefy
   'sdETH+ETH-f': '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C', // StakeDAO
   'yvCurve-ETH+-f': '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581', // Yearn
+  virtualERC20: '0x3E42f2C352Ba3679433d1bFA2661E743B72514bb', // Concentrator
 } as const
 
 export const RTOKENS = {
@@ -283,6 +284,10 @@ export const PROTOCOL_CONFIGS = {
       // wrapped cUSDTV3
       '0xbeD348315d7327Cd81d26338c11976674825bb14',
     ],
+  },
+  concentrator: {
+    vault: '0x59866ec5650e9ba00c51f6d681762b48b0ada3de',
+    pid: 14,
   },
 }
 

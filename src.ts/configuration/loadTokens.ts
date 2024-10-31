@@ -36,7 +36,13 @@ export const loadTokens = async (
     Promise.all(
       Object.keys(commenTokenMap).map(async (key) => {
         const addr = commenTokenMap[key]
-        return [key, await universe.getToken(addr).catch(() => null)] as const
+        return [
+          key,
+          await universe.getToken(addr).catch((e) => {
+            console.log(e)
+            return null
+          }),
+        ] as const
       })
     ),
     Promise.all(

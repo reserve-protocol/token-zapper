@@ -22,6 +22,7 @@ import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupChainlinkRegistry } from './setupChainLink'
 import { setupCompoundV3 } from './setupCompV3'
+import { setupConcentrator } from './setupConcentrator'
 import { setupConvexStakingWrappers } from './setupConvexStakingWrappers'
 import { CurveIntegration } from './setupCurve'
 import { setupERC4626 } from './setupERC4626'
@@ -140,6 +141,9 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       return vault
     })
   )
+
+  // Set up Concentrator
+  await setupConcentrator(universe, PROTOCOL_CONFIGS.concentrator)
 
   universe.addPreferredRTokenInputToken(
     universe.rTokens['ETH+'],

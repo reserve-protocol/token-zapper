@@ -28,12 +28,13 @@ export class ConcentratorDepositAction extends ConcentratorBase {
         this.universe.provider
       )
     )
-    const out = planner.add(
+
+    planner.add(
       lib.deposit(this.pid, destination.address, inputs[0]),
       this.toString()
     )
 
-    return out ? [out] : [inputs[0]]
+    return null
   }
   public get returnsOutput(): boolean {
     return false
@@ -48,7 +49,7 @@ export class ConcentratorDepositAction extends ConcentratorBase {
   }
 
   get outputSlippage() {
-    return 1n
+    return 0n
   }
 
   constructor(
@@ -85,7 +86,7 @@ export class ConcentratorWithdrawAction extends ConcentratorBase {
       this.toString()
     )
 
-    return [inputs[0]]
+    return null
   }
 
   public get returnsOutput(): boolean {

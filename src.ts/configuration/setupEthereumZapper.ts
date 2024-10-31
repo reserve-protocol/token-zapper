@@ -143,7 +143,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
 
   // Set up Concentrator
-  await setupConcentrator(universe, PROTOCOL_CONFIGS.concentrator)
+  setupConcentrator(universe, PROTOCOL_CONFIGS.concentrator)
 
   universe.addPreferredRTokenInputToken(
     universe.rTokens['ETH+'],

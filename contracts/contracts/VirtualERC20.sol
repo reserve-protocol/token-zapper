@@ -6,24 +6,18 @@ interface IConcentratorVault {
 }
 
 contract VirtualERC20 {
-    IConcentratorVault public immutable concentratorVault;
+    IConcentratorVault public concentratorVault;
     uint256 public pid;
-    string public _name;
-    string public _symbol;
-    uint8 public immutable _decimals;
+    string public name;
+    string public symbol;
+    uint8 public immutable decimals;
 
-    constructor(
-        address _vaultAddress,
-        uint256 _pid,
-        string memory name_,
-        string memory symbol_,
-        uint8 decimals_
-    ) {
+    constructor(address _vaultAddress, uint256 _pid, string memory name_, string memory symbol_, uint8 decimals_) {
         concentratorVault = IConcentratorVault(_vaultAddress);
         pid = _pid;
-        _name = name_;
-        _symbol = symbol_;
-        _decimals = decimals_;
+        name = name_;
+        symbol = symbol_;
+        decimals = decimals_;
     }
 
     function balanceOf(address account) public view returns (uint256) {

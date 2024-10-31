@@ -23,29 +23,26 @@ import type {
 
 export interface VirtualERC20Interface extends utils.Interface {
   functions: {
-    "_decimals()": FunctionFragment;
-    "_name()": FunctionFragment;
-    "_symbol()": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "concentratorVault()": FunctionFragment;
+    "decimals()": FunctionFragment;
+    "name()": FunctionFragment;
     "pid()": FunctionFragment;
+    "symbol()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "_decimals"
-      | "_name"
-      | "_symbol"
       | "balanceOf"
       | "concentratorVault"
+      | "decimals"
+      | "name"
       | "pid"
+      | "symbol"
       | "transfer"
   ): FunctionFragment;
 
-  encodeFunctionData(functionFragment: "_decimals", values?: undefined): string;
-  encodeFunctionData(functionFragment: "_name", values?: undefined): string;
-  encodeFunctionData(functionFragment: "_symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "balanceOf",
     values: [PromiseOrValue<string>]
@@ -54,21 +51,24 @@ export interface VirtualERC20Interface extends utils.Interface {
     functionFragment: "concentratorVault",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
+  encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "pid", values?: undefined): string;
+  encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "transfer",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
 
-  decodeFunctionResult(functionFragment: "_decimals", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "_name", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "_symbol", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "concentratorVault",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pid", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
 
   events: {};
@@ -101,12 +101,6 @@ export interface VirtualERC20 extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    _decimals(overrides?: CallOverrides): Promise<[number]>;
-
-    _name(overrides?: CallOverrides): Promise<[string]>;
-
-    _symbol(overrides?: CallOverrides): Promise<[string]>;
-
     balanceOf(
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -114,7 +108,13 @@ export interface VirtualERC20 extends BaseContract {
 
     concentratorVault(overrides?: CallOverrides): Promise<[string]>;
 
+    decimals(overrides?: CallOverrides): Promise<[number]>;
+
+    name(overrides?: CallOverrides): Promise<[string]>;
+
     pid(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    symbol(overrides?: CallOverrides): Promise<[string]>;
 
     transfer(
       arg0: PromiseOrValue<string>,
@@ -123,12 +123,6 @@ export interface VirtualERC20 extends BaseContract {
     ): Promise<[boolean]>;
   };
 
-  _decimals(overrides?: CallOverrides): Promise<number>;
-
-  _name(overrides?: CallOverrides): Promise<string>;
-
-  _symbol(overrides?: CallOverrides): Promise<string>;
-
   balanceOf(
     account: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -136,7 +130,13 @@ export interface VirtualERC20 extends BaseContract {
 
   concentratorVault(overrides?: CallOverrides): Promise<string>;
 
+  decimals(overrides?: CallOverrides): Promise<number>;
+
+  name(overrides?: CallOverrides): Promise<string>;
+
   pid(overrides?: CallOverrides): Promise<BigNumber>;
+
+  symbol(overrides?: CallOverrides): Promise<string>;
 
   transfer(
     arg0: PromiseOrValue<string>,
@@ -145,12 +145,6 @@ export interface VirtualERC20 extends BaseContract {
   ): Promise<boolean>;
 
   callStatic: {
-    _decimals(overrides?: CallOverrides): Promise<number>;
-
-    _name(overrides?: CallOverrides): Promise<string>;
-
-    _symbol(overrides?: CallOverrides): Promise<string>;
-
     balanceOf(
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -158,7 +152,13 @@ export interface VirtualERC20 extends BaseContract {
 
     concentratorVault(overrides?: CallOverrides): Promise<string>;
 
+    decimals(overrides?: CallOverrides): Promise<number>;
+
+    name(overrides?: CallOverrides): Promise<string>;
+
     pid(overrides?: CallOverrides): Promise<BigNumber>;
+
+    symbol(overrides?: CallOverrides): Promise<string>;
 
     transfer(
       arg0: PromiseOrValue<string>,
@@ -170,12 +170,6 @@ export interface VirtualERC20 extends BaseContract {
   filters: {};
 
   estimateGas: {
-    _decimals(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _name(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _symbol(overrides?: CallOverrides): Promise<BigNumber>;
-
     balanceOf(
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -183,7 +177,13 @@ export interface VirtualERC20 extends BaseContract {
 
     concentratorVault(overrides?: CallOverrides): Promise<BigNumber>;
 
+    decimals(overrides?: CallOverrides): Promise<BigNumber>;
+
+    name(overrides?: CallOverrides): Promise<BigNumber>;
+
     pid(overrides?: CallOverrides): Promise<BigNumber>;
+
+    symbol(overrides?: CallOverrides): Promise<BigNumber>;
 
     transfer(
       arg0: PromiseOrValue<string>,
@@ -193,12 +193,6 @@ export interface VirtualERC20 extends BaseContract {
   };
 
   populateTransaction: {
-    _decimals(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     balanceOf(
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -206,7 +200,13 @@ export interface VirtualERC20 extends BaseContract {
 
     concentratorVault(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    decimals(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     pid(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     transfer(
       arg0: PromiseOrValue<string>,

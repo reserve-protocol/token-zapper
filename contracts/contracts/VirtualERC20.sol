@@ -6,8 +6,8 @@ interface IConcentratorVault {
 }
 
 contract VirtualERC20 {
-    IConcentratorVault public concentratorVault;
-    uint256 public pid;
+    IConcentratorVault public immutable concentratorVault;
+    uint256 public immutable pid;
     string public name;
     string public symbol;
     uint8 public immutable decimals;

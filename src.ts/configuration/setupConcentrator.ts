@@ -11,6 +11,21 @@ export const setupConcentrator = (
   universe: EthereumUniverse,
   config: ConcentratorConfig
 ) => {
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens['virtualERC20'],
+    priceFn: async () => {
+      const lpPrice = await universe.fairPrice(
+        universe.commonTokens['ETH+ETH-f'].one
+      )
+      if (lpPrice == null) {
+        throw Error(
+          `Failed to price ${universe.commonTokens['virtualERC20']}: Missing price for ETH+ETH-f`
+        )
+      }
+      return lpPrice
+    },
+  })
+
   const vaultAddress = Address.from(config.vault)
 
   const depositToConcentrator = new ConcentratorDepositAction(

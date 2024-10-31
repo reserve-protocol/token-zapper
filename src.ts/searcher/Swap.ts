@@ -344,6 +344,9 @@ export class SwapPlan {
   public async outputProportions() {
     return await this.steps.at(-1)!.outputProportions()
   }
+  public async inputProportions() {
+    return await this.steps.at(0)!.inputProportions()
+  }
 
   public async quote(
     input: TokenQuantity[]

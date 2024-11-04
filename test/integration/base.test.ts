@@ -9,7 +9,7 @@ import {
   createEnso,
   createKyberswap,
   setupBaseZapper,
-  Universe
+  Universe,
 } from '../../src.ts/index'
 import {
   createActionTestCase,
@@ -145,7 +145,20 @@ const individualIntegrations = [
 
 const zapIntoYieldPositionCases: ReturnType<
   typeof makeZapIntoYieldPositionTestCase
->[] = []
+>[] = [
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.USDC,
+    rTokens.hyUSD,
+    t['vAMM-hyUSD/eUSD']
+  ),
+  makeZapIntoYieldPositionTestCase(
+    10,
+    t.USDC,
+    rTokens.hyUSD,
+    t['dyson-hyUSDeUSD']
+  ),
+]
 
 let universe: Universe
 const provider = getProvider(process.env.BASE_PROVIDER!)
@@ -156,9 +169,7 @@ beforeAll(async () => {
     {
       ...baseConfig,
       searcherMinRoutesToProduce: 1,
-      routerDeadline: 2000,
-      searchConcurrency: 32,
-      maxSearchTimeMs: 7000,
+      maxSearchTimeMs: 60000,
     },
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))
@@ -177,7 +188,7 @@ beforeAll(async () => {
 
   await universe.initialized
   return universe
-}, 5000)
+}, 30000)
 
 describe('base zapper', () => {
   beforeEach(async () => {
@@ -288,5 +299,5 @@ describe('base zapper', () => {
 })
 
 afterAll(() => {
-  ; (universe.provider as WebSocketProvider).websocket.close()
+  ;(universe.provider as WebSocketProvider).websocket.close()
 })

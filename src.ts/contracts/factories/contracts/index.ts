@@ -8,6 +8,7 @@ export * as compoundV3Sol from "./CompoundV3.sol";
 export * as concentratorSol from "./Concentrator.sol";
 export * as convexSol from "./Convex.sol";
 export * as curveStableSwapNgSol from "./CurveStableSwapNG.sol";
+export * as dysonSol from "./Dyson.sol";
 export * as iAssetRegistrySol from "./IAssetRegistry.sol";
 export * as icTokenSol from "./ICToken.sol";
 export * as ierc4626Sol from "./IERC4626.sol";

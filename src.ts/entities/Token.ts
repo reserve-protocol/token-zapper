@@ -4,6 +4,7 @@ import { parseUnits, formatUnits } from '@ethersproject/units'
 import { BigNumber } from '@ethersproject/bignumber'
 import { type BaseUniverse } from '../configuration/base'
 import { BigNumberish } from 'ethers'
+import { USD_ADDRESS } from '../base/constants'
 /**
  * A class representing a token.
  * @property {Address} address - The address of the token.
@@ -170,6 +171,18 @@ export class TokenQuantity {
     }
   }
 
+  public get isZero() {
+    return this.amount === 0n
+  }
+
+  public get isOne() {
+    return this.amount === this.token.scale
+  }
+
+  public get isPositive() {
+    return this.amount > 0n
+  }
+
   public gte(other: TokenQuantity) {
     return this.amount >= other.amount
   }
@@ -232,9 +245,22 @@ export class TokenQuantity {
   }
 
   public formatWithSymbol(): string {
+    if (this.token.address.address === USD_ADDRESS) {
+      let digits = this.token.decimals
+      if (this.amount > 1000000n) {
+        digits = 2
+      }
+
+      return `$ ${formatUnits(this.amount, digits)}`
+    }
+
     return (
       formatUnits(this.amount, this.token.decimals) + ' ' + this.token.symbol
     )
+  }
+
+  public withPrice(price: TokenQuantity) {
+    return new PricedTokenQuantity(this, price)
   }
 
   public toScaled(scale: bigint) {

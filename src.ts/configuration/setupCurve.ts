@@ -16,7 +16,6 @@ import { loadCurve } from '../action/Curve'
 import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { Universe } from '..'
 import { RouterAction } from '../action/RouterAction'
-import { LPToken } from '../action/LPToken'
 
 type JSONPoolDataGeneric = (typeof ethereumPools.data.poolData)[number]
 type JSONCoin = Omit<
@@ -334,24 +333,6 @@ export class CurveIntegration {
 
     const lpTokens = normalCurvePoolList.poolInst.map((i) => i.lpToken).flat()
 
-    for (const lpToken of lpTokens) {
-      if (universe.lpTokens.has(lpToken)) {
-        continue
-      }
-      const pool = normalCurvePoolList.poolByLPToken.get(lpToken)
-
-      const inst = new LPToken(
-        lpToken,
-        pool?.poolTokens.map((i) => i.token) ?? [],
-        async () => {
-          throw new Error('Unimplemented')
-        },
-        async () => {
-          throw new Error('Unimplemented')
-        }
-      )
-      universe.defineLPToken(inst)
-    }
 
     const inputTradeRestrictions = await Promise.all(
       Object.entries(config.allowedTradeInputs).map(async ([_, addr]) => {

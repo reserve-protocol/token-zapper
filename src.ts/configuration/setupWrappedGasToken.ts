@@ -21,7 +21,7 @@ export const setupWrappedGasToken = async (universe: Universe<Config>) => {
       if (input.token === wrappedToken) {
         return await new SwapPlan(universe, [
           wrappedGasTokenActions.burn,
-        ]).quote([input], dest)
+        ]).quote([input])
       }
       return null
     }
@@ -33,7 +33,7 @@ export const setupWrappedGasToken = async (universe: Universe<Config>) => {
       if (input.token === universe.nativeToken) {
         return await new SwapPlan(universe, [
           wrappedGasTokenActions.mint,
-        ]).quote([input], dest)
+        ]).quote([input])
       }
       return null
     }

@@ -91,7 +91,9 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     await setupAaveV2(universe, PROTOCOL_CONFIGS.aavev2)
   )
   // console.log(aaveV2.describe().join('\n'))
+  console.log("aaa")
   const curve = await CurveIntegration.load(universe, PROTOCOL_CONFIGS.curve)
+  console.log("done")
   universe.integrations.curve = curve
   universe.addTradeVenue(curve.venue)
 
@@ -225,7 +227,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       if (input.token === universe.wrappedNativeToken) {
         return await new SwapPlan(universe, [depositToETHX]).quote(
           [input],
-          dest
         )
       }
       return null

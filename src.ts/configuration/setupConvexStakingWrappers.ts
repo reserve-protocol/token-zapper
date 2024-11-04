@@ -2,8 +2,7 @@ import { ParamType } from '@ethersproject/abi'
 import {
   Action,
   DestinationOptions,
-  InteractionConvention,
-  isMultiChoiceEdge,
+  InteractionConvention
 } from '../action/Action'
 import { CurveStableSwapNGPool } from '../action/CurveStableSwapNG'
 import { Address } from '../base/Address'
@@ -307,25 +306,6 @@ class ConvexStakingWrapper {
         return await handler(unit)
       }
     )
-
-    for (const baseTok of this.curvePool.allPoolTokens) {
-      try {
-        if (
-          !this.universe.rTokensInfo.tokens.has(baseTok) &&
-          this.universe.wrappedTokens.has(baseTok)
-        ) {
-          continue
-        }
-        const act = await this.universe.createTradeEdge(curveLpToken, baseTok)
-        if (isMultiChoiceEdge(act)) {
-          for (const a of act.choices) {
-            this.universe.addAction(a)
-          }
-        } else {
-          this.universe.addAction(act)
-        }
-      } catch (e) {}
-    }
   }
 
   public static async fromConfigAddress(

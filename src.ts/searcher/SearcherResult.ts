@@ -55,58 +55,7 @@ const zapperInterface = Zapper__factory.createInterface()
 const needsZeroedOutFirst = new Set([
   Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7'),
 ])
-class Step {
-  constructor(
-    readonly inputs: TokenQuantity[],
-    readonly action: BaseAction,
-    readonly destination: Address,
-    readonly outputs: TokenQuantity[]
-  ) { }
-}
 
-const linearize = (executor: Address, tokenExchange: SwapPaths) => {
-  const out: Step[] = []
-  const allApprovals: Approval[] = []
-  const balances = new TokenAmounts()
-  balances.addQtys(tokenExchange.inputs)
-
-  const recourseOn = (
-    node: SwapPath | SingleSwap,
-    nextDestination: Address
-  ) => {
-    if (node.type === 'SingleSwap') {
-      balances.exchange(node.inputs, node.outputs)
-      out.push(
-        new Step(node.inputs, node.action, nextDestination, node.outputs)
-      )
-
-      for (const approval of node.action.approvals) {
-        allApprovals.push(approval)
-      }
-      return
-    }
-    for (let i = 0; i < node.steps.length; i++) {
-      const step = node.steps[i]
-      const hasNext = node.steps[i + 1] != null
-      let nextAddr = !hasNext ? nextDestination : executor
-      if (
-        step.proceedsOptions === DestinationOptions.Recipient &&
-        node.steps[i + 1]?.interactionConvention ===
-        InteractionConvention.PayBeforeCall
-      ) {
-        nextAddr = node.steps[i + 1].address
-      }
-      recourseOn(step, nextAddr)
-    }
-  }
-
-  for (const groupOfSwaps of tokenExchange.swapPaths) {
-    const endDest = groupOfSwaps.destination
-    recourseOn(groupOfSwaps, endDest)
-  }
-
-  return [out, balances, allApprovals] as const
-}
 export class ThirdPartyIssue extends Error {
   constructor(public readonly msg: string) {
     super(msg)
@@ -121,9 +70,7 @@ export abstract class BaseSearcherResult {
 
   protected readonly planner = new Planner()
   public readonly blockNumber: number
-  public readonly commands: Step[]
   public readonly potentialResidualTokens: Token[]
-  public readonly allApprovals: Approval[]
   public readonly inputToken: Token
   public readonly inputIsNative: boolean
 
@@ -179,26 +126,26 @@ export abstract class BaseSearcherResult {
     this.blockNumber = this.universe.currentBlock
     const potentialResidualTokens = new Set<Token>()
     const executorAddress = this.universe.config.addresses.executorAddress
+    for (const path of swaps.swapPaths) {
+      for (const step of path.steps) {
 
-    const [steps, , allApprovals] = linearize(executorAddress, this.swaps)
-    this.allApprovals = allApprovals
-    this.commands = steps
-    for (const step of steps) {
-      for (const token of step.action.approvals.map((i) => i.token).flat()) {
-        potentialResidualTokens.add(token)
-      }
-      for (const qty of step.inputs) {
-        if (qty.token === this.universe.nativeToken) {
-          continue
+        for (const token of step.action.approvals.map((i) => i.token).flat()) {
+          potentialResidualTokens.add(token)
         }
-        potentialResidualTokens.add(qty.token)
-      }
-      for (const qty of step.outputs) {
-        if (qty.token === this.universe.nativeToken) {
-          continue
+        for (const qty of step.inputs) {
+          if (qty.token === this.universe.nativeToken) {
+            continue
+          }
+          potentialResidualTokens.add(qty.token)
         }
-        potentialResidualTokens.add(qty.token)
+        for (const qty of step.outputs) {
+          if (qty.token === this.universe.nativeToken) {
+            continue
+          }
+          potentialResidualTokens.add(qty.token)
+        }
       }
+
     }
 
     this.potentialResidualTokens = [...potentialResidualTokens]
@@ -363,7 +310,6 @@ export abstract class BaseSearcherResult {
           )
         }),
         totalValue,
-        this.swaps.destination
       ),
       dust: dustQuantities,
       dustValue: valueOfDust,
@@ -375,8 +321,10 @@ export abstract class BaseSearcherResult {
     const executorAddress = this.universe.config.addresses.executorAddress
     const approvalNeeded: Approval[] = []
     const duplicate = new Set<string>()
+    const approvals = this.swaps.swapPaths.map((i) => i.steps.map(ii => ii.action.approvals)).flat(2)
+
     await Promise.all(
-      this.allApprovals.map(async (i) => {
+      approvals.map(async (i) => {
         await this.checkIfSearchIsAborted()
         const key = i.spender.toString() + i.token.address.toString()
         if (duplicate.has(key)) {
@@ -553,7 +501,6 @@ export abstract class BaseSearcherResult {
         this.swaps.swapPaths,
         stats.outputs.map((i) => i.quantity),
         stats.valueUSD,
-        this.swaps.destination
       )
 
       const finalTx = this.encodeTx(

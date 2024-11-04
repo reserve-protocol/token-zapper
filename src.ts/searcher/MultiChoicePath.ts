@@ -418,7 +418,6 @@ export class MultiChoicePath implements SwapPath {
       this.paths,
       this.outputs,
       this.outputValue,
-      this.destination
     )
   }
 
@@ -477,9 +476,6 @@ export class MultiChoicePath implements SwapPath {
   }
   get outputValue(): TokenQuantity {
     return this.path.outputValue
-  }
-  get destination(): Address {
-    return this.path.destination
   }
 
   toString() {

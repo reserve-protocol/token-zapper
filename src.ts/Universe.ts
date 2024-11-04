@@ -1,7 +1,6 @@
 import { ethers } from 'ethers'
 
 import {
-  createMultiChoiceAction,
   type BaseAction as Action,
 } from './action/Action'
 import { LPToken } from './action/LPToken'
@@ -48,6 +47,7 @@ import { ToTransactionArgs } from './searcher/ToTransactionArgs'
 import { Contract } from './tx-gen/Planner'
 import { ZapperTokenQuantityPrice } from './oracles/ZapperAggregatorOracle'
 import winston from 'winston'
+import { TokenType } from './entities/TokenClass'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -72,6 +72,53 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.yieldPositionZaps.set(yieldPosition, rTokenInput)
   }
 
+
+  public readonly tokenType = new DefaultMap<Token, Promise<TokenType>>(async token => {
+    if (this.rTokensInfo.tokens.has(token)) {
+      return TokenType.RToken
+    }
+    if (this.lpTokens.has(token)) {
+      return TokenType.LPToken
+    }
+    const cls = await this.tokenClass.get(token)
+    if (cls === this.usd) {
+      return TokenType.StableCoin
+    }
+    if (cls === this.nativeToken) {
+      return TokenType.ETHLST
+    }
+    return TokenType.Asset
+  })
+
+  public readonly tokenClass = new DefaultMap<Token, Promise<Token>>(async (token: Token): Promise<Token> => {
+    if (this.wrappedNativeToken === token || this.nativeToken === token) {
+      return this.wrappedNativeToken
+    }
+    const tokenPrice = (await this.fairPrice(token.one))?.asNumber() ?? 0;
+    if (tokenPrice == 0) {
+      throw new Error('Failed to get price')
+    }
+    if (this.lpTokens.has(token)) {
+      const poolTokens = (await this.lpTokens.get(token)!.lpRedeem(token.one)).map(i => i.token)
+      const classes = await Promise.all(poolTokens.map(t => this.tokenClass.get(t)))
+      if (classes.every(t => t === classes[0])) {
+        return classes[0]
+      }
+      return token;
+    }
+    if (Math.abs(1 - tokenPrice) < 0.05) {
+      return await this.getToken(this.config.addresses.usdc)
+    }
+    const ethPrice = (await this.fairPrice(this.wrappedNativeToken.one))?.asNumber() ?? 0;
+    if (ethPrice == 0) {
+      throw new Error('Failed to get eth price')
+    }
+    if (Math.abs(ethPrice - tokenPrice) < ethPrice * 0.05) {
+      return this.wrappedNativeToken
+    }
+    return token
+  })
+
   public _finishResolving: () => void = () => { }
   public initialized: Promise<void> = new Promise((resolve) => {
     this._finishResolving = resolve
@@ -84,12 +131,12 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   public readonly perf = new PerformanceMonitor()
   public prettyPrintPerfs(addContext = false) {
-    console.log('Performance Stats')
+    this.logger.info('Performance Stats')
     for (const [_, value] of this.perf.stats.entries()) {
-      console.log('  ' + value.toString())
+      this.logger.info('  ' + value.toString())
       if (addContext) {
         for (const context of value.contextStats) {
-          console.log('    ' + context.toString())
+          this.logger.info('    ' + context.toString())
         }
       }
     }
@@ -102,6 +149,25 @@ export class Universe<const UniverseConf extends Config = Config> {
     const cache = new BlockCache<Input, Result, Key>(fetch, ttl, this.currentBlock, keyFn as any)
     this.caches.push(cache)
     return cache
+  }
+
+  public createCachedProducer<Result>(
+    fetch: () => Promise<Result>,
+    ttl: number = this.config.requoteTolerance
+  ): () => Promise<Result> {
+    let lastFetch: number = 0
+    let lastResult: Promise<Result> | null = null
+    return async () => {
+      if (lastResult == null || Date.now() - lastFetch > ttl) {
+        lastFetch = Date.now()
+        lastResult = fetch()
+        void lastResult.catch(e => {
+          lastResult = null
+          throw e
+        });
+      }
+      return await lastResult
+    }
   }
 
   public readonly tokens = new Map<Address, Token>()
@@ -122,25 +188,6 @@ export class Universe<const UniverseConf extends Config = Config> {
       units,
       txFee,
       txFeeUsd,
-    }
-  }
-
-  public createCachedProducer<Result>(
-    fetch: () => Promise<Result>,
-    ttl: number = this.config.requoteTolerance
-  ): () => Promise<Result> {
-    let lastFetch = 0
-    let lastResult: Promise<Result> | null = null
-    return async () => {
-      if (lastResult == null || Date.now() - lastFetch > ttl) {
-        lastFetch = Date.now()
-        lastResult = fetch()
-        void lastResult.catch(e => {
-          lastResult = null
-          throw e
-        });
-      }
-      return await lastResult
     }
   }
 
@@ -299,6 +346,7 @@ export class Universe<const UniverseConf extends Config = Config> {
           }
 
 
+
           if (stopSearch.signal.aborted || opts.abort.aborted) {
             return;
           }
@@ -313,6 +361,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     )
 
     await Promise.race([work, stopWork])
+
   }
 
   // Sentinel token used for pricing things
@@ -504,6 +553,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (this.allActions.has(action)) {
       return this
     }
+    console.log(`Adding ${action.protocol}: ${action.inputToken.join(', ')} -> ${action.outputToken.join(', ')}`)
     this.allActions.add(action)
     if (actionAddress != null) {
       this.actions.get(actionAddress).push(action)
@@ -515,15 +565,37 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this
   }
 
-  public defineLPToken(lpTokenInstance: LPToken) {
-    this.lpTokens.set(lpTokenInstance.token, lpTokenInstance)
-    this.addAction(lpTokenInstance.mintAction)
-    this.addAction(lpTokenInstance.burnAction)
-    // this.defineMintable(
-    //   lpTokenInstance.mintAction,
-    //   lpTokenInstance.burnAction,
-    //   true
-    // )
+  public async defineLPToken(
+    lpToken: Token,
+    burn: (a: TokenQuantity) => Promise<TokenQuantity[]>,
+    mint: (a: TokenQuantity[]) => Promise<TokenQuantity>) {
+    const underlyingPrLP = await burn(lpToken.one)
+    const positionTokens = underlyingPrLP.map(i => i.token);
+
+    const inst = new LPToken(
+      lpToken,
+      positionTokens,
+      burn,
+      mint
+    )
+
+    this.addSingleTokenPriceSource({
+      token: lpToken,
+      priceFn: async () => {
+        const underlyings = (await burn(lpToken.one))
+        const prices = await Promise.all(
+          underlyings.map(async (i) => {
+            const p = await this.fairPrice(i)
+            if (p == null) {
+              throw new Error(`Cannot price ${lpToken}: Failed to price ${i}`)
+            }
+            return p
+          })
+        )
+        return prices.reduce((l, r) => l.add(r), this.usd.zero)
+      },
+    })
+    this.lpTokens.set(lpToken, inst)
   }
 
   public weirollZapperExec
@@ -542,27 +614,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this.config.addresses.zapperAddress
   }
 
-  public async createTradeEdge(tokenIn: Token, tokenOut: Token) {
-    const edges: Action[] = []
-    for (const venue of this.tradeVenues) {
-      if (
-        !venue.supportsDynamicInput ||
-        !venue.supportsEdges ||
-        !venue.canCreateEdgeBetween(tokenIn, tokenOut)
-      ) {
-        continue
-      }
-      const edge = await venue.createTradeEdge(tokenIn, tokenOut)
-      if (edge != null) {
-        edges.push(edge)
-      }
-    }
-
-    if (edges.length === 0) {
-      throw new Error(`No trade edge found for ${tokenIn} -> ${tokenOut}`)
-    }
-    return createMultiChoiceAction(this, edges)
-  }
   public defineMintable(
     mint: Action,
     burn: Action,

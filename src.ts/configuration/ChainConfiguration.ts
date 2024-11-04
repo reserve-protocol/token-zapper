@@ -8,12 +8,11 @@ const defaultSearcherOptions = {
 
   // How long any individual trade may use
   routerDeadline: 2500,
+  routerMinResults: 1,
   searcherMinRoutesToProduce: 2,
   searcherMaxRoutesToProduce: 8,
 
   searchConcurrency: 32,
-
-  routerMinResults: 1,
 
   defaultInternalTradeSlippage: 50n,
 
@@ -79,6 +78,8 @@ export const makeConfig = <
     uniV3Router: string
     curveStableSwapNGHelper: string
     curveCryptoFactoryHelper: string
+
+    usdc: string
   },
   options: {
     blocktime: Blocktime

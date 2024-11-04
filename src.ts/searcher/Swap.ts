@@ -4,7 +4,8 @@ import {
   type BaseAction,
 } from '../action/Action'
 import { type Address } from '../base/Address'
-import { type TokenQuantity } from '../entities/Token'
+import { DefaultMap } from '../base/DefaultMap'
+import { Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Universe } from '../Universe'
 
@@ -54,6 +55,73 @@ export class SingleSwap {
   }
 }
 
+class PathStats {
+  constructor(
+    public readonly outputValue: TokenQuantity,
+    public readonly txFee: TokenQuantity,
+    public readonly netValue: TokenQuantity,
+    public readonly gasUnits: bigint
+  ) {}
+}
+
+class BasePath {
+  get proceedsOptions(): DestinationOptions {
+    return this.steps.at(-1)!.proceedsOptions
+  }
+  get interactionConvention(): InteractionConvention {
+    return this.steps.at(0)!.interactionConvention
+  }
+  constructor(
+    public readonly stats: PathStats,
+    public readonly steps: SingleSwap[],
+    public readonly inputs: TokenQuantity[],
+    public readonly outputs: TokenQuantity[]
+  ) {}
+
+  get supportsDynamicInput() {
+    return this.steps[0].action.supportsDynamicInput
+  }
+  async exchange(tokenAmounts: TokenAmounts) {
+    tokenAmounts.exchange(this.inputs, this.outputs)
+  }
+
+  get gasUnits() {
+    return this.stats.gasUnits
+  }
+  get netValue() {
+    return this.stats.netValue
+  }
+  get txFee() {
+    return this.stats.txFee
+  }
+
+  public proportions() {
+    return this.outputs.map((i) => i.div(this.stats.outputValue.into(i.token)))
+  }
+}
+
+export class SwapPath1to1 extends BasePath {
+  constructor(
+    public readonly input: TokenQuantity,
+    steps: SingleSwap[],
+    public readonly output: TokenQuantity,
+    stats: PathStats
+  ) {
+    super(stats, steps, [input], [output])
+  }
+}
+
+export class SwapPath1toN extends BasePath {
+  constructor(
+    public readonly input: TokenQuantity,
+    steps: SingleSwap[],
+    outputs: TokenQuantity[],
+    stats: PathStats
+  ) {
+    super(stats, steps, [input], outputs)
+  }
+}
+
 /**
  * A SwapPath groups a set of SingleSwap's together. The output of one SingleSwap is the input of the next.
  * A SwapPath may be optimized, as long as the input's and output's remain the same.
@@ -78,8 +146,7 @@ export class SwapPath {
       this.inputs,
       [this],
       this.outputs,
-      this.outputValue,
-      this.destination
+      this.outputValue
     )
   }
 
@@ -88,7 +155,7 @@ export class SwapPath {
     public readonly steps: SingleSwap[],
     public readonly outputs: TokenQuantity[],
     public readonly outputValue: TokenQuantity,
-    public readonly destination: Address
+    public readonly dust: TokenQuantity[] = []
   ) {
     if (steps.length === 0) {
       throw new Error('Invalid SwapPath, no steps')
@@ -141,7 +208,7 @@ export class SwapPath {
         }
       }
     }
-    out.push(`  outputs: ${this.outputs.join(', ')} -> ${this.destination}`)
+    out.push(`  outputs: ${this.outputs.join(', ')}`)
     out.push('}')
     return out
   }
@@ -175,8 +242,7 @@ export class SwapPaths {
     public readonly inputs: TokenQuantity[],
     public readonly swapPaths: SwapPath[],
     public readonly outputs: TokenQuantity[],
-    public readonly outputValue: TokenQuantity,
-    public readonly destination: Address
+    public readonly outputValue: TokenQuantity
   ) {}
 
   public static fromPaths(universe: Universe, paths: SwapPath[]) {
@@ -190,14 +256,12 @@ export class SwapPaths {
     const outputValue = paths
       .map((i) => i.outputValue)
       .reduce((l, r) => l.add(r))
-    const destination = paths.at(-1)!.destination
     return new SwapPaths(
       universe,
       inputs.toTokenQuantities(),
       paths,
       outputs.toTokenQuantities(),
-      outputValue,
-      destination
+      outputValue
     )
   }
 
@@ -268,42 +332,100 @@ export class SwapPaths {
  * and can be used to generate an actual transaction.
  * */
 export class SwapPlan {
+  public readonly inputs: Token[] = []
+  public readonly outputs: Token[] = []
   constructor(
     readonly universe: Universe,
     public readonly steps: BaseAction[]
-  ) {}
+  ) {
+    const inputs = new Set<Token>()
+    const outputs = new Set<Token>()
 
-  get inputs() {
-    return this.steps[0].inputToken
+    for (let i = 0; i < steps.length; i++) {
+      for (const input of steps[i].inputToken) {
+        if (outputs.has(input)) {
+          outputs.delete(input)
+        } else {
+          inputs.add(input)
+        }
+      }
+      for (const output of steps[i].outputToken) {
+        outputs.add(output)
+      }
+    }
+    this.inputs = [...inputs]
+
+    this.outputs = [...outputs]
   }
 
-  public async quote(
-    input: TokenQuantity[],
-    destination: Address
-  ): Promise<SwapPath> {
+  public get addresesInUse() {
+    return this.steps.map((i) => [...i.addressesInUse]).flat()
+  }
+
+  public async outputProportions() {
+    return await this.steps.at(-1)!.outputProportions()
+  }
+  public async inputProportions() {
+    const inputProportions = new DefaultMap<Token, TokenQuantity>((t) => t.zero)
+    for (let i = this.steps.length - 1; i >= 0; i--) {
+      const step = this.steps[i]
+
+      const inputs = await step.inputProportions()
+      console.log(step.toString(), ': ', inputs.join(', '))
+      const outputs = await step.outputProportions()
+      console.log(
+        `${step.toString()}: ${inputs.join(', ')} -> ${outputs.join(', ')}`
+      )
+      let total = 0n
+      for (const qty of outputs) {
+        const previous = inputProportions.get(qty.token)
+        total += previous.toScaled(10n ** 18n)
+        inputProportions.delete(qty.token)
+      }
+      if (total === 0n) {
+        total = 10n ** 18n
+      }
+      for (const qty of inputs) {
+        inputProportions.set(qty.token, qty.mul(qty.token.fromScale18BN(total)))
+      }
+    }
+    const res = this.inputs.map((i) => inputProportions.get(i)!)
+    return res
+  }
+
+  get dustTokens() {
+    return this.steps.at(-1)!.dustTokens
+  }
+
+  public async quote(input: TokenQuantity[]): Promise<SwapPath> {
     if (input.length === 0) {
       throw new Error('Invalid input, no input tokens ' + this.toString())
     }
-    let legAmount = input
+
+    const amts = TokenAmounts.fromQuantities(input)
     const swaps: SingleSwap[] = []
 
     for (const step of this.steps) {
-      if (step.inputToken.length !== legAmount.length) {
-        throw new Error(
-          'Invalid input, input count does not match Action input length: ' +
-            step.inputToken.join(', ') +
-            ' vs ' +
-            legAmount.join(', ') +
-            ' ' +
-            this.toString()
-        )
+      const legAmount = step.inputToken.map((tok) => {
+        const qty = amts.get(tok)
+        if (!qty.isZero) {
+          return qty
+        }
+        throw new Error(`Missing input token ${tok} for ${step.toString()}`)
+      })
+      const dustTokens = step.dustTokens
+      if (dustTokens.length === 0) {
+        const output = await step.quoteWithSlippage(legAmount)
+        swaps.push(new SingleSwap(legAmount, step, output))
+        amts.exchange(legAmount, output)
+      } else {
+        const output = await step.quoteWithSlippageAndDust(legAmount)
+        swaps.push(new SingleSwap(legAmount, step, output.output))
+        amts.exchange(legAmount, [...output.output, ...output.dust])
       }
-
-      const output = await step.quoteWithSlippage(legAmount)
-      swaps.push(new SingleSwap(legAmount, step, output))
-      legAmount = output
     }
 
+    const legAmount = amts.toTokenQuantities()
     const value = (
       await Promise.all(
         legAmount.map(
@@ -313,10 +435,15 @@ export class SwapPlan {
       )
     ).reduce((l, r) => l.add(r))
 
-    return new SwapPath(input, swaps, legAmount, value, destination)
+    const dust = this.dustTokens.map((i) => amts.get(i))
+    const output = this.outputs.map((i) => amts.get(i))
+
+    return new SwapPath(input, swaps, output, value, dust)
   }
 
   toString() {
-    return `SwapPlan(${this.steps.map((i) => i.toString()).join(', ')})`
+    return `SwapPlan(${this.inputs.join(', ')} -> (${this.steps
+      .map((i) => i.toString())
+      .join(', ')}) -> ${this.outputs.join(', ')}) `
   }
 }

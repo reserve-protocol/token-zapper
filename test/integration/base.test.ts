@@ -168,6 +168,7 @@ beforeAll(async () => {
       ...baseConfig,
       searcherMinRoutesToProduce: 1,
       maxSearchTimeMs: 60000,
+      routerDeadline: 20000,
     },
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))

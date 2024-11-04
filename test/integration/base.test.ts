@@ -143,18 +143,16 @@ const individualIntegrations = [
   ),
 ]
 
-const zapIntoYieldPositionCases: ReturnType<
-  typeof makeZapIntoYieldPositionTestCase
->[] = [
+const zapIntoYieldPositionCases = [
   makeZapIntoYieldPositionTestCase(
-    1,
-    t.WETH,
+    10000,
+    t.USDC,
     rTokens.hyUSD,
     t['vAMM-hyUSD/eUSD']
   ),
   makeZapIntoYieldPositionTestCase(
-    1,
-    t.WETH,
+    10000,
+    t.USDC,
     rTokens.hyUSD,
     t['dyson-hyUSDeUSD']
   ),

@@ -147,14 +147,14 @@ const zapIntoYieldPositionCases: ReturnType<
   typeof makeZapIntoYieldPositionTestCase
 >[] = [
   makeZapIntoYieldPositionTestCase(
-    5,
-    t.USDC,
+    1,
+    t.WETH,
     rTokens.hyUSD,
     t['vAMM-hyUSD/eUSD']
   ),
   makeZapIntoYieldPositionTestCase(
-    10,
-    t.USDC,
+    1,
+    t.WETH,
     rTokens.hyUSD,
     t['dyson-hyUSDeUSD']
   ),

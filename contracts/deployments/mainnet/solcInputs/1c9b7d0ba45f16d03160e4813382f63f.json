@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/VirtualERC20.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.17;\n\ninterface IConcentratorVault {\n    function getUserShare(uint256 _pid, address _account) external view returns (uint256);\n}\n\ncontract VirtualERC20 {\n    IConcentratorVault public immutable concentratorVault;\n    uint256 public immutable pid;\n    string public name;\n    string public symbol;\n    uint8 public immutable decimals;\n\n    constructor(address _vaultAddress, uint256 _pid, string memory name_, string memory symbol_, uint8 decimals_) {\n        concentratorVault = IConcentratorVault(_vaultAddress);\n        pid = _pid;\n        name = name_;\n        symbol = symbol_;\n        decimals = decimals_;\n    }\n\n    function balanceOf(address account) public view returns (uint256) {\n        return concentratorVault.getUserShare(pid, account);\n    }\n\n    function transfer(address, uint256 amt) public pure returns (bool) {\n        if (amt == 0) {\n            return true;\n        }\n        revert(\"VirtualERC20: Transfers not supported\");\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

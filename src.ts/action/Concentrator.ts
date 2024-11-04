@@ -29,12 +29,12 @@ export class ConcentratorDepositAction extends ConcentratorBase {
       )
     )
 
-    planner.add(
+    const out = planner.add(
       lib.deposit(this.pid, destination.address, inputs[0]),
       this.toString()
     )
 
-    return null
+    return out ? [out] : null
   }
   public get returnsOutput(): boolean {
     return false
@@ -66,55 +66,6 @@ export class ConcentratorDepositAction extends ConcentratorBase {
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Recipient,
       [new Approval(underlying, vaultAddress)]
-    )
-  }
-}
-
-export class ConcentratorWithdrawAction extends ConcentratorBase {
-  public get actionName(): string {
-    return 'withdraw'
-  }
-  async plan(planner: Planner, inputs: Value[]) {
-    const lib = this.gen.Contract.createContract(
-      IAladdinCRVConvexVault__factory.connect(
-        this.vaultAddress.address,
-        this.universe.provider
-      )
-    )
-    planner.add(
-      lib.withdrawAndClaim(this.pid, inputs[0], 0, 0),
-      this.toString()
-    )
-
-    return null
-  }
-
-  public get returnsOutput(): boolean {
-    return false
-  }
-
-  gasEstimate() {
-    return BigInt(200000n)
-  }
-
-  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [this.virtualERC20.from(amountsIn.amount)]
-  }
-
-  constructor(
-    readonly universe: Universe,
-    readonly underlying: Token,
-    readonly virtualERC20: Token,
-    readonly vaultAddress: Address,
-    readonly pid: number
-  ) {
-    super(
-      virtualERC20.address,
-      [virtualERC20],
-      [underlying],
-      InteractionConvention.None,
-      DestinationOptions.Callee,
-      []
     )
   }
 }

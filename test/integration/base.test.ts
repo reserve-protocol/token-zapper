@@ -167,6 +167,7 @@ beforeAll(async () => {
     {
       ...baseConfig,
       searcherMinRoutesToProduce: 1,
+      routerDeadline: 20000,
       maxSearchTimeMs: 60000,
       routerDeadline: 20000,
     },

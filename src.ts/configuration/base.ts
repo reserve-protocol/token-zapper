@@ -52,6 +52,7 @@ export const baseConfig = makeConfig(
   },
   {
     blocktime: 2000,
+    zapMaxDustProduced: 5,
     blockGasLimit: 60_000_000n,
     requoteTolerance: 4,
   }

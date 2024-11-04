@@ -274,7 +274,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
           }
 
           return true
-        }).slice(0, 16)
+        }).slice(0, 32)
         this.loggers.searching.info(
           `Found ${swapPlans.length}/${allPlans.length} trades: for ${input.token} -> ${output}`
         )
@@ -290,6 +290,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
               }
               return out
             } catch (e) {
+              console.log(e)
               return null
             }
           })

@@ -48,6 +48,7 @@ export const setupAerodromeRouter = async (universe: Universe) => {
     mixedRouterAddr.address,
     universe.provider
   )
+  const logger = universe.logger.child({ integration: 'Aerodrome' })
 
   const aerodromeContext = new AerodromeContext(
     universe,
@@ -74,7 +75,9 @@ export const setupAerodromeRouter = async (universe: Universe) => {
               factory
             )
             await aerodromeContext.definePool(Address.from(addr), data)
-          } catch (e) {}
+          } catch (e) {
+
+          }
         } else {
           try {
             const factoryInst = IAerodromeFactory__factory.connect(

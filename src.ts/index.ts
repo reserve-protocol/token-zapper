@@ -20,8 +20,10 @@ import { EthereumUniverse, ethereumConfig } from './configuration/ethereum'
 import { setupEthereumZapper } from './configuration/setupEthereumZapper'
 
 import { loadTokens } from './configuration/loadTokens'
-import { makeConfig, convertAddressObject } from './configuration/ChainConfiguration'
+import { makeConfig } from './configuration/ChainConfiguration'
 import { JsonRpcProvider } from '@ethersproject/providers'
+export * from "./searcher/Dag"
+export * from "./searcher/DagBuilder"
 import {
   ChainId,
   ChainIds,

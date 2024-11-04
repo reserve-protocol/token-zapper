@@ -4,7 +4,8 @@ import {
   type BaseAction,
 } from '../action/Action'
 import { type Address } from '../base/Address'
-import { type TokenQuantity } from '../entities/Token'
+import { DefaultMap } from '../base/DefaultMap'
+import { Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Universe } from '../Universe'
 
@@ -21,7 +22,7 @@ export class SingleSwap {
     public readonly inputs: TokenQuantity[],
     public readonly action: BaseAction,
     public readonly outputs: TokenQuantity[]
-  ) { }
+  ) {}
 
   get proceedsOptions() {
     return this.action.proceedsOptions
@@ -41,8 +42,8 @@ export class SingleSwap {
     return `SingleSwap(input: ${this.inputs
       .map((i) => i.formatWithSymbol())
       .join(', ')}, action: ${this.action}, output: ${this.outputs
-        .map((i) => i.formatWithSymbol())
-        .join(', ')})`
+      .map((i) => i.formatWithSymbol())
+      .join(', ')})`
   }
 
   describe() {
@@ -60,7 +61,7 @@ class PathStats {
     public readonly txFee: TokenQuantity,
     public readonly netValue: TokenQuantity,
     public readonly gasUnits: bigint
-  ) { }
+  ) {}
 }
 
 class BasePath {
@@ -75,7 +76,7 @@ class BasePath {
     public readonly steps: SingleSwap[],
     public readonly inputs: TokenQuantity[],
     public readonly outputs: TokenQuantity[]
-  ) { }
+  ) {}
 
   get supportsDynamicInput() {
     return this.steps[0].action.supportsDynamicInput
@@ -153,7 +154,8 @@ export class SwapPath {
     public readonly inputs: TokenQuantity[],
     public readonly steps: SingleSwap[],
     public readonly outputs: TokenQuantity[],
-    public readonly outputValue: TokenQuantity
+    public readonly outputValue: TokenQuantity,
+    public readonly dust: TokenQuantity[] = []
   ) {
     if (steps.length === 0) {
       throw new Error('Invalid SwapPath, no steps')
@@ -185,8 +187,8 @@ export class SwapPath {
     return `SwapPath(input: ${this.inputs
       .map((i) => i.formatWithSymbol())
       .join(', ')}, steps: ${this.steps.join(', ')}, output: ${this.outputs
-        .map((i) => i.formatWithSymbol())
-        .join(', ')} (${this.outputValue.formatWithSymbol()}))`
+      .map((i) => i.formatWithSymbol())
+      .join(', ')} (${this.outputValue.formatWithSymbol()}))`
   }
 
   describe() {
@@ -241,7 +243,7 @@ export class SwapPaths {
     public readonly swapPaths: SwapPath[],
     public readonly outputs: TokenQuantity[],
     public readonly outputValue: TokenQuantity
-  ) { }
+  ) {}
 
   public static fromPaths(universe: Universe, paths: SwapPath[]) {
     if (paths.length === 0) {
@@ -272,22 +274,23 @@ export class SwapPaths {
   }
 
   toShortString() {
-    return `SwapPaths(input:${this.inputs},output:${this.outputs
-      },ops:[${this.swapPaths
-        .map((i) => {
-          return `[${i.inputs.join(', ')} => ${i.outputs.join(', ')}]`
-        })
-        .join(', ')}])`
+    return `SwapPaths(input:${this.inputs},output:${
+      this.outputs
+    },ops:[${this.swapPaths
+      .map((i) => {
+        return `[${i.inputs.join(', ')} => ${i.outputs.join(', ')}]`
+      })
+      .join(', ')}])`
   }
 
   toString() {
     return `SwapPaths(input: ${this.inputs
       .map((i) => i.formatWithSymbol())
       .join(', ')}, swapPaths: ${this.swapPaths.join(
-        ', '
-      )}, output: ${this.outputs
-        .map((i) => i.formatWithSymbol())
-        .join(', ')} (${this.outputValue.formatWithSymbol()}))`
+      ', '
+    )}, output: ${this.outputs
+      .map((i) => i.formatWithSymbol())
+      .join(', ')} (${this.outputValue.formatWithSymbol()}))`
   }
 
   describe() {
@@ -329,51 +332,100 @@ export class SwapPaths {
  * and can be used to generate an actual transaction.
  * */
 export class SwapPlan {
+  public readonly inputs: Token[] = []
+  public readonly outputs: Token[] = []
   constructor(
     readonly universe: Universe,
-    public readonly steps: BaseAction[],
-  ) { }
+    public readonly steps: BaseAction[]
+  ) {
+    const inputs = new Set<Token>()
+    const outputs = new Set<Token>()
 
-  public get inputs() {
-    return this.steps[0].inputToken
+    for (let i = 0; i < steps.length; i++) {
+      for (const input of steps[i].inputToken) {
+        if (outputs.has(input)) {
+          outputs.delete(input)
+        } else {
+          inputs.add(input)
+        }
+      }
+      for (const output of steps[i].outputToken) {
+        outputs.add(output)
+      }
+    }
+    this.inputs = [...inputs]
+
+    this.outputs = [...outputs]
   }
-  public get outputs() {
-    return this.steps[this.steps.length - 1].outputToken
+
+  public get addresesInUse() {
+    return this.steps.map((i) => [...i.addressesInUse]).flat()
   }
 
   public async outputProportions() {
     return await this.steps.at(-1)!.outputProportions()
   }
   public async inputProportions() {
-    return await this.steps.at(0)!.inputProportions()
+    const inputProportions = new DefaultMap<Token, TokenQuantity>((t) => t.zero)
+    for (let i = this.steps.length - 1; i >= 0; i--) {
+      const step = this.steps[i]
+
+      const inputs = await step.inputProportions()
+      console.log(step.toString(), ': ', inputs.join(', '))
+      const outputs = await step.outputProportions()
+      console.log(
+        `${step.toString()}: ${inputs.join(', ')} -> ${outputs.join(', ')}`
+      )
+      let total = 0n
+      for (const qty of outputs) {
+        const previous = inputProportions.get(qty.token)
+        total += previous.toScaled(10n ** 18n)
+        inputProportions.delete(qty.token)
+      }
+      if (total === 0n) {
+        total = 10n ** 18n
+      }
+      for (const qty of inputs) {
+        inputProportions.set(qty.token, qty.mul(qty.token.fromScale18BN(total)))
+      }
+    }
+    const res = this.inputs.map((i) => inputProportions.get(i)!)
+    return res
   }
 
-  public async quote(
-    input: TokenQuantity[]
-  ): Promise<SwapPath> {
+  get dustTokens() {
+    return this.steps.at(-1)!.dustTokens
+  }
+
+  public async quote(input: TokenQuantity[]): Promise<SwapPath> {
     if (input.length === 0) {
       throw new Error('Invalid input, no input tokens ' + this.toString())
     }
-    let legAmount = input
+
+    const amts = TokenAmounts.fromQuantities(input)
     const swaps: SingleSwap[] = []
 
     for (const step of this.steps) {
-      if (step.inputToken.length !== legAmount.length) {
-        throw new Error(
-          'Invalid input, input count does not match Action input length: ' +
-          step.inputToken.join(', ') +
-          ' vs ' +
-          legAmount.join(', ') +
-          ' ' +
-          this.toString()
-        )
+      const legAmount = step.inputToken.map((tok) => {
+        const qty = amts.get(tok)
+        if (!qty.isZero) {
+          return qty
+        }
+        throw new Error(`Missing input token ${tok} for ${step.toString()}`)
+      })
+      const dustTokens = step.dustTokens
+      if (dustTokens.length === 0) {
+        const output = await step.quoteWithSlippage(legAmount)
+        swaps.push(new SingleSwap(legAmount, step, output))
+        amts.exchange(legAmount, output)
+      } else {
+        const output = await step.quoteWithSlippageAndDust(legAmount)
+        swaps.push(new SingleSwap(legAmount, step, output.output))
+        amts.exchange(legAmount, [...output.output, ...output.dust])
       }
-
-      const output = await step.quoteWithSlippage(legAmount)
-      swaps.push(new SingleSwap(legAmount, step, output))
-      legAmount = output
     }
 
+    const legAmount = amts.toTokenQuantities()
     const value = (
       await Promise.all(
         legAmount.map(
@@ -383,10 +435,15 @@ export class SwapPlan {
       )
     ).reduce((l, r) => l.add(r))
 
-    return new SwapPath(input, swaps, legAmount, value)
+    const dust = this.dustTokens.map((i) => amts.get(i))
+    const output = this.outputs.map((i) => amts.get(i))
+
+    return new SwapPath(input, swaps, output, value, dust)
   }
 
   toString() {
-    return `SwapPlan(${this.steps.map((i) => i.toString()).join(', ')})`
+    return `SwapPlan(${this.inputs.join(', ')} -> (${this.steps
+      .map((i) => i.toString())
+      .join(', ')}) -> ${this.outputs.join(', ')}) `
   }
 }

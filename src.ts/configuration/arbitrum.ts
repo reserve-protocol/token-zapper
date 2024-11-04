@@ -60,6 +60,8 @@ export const arbiConfig = makeConfig(
     uniV3Router: '0x922eDac4D5c6702192473ec77a294edD834Fb2af',
     curveStableSwapNGHelper: '0x323EB0B5e2a59d5565E59CBEb965f00298d3A2a1',
     curveCryptoFactoryHelper: ethers.constants.AddressZero,
+
+    usdc: '0xaf88d065e77c8cc2239327c5edb3a432268e5831'
   } as const,
   {
     blocktime: 250,

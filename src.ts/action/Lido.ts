@@ -146,7 +146,7 @@ export class LidoDeployment {
   }
 }
 
-abstract class BaseLidoAction extends Action('Lido.Base') {
+abstract class BaseLidoAction extends Action('Lido') {
   abstract get actionName(): string
   get oneUsePrZap() {
     return false

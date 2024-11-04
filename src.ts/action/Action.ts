@@ -284,6 +284,9 @@ export abstract class BaseAction {
     return 'Unknown'
   }
 
+  get dustTokens(): Token[] {
+    return []
+  }
   /**
    * The interaction convention of the action.
    * See @InteractionConvention for more information
@@ -307,14 +310,24 @@ export abstract class BaseAction {
     public _interactionConvention: InteractionConvention,
     public _proceedsOptions: DestinationOptions,
     public _approvals: Approval[]
-  ) { }
+  ) {}
 
   public async intoSwapPath(universe: Universe, qty: TokenQuantity) {
-    return await new SwapPlan(universe, [this]).quote(
-      [qty],
-    )
+    return await new SwapPlan(universe, [this]).quote([qty])
   }
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
+  public async quoteWithDust(amountsIn: TokenQuantity[]): Promise<{
+    output: TokenQuantity[]
+    dust: TokenQuantity[]
+  }> {
+    if (this.dustTokens.length === 0) {
+      return {
+        output: await this.quote(amountsIn),
+        dust: [],
+      }
+    }
+    throw new Error('Unimplemented')
+  }
   public async quoteWithSlippage(
     amountsIn: TokenQuantity[]
   ): Promise<TokenQuantity[]> {
@@ -325,9 +338,32 @@ export abstract class BaseAction {
     return outputs.map((output) => {
       return output.token.from(
         output.amount -
-        (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
+          (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
       )
     })
+  }
+
+  public async quoteWithSlippageAndDust(
+    amountsIn: TokenQuantity[]
+  ): Promise<{ output: TokenQuantity[]; dust: TokenQuantity[] }> {
+    const outputs = await this.quoteWithDust(amountsIn)
+    if (this.outputSlippage === 0n) {
+      return outputs
+    }
+    return {
+      output: outputs.output.map((output) => {
+        return output.token.from(
+          output.amount -
+            (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
+        )
+      }),
+      dust: outputs.dust.map((output) => {
+        return output.token.from(
+          output.amount -
+            (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
+        )
+      }),
+    }
   }
   abstract gasEstimate(): bigint
   public async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {

@@ -91,7 +91,7 @@ export class CurvePool {
     readonly underlyingTokens: Token[],
     public readonly meta: PoolTemplate,
     readonly templateName: string
-  ) {}
+  ) { }
 
   toString() {
     let out = `CurvePool(name=${this.meta.name},tokens=${this.tokens.join(
@@ -283,7 +283,7 @@ export class CurveSwap extends Action('Curve') {
         for (const r of _route) {
           this.addPool(Address.from(r))
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 
@@ -462,11 +462,7 @@ export const loadCurve = async (universe: Universe) => {
       return lpToken.from(out)
     }
 
-    const lpTokenInstance = new LPToken(lpToken, tokensInPosition, burn, mint)
-    universe.defineLPToken(lpTokenInstance)
-
-    const gaugeToken = await universe.getToken(Address.from(pool.meta.lpToken))
-    universe.lpTokens.set(gaugeToken, lpTokenInstance)
+    await universe.defineLPToken(lpToken, burn, mint)
   }
 
   const addCurvePoolEdges = async (universe: Universe, pools: CurvePool[]) => {

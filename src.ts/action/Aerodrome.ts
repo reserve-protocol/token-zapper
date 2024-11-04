@@ -16,7 +16,6 @@ import {
   IERC20__factory,
   IMixedRouteQuoterV1,
   SlipstreamRouterCall,
-  UniV3RouterCall,
 } from '../contracts'
 import { SwapLpStructOutput } from '../contracts/contracts/Aerodrome.sol/IAerodromeSugar'
 import { Token, TokenQuantity } from '../entities/Token'
@@ -85,9 +84,8 @@ abstract class BaseV2AerodromeAction extends Action('BaseAerodromeStablePool') {
   }
 
   public toString(): string {
-    return `${this.protocol}.${this.actionName}(${
-      this.pool.address
-    }, ${this.inputToken.join(', ')} => ${this.outputToken.join(', ')})`
+    return `${this.protocol}.${this.actionName}(${this.pool.address
+      }, ${this.inputToken.join(', ')} => ${this.outputToken.join(', ')})`
   }
 }
 
@@ -558,9 +556,9 @@ class WrappedLpAdd extends BaseV2AerodromeAction {
           amounts: (tokenIn === pool.token0
             ? [amountIn.scalarDiv(2n), quote.outputs[0]]
             : [quote.outputs[0], amountIn.scalarDiv(2n)]) as [
-            TokenQuantity,
-            TokenQuantity
-          ],
+              TokenQuantity,
+              TokenQuantity
+            ],
           output: liquidity,
         }
       },
@@ -706,16 +704,16 @@ class AerodromeStablePool {
     this.actions =
       this.poolType === AerodromePoolType.CL
         ? {
-            t0for1: new AeropoolSwapCL(this, this.token0, this.token1),
-            t1for0: new AeropoolSwapCL(this, this.token1, this.token0),
-          }
+          t0for1: new AeropoolSwapCL(this, this.token0, this.token1),
+          t1for0: new AeropoolSwapCL(this, this.token1, this.token0),
+        }
         : {
-            addLiquidity: new AeropoolAddLiquidity(this),
-            removeLiquidity: new AeropoolRemoveLiquidity(this),
+          addLiquidity: new AeropoolAddLiquidity(this),
+          removeLiquidity: new AeropoolRemoveLiquidity(this),
 
-            t0for1: new AeropoolSwap(this, [this.token0], [this.token1]),
-            t1for0: new AeropoolSwap(this, [this.token1], [this.token0]),
-          }
+          t0for1: new AeropoolSwap(this, [this.token0], [this.token1]),
+          t1for0: new AeropoolSwap(this, [this.token1], [this.token0]),
+        }
 
     if (
       this.poolType === AerodromePoolType.CL ||
@@ -823,9 +821,9 @@ class AerodromeStablePool {
 
     const _totalSupply = (await this.totalSupply()).amount
 
-    ;[amount0, amount1] = D0FOR1
-      ? [desiredInput, amountBOptimal]
-      : [amountBOptimal, desiredInput]
+      ;[amount0, amount1] = D0FOR1
+        ? [desiredInput, amountBOptimal]
+        : [amountBOptimal, desiredInput]
 
     const A = (amount0.amount * _totalSupply) / res0.amount
     const B = (amount1.amount * _totalSupply) / res1.amount
@@ -878,30 +876,19 @@ class AerodromeStablePool {
           universe.addAction(new WrappedLpRemove(inst, inst.token0))
           universe.addAction(new WrappedLpRemove(inst, inst.token1))
 
-          universe.addSingleTokenPriceSource({
-            token: inst.lpToken,
-            priceFn: async () => {
-              const underlying = await inst.actions.removeLiquidity!.quote([
-                inst.lpToken.one,
-              ])
-              const prices = await Promise.all(
-                underlying.map((i) => universe.fairPrice(i))
-              )
-              let out = universe.usd.zero
-              for (let i = 0; i < prices.length; i++) {
-                const qty = underlying[i]
-                const price = prices[i]
-                if (price == null) {
-                  throw new Error(
-                    `Failed to price ${inst.lpToken}: Missing price provider for ${qty.token}`
-                  )
-                }
-                out = out.add(price)
+          await universe.defineLPToken(
+            inst.lpToken,
+            async amt => await inst.quoteRemoveLiquidity(amt),
+            async amts => {
+              const q0 = (await inst.quoteAddLiquidity(amts[0]))
+              const q1 = (await inst.quoteAddLiquidity(amts[1]))
+              if (q0.liquidity.amount < q1.liquidity.amount) {
+                return q0.liquidity
               }
-              return out
+              return q1.liquidity
             },
-          })
-        } catch (e) {}
+          )
+        } catch (e) { }
       }
     }
 

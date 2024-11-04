@@ -5,11 +5,7 @@ import {
   Token,
   type TokenQuantity,
 } from '../entities/Token'
-import {
-  Action,
-  DestinationOptions,
-  InteractionConvention
-} from './Action'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 import { Approval } from '../base/Approval'
 import {
@@ -123,12 +119,22 @@ export class RTokenDeployment {
 
     const quoteMint = universe.createCache(
       async (input: TokenQuantity[]) => {
-        return await this.contracts.facade.callStatic
+        const rTokenOut = await this.contracts.facade.callStatic
           .maxIssuableByAmounts(
             this.rToken.address.address,
             input.map((i) => i.amount)
           )
-          .then(async (qty) => [rToken.from(qty)])
+          .then(async (qty) => rToken.from(qty))
+        const basketInputs = await this.contracts.rTokenLens.callStatic.redeem(
+          contracts.assetRegistry.address,
+          contracts.basketHandler.address,
+          rToken.address.address,
+          rTokenOut.amount
+        )
+        const remainder = input.map((qty, index) =>
+          qty.sub(qty.token.from(basketInputs.quantities[index]))
+        )
+        return [rTokenOut, ...remainder]
       },
       12000,
       (input) => input.join(',')
@@ -247,7 +253,7 @@ abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
   toString(): string {
     return `RToken(action=${this.action}, ${this.inputToken.join(
       ', '
-    )} -> ${this.outputToken.join(', ')}`
+    )} -> ${this.outputToken.join(', ')})`
   }
 }
 
@@ -282,7 +288,12 @@ export class MintRTokenAction extends ReserveRTokenBase {
   }
 
   public async inputProportions() {
-    return (await this.rTokenDeployment.calculateMultiInputUnit()).proportions
+    const proportions = (await this.rTokenDeployment.calculateMultiInputUnit())
+      .proportions
+
+    console.log(this.rTokenDeployment.rToken + ' => ' + proportions.join(', '))
+
+    return proportions
   }
 
   get universe() {
@@ -292,13 +303,25 @@ export class MintRTokenAction extends ReserveRTokenBase {
     return this.rTokenDeployment.mintEstimate
   }
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return await this.rTokenDeployment.quoteMint(amountsIn)
+    return [(await this.rTokenDeployment.quoteMint(amountsIn))[0]]
+  }
+  async quoteWithDust(amountsIn: TokenQuantity[]) {
+    const [rTokenQty, ...dust] = await this.rTokenDeployment.quoteMint(
+      amountsIn
+    )
+    return {
+      output: [rTokenQty],
+      dust,
+    }
   }
 
   get outputSlippage() {
     return 0n
   }
   get basket() {
+    return this.rTokenDeployment.basket
+  }
+  get dustTokens() {
     return this.rTokenDeployment.basket
   }
   constructor(public readonly rTokenDeployment: RTokenDeployment) {

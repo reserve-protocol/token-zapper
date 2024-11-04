@@ -133,6 +133,7 @@
     "build:commonjs": "tsc --project tsconfig.commonjs.json && cp -r src.ts/configuration/data/ lib.commonjs/configuration/data",
     "test:unit": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --testPathPattern 'test/unit'",
     "integration:eth": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/ethereum.test.ts'",
+    "integration:eth:dags": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/dags.eth.test.ts'",
     "integration:base": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/base.test.ts'",
     "integration:arbitrum": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/arbitrum.test.ts'",
     "format": "npm run prettier:fix",

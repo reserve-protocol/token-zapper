@@ -14,8 +14,6 @@ const defaultSearcherOptions = {
 
   searchConcurrency: 32,
 
-  routerMinResults: 1,
-
   defaultInternalTradeSlippage: 50n,
 
   maxSearchTimeMs: 12000,
@@ -80,6 +78,8 @@ export const makeConfig = <
     uniV3Router: string
     curveStableSwapNGHelper: string
     curveCryptoFactoryHelper: string
+
+    usdc: string
   },
   options: {
     blocktime: Blocktime

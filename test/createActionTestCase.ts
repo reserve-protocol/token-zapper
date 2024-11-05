@@ -17,30 +17,34 @@ export const createActionTestCase = (
   const testName = `${testCase.actionName}: ${getSymbol.get(
     testCase.input
   )!} into ${getSymbol.get(testCase.output)!}`
-  it(testName, async () => {
-    expect.assertions(1)
-    const universe = getUniverse()
-    await universe.initialized
-    const input = universe.tokens.get(testCase.input)?.from(testCase.qty)
-    const output = universe.tokens.get(testCase.output)
-    let result = 'failed'
+  it(
+    testName,
+    async () => {
+      expect.assertions(1)
+      const universe = getUniverse()
+      await universe.initialized
+      const input = universe.tokens.get(testCase.input)?.from(testCase.qty)
+      const output = universe.tokens.get(testCase.output)
+      let result = 'failed'
 
-    try {
-      const zap = await universe.searcher.debugZapIntoToken(
-        input!,
-        output!,
-        testUser,
-        {
-          maxHops: testCase.maxHops,
-        }
-      )
-      logger.info(`Action ${testName}: ${zap.bestZapTx.tx}`)
-      result = 'success'
-    } catch (e) {
-      logger.error(`${testName} = ${e.message}`)
-    }
-    expect(result).toBe('success')
-  })
+      try {
+        const zap = await universe.searcher.debugZapIntoToken(
+          input!,
+          output!,
+          testUser,
+          {
+            maxHops: testCase.maxHops,
+          }
+        )
+        logger.info(`Action ${testName}: ${zap.bestZapTx.tx}`)
+        result = 'success'
+      } catch (e) {
+        logger.error(`${testName} = ${e.message}`)
+      }
+      expect(result).toBe('success')
+    },
+    10000
+  )
 }
 
 export const makeIntegrationtestCase = (

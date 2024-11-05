@@ -523,7 +523,7 @@ class WrappedLpAdd extends BaseV2AerodromeAction {
             this.pool.universe.execAddress,
             this.pool.universe.config.defaultInternalTradeSlippage,
             abort,
-            1
+            3
           )
 
         let quote: SwapPath | undefined = undefined

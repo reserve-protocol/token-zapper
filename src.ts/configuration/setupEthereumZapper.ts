@@ -1,5 +1,6 @@
 import { ONE } from '../action/Action'
 import { BeefyDepositAction } from '../action/Beefy'
+import { setupConvexEdges } from '../action/Convex'
 import { loadCompV2Deployment } from '../action/CTokens'
 import {
   ERC4626DepositAction,

@@ -34,7 +34,10 @@ export class ConvexDepositAndStake extends Action('Convex') {
         this.universe.provider
       )
     )
-    planner.add(lib.deposit(inputs[0], destination.address), "ConvexDepositAndStake.deposit")
+    planner.add(
+      lib.deposit(inputs[0], destination.address),
+      'ConvexDepositAndStake.deposit'
+    )
     return [inputs[0]]
   }
   toString(): string {
@@ -113,10 +116,10 @@ export class ConvexUnstakeAndWithdraw extends Action('Convex') {
 export const setupConvexEdges = async (
   universe: Universe,
   stakedConvexToken: Token,
-  convex: Address
+  convexBoosterAddress: Address
 ) => {
   const convexBooster = IBooster__factory.connect(
-    convex.address,
+    convexBoosterAddress.address,
     universe.provider
   )
   const stkCVXTokenInst = ConvexStakingWrapper__factory.connect(
@@ -137,7 +140,7 @@ export const setupConvexEdges = async (
   const crvRewards = Address.from(info.crvRewards)
 
   const convexPool = new ConvexPool(
-    convex,
+    convexBoosterAddress,
     convexPoolId.toBigInt(),
     curveLPToken,
     convexDepositToken,

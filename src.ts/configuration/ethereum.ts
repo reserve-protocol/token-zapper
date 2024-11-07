@@ -71,6 +71,7 @@ export const COMMON_TOKENS = {
   'sdETH+ETH-f': '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C', // StakeDAO
   'yvCurve-ETH+-f': '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581', // Yearn
   'consETHETH-f': '0x70528C2Bc8328837969c033b658D8207c64D8E02', // Concentrator
+  'cvxETH+ETH-f': '0xA6A97C02885b08ABb4bf6D742796081eC54540fe', // Convex
 } as const
 
 export const RTOKENS = {

@@ -257,6 +257,12 @@ const zapIntoYieldPositionCases = [
     rTokens['ETH+'],
     t['stkcvxETH+ETH-f']
   ),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['cvxETH+ETH-f']
+  ),
 ]
 
 const INPUT_MUL = process.env.INPUT_MULTIPLIER

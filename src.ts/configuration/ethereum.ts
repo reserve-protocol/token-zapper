@@ -199,7 +199,15 @@ export const PROTOCOL_CONFIGS = {
       stkcvx3Crv: '0xee0ac49885719DBF5FC1CDAFD9c752127E009fFa',
     },
 
+    crvTokens: {
+      'crvETH+ETH-f': '0x90D5B65Af52654A2B230244a61DD4Ce3CFa4835f',
+    },
+
     pids: [185],
+
+    pidToCrvTokens: {
+      185: 'crvETH+ETH-f',
+    },
   },
 
   aavev2: {

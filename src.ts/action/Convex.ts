@@ -5,7 +5,7 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { Approval } from '../base/Approval'
 
 import { Planner, Value } from '../tx-gen/Planner'
-import { IBooster__factory } from '../contracts'
+import { IBooster__factory, IRewardStaking__factory } from '../contracts'
 
 abstract class ConvexBase extends Action('Convex') {
   abstract get actionName(): string
@@ -68,31 +68,99 @@ export class ConvexDepositAction extends ConvexBase {
   }
 }
 
+export class ConvexStakeAction extends ConvexBase {
+  public get actionName(): string {
+    return 'stake'
+  }
+
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const lib = this.gen.Contract.createContract(
+      IRewardStaking__factory.connect(
+        this.crvRewards.address,
+        this.universe.provider
+      )
+    )
+    planner.add(lib.stakeFor(destination.address, inputs[0]), this.toString())
+
+    return null
+  }
+
+  public get returnsOutput(): boolean {
+    return false
+  }
+
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return [this.cvxToken.from(amountsIn.amount)]
+  }
+
+  gasEstimate() {
+    return BigInt(250000n)
+  }
+
+  get outputSlippage() {
+    return 0n
+  }
+
+  constructor(
+    readonly universe: Universe,
+    readonly underlying: Token,
+    public readonly cvxToken: Token,
+    readonly crvRewards: Address
+  ) {
+    super(
+      cvxToken.address,
+      [underlying],
+      [cvxToken],
+      InteractionConvention.ApprovalRequired,
+      DestinationOptions.Recipient,
+      [new Approval(underlying, crvRewards, true)]
+    )
+  }
+}
+
 type ConvexConfig = {
   boosterAddress: string
   pids: number[]
+  crvTokens: Record<string, string>
+  pidToCrvTokens: Record<number, string>
 }
 
 export const setupConvex = async (universe: Universe, config: ConvexConfig) => {
+  const { boosterAddress, pids, crvTokens, pidToCrvTokens } = config
+
   const convexBooster = IBooster__factory.connect(
-    config.boosterAddress,
+    boosterAddress,
     universe.provider
   )
 
-  for (const pid of config.pids) {
+  for (const pid of pids) {
     const info = await convexBooster.poolInfo(pid)
 
     const lpToken = await universe.getToken(Address.from(info.lptoken))
     const cvxToken = await universe.getToken(Address.from(info.token))
+    const crvToken = await universe.getToken(
+      Address.from(crvTokens[pidToCrvTokens[pid]])
+    )
 
     const depositAction = new ConvexDepositAction(
       universe,
       lpToken,
       cvxToken,
-      Address.from(config.boosterAddress),
+      Address.from(boosterAddress),
       pid
     )
 
+    const stakeAction = new ConvexStakeAction(
+      universe,
+      cvxToken,
+      crvToken,
+      Address.from(info.crvRewards)
+    )
+
+    universe.addAction(depositAction)
+    universe.addAction(stakeAction)
+
+    // cvxToken price
     universe.addSingleTokenPriceSource({
       token: cvxToken,
       priceFn: async () => {
@@ -106,7 +174,19 @@ export const setupConvex = async (universe: Universe, config: ConvexConfig) => {
       },
     })
 
-    universe.addAction(depositAction)
+    // crvToken price
+    universe.addSingleTokenPriceSource({
+      token: crvToken,
+      priceFn: async () => {
+        const lpPrice = await universe.fairPrice(lpToken.one)
+        if (lpPrice == null) {
+          throw Error(
+            `Failed to price ${crvToken.symbol}: Missing price for ${lpToken.symbol}`
+          )
+        }
+        return lpPrice
+      },
+    })
   }
 }
 

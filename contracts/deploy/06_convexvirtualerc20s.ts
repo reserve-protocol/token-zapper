@@ -21,8 +21,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const lpTokenSymbol = await lpToken.symbol()
     const lpTokenDecimals = await lpToken.decimals()
 
-    const name = `Convex ${lpTokenName}`
-    const symbol = `cvx${lpTokenSymbol}`
+    const name = `Convex CRV ${lpTokenName}`
+    const symbol = `crv${lpTokenSymbol}`
     const decimals = lpTokenDecimals
 
     const deployment = await hre.deployments.deploy(`ConvexVirtualERC20`, {

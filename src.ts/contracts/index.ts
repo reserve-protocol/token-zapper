@@ -94,6 +94,8 @@ export type { IAladdinCRVConvexVault } from "./contracts/Concentrator.sol/IAladd
 export { IAladdinCRVConvexVault__factory } from "./factories/contracts/Concentrator.sol/IAladdinCRVConvexVault__factory";
 export type { ConvexStakingWrapper } from "./contracts/Convex.sol/ConvexStakingWrapper";
 export { ConvexStakingWrapper__factory } from "./factories/contracts/Convex.sol/ConvexStakingWrapper__factory";
+export type { ConvexVirtualERC20 } from "./contracts/Convex.sol/ConvexVirtualERC20";
+export { ConvexVirtualERC20__factory } from "./factories/contracts/Convex.sol/ConvexVirtualERC20__factory";
 export type { IBooster } from "./contracts/Convex.sol/IBooster";
 export { IBooster__factory } from "./factories/contracts/Convex.sol/IBooster__factory";
 export type { ICurveLPToken } from "./contracts/Convex.sol/ICurveLPToken";

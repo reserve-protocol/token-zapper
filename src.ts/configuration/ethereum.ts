@@ -197,6 +197,8 @@ export const PROTOCOL_CONFIGS = {
       'stkcvxMIM-3LP3CRV-f': '0x8443364625e09a33d793acd03aCC1F3b5DbFA6F6',
       stkcvx3Crv: '0xee0ac49885719DBF5FC1CDAFD9c752127E009fFa',
     },
+
+    pids: [185],
   },
 
   aavev2: {

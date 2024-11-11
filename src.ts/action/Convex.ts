@@ -90,7 +90,7 @@ export class ConvexStakeAction extends ConvexBase {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [this.cvxToken.from(amountsIn.amount)]
+    return [this.crvToken.from(amountsIn.amount)]
   }
 
   gasEstimate() {
@@ -104,16 +104,16 @@ export class ConvexStakeAction extends ConvexBase {
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    public readonly cvxToken: Token,
+    public readonly crvToken: Token,
     readonly crvRewards: Address
   ) {
     super(
-      cvxToken.address,
+      crvToken.address,
       [underlying],
-      [cvxToken],
+      [crvToken],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Recipient,
-      [new Approval(underlying, crvRewards, true)]
+      [new Approval(underlying, crvRewards)]
     )
   }
 }

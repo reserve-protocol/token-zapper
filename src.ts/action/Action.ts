@@ -45,10 +45,6 @@ export const ONE_Val = new gen.LiteralValue(
   defaultAbiCoder.encode(['uint256'], [ONE])
 )
 
-const needsZeroedOutFirst = new Set([
-  Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7'),
-])
-
 export const plannerUtils = {
   planForwardERC20(
     universe: Universe,
@@ -102,7 +98,7 @@ export const plannerUtils = {
     const token = gen.Contract.createContract(
       IERC20__factory.connect(input.address.address, universe.provider)
     )
-    if (needsZeroedOutFirst.has(input.address)) {
+    if (input.resetApproval) {
       planner.add(token.approve(spender.address, 0))
     }
     planner.add(token.approve(spender.address, constants.MaxUint256))

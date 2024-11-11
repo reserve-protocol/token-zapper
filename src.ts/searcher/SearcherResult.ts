@@ -52,9 +52,7 @@ import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { Logger } from 'winston'
 
 const zapperInterface = Zapper__factory.createInterface()
-const needsZeroedOutFirst = new Set([
-  Address.from('0xdac17f958d2ee523a2206206994597c13d831ec7'),
-])
+
 class Step {
   constructor(
     readonly inputs: TokenQuantity[],
@@ -402,10 +400,7 @@ export abstract class BaseSearcherResult {
           this.universe.provider
         )
       )
-      if (
-        approval.resetApproval ||
-        needsZeroedOutFirst.has(approval.token.address)
-      ) {
+      if (token.resetApproval) {
         this.planner.add(token.approve(approval.spender.address, 0))
       }
       this.planner.add(

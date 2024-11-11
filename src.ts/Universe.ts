@@ -477,7 +477,8 @@ export class Universe<const UniverseConf extends Config = Config> {
         address,
         data.symbol,
         data.symbol,
-        data.decimals
+        data.decimals,
+        !!this.config.resetApprovalTokens[address.address]
       )
       this.tokens.set(address, previous)
     }
@@ -495,7 +496,8 @@ export class Universe<const UniverseConf extends Config = Config> {
       address,
       symbol,
       name,
-      decimals
+      decimals,
+      !!this.config.resetApprovalTokens[address.address]
     )
     return token
   }

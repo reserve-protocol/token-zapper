@@ -5,157 +5,187 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { Approval } from '../base/Approval'
 
 import { Planner, Value } from '../tx-gen/Planner'
-import { ConvexStakingWrapper__factory, IBooster__factory } from '../contracts'
+import { IBooster__factory, IRewardStaking__factory } from '../contracts'
 
-class ConvexPool {
-  constructor(
-    public readonly convexBooster: Address,
-    public readonly convexPoolId: bigint,
-    public readonly curveLPToken: Token,
-    public readonly convexDepositToken: Token,
-    public readonly stakedConvexDepositToken: Token,
-    public readonly rewardsAddress: Address
-  ) {}
+abstract class ConvexBase extends Action('Convex') {
+  abstract get actionName(): string
 
-  toString() {
-    return `ConvexPool(id=${this.convexPoolId})`
+  toString(): string {
+    return `Convex.${this.actionName}(${this.inputToken.join(
+      ','
+    )} => ${this.outputToken.join(',')}))`
   }
 }
 
-export class ConvexDepositAndStake extends Action('Convex') {
-  async plan(
-    planner: Planner,
-    inputs: Value[],
-    destination: Address
-  ): Promise<Value[]> {
+export class ConvexDepositAction extends ConvexBase {
+  public get actionName(): string {
+    return 'deposit'
+  }
+
+  async plan(planner: Planner, inputs: Value[]) {
     const lib = this.gen.Contract.createContract(
-      ConvexStakingWrapper__factory.connect(
-        this.convexPool.stakedConvexDepositToken.address.address,
+      IBooster__factory.connect(
+        this.boosterAddress.address,
         this.universe.provider
       )
     )
-    planner.add(lib.deposit(inputs[0], destination.address), "ConvexDepositAndStake.deposit")
-    return [inputs[0]]
-  }
-  toString(): string {
-    return `ConvexDepositAndStake(${this.convexPool})`
-  }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountIn.into(this.outputToken[0])]
-  }
-  gasEstimate(): bigint {
-    return 250000n
-  }
-  constructor(readonly universe: Universe, readonly convexPool: ConvexPool) {
-    super(
-      convexPool.stakedConvexDepositToken.address,
-      [convexPool.curveLPToken],
-      [convexPool.stakedConvexDepositToken],
-      InteractionConvention.ApprovalRequired,
-      DestinationOptions.Callee,
-      [
-        new Approval(
-          convexPool.curveLPToken,
-          convexPool.stakedConvexDepositToken.address
-        ),
-      ]
-    )
-  }
-}
+    planner.add(lib.deposit(this.pid, inputs[0], false), this.toString())
 
-export class ConvexUnstakeAndWithdraw extends Action('Convex') {
-  public get outputSlippage(): bigint {
+    return null
+  }
+
+  public get returnsOutput(): boolean {
+    return false
+  }
+
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return [this.cvxToken.from(amountsIn.amount)]
+  }
+
+  gasEstimate() {
+    return BigInt(250000n)
+  }
+
+  get outputSlippage() {
     return 0n
   }
-  async plan(
-    planner: Planner,
-    [input]: Value[],
-    _: Address,
-    [predicted]: TokenQuantity[]
-  ): Promise<Value[]> {
-    const lib = this.gen.Contract.createContract(
-      ConvexStakingWrapper__factory.connect(
-        this.convexPool.stakedConvexDepositToken.address.address,
-        this.universe.provider
-      )
-    )
-    planner.add(lib.withdrawAndUnwrap(input ?? predicted.amount))
 
-    return this.outputBalanceOf(this.universe, planner)
-  }
-  toString(): string {
-    return `ConvexUnstakeAndWithdraw(${this.convexPool})`
-  }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [amountIn.into(this.outputToken[0])]
-  }
-  gasEstimate(): bigint {
-    return 250000n
-  }
-  constructor(readonly universe: Universe, readonly convexPool: ConvexPool) {
+  constructor(
+    readonly universe: Universe,
+    readonly underlying: Token,
+    public readonly cvxToken: Token,
+    readonly boosterAddress: Address,
+    readonly pid: number
+  ) {
     super(
-      convexPool.stakedConvexDepositToken.address,
-      [convexPool.stakedConvexDepositToken],
-      [convexPool.curveLPToken],
-      InteractionConvention.None,
+      cvxToken.address,
+      [underlying],
+      [cvxToken],
+      InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
-      []
+      [new Approval(underlying, boosterAddress)]
     )
   }
 }
 
-/**
- * Sets up all the edges associated with a convex pool.
- * This also sets up the minting of the convex deposit token, despite this token not being that useful.
- * @param universe
- * @param stakedConvexToken The staked convex lp token
- */
-export const setupConvexEdges = async (
-  universe: Universe,
-  stakedConvexToken: Token,
-  convex: Address
-) => {
+export class ConvexStakeAction extends ConvexBase {
+  public get actionName(): string {
+    return 'stake'
+  }
+
+  async plan(planner: Planner, inputs: Value[], destination: Address) {
+    const lib = this.gen.Contract.createContract(
+      IRewardStaking__factory.connect(
+        this.crvRewards.address,
+        this.universe.provider
+      )
+    )
+    planner.add(lib.stakeFor(destination.address, inputs[0]), this.toString())
+
+    return null
+  }
+
+  public get returnsOutput(): boolean {
+    return false
+  }
+
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    return [this.cvxToken.from(amountsIn.amount)]
+  }
+
+  gasEstimate() {
+    return BigInt(250000n)
+  }
+
+  get outputSlippage() {
+    return 0n
+  }
+
+  constructor(
+    readonly universe: Universe,
+    readonly underlying: Token,
+    public readonly cvxToken: Token,
+    readonly crvRewards: Address
+  ) {
+    super(
+      cvxToken.address,
+      [underlying],
+      [cvxToken],
+      InteractionConvention.ApprovalRequired,
+      DestinationOptions.Recipient,
+      [new Approval(underlying, crvRewards, true)]
+    )
+  }
+}
+
+type ConvexConfig = {
+  boosterAddress: string
+  pids: number[]
+  crvTokens: Record<string, string>
+  pidToCrvTokens: Record<number, string>
+}
+
+export const setupConvex = async (universe: Universe, config: ConvexConfig) => {
+  const { boosterAddress, pids, crvTokens, pidToCrvTokens } = config
+
   const convexBooster = IBooster__factory.connect(
-    convex.address,
-    universe.provider
-  )
-  const stkCVXTokenInst = ConvexStakingWrapper__factory.connect(
-    stakedConvexToken.address.address,
+    boosterAddress,
     universe.provider
   )
 
-  const curveLPToken = await universe.getToken(
-    Address.from(await stkCVXTokenInst.curveToken())
-  )
-  const convexDepositToken = await universe.getToken(
-    Address.from(await stkCVXTokenInst.convexToken())
-  )
-  const convexPoolId = await stkCVXTokenInst.callStatic.convexPoolId()
+  for (const pid of pids) {
+    const info = await convexBooster.poolInfo(pid)
 
-  const info = await convexBooster.poolInfo(convexPoolId.toBigInt())
+    const lpToken = await universe.getToken(Address.from(info.lptoken))
+    const cvxToken = await universe.getToken(Address.from(info.token))
+    const crvToken = await universe.getToken(
+      Address.from(crvTokens[pidToCrvTokens[pid]])
+    )
 
-  const crvRewards = Address.from(info.crvRewards)
+    const depositAction = new ConvexDepositAction(
+      universe,
+      lpToken,
+      cvxToken,
+      Address.from(boosterAddress),
+      pid
+    )
 
-  const convexPool = new ConvexPool(
-    convex,
-    convexPoolId.toBigInt(),
-    curveLPToken,
-    convexDepositToken,
-    stakedConvexToken,
-    crvRewards
-  )
+    const stakeAction = new ConvexStakeAction(
+      universe,
+      cvxToken,
+      crvToken,
+      Address.from(info.crvRewards)
+    )
 
-  // Add one step actions that are actually used for the most part
-  const depositAndStakeAction = new ConvexDepositAndStake(universe, convexPool)
-  const unstakeAndWithdrawAction = new ConvexUnstakeAndWithdraw(
-    universe,
-    convexPool
-  )
-  universe.defineMintable(depositAndStakeAction, unstakeAndWithdrawAction)
+    universe.addAction(depositAction)
+    universe.addAction(stakeAction)
 
-  return {
-    pool: convexPool,
-    depositAndStakeAction,
-    unstakeAndWithdrawAction,
+    // cvxToken price
+    universe.addSingleTokenPriceSource({
+      token: cvxToken,
+      priceFn: async () => {
+        const lpPrice = await universe.fairPrice(lpToken.one)
+        if (lpPrice == null) {
+          throw Error(
+            `Failed to price ${cvxToken.symbol}: Missing price for ${lpToken.symbol}`
+          )
+        }
+        return lpPrice
+      },
+    })
+
+    // crvToken price
+    universe.addSingleTokenPriceSource({
+      token: crvToken,
+      priceFn: async () => {
+        const lpPrice = await universe.fairPrice(lpToken.one)
+        if (lpPrice == null) {
+          throw Error(
+            `Failed to price ${crvToken.symbol}: Missing price for ${lpToken.symbol}`
+          )
+        }
+        return lpPrice
+      },
+    })
   }
 }

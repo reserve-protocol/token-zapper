@@ -45,7 +45,7 @@ import {
   Planner,
   Value,
   encodeArg,
-  printPlan
+  printPlan,
 } from '../tx-gen/Planner'
 import { ToTransactionArgs } from './ToTransactionArgs'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
@@ -61,7 +61,7 @@ class Step {
     readonly action: BaseAction,
     readonly destination: Address,
     readonly outputs: TokenQuantity[]
-  ) { }
+  ) {}
 }
 
 const linearize = (executor: Address, tokenExchange: SwapPaths) => {
@@ -92,7 +92,7 @@ const linearize = (executor: Address, tokenExchange: SwapPaths) => {
       if (
         step.proceedsOptions === DestinationOptions.Recipient &&
         node.steps[i + 1]?.interactionConvention ===
-        InteractionConvention.PayBeforeCall
+          InteractionConvention.PayBeforeCall
       ) {
         nextAddr = node.steps[i + 1].address
       }
@@ -113,11 +113,11 @@ export class ThirdPartyIssue extends Error {
   }
 }
 export abstract class BaseSearcherResult {
-  private readonly zapIdBytes = randomBytes(32);
+  private readonly zapIdBytes = randomBytes(32)
   public readonly zapId: bigint = BigInt(hexlify(this.zapIdBytes))
-  public readonly zapIdStr = Buffer.from(this.zapIdBytes).toString("base64")
-  public readonly txGenLogger: Logger;
-  public readonly simLogger: Logger;
+  public readonly zapIdStr = Buffer.from(this.zapIdBytes).toString('base64')
+  public readonly txGenLogger: Logger
+  public readonly simLogger: Logger
 
   protected readonly planner = new Planner()
   public readonly blockNumber: number
@@ -211,7 +211,6 @@ export abstract class BaseSearcherResult {
   }
 
   async simulate(opts: SimulateParams): Promise<ZapperOutputStructOutput> {
-
     // if (this.abortSignal.aborted) {
     //   throw new Error('Aborted')
     // }
@@ -403,7 +402,10 @@ export abstract class BaseSearcherResult {
           this.universe.provider
         )
       )
-      if (needsZeroedOutFirst.has(approval.token.address)) {
+      if (
+        approval.resetApproval ||
+        needsZeroedOutFirst.has(approval.token.address)
+      ) {
         this.planner.add(token.approve(approval.spender.address, 0))
       }
       this.planner.add(
@@ -426,7 +428,7 @@ export abstract class BaseSearcherResult {
         outputTokenOutput.amount === 1n
           ? 1n
           : outputTokenOutput.amount -
-          outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
+            outputTokenOutput.amount / (options.outputSlippage ?? 250_000n),
       tokenOut: this.outputToken.address.address,
       tokens: this.potentialResidualTokens.map((i) => i.address.address),
     }
@@ -440,8 +442,8 @@ export abstract class BaseSearcherResult {
     return this.inputIsNative
       ? zapperInterface.encodeFunctionData('zapETH', [payload])
       : options.permit2 == null
-        ? zapperInterface.encodeFunctionData('zapERC20', [payload])
-        : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
+      ? zapperInterface.encodeFunctionData('zapERC20', [payload])
+      : zapperInterface.encodeFunctionData('zapERC20WithPermit2', [
           payload,
           options.permit2.permit,
           parseHexStringIntoBuffer(options.permit2.signature),
@@ -491,7 +493,7 @@ export abstract class BaseSearcherResult {
     const data = this.encodeCall(options, params)
     this.simLogger.debug(
       `SIMULATING PLAN FOR ${this.userInput} -> ${this.outputToken}:`
-    );
+    )
     this.searcher.loggers.simulation.debug(
       printPlan(this.planner, this.universe).join('\n')
     )
@@ -504,7 +506,7 @@ export abstract class BaseSearcherResult {
         `TX simulated successfully in ${Date.now() - start}ms`
       )
 
-      let dust = this.potentialResidualTokens.map((qty) => qty)
+      const dust = this.potentialResidualTokens.map((qty) => qty)
       if (options.returnDust === true) {
         for (const tok of dust) {
           if (fullyConsumed.has(tok)) {
@@ -715,11 +717,11 @@ export class RedeemZap extends BaseSearcherResult {
         if (input == null) {
           input = step.action.supportsDynamicInput
             ? plannerUtils.erc20.balanceOf(
-              this.universe,
-              this.planner,
-              step.inputs[0].token,
-              executorAddress
-            )
+                this.universe,
+                this.planner,
+                step.inputs[0].token,
+                executorAddress
+              )
             : encodeArg(step.inputs[0].amount, ParamType.from('uint256'))
         }
         if (step.action.supportsDynamicInput) {
@@ -757,15 +759,15 @@ export class RedeemZap extends BaseSearcherResult {
         if (input == null) {
           input = dynInput
             ? plannerUtils.erc20.balanceOf(
-              this.universe,
-              this.planner,
-              stepInput,
-              executorAddress
-            )
+                this.universe,
+                this.planner,
+                stepInput,
+                executorAddress
+              )
             : encodeArg(
-              stepInputQty.amount - stepInputQty.amount / 1000000n,
-              ParamType.from('uint256')
-            )
+                stepInputQty.amount - stepInputQty.amount / 1000000n,
+                ParamType.from('uint256')
+              )
         }
 
         await step.action.plan(this.planner, [input], dest, step.inputs)
@@ -904,16 +906,16 @@ export class MintZap extends BaseSearcherResult {
       const tradesToGenerate = allSupportDynamicInput
         ? allTrades
         : [
-          ...allTrades.filter((i) => !i.supportsDynamicInput),
-          ...allTrades.filter((i) => i.supportsDynamicInput),
-        ]
+            ...allTrades.filter((i) => !i.supportsDynamicInput),
+            ...allTrades.filter((i) => i.supportsDynamicInput),
+          ]
 
       const dynamicTradeInputSplits = new Map<Token, Value>()
       if (this.parts.setup != null) {
         this.planner.addComment(
           'Setup section: change the input to make searcher results better'
         )
-        let input = [
+        const input = [
           new LiteralValue(
             ParamType.fromString('uint256'),
             defaultAbiCoder.encode(
@@ -924,7 +926,7 @@ export class MintZap extends BaseSearcherResult {
         ]
         for (let i = 0; i < this.parts.setup.inputs.length; i++) {
           const step = this.parts.setup.steps[i]
-          let output = await step.action.planWithOutput(
+          const output = await step.action.planWithOutput(
             this.universe,
             this.planner,
             input,

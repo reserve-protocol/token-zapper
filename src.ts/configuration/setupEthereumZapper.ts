@@ -1,5 +1,6 @@
 import { ONE } from '../action/Action'
 import { BeefyDepositAction } from '../action/Beefy'
+import { setupConvex } from '../action/Convex'
 import { loadCompV2Deployment } from '../action/CTokens'
 import {
   ERC4626DepositAction,
@@ -144,6 +145,9 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   // Set up Concentrator
   setupConcentrator(universe, PROTOCOL_CONFIGS.concentrator)
+
+  // Set up Convex
+  await setupConvex(universe, PROTOCOL_CONFIGS.convex)
 
   universe.addPreferredRTokenInputToken(
     universe.rTokens['ETH+'],

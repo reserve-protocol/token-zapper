@@ -71,6 +71,7 @@ export const COMMON_TOKENS = {
   'sdETH+ETH-f': '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C', // StakeDAO
   'yvCurve-ETH+-f': '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581', // Yearn
   'consETHETH-f': '0x70528C2Bc8328837969c033b658D8207c64D8E02', // Concentrator
+  'cvxETH+ETH-f': '0xA6A97C02885b08ABb4bf6D742796081eC54540fe', // Convex
 } as const
 
 export const RTOKENS = {
@@ -196,6 +197,16 @@ export const PROTOCOL_CONFIGS = {
       'stkcvxeUSD3CRV-f4': '0x81697e25DFf8564d9E0bC6D27edb40006b34ea2A',
       'stkcvxMIM-3LP3CRV-f': '0x8443364625e09a33d793acd03aCC1F3b5DbFA6F6',
       stkcvx3Crv: '0xee0ac49885719DBF5FC1CDAFD9c752127E009fFa',
+    },
+
+    crvTokens: {
+      'crvETH+ETH-f': '0x90D5B65Af52654A2B230244a61DD4Ce3CFa4835f',
+    },
+
+    pids: [185],
+
+    pidToCrvTokens: {
+      185: 'crvETH+ETH-f',
     },
   },
 

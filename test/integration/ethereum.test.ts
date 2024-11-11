@@ -120,11 +120,12 @@ const t = {
   ...ethereumConfig.addresses.commonTokens,
   ...convertAddressObject(ethereumProtocolConfigs.compV3.comets),
   ...convertAddressObject(ethereumProtocolConfigs.convex.wrappers),
+  ...convertAddressObject(ethereumProtocolConfigs.convex.crvTokens),
 }
 const rTokens = ethereumConfig.addresses.rTokens
 
 export const getSymbol = new Map(
-  Object.entries(ethereumConfig.addresses.commonTokens)
+  Object.entries(t)
     .concat(Object.entries(ethereumConfig.addresses.rTokens))
     .map(([k, v]) => [v, k])
 )
@@ -250,6 +251,24 @@ const zapIntoYieldPositionCases = [
     t.WETH,
     rTokens['ETH+'],
     t['consETHETH-f']
+  ),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['stkcvxETH+ETH-f']
+  ),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['cvxETH+ETH-f']
+  ),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['crvETH+ETH-f']
   ),
 ]
 

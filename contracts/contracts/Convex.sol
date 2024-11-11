@@ -15,6 +15,9 @@ struct PoolInfo {
 
 interface IBooster{
     function poolInfo(uint256) external view returns(PoolInfo memory);
+    function deposit(uint256 _pid, uint256 _amount, bool _stake) external returns(bool);
+    function withdraw(uint256 _pid, uint256 _amount) external returns(bool);
+    function withdrawTo(uint256 _pid, uint256 _amount, address _to) external returns(bool);
 }
 
 interface IRewardStaking {
@@ -76,4 +79,34 @@ interface ConvexStakingWrapper is IERC20Metadata {
 
 interface ICurveLPToken is IERC20Metadata {
     function minter() external view returns (address);
+}
+
+contract ConvexVirtualERC20 {
+    IRewardStaking public immutable crvRewards;
+    string public name;
+    string public symbol;
+    uint8 public immutable decimals;
+
+    constructor(
+        address _crvRewards,
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_
+    ) {
+        crvRewards = IRewardStaking(_crvRewards);
+        name = name_;
+        symbol = symbol_;
+        decimals = decimals_;
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        return crvRewards.balanceOf(account);
+    }
+
+    function transfer(address, uint256 amt) public pure returns (bool) {
+        if (amt == 0) {
+            return true;
+        }
+        revert("ConvexVirtualERC20: Transfers not supported");
+    }
 }

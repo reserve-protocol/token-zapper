@@ -6,6 +6,7 @@ import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulat
 import {
   Address,
   baseConfig,
+  baseProtocolConfigs,
   createEnso,
   createKyberswap,
   setupBaseZapper,
@@ -16,6 +17,7 @@ import {
   makeIntegrationtestCase,
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
+import { convertAddressObject } from '../../src.ts/configuration/ChainConfiguration'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -76,11 +78,14 @@ const getProvider = (url: string) => {
   return new ethers.providers.JsonRpcProvider(url)
 }
 
-const t = baseConfig.addresses.commonTokens
+const t = {
+  ...baseConfig.addresses.commonTokens,
+  ...convertAddressObject(baseProtocolConfigs.aerodrome.lpPoolWrappers),
+}
 const rTokens = baseConfig.addresses.rTokens
 
 const getSymbol = new Map(
-  Object.entries(baseConfig.addresses.commonTokens)
+  Object.entries(t)
     .concat(Object.entries(baseConfig.addresses.rTokens))
     .map(([k, v]) => [v, k])
 )
@@ -133,12 +138,27 @@ const redeemCases = [
   makeMintTestCase(5, rTokens.bsd, t.USDC),
 ]
 const individualIntegrations = [
-  // makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
+  makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
   makeIntegrationtestCase(
     'wsAMM-eUSD/USDC',
     10000,
     t.USDC,
     t['wsAMM-eUSD/USDC'],
+    2
+  ),
+  makeIntegrationtestCase(
+    'wvAMM-WETH/AERO',
+    5,
+    t.WETH,
+    t['wvAMM-WETH/AERO'],
+    2
+  ),
+  makeIntegrationtestCase('wvAMM-Mog/WETH', 5, t.WETH, t['wvAMM-Mog/WETH'], 2),
+  makeIntegrationtestCase(
+    'wsAMM-USDz/USDC',
+    10000,
+    t.USDC,
+    t['wsAMM-USDz/USDC'],
     2
   ),
 ]
@@ -169,7 +189,6 @@ beforeAll(async () => {
       searcherMinRoutesToProduce: 1,
       routerDeadline: 20000,
       maxSearchTimeMs: 60000,
-      routerDeadline: 20000,
     },
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))

@@ -109,6 +109,24 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     priceToken: universe.usd,
   })
 
+  await universe.addSingleTokenPriceOracle({
+    token: universe.commonTokens.USDz,
+    oracleAddress: Address.from('0xe25969e2Fa633a0C027fAB8F30Fc9C6A90D60B48'),
+    priceToken: universe.usd,
+  })
+
+  await universe.addSingleTokenPriceOracle({
+    token: universe.commonTokens.AERO,
+    oracleAddress: Address.from('0x4EC5970fC728C5f65ba413992CD5fF6FD70fcfF0'),
+    priceToken: universe.usd,
+  })
+
+  await universe.addSingleTokenPriceOracle({
+    token: universe.commonTokens.MOG,
+    oracleAddress: Address.from('0x4aeb6D15769EaD32D0c5Be2940F40c7CFf53801d'),
+    priceToken: universe.usd,
+  })
+
   universe.addTradeVenue(
     universe.addIntegration('uniswapV3', await setupUniswapRouter(universe))
   )

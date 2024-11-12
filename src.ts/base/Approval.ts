@@ -2,12 +2,8 @@ import { type Address } from './Address'
 import { type Token } from '../entities/Token'
 
 export class Approval {
-  constructor(
-    readonly token: Token,
-    readonly spender: Address,
-    readonly resetApproval: boolean = false
-  ) {}
+  constructor(readonly token: Token, readonly spender: Address) {}
   toString() {
-    return `Approval(token: ${this.token}, spender: ${this.spender}, resetApproval: ${this.resetApproval})`
+    return `Approval(token: ${this.token}, spender: ${this.spender})`
   }
 }

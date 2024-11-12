@@ -25,6 +25,8 @@ export const RTOKENS = {
   MATT: '0x641b0453487c9d14c5df96d45a481ef1dc84e31f',
 } as const
 
+const NEEDS_ZEROED_OUT_FIRST: Record<string, string> = {}
+
 export const baseConfig = makeConfig(
   8453,
   {
@@ -34,6 +36,7 @@ export const baseConfig = makeConfig(
   },
   COMMON_TOKENS,
   RTOKENS,
+  NEEDS_ZEROED_OUT_FIRST,
   {
     emitId: '0xC7a942301d92024321995f7f748C2B0687a1Cb60',
     facadeAddress: '0xEb2071e9B542555E90E6e4E1F83fa17423583991',

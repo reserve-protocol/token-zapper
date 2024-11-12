@@ -36,6 +36,9 @@ export const RTOKENS = {
 
   _rTokenWithWUSDM: '0x05d0e5a60251cef203a06b17973c843c8225cc4e',
 }
+
+const NEEDS_ZEROED_OUT_FIRST: Record<string, string> = {}
+
 export const arbiConfig = makeConfig(
   ChainIds.Arbitrum,
   {
@@ -45,6 +48,7 @@ export const arbiConfig = makeConfig(
   } as const,
   COMMON_TOKENS,
   RTOKENS,
+  NEEDS_ZEROED_OUT_FIRST,
   {
     emitId: '0x66BC6029408a5dEB3ffacA6835119af963bB408a',
     facadeAddress: reserveAddresses.FACADE_ADDRESS,

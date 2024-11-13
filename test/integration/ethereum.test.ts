@@ -107,6 +107,10 @@ export const ethWhales = {
   // pxeth
   '0x04c154b66cb340f3ae24111cc767e0184ed00cc6':
     '0x40e93a52f6af9fcd3b476aedadd7feabd9f7aba8',
+
+  // usds
+  '0xdC035D45d973E3EC169d2276DDab16f1e407384F':
+    '0x0650CAF159C5A49f711e8169D4336ECB9b950275',
 }
 
 const getProvider = (url: string) => {
@@ -223,6 +227,7 @@ const individualIntegrations = [
 
   makeIntegrationtestCase('Reth', 10, t.WETH, t.reth, 2),
   makeIntegrationtestCase('ETHx', 10, t.WETH, t.ETHx, 2),
+  makeIntegrationtestCase('sUSDS', 1000, t.USDS, t.sUSDS, 1),
 ]
 
 const zapIntoYieldPositionCases = [

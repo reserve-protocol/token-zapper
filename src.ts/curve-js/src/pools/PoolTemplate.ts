@@ -6,7 +6,8 @@ import memoize from "memoizee";
 import { curve } from "../curve";
 import { _getPoolsFromApi } from '../external-api';
 import {
-    IDict
+    IDict,
+    IPoolData
 } from '../interfaces';
 import {
     BN,
@@ -61,10 +62,13 @@ export class PoolTemplate {
         allCoinBalances: (...addresses: string[] | string[][]) => Promise<IDict<IDict<string>> | IDict<string>>,
     };
 
+    data: IPoolData;
+
     constructor(id: string) {
         const poolData = curve.constants.POOLS_DATA[id] || curve.constants.FACTORY_POOLS_DATA[id] || curve.constants.CRYPTO_FACTORY_POOLS_DATA[id];
 
         this.id = id;
+        this.data = poolData
         this.name = poolData.name;
         this.fullName = poolData.full_name;
         this.symbol = poolData.symbol;

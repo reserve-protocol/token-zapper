@@ -43,7 +43,20 @@ export class ERC4626Deployment {
     const assetTokenAddress = await vaultInst.callStatic.asset()
     const shareToken = await universe.getToken(Address.from(shareTokenAddress))
     const assetToken = await universe.getToken(Address.from(assetTokenAddress))
-
+    universe.addSingleTokenPriceSource({
+      token: shareToken,
+      priceFn: async () => {
+        const wei = await vaultInst.callStatic.previewRedeem(
+          shareToken.one.amount
+        )
+        const assets = assetToken.from(wei)
+        const usd = await universe.fairPrice(assets)
+        if (usd == null) {
+          throw new Error('Price not found for ' + shareToken)
+        }
+        return usd
+      },
+    })
     return new ERC4626Deployment(
       protocol,
       universe,

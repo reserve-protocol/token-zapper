@@ -1,15 +1,15 @@
-export class BlockCache<Input, Result extends NonNullable<any>, Key=Input> {
+export class BlockCache<Input, Result extends NonNullable<any>, Key = Input> {
   constructor(
     private readonly fetch: (key: Input) => Promise<Result>,
     private readonly blocksToLive: number,
     private currentBlock: number,
-    private keyFn: (key: Input) => Key = x => x as any as Key
+    private keyFn: (key: Input) => Key = (x) => x as any as Key
   ) {}
 
   private cache = new Map<Key, { result: Promise<Result>; time: number }>()
 
   public get(key: Input): Promise<Result> {
-    const k = this.keyFn(key);
+    const k = this.keyFn(key)
     let out = this.cache.get(k)
     if (out == null) {
       const res = this.fetch(key)
@@ -25,7 +25,7 @@ export class BlockCache<Input, Result extends NonNullable<any>, Key=Input> {
   }
 
   public onBlock(block: number) {
-    this.currentBlock = block
+    this.currentBlock = Date.now()
     for (const [key, { time }] of [...this.cache.entries()]) {
       if (block - time > this.blocksToLive) {
         this.cache.delete(key)

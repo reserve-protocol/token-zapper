@@ -19,13 +19,12 @@ export const setupRETH = async (
   )
 
   const actions = [
-    rethRouter.burnToETH,
+    // rethRouter.burnToETH,
     rethRouter.burnToWETH,
-    rethRouter.mintViaETH,
+    // rethRouter.mintViaETH,
     rethRouter.mintViaWETH,
   ]
   for (const action of actions) {
     universe.addAction(action, reth.address)
   }
-
 }

@@ -9,7 +9,7 @@ export interface IDict<T> {
 }
 
 export type ICurve = {
-    whitelist: Set<string>,
+    whitelist?: Set<string>,
     provider: Provider;
     multicallProvider: MulticallProvider;
     signerAddress: string;
@@ -42,6 +42,7 @@ export interface IPoolData {
     symbol: string,
     reference_asset: REFERENCE_ASSET,
     swap_address: string,
+    implementation: string,
     token_address: string,
     gauge_address: string,
     deposit_address?: string,

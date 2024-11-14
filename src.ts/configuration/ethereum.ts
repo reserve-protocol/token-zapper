@@ -76,8 +76,6 @@ export const RTOKENS = {
   eUSD: '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F',
   'ETH+': '0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8',
   hyUSD: '0xaCdf0DBA4B9839b96221a8487e9ca660a48212be',
-  RSD: '0xF2098092a5b9D25A3cC7ddc76A0553c9922eEA9E',
-  iUSD: '0x9b451BEB49a03586e6995E5A93b9c745D068581e',
   'USDC+': '0xFc0B1EEf20e4c68B3DCF36c4537Cfa7Ce46CA70b',
   USD3: '0x0d86883faf4ffd7aeb116390af37746f45b6f378',
   rgUSD: '0x78da5799cf427fee11e9996982f4150ece7a99a7',
@@ -109,7 +107,7 @@ export const ethereumConfig = makeConfig(
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
     curveCryptoFactoryHelper: '0xf4fe93bb762A0b890B08C96FE99a6F405c44B360',
 
-    usdc: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
+    usdc: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
   },
   {
     blocktime: 12000,
@@ -128,41 +126,6 @@ export const PROTOCOL_CONFIGS = {
     frxethOracle: '0xc58f3385fbc1c8ad2c0c9a061d7c13b141d7a5df',
   },
   curve: {
-    allowedTradeInputs: {
-      USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-      USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-      DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
-      WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
-      WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-
-      MIM: '0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3',
-      FRAX: '0x853d955acef822db058eb8505911ed77f175b99e',
-      crvUSD: '0xf939e0a03fb07f59a73314e73794be0e57ac1b4e',
-      pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
-
-      reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
-      steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
-      wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
-      cbeth: '0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
-      frxeth: '0x5E8422345238F34275888049021821E8E08CAa1f',
-      sfrxeth: '0xac3E018457B222d93114458476f3E3416Abbe38F',
-    },
-    allowedTradeOutput: {
-      USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-      USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-      DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
-      WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
-      WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-
-      pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
-
-      reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
-      steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
-      wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
-      cbeth: '0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
-      frxeth: '0x5E8422345238F34275888049021821E8E08CAa1f',
-      sfrxeth: '0xac3E018457B222d93114458476f3E3416Abbe38F',
-    },
     // Tells setupCurve.ts to not use the generic curve implementation, but use our own
     specialCases: [
       {

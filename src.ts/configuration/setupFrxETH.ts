@@ -54,7 +54,7 @@ interface IFrxETHConfig {
 
 class FrxETHMint extends BaseFrxETH {
   gasEstimate(): bigint {
-    return 100000n
+    return 50000n
   }
   constructor(
     private readonly universe: UniverseWithERC20GasTokenDefined,
@@ -100,6 +100,8 @@ class FrxETHMint extends BaseFrxETH {
 }
 
 class SFrxETHMint extends BaseFrxETH {
+  private mintRate: () => Promise<TokenQuantity>
+
   gasEstimate(): bigint {
     return 100000n
   }
@@ -117,6 +119,9 @@ class SFrxETHMint extends BaseFrxETH {
       DestinationOptions.Callee,
       [new Approval(frxeth, Address.from(vault.address))]
     )
+    this.mintRate = universe.createCachedProducer(async () => {
+      return frxeth.from(await vault.callStatic.previewMint(frxeth.one.amount))
+    }, 12000)
   }
   get actionName() {
     return 'SFrxETH.mint'
@@ -145,16 +150,14 @@ class SFrxETHMint extends BaseFrxETH {
     return null
   }
 
-  async quote(amountsIn: TokenQuantity[]) {
-    return [
-      this.outputToken[0].from(
-        await this.vault.previewDeposit(amountsIn[0].amount)
-      ),
-    ]
+  async quote([amountsIn]: TokenQuantity[]) {
+    const r = await this.mintRate()
+    return [r.mul(amountsIn).into(this.sfrxeth)]
   }
 }
 
 class SFrxETHburn extends BaseFrxETH {
+  private burnRate: () => Promise<TokenQuantity>
   gasEstimate(): bigint {
     return 100000n
   }
@@ -172,6 +175,11 @@ class SFrxETHburn extends BaseFrxETH {
       DestinationOptions.Callee,
       []
     )
+    this.burnRate = universe.createCachedProducer(async () => {
+      return frxeth.from(
+        await vault.callStatic.previewRedeem(sfrxeth.one.amount)
+      )
+    }, 12000)
   }
   get actionName() {
     return 'FrxETH.burn'
@@ -205,12 +213,9 @@ class SFrxETHburn extends BaseFrxETH {
     return null
   }
 
-  async quote(amountsIn: TokenQuantity[]) {
-    return [
-      this.outputToken[0].from(
-        await this.vault.previewRedeem(amountsIn[0].amount)
-      ),
-    ]
+  async quote([amountIn]: TokenQuantity[]) {
+    const r = await this.burnRate()
+    return [r.mul(amountIn).into(this.frxeth)]
   }
 }
 

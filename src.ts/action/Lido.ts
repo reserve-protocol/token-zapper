@@ -1,28 +1,16 @@
-import { ParamType } from '@ethersproject/abi'
 import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { BlockCache } from '../base/BlockBasedCache'
 
-import {
-  IStETH,
-  IStETH__factory,
-  IWrappedNative__factory,
-  ZapperExecutor__factory,
-} from '../contracts'
+import { IStETH, IStETH__factory, IWrappedNative__factory } from '../contracts'
 import { type IWStETH } from '../contracts/contracts/IWStETH'
 import { IWStETH__factory } from '../contracts/factories/contracts/IWStETH__factory'
 
+import { constants } from 'ethers'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import * as gen from '../tx-gen/Planner'
-import {
-  Action,
-  BaseAction,
-  DestinationOptions,
-  InteractionConvention,
-} from './Action'
-import { constants } from 'ethers'
-import { DepositAction, WithdrawAction } from './WrappedNative'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 export class LidoDeployment {
   public readonly contracts: {
@@ -34,7 +22,7 @@ export class LidoDeployment {
     stethInstance: gen.Contract
     weth: gen.Contract
   }
-  private rateCache: BlockCache<TokenQuantity, TokenQuantity>
+  private rateFn: (qty: TokenQuantity) => Promise<TokenQuantity>
 
   public readonly actions: {
     stake: {
@@ -75,24 +63,25 @@ export class LidoDeployment {
         )
       ),
     }
-    this.rateCache = universe.createCache(async (qty) => {
+    const burnRate = universe.createCachedProducer(async () => {
+      return await this.quoteBurn_(wsteth.one)
+    }, 12000)
+    const mintRate = universe.createCachedProducer(async () => {
+      return await this.quoteMint_(steth.one)
+    }, 12000)
+    this.rateFn = async (qty) => {
       if (qty.token === wsteth) {
-        return await this.quoteBurn_(qty)
+        return (await burnRate()).mul(qty.into(steth))
       } else {
-        return await this.quoteMint_(qty)
+        return (await mintRate()).mul(qty.into(wsteth))
       }
-    })
+    }
 
     const wrap = new STETHToWSTETH(this)
     const unwrap = new WSTETHToSTETH(this)
     const stake = new ETHToSTETH(this)
-    // const unwrapWeth = new WithdrawAction(universe, universe.wrappedNativeToken)
-
-    // const stakeFromWETH = new (unwrapWeth.combine(stake))(universe)
-
     universe.defineMintable(wrap, unwrap, true)
     universe.addAction(stake, steth.address)
-    // universe.addAction(stakeFromWETH, steth.address)
 
     this.actions = {
       stake: {
@@ -109,10 +98,10 @@ export class LidoDeployment {
   }
 
   public async quoteWrap(amountsIn: TokenQuantity): Promise<TokenQuantity> {
-    return await this.rateCache.get(amountsIn)
+    return await this.rateFn(amountsIn)
   }
   public async quoteUnwrap(amountsIn: TokenQuantity): Promise<TokenQuantity> {
-    return await this.rateCache.get(amountsIn)
+    return await this.rateFn(amountsIn)
   }
 
   private async quoteMint_(amountsIn: TokenQuantity): Promise<TokenQuantity> {

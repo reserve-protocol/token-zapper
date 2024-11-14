@@ -1,7 +1,7 @@
 import {
+  type BaseAction,
   type DestinationOptions,
   type InteractionConvention,
-  type BaseAction,
 } from '../action/Action'
 import { type Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
@@ -334,14 +334,17 @@ export class SwapPaths {
 export class SwapPlan {
   public readonly inputs: Token[] = []
   public readonly outputs: Token[] = []
+  public readonly gasEstimate: bigint
   constructor(
     readonly universe: Universe,
     public readonly steps: BaseAction[]
   ) {
     const inputs = new Set<Token>()
     const outputs = new Set<Token>()
+    let gas = 0n
 
     for (let i = 0; i < steps.length; i++) {
+      gas += steps[i].gasEstimate()
       for (const input of steps[i].inputToken) {
         if (outputs.has(input)) {
           outputs.delete(input)
@@ -353,13 +356,18 @@ export class SwapPlan {
         outputs.add(output)
       }
     }
+    this.gasEstimate = gas
     this.inputs = [...inputs]
 
     this.outputs = [...outputs]
   }
 
   public get addresesInUse() {
-    return this.steps.map((i) => [...i.addressesInUse]).flat()
+    const addrs = this.steps
+      .map((i) => (i.oneUsePrZap ? [...i.addressesInUse] : []))
+      .flat()
+
+    return addrs
   }
 
   public async outputProportions() {
@@ -371,11 +379,7 @@ export class SwapPlan {
       const step = this.steps[i]
 
       const inputs = await step.inputProportions()
-      console.log(step.toString(), ': ', inputs.join(', '))
       const outputs = await step.outputProportions()
-      console.log(
-        `${step.toString()}: ${inputs.join(', ')} -> ${outputs.join(', ')}`
-      )
       let total = 0n
       for (const qty of outputs) {
         const previous = inputProportions.get(qty.token)
@@ -407,11 +411,7 @@ export class SwapPlan {
 
     for (const step of this.steps) {
       const legAmount = step.inputToken.map((tok) => {
-        const qty = amts.get(tok)
-        if (!qty.isZero) {
-          return qty
-        }
-        throw new Error(`Missing input token ${tok} for ${step.toString()}`)
+        return amts.get(tok)
       })
       const dustTokens = step.dustTokens
       if (dustTokens.length === 0) {
@@ -426,6 +426,15 @@ export class SwapPlan {
     }
 
     const legAmount = amts.toTokenQuantities()
+    if (legAmount.length === 0) {
+      return new SwapPath(
+        input,
+        swaps,
+        this.outputs.map((i) => i.zero),
+        this.universe.usd.zero,
+        []
+      )
+    }
     const value = (
       await Promise.all(
         legAmount.map(

@@ -23,6 +23,7 @@ import {
   encodeArg,
 } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
+import { TokenType } from '../entities/TokenClass'
 
 const ONEFP18 = 10n ** 18n
 
@@ -53,6 +54,10 @@ class CompoundV2Market {
     public readonly underlying: Token,
     private storagedRate: bigint
   ) {
+    this.universe.tokenType.set(
+      cToken,
+      Promise.resolve(TokenType.OtherMintable)
+    )
     this.instICToken = ICToken__factory.connect(
       this.cToken.address.address,
       this.universe.provider
@@ -489,6 +494,20 @@ export const loadCompV2Deployment = async (
     comptroller,
     protocolName
   )
+  for (const cToken of deployment.cTokens) {
+    universe.addSingleTokenPriceSource({
+      token: cToken,
+      priceFn: async () => {
+        const market = deployment.getMarket(cToken)
+        const out = await market!.burn.quote([cToken.one])
+        const cTokenPrice = await universe.fairPrice(out[0])
+        if (cTokenPrice == null) {
+          throw new Error(`Failed to price ${cToken}`)
+        }
+        return cTokenPrice
+      },
+    })
+  }
   await Promise.all(
     definition.wrappers.map(async (wrapper) => {
       const token = await universe.getToken(Address.from(wrapper))

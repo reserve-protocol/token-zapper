@@ -396,7 +396,7 @@ export class Searcher<SearcherUniverse extends Universe<Config>> {
         abortSignal,
         precursorTokens
       ).catch((e) => {
-        console.log('this.createZapMintOption', e)
+        this.loggers.searching.error('this.createZapMintOption', e)
       })
     }
   }

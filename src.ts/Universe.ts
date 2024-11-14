@@ -47,7 +47,7 @@ import { ToTransactionArgs } from './searcher/ToTransactionArgs'
 import { Contract } from './tx-gen/Planner'
 import { ZapperTokenQuantityPrice } from './oracles/ZapperAggregatorOracle'
 import winston from 'winston'
-import { TokenType } from './entities/TokenClass'
+import { isAsset, TokenType } from './entities/TokenClass'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -72,8 +72,37 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.yieldPositionZaps.set(yieldPosition, rTokenInput)
   }
 
+  public readonly underlyingToken = new DefaultMap<Token, Promise<Token>>(async (token: Token): Promise<Token> => {
+    if (token === this.nativeToken || token === this.wrappedNativeToken) {
+      return this.wrappedNativeToken
+    }
+    const tokenType = await this.tokenType.get(token);
+
+    if (tokenType === TokenType.LPToken) {
+      return token
+    }
+    if (tokenType === TokenType.ETHLST || isAsset(tokenType)) {
+      return token
+    }
+    if (this.wrappedTokens.has(token)) {
+      const mint = this.wrappedTokens.get(token)!.mint;
+      if (mint.inputToken.length === 1) {
+        return this.underlyingToken.get(mint.inputToken[0])
+      }
+    }
+    for(const [base, tok] of this.yieldPositionZaps.entries()) {
+      if (tok === token) {
+        return this.underlyingToken.get(base)
+      }
+    }
+    
+    return token
+  })
 
   public readonly tokenType = new DefaultMap<Token, Promise<TokenType>>(async token => {
+    if (token === this.nativeToken || token === this.wrappedNativeToken) {
+      return TokenType.Asset
+    }
     if (this.rTokensInfo.tokens.has(token)) {
       return TokenType.RToken
     }
@@ -81,11 +110,14 @@ export class Universe<const UniverseConf extends Config = Config> {
       return TokenType.LPToken
     }
     const cls = await this.tokenClass.get(token)
-    if (cls === this.usd) {
-      return TokenType.StableCoin
-    }
     if (cls === this.nativeToken) {
       return TokenType.ETHLST
+    }
+    if (this.wrappedTokens.has(token)) {
+      return TokenType.OtherMintable
+    }
+    if (cls === this.usd) {
+      return TokenType.Asset
     }
     return TokenType.Asset
   })
@@ -93,6 +125,20 @@ export class Universe<const UniverseConf extends Config = Config> {
   public readonly tokenClass = new DefaultMap<Token, Promise<Token>>(async (token: Token): Promise<Token> => {
     if (this.wrappedNativeToken === token || this.nativeToken === token) {
       return this.wrappedNativeToken
+    }
+    if (this.rTokensInfo.tokens.has(token)) {
+      const basketTokenClasses = await Promise.all(this.rTokenDeployments.get(token)!.basket.map(t => this.tokenClass.get(t)));
+      if (basketTokenClasses.every(t => t === basketTokenClasses[0])) {
+        return basketTokenClasses[0]
+      }
+      return token;
+    }
+    if (this.wrappedTokens.has(token)) {
+      const classes = await Promise.all(this.wrappedTokens.get(token)!.mint.inputToken.map(t => this.tokenClass.get(t)))
+      if (classes.every(t => t === classes[0])) {
+        return classes[0]
+      }
+      return token;
     }
     const tokenPrice = (await this.fairPrice(token.one))?.asNumber() ?? 0;
     if (tokenPrice == 0) {
@@ -113,7 +159,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (ethPrice == 0) {
       throw new Error('Failed to get eth price')
     }
-    if (Math.abs(ethPrice - tokenPrice) < ethPrice * 0.05) {
+    if (Math.abs(ethPrice - tokenPrice) < ethPrice * 0.15) {
       return this.wrappedNativeToken
     }
     return token
@@ -143,17 +189,17 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
   public createCache<Input, Result, Key = Input>(
     fetch: (key: Input) => Promise<Result>,
-    ttl: number = this.config.requoteTolerance,
+    ttl: number = (12000 / this.config.requoteTolerance),
     keyFn?: (key: Input) => Key
   ): BlockCache<Input, Result, Key> {
-    const cache = new BlockCache<Input, Result, Key>(fetch, ttl, this.currentBlock, keyFn as any)
+    const cache = new BlockCache<Input, Result, Key>(fetch, ttl, Date.now(), keyFn as any)
     this.caches.push(cache)
     return cache
   }
 
   public createCachedProducer<Result>(
     fetch: () => Promise<Result>,
-    ttl: number = this.config.requoteTolerance
+    ttl: number = (12000 / this.config.requoteTolerance)
   ): () => Promise<Result> {
     let lastFetch: number = 0
     let lastResult: Promise<Result> | null = null
@@ -214,14 +260,14 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   // 'Virtual' token used for pricing things
   public readonly usd: Token = Token.createToken(
-    this.tokens,
+    this,
     Address.fromHexString(USD_ADDRESS),
     'USD',
     'USD Dollar',
     8
   )
 
-  private fairPriceCache: BlockCache<TokenQuantity, TokenQuantity>
+  private fairPriceCache: BlockCache<TokenQuantity, TokenQuantity, string>
 
   public readonly graph: Graph = new Graph()
   public readonly wrappedTokens = new Map<
@@ -467,7 +513,7 @@ export class Universe<const UniverseConf extends Config = Config> {
    */
   public readonly oracle: ZapperTokenQuantityPrice
 
-  /** */
+  public readonly singleTokenPriceOracles = new Map<Token, PriceOracle>()
   public async addSingleTokenPriceOracle(opts: {
     token: Token
     oracleAddress: Address
@@ -480,7 +526,8 @@ export class Universe<const UniverseConf extends Config = Config> {
       oracleAddress,
       priceToken
     )
-    this.oracles.push(oracle)
+    this.singleTokenPriceOracles.set(token, oracle)
+    // this.oracles.push(oracle)
     return oracle
   }
   public addSingleTokenPriceSource(opts: {
@@ -493,7 +540,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       token,
       priceFn
     )
-    this.oracles.push(oracle)
+    this.singleTokenPriceOracles.set(token, oracle)
     return oracle
   }
   async fairPrice(qty: TokenQuantity) {
@@ -505,6 +552,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     perfStart()
     return out
   }
+
   async quoteIn(qty: TokenQuantity, tokenToQuoteWith: Token) {
     return this.oracle?.quoteIn(qty, tokenToQuoteWith).catch(() => null) ?? null
   }
@@ -522,7 +570,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (previous == null) {
       const data = await this.loadToken(address)
       previous = Token.createToken(
-        this.tokens,
+        this,
         address,
         data.symbol,
         data.symbol,
@@ -540,7 +588,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     decimals: number
   ) {
     const token = Token.createToken(
-      this.tokens,
+      this,
       address,
       symbol,
       name,
@@ -553,7 +601,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (this.allActions.has(action)) {
       return this
     }
-    console.log(`Adding ${action.protocol}: ${action.inputToken.join(', ')} -> ${action.outputToken.join(', ')}`)
     this.allActions.add(action)
     if (actionAddress != null) {
       this.actions.get(actionAddress).push(action)
@@ -682,7 +729,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   ) {
     const nativeToken = config.nativeToken
     this.nativeToken = Token.createToken(
-      this.tokens,
+      this,
       Address.fromHexString(GAS_TOKEN_ADDRESS),
       nativeToken.symbol,
       nativeToken.name,
@@ -690,7 +737,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     )
 
     this.wrappedNativeToken = Token.createToken(
-      this.tokens,
+      this,
       config.addresses.wrappedNative,
       'W' + nativeToken.symbol,
       'Wrapped ' + nativeToken.name,
@@ -710,25 +757,16 @@ export class Universe<const UniverseConf extends Config = Config> {
       )
     )
     this.oracle = new ZapperTokenQuantityPrice(this)
-    this.fairPriceCache = this.createCache<TokenQuantity, TokenQuantity>(
+    this.fairPriceCache = this.createCache<TokenQuantity, TokenQuantity, string>(
       async (qty: TokenQuantity) => {
-        if (this.rTokenDeployments.has(qty.token)) {
-          const outs = await this.rTokenDeployments
-            .get(qty.token)!
-            .burn.quote([qty])
-          const outsPriced = await Promise.all(
-            outs.map(async (i) => (await this.fairPrice(i)) ?? this.usd.zero)
-          )
-          const sum = outsPriced.reduce((a, b) => a.add(b), this.usd.zero)
-          return sum
-        }
-        const out =
-          (await this.oracle?.quote(qty).catch((e) => {
+        const out = await this.oracle.quote(qty).catch((e) => {
+            console.log(e)
             return this.usd.zero
-          })) ?? this.usd.zero
+          })
         return out
       },
-      this.config.requoteTolerance
+      this.config.requoteTolerance,
+      i => i.toString()
     )
     const pending = new Map<string, Promise<string>>()
     this.simulateZapFn = async (params) => {
@@ -804,7 +842,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       simulateZapFunction,
       opts.logger
     )
-    universe.oracles.push(new LPTokenPriceOracle(universe))
+    // universe.oracles.push(new LPTokenPriceOracle(universe))
     await Promise.all(
       Object.values(universe.config.addresses.rTokens).map(
         async (rTokenAddress) => {

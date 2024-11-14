@@ -26,10 +26,12 @@ import {
 } from '../contracts'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import { MultiInputUnit } from './MultiInputAction'
+import { ethers } from 'ethers'
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction
   public readonly mint: MintRTokenAction
+  public readonly addressesInUse: Set<Address>
 
   toString() {
     return `RToken[${this.rToken}](basket=${this.basket.join(', ')})`
@@ -68,7 +70,7 @@ export class RTokenDeployment {
     this.basket = this.unitBasket_.map((i) => i.token)
     this.burn = new BurnRTokenAction(this)
     this.mint = new MintRTokenAction(this)
-
+    this.addressesInUse = new Set([Address.from(this.contracts.main.address)])
     const getIssueanceAvailable = universe.createCachedProducer(
       async () =>
         rToken.from(
@@ -117,45 +119,69 @@ export class RTokenDeployment {
       )
     })
 
-    const quoteMint = universe.createCache(
-      async (input: TokenQuantity[]) => {
-        const rTokenOut = await this.contracts.facade.callStatic
-          .maxIssuableByAmounts(
-            this.rToken.address.address,
-            input.map((i) => i.amount)
-          )
-          .then(async (qty) => rToken.from(qty))
-        const basketInputs = await this.contracts.rTokenLens.callStatic.redeem(
-          contracts.assetRegistry.address,
-          contracts.basketHandler.address,
-          rToken.address.address,
-          rTokenOut.amount
+    const unitBasket = universe.createCachedProducer(async () => {
+      const { erc20s, quantities } =
+        await this.contracts.rTokenLens.callStatic.redeem(
+          this.contracts.assetRegistry.address,
+          this.contracts.basketHandler.address,
+          this.contracts.rToken.address,
+          this.rToken.scale
         )
-        const remainder = input.map((qty, index) =>
-          qty.sub(qty.token.from(basketInputs.quantities[index]))
-        )
-        return [rTokenOut, ...remainder]
-      },
-      12000,
-      (input) => input.join(',')
-    )
 
-    const quoteRedeem = universe.createCache(
-      async ([input]: TokenQuantity[]) => {
-        return await this.contracts.facade.callStatic
-          .redeem(this.rToken.address.address, input.amount)
-          .then(async ([, quantities]) =>
-            this.basket.map((token, i) => token.from(quantities[i]))
-          )
+      const unit = await Promise.all(
+        erc20s.map((addr, index) =>
+          this.universe
+            .getToken(Address.from(addr))
+            .then((token) => token.from(quantities[index]))
+        )
+      )
+
+      return unit
+    }, 12000)
+
+    const ONE = 10n ** 18n
+    const quoteMint = async (input: TokenQuantity[]) => {
+      const unit = await unitBasket()
+      if (unit.length !== input.length) {
+        throw new Error('Invalid input length')
+      }
+      let baskets = ethers.constants.MaxUint256.toBigInt()
+      for (let i = 0; i < input.length; i++) {
+        const basketsUsingQtys = (input[i].amount * ONE) / unit[i].amount
+        baskets = basketsUsingQtys < baskets ? basketsUsingQtys : baskets
+      }
+
+      const inputSpent = unit.map((i) =>
+        i.token.from((i.amount * baskets) / ONE)
+      )
+      const dust = input.map((i, index) => i.sub(inputSpent[index]))
+
+      return [this.rToken.from(baskets), ...dust]
+    }
+
+    universe.addSingleTokenPriceSource({
+      token: this.rToken,
+      priceFn: async () => {
+        const [low, high] = (
+          await this.contracts.facade.price(this.rToken.address.address)
+        ).map((i) => i.toBigInt())
+        const mid = (low + high) / 2n
+        return this.universe.usd.from(mid / 10n ** 10n)
       },
-      12000,
-      (input) => input.join(',')
-    )
+    })
+
+    const quoteRedeem = async ([input]: TokenQuantity[]) => {
+      const unit = await unitBasket()
+      const out = unit.map((qty) =>
+        qty.token.from((qty.amount * input.amount) / ONE)
+      )
+      return out
+    }
 
     this.supply = getSupply
     this.maxIssueable = getIssueanceAvailable
-    this.quoteMint = (inputs) => quoteMint.get(inputs)
-    this.quoteRedeem = (inputs) => quoteRedeem.get(inputs)
+    this.quoteMint = quoteMint
+    this.quoteRedeem = quoteRedeem
 
     this.calculateMultiInputUnit = getIssueanceUnit
 
@@ -167,9 +193,7 @@ export class RTokenDeployment {
   public static async load(
     uni: Universe,
     facadeAddress: Address,
-    rToken: Token,
-    mintEstimate: bigint = 1000000n,
-    burnEstimate: bigint = 1000000n
+    rToken: Token
   ) {
     // console.log('loading ' + rToken)
     const rTokenInst = IRToken__factory.connect(
@@ -233,8 +257,8 @@ export class RTokenDeployment {
         ),
         assetRegistry: assetReg,
       },
-      mintEstimate,
-      burnEstimate
+      200000n + 100000n * BigInt(uniBasket.length),
+      200000n + 100000n * BigInt(uniBasket.length)
     )
   }
 }
@@ -291,13 +315,18 @@ export class MintRTokenAction extends ReserveRTokenBase {
     const proportions = (await this.rTokenDeployment.calculateMultiInputUnit())
       .proportions
 
-    console.log(this.rTokenDeployment.rToken + ' => ' + proportions.join(', '))
-
     return proportions
   }
 
   get universe() {
     return this.rTokenDeployment.universe
+  }
+
+  get oneUsePrZap() {
+    return true
+  }
+  get addressesInUse() {
+    return this.rTokenDeployment.addressesInUse
   }
   gasEstimate() {
     return this.rTokenDeployment.mintEstimate
@@ -351,6 +380,13 @@ export class BurnRTokenAction extends ReserveRTokenBase {
     )
     planner.add(rtokenContract.redeem(input ?? predictedInput.amount))
     return null
+  }
+
+  get oneUsePrZap() {
+    return true
+  }
+  get addressesInUse() {
+    return this.rTokenDeployment.addressesInUse
   }
   get universe() {
     return this.rTokenDeployment.universe

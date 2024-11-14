@@ -84,8 +84,9 @@ abstract class BaseV2AerodromeAction extends Action('BaseAerodromeStablePool') {
   }
 
   public toString(): string {
-    return `${this.protocol}.${this.actionName}(${this.pool.address
-      }, ${this.inputToken.join(', ')} => ${this.outputToken.join(', ')})`
+    return `${this.protocol}.${this.actionName}(${
+      this.pool.address
+    }, ${this.inputToken.join(', ')} => ${this.outputToken.join(', ')})`
   }
 }
 
@@ -93,11 +94,29 @@ class AeropoolAddLiquidity extends BaseV2AerodromeAction {
   get actionName(): string {
     return 'addLiquidity'
   }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [(await this.pool.quoteAddLiquidity(amountIn)).liquidity]
+
+  get dustTokens(): Token[] {
+    return [this.pool.token0, this.pool.token1]
+  }
+  async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const q = await this.pool.quoteAdd2Liquidity(amountsIn)
+    return [q.liquidity]
+  }
+
+  async quoteWithDust(amountsIn: TokenQuantity[]) {
+    const q = await this.pool.quoteAdd2Liquidity(amountsIn)
+    return {
+      output: [q.liquidity],
+      dust: q.remaining,
+    }
   }
   gasEstimate(): bigint {
     return 500000n
+  }
+
+  async inputAmounts(): Promise<TokenQuantity[]> {
+    const q = await this.pool.quoteAddLiquidity(this.pool.token0.one)
+    return [q.amount0, q.amount1]
   }
 
   // function addLiquidityV2(
@@ -218,6 +237,14 @@ class AeropoolRemoveLiquidity extends BaseV2AerodromeAction {
 class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
   get actionName(): string {
     return 'swapCL'
+  }
+
+  get isTrade() {
+    return true
+  }
+
+  get dependsOnRpc() {
+    return true
   }
 
   public get oneUsePrZap() {
@@ -342,6 +369,14 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
 class AeropoolSwap extends BaseV2AerodromeAction {
   get actionName(): string {
     return 'swap'
+  }
+
+  get isTrade() {
+    return true
+  }
+
+  get dependsOnRpc() {
+    return false
   }
 
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -556,9 +591,9 @@ class WrappedLpAdd extends BaseV2AerodromeAction {
           amounts: (tokenIn === pool.token0
             ? [amountIn.scalarDiv(2n), quote.outputs[0]]
             : [quote.outputs[0], amountIn.scalarDiv(2n)]) as [
-              TokenQuantity,
-              TokenQuantity
-            ],
+            TokenQuantity,
+            TokenQuantity
+          ],
           output: liquidity,
         }
       },
@@ -704,16 +739,16 @@ class AerodromeStablePool {
     this.actions =
       this.poolType === AerodromePoolType.CL
         ? {
-          t0for1: new AeropoolSwapCL(this, this.token0, this.token1),
-          t1for0: new AeropoolSwapCL(this, this.token1, this.token0),
-        }
+            t0for1: new AeropoolSwapCL(this, this.token0, this.token1),
+            t1for0: new AeropoolSwapCL(this, this.token1, this.token0),
+          }
         : {
-          addLiquidity: new AeropoolAddLiquidity(this),
-          removeLiquidity: new AeropoolRemoveLiquidity(this),
+            addLiquidity: new AeropoolAddLiquidity(this),
+            removeLiquidity: new AeropoolRemoveLiquidity(this),
 
-          t0for1: new AeropoolSwap(this, [this.token0], [this.token1]),
-          t1for0: new AeropoolSwap(this, [this.token1], [this.token0]),
-        }
+            t0for1: new AeropoolSwap(this, [this.token0], [this.token1]),
+            t1for0: new AeropoolSwap(this, [this.token1], [this.token0]),
+          }
 
     if (
       this.poolType === AerodromePoolType.CL ||
@@ -807,6 +842,18 @@ class AerodromeStablePool {
     const amountB = (lpTokens.amount * reserveB.amount) / supply.amount
     return [this.token0.from(amountA), this.token1.from(amountB)]
   }
+  public async quoteAdd2Liquidity([amount0, amount1]: TokenQuantity[]) {
+    const q0 = await this.quoteAddLiquidity(amount0)
+    const q1 = await this.quoteAddLiquidity(amount1)
+    const q = q0.liquidity.amount < q1.liquidity.amount ? q0 : q1
+    const rem0 = amount0.sub(q.amount0)
+    const rem1 = amount1.sub(q.amount1)
+    return {
+      liquidity: q.liquidity,
+      amounts: [q.amount0, q.amount1],
+      remaining: [rem0, rem1],
+    }
+  }
   public async quoteAddLiquidity(desiredInput: TokenQuantity) {
     const [D0FOR1, reserveA, reserveB, [res0, res1]] = await this.direction(
       desiredInput
@@ -821,9 +868,9 @@ class AerodromeStablePool {
 
     const _totalSupply = (await this.totalSupply()).amount
 
-      ;[amount0, amount1] = D0FOR1
-        ? [desiredInput, amountBOptimal]
-        : [amountBOptimal, desiredInput]
+    ;[amount0, amount1] = D0FOR1
+      ? [desiredInput, amountBOptimal]
+      : [amountBOptimal, desiredInput]
 
     const A = (amount0.amount * _totalSupply) / res0.amount
     const B = (amount1.amount * _totalSupply) / res1.amount
@@ -878,17 +925,17 @@ class AerodromeStablePool {
 
           await universe.defineLPToken(
             inst.lpToken,
-            async amt => await inst.quoteRemoveLiquidity(amt),
-            async amts => {
-              const q0 = (await inst.quoteAddLiquidity(amts[0]))
-              const q1 = (await inst.quoteAddLiquidity(amts[1]))
+            async (amt) => await inst.quoteRemoveLiquidity(amt),
+            async (amts) => {
+              const q0 = await inst.quoteAddLiquidity(amts[0])
+              const q1 = await inst.quoteAddLiquidity(amts[1])
               if (q0.liquidity.amount < q1.liquidity.amount) {
                 return q0.liquidity
               }
               return q1.liquidity
-            },
+            }
           )
-        } catch (e) { }
+        } catch (e) {}
       }
     }
 

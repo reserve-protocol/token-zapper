@@ -86,7 +86,9 @@ export const resolveTradeConflicts = async (
             nextTrade.outputToken[0],
             searcher.defaultInternalTradeSlippage
           )
-          searcher.loggers.searching.debug(newNextTrade.steps[0].action.toString())
+          searcher.loggers.searching.debug(
+            newNextTrade.steps[0].action.toString()
+          )
           newTrades.push(newNextTrade)
         })
       )
@@ -123,8 +125,7 @@ export const generateAllPermutations = async function (
 
   let withoutComflicts = allCombos.filter(
     (paths) =>
-      willPathsHaveAddressConflicts(searcher, paths, signer)
-        .length === 0
+      willPathsHaveAddressConflicts(searcher, paths, signer).length === 0
   )
   const valuedTrades = await Promise.all(
     withoutComflicts.map(async (trades) => {
@@ -156,13 +157,17 @@ const sortZaps = (
 ) => {
   let failed = txes
   if (txes.length === 0) {
-    searcher.loggers.searching.error(`All ${txes.length}/${allQuotes.length} potential zaps failed`)
+    searcher.loggers.searching.error(
+      `All ${txes.length}/${allQuotes.length} potential zaps failed`
+    )
     throw new Error('No zaps found')
   }
 
   txes.sort((l, r) => -l.tx.compare(r.tx))
 
-  searcher.loggers.searching.debug(`${txes.length} / ${allQuotes.length} passed simulation:`)
+  searcher.loggers.searching.debug(
+    `${txes.length} / ${allQuotes.length} passed simulation:`
+  )
   for (const tx of txes) {
     searcher.loggers.searching.debug(tx.tx.stats.toString())
   }
@@ -222,7 +227,9 @@ export const createConcurrentStreamingEvaluator = (
         searcher.loggers.searching.debug(tx.stats.toString())
         searcher.loggers.searching.debug(tx.stats.dust.toString())
         searcher.loggers.searching.debug('plan:')
-        searcher.loggers.searching.debug(printPlan(tx.planner, tx.universe).join('\n'))
+        searcher.loggers.searching.debug(
+          printPlan(tx.planner, tx.universe).join('\n')
+        )
         return
       }
       // Reject if the zap looses too much value
@@ -242,7 +249,9 @@ export const createConcurrentStreamingEvaluator = (
       if (toTxArgs.minSearchTime != null) {
         const elapsed = Date.now() - startTime
         if (elapsed > toTxArgs.minSearchTime) {
-          searcher.loggers.searching.debug('Aborting search: elapsed > toTxArgs.minSearchTime')
+          searcher.loggers.searching.debug(
+            'Aborting search: elapsed > toTxArgs.minSearchTime'
+          )
           abortController.abort()
           return
         }
@@ -270,16 +279,22 @@ export const createConcurrentStreamingEvaluator = (
       resultsReadyController.abort()
       return
     }
-    searcher.loggers.searching.debug(`Waiting 2500ms for the last ${pending.size} pending`)
+    searcher.loggers.searching.debug(
+      `Waiting 2500ms for the last ${pending.size} pending`
+    )
     const timeout = new Promise((resolve) =>
       AbortSignal.timeout(2500).addEventListener('abort', resolve)
     )
     await Promise.race([
       timeout,
-      Promise.all([...pending].map(p => p.catch(e => {
-        searcher.loggers.searching.error(`Pending tx gen task failed: ${e}`)
-        return null
-      })))
+      Promise.all(
+        [...pending].map((p) =>
+          p.catch((e) => {
+            searcher.loggers.searching.error(`Pending tx gen task failed: ${e}`)
+            return null
+          })
+        )
+      ),
     ])
     resultsReadyController.abort()
   })
@@ -287,7 +302,9 @@ export const createConcurrentStreamingEvaluator = (
     if (abortController.signal.aborted) {
       return
     }
-    searcher.loggers.searching.debug('Aborting search: searcher.config.maxSearchTimeMs')
+    searcher.loggers.searching.debug(
+      'Aborting search: searcher.config.maxSearchTimeMs'
+    )
     abortController.abort()
   }, waitTime)
 
@@ -411,13 +428,17 @@ export class MultiChoicePath implements SwapPath {
     return this.path.supportsDynamicInput
   }
 
+  public get dust() {
+    return this.path.dust
+  }
+
   intoSwapPaths(universe: Universe<Config>): SwapPaths {
     return new SwapPaths(
       universe,
       this.path.inputs,
       this.paths,
       this.outputs,
-      this.outputValue,
+      this.outputValue
     )
   }
 

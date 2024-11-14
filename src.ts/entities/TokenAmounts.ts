@@ -18,6 +18,15 @@ export class TokenAmounts {
     tok.fromBigInt(0n)
   )
 
+  public isEmpty() {
+    for (const qty of this.tokenBalances.values()) {
+      if (!qty.isZero) {
+        return false
+      }
+    }
+    return true
+  }
+
   static fromQuantities(qtys: TokenQuantity[]) {
     const out = new TokenAmounts()
     qtys.forEach((qty) => out.add(qty))

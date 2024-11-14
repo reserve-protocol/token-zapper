@@ -14,8 +14,20 @@ export class ZapperOracleAggregator extends PriceOracle {
   }
 
   private async priceAsset(token: Token): Promise<TokenQuantity> {
+    if (token == this.universe.usd) {
+      return token.one
+    }
     let sum = this.universe.usd.zero
     let samples = 0n
+
+    if (this.universe.singleTokenPriceOracles.has(token)) {
+      const oracle = this.universe.singleTokenPriceOracles.get(token)!
+      const out = await oracle.quote(token)
+      if (out == null) {
+        throw new Error('Unable to price ' + token)
+      }
+      return out
+    }
 
     await Promise.all(
       this.universe.oracles.map(async (oracle) => {
@@ -24,7 +36,7 @@ export class ZapperOracleAggregator extends PriceOracle {
           return
         }
         if (price.token !== this.universe.usd) {
-          console.log(
+          this.universe.logger.debug(
             'Price oracle returned price in ' +
               price.token.symbol +
               ' instead of USD'
@@ -69,17 +81,31 @@ export class ZapperTokenQuantityPrice extends Cached<
   }
 
   private async quoteFn(qty: TokenQuantity) {
+    if (qty.amount === 0n) {
+      return this.universe.usd.zero
+    }
+    if (qty.token == this.universe.usd) {
+      return qty
+    }
     const universe = this.universe
     const wrappedToken = universe.wrappedTokens.get(qty.token)
-    if (wrappedToken != null) {
+    if (
+      !universe.singleTokenPriceOracles.has(qty.token) &&
+      wrappedToken != null
+    ) {
       const outTokens = await wrappedToken.burn.quote([qty])
       const sums = await Promise.all(
         outTokens.map(async (qty) => await this.get(qty))
       )
       const out = sums.reduce((l, r) => l.add(r))
 
+      const qtyInto = qty.into(out.token)
       const unitPrice =
-        qty.amount === qty.token.scale ? out : out.div(qty.into(out.token))
+        qty.amount === qty.token.scale
+          ? out
+          : qtyInto.isZero
+          ? out.token.zero
+          : out.div(qtyInto)
       this.latestPrices.set(qty.token, unitPrice)
 
       return out
@@ -92,6 +118,9 @@ export class ZapperTokenQuantityPrice extends Cached<
   }
 
   private async tokenPrice(token: Token) {
+    if (token == this.universe.usd) {
+      return this.universe.usd.one
+    }
     const outPrice = await this.aggregatorOracle.quote(token)
     if (outPrice != null) {
       this.latestPrices.set(token, outPrice)
@@ -100,6 +129,9 @@ export class ZapperTokenQuantityPrice extends Cached<
   }
 
   public async quote(qty: TokenQuantity) {
+    if (qty.token == this.universe.usd) {
+      return qty
+    }
     return this.get(qty)
   }
   public async quoteIn(tokenQty: TokenQuantity, quoteToken: Token) {

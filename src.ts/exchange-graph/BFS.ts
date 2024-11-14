@@ -10,7 +10,7 @@ class ChoicesPrStep {
   constructor(
     readonly universe: Universe,
     public readonly optionsPrStep: Action[][]
-  ) { }
+  ) {}
 
   convertToSingularPaths(): SwapPlan[] {
     const paths: SwapPlan[] = []
@@ -39,14 +39,14 @@ class BFSSearchResult {
     public readonly input: Token,
     public readonly steps: ChoicesPrStep[],
     public readonly output: Token
-  ) { }
+  ) {}
 }
 class OpenSetNode {
   private constructor(
     readonly token: Token,
     readonly length: number,
     readonly transition: { actions: Action[]; node: OpenSetNode } | null
-  ) { }
+  ) {}
 
   hasVisited(token: Token) {
     let current = this as OpenSetNode
@@ -117,7 +117,6 @@ export const bfs = (
   return new BFSSearchResult(start, paths, end)
 }
 
-
 export const shortestPath = (
   ctx: Universe,
   graph: Graph,
@@ -127,15 +126,17 @@ export const shortestPath = (
 ) => {
   const visited = new Set<Token>()
   const toVisit: {
-    path: Token[],
+    path: Token[]
     weight: number
-  }[] = [{
-    path: [start],
-    weight: 0
-  }]
+  }[] = [
+    {
+      path: [start],
+      weight: 0,
+    },
+  ]
 
   const results: {
-    path: Token[],
+    path: Token[]
     weight: number
   }[] = []
   visited.add(start)
@@ -143,7 +144,7 @@ export const shortestPath = (
   while (toVisit.length !== 0) {
     const node = toVisit.shift()!
 
-    const previous = node.path.at(-1)!;
+    const previous = node.path.at(-1)!
     if (previous === end) {
       results.push(node)
       continue
@@ -151,19 +152,23 @@ export const shortestPath = (
     if (!graph.vertices.has(previous)) {
       continue
     }
-    for (const [nextToken, actions] of graph.vertices.get(previous).outgoingEdges.entries()) {
-      if (!actions.some(action => {
-        if (incompatibleActions.has(action)) {
-          return false
-        }
-        for (const addr of action.addressesInUse) {
-          if (addressesUsed.has(addr)) {
-            incompatibleActions.add(action)
+    for (const [nextToken, actions] of graph.vertices
+      .get(previous)
+      .outgoingEdges.entries()) {
+      if (
+        !actions.some((action) => {
+          if (incompatibleActions.has(action)) {
             return false
           }
-        }
-        return true
-      })) {
+          for (const addr of action.addressesInUse) {
+            if (addressesUsed.has(addr)) {
+              incompatibleActions.add(action)
+              return false
+            }
+          }
+          return true
+        })
+      ) {
         continue
       }
       if (nextToken !== end) {
@@ -173,7 +178,7 @@ export const shortestPath = (
         visited.add(nextToken)
       }
 
-      let tokenWeight = 1;
+      let tokenWeight = 1
 
       if (ctx.lpTokens.has(nextToken)) {
         tokenWeight = ctx.lpTokens.get(nextToken)!.poolTokens.length ** 2
@@ -184,15 +189,15 @@ export const shortestPath = (
 
       toVisit.push({
         path: [...node.path, nextToken],
-        weight: node.weight + tokenWeight
+        weight: node.weight + tokenWeight,
       })
     }
   }
 
   results.sort((l, r) => l.weight - r.weight)
-  console.log(`Paths found:`)
-  for (const path of results) {
-    console.log("  ", path.path.join(' -> '), path.weight)
+  if (results.length === 0) {
+    console.warn(`no path found from ${start} to ${end}`)
+    return []
   }
   return results[0].path
 }

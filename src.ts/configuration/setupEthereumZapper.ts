@@ -16,6 +16,7 @@ import {
   IVaultYearn__factory,
 } from '../contracts'
 import { TokenQuantity } from '../entities/Token'
+import { TokenType } from '../entities/TokenClass'
 import { SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
 import { setupAaveV2 } from './setupAaveV2'
@@ -90,16 +91,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     await setupAaveV2(universe, PROTOCOL_CONFIGS.aavev2)
   )
   // console.log(aaveV2.describe().join('\n'))
-  console.log("aaa")
-  const curve = await CurveIntegration.load(universe, PROTOCOL_CONFIGS.curve)
-  console.log("done")
-  universe.integrations.curve = curve
-  universe.addTradeVenue(curve.venue)
-
-  universe.addIntegration(
-    'convex',
-    await setupConvexStakingWrappers(universe, curve, PROTOCOL_CONFIGS.convex)
-  )
 
   universe.addIntegration(
     'aaveV3',
@@ -221,9 +212,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.commonTokens.ETHx,
     async (input: TokenQuantity, dest: Address) => {
       if (input.token === universe.wrappedNativeToken) {
-        return await new SwapPlan(universe, [depositToETHX]).quote(
-          [input],
-        )
+        return await new SwapPlan(universe, [depositToETHX]).quote([input])
       }
       return null
     }
@@ -310,6 +299,46 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.rTokens['ETH+']
   )
 
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens.cbeth,
+    priceFn: async () => {
+      return (await universe.fairPrice(universe.commonTokens.WETH.one))!
+    },
+  })
+
+  universe.tokenType.set(
+    universe.commonTokens.ETHx,
+    Promise.resolve(TokenType.ETHLST)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.reth,
+    Promise.resolve(TokenType.ETHLST)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.steth,
+    Promise.resolve(TokenType.ETHLST)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.wsteth,
+    Promise.resolve(TokenType.OtherMintable)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.frxeth,
+    Promise.resolve(TokenType.ETHLST)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.sfrxeth,
+    Promise.resolve(TokenType.OtherMintable)
+  )
+  const curve = await CurveIntegration.load(universe, PROTOCOL_CONFIGS.curve)
+  universe.integrations.curve = curve
+
+  universe.addIntegration(
+    'convex',
+    await setupConvexStakingWrappers(universe, curve, PROTOCOL_CONFIGS.convex)
+  )
+
+  console.log('DONE')
   // universe.tokenFromTradeSpecialCases.set(
   //   commonTokens.pxETH,
   //   async (input: TokenQuantity, output: Token) => {

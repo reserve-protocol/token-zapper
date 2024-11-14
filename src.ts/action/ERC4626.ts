@@ -26,6 +26,22 @@ export class ERC4626TokenVault {
   }
 }
 
+const mapKey = (k: bigint) => {
+  if (k > 100000n) {
+    return (k / 100000n) * 100000n
+  }
+  if (k > 10000n) {
+    return (k / 10000n) * 10000n
+  }
+  if (k > 1000n) {
+    return (k / 1000n) * 1000n
+  }
+  if (k > 100n) {
+    return (k / 100n) * 100n
+  }
+  return k
+}
+
 export const ETHTokenVaultDepositAction = (proto: string) =>
   class ETHTokenVaultDepositAction extends Action(proto) {
     public get supportsDynamicInput(): boolean {
@@ -53,24 +69,16 @@ export const ETHTokenVaultDepositAction = (proto: string) =>
       planner.add(weth.withdraw(inputs[0]))
       const out = planner.add(
         lib.deposit(destination.address).withValue(inputs[0]),
-        "deposit",
+        'deposit',
         `${proto}.deposit{value:${predicted[0]}}(${destination.address})`
       )
       return [out!]
     }
     gasEstimate() {
-      return BigInt(200000n)
-    }
-
-    public async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
-      const x = (await this.inst.callStatic.previewDeposit(amountIn)).toBigInt()
-      return [this.outputToken[0].fromBigInt(x)]
+      return BigInt(150_000n)
     }
     public readonly inst: ETHTokenVault
-    public readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
-    async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-      return await this.quoteCache.get(amountIn.amount)
-    }
+    public quote: (amountIn: TokenQuantity[]) => Promise<TokenQuantity[]>
     constructor(
       readonly universe: Universe,
       readonly shareToken: Token,
@@ -89,10 +97,26 @@ export const ETHTokenVaultDepositAction = (proto: string) =>
         vaultAddress.address,
         this.universe.provider
       )
-      this.quoteCache = this.universe.createCache<bigint, TokenQuantity[]>(
-        async (a) => await this._quote(a),
-        1
+      const rateFn = this.universe.createCache(
+        async (amt: bigint) => {
+          const inputToken = this.inputToken[0]
+          if (amt < 1n) {
+            amt = 1n
+          }
+          const rate = await this.inst.callStatic.previewDeposit(
+            amt * inputToken.scale
+          )
+          return inputToken.from(rate.toBigInt() / amt)
+        },
+        24000,
+        mapKey
       )
+
+      this.quote = async ([amountIn]: TokenQuantity[]) => {
+        const inputToken = this.inputToken[0]
+        const rate = await rateFn.get(amountIn.amount / inputToken.scale)
+        return [rate.mul(amountIn).into(this.outputToken[0])]
+      }
     }
 
     toString(): string {
@@ -129,18 +153,11 @@ export const ERC4626DepositAction = (proto: string) =>
       return [out!]
     }
     gasEstimate() {
-      return BigInt(200000n)
+      return BigInt(150_000n)
     }
+    public quote: (amountIn: TokenQuantity[]) => Promise<TokenQuantity[]>
 
-    public async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
-      const x = (await this.inst.callStatic.previewDeposit(amountIn)).toBigInt()
-      return [this.outputToken[0].fromBigInt(x)]
-    }
     public readonly inst: IERC4626
-    public readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
-    async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-      return await this.quoteCache.get(amountIn.amount)
-    }
     constructor(
       readonly universe: Universe,
       readonly underlying: Token,
@@ -159,10 +176,28 @@ export const ERC4626DepositAction = (proto: string) =>
         this.shareToken.address.address,
         this.universe.provider
       )
-      this.quoteCache = this.universe.createCache<bigint, TokenQuantity[]>(
-        async (a) => await this._quote(a),
-        1
+
+      const rateFn = this.universe.createCache(
+        async (amt: bigint) => {
+          const inputToken = this.inputToken[0]
+          if (amt < 1n) {
+            amt = 1n
+          }
+          const rate = await this.inst.callStatic.previewDeposit(
+            amt * inputToken.scale
+          )
+          return inputToken.from(rate.toBigInt() / amt)
+        },
+        24000,
+        mapKey
       )
+
+      this.quote = async ([amountIn]: TokenQuantity[]) => {
+        const inputToken = this.inputToken[0]
+        let res = amountIn.amount / inputToken.scale
+        const rate = await rateFn.get(res)
+        return [rate.mul(amountIn).into(this.outputToken[0])]
+      }
     }
 
     toString(): string {
@@ -212,17 +247,11 @@ export const ERC4626WithdrawAction = (proto: string) =>
       return this.outputBalanceOf(this.universe, planner)
     }
     gasEstimate() {
-      return BigInt(200000n)
-    }
-    public async _quote(amountIn: bigint): Promise<TokenQuantity[]> {
-      const x = (await this.inst.previewRedeem(amountIn)).toBigInt()
-      return [this.outputToken[0].fromBigInt(x)]
+      return BigInt(150_000n)
     }
     public readonly inst: IERC4626
-    public readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
-    async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-      return await this.quoteCache.get(amountIn.amount)
-    }
+
+    public quote: (amountIn: TokenQuantity[]) => Promise<TokenQuantity[]>
 
     constructor(
       readonly universe: Universe,
@@ -243,10 +272,24 @@ export const ERC4626WithdrawAction = (proto: string) =>
         this.shareToken.address.address,
         this.universe.provider
       )
-      this.quoteCache = this.universe.createCache<bigint, TokenQuantity[]>(
-        async (a) => await this._quote(a),
-        1
+      const rateFn = this.universe.createCache(
+        async (amt: bigint) => {
+          const inputToken = this.inputToken[0]
+          if (amt < 1n) {
+            amt = 1n
+          }
+          const rate = await this.inst.callStatic.previewRedeem(amt)
+          return inputToken.from(rate.toBigInt() / amt)
+        },
+        24000,
+        mapKey
       )
+      this.quote = async ([amountIn]: TokenQuantity[]) => {
+        const inputToken = this.inputToken[0]
+        let res = amountIn.amount / inputToken.scale
+        const rate = await rateFn.get(res)
+        return [rate.mul(amountIn).into(this.outputToken[0])]
+      }
     }
     toString(): string {
       return `ERC4626Withdraw(${this.shareToken.toString()})`

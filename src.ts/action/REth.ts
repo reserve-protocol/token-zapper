@@ -89,6 +89,19 @@ abstract class RocketPoolBase extends Action('Rocketpool') {
   public get supportsDynamicInput(): boolean {
     return true
   }
+  get dependsOnRpc(): boolean {
+    return true
+  }
+  get isTrade(): boolean {
+    return true
+  }
+
+  get oneUsePrZap(): boolean {
+    return true
+  }
+  get addressesInUse() {
+    return new Set([this.address])
+  }
   toString(): string {
     return `RocketpoolRouter.${this.action}(${this.inputToken.join(
       ', '
@@ -166,7 +179,7 @@ export class ETHToRETH extends RocketPoolBase {
     public readonly router: IRouter
   ) {
     super(
-      router.reth.address,
+      Address.from(router.routerInstance.address),
       [universe.nativeToken],
       [router.reth],
       InteractionConvention.None,
@@ -254,7 +267,7 @@ export class WETHToRETH extends RocketPoolBase {
     public readonly router: IRouter
   ) {
     super(
-      universe.wrappedNativeToken.address,
+      Address.from(router.routerInstance.address),
       [universe.wrappedNativeToken],
       [router.reth],
       InteractionConvention.None,
@@ -355,7 +368,7 @@ export class RETHToWETH extends RocketPoolBase {
     public readonly router: IRouter
   ) {
     super(
-      universe.wrappedNativeToken.address,
+      Address.from(router.routerInstance.address),
       [router.reth],
       [universe.wrappedNativeToken],
       InteractionConvention.ApprovalRequired,
@@ -429,7 +442,7 @@ export class RETHToETH extends RocketPoolBase {
     public readonly router: IRouter
   ) {
     super(
-      universe.nativeToken.address,
+      Address.from(router.routerInstance.address),
       [router.reth],
       [universe.nativeToken],
       InteractionConvention.ApprovalRequired,

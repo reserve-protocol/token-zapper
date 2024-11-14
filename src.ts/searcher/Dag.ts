@@ -1,38 +1,83 @@
-import { consumers } from 'stream'
+import { Logger } from 'winston'
+import { Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
-import { Token, TokenQuantity } from '../entities/Token'
+import { PricedTokenQuantity, Token, TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
-import { Value, Planner } from '../tx-gen/Planner'
+import { Planner, Value } from '../tx-gen/Planner'
 import { SwapPlan } from './Swap'
-import { Universe } from '..'
+import { isAbstractAction, TradeAction, WrappedAction } from './TradeAction'
+import { BaseAction } from '../action/Action'
 
-class EvalContext {
+class DagEvalContext {
+  public gasUsed: bigint = 0n
+  public tradesUsed = new Set<Token | Address>()
+  public get universe() {
+    return this.dag.universe
+  }
   public readonly balances: TokenAmounts = new TokenAmounts()
-  constructor(public readonly dag: Dag) { }
+  constructor(public readonly dag: DagBuilder) {}
 }
-class PlanContext extends EvalContext {
+class DagPlanContext extends DagEvalContext {
   public readonly values: Map<Token, Value> = new Map()
   public readonly planner: Planner = new Planner()
 }
+const resolution = 10000
+const stepSize = 1 / resolution
+const normalizeVector = (vec: number[]) => {
+  if (vec.length < 1) {
+    return vec
+  }
+  if (vec.length === 1) {
+    vec[0] = 1.0
+    return vec
+  }
+  let sum = 0.0
+  let min = 10
+  for (let i = 0; i < vec.length; i++) {
+    if (vec[i] < min) {
+      min = vec[i]
+    }
+  }
+  const offset = min < 0 ? -min : 0
+  for (let i = 0; i < vec.length; i++) {
+    if (offset !== 0) {
+      vec[i] += offset
+    }
+
+    // Sum up total
+    sum += vec[i]
+  }
+  if (sum === 0) {
+    return vec
+  }
+
+  // let total = 0
+  for (let i = 0; i < vec.length; i++) {
+    vec[i] = vec[i] / sum
+  }
+  // if (tot
+  return vec
+}
+
 abstract class DagNode {
   private static nextId = 0
-  public proportionOfOutput: number = 0
+  public get gasEstimate() {
+    return 0n
+  }
+
   public readonly id: number = DagNode.nextId++
-  public readonly dependencies: DagNode[] = []
-  public readonly consumers = new DefaultMap<Token, DagNode[]>(() => [])
 
   constructor(
-    public readonly inputs: [number, Token][],
-    public readonly outputs: [number, Token][]
-  ) { }
+    protected _inputs: [number, Token][],
+    protected _outputs: [number, Token][]
+  ) {}
 
-  public forward(token: Token, next: DagNode) {
-    console.log(
-      `Forwarding ${token} from ${this.dotNode()} to ${next.dotNode()}`
-    )
-    this.consumers.get(token).push(next)
-    next.dependencies.push(this)
+  public get inputs() {
+    return this._inputs
+  }
+  public get outputs() {
+    return this._outputs
   }
 
   public dotNode() {
@@ -43,11 +88,20 @@ abstract class DagNode {
     return `node_${this.id}`
   }
 
-  public dotEdges() {
-    return [...this.consumers.entries()]
+  public dotEdges(dag: DagBuilder, consumers: [Token, DagNode[]][]) {
+    return consumers
       .map(([token, nodes]) => {
+        const propValue =
+          this.outputs.find(([_, tok]) => tok === token)?.[0] ?? 0
+
+        const label =
+          propValue === 0
+            ? `~${token}`
+            : propValue === 1
+            ? token.symbol
+            : `${(propValue * 100).toFixed(2)}% ${token}`
         return nodes.map(
-          (node) => `${this.dotId()} -> ${node.dotId()} [label="${token}"]`
+          (node) => `${this.dotId()} -> ${node.dotId()} [label="${label}"]`
         )
       })
       .flat()
@@ -59,27 +113,32 @@ abstract class DagNode {
         return prop
       }
     }
-    throw new Error(`Failed to find input proportion for ${token}`)
+    throw new Error(
+      `${this.dotNode()}: Failed to find input proportion for ${token}`
+    )
   }
 
-  public getOutputProportion(token: Token, consumer?: DagNode) {
+  public getOutputProportion(token: Token, index: number) {
     for (const [prop, tok] of this.outputs) {
       if (tok === token) {
         return prop
       }
     }
-    return 0.0
+    throw new Error(
+      `${this.dotNode()}: Failed to find output proportion for ${token}`
+    )
   }
 
   public async evaluate(
-    context: EvalContext,
+    context: DagEvalContext,
+    consumers: [Token, DagNode[]][],
     inputs: TokenQuantity[]
   ): Promise<[DagNode, TokenQuantity][]> {
     throw new Error('Method not implemented.')
   }
 
   public async plan(
-    context: PlanContext,
+    context: DagPlanContext,
     inputs: Value[],
     destination: Address,
     predictedInputs: TokenQuantity[]
@@ -87,56 +146,82 @@ abstract class DagNode {
     throw new Error('Method not implemented.')
   }
 }
-class EffectNode extends DagNode {
-  constructor(
-    private readonly effect: (
-      consumers: DagNode[],
-      context: EvalContext,
-      inputs: TokenQuantity[]
-    ) => Promise<[DagNode, TokenQuantity][]>,
-    inputToken: Token,
-    outputToken: Token,
-    private readonly _toString?: () => string
+class RootNode extends DagNode {
+  constructor(inputs: [number, Token][]) {
+    super(inputs, inputs)
+  }
+
+  public async evaluate(
+    context: DagEvalContext,
+    outgoingEdges: [Token, DagNode[]][],
+    inputs: TokenQuantity[]
   ) {
-    super([[1, inputToken]], [[1, outputToken]])
+    for (const input of inputs) {
+      context.balances.add(input)
+    }
+    const outputs: [DagNode, TokenQuantity][] = []
+    for (const [token, consumers] of outgoingEdges) {
+      if (consumers.length !== 1) {
+        throw new Error('Root must have exactly one consumer pr input')
+      }
+      outputs.push([consumers[0], context.balances.get(token)])
+      context.balances.tokenBalances.delete(token)
+    }
+    return outputs
   }
+  public dotNode(): string {
+    return 'root'
+  }
+  public dotId(): string {
+    return 'root'
+  }
+
   toString() {
-    return this._toString
-      ? this._toString()
-      : `EffectNode(id=${this.id}, deps=${this.dependencies})`
+    return `Root${this.inputs.map((i) => i[1]).join(', ')})`
+  }
+}
+const copyVectors = (from: number[][], to: number[][]) => {
+  for (let i = 0; i < from.length; i++) {
+    for (let j = 0; j < from[i].length; j++) {
+      to[i][j] = from[i][j]
+    }
+  }
+}
+class BalanceNode extends DagNode {
+  constructor(public readonly token: Token) {
+    super([[1, token]], [[1, token]])
   }
 
-  static balanceNode(token: Token) {
-    return new EffectNode(
-      async (consumers, context, inputs) => {
-        if (consumers.length !== 1) {
-          throw new Error('BalanceNode must have exactly one consumer')
-        }
-        for (const input of inputs) {
-          context.balances.add(input)
-        }
-        const out = context.balances.get(token)
-        context.balances.tokenBalances.delete(token)
-        return [[consumers[0], out]]
-      },
-      token,
-      token,
-      () => `bal_${token}`
-    )
+  public async evaluate(
+    context: DagEvalContext,
+    outgoingEdges: [Token, DagNode[]][],
+    inputs: TokenQuantity[]
+  ): Promise<[DagNode, TokenQuantity][]> {
+    for (const input of inputs) {
+      context.balances.add(input)
+    }
+    return outgoingEdges.map(([token, consumers]) => {
+      if (consumers.length !== 1) {
+        throw new Error(
+          `BalanceNode must have exactly one consumer, got ${
+            consumers.length
+          } for ${token}, ${consumers.map((i) => i.toString())}`
+        )
+      }
+      const bal = context.balances.get(token)
+      context.balances.tokenBalances.delete(token)
+      return [consumers[0], bal]
+    })
   }
 
-  public async evaluate(context: EvalContext, inputs: TokenQuantity[]) {
-    return await this.effect(
-      [...this.consumers.values()].map((i) => i[0]),
-      context,
-      inputs
-    )
+  toString() {
+    return `bal_${this.token}`
   }
 }
 
 class OutputNode extends DagNode {
-  constructor() {
-    super([], [])
+  constructor(outputs: [number, Token][]) {
+    super([], outputs)
   }
   public dotNode() {
     return 'output'
@@ -144,7 +229,12 @@ class OutputNode extends DagNode {
   public dotId() {
     return 'output'
   }
-  public async evaluate(context: EvalContext, inputs: TokenQuantity[]) {
+
+  public async evaluate(
+    context: DagEvalContext,
+    outgoingEdges: [Token, DagNode[]][],
+    inputs: TokenQuantity[]
+  ) {
     return Promise.resolve(
       inputs.map((i) => [this, i] as [DagNode, TokenQuantity])
     )
@@ -153,6 +243,7 @@ class OutputNode extends DagNode {
     return `OutputNode`
   }
 }
+
 class ActionNode extends DagNode {
   constructor(
     public readonly inputProportions: [number, Token][],
@@ -163,65 +254,112 @@ class ActionNode extends DagNode {
   }
 
   toString() {
-    return `Act(${this.actions.steps.map((i) => i.protocol).join(' -> ')})`
+    return this.actions.steps.map((i) => i.toString()).join(' -> ')
   }
 
-  public async evaluate(_: EvalContext, inputs: TokenQuantity[]) {
+  public get abstractActions() {
+    return this.actions.steps.filter((i) => isAbstractAction(i))
+  }
+  public get gasEstimate() {
+    return this.actions.gasEstimate
+  }
+  public async evaluate(
+    ctx: DagEvalContext,
+    outgoingEdges: [Token, DagNode[]][],
+    inputs: TokenQuantity[]
+  ) {
+    if (inputs.every((i) => i.isZero)) {
+      return []
+    }
     const path = await this.actions.quote(inputs)
 
-    for (const output of path.outputs) {
-      const consumers = this.consumers.get(output.token)
-      if (consumers.length !== 1) {
+    const out: [DagNode, TokenQuantity][] = []
+    for (const output of [...path.outputs, ...path.dust]) {
+      const edges = outgoingEdges.find(([token]) => token === output.token)
+
+      if (edges == null || edges[1].length !== 1) {
         throw new Error(
-          `Each output token must have exactly one consumer. Got ${consumers.length} for ${output.token}`
+          `${this.dotNode()}: Each output token must have exactly one consumer. Got ${
+            edges == null ? 0 : edges[1].length
+          } for ${output.token}`
         )
       }
+      out.push([edges[1][0], output])
     }
-
-    return [...path.outputs, ...path.dust].map(
-      (qty) =>
-        [this.consumers.get(qty.token)![0], qty] as [DagNode, TokenQuantity]
-    )
+    return out
   }
 }
 class SplitNode extends DagNode {
+  public get outputs() {
+    return this.splits_.map(
+      (split) => [split, this.inputToken] as [number, Token]
+    )
+  }
   constructor(
     public readonly inputToken: Token,
-    public readonly splits: number[]
+    public splits_: number[],
+    public readonly splitNodeIndex: number
   ) {
-    super(
-      [[1, inputToken]],
-      splits.map((split) => [split, inputToken])
-    )
-    const sum = splits.reduce((l, r) => l + r)
-    const diffFromOne = Math.abs(1 - sum)
-    if (diffFromOne > 0.001) {
-      throw new Error('SplitNode must sum to 1')
+    super([[1, inputToken]], [])
+
+    if (splits_.some((i) => isNaN(i) || !isFinite(i))) {
+      throw new Error(
+        `${this.dotNode()}: Split proportions must be finite numbers. Got ${splits_.join(
+          ', '
+        )}`
+      )
     }
   }
 
-  public getOutputProportion(token: Token, consumer?: DagNode) {
-    if (consumer == null) {
-      return super.getOutputProportion(token)
+  public getOutputProportion(token: Token, index: number) {
+    if (token !== this.inputToken) {
+      throw new Error(
+        `${this.dotNode()}: Expected ${this.inputToken}, got ${token}`
+      )
     }
-    const idx = this.consumers.get(token).findIndex((i) => i === consumer)
-    if (idx === -1) {
-      throw new Error('Panic! Missing consumer')
-    }
-    return this.splits[idx]
+    return this.splits_[index]
   }
-  public dotEdges(): string[] {
-    return this.outputs.map(
-      ([split, token], index) =>
-        `${this.dotId()} -> ${this.consumers
-          .get(token)!
-        [index].dotId()} [label="${(split * 100).toFixed(2)}% ${token}"]`
-    )
+
+  public dotEdges(
+    dag: DagBuilder,
+    outgoingEdges: [Token, DagNode[]][]
+  ): string[] {
+    const splits = dag.splitNodes[this.splitNodeIndex]
+    return this.outputs.map(([, token], index) => {
+      const consumers = outgoingEdges.find(([tok]) => tok === token)
+      if (consumers == null) {
+        console.log(
+          `${this.dotNode()}: No consumers for ${token} from ${this.dotNode()}, ${outgoingEdges
+            .map(([tok]) => tok.symbol)
+            .join(', ')}`
+        )
+        throw new Error(`No consumers for ${token}`)
+      }
+      const split = splits[index]
+      return `${this.dotId()} -> ${consumers[1]![index].dotId()} [label="${(
+        split * 100
+      ).toFixed(2)}% ${token}"]`
+    })
   }
+
   toString() {
     return `Split`
   }
-  public async evaluate(_: EvalContext, inputs: TokenQuantity[]) {
+  public async evaluate(
+    ctx: DagEvalContext,
+    outgoingEdges: [Token, DagNode[]][],
+    inputs: TokenQuantity[]
+  ) {
+    if (inputs.every((i) => i.isZero)) {
+      const out = outgoingEdges
+        .map(([token, consumers]) => {
+          return consumers.map(
+            (c) => [c, token.zero] as [DagNode, TokenQuantity]
+          )
+        })
+        .flat()
+      return out
+    }
     if (inputs.length === 0) {
       throw new Error('SplitNode must have at least one input')
     }
@@ -229,24 +367,44 @@ class SplitNode extends DagNode {
       throw new Error('SplitNode must have same token as input')
     }
     const input = inputs.reduce((l, r) => l.add(r), inputs[0].token.zero)
-    const consumers = this.consumers.get(input.token)
-    if (consumers.length !== this.splits.length) {
-      throw new Error('SplitNode must have as many consumers as splits')
+    const outEdge = outgoingEdges.find(([token]) => token === input.token) as
+      | null
+      | [Token, DagNode[]]
+    if (outEdge == null) {
+      throw new Error(`No consumers for ${input.token}`)
     }
-    const splitQtys = this.splits.map((split, index) => {
+    const [, consumers] = outEdge
+    const splits = ctx.dag.splitNodes[this.splitNodeIndex]
+
+    if (consumers.length !== splits.length) {
+      throw new Error(
+        `SplitNode must have as many consumers as splits. Consumers: ${consumers.map(
+          (i) => i
+        )}, splits: ${splits.length}`
+      )
+    }
+    const outputs = splits.map((split, index) => {
       return [consumers[index], input.mul(input.token.from(split))] as [
         DagNode,
         TokenQuantity
       ]
     })
-    return splitQtys
+    return outputs
   }
 }
-export class SearchContextConfig {
+
+export class DagBuilderConfig {
+  public readonly outputTokenSet: Set<Token>
   constructor(
+    public readonly universe: Universe,
+    public readonly logger: Logger,
     public readonly userInput: TokenQuantity[],
-    public readonly userOutput: TokenQuantity[]
-  ) { }
+    public readonly userInputProportions: number[],
+    public readonly userOutput: TokenQuantity[],
+    public readonly userOutputProportions: number[]
+  ) {
+    this.outputTokenSet = new Set(userOutput.map((i) => i.token))
+  }
 }
 
 class EvaluatedNode {
@@ -254,27 +412,123 @@ class EvaluatedNode {
     public readonly node: DagNode,
     public readonly inputs: TokenQuantity[],
     public readonly outputs: [DagNode, TokenQuantity][]
-  ) { }
+  ) {}
+
+  public get price() {
+    if (!(this.node instanceof ActionNode)) {
+      return 0
+    }
+    if (
+      this.node.actions.steps[0].inputToken.length !== 1 &&
+      this.node.actions.steps[0].outputToken.length !== 1
+    ) {
+      return 0
+    }
+    const input = this.inputs[0]
+    const output = this.outputs[0][1]
+    return output.asNumber() / input.asNumber()
+  }
+
+  public get hasPrice() {
+    return (
+      this.node instanceof ActionNode &&
+      this.node.actions.steps[0].inputToken.length === 1 &&
+      this.node.actions.steps[0].outputToken.length === 1
+    )
+  }
+
+  public abstractAction(): {
+    action: TradeAction | WrappedAction
+    inputs: TokenQuantity
+    expectedOutputs: TokenQuantity
+  } | null {
+    if (this.node instanceof ActionNode) {
+      if (this.inputs.length !== 1) {
+        throw new Error('Expected single input')
+      }
+      if (this.outputs.length !== 1) {
+        throw new Error('Expected single output')
+      }
+      const actions = this.node.abstractActions
+      if (actions.length === 0) {
+        return null
+      }
+      if (actions.length > 1) {
+        throw new Error('Multiple abstract actions in a single node')
+      }
+      return {
+        action: actions[0],
+        inputs: this.inputs[0],
+        expectedOutputs: this.outputs[0][1],
+      }
+    }
+    return null
+  }
 }
 
-class EvaluatedDag {
+interface PricedTokenQuantities {
+  readonly sum: number
+  readonly prices: number[]
+  readonly quantities: TokenQuantity[]
+}
+export class EvaluatedDag {
   public constructor(
-    public readonly dag: Dag,
+    public readonly dag: DagBuilder,
     public readonly evaluated: EvaluatedNode[],
-    public readonly outputs: TokenQuantity[]
-  ) { }
+    private readonly inputs: PricedTokenQuantities,
+    private readonly allOutputs_: PricedTokenQuantities,
+    private readonly outputs_: PricedTokenQuantities,
+    private readonly dust_: PricedTokenQuantities,
+    public readonly txFee: PricedTokenQuantity
+  ) {}
+
+  public get abstractActions() {
+    return this.evaluated
+      .flatMap((i) => i.abstractAction())
+      .filter((act) => act != null)
+  }
+
+  public get inputsValue() {
+    return this.inputs.sum
+  }
+
+  public get allOutputs() {
+    return this.allOutputs_.quantities
+  }
+  public get outputs() {
+    return this.outputs_.quantities
+  }
+  public get dust() {
+    return this.dust_.quantities
+  }
+  public get dustValue() {
+    return this.dust_.sum
+  }
+  public get outputsValue() {
+    return this.outputs_.sum
+  }
+  public get totalValue() {
+    return this.allOutputs_.sum
+  }
 
   public toDot() {
     let out = 'digraph G {\n'
     for (const node of this.evaluated) {
+      if (node.inputs.every((i) => i.isZero)) {
+        continue
+      }
       out += '  ' + node.node.dotNode() + '\n'
     }
     for (const node of this.evaluated) {
       for (const [consumer, qty] of node.outputs) {
+        if (node.node === consumer) {
+          continue
+        }
         const val = qty.asNumber()
         if (val < 0.0001) {
           continue
         }
+        const price = node.hasPrice ? ', price=' + node.price : ''
         let digits = ''
         if (val === 1) {
           digits = ''
@@ -289,34 +543,87 @@ class EvaluatedDag {
           ' -> ' +
           consumer.dotId() +
           ' [label="' +
-          `${digits}${qty.token.symbol}` +
-          '"]\n'
+          `${digits}${qty.token.symbol}${price}"]\n`
       }
     }
     out += '\n}'
     return out
   }
 }
-export class Dag {
-  public readonly root: DagNode
-  public readonly outputs: DagNode
+
+type ObjectiveFunction = (dag: EvaluatedDag) => number
+
+export class DagBuilder {
+  private startNode!: DagNode
+  private outputNode!: OutputNode
+
+  private readonly edges = new DefaultMap<
+    DagNode,
+    DefaultMap<Token, DagNode[]>
+  >(() => new DefaultMap<Token, DagNode[]>(() => []))
+  private readonly dependencies = new DefaultMap<DagNode, DagNode[]>(() => [])
+
   private balanceNodeTip = new DefaultMap<Token, DagNode>((token) => {
     if (!this.balanceNodeStart.has(token)) {
-      return this.outputs
+      return this.outputNode
     }
-    return EffectNode.balanceNode(token)
+    return new BalanceNode(token)
   })
+  private proportionOfOutput = new Map<DagNode, number>()
+  private proportionOfInput = new Map<DagNode, number>()
   private balanceNodeStart = new Map<Token, DagNode>()
-  private sorted: DagNode[] = []
-  private splitNodes: SplitNode[] = []
+  private _sorted: DagNode[] = []
 
+  public splitNodes: number[][] = []
   private openTokenSet = new Map<
     Token,
     {
       proportion: number
-      consumers: { proportion: number; consumer: DagNode }[]
+      readonly consumers: {
+        readonly proportion: number
+        readonly consumer: DagNode
+      }[]
     }
   >()
+
+  // Clones the DAGBuilder such that the constant state is preserved, while the mutable state is copied
+  public clone() {
+    const self = new DagBuilder(this.universe, this.config)
+    self.startNode = this.startNode
+    self.outputNode = this.outputNode
+
+    self.splitNodes = [...this.splitNodes.map((i) => [...i])]
+    self.proportionOfInput = new Map(this.proportionOfInput)
+    self.proportionOfOutput = new Map(this.proportionOfOutput)
+    self._sorted = [...this._sorted]
+
+    for (const [fromNode, outEdges] of this.edges.entries()) {
+      for (const [token, nodes] of outEdges.entries()) {
+        self.edges.get(fromNode).set(token, [...nodes])
+      }
+    }
+    for (const [token, nodes] of this.dependencies.entries()) {
+      self.dependencies.set(token, [...nodes])
+    }
+    for (const [token, node] of this.balanceNodeTip.entries()) {
+      self.balanceNodeTip.set(token, node)
+    }
+    for (const [token, node] of this.balanceNodeStart.entries()) {
+      self.balanceNodeStart.set(token, node)
+    }
+    for (const [token, consumers] of this.openTokenSet.entries()) {
+      self.openTokenSet.set(token, {
+        proportion: consumers.proportion,
+        consumers: consumers.consumers.map((v) => {
+          return {
+            proportion: v.proportion,
+            consumer: v.consumer,
+          }
+        }),
+      })
+    }
+    return self
+  }
 
   public get isDagConstructed() {
     return this.openTokenSet.size === 0
@@ -330,7 +637,8 @@ export class Dag {
       out += '  ' + node.dotNode() + '\n'
     }
     for (const node of sorted) {
-      for (const s of node.dotEdges()) {
+      const outgoing = [...this.edges.get(node).entries()]
+      for (const s of node.dotEdges(this, outgoing)) {
         out += '  ' + s + '\n'
       }
     }
@@ -341,100 +649,126 @@ export class Dag {
   public getBalanceStartNode(token: Token) {
     return this.balanceNodeStart.get(token)
   }
+  public unspentInputTokens() {
+    const outs = [...this.balanceNodeTip.entries()]
+      .filter(
+        ([i, n]) =>
+          this.balanceNodeStart.has(i) &&
+          (this.proportionOfInput.get(n) ?? 0) != 0
+      )
+      .map(
+        ([t, n]) => [this.proportionOfInput.get(n) ?? 0, t] as [number, Token]
+      )
+    outs.sort((l, r) => r[0] - l[0])
+    return outs.map(([_, t]) => t)
+  }
 
   public get openTokens() {
     return [...this.openTokenSet.keys()]
   }
-  public get nextTokenToMatch(): Token | null {
+  private get nextTokenToMatch(): Token | null {
     for (const token of this.openTokenSet.keys()) {
       if (
         this.balanceNodeTip.has(token) &&
-        this.balanceNodeTip.get(token) !== this.outputs
+        this.balanceNodeTip.get(token) !== this.outputNode
       ) {
         return token
       }
     }
     return null
   }
-  public static async create(universe: Universe, config: SearchContextConfig) {
-    return new Dag(config)
-  }
-  private constructor(private readonly config: SearchContextConfig) {
-    this.outputs = new OutputNode()
-    this.root = new (class extends DagNode {
-      constructor() {
-        super(
-          config.userInput.map((i) => [1, i.token]),
-          config.userOutput.map((i) => [1, i.token])
-        )
-      }
-      public async evaluate(context: EvalContext, inputs: TokenQuantity[]) {
-        for (const input of inputs) {
-          context.balances.add(input)
-        }
-        const outputs: [DagNode, TokenQuantity][] = []
-        for (const [token, consumers] of this.consumers.entries()) {
-          if (consumers.length !== 1) {
-            throw new Error('Root must have exactly one consumer pr input')
-          }
-          outputs.push([consumers[0], context.balances.get(token)!])
-          context.balances.tokenBalances.delete(token)
-        }
-        return outputs
-      }
-      public dotNode(): string {
-        return 'root'
-      }
-      public dotId(): string {
-        return 'root'
-      }
+  public static async create(universe: Universe, config: DagBuilderConfig) {
+    const self = new DagBuilder(universe, config)
 
-      toString() {
-        return `Root${this.inputs.map((i) => i[1]).join(', ')})`
-      }
-    })()
+    self.startNode = new RootNode(
+      config.userInputProportions.map((prop, index) => [
+        prop,
+        config.userInput[index].token,
+      ])
+    )
+    self.outputNode = new OutputNode(
+      config.userOutputProportions.map((prop, index) => [
+        prop,
+        config.userOutput[index].token,
+      ])
+    )
 
-    for (const { token } of config.userInput) {
-      const inputBalanceNode = EffectNode.balanceNode(token)
-      this.balanceNodeTip.set(token, inputBalanceNode)
-      this.balanceNodeStart.set(token, inputBalanceNode)
-      this.root.forward(token, inputBalanceNode)
+    self.proportionOfInput.set(self.startNode, 1.0)
+
+    for (let i = 0; i < config.userInput.length; i++) {
+      const proportion = config.userInputProportions[i]
+      const token = config.userInput[i].token
+      const inputBalanceNode = new BalanceNode(token)
+      self.balanceNodeTip.set(token, inputBalanceNode)
+      self.balanceNodeStart.set(token, inputBalanceNode)
+      self.forward(self.startNode, token, inputBalanceNode)
+      self.proportionOfInput.set(inputBalanceNode, proportion)
     }
     for (const qty of config.userOutput) {
-      this.balanceNodeTip.set(qty.token, this.outputs)
-      this.outputs.proportionOfOutput = qty.asNumber()
-      this.openTokenSet.set(qty.token, {
-        proportion: this.outputs.proportionOfOutput,
+      self.balanceNodeTip.set(qty.token, self.outputNode)
+      self.proportionOfOutput.set(self.outputNode, qty.asNumber())
+      self.openTokenSet.set(qty.token, {
+        proportion: qty.asNumber(),
         consumers: [
           {
             proportion: 1.0,
-            consumer: this.outputs,
+            consumer: self.outputNode,
           },
         ],
       })
     }
+    return self
   }
 
+  private forward(from: DagNode, token: Token, next: DagNode) {
+    if (from === next) {
+      this.config.logger.warn(`Forwarding ${from} -> ${next} is a no-op`)
+      return
+    }
+    const consumers = this.edges.get(from).get(token)
+    const index = consumers.length
+    consumers.push(next)
+    const deps = this.dependencies.get(next)
+    deps.push(from)
+
+    const props = next.inputs
+      .map(
+        ([, token]) =>
+          deps
+            .filter(
+              (dep) => dep.outputs.find(([_, tok]) => tok === token) != null
+            )
+            .map(
+              (dep) =>
+                (this.proportionOfInput.get(dep) ?? 0) *
+                dep.getOutputProportion(token, index)
+            )
+            .reduce((l, r) => l + r, 0) * next.getInputProportion(token)
+      )
+      .reduce((l, r) => l + r, 0)
+
+    this.proportionOfInput.set(next, props)
+  }
+  private constructor(
+    public readonly universe: Universe,
+    public readonly config: DagBuilderConfig
+  ) {}
+
   public getUnspent() {
-    const unspentInputs: Token[] = []
-    const dust: Token[] = []
+    const unspentInputs: [number, Token][] = []
     for (const [token, node] of this.balanceNodeTip.entries()) {
-      if (this.balanceNodeStart.has(token)) {
-        if (this.balanceNodeStart.get(token) === node) {
-          unspentInputs.push(token)
-        } else {
-          dust.push(token)
-        }
+      const proportionOfInput = this.proportionOfInput.get(node) ?? 0
+
+      if (proportionOfInput > 0.001) {
+        unspentInputs.push([proportionOfInput, token])
       }
     }
-    return {
-      input: unspentInputs,
-      dust,
-    }
+    unspentInputs.sort((l, r) => r[0] - l[0])
+    return unspentInputs.map(([_, token]) => token)
   }
 
   public spendInput(path: SwapPlan) {
-    const inputNode = this.balanceNodeStart.get(path.inputs[0])
+    const inputNode = this.balanceNodeTip.get(path.inputs[0])
     const outputNode = this.balanceNodeStart.get(path.outputs[0])
     if (inputNode == null || outputNode == null) {
       throw new Error('Panic! Missing start node for ' + path.inputs[0])
@@ -443,109 +777,129 @@ export class Dag {
       [1, path.outputs[0]],
     ])
 
-    inputNode.forward(path.inputs[0], actNode)
-    actNode.forward(path.outputs[0], outputNode)
+    this.forward(inputNode, path.inputs[0], actNode)
+    this.forward(actNode, path.outputs[0], outputNode)
     this.balanceNodeTip.delete(path.inputs[0])
   }
 
-  private normalizeProportions() {
+  private normalizeOpenSet() {
     if (this.openTokenSet.size === 0) {
       return
     }
     let sum = 0.0
-    for (const [_, { proportion }] of this.openTokenSet.entries()) {
+    for (const [token, { proportion }] of [...this.openTokenSet.entries()]) {
+      if (proportion === 0.0) {
+        this.openTokenSet.delete(token)
+        continue
+      }
       sum += proportion
     }
-    if (sum > 1.0) {
-      throw new Error('Proportions must sum less than 1')
+    if (sum > 1.01) {
+      throw new Error(`Proportions sum is too high: ${sum} expected <= 1.0`)
     }
-    for (const prop of this.openTokenSet.values()) {
-      if (sum === 0.0) {
-        throw new Error('Sum is 0')
-      }
-      prop.proportion /= sum
+
+    if (sum === 0.0) {
+      throw new Error('Sum is 0')
     }
-    console.log('Normalized proportions')
+    this.config.logger.debug(`Open tokens set:`)
     for (const [token, prop] of this.openTokenSet.entries()) {
-      console.log(`  ${token}: ${prop.proportion}`)
+      prop.proportion /= sum
+      this.config.logger.debug(`  ${token}: ${prop.proportion}`)
+      for (const consumer of prop.consumers) {
+        this.config.logger.debug(
+          `    ${consumer.consumer.dotId()}: ${consumer.proportion}`
+        )
+      }
     }
   }
 
-  /** Matches a balance node with an open set token,
-   *  this will create splits as neccessary and connect up balance nodes to the output nodes */
-  public matchBalance(token: Token) {
-    const previousNode = this.balanceNodeTip.get(token)
-    if (previousNode == null) {
-      throw new Error('No balance for token ' + token.toString())
+  /** Connects up a balance node with the output derivation side.
+   **/
+  public matchBalances() {
+    for (let i = 0; i < 50; i++) {
+      const balanceToken = this.nextTokenToMatch
+      if (balanceToken == null) {
+        break
+      }
+      this.matchBalance(balanceToken)
     }
-    if (previousNode === this.outputs) {
+  }
+  private matchBalance(token: Token) {
+    if (!this.balanceNodeTip.has(token)) {
+      throw new Error(`matchBalance: No balance node for ${token}`)
+    }
+    const previousNode = this.balanceNodeTip.get(token)
+    if (previousNode === this.outputNode) {
       return
     }
-    console.log(`Matching balance for ${token}: ${previousNode}`)
-    const { outputProportion: prop } = this.takeOpenSet(token)
+    const { proportion: tokenOutputProportion, consumers } =
+      this.takeOpenSet(token)
+
+    // If there is more than one consumer, we need to split the current balance between all of them
+    // and forward the remainder to the balance node
+
     if (this.openTokenSet.size !== 0) {
-      const propToSpend = prop.proportion
-
-      const splits = [
-        ...prop.consumers.map((consumer) => propToSpend * consumer.proportion),
-        1.0 - propToSpend,
+      let splits = [
+        ...consumers.map(
+          (consumer) => consumer.proportion * tokenOutputProportion
+        ),
       ]
-      if (splits.length <= 1) {
-        throw new Error('No splits for token ' + token.toString())
-      }
-      const balanceNode = EffectNode.balanceNode(token)
-      const consumers = [
-        ...prop.consumers.map((consumer) => consumer.consumer),
+      const sum = splits.reduce((l, r) => l + r, 0)
+      splits.push(1.0 - sum)
+      normalizeVector(splits)
+      const balanceNode = new BalanceNode(token)
+
+      const splitNode = new SplitNode(token, splits, this.splitNodes.length)
+      this.proportionOfInput.set(splitNode, tokenOutputProportion)
+      this.splitNodes.push(splits)
+      for (const consumer of [
+        ...consumers.map((consumer) => consumer.consumer),
         balanceNode,
-      ]
-
-      const splitNode = new SplitNode(token, splits)
-      this.splitNodes.push(splitNode)
-      for (const consumer of consumers) {
-        splitNode.forward(token, consumer)
+      ]) {
+        this.forward(splitNode, token, consumer)
       }
-      previousNode.forward(token, splitNode)
+      this.forward(previousNode, token, splitNode)
 
       this.balanceNodeTip.set(token, balanceNode)
-      console.log(`Splits: ${splits.join(', ')}`)
-
-      return splits.at(-1)!
+    } else {
+      this.balanceNodeTip.delete(token)
+      if (consumers.length === 1) {
+        this.forward(previousNode, token, consumers[0].consumer)
+      } else {
+        if (
+          consumers.some((i) => isNaN(i.proportion) || !isFinite(i.proportion))
+        ) {
+          throw new Error(
+            `Failed to match balance for ${token}: Consumer proportions must be finite numbers. Got ${consumers
+              .map((i) => i.proportion)
+              .join(', ')}`
+          )
+        }
+        const splits = normalizeVector(
+          consumers.map((consumer) => consumer.proportion)
+        )
+        const splitNode = new SplitNode(token, splits, this.splitNodes.length)
+        this.forward(previousNode, token, splitNode)
+        this.splitNodes.push(splits)
+        for (const { consumer } of consumers) {
+          this.forward(splitNode, token, consumer)
+        }
+      }
     }
-    this.balanceNodeTip.delete(token)
-    if (prop.consumers.length === 1) {
-      previousNode.forward(token, prop.consumers[0].consumer)
-      return 0
-    }
-
-    let splits = prop.consumers.map((consumer) => consumer.proportion)
-    const sum = splits.reduce((l, r) => l + r)
-
-    splits = splits.map((split) => split / sum)
-
-    const splitNode = new SplitNode(token, splits)
-    previousNode.forward(token, splitNode)
-    this.splitNodes.push(splitNode)
-    for (const { consumer } of prop.consumers) {
-      splitNode.forward(token, consumer)
-    }
-
-    return 0
   }
 
   private takeOpenSet(token: Token) {
-    const prop = this.openTokenSet.get(token)
-    if (prop == null) {
+    const outputProportion = this.openTokenSet.get(token)
+    if (outputProportion == null) {
       throw new Error('No balance for token ' + token.toString())
     }
     this.openTokenSet.delete(token)
-    this.normalizeProportions()
-    return {
-      outputProportion: prop,
-    }
+    this.normalizeOpenSet()
+    return outputProportion
   }
 
   /**
-   * Replace underived set:
+   * Adds a new layer of nodes to the dag connecting it up to the open set.
    * A plan is a valid input IFF all output tokens are in the open set. Two plans may not produce the same output tokens.
    * The union of all outputs must be exactly the open set.
    *
@@ -554,156 +908,162 @@ export class Dag {
    *  IF there is more than one consumer pr open set token, a split node is added between producer and consumer
    */
   public async replaceOpenSet(tokenDerivations: SwapPlan[]) {
-    console.log(`Replacing with ${tokenDerivations.join(', ')}`)
-    const openSet = this.openTokenSet
-    this.openTokenSet = new Map()
+    const producers = new DefaultMap<Token, DagNode[]>(() => [])
+    const consumers = new DefaultMap<Token, DagNode[]>(() => [])
 
-    const tokensToConsume = new Set<Token>()
-    for (const token of openSet.keys()) {
-      tokensToConsume.add(token)
+    const newOpenTokenSet: Set<Token> = new Set()
+    const plans = new Set<SwapPlan>()
+    const nodeArrayToDagNode = (nodes: DagNode[]) => {
+      return nodes.map((i) => ({
+        proportion: 1.0 / nodes.length,
+        consumer: i,
+      }))
     }
-
-    const producers = new Map<Token, ActionNode>()
-    const newOpenSetConsumers = new DefaultMap<Token, [number, DagNode][]>(
-      () => []
+    const maybeSplit = (
+      token: Token,
+      consumers: { proportion: number; consumer: DagNode }[]
+    ) => {
+      if (consumers.length === 1) {
+        return consumers[0].consumer
+      } else {
+        const rates = consumers.map((i) => i.proportion)
+        const splitNode = new SplitNode(token, rates, this.splitNodes.length)
+        this.splitNodes.push(rates)
+        for (const consumer of consumers) {
+          this.forward(splitNode, token, consumer.consumer)
+        }
+        return splitNode
+      }
+    }
+    for (const [token, prop] of this.openTokenSet.entries()) {
+      const consumer = maybeSplit(token, prop.consumers)
+      consumers.get(token).push(consumer)
+    }
+    const merged = new DefaultMap<BaseAction, SwapPlan>(
+      (action) => new SwapPlan(this.universe, [action])
     )
-
-    const outputNodes = new DefaultMap<Token, [number, DagNode]>((token) => {
-      const consumers = openSet.get(token)
-      if (consumers == null) {
-        throw new Error(`Panic! Missing consumers for ${token}`)
+    for (const plan of tokenDerivations) {
+      for (const step of plan.steps) {
+        const singleStepAction = merged.get(step)
+        plans.add(singleStepAction)
       }
-
-      if (consumers.consumers.length === 1) {
-        return [consumers.proportion, consumers.consumers[0].consumer] as const
+      for (const token of plan.inputs) {
+        newOpenTokenSet.add(token)
       }
-      const splits = consumers.consumers.map((consumer) => consumer.proportion)
-      const sum = splits.reduce((l, r) => l + r)
-      const splitNode = new SplitNode(
-        token,
-        splits.map((split) => split / sum)
+    }
+    const newProducers: DagNode[] = []
+    const tokenWeights: DefaultMap<Token, number> = new DefaultMap(() => 0)
+    for (const plan of plans) {
+      const actionNode = new ActionNode(
+        (await plan.inputProportions()).map((i) => [i.asNumber(), i.token]),
+        plan,
+        (await plan.outputProportions()).map((i) => [i.asNumber(), i.token])
       )
-      this.splitNodes.push(splitNode)
-      for (const { consumer } of consumers.consumers) {
-        splitNode.forward(token, consumer)
+      newProducers.push(actionNode)
+      for (const [, token] of actionNode.outputs) {
+        producers.get(token).push(actionNode)
+      }
+      for (const [proportion, token] of actionNode.inputs) {
+        tokenWeights.set(token, tokenWeights.get(token) + proportion)
+        consumers.get(token).push(actionNode)
       }
 
-      return [consumers.proportion, splitNode] as const
-    })
-    for (const action of tokenDerivations) {
-      if (!action.outputs.some((tok) => openSet.has(tok))) {
-        throw new Error(
-          `Cannot replace set: Invalid action ${action} does not produce any of the open set tokens`
-        )
-      }
-      console.log('adding production for ' + action.toString())
-      const inputs = await action
-        .inputProportions()
-        .then((i) =>
-          i.map((qty) => [qty.asNumber(), qty.token] as [number, Token])
-        )
-      const outputs = await action
-        .outputProportions()
-        .then((i) =>
-          i.map((qty) => [qty.asNumber(), qty.token] as [number, Token])
-        )
-      const actionNode = new ActionNode(inputs, action, outputs)
-      for (const outputToken of action.outputs) {
-        if (!openSet.has(outputToken)) {
-          throw new Error(
-            `Cannot replace set: token ${outputToken} is not in the open set`
-          )
-        }
-        if (!tokensToConsume.has(outputToken)) {
-          throw new Error(`Input token consumed`)
-        }
-        console.log(`Consuming ${outputToken}`)
-        tokensToConsume.delete(outputToken)
-        producers.set(outputToken, actionNode)
-      }
-      for (const dustToken of action.dustTokens) {
-        actionNode.forward(dustToken, this.outputs)
-      }
-
-      for (const [proportion, inputToken] of inputs) {
-        newOpenSetConsumers.get(inputToken).push([proportion, actionNode])
+      for (const dust of plan.dustTokens) {
+        this.forward(actionNode, dust, this.outputNode)
       }
     }
-
-    if (tokensToConsume.size !== 0) {
-      throw new Error(
-        `Cannot replace set: Every token in open set consumed; ${[
-          ...tokensToConsume,
-        ].join(', ')} missing productions`
-      )
-    }
-
-    const nodeWeights = new DefaultMap<DagNode, number>(() => 0)
-    const inputConsumers = new DefaultMap<Token, DagNode[]>(() => [])
-
-    for (const [outputToken, node] of producers.entries()) {
-      const [proportion, forwardNode] = outputNodes.get(outputToken)!
-      const currentWeight = nodeWeights.get(node)
-      node.forward(outputToken, forwardNode)
-      const weight = currentWeight + proportion
-      nodeWeights.set(node, weight)
-      node.proportionOfOutput = weight
-      for (const [_, inputToken] of node.inputs) {
-        inputConsumers.get(inputToken).push(node)
+    for (const node of newProducers) {
+      for (const [, token] of node.outputs) {
+        const nodes = consumers.get(token)
+        const consumer = maybeSplit(token, nodeArrayToDagNode(nodes))
+        consumers.set(token, [consumer])
+        this.forward(node, token, consumer)
       }
     }
-
-    for (const [inputToken, nodes] of inputConsumers.entries()) {
-      let sum = 0.0
-      const consumers: { proportion: number; consumer: DagNode }[] = []
-      for (const node of nodes) {
-        const nodeWeight = nodeWeights.get(node)
-
-        sum += node.getInputProportion(inputToken) * nodeWeight
-        consumers.push({ proportion: nodeWeight, consumer: node })
+    this.openTokenSet.clear()
+    const sum = [...newOpenTokenSet]
+      .map((i) => tokenWeights.get(i))
+      .reduce((l, r) => l + r, 0)
+    for (const [token, consumer] of consumers.entries()) {
+      if (!newOpenTokenSet.has(token)) {
+        continue
       }
-      this.openTokenSet.set(inputToken, {
-        proportion: sum,
-        consumers,
+
+      const inputNode = maybeSplit(token, nodeArrayToDagNode(consumer))
+      const weight = tokenWeights.get(token) / sum
+      this.openTokenSet.set(token, {
+        proportion: weight,
+        consumers: [{ proportion: 1.0, consumer: inputNode }],
       })
     }
 
-    this.normalizeProportions()
+    this.normalizeOpenSet()
   }
+
   public getSorted() {
-    if (this.sorted.length !== 0) {
-      return this.sorted
+    if (this.openTokenSet.size !== 0) {
+      throw new Error('Cannot get sorted graph, graph is not built')
+    }
+    if (this.balanceNodeTip.size !== 0) {
+      throw new Error('Cannot get sorted graph, graph is not finalized')
+    }
+    if (this._sorted.length !== 0) {
+      return this._sorted
     }
     const sorted: DagNode[] = []
-    const S: DagNode[] = []
-    S.push(this.root)
+    const openSet: DagNode[] = []
     const seen: Set<DagNode> = new Set()
-    seen.add(this.outputs)
-    while (S.length !== 0) {
-      const node = S.pop()!
+    const all = new Set<DagNode>()
+
+    openSet.push(this.startNode)
+    seen.add(this.outputNode)
+    all.add(this.outputNode)
+    while (openSet.length !== 0) {
+      const node = openSet.pop()!
       sorted.push(node)
       seen.add(node)
-
-      for (const consumers of node.consumers.values()) {
-        for (const consumer of consumers) {
-          if (seen.has(consumer)) {
-            continue
-          }
-          if (consumer.dependencies.every((i) => seen.has(i))) {
-            S.push(consumer)
-          }
+      all.add(node)
+      const consumers = [...this.edges.get(node).entries()].flatMap(
+        ([_, nodes]) => nodes
+      )
+      for (const consumer of consumers) {
+        all.add(consumer)
+        if (seen.has(consumer)) {
+          continue
+        }
+        const dependencies = this.dependencies.get(consumer)
+        for (const dep of dependencies) {
+          all.add(dep)
+        }
+        if (dependencies.every((i) => seen.has(i))) {
+          openSet.push(consumer)
         }
       }
     }
-    this.sorted = sorted
+    sorted.push(this.outputNode)
+    // if (all.size !== sorted.length) {
+    //   for (const node of all) {
+    //     if (!sorted.includes(node)) {
+    //       this.config.logger.error(`Missing node: ${node}`)
+    //       sorted.push(node)
+    //     }
+    //   }
+    // }
+    this._sorted = sorted
     return sorted
   }
 
-  public finialize() {
+  // Routes all unspent dust to the output
+  public finalize() {
     for (const [t, node] of this.balanceNodeTip.entries()) {
-      node.forward(t, this.outputs)
+      if (node === this.outputNode) {
+        continue
+      }
+      this.forward(node, t, this.outputNode)
     }
     this.balanceNodeTip.clear()
+
+    this.simplify()
   }
 
   public async evaluate(inputs: TokenQuantity[] = this.config.userInput) {
@@ -727,33 +1087,569 @@ export class Dag {
         )
       }
     })
-    const ctx = new EvalContext(this)
+    const ctx = new DagEvalContext(this)
     const sorted = this.getSorted()
     const evaluated: EvaluatedNode[] = []
     const nodeInputs = new DefaultMap<DagNode, TokenAmounts>(
       () => new TokenAmounts()
     )
     nodeInputs.set(
-      this.root,
+      this.startNode,
       TokenAmounts.fromQuantities(this.config.userInput)
     )
 
-    for (const node of sorted) {
-      const inputs = nodeInputs.get(node).toTokenQuantities()
-      console.log(`Evaluating ${inputs} => ${node.dotId()}`)
-      const out = await node.evaluate(ctx, inputs)
-      evaluated.push(new EvaluatedNode(node, inputs, out))
-
-      console.log(`${node.dotId()}:`)
-      for (const [consumer, qty] of out) {
-        console.log(`  - ${qty} => ${consumer.dotId()}`)
-        nodeInputs.get(consumer).add(qty)
-      }
+    const inputsPriced = await Promise.all(
+      inputs.map((i) => i.price().then((i) => i.asNumber()))
+    )
+    const valueOfInput = inputsPriced.reduce((l, r) => l + r, 0)
+    const inputs_ = {
+      sum: valueOfInput,
+      quantities: inputs,
+      prices: inputsPriced,
     }
+
+    const evaluating = new Map<DagNode, Promise<void>>()
+
+    const INTERPOLATION_THRESHOLD = 0.08
+    for (const node of sorted) {
+      if (node === this.outputNode) {
+        continue
+      }
+      const deps = this.dependencies.get(node)
+      await Promise.all(deps.map((dep) => evaluating.get(dep)))
+      const inputTokenAmts = nodeInputs.get(node)
+
+      const inputs = node.inputs.map((i) => inputTokenAmts.get(i[1]))
+      const inputsValues = await Promise.all(
+        inputs.map((i) => i.price().then((i) => i.asNumber()))
+      )
+      const nodeInputValue = inputsValues.reduce((l, r) => l + r, 0)
+      const proportionOfInput = Math.min(nodeInputValue / valueOfInput, 1)
+      const consumers = [...this.edges.get(node).entries()]
+
+      // Since we're using gradient optimisation it is important to keep the objective function smooth,
+      // so we should interpolate the output value and gasEstimate when the input value is nears 0
+      //
+
+      evaluating.set(
+        node,
+        node.evaluate(ctx, consumers, inputs).then((out) => {
+          let outputResult = out
+          let gasResult = node.gasEstimate
+
+          if (proportionOfInput < INTERPOLATION_THRESHOLD) {
+            const interpValue = 1 - proportionOfInput / INTERPOLATION_THRESHOLD
+            gasResult = BigInt(Math.floor(Number(gasResult) * interpValue))
+            // outputResult = outputResult.map((i) => [
+            //   i[0],
+            //   i[1].mul(i[1].token.from(interpValue)),
+            // ])
+          }
+
+          evaluated.push(new EvaluatedNode(node, inputs, outputResult))
+          if (nodeInputValue !== 0) {
+            ctx.gasUsed += gasResult
+          }
+
+          if (out.length === 0 || out.every((i) => i[1].isZero)) {
+            for (const qty of inputs) {
+              nodeInputs.get(this.outputNode).add(qty)
+            }
+          }
+
+          for (const [consumer, qty] of out) {
+            nodeInputs.get(consumer).add(qty)
+          }
+        })
+      )
+    }
+    await Promise.all(evaluating.values())
+
+    const allOutputs = nodeInputs.get(this.outputNode).toTokenQuantities()
+    const pricedAllOutputs = await Promise.all(
+      allOutputs.map(
+        async (i) =>
+          [i.token, await i.price().then((i) => i.asNumber())] as const
+      )
+    )
+
+    const allOutputs_: PricedTokenQuantities = {
+      sum: pricedAllOutputs.reduce((l, r) => l + r[1], 0),
+      quantities: allOutputs,
+      prices: pricedAllOutputs.map((i) => i[1]),
+    }
+
+    const pricedOutputs = pricedAllOutputs.filter((i) =>
+      this.config.outputTokenSet.has(i[0])
+    )
+    const outputs_: PricedTokenQuantities = {
+      sum: pricedOutputs.reduce(
+        (l, r) => l + (this.config.outputTokenSet.has(r[0]) ? r[1] : 0),
+        0
+      ),
+      quantities: allOutputs.filter((i) =>
+        this.config.outputTokenSet.has(i.token)
+      ),
+      prices: pricedOutputs
+        .filter((i) => this.config.outputTokenSet.has(i[0]))
+        .map((i) => i[1]),
+    }
+    const dust_: PricedTokenQuantities = {
+      sum: allOutputs_.sum - outputs_.sum,
+      quantities: allOutputs_.quantities.filter(
+        (i) => !this.config.outputTokenSet.has(i.token)
+      ),
+      prices: pricedAllOutputs
+        .filter((i) => !this.config.outputTokenSet.has(i[0]))
+        .map((i) => i[1]),
+    }
+
+    const txFee = this.universe.nativeToken.from(
+      this.universe.gasPrice * ctx.gasUsed
+    )
+
     return new EvaluatedDag(
       this,
       evaluated,
-      nodeInputs.get(this.outputs)!.toTokenQuantities()
+      inputs_,
+      allOutputs_,
+      outputs_,
+      dust_,
+      new PricedTokenQuantity(txFee, await txFee.price())
     )
   }
+
+  public replaceNode(previous: DagNode, replacement: DagNode) {
+    for (const [token, prop] of [...this.openTokenSet.entries()]) {
+      if (!prop.consumers.some((i) => i.consumer === previous)) {
+        continue
+      }
+      this.openTokenSet.set(token, {
+        ...prop,
+        consumers: prop.consumers.map((i) => {
+          if (i.consumer === previous) {
+            return { proportion: i.proportion, consumer: replacement }
+          }
+          return i
+        }),
+      })
+    }
+    const replacementEdges = this.edges.get(replacement)
+    for (const [token, nodes] of this.edges.get(previous)!) {
+      replacementEdges.set(token, [...nodes])
+    }
+    const deps = this.dependencies.get(previous)!
+    for (const dep of deps) {
+      this.dependencies.get(replacement)!.push(dep)
+    }
+    for (const [token, node] of [...this.balanceNodeTip.entries()]) {
+      if (node === previous) {
+        this.balanceNodeTip.set(token, replacement)
+      }
+    }
+    for (const [token, node] of [...this.balanceNodeStart.entries()]) {
+      if (node === previous) {
+        this.balanceNodeStart.set(token, replacement)
+      }
+    }
+    for (const [node, prop] of [...this.proportionOfOutput.entries()]) {
+      if (node === previous) {
+        this.proportionOfOutput.set(node, prop)
+      }
+    }
+    for (const [node, prop] of [...this.proportionOfInput.entries()]) {
+      if (node === previous) {
+        this.proportionOfInput.set(node, prop)
+      }
+    }
+    this._sorted = this._sorted.map((i) => {
+      if (i === previous) {
+        return replacement
+      }
+      return i
+    })
+    this.dependencies.delete(previous)
+    this.edges.delete(previous)
+  }
+
+  private async derivative(
+    clones: DagBuilder[][],
+    currentValue: number,
+    objectiveFn: ObjectiveFunction,
+    derivative: number[][]
+  ) {
+    const eps = 0.00001
+
+    let magnitude = 0
+    await Promise.all(
+      clones.map(async (nodes, i) => {
+        let mag = 0.0
+        await Promise.all(
+          nodes.map(async (dag, j) => {
+            dag.splitNodes[i][j] += eps
+            normalizeVector(dag.splitNodes[i])
+            const newValue = objectiveFn(await dag.evaluate())
+
+            const dimensionGradient = (newValue - currentValue) / eps
+            derivative[i][j] = dimensionGradient
+            mag += dimensionGradient * dimensionGradient
+            for (let k = 0; k < this.splitNodes[i].length; k++) {
+              dag.splitNodes[i][k] = this.splitNodes[i][k]
+            }
+          })
+        )
+        mag = Math.sqrt(mag)
+        if (mag === 0) {
+          return
+        }
+        magnitude += 1
+
+        if (mag === 0) {
+          return
+        }
+        for (let j = 0; j < derivative[i].length; j++) {
+          derivative[i][j] = derivative[i][j] / mag
+        }
+      })
+    )
+    magnitude = Math.sqrt(magnitude)
+    // console.log(magnitude)
+    for (let i = 0; i < derivative.length; i++) {
+      for (let j = 0; j < derivative[i].length; j++) {
+        derivative[i][j] = derivative[i][j] / magnitude
+      }
+    }
+    return magnitude
+  }
+
+  public get dustCanBeOptimised() {
+    return this.splitNodes.length > 0
+  }
+
+  public mergeActionNodes(parent: SplitNode, mergeableNodes: ActionNode[]) {
+    // Merge all the nodes in the parent
+    const nodeA = mergeableNodes[0]
+    const parentEdges = this.edges.get(parent).get(parent.inputToken)!
+    const parentSplits = parent.splits_
+    const removedNodes = new Set<DagNode>(mergeableNodes)
+    const newParentEdges: DagNode[] = []
+    const newSplits: number[] = []
+
+    let totalWeight = 0
+    for (let i = 0; i < parentEdges.length; i++) {
+      const node = parentEdges[i]
+      const split = parentSplits[i]
+      if (removedNodes.has(node)) {
+        totalWeight += split
+      } else {
+        newParentEdges.push(node)
+        newSplits.push(split)
+      }
+    }
+    newParentEdges.push(nodeA)
+    newSplits.push(totalWeight)
+    normalizeVector(newSplits)
+    parent.splits_ = newSplits
+    this.edges.get(parent).set(parent.inputToken, newParentEdges)
+    this.splitNodes[parent.splitNodeIndex] = newSplits
+
+    const allOutgoingEdges = new DefaultMap<Token, DagNode[]>(() => [])
+    const allDependencies = new Set<DagNode>()
+    for (const node of mergeableNodes) {
+      for (const [token, nodes] of this.edges.get(node)!) {
+        allOutgoingEdges.get(token).push(...nodes)
+      }
+      for (const dep of this.dependencies.get(node)!) {
+        allDependencies.add(dep)
+      }
+      this.dependencies.delete(node)
+      this.edges.delete(node)
+    }
+
+    // Created new merged node
+    const newDeps = [...allDependencies]
+    this.dependencies.set(nodeA, newDeps)
+    const nodeAOutgoingEdges = this.edges.get(nodeA)
+
+    for (const outputToken of nodeA.actions.outputs) {
+      const outputNodes = allOutgoingEdges.get(outputToken)
+
+      const splitNodeIndex = this.splitNodes.length
+      const splits = outputNodes.map(() => 1 / outputNodes.length)
+      const outputNode = new SplitNode(outputToken, splits, splitNodeIndex)
+
+      this.splitNodes.push(splits)
+      nodeAOutgoingEdges.set(outputToken, [outputNode])
+      this.dependencies.get(outputNode).push(nodeA)
+      for (const outNode of outputNodes) {
+        const deps = this.dependencies.get(outNode)!
+        for (let i = 0; i < deps.length; i++) {
+          if (removedNodes.has(deps[i])) {
+            deps[i] = outputNode
+          }
+        }
+        this.edges.get(outputNode).get(outputToken).push(outNode)
+      }
+    }
+  }
+  public simplify() {
+    if (!this.isDagConstructed) {
+      throw new Error('Cannot simplify DAG, DAG is not constructed')
+    }
+    this._sorted = []
+    const balanceNodes: BalanceNode[] = []
+
+    // Step 1: Remove all balance nodes
+    for (const node of this.edges.keys()) {
+      if (node instanceof BalanceNode) {
+        balanceNodes.push(node)
+      }
+    }
+    for (const node of balanceNodes) {
+      this.removeBalanceNode(node)
+    }
+
+    while (true) {
+      const mergableSplitNodes: { parent: SplitNode; child: SplitNode }[] = []
+      for (const childSplitNode of this.edges.keys()) {
+        if (childSplitNode instanceof SplitNode) {
+          const parentSplitNodes = this.dependencies
+            .get(childSplitNode)
+            .filter((i) => i instanceof SplitNode)
+          if (parentSplitNodes.length === 0) {
+            continue
+          }
+          mergableSplitNodes.push({
+            parent: parentSplitNodes[0],
+            child: childSplitNode,
+          })
+          break
+        }
+      }
+      if (mergableSplitNodes.length === 0) {
+        break
+      }
+      for (const { parent, child } of mergableSplitNodes) {
+        this.mergeSplits(parent, child)
+        const actNodeConsumers = this.edges
+          .get(parent)
+          .get(parent.inputToken)
+          .filter((i) => i instanceof ActionNode)
+        const consumersByAction = new DefaultMap<BaseAction, ActionNode[]>(
+          () => []
+        )
+        for (const consumer of actNodeConsumers) {
+          if (consumer.inputs.length !== 1) {
+            continue
+          }
+          consumersByAction.get(consumer.actions.steps[0]).push(consumer)
+        }
+        for (const consumers of consumersByAction.values()) {
+          if (consumers.length <= 1) {
+            continue
+          }
+          this.mergeActionNodes(parent, consumers)
+        }
+        // Only merge one split pr iteration
+        break
+      }
+    }
+    this._sorted = []
+  }
+
+  public removeBalanceNode(node: BalanceNode) {
+    const edges = this.edges.get(node)
+    const deps = this.dependencies.get(node)
+
+    const consumer = edges.get(node.token)[0]
+
+    const consumerDeps = this.dependencies.get(consumer)!
+    consumerDeps.splice(consumerDeps.indexOf(node), 1)
+    for (const dep of deps) {
+      consumerDeps.push(dep)
+      for (const [_, nodes] of this.edges.get(dep)!) {
+        nodes[nodes.indexOf(node)] = consumer
+      }
+    }
+
+    this.edges.delete(node)
+  }
+
+  public mergeSplits(parent: SplitNode, child: SplitNode) {
+    if (parent.inputToken !== child.inputToken) {
+      throw new Error('Cannot merge splits, they are not the same')
+    }
+    if (parent.splitNodeIndex === child.splitNodeIndex) {
+      return
+    }
+    const parentEdges = this.edges.get(parent).get(parent.inputToken)
+    const childIndex = parentEdges.indexOf(child)
+    const parentSplits = this.splitNodes[parent.splitNodeIndex]
+    if (childIndex === -1) {
+      throw new Error('Cannot merge splits, child is not a consumer of parent')
+    }
+    parentEdges.splice(childIndex, 1)
+    parentSplits.splice(childIndex, 1)
+
+    const childEdges = this.edges.get(child).get(child.inputToken)
+    for (const edge of childEdges) {
+      parentEdges.push(edge)
+      const deps = this.dependencies.get(edge)!
+      if (deps.length !== 0) {
+        const childIndex = deps.indexOf(child)
+        deps[childIndex] = parent
+      }
+    }
+    const childSplits = this.splitNodes[child.splitNodeIndex]
+    this.splitNodes[child.splitNodeIndex] = []
+    parentSplits.push(...childSplits)
+    parent.splits_ = parentSplits
+    this.splitNodes[parent.splitNodeIndex] = parentSplits
+    this.edges.delete(child)
+
+    // Replace all references to the child with the parent
+    // If node is a Split, edit the splitNodeIndex if it is greater than the child's
+    for (const [_, outgoingEdges] of this.edges.entries()) {
+      for (const [_, nodes] of outgoingEdges.entries()) {
+        for (let i = 0; i < nodes.length; i++) {
+          const node = nodes[i]
+          if (node === child) {
+            nodes[i] = parent
+          }
+        }
+      }
+    }
+    const newEdges = this.edges.get(parent).get(parent.inputToken)
+    if (newEdges.includes(parent)) {
+      const index = newEdges.indexOf(parent)
+      newEdges.splice(index, 1)
+      parent.splits_.splice(index, 1)
+      this.splitNodes[parent.splitNodeIndex] = parent.splits_
+    }
+  }
+
+  async mergeNodes() {
+    if (!this.isDagConstructed) {
+      throw new Error('Cannot get nodes, DAG is not constructed')
+    }
+  }
+
+  async optimiseReduceDust(iterations: number) {
+    if (this.splitNodes.length === 0) {
+      return [await this.evaluate(), this] as const
+    }
+
+    if (!this.isDagConstructed) {
+      throw new Error('Cannot optimise DAG, DAG is not constructed')
+    }
+    const copies = this.splitNodes.map((vect) => vect.map(() => this.clone()))
+    const toReset = copies.map((i) => i.map((ii) => ii.splitNodes)).flat(1)
+
+    let output = await this.evaluate()
+    if (output.dustValue < 0.01) {
+      return [output, this as DagBuilder] as const
+    }
+    const initialOutput = output
+
+    // Minimize dust:
+    // By giving dust a negative weight, we should minimize it.
+    // But we should also try to minimize the imbalance between the dust qtys,
+    // As it can be easy to find a local minima otherwise
+
+    const valueFn: ObjectiveFunction = (value) => {
+      return (
+        value.outputsValue + value.totalValue - value.txFee.price.asNumber()
+      )
+    }
+
+    let currentObjectiveValue = valueFn(initialOutput)
+    if (isNaN(currentObjectiveValue)) {
+      throw new Error('Initial value is NaN')
+    }
+    if (!isFinite(currentObjectiveValue)) {
+      return [initialOutput, this as DagBuilder] as const
+    }
+
+    let derivative = this.splitNodes.map((vect) => vect.map(() => 0))
+
+    let bestSoFar = {
+      output: currentObjectiveValue,
+      out: output,
+      dag: this.clone(),
+    }
+
+    let worseCount = 0
+    for (let iteration = 0; iteration < iterations; iteration++) {
+      await this.derivative(copies, currentObjectiveValue, valueFn, derivative)
+      let learningRate = 1 - iteration / iterations + 0.00001
+      let nextRate = learningRate * 0.5
+      for (let step = 0; step < 10; step++) {
+        for (let i = 0; i < this.splitNodes.length; i++) {
+          for (let j = 0; j < this.splitNodes[i].length; j++) {
+            let newValue =
+              this.splitNodes[i][j] + derivative[i][j] * learningRate
+
+            this.splitNodes[i][j] =
+              newValue < 0.01 && derivative[i][j] < 0 ? 0 : newValue
+          }
+          normalizeVector(this.splitNodes[i])
+        }
+        learningRate = nextRate
+        nextRate *= 0.95
+
+        const newOut = await this.evaluate()
+        const newObjValue = valueFn(newOut)
+
+        const worseResult = newObjValue < currentObjectiveValue
+
+        const smallChange = 1 - newObjValue / currentObjectiveValue < 0.001
+
+        if (newObjValue > bestSoFar.output) {
+          console.log(
+            `new best: ${newOut.outputs.join(', ')}, fee: ${
+              newOut.txFee.quantity
+            }, dust: ${newOut.dust.join(', ')}`
+          )
+          bestSoFar = {
+            output: newObjValue,
+            out: newOut,
+            dag: this.clone(),
+          }
+        }
+
+        output = newOut
+        currentObjectiveValue = newObjValue
+
+        for (let k = 0; k < toReset.length; k++) {
+          copyVectors(this.splitNodes, toReset[k])
+        }
+
+        if (smallChange) {
+          worseCount += 1
+        } else {
+          worseCount = 0
+        }
+
+        if (worseResult) {
+          break
+        }
+      }
+
+      if (worseCount > 25) {
+        console.log('Reset')
+        copyVectors(bestSoFar.dag.splitNodes, this.splitNodes)
+        for (let k = 0; k < toReset.length; k++) {
+          copyVectors(this.splitNodes, toReset[k])
+        }
+        currentObjectiveValue = bestSoFar.output
+        worseCount = 0
+      }
+    }
+
+    return [bestSoFar.out, bestSoFar.dag] as const
+  }
+}
+
+export const isActionNode = (node: DagNode): node is ActionNode => {
+  return node instanceof ActionNode
 }

@@ -2,7 +2,7 @@ import { ParamType } from '@ethersproject/abi'
 import {
   Action,
   DestinationOptions,
-  InteractionConvention
+  InteractionConvention,
 } from '../action/Action'
 import { CurveStableSwapNGPool } from '../action/CurveStableSwapNG'
 import { Address } from '../base/Address'
@@ -223,53 +223,9 @@ class ConvexStakingWrapper {
   }
 
   public async attachToUniverse() {
-    const curvePool = this.curvePool
     this.universe.defineMintable(this.curveLpToWrapper, this.unwrapToCurveLp)
 
     // Define token sourcing rule for the curve pool
-
-    const curveLpToken = curvePool.lpToken
-
-    const convexDepositToken = this.convexToken
-
-    const handlers = new Map<
-      Token,
-      (unit: TokenQuantity) => Promise<BasketTokenSourcingRuleApplication>
-    >()
-
-    handlers.set(curveLpToken, async (unit) =>
-      BasketTokenSourcingRuleApplication.singleBranch(
-        [unit.into(curveLpToken)],
-        [PostTradeAction.fromAction(this.curveLpToWrapper)]
-      )
-    )
-
-    handlers.set(convexDepositToken, async (unit) =>
-      BasketTokenSourcingRuleApplication.singleBranch(
-        [unit.into(this.convexToken)],
-        [PostTradeAction.fromAction(this.convexDepositToWrapper)]
-      )
-    )
-
-    for (const token of curvePool.allPoolTokens) {
-      if (token == curveLpToken) {
-        continue
-      }
-
-      handlers.set(token, async (unit) => {
-        const edge = await this.curve.findDepositAction(token.one, curveLpToken)
-        const out = await edge.quote([token.one])
-
-        const inputQty = unit.div(out[0]).into(token)
-        return BasketTokenSourcingRuleApplication.singleBranch(
-          [inputQty],
-          [
-            PostTradeAction.fromAction(edge, true),
-            PostTradeAction.fromAction(this.curveLpToWrapper, true),
-          ]
-        )
-      })
-    }
 
     this.universe.addSingleTokenPriceSource({
       token: this.wrapperToken,
@@ -280,32 +236,6 @@ class ConvexStakingWrapper {
         )
       },
     })
-
-    const pickBestPrecursorToken = (toks: Token[]): Token => {
-      const t = toks.find((i) => !this.universe.rTokensInfo.tokens.has(i))
-      return t ?? toks[0]
-    }
-
-    this.universe.defineTokenSourcingRule(
-      this.wrapperToken,
-      async (token, unit) => {
-        const handler = handlers.get(token)
-        if (handler == null) {
-          if (this.curvePool instanceof CurveStableSwapNGPool) {
-            const randInput = pickBestPrecursorToken([
-              ...this.curvePool.underlying,
-            ])
-            return await handlers.get(randInput)!(unit)
-          } else {
-            const randInput = pickBestPrecursorToken([
-              ...this.curvePool.assetType.bestInputTokens,
-            ])
-            return await handlers.get(randInput)!(unit)
-          }
-        }
-        return await handler(unit)
-      }
-    )
   }
 
   public static async fromConfigAddress(

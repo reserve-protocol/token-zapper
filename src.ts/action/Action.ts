@@ -195,6 +195,14 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
+
+  get isTrade() {
+    return false
+  }
+  get dependsOnRpc() {
+    return false
+  }
+
   get isMultiInput() {
     return this.inputToken.length !== 1
   }

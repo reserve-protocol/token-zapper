@@ -74,7 +74,7 @@ export interface CurveRouterCall extends BaseContract {
   functions: {
     exchange(
       amountIn: PromiseOrValue<BigNumberish>,
-      _expected: PromiseOrValue<BigNumberish>,
+      expected: PromiseOrValue<BigNumberish>,
       router: PromiseOrValue<string>,
       encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -83,7 +83,7 @@ export interface CurveRouterCall extends BaseContract {
 
   exchange(
     amountIn: PromiseOrValue<BigNumberish>,
-    _expected: PromiseOrValue<BigNumberish>,
+    expected: PromiseOrValue<BigNumberish>,
     router: PromiseOrValue<string>,
     encodedRouterCall: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -92,7 +92,7 @@ export interface CurveRouterCall extends BaseContract {
   callStatic: {
     exchange(
       amountIn: PromiseOrValue<BigNumberish>,
-      _expected: PromiseOrValue<BigNumberish>,
+      expected: PromiseOrValue<BigNumberish>,
       router: PromiseOrValue<string>,
       encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -104,7 +104,7 @@ export interface CurveRouterCall extends BaseContract {
   estimateGas: {
     exchange(
       amountIn: PromiseOrValue<BigNumberish>,
-      _expected: PromiseOrValue<BigNumberish>,
+      expected: PromiseOrValue<BigNumberish>,
       router: PromiseOrValue<string>,
       encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -114,7 +114,7 @@ export interface CurveRouterCall extends BaseContract {
   populateTransaction: {
     exchange(
       amountIn: PromiseOrValue<BigNumberish>,
-      _expected: PromiseOrValue<BigNumberish>,
+      expected: PromiseOrValue<BigNumberish>,
       router: PromiseOrValue<string>,
       encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }

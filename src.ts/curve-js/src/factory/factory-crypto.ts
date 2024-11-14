@@ -208,6 +208,7 @@ export async function getCryptoFactoryPoolData(this: ICurve, fromIdx = 0, swapAd
             CRYPTO_FACTORY_POOLS_DATA[poolIds[i]] = {
                 name: poolNames[i].split(": ")[1].trim(),
                 full_name: poolNames[i],
+                implementation: "",
                 symbol: poolSymbols[i],
                 reference_asset: "CRYPTO",
                 swap_address: swapAddresses[i],
@@ -234,6 +235,7 @@ export async function getCryptoFactoryPoolData(this: ICurve, fromIdx = 0, swapAd
                 full_name: poolNames[i],
                 symbol: poolSymbols[i],
                 reference_asset: "CRYPTO",
+                implementation: "",
                 swap_address: swapAddresses[i],
                 token_address: tokenAddresses[i],
                 gauge_address: gaugeAddresses[i],

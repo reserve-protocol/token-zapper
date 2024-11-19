@@ -268,6 +268,12 @@ export const PROTOCOL_CONFIGS = {
     vault: '0x59866ec5650e9ba00c51f6d681762b48b0ada3de',
     pid: 14,
   },
+  beefy: {
+    vaults: [
+      '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0',
+      '0x1817CFfc44c78d5aED61420bF48Cc273E504B7BE',
+    ],
+  },
 }
 
 const NEEDS_ZEROED_OUT_FIRST = {

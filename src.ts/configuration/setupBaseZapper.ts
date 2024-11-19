@@ -15,6 +15,7 @@ import { createProtocolWithWrappers } from '../action/RewardableWrapper'
 import { DysonDepositAction } from '../action/Dyson'
 import { IDysonVault__factory } from '../contracts'
 import { ONE } from '../action/Action'
+import { setupBeefy } from './setupBeefy'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   await loadBaseTokenList(universe)
@@ -192,4 +193,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
       return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
     },
   })
+
+  // Set up Beefy
+  await setupBeefy(universe, PROTOCOL_CONFIGS.beefy)
 }

@@ -118,6 +118,17 @@ export const PROTOCOL_CONFIGS = {
       'wsAMM-eUSD/USDC': '0xDB5b8cead52f77De0f6B5255f73F348AAf2CBb8D',
     },
   },
+
+  beefy: {
+    vaults: [
+      '0x22a0B976b3c2f1f695e25A15b8449a785F17f8Ae',
+      '0xB62F13126fCD0dD49dE8fF811406554197Bd0E11',
+      '0x8bd6dF821513aECDbbaa29C1d5212b43fdCe7819',
+      '0xB614A6E6c21202De79DceB95AE2dd4817DD7e14b',
+      '0x79c92ad4455866524dACFC4085253CE97aACEcF0',
+      '0x4b65212E81d9040537aDd569702a8FEB8f209B7c',
+    ],
+  },
 }
 
 export type BaseConfigType = typeof baseConfig

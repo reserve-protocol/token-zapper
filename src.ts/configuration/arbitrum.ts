@@ -118,6 +118,15 @@ export const PROTOCOL_CONFIGS = {
       ],
     },
     erc4626: [['0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812', 'wUSDM']],
+    beefy: {
+      vaults: [
+        '0x38Fb2BbedacDCC3490ee84a1e454324C16f31dae',
+        '0x41c0d96f9c297Eb2216792a3CD50296638684705',
+        '0x9E06d77853F548d759dD7DcF6ba27ABAa71b4362',
+        '0x02dB67e732748027293C2eaeb21C949d8DF3F6a8',
+        '0xDd84e4b6ec8A8c05c95f3eC3C7464029Cb900577',
+      ],
+    },
   },
 } as const
 

@@ -132,6 +132,12 @@ export const PROTOCOL_CONFIGS = {
   yearn: {
     vaults: ['0x4d3ceBA4349ADB06d2De8EBD2F9320A61303aD81'],
   },
+  dyson: {
+    vaults: [
+      '0xbfDb6140a85d669B136579E95e7673f27Ef41BB0',
+      '0x0DEd65F164b50249496903873e950814e439DFf7',
+    ],
+  },
 }
 
 export type BaseConfigType = typeof baseConfig

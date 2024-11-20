@@ -129,6 +129,9 @@ export const PROTOCOL_CONFIGS = {
       '0x4b65212E81d9040537aDd569702a8FEB8f209B7c',
     ],
   },
+  yearn: {
+    vaults: ['0x4d3ceBA4349ADB06d2De8EBD2F9320A61303aD81'],
+  },
 }
 
 export type BaseConfigType = typeof baseConfig

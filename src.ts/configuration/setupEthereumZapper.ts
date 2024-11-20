@@ -29,6 +29,7 @@ import { setupRETH } from './setupRETH'
 import { setupStakeDAO } from './setupStakeDAO'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
+import { setupYearn } from './setupYearn'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await universe.provider.getNetwork()
@@ -152,6 +153,9 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   // Set up StakeDAO
   await setupStakeDAO(universe, PROTOCOL_CONFIGS.stakeDAO)
 
+  // Set up Yearn
+  await setupYearn(universe, PROTOCOL_CONFIGS.yearn)
+
   universe.addPreferredRTokenInputToken(
     universe.rTokens['ETH+'],
     commonTokens.WETH
@@ -190,13 +194,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToETHX)
 
-  const depositToYearn = new YearnDepositAction(
-    universe,
-    commonTokens['ETH+ETH-f'],
-    commonTokens['yvCurve-ETH+-f']
-  )
-  universe.addAction(depositToYearn)
-
   const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
     universe,
     universe.commonTokens.USDe,
@@ -218,27 +215,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       return null
     }
   )
-
-  universe.addSingleTokenPriceSource({
-    token: universe.commonTokens['yvCurve-ETH+-f'],
-    priceFn: async () => {
-      const lpPrice = await universe.fairPrice(
-        universe.commonTokens['ETH+ETH-f'].one
-      )
-
-      if (lpPrice == null) {
-        throw Error(
-          `Failed to price ${universe.commonTokens['yvCurve-ETH+-f']}: Missing price for ETH+ETH-f`
-        )
-      }
-      const rate = await IVaultYearn__factory.connect(
-        universe.commonTokens['yvCurve-ETH+-f'].address.address,
-        universe.provider
-      ).callStatic.pricePerShare()
-
-      return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
-    },
-  })
 
   universe.addSingleTokenPriceOracle({
     token: universe.commonTokens.ETHx,

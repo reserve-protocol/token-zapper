@@ -280,6 +280,13 @@ export const PROTOCOL_CONFIGS = {
       '0x41639ABcA04c22e80326A96C8fE2882C97BaEb6e',
     ],
   },
+  yearn: {
+    vaults: [
+      '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581',
+      '0xBfBC4acAE2ceC91A5bC80eCA1C9290F92959f7c3',
+      '0x961Ad224fedDFa468c81acB3A9Cc2cC4731809f4',
+    ],
+  },
 }
 
 const NEEDS_ZEROED_OUT_FIRST = {

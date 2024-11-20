@@ -7,4 +7,5 @@ interface IVaultYearn is IERC20 {
     function deposit(uint256 amount) external returns (uint256);
     function withdraw(uint256 maxShares) external returns (uint256);
     function pricePerShare() external view returns (uint256);
+    function token() external view returns (address);
 }

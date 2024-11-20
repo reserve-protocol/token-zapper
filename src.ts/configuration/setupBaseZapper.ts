@@ -16,6 +16,7 @@ import { DysonDepositAction } from '../action/Dyson'
 import { IDysonVault__factory } from '../contracts'
 import { ONE } from '../action/Action'
 import { setupBeefy } from './setupBeefy'
+import { setupYearn } from './setupYearn'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   await loadBaseTokenList(universe)
@@ -196,4 +197,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
 
   // Set up Beefy
   await setupBeefy(universe, PROTOCOL_CONFIGS.beefy)
+
+  // Set up Yearn
+  await setupYearn(universe, PROTOCOL_CONFIGS.yearn)
 }

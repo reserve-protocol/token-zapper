@@ -34,6 +34,7 @@ export interface IVaultYearnInterface extends utils.Interface {
     "balanceOf(address)": FunctionFragment;
     "deposit(uint256)": FunctionFragment;
     "pricePerShare()": FunctionFragment;
+    "token()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
@@ -47,6 +48,7 @@ export interface IVaultYearnInterface extends utils.Interface {
       | "balanceOf"
       | "deposit"
       | "pricePerShare"
+      | "token"
       | "totalSupply"
       | "transfer"
       | "transferFrom"
@@ -73,6 +75,7 @@ export interface IVaultYearnInterface extends utils.Interface {
     functionFragment: "pricePerShare",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
     values?: undefined
@@ -102,6 +105,7 @@ export interface IVaultYearnInterface extends utils.Interface {
     functionFragment: "pricePerShare",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
     data: BytesLike
@@ -197,6 +201,8 @@ export interface IVaultYearn extends BaseContract {
 
     pricePerShare(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    token(overrides?: CallOverrides): Promise<[string]>;
+
     totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     transfer(
@@ -242,6 +248,8 @@ export interface IVaultYearn extends BaseContract {
 
   pricePerShare(overrides?: CallOverrides): Promise<BigNumber>;
 
+  token(overrides?: CallOverrides): Promise<string>;
+
   totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
   transfer(
@@ -286,6 +294,8 @@ export interface IVaultYearn extends BaseContract {
     ): Promise<BigNumber>;
 
     pricePerShare(overrides?: CallOverrides): Promise<BigNumber>;
+
+    token(overrides?: CallOverrides): Promise<string>;
 
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -357,6 +367,8 @@ export interface IVaultYearn extends BaseContract {
 
     pricePerShare(overrides?: CallOverrides): Promise<BigNumber>;
 
+    token(overrides?: CallOverrides): Promise<BigNumber>;
+
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
     transfer(
@@ -402,6 +414,8 @@ export interface IVaultYearn extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     pricePerShare(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

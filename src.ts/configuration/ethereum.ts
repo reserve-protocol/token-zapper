@@ -274,6 +274,12 @@ export const PROTOCOL_CONFIGS = {
       '0x1817CFfc44c78d5aED61420bF48Cc273E504B7BE',
     ],
   },
+  stakeDAO: {
+    gauges: [
+      '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C',
+      '0x41639ABcA04c22e80326A96C8fE2882C97BaEb6e',
+    ],
+  },
 }
 
 const NEEDS_ZEROED_OUT_FIRST = {

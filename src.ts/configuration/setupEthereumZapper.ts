@@ -26,6 +26,7 @@ import { setupERC4626 } from './setupERC4626'
 import { loadEthereumTokenList } from './setupEthereumTokenList'
 import { setupFrxETH } from './setupFrxETH'
 import { setupRETH } from './setupRETH'
+import { setupStakeDAO } from './setupStakeDAO'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
@@ -148,6 +149,9 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   // Set up Beefy
   await setupBeefy(universe, PROTOCOL_CONFIGS.beefy)
 
+  // Set up StakeDAO
+  await setupStakeDAO(universe, PROTOCOL_CONFIGS.stakeDAO)
+
   universe.addPreferredRTokenInputToken(
     universe.rTokens['ETH+'],
     commonTokens.WETH
@@ -186,19 +190,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToETHX)
 
-  const stakeDAOVault = await IGaugeStakeDAO__factory.connect(
-    commonTokens['sdETH+ETH-f'].address.address,
-    universe.provider
-  ).callStatic.vault()
-
-  const depositToStakeDAO = new StakeDAODepositAction(
-    universe,
-    commonTokens['ETH+ETH-f'],
-    commonTokens['sdETH+ETH-f'],
-    Address.from(stakeDAOVault)
-  )
-  universe.addAction(depositToStakeDAO)
-
   const depositToYearn = new YearnDepositAction(
     universe,
     commonTokens['ETH+ETH-f'],
@@ -227,21 +218,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       return null
     }
   )
-
-  universe.addSingleTokenPriceSource({
-    token: universe.commonTokens['sdETH+ETH-f'],
-    priceFn: async () => {
-      const lpPrice = await universe.fairPrice(
-        universe.commonTokens['ETH+ETH-f'].one
-      )
-      if (lpPrice == null) {
-        throw Error(
-          `Failed to price ${universe.commonTokens['sdETH+ETH-f']}: Missing price for ETH+ETH-f`
-        )
-      }
-      return lpPrice
-    },
-  })
 
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['yvCurve-ETH+-f'],

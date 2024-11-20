@@ -120,7 +120,6 @@ const t = {
   ...ethereumConfig.addresses.commonTokens,
   ...convertAddressObject(ethereumProtocolConfigs.compV3.comets),
   ...convertAddressObject(ethereumProtocolConfigs.convex.wrappers),
-  ...convertAddressObject(ethereumProtocolConfigs.convex.crvTokens),
 }
 const rTokens = ethereumConfig.addresses.rTokens
 

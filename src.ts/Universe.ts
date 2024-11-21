@@ -67,9 +67,11 @@ export type Integrations = Partial<{
 }>
 export class Universe<const UniverseConf extends Config = Config> {
   private emitter = new EventEmitter()
-  private yieldPositionZaps: Map<Token, Token> = new Map();
+  private yieldPositionZaps: Map<Token, Token[]> = new Map();
   public defineYieldPositionZap(yieldPosition: Token, rTokenInput: Token) {
-    this.yieldPositionZaps.set(yieldPosition, rTokenInput)
+    let value = this.yieldPositionZaps.get(yieldPosition) || []
+    value = [...value.filter((token) => token.address.address !== rTokenInput.address.address), rTokenInput]
+    this.yieldPositionZaps.set(yieldPosition, value)
   }
 
   public _finishResolving: () => void = () => { }

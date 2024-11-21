@@ -1,4 +1,3 @@
-import { ONE } from '../action/Action'
 import { setupConvex } from '../action/Convex'
 import { loadCompV2Deployment } from '../action/CTokens'
 import {
@@ -6,11 +5,8 @@ import {
   ETHTokenVaultDepositAction,
 } from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
-import { StakeDAODepositAction } from '../action/StakeDAO'
-import { YearnDepositAction } from '../action/Yearn'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
-import { IGaugeStakeDAO__factory, IVaultYearn__factory } from '../contracts'
 import { TokenQuantity } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'

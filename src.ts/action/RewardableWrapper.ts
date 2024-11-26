@@ -1,14 +1,14 @@
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
-import { InteractionConvention, DestinationOptions, Action } from './Action'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-import * as gen from '../tx-gen/Planner'
 import { Address } from '..'
 import { Approval } from '../base/Approval'
 import {
   IRewardableERC20Wrapper,
   IRewardableERC20Wrapper__factory,
 } from '../contracts'
+import * as gen from '../tx-gen/Planner'
 
 export const createProtocolWithWrappers = (
   universe: Universe,

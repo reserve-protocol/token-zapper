@@ -41,23 +41,20 @@ class CryptoFactoryPoolAddLiquidity extends CurveFactoryCryptoPoolBase {
   public get returnsOutput(): boolean {
     return true
   }
+
   public async inputProportions(): Promise<TokenQuantity[]> {
     const { tok0PrLpToken, tok1PrLpToken } =
       await this.pool.calcTokenAmountsPrLp()
-
     const [token0, token1] = this.pool.allPoolTokens
-    const [priceA, priceB] = await Promise.all([
-      this.pool.universe.fairPrice(tok0PrLpToken),
-      this.pool.universe.fairPrice(tok1PrLpToken),
+    const [price0, price1] = await Promise.all([
+      tok0PrLpToken.price(),
+      tok1PrLpToken.price(),
     ])
-
-    const outPrice = priceA!.add(priceB!)
-
-    return [
-      priceA!.into(token0).div(outPrice!.into(token0)),
-      priceB!.into(token1).div(outPrice!.into(token1)),
-    ]
+    const sum = price0!.add(price1!)
+    const out = [price0!.div(sum).into(token0), price1!.div(sum).into(token1)]
+    return out
   }
+
   async plan(
     planner: Planner,
     inputs: Value[],

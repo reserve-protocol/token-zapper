@@ -2,4 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { ISwapRouter } from "./ISwapRouter";
+export type { IUniV3Factory } from "./IUniV3Factory";
+export type { IUniV3Pool } from "./IUniV3Pool";
+export type { IUniV3QuoterV2 } from "./IUniV3QuoterV2";
 export type { UniV3RouterCall } from "./UniV3RouterCall";

@@ -1,7 +1,6 @@
 import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { BlockCache } from '../base/BlockBasedCache'
 
 import { IStETH, IStETH__factory, IWrappedNative__factory } from '../contracts'
 import { type IWStETH } from '../contracts/contracts/IWStETH'
@@ -82,6 +81,8 @@ export class LidoDeployment {
     const stake = new ETHToSTETH(this)
     universe.defineMintable(wrap, unwrap, true)
     universe.addAction(stake, steth.address)
+    universe.mintableTokens.set(steth, stake)
+    
 
     this.actions = {
       stake: {

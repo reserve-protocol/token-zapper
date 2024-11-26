@@ -1,16 +1,11 @@
-import {
-  defaultAbiCoder,
-  ParamType,
-  parseEther,
-  parseUnits,
-  solidityPack,
-} from 'ethers/lib/utils'
+import { defaultAbiCoder } from 'ethers/lib/utils'
 import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { DefaultMap } from '../base/DefaultMap'
 import { GAS_TOKEN_ADDRESS, ZERO } from '../base/constants'
 
+import { utils } from 'ethers'
 import {
   IAerodromeRouter,
   IERC20__factory,
@@ -19,14 +14,7 @@ import {
 } from '../contracts'
 import { SwapLpStructOutput } from '../contracts/contracts/Aerodrome.sol/IAerodromeSugar'
 import { Token, TokenQuantity } from '../entities/Token'
-import { MultiChoicePath } from '../searcher/MultiChoicePath'
-import {
-  CommandFlags,
-  Contract,
-  encodeArg,
-  Planner,
-  Value,
-} from '../tx-gen/Planner'
+import { CommandFlags, Contract, Planner, Value } from '../tx-gen/Planner'
 import {
   Action,
   BaseAction,
@@ -34,8 +22,6 @@ import {
   InteractionConvention,
   ONE,
 } from './Action'
-import { utils } from 'ethers'
-import { SwapPath } from '../searcher/Swap'
 
 export enum AerodromePoolType {
   STABLE = 'STABLE',
@@ -434,270 +420,6 @@ class AeropoolSwap extends BaseV2AerodromeAction {
   }
 }
 
-class WrappedLpAdd extends BaseV2AerodromeAction {
-  async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const q = await this._quoteInner(amountsIn)
-    return [q.output.liquidity]
-  }
-  get actionName(): string {
-    return this.pool.actions.addLiquidity!.actionName
-  }
-
-  gasEstimate(): bigint {
-    return 500000n * 2n
-  }
-  async plan(
-    planner: Planner,
-    [input]: Value[],
-    destination: Address,
-    predictedInputs: TokenQuantity[]
-  ): Promise<null | Value[]> {
-    const { quote, amounts } = await this._quoteInner(predictedInputs)
-
-    let tradeInput: Value[] = [
-      this.genUtils.fraction(
-        this.pool.universe,
-        planner,
-        input,
-        parseUnits('0.520', 18).toBigInt(),
-        `trade ${quote.inputs.join(', ')} -> ${quote.outputs.join(', ')}`,
-        'trade_input'
-      ),
-    ]
-    const rest = this.genUtils.sub(
-      this.pool.universe,
-      planner,
-      input,
-      tradeInput[0],
-      `remaining into pool`,
-      `remainder`
-    )
-
-    for (const step of quote.steps) {
-      for (const inputToken of step.action.inputToken) {
-        await this.genUtils.approve(
-          this.pool.universe,
-          planner,
-          inputToken.one,
-          step.action.approvals[0].spender
-        )
-      }
-      tradeInput = await step.action.planWithOutput(
-        this.pool.universe,
-        planner,
-        tradeInput,
-        this.pool.universe.execAddress,
-        step.inputs
-      )
-    }
-
-    const valueInputs =
-      this.tokenIn === this.pool.token0
-        ? [rest, tradeInput[0]]
-        : [tradeInput[0], rest]
-
-    // for (const tok of amounts) {
-    //   await this.genUtils.approve(
-    //     this.pool.universe,
-    //     planner,
-    //     tok,
-    //     Address.from(this.pool.context.router.address)
-    //   )
-    // }
-    await this.pool.actions.addLiquidity!.plan(
-      planner,
-      valueInputs,
-      destination,
-      amounts
-    )
-
-    return null
-  }
-
-  private _quoteInner: (amountIn: TokenQuantity[]) => Promise<{
-    quote: SwapPath
-    amounts: [TokenQuantity, TokenQuantity]
-    output: {
-      amount0: TokenQuantity
-      amount1: TokenQuantity
-      liquidity: TokenQuantity
-    }
-  }>
-
-  constructor(
-    public readonly pool: AerodromeStablePool,
-    public readonly tokenIn: Token,
-    public readonly tradeFor: Token
-  ) {
-    super(
-      pool,
-      [tokenIn],
-      [pool.lpToken],
-      [
-        new Approval(pool.token0, Address.from(pool.context.router.address)),
-        new Approval(pool.token1, Address.from(pool.context.router.address)),
-      ]
-    )
-
-    if (tokenIn === tradeFor) {
-      throw new Error(`Same tokenIn and tradeFor: ${this}`)
-    }
-
-    const cache = this.pool.universe.createCache(
-      async ([amountIn]: TokenQuantity[]) => {
-        const abort = AbortSignal.timeout(
-          this.pool.universe.config.routerDeadline
-        )
-        const multiQuote =
-          await this.pool.universe.searcher.findSingleInputTokenSwap(
-            true,
-            amountIn.scalarDiv(2n),
-            this.tradeFor,
-            this.pool.universe.execAddress,
-            this.pool.universe.config.defaultInternalTradeSlippage,
-            abort,
-            1
-          )
-
-        let quote: SwapPath | undefined = undefined
-        for (let i = 0; i < multiQuote.paths.length; i++) {
-          const path = multiQuote.paths[i]
-          let valid = true
-          for (const step of path.steps) {
-            if (step.address === this.pool.address) {
-              valid = false
-              break
-            }
-          }
-          if (!valid) {
-            continue
-          }
-
-          quote = path
-          break
-        }
-
-        if (!quote) {
-          throw new Error('No quote found')
-        }
-
-        const q0 = await this.pool.quoteAddLiquidity(amountIn.scalarDiv(2n))
-        const q1 = await this.pool.quoteAddLiquidity(quote.outputs[0])
-
-        const liquidity = q0.liquidity.amount < q1.liquidity.amount ? q1 : q0
-
-        return {
-          quote,
-          amounts: (tokenIn === pool.token0
-            ? [amountIn.scalarDiv(2n), quote.outputs[0]]
-            : [quote.outputs[0], amountIn.scalarDiv(2n)]) as [
-            TokenQuantity,
-            TokenQuantity
-          ],
-          output: liquidity,
-        }
-      },
-      12000,
-      (inp) => `${inp.join(', ')}`
-    )
-    this._quoteInner = async (amountIn: TokenQuantity[]) =>
-      await cache.get(amountIn)
-  }
-}
-
-class WrappedLpRemove extends BaseV2AerodromeAction {
-  async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [(await this._quoteInner(amountsIn)).output]
-  }
-  get actionName(): string {
-    return this.pool.actions.removeLiquidity!.actionName
-  }
-
-  gasEstimate(): bigint {
-    throw new Error('Method not implemented.')
-  }
-  async plan(
-    planner: Planner,
-    inputs: Value[],
-    destination: Address,
-    predictedInputs: TokenQuantity[]
-  ): Promise<null | Value[]> {
-    const quote = await this._quoteInner(predictedInputs)
-
-    let tradeInput = await this.pool.actions.removeLiquidity!.planWithOutput(
-      this.pool.universe,
-      planner,
-      inputs,
-      this.pool.universe.execAddress,
-      predictedInputs
-    )
-
-    for (const step of quote.quote.steps) {
-      tradeInput = await step.action.planWithOutput(
-        this.pool.universe,
-        planner,
-        tradeInput,
-        this.pool.universe.execAddress,
-        step.inputs
-      )
-    }
-    this.genUtils.planForwardERC20(
-      this.pool.universe,
-      planner,
-      this.out,
-      tradeInput[0],
-      destination
-    )
-    return null
-  }
-
-  private _quoteInner: (amountIn: TokenQuantity[]) => Promise<{
-    quote: MultiChoicePath
-    output: TokenQuantity
-  }>
-
-  constructor(
-    public readonly pool: AerodromeStablePool,
-    public readonly out: Token
-  ) {
-    super(pool, [pool.lpToken], [out])
-
-    const cache = this.pool.universe.createCache(
-      async ([amountIn]: TokenQuantity[]) => {
-        const burnQ = await this.pool.quoteRemoveLiquidity(amountIn)
-
-        const abort = AbortSignal.timeout(
-          this.pool.universe.config.routerDeadline
-        )
-        const quote =
-          await this.pool.universe.searcher.findSingleInputTokenSwap(
-            true,
-            out === this.pool.token0 ? burnQ[1] : burnQ[0],
-            out === this.pool.token0 ? this.pool.token0 : this.pool.token1,
-            this.pool.universe.execAddress,
-            this.pool.universe.config.defaultInternalTradeSlippage,
-            abort,
-            1
-          )
-
-        const output =
-          out == this.pool.token0
-            ? burnQ[0].add(quote.outputs[0])
-            : burnQ[1].add(quote.outputs[0])
-
-        return {
-          quote,
-          output,
-        }
-      },
-      12000,
-      (inp) => `${inp.join(', ')}`
-    )
-    this._quoteInner = async (amountIn: TokenQuantity[]) =>
-      await cache.get(amountIn)
-  }
-}
-
 const FEE_DIVISOR = 10000n
 class AerodromeStablePool {
   private reserves: () => Promise<TokenQuantity[]>
@@ -918,10 +640,8 @@ class AerodromeStablePool {
         try {
           await inst.actions.removeLiquidity!.quote([inst.lpToken.one])
 
-          universe.addAction(new WrappedLpAdd(inst, inst.token0, inst.token1))
-          universe.addAction(new WrappedLpAdd(inst, inst.token1, inst.token0))
-          universe.addAction(new WrappedLpRemove(inst, inst.token0))
-          universe.addAction(new WrappedLpRemove(inst, inst.token1))
+          universe.addAction(inst.actions.addLiquidity!)
+          universe.addAction(inst.actions.removeLiquidity!)
 
           await universe.defineLPToken(
             inst.lpToken,

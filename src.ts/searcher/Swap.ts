@@ -4,6 +4,7 @@ import {
   type InteractionConvention,
 } from '../action/Action'
 import { type Address } from '../base/Address'
+import { FEE_SCALE } from '../base/constants'
 import { DefaultMap } from '../base/DefaultMap'
 import { Token, type TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
@@ -362,6 +363,10 @@ export class SwapPlan {
     this.outputs = [...outputs]
   }
 
+  public get is1to1() {
+    return this.inputs.length === 1 && this.outputs.length === 1
+  }
+
   public get addresesInUse() {
     const addrs = this.steps
       .map((i) => (i.oneUsePrZap ? [...i.addressesInUse] : []))
@@ -401,7 +406,10 @@ export class SwapPlan {
     return this.steps.at(-1)!.dustTokens
   }
 
-  public async quote(input: TokenQuantity[]): Promise<SwapPath> {
+  public async quote(
+    input: TokenQuantity[],
+    slippage: bigint = 0n
+  ): Promise<SwapPath> {
     if (input.length === 0) {
       throw new Error('Invalid input, no input tokens ' + this.toString())
     }
@@ -447,7 +455,13 @@ export class SwapPlan {
     const dust = this.dustTokens.map((i) => amts.get(i))
     const output = this.outputs.map((i) => amts.get(i))
 
-    return new SwapPath(input, swaps, output, value, dust)
+    return new SwapPath(
+      input,
+      swaps,
+      output.map((i) => i.sub(i.fpMul(slippage, FEE_SCALE))),
+      value,
+      dust
+    )
   }
 
   toString() {

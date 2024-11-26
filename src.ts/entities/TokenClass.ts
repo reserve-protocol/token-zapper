@@ -77,7 +77,7 @@ export const getTokenInfo = async (
       ? universe.wrappedNativeToken
       : await universe.underlyingToken.get(token)
 
-  const underlyingTokens: Token[] = []
+  const underlyingTokens: Token[] = [underlyingToken]
   if (tokenType === TokenType.LPToken) {
     underlyingTokens.push(...universe.lpTokens.get(token)!.poolTokens)
   }

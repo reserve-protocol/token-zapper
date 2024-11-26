@@ -6,7 +6,7 @@ import { loadArbitrumTokenList } from './loadArbitrumTokenList'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupCompoundV3 } from './setupCompV3'
 import { setupERC4626 } from './setupERC4626'
-import { setupUniswapRouter } from './setupUniswapRouter'
+import { setupUniswapV3Router } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
 export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
@@ -110,9 +110,8 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
     await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
   )
 
-  universe.addTradeVenue(
-    universe.addIntegration('uniswapV3', await setupUniswapRouter(universe))
-  )
+  const router = await setupUniswapV3Router(universe)
+  universe.addIntegration('uniswapV3', await router.venue())
 
   universe.addPreferredRTokenInputToken(
     universe.rTokens.KNOX,

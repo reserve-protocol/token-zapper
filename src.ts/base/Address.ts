@@ -87,11 +87,11 @@ export class Address {
       return fastPath
     }
 
+    if (!(addr.length === 42 || addr.length === 40)) {
+      throw new Error(`Invalid hex string ${addr}, expected hex string length of 42 or 40, but got ${addr.length}`)
+    }
     if (!isAddress(addr)) {
       throw new Error('Invalid input type ' + addr)
-    }
-    if (!(addr.length === 42 || addr.length === 40)) {
-      throw new Error('Invalid hex string length ' + addr)
     }
     try {
       return Address.interningCache.get(

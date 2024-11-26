@@ -27,3 +27,25 @@ interface IRETHRouter {
         uint256 _steps
     ) external returns (uint256[2] memory portions, uint256 amountOut);
 }
+
+interface IRETH {
+    function getEthValue(uint256 _rethAmount) external view returns (uint256);
+    function getRethValue(uint256 _ethAmount) external view returns (uint256);
+}
+
+interface RocketDepositPoolInterface {
+    function getBalance() external view returns (uint256);
+    function getNodeBalance() external view returns (uint256);
+    function getUserBalance() external view returns (int256);
+    function getExcessBalance() external view returns (uint256);
+    function deposit() external payable;
+    function getMaximumDepositAmount() external view returns (uint256);
+    function nodeDeposit(uint256 _totalAmount) external payable;
+    function nodeCreditWithdrawal(uint256 _amount) external;
+    function recycleDissolvedDeposit() external payable;
+    function recycleExcessCollateral() external payable;
+    function recycleLiquidatedStake() external payable;
+    function assignDeposits() external;
+    function maybeAssignDeposits() external returns (bool);
+    function withdrawExcessBalance(uint256 _amount) external;
+}

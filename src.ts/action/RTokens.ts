@@ -7,6 +7,7 @@ import {
 } from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
+import { ethers } from 'ethers'
 import { Approval } from '../base/Approval'
 import {
   IAsset,
@@ -26,7 +27,6 @@ import {
 } from '../contracts'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import { MultiInputUnit } from './MultiInputAction'
-import { ethers } from 'ethers'
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction
@@ -38,6 +38,16 @@ export class RTokenDeployment {
   }
 
   public readonly supply: () => Promise<TokenQuantity>
+  public async exchangeRate() {
+    const supply = await this.supply()
+    const baskets = this.rToken.from(
+      (await this.contracts.rToken.callStatic.basketsNeeded()).toBigInt()
+    )
+    const tokenClass = await this.universe.tokenClass.get(this.rToken)
+    const out = (baskets.amount * 10n ** 18n) / supply.amount
+    const mult = tokenClass.from(1.0)
+    return tokenClass.from(out).invert().mul(mult)
+  }
   public readonly unitBasket: () => Promise<PricedTokenQuantity[]>
   public readonly maxIssueable: () => Promise<TokenQuantity>
   public readonly quoteMint: (
@@ -139,9 +149,30 @@ export class RTokenDeployment {
       return unit
     }, 12000)
 
+    const redeemUnit = universe.createCache(async (wholeUnits: bigint) => {
+      const { erc20s, quantities } =
+        await this.contracts.rTokenLens.callStatic.redeem(
+          this.contracts.assetRegistry.address,
+          this.contracts.basketHandler.address,
+          this.contracts.rToken.address,
+          wholeUnits * this.rToken.scale
+        )
+
+      const unit = await Promise.all(
+        erc20s.map((addr, index) =>
+          this.universe
+            .getToken(Address.from(addr))
+            .then((token) =>
+              token.from(quantities[index].toBigInt() / wholeUnits)
+            )
+        )
+      )
+      return unit
+    }, 12000)
+
     const ONE = 10n ** 18n
     const quoteMint = async (input: TokenQuantity[]) => {
-      const unit = await unitBasket()
+      let unit = await unitBasket()
       if (unit.length !== input.length) {
         throw new Error('Invalid input length')
       }
@@ -179,6 +210,7 @@ export class RTokenDeployment {
     }
 
     this.supply = getSupply
+
     this.maxIssueable = getIssueanceAvailable
     this.quoteMint = quoteMint
     this.quoteRedeem = quoteRedeem
@@ -265,9 +297,6 @@ export class RTokenDeployment {
 
 abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
   abstract action: string
-  get supportsDynamicInput() {
-    return true
-  }
   get oneUsePrZap() {
     return false
   }
@@ -283,6 +312,9 @@ abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
 
 export class MintRTokenAction extends ReserveRTokenBase {
   action = 'issue'
+  get supportsDynamicInput() {
+    return false
+  }
   async plan(
     planner: Planner,
     _: Value[],
@@ -369,6 +401,9 @@ export class MintRTokenAction extends ReserveRTokenBase {
 
 export class BurnRTokenAction extends ReserveRTokenBase {
   action = 'redeem'
+  get supportsDynamicInput() {
+    return true
+  }
   async plan(
     planner: Planner,
     [input]: Value[],

@@ -211,8 +211,19 @@ export class TokenQuantity {
       : 1
   }
 
+  private _number?: number
   public asNumber() {
-    return parseFloat(this.format())
+    if (this._number == null) {
+      this._number = parseFloat(this.format())
+    }
+    return this._number
+  }
+
+  public invert() {
+    return new TokenQuantity(
+      this.token,
+      (this.token.scale * this.token.scale) / this.amount
+    )
   }
 
   public sub(other: TokenQuantity) {

@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 
 import {
+  findTradeSize,
   type BaseAction as Action,
 } from './action/Action'
 import { LPToken } from './action/LPToken'
@@ -18,12 +19,11 @@ import {
 } from './entities/Token'
 import { TokenLoader, makeTokenLoader } from './entities/makeTokenLoader'
 import { Graph } from './exchange-graph/Graph'
-import { LPTokenPriceOracle } from './oracles/LPTokenPriceOracle'
 import { PriceOracle } from './oracles/PriceOracle'
 import { ApprovalsStore } from './searcher/ApprovalsStore'
-import { SourcingRule } from './searcher/SourcingRule'
 
 import EventEmitter from 'events'
+import winston from 'winston'
 import { CompoundV2Deployment } from './action/CTokens'
 import { LidoDeployment } from './action/Lido'
 import { RTokenDeployment } from './action/RTokens'
@@ -40,14 +40,12 @@ import { CompoundV3Deployment } from './configuration/setupCompV3'
 import { ReserveConvex } from './configuration/setupConvexStakingWrappers'
 import { CurveIntegration } from './configuration/setupCurve'
 import { ZapperExecutor__factory } from './contracts'
+import { TokenType, isAsset } from './entities/TokenClass'
+import { ZapperTokenQuantityPrice } from './oracles/ZapperAggregatorOracle'
 import { PerformanceMonitor } from './searcher/PerformanceMonitor'
-import { Searcher } from './searcher/Searcher'
 import { SwapPath } from './searcher/Swap'
 import { ToTransactionArgs } from './searcher/ToTransactionArgs'
 import { Contract } from './tx-gen/Planner'
-import { ZapperTokenQuantityPrice } from './oracles/ZapperAggregatorOracle'
-import winston from 'winston'
-import { isAsset, TokenType } from './entities/TokenClass'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -84,8 +82,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (tokenType === TokenType.ETHLST || isAsset(tokenType)) {
       return token
     }
-    if (this.wrappedTokens.has(token)) {
-      const mint = this.wrappedTokens.get(token)!.mint;
+    if (this.mintableTokens.has(token)) {
+      const mint = this.getMintAction(token)!;
       if (mint.inputToken.length === 1) {
         return this.underlyingToken.get(mint.inputToken[0])
       }
@@ -113,7 +111,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (cls === this.nativeToken) {
       return TokenType.ETHLST
     }
-    if (this.wrappedTokens.has(token)) {
+    if (this.mintableTokens.has(token)) {
       return TokenType.OtherMintable
     }
     if (cls === this.usd) {
@@ -133,8 +131,8 @@ export class Universe<const UniverseConf extends Config = Config> {
       }
       return token;
     }
-    if (this.wrappedTokens.has(token)) {
-      const classes = await Promise.all(this.wrappedTokens.get(token)!.mint.inputToken.map(t => this.tokenClass.get(t)))
+    if (this.mintableTokens.has(token)) {
+      const classes = await Promise.all(this.getMintAction(token)!.inputToken.map(t => this.tokenClass.get(t)))
       if (classes.every(t => t === classes[0])) {
         return classes[0]
       }
@@ -224,6 +222,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this._gasTokenPrice ?? this.usd.from(3000)
   }
 
+  public getMintAction(token: Token) {
+    return this.mintableTokens.get(token)
+  }
+
   public async quoteGas(units: bigint) {
     if (this._gasTokenPrice == null) {
       this._gasTokenPrice = await this.fairPrice(this.nativeToken.one)
@@ -237,10 +239,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
   }
 
-  public readonly precursorTokenSourcingSpecialCases = new Map<
-    Token,
-    SourcingRule
-  >()
   public readonly actions = new DefaultMap<Address, Action[]>(() => [])
   private readonly allActions = new Set<Action>()
 
@@ -273,6 +271,10 @@ export class Universe<const UniverseConf extends Config = Config> {
   public readonly wrappedTokens = new Map<
     Token,
     { mint: Action; burn: Action; allowAggregatorSearcher: boolean }
+  >()
+  public readonly mintableTokens = new Map<
+    Token,
+    Action
   >()
   public readonly oracles: PriceOracle[] = []
 
@@ -496,10 +498,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     gasPrice: 0n,
   }
 
-  public defineTokenSourcingRule(precursor: Token, rule: SourcingRule) {
-    this.precursorTokenSourcingSpecialCases.set(precursor, rule)
-  }
-
   /**
    * This method try to price a given token in USD.
    * It will first try and see if there is an canonical way to mint/burn the token,
@@ -604,10 +602,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.allActions.add(action)
     if (actionAddress != null) {
       this.actions.get(actionAddress).push(action)
+    } else {
+      this.actions.get(action.address).push(action)
     }
-    if (action.addToGraph) {
-      this.graph.addEdge(action)
-    }
+    this.graph.addEdge(action);
 
     return this
   }
@@ -666,6 +664,9 @@ export class Universe<const UniverseConf extends Config = Config> {
     burn: Action,
     allowAggregatorSearcher = false
   ) {
+    if (mint.outputToken.length === 1) {
+      this.mintableTokens.set(mint.outputToken[0], mint)
+    }
     const output = mint.outputToken[0]
     if (
       !mint.outputToken.every((i, index) => burn.inputToken[index] === i) ||
@@ -681,17 +682,12 @@ export class Universe<const UniverseConf extends Config = Config> {
         )}) -> ${burn} -> (${burn.outputToken.join(', ')})`
       )
     }
-
-    // console.log(
-    //   `Defining mintable ${mint.outputToken.join(
-    //     ', '
-    //   )} via ${mint.inputToken.join(', ')}`
-    // )
     if (this.wrappedTokens.has(output)) {
       throw new Error('Token already mintable')
     }
-    this.addAction(mint, output.address)
-    this.addAction(burn, output.address)
+    this.addAction(mint)
+    this.addAction(burn)
+
     const out = {
       mint,
       burn,
@@ -703,8 +699,37 @@ export class Universe<const UniverseConf extends Config = Config> {
 
   public simulateZapFn: SimulateZapTransactionFunction
 
-  public get searcher() {
-    return new Searcher<Universe<UniverseConf>>(this)
+  public mintRate: BlockCache<Token, TokenQuantity>;
+  public mintRateProviders = new Map<Token, () => Promise<TokenQuantity>>()
+  public midPrices: BlockCache<Action, TokenQuantity>;
+  private _maxTradeSizes: DefaultMap<Action, Promise<BlockCache<number, TokenQuantity>>> = new DefaultMap(async edge => {
+    if (!edge.is1to1) {
+      throw new Error('Edge is not 1-to-1')
+    }
+    const inputToken = edge.inputToken[0]
+    const liquidity = (await edge.liquidity()) * 0.5
+    if (!isFinite(liquidity)) {
+      throw new Error('Liquidity is not finite')
+    }
+
+    const inputTokenPrice = (await inputToken.price).asNumber()
+    const maxSize = inputToken.from(liquidity / inputTokenPrice)
+
+    return this.createCache(
+      async (limit: number) => {
+        // const inputTokenPrice = (await inputToken.price).asNumber()
+        // const outputTokenPrice = (await edge.outputToken[0].price).asNumber()
+        // const txFeePrice = (await this.nativeToken.from(edge.gasEstimate() * this.gasPrice).price()).asNumber()
+
+        return inputToken.from(
+          await findTradeSize(edge, maxSize, limit)
+        )
+      }
+    )
+  })
+
+  public async getMaxTradeSize(edge: Action, limit: number) {
+    return (await this._maxTradeSizes.get(edge)).get(limit)
   }
 
   private constructor(
@@ -735,6 +760,18 @@ export class Universe<const UniverseConf extends Config = Config> {
       nativeToken.name,
       nativeToken.decimals
     )
+
+    this.midPrices = this.createCache(async (edge: Action) => {
+      if (!edge.is1to1) {
+        throw new Error(`${edge} is not 1to1`)
+      }
+      const inputToken = edge.inputToken[0]
+      const outputToken = edge.outputToken[0]
+      const outputSize = (await edge.quote([inputToken.one.scalarMul(10n)]))[0]
+      return outputToken.from(outputSize.asNumber() / 10)
+    }, 12000)
+
+    
 
     this.wrappedNativeToken = Token.createToken(
       this,
@@ -784,7 +821,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       if (prev != null) {
         return prev
       }
-      const p = this.simulateZapFn_(params)
+      const p = this.simulateZapFn_(params, this)
 
       pending.set(k, p)
 
@@ -795,7 +832,56 @@ export class Universe<const UniverseConf extends Config = Config> {
       })
       return p
     }
+
+    const native = this.nativeToken
+    const wrappedNative = this.wrappedNativeToken
+    this.mintRate = this.createCache(async (token: Token) => {
+      if (this.mintRateProviders.has(token)) {
+        return await this.mintRateProviders.get(token)!()
+      }
+      if (token === wrappedNative) {
+        return native.one
+        }
+        if (!this.mintableTokens.has(token)) {
+          throw new Error(`${token} is not mintable`)
+        }
+        const mint = this.mintableTokens.get(token)!
+        if (mint.inputToken.length !== 1) {
+          if (this.rTokenDeployments.has(token)) {
+            const deployment = this.rTokenDeployments.get(token)!
+            return await deployment.exchangeRate()
+          }
+          const underlying = await mint.inputProportions()
+          const outToken = await this.tokenClass.get(token)
+          let sum = 0.0
+          while(underlying.length !== 0) {
+            const rate =  underlying.pop()!
+            if (this.mintableTokens.has(rate.token)) {
+              const newRate = await this.mintRate.get(rate.token)
+              underlying.push(newRate.mul(rate.into(newRate.token)))
+            } else {
+              sum += rate.asNumber()
+            }
+          }
+          return outToken.from(sum)
+        }
+        const out = await mint.quote([mint.inputToken[0].one])
+        if (out.length !== 1) {
+          throw new Error(`${mint} returned ${out.length} outputs, expected 1`)
+        }
+        const outN = 1 / out[0].asNumber()
+        
+        const rate = mint.inputToken[0].from(outN)
+        const ratePrice = (await rate.price()).asNumber()
+        const inputTokenPrice = (await mint.inputToken[0].price).asNumber()
+        
+        return mint.inputToken[0].from(
+          1/(ratePrice/inputTokenPrice)
+        )
+      }
+    )
   }
+
 
   public async updateBlockState(block: number, gasPrice: bigint) {
     if (block <= this.blockState.currentBlock) {
@@ -890,13 +976,14 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (typeof rToken === 'string') {
       rToken = await this.getToken(Address.from(rToken))
     }
-    const out = await this.searcher.zapIntoRToken(
-      userInput,
-      rToken,
-      userAddress,
-      opts
-    )
-    return out.bestZapTx.tx
+    throw new Error("...")
+    // const out = await this.searcher.zapIntoRToken(
+    //   userInput,
+    //   rToken,
+    //   userAddress,
+    //   opts
+    // )
+    // return out.bestZapTx.tx
   }
   public async redeem(
     rTokenQuantity: TokenQuantity,
@@ -910,13 +997,14 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (typeof outputToken === 'string') {
       outputToken = await this.getToken(Address.from(outputToken))
     }
-    const out = await this.searcher.redeem(
-      rTokenQuantity,
-      outputToken,
-      userAddress,
-      opts
-    )
-    return out.bestZapTx.tx
+    throw new Error("...")
+    // const out = await this.searcher.redeem(
+    //   rTokenQuantity,
+    //   outputToken,
+    //   userAddress,
+    //   opts
+    // )
+    // return out.bestZapTx.tx
   }
 
   get approvalAddress() {

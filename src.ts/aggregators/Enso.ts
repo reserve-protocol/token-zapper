@@ -8,20 +8,12 @@ import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { Token, TokenQuantity } from '../entities/Token'
 
+import { defaultAbiCoder, ParamType } from '@ethersproject/abi'
 import { EnsoRouter__factory } from '../contracts/factories/contracts/EnsoRouter__factory'
 import { SwapPlan } from '../searcher/Swap'
 import { FunctionCall, Planner, Value } from '../tx-gen/Planner'
 import { DexRouter, TradingVenue } from './DexAggregator'
-import { defaultAbiCoder, ParamType } from '@ethersproject/abi'
-import { createDisabledParisTable } from './createDisabledParisTable'
 
-const disabledPairs = createDisabledParisTable()
-
-// disabledPairs.define(
-//   1,
-//   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-//   '0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8'
-// )
 export interface EnsoQuote {
   gas: string
   amountOut: string
@@ -287,9 +279,6 @@ export const createEnso = (
     universe,
     aggregatorName,
     async (abort: AbortSignal, input, output, slippage) => {
-      if (disabledPairs.isDisabled(universe.chainId, input, output)) {
-        throw new Error('Enso: Pair disabled')
-      }
       if (
         input.token === universe.nativeToken ||
         output === universe.nativeToken

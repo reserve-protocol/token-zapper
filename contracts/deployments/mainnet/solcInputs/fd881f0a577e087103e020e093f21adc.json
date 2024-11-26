@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/weiroll-helpers/CurveRouterCall.sol": {
+      "content": "// SPDX-License-Identifier: BlueOak-1.0.0\npragma solidity 0.8.17;\ninterface ICurveRouter {\n\n    function get_dy(\n        address[11] calldata route,\n        uint256[5][5] calldata swapParams,\n        uint256 amount\n    ) external view returns (uint256);\n\n\n    function get_dy(\n        address[11] calldata route,\n        uint256[5][5] calldata swapParams,\n        uint256 amount,\n        address[5] calldata pools\n    ) external view returns (uint256);\n\n    function exchange(\n        address[11] calldata route,\n        uint256[5][5] calldata swapParams,\n        uint256 amount,\n        uint256 expected\n    ) external payable returns (uint256);\n\n\n    function exchange(\n        address[11] calldata route,\n        uint256[5][5] calldata swapParams,\n        uint256 amount,\n        uint256 expected,\n        address[5] calldata pools\n    ) external payable returns (uint256);\n\n    function exchange(\n        address[11] calldata route,\n        uint256[5][5] calldata swapParams,\n        uint256 amount,\n        uint256 expected,\n        address[5] calldata pools,\n        uint256 minAmount\n    ) external payable returns (uint256);\n\n\n    function exchange_multiple(\n        address[9] calldata route,\n        uint256[3][4] calldata swapParams,\n        uint256 amount,\n        uint256 expected,\n        address[4] calldata pools\n    ) external returns (uint256);\n}\ncontract CurveRouterCall {\n    function exchange(\n        uint256 amountIn,\n        uint256 expected,\n        address router,\n        bytes memory encodedRouterCall\n    ) external returns (uint256) {\n        (\n            address[9] memory route,\n            uint256[3][4] memory swapParams,\n            address[4] memory pools\n        ) = abi.decode(\n            encodedRouterCall,\n            (address[9], uint256[3][4], address[4])\n        );\n        return ICurveRouter(router).exchange_multiple(\n            route,\n            swapParams,\n            amountIn,\n            expected,\n            pools\n        );\n    }\n\n    function exchangeNew(\n        uint256 amountIn,\n        bytes memory encodedRouterCall\n    ) external returns (uint256) {\n        (\n            address[11] memory route,\n            uint256[5][5] memory swapParams,\n            uint256 expected,\n            address router\n        ) = abi.decode(\n            encodedRouterCall,\n            (address[11], uint256[5][5], uint256, address)\n        );\n        return ICurveRouter(router).exchange(\n            route,\n            swapParams,\n            amountIn,\n            expected\n        );\n    }\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

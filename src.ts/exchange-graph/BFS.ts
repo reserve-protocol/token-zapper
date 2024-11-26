@@ -1,10 +1,9 @@
 import { type BaseAction as Action } from '../action/Action'
-import { type Token } from '../entities/Token'
-import { type Universe } from '../Universe'
-import { SwapPlan } from '../searcher/Swap'
-import { type Graph } from './Graph'
-import { TokenType } from '../entities/TokenClass'
 import { Address } from '../base/Address'
+import { type Token } from '../entities/Token'
+import { SwapPlan } from '../searcher/Swap'
+import { type Universe } from '../Universe'
+import { type Graph } from './Graph'
 
 class ChoicesPrStep {
   constructor(
@@ -156,21 +155,28 @@ export const shortestPath = (
       .get(previous)
       .outgoingEdges.entries()) {
       if (
-        !actions.some((action) => {
-          if (incompatibleActions.has(action)) {
+        actions.some((action) => {
+          if (action.isTrade) {
+            return true
+          }
+          if (!action.oneUsePrZap) {
             return false
+          }
+          if (incompatibleActions.has(action)) {
+            return true
           }
           for (const addr of action.addressesInUse) {
             if (addressesUsed.has(addr)) {
               incompatibleActions.add(action)
-              return false
+              return true
             }
           }
-          return true
+          return false
         })
       ) {
         continue
       }
+
       if (nextToken !== end) {
         if (visited.has(nextToken)) {
           continue
@@ -196,8 +202,10 @@ export const shortestPath = (
 
   results.sort((l, r) => l.weight - r.weight)
   if (results.length === 0) {
-    console.warn(`no path found from ${start} to ${end}`)
     return []
+  }
+  for (const result of results) {
+    console.log(result.weight, result.path.join(' -> '))
   }
   return results[0].path
 }

@@ -1,11 +1,7 @@
 import { defaultAbiCoder } from '@ethersproject/abi/lib/abi-coder'
-import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
 import { BigNumber, constants, providers } from 'ethers'
+import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
 
-import * as ethers from 'ethers'
-import { Interface } from 'ethers/lib/utils'
-
-import { hexlify } from 'ethers/lib/utils'
 // import {
 //   type ForkySimulator,
 //   type OnLogFn,
@@ -16,10 +12,8 @@ import { simulationUrls } from '../base/constants'
 // import abi from '../../contracts/artifacts/contracts/Zapper.sol/ZapperExecutor.json'
 // const byteCode = abi.deployedBytecode
 import { Config } from '../configuration/ChainConfiguration'
-import { JsonRpcProvider, TransactionRequest } from '@ethersproject/providers'
-import { Universe } from '../Universe'
 import { logger } from '../logger'
-import { wait } from '../base/controlflow'
+import { Universe } from '../Universe'
 export interface SimulateParams {
   // Zapper address on the chain
   to: string
@@ -66,7 +60,8 @@ export const decodeSimulationFunctionOutput = (data: string) => {
 }
 
 export type SimulateZapTransactionFunction = (
-  params: SimulateParams
+  params: SimulateParams,
+  universe: Universe,
 ) => Promise<string>
 
 /**
@@ -82,15 +77,15 @@ export type SimulateZapTransactionFunction = (
  */
 export const createSimulateZapTransactionUsingProvider =
   (provider: providers.JsonRpcProvider): SimulateZapTransactionFunction =>
-    async (input: SimulateParams): Promise<string> => {
-      const data = await provider.call({
-        to: input.to,
-        from: input.from,
-        data: input.data,
-        value: input.value,
-      })
-      return data
-    }
+  async (input: SimulateParams): Promise<string> => {
+    const data = await provider.call({
+      to: input.to,
+      from: input.from,
+      data: input.data,
+      value: input.value,
+    })
+    return data
+  }
 
 // Default implementation of the simulation function, using the provider
 // It works well for zaps that zaps using ETH as the input
@@ -161,14 +156,14 @@ export const makeCustomRouterSimulator = (
     Object.entries(whales).map(([k, v]) => [k.toLowerCase(), v.toLowerCase()])
   )
 
-  return async (input: SimulateParams) => {
+  return async (input: SimulateParams, universe: Universe) => {
     const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
 
     if (whale == null) {
       console.log(
         'No whale for token ' +
-        input.setup.inputTokenAddress +
-        ', so will not fund the sender with funds'
+          input.setup.inputTokenAddress +
+          ', so will not fund the sender with funds'
       )
     }
 
@@ -184,23 +179,23 @@ export const makeCustomRouterSimulator = (
       moveFunds:
         whale != null
           ? [
-            {
-              owner: whale,
-              token: input.setup.inputTokenAddress,
-              spender: input.from,
-              quantity:
-                '0x' +
-                input.setup.userBalanceAndApprovalRequirements.toString(16),
-            },
-          ]
+              {
+                owner: whale,
+                token: input.setup.inputTokenAddress,
+                spender: input.from,
+                quantity:
+                  '0x' +
+                  input.setup.userBalanceAndApprovalRequirements.toString(16),
+              },
+            ]
           : [],
       transactions: [
         {
           from: input.from,
           to: input.to,
           data: input.data,
-          gas: '0x' + (25_000_000).toString(16),
-          gasPrice: '0x1',
+          gas: '0x' + (15_000_000).toString(16),
+          gasPrice: '0x' + universe.gasPrice.toString(16),
           value: '0x' + input.value.toString(16),
         },
       ],
@@ -222,6 +217,7 @@ export const makeCustomRouterSimulator = (
       }
     }
 
+    console.log(JSON.stringify(body, null, 2))
     const encodedBody = JSON.stringify(body, null, 2)
     const resp = await fetch(url, {
       method: 'POST',

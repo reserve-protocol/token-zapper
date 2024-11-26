@@ -13,29 +13,9 @@ export const setupWrappedGasToken = async (universe: Universe<Config>) => {
     burn: new DepositAction(universe, wrappedToken),
     mint: new WithdrawAction(universe, wrappedToken),
   }
-  universe.addAction(wrappedGasTokenActions.burn)
-  universe.addAction(wrappedGasTokenActions.mint)
-  universe.tokenTradeSpecialCases.set(
-    universe.nativeToken,
-    async (input: TokenQuantity, dest: Address) => {
-      if (input.token === wrappedToken) {
-        return await new SwapPlan(universe, [
-          wrappedGasTokenActions.burn,
-        ]).quote([input])
-      }
-      return null
-    }
-  )
-
-  universe.tokenTradeSpecialCases.set(
-    wrappedToken,
-    async (input: TokenQuantity, dest: Address) => {
-      if (input.token === universe.nativeToken) {
-        return await new SwapPlan(universe, [
-          wrappedGasTokenActions.mint,
-        ]).quote([input])
-      }
-      return null
-    }
+  universe.defineMintable(
+    wrappedGasTokenActions.burn,
+    wrappedGasTokenActions.mint,
+    true
   )
 }

@@ -8,5 +8,6 @@ export type { curvepoolsSol };
 import type * as uniV3RouterCallSol from "./UniV3RouterCall.sol";
 export type { uniV3RouterCallSol };
 export type { BalanceOf } from "./BalanceOf";
+export type { BalancerCall } from "./BalancerCall";
 export type { EmitId } from "./EmitId";
 export type { EthBalance } from "./EthBalance";

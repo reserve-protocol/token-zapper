@@ -51,8 +51,17 @@ interface ICurveRouter {
     ) external returns (uint256);
 }
 contract CurveRouterCall {
-    function exchange(uint256 amountIn, uint256 expected, address router, bytes memory encodedRouterCall) external returns (uint256) {
-        (address[9] memory route, uint256[3][4] memory swapParams, address[4] memory pools ) = abi.decode(
+    function exchange(
+        uint256 amountIn,
+        uint256 expected,
+        address router,
+        bytes memory encodedRouterCall
+    ) external returns (uint256) {
+        (
+            address[9] memory route,
+            uint256[3][4] memory swapParams,
+            address[4] memory pools
+        ) = abi.decode(
             encodedRouterCall,
             (address[9], uint256[3][4], address[4])
         );
@@ -62,6 +71,27 @@ contract CurveRouterCall {
             amountIn,
             expected,
             pools
+        );
+    }
+
+    function exchangeNew(
+        uint256 amountIn,
+        bytes memory encodedRouterCall
+    ) external returns (uint256) {
+        (
+            address[11] memory route,
+            uint256[5][5] memory swapParams,
+            uint256 expected,
+            address router
+        ) = abi.decode(
+            encodedRouterCall,
+            (address[11], uint256[5][5], uint256, address)
+        );
+        return ICurveRouter(router).exchange(
+            route,
+            swapParams,
+            amountIn,
+            expected
         );
     }
 }

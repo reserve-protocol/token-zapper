@@ -1,4 +1,5 @@
 import { ONE } from '../action/Action'
+import { setupBalancer } from '../action/Balancer'
 import { BeefyDepositAction } from '../action/Beefy'
 import { loadCompV2Deployment } from '../action/CTokens'
 import {
@@ -28,8 +29,9 @@ import { CurveIntegration } from './setupCurve'
 import { setupERC4626 } from './setupERC4626'
 import { loadEthereumTokenList } from './setupEthereumTokenList'
 import { setupFrxETH } from './setupFrxETH'
+import { setupOdosPricing } from './setupOdosPricing'
 import { setupRETH } from './setupRETH'
-import { setupUniswapRouter } from './setupUniswapRouter'
+import { setupUniswapV3Router } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
@@ -37,6 +39,8 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
   const eth = universe.nativeToken
   const commonTokens = universe.commonTokens
+  setupOdosPricing(universe)
+
   // Searcher depends on a way to price tokens
   // Below we set up the chainlink registry to price tokens
 
@@ -90,26 +94,31 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     'aaveV2',
     await setupAaveV2(universe, PROTOCOL_CONFIGS.aavev2)
   )
+
   // console.log(aaveV2.describe().join('\n'))
 
   universe.addIntegration(
     'aaveV3',
     await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
   )
+
   // console.log(aaveV3.describe().join('\n'))
 
-  const uniswap = universe.addIntegration(
-    'uniswapV3',
-    await setupUniswapRouter(universe)
-  )
+  try {
+    const router = await setupUniswapV3Router(universe)
+    const venue = await router.venue()
+    const uniswap = universe.addIntegration('uniswapV3', venue)
+    universe.addTradeVenue(uniswap)
+  } catch (e) {
+    console.log('Failed to load uniswapV3')
+    console.log(e)
+  }
 
   await universe.addSingleTokenPriceOracle({
     token: commonTokens.apxETH,
     oracleAddress: Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea'),
     priceToken: eth,
   })
-
-  universe.addTradeVenue(uniswap)
 
   // Set up RETH
   await setupRETH(universe, PROTOCOL_CONFIGS.rocketPool)
@@ -164,13 +173,15 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     commonTokens.USDC
   )
 
-  const depositToETHX = new (ETHTokenVaultDepositAction('ETHX'))(
+  const depositToETHX = new ETHTokenVaultDepositAction(
     universe,
     universe.commonTokens.ETHx,
     Address.from('0xcf5EA1b38380f6aF39068375516Daf40Ed70D299'),
-    1n
+    1n,
+    'ETHX'
   )
   universe.addAction(depositToETHX)
+  universe.mintableTokens.set(universe.commonTokens.ETHx, depositToETHX)
 
   const depositToBeefy = new BeefyDepositAction(
     universe,
@@ -207,16 +218,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
 
   universe.addAction(depositTosUSDe)
-
-  universe.tokenTradeSpecialCases.set(
-    universe.commonTokens.ETHx,
-    async (input: TokenQuantity, dest: Address) => {
-      if (input.token === universe.wrappedNativeToken) {
-        return await new SwapPlan(universe, [depositToETHX]).quote([input])
-      }
-      return null
-    }
-  )
 
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['mooConvexETH+'],
@@ -330,34 +331,31 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.commonTokens.sfrxeth,
     Promise.resolve(TokenType.OtherMintable)
   )
-  const curve = await CurveIntegration.load(universe, PROTOCOL_CONFIGS.curve)
-  universe.integrations.curve = curve
+  console.log('Loading curve')
+  try {
+    const curve = await CurveIntegration.load(universe, PROTOCOL_CONFIGS.curve)
+    universe.integrations.curve = curve
+    universe.addIntegration(
+      'convex',
+      await setupConvexStakingWrappers(universe, curve, PROTOCOL_CONFIGS.convex)
+    )
+  } catch (e) {
+    console.log(e)
+    console.log('Failed to load curve')
+  }
+  console.log('Setting up balancer')
+  try {
+    await setupBalancer(universe)
+  } catch (e) {
+    console.log(e)
+    console.log('Failed to load balancer')
+  }
 
-  universe.addIntegration(
-    'convex',
-    await setupConvexStakingWrappers(universe, curve, PROTOCOL_CONFIGS.convex)
-  )
+  universe.addSingleTokenPriceOracle({
+    token: universe.commonTokens.sUSD,
+    oracleAddress: Address.from('0xfF30586cD0F29eD462364C7e81375FC0C71219b1'),
+    priceToken: universe.usd,
+  })
 
   console.log('DONE')
-  // universe.tokenFromTradeSpecialCases.set(
-  //   commonTokens.pxETH,
-  //   async (input: TokenQuantity, output: Token) => {
-  //     if (output !== commonTokens.WETH) {
-  //       return null
-  //     }
-
-  //     try {
-  //       const out = await uniswap.router.swap(
-  //         AbortSignal.timeout(5000),
-  //         input,
-  //         output,
-  //         universe.config.defaultInternalTradeSlippage
-  //       )
-  //       return out
-  //     } catch (e) {
-  //       console.log(e)
-  //       return null
-  //     }
-  //   }
-  // )
 }

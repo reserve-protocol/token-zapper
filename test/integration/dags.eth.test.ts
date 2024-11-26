@@ -5,6 +5,7 @@ import { WebSocketProvider } from '@ethersproject/providers'
 import { makeCustomRouterSimulator } from '../../src.ts/configuration/ChainConfiguration'
 import { EthereumUniverse } from '../../src.ts/configuration/ethereum'
 import {
+  Address,
   createEnso,
   createKyberswap,
   createParaswap,
@@ -123,11 +124,6 @@ provider.on('debug', (log) => {
   if (!initialized) {
     return
   }
-  if (log.action === 'request' && log.request.method === 'eth_call') {
-    const { to, data } = log.request.params[0]
-
-    // console.log(to + ': ' + data.slice(0, 10))
-  }
 })
 
 beforeAll(async () => {
@@ -181,187 +177,21 @@ describe('dag builder', () => {
   })
 
   describe('Standard RToken zaps', () => {
-    // it('500 WETH => ETH+', async () => {
-    //   const dags = await new DagSearcher(universe).buildDag(
-    //     [universe.commonTokens.WETH.from(500.0)],
-    //     universe.rTokens['ETH+']
-    //   )
-    //   console.log(`Found ${dags.length} DAGs`)
-    //   for (const dag of dags.slice(0, 3)) {
-    //     console.log(dag.dag.toDot())
-    //     console.log(`Result ${dag.outputs.join(', ')}`)
-    //     console.log(dag.toDot())
-    //   }
-    // }, 30000)
-    // it('400 WETH => ETH+', async () => {
-    //   const dags = await new DagSearcher(universe).buildDag(
-    //     [universe.commonTokens.WETH.from(400.0)],
-    //     universe.rTokens['ETH+']
-    //   )
-    //   console.log(`Found ${dags.length} DAGs`)
-    //   for (const dag of dags.slice(0, 3)) {
-    //     console.log(dag.dag.toDot())
-    //     console.log(`Result ${dag.outputs.join(', ')}`)
-    //     console.log(dag.toDot())
-    //   }
-    // }, 30000)
-    // it('500 WETH => ETH+', async () => {
-    //   const dags = await new DagSearcher(universe).buildDag(
-    //     [universe.commonTokens.WETH.from(500.0)],
-    //     universe.rTokens['ETH+']
-    //   )
-    //   console.log(`Found ${dags.length} DAGs`)
-    //   for (const dag of dags.slice(0, 3)) {
-    //     console.log(dag.dag.toDot())
-    //     console.log(`Result ${dag.outputs.join(', ')}`)
-    //     console.log(dag.toDot())
-    //   }
-    // }, 30000)
-
-    // it('5 WETH => ETH+', async () => {
-    //   const dags = await new DagSearcher(universe).buildDag(
-    //     [universe.commonTokens.WETH.from(5.0)],
-    //     universe.rTokens['ETH+']
-    //   )
-    //   console.log(`Found ${dags.length} DAGs`)
-    //   for (const dag of dags.slice(0, 3)) {
-    //     console.log(dag.dag.toDot())
-    //     console.log(`Result ${dag.outputs.join(', ')}`)
-    //     console.log(dag.toDot())
-    //   }
-    // }, 30000)
-    it('250 WETH => ETH+', async () => {
-      const dags = await new DagSearcher(universe).buildDag(
-        [universe.commonTokens.WETH.from(250.0)],
+    it('1000 WETH => ETH+', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.WETH.from(1000.0)],
         universe.rTokens['ETH+']
       )
-      console.log(`Found ${dags.length} DAGs`)
-      for (const dag of dags.slice(0, 3)) {
-        console.log(dag.dag.toDot())
-        console.log(`Result ${dag.outputs.join(', ')}`)
-        console.log(dag.toDot())
-      }
-    }, 30000)
-
-    // it('100 WETH => ETH+', async () => {
-    //   const dags = await new DagSearcher(universe).buildDag(
-    //     [universe.commonTokens.WETH.from(100.0)],
-    //     universe.rTokens['ETH+']
-    //   )
-    //   console.log(`Found ${dags.length} DAGs`)
-    //   for (const dag of dags.slice(0, 3)) {
-    //     console.log(dag.dag.toDot())
-    //     console.log(`Result ${dag.outputs.join(', ')}`)
-    //     console.log(dag.toDot())
-    //   }
-    // }, 30000)
-    // it('1m USDC => eUSD', async () => {
-    //   const dags = await new DagSearcher(universe).buildDag(
-    //     [universe.commonTokens.USDC.from(1000000.0)],
-    //     universe.rTokens.eUSD
-    //   )
-    //   console.log(`Found ${dags.length} DAGs`)
-    //   for (const dag of dags.slice(0, 3)) {
-    //     console.log(dag.dag.toDot())
-    //     console.log(`Result ${dag.outputs.join(', ')}`)
-    //     console.log(dag.toDot())
-    //   }
-    // }, 30000)
-    // it('Standard RToken USDC => eUSD', async () => {
-    //   const dags = await new DagSearcher(universe).buildDag(
-    //     [universe.commonTokens.USDC.from(1_000_000.0)],
-    //     universe.rTokens.eUSD
-    //   )
-    //   console.log(`Found ${dags.length} DAGs`)
-    //   for (const dag of dags.slice(0, 3)) {
-    //     console.log(dag.dag.toDot())
-    //     console.log(`Result ${dag.outputs.join(', ')}`)
-    //     console.log(dag.toDot())
-    //   }
-    // it('Standard RToken WETH => dgnETH', async () => {
-    //   const dags = await new DagSearcher(universe).buildDag(
-    //     [universe.commonTokens.WETH.from(250.0)],
-    //     universe.rTokens.dgnETH
-    //   )
-    //   console.log(`Found ${dags.length} DAGs`)
-    //   for (const dag of dags.slice(0, 3)) {
-    //     console.log(dag.dag.toDot())
-    //     console.log(`Result ${dag.outputs.join(', ')}`)
-    //     console.log(dag.toDot())
-    //   }
-    // }, 30000)
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
   })
-
-  it('Can find a solution WETH, WSTETH, ETH+ETH-f', async () => {
-    const dags = await new DagSearcher(universe).buildDag(
-      [
-        universe.commonTokens.WETH.from(500.0),
-        universe.commonTokens.wsteth.from(500.0),
-      ],
-      universe.commonTokens['ETH+ETH-f']
-    )
-
-    console.log(`Found ${dags.length} DAGs`)
-    for (const dag of dags.slice(0, 1)) {
-      console.log(dag.dag.toDot())
-      console.log(`Result ${dag.outputs.join(', ')}`)
-      console.log(dag.toDot())
-    }
-  }, 60000)
-
-  it('Can find a solution LARGE WETH, RETH, WSTETH => ETH+ETH-f', async () => {
-    const dags = await new DagSearcher(universe).buildDag(
-      [
-        universe.commonTokens.WETH.from(1000.0),
-        universe.commonTokens.reth.from(500.0),
-        universe.commonTokens.wsteth.from(500.0),
-      ],
-      universe.commonTokens['ETH+ETH-f']
-    )
-
-    console.log(`Found ${dags.length} DAGs`)
-    for (const dag of dags) {
-      console.log(dag.dag.toDot())
-      console.log(`Result ${dag.outputs.join(', ')}`)
-      console.log(dag.toDot())
-    }
-  }, 60000)
-
-  it('Can find a solution SMALL WETH, RETH, WSTETH => ETH+ETH-f', async () => {
-    const dags = await new DagSearcher(universe).buildDag(
-      [
-        universe.commonTokens.WETH.from(10.0),
-        universe.commonTokens.reth.from(5.0),
-        universe.commonTokens.wsteth.from(5.0),
-      ],
-      universe.commonTokens['ETH+ETH-f']
-    )
-
-    console.log(`Found ${dags.length} DAGs`)
-    for (const dag of dags) {
-      console.log(dag.dag.toDot())
-      console.log(`Result ${dag.outputs.join(', ')}`)
-      console.log(dag.toDot())
-    }
-  }, 60000)
-
-  it('Can find a solution 2x USDC, USDT -> eUSD', async () => {
-    const searcher = new DagSearcher(universe)
-    const dags = await searcher.buildDag(
-      [
-        universe.commonTokens.USDC.from(1000000.0),
-        universe.commonTokens.USDT.from(500000.0),
-      ],
-      universe.rTokens.eUSD
-    )
-
-    console.log(`Found ${dags.length} DAGs`)
-    for (const dag of dags.slice(0, 1)) {
-      console.log(dag.dag.toDot())
-      console.log(`Result ${dag.outputs.join(', ')}`)
-      console.log(dag.toDot())
-    }
-  }, 60000)
 })
 
 afterAll(() => {

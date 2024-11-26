@@ -48,7 +48,6 @@ export const configuration = {
   makeConfig,
 }
 
-export { Searcher } from './searcher/Searcher'
 export { Universe } from './Universe'
 
 export { createKyberswap } from './aggregators/Kyberswap'

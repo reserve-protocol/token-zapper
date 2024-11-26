@@ -132,6 +132,22 @@ export const plannerUtils = {
     }
     return planner.add(uni.weirollZapperExec.sub(a, b), comment, name)!
   },
+  add: (
+    uni: Universe,
+    planner: gen.Planner,
+    a: gen.Value | bigint,
+    b: gen.Value | bigint,
+    comment: string,
+    name?: string
+  ) => {
+    if (a instanceof gen.LiteralValue && b instanceof gen.LiteralValue) {
+      return gen.encodeArg(
+        BigInt(a.value) + BigInt(b.value),
+        ParamType.from('uint256')
+      )
+    }
+    return planner.add(uni.weirollZapperExec.add(a, b), comment, name)!
+  },
   erc20: {
     transfer(
       universe: Universe,
@@ -195,6 +211,9 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
+  public async liquidity(): Promise<number> {
+    return Infinity
+  }
 
   get isTrade() {
     return false
@@ -311,6 +330,11 @@ export abstract class BaseAction {
   get address(): Address {
     return this._address
   }
+
+  public get is1to1() {
+    return this.inputToken.length === 1 && this.outputToken.length === 1
+  }
+
   constructor(
     public _address: Address,
     public readonly inputToken: Token[],
@@ -421,13 +445,6 @@ export abstract class BaseAction {
     )
   }
 
-  // TODO: This is sort of a hack for stETH as it's a mintable but not burnable token.
-  // But we need the burn Action to calculate the baskets correctly, but we don't want
-  // to have the token actually appear in paths.
-  public get addToGraph() {
-    return true
-  }
-
   public get outputSlippage() {
     return 0n
   }
@@ -485,9 +502,6 @@ class TradeEdgeAction extends BaseAction {
   get addressesInUse() {
     return this.current.addressesInUse
   }
-  get addToGraph() {
-    return this.current.addToGraph
-  }
 
   constructor(
     public readonly universe: Universe,
@@ -518,4 +532,41 @@ export const Action = (proto: string) => {
   }
 
   return ProtocolAction
+}
+
+export const findTradeSize = async (
+  action: BaseAction,
+  maxInput: TokenQuantity,
+  limitPrice: number,
+  eps: number = 1e-4,
+  iterations: number = 32
+) => {
+  if (!action.is1to1) {
+    throw new Error(`${action}: Unimplemented for non-1to1 trades`)
+  }
+  const liquidity = await action.liquidity()
+  if (!isFinite(liquidity)) {
+    return Infinity
+  }
+
+  let searchSpan = maxInput.scalarDiv(2n)
+  let input = maxInput
+  for (let i = 0; i < iterations; i++) {
+    const [outputAmount] = await action.quote([input])
+    const price = outputAmount.asNumber() / input.asNumber()
+
+    const diff = Math.abs(limitPrice - price)
+
+    if (diff < eps && price > limitPrice) {
+      break
+    }
+
+    if (price < limitPrice) {
+      input = input.sub(searchSpan)
+    } else {
+      input = input.add(searchSpan)
+    }
+    searchSpan = searchSpan.scalarDiv(2n)
+  }
+  return input.asNumber()
 }

@@ -120,7 +120,10 @@ class SFrxETHMint extends BaseFrxETH {
       [new Approval(frxeth, Address.from(vault.address))]
     )
     this.mintRate = universe.createCachedProducer(async () => {
-      return frxeth.from(await vault.callStatic.previewMint(frxeth.one.amount))
+      const rate = frxeth.from(
+        await vault.callStatic.previewDeposit(frxeth.one.amount)
+      )
+      return rate
     }, 12000)
   }
   get actionName() {
@@ -152,6 +155,7 @@ class SFrxETHMint extends BaseFrxETH {
 
   async quote([amountsIn]: TokenQuantity[]) {
     const r = await this.mintRate()
+
     return [r.mul(amountsIn).into(this.sfrxeth)]
   }
 }
@@ -182,7 +186,7 @@ class SFrxETHburn extends BaseFrxETH {
     }, 12000)
   }
   get actionName() {
-    return 'FrxETH.burn'
+    return 'SFrxETH.burn'
   }
 
   public get returnsOutput(): boolean {
@@ -240,6 +244,7 @@ export const setupFrxETH = async (
   universe.defineMintable(mintSfrxETH, burnSfrxETH, true)
 
   universe.addAction(mintFrxETH)
+  universe.mintableTokens.set(frxETH, mintFrxETH)
 
   const oracle = IFrxEthFraxOracle__factory.connect(
     config.frxethOracle,

@@ -371,8 +371,8 @@ const newtonD = (
     // D_prev: uint256 = D
     const D_prev = D
 
-    // K0: uint256 = (10**18 * N**2) * x[0] / D * x[1] / D
-    const K0 = (ONE * N ** 2n * x[0] * x[1]) / D
+    // K0: uint256 =  (10**18 * N_COINS**2) * x[0] / D * x[1] / D
+    const K0 = (((ONE * N ** 2n * x[0]) / D) * x[1]) / D
 
     // _g1k0: uint256 = gamma + 10**18
     let _g1k0 = gamma + ONE

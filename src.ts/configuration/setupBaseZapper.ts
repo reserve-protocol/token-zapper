@@ -8,7 +8,7 @@ import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
 import { setupCompoundV3 } from './setupCompV3'
 import { setupAaveV3 } from './setupAaveV3'
-import { setupUniswapRouter } from './setupUniswapRouter'
+import { setupUniswapV3Router } from './setupUniswapRouter'
 import { setupAerodromeRouter } from './setupAerodromeRouter'
 import { setupERC4626 } from './setupERC4626'
 import { createProtocolWithWrappers } from '../action/RewardableWrapper'
@@ -106,9 +106,8 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     priceToken: universe.usd,
   })
 
-  universe.addTradeVenue(
-    universe.addIntegration('uniswapV3', await setupUniswapRouter(universe))
-  )
+  const router = await setupUniswapV3Router(universe)
+  universe.addIntegration('uniswapV3', await router.venue())
 
   await setupAerodromeRouter(universe)
   const aerodromeWrappers = createProtocolWithWrappers(universe, 'aerodrome')

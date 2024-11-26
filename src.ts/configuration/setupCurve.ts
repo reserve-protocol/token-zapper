@@ -312,8 +312,6 @@ export class CurveIntegration {
       })
     )
 
-    const lpTokens = normalCurvePoolList.poolInst.map((i) => i.lpToken).flat()
-
     const specialCasePools = await convertPoolListIntoMaps(ngPoolList)
 
     const out = new CurveIntegration(

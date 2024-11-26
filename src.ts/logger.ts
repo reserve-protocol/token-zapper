@@ -1,4 +1,3 @@
-import { error } from "console";
 import winston from "winston";
 
 const meta: any = {

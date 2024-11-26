@@ -2,10 +2,22 @@ import { type TransactionRequest } from '@ethersproject/providers'
 import { BigNumber } from 'ethers'
 import { hexlify, hexZeroPad, resolveProperties } from 'ethers/lib/utils'
 import { type ZapERC20ParamsStruct } from '../contracts/contracts/Zapper.sol/Zapper'
-import { PricedTokenQuantity, type TokenQuantity } from '../entities/Token'
+import {
+  PricedTokenQuantity,
+  Token,
+  type TokenQuantity,
+} from '../entities/Token'
 import { Planner, printPlan } from '../tx-gen/Planner'
-import { type BaseSearcherResult } from './SearcherResult'
+import { Universe } from '../Universe'
 
+interface BaseSearcherResult {
+  universe: Universe
+  zapId: string
+  startTime: number
+  blockNumber: number
+
+  tokenPrices: Map<Token, PricedTokenQuantity>
+}
 class DustStats {
   private constructor(
     public readonly dust: PricedTokenQuantity[],
@@ -102,7 +114,13 @@ export class ZapTxStats {
     }
   ) {
     const [inputValue, outputValue, ...dustValue] = await Promise.all(
-      [input.input, input.output, ...input.dust].map((i) => result.priceQty(i))
+      [input.input, input.output, ...input.dust].map(async (i) => {
+        const price = await result.universe.fairPrice(i)
+        if (price == null) {
+          throw new Error('No price found for ' + i)
+        }
+        return new PricedTokenQuantity(i, price)
+      })
     )
 
     const totalValueUSD = dustValue.reduce(
@@ -272,7 +290,7 @@ export class ZapTransaction {
       state: {
         prices: {
           searcherPrices: Array.from(
-            this.searchResult.searcher.tokenPrices.entries()
+            this.searchResult.tokenPrices.entries()
           ).map(([k, v]) => ({
             token: k.serialize(),
             price: v.serialize(),

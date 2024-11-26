@@ -8,7 +8,12 @@ import { Approval } from '../base/Approval'
 
 import { DefaultMap } from '../base/DefaultMap'
 import { ChainId, ChainIds } from '../configuration/ReserveAddresses'
-import { ICurveRouter, ICurveRouter__factory } from '../contracts'
+import {
+  CurveRouterCall,
+  CurveRouterCall__factory,
+  ICurveRouter,
+  ICurveRouter__factory,
+} from '../contracts'
 import { Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
@@ -17,7 +22,11 @@ export class CurvePool {
   [Symbol.toStringTag] = 'CurvePool'
 
   public readonly addressesInUse = new Set<Address>()
+
+  public readonly liquidity: () => Promise<number>
+  public readonly balances: () => Promise<TokenQuantity[]>
   constructor(
+    public readonly universe: Universe,
     readonly address: Address,
     readonly lpToken: Token,
     readonly tokens: Token[],
@@ -26,6 +35,28 @@ export class CurvePool {
     readonly templateName: string
   ) {
     this.addressesInUse.add(address)
+
+    this.balances = universe.createCachedProducer(async () => {
+      const qtys = await Promise.all(
+        this.underlyingTokens.map(async (token) => {
+          return await this.universe.balanceOf(token, this.address)
+        })
+      )
+      return qtys
+    })
+
+    this.liquidity = universe.createCachedProducer(async () => {
+      const out = await this.balances()
+      const prices = await Promise.all(
+        out.map((i) => i.price().then((i) => i.asNumber()))
+      )
+
+      let sum = 0
+      for (let i = 0; i < prices.length; i++) {
+        sum += prices[i]
+      }
+      return sum
+    })
   }
 
   get hasEth() {
@@ -33,9 +64,6 @@ export class CurvePool {
   }
 
   public swapTypeUnderlying(i: number, j: number) {
-    const tokenIn = this.underlyingTokens[i]
-    const tokenOut = this.underlyingTokens[j]
-
     if (this.meta.isPlain || (this.meta.isCrypto && !this.meta.isMeta)) {
       return 1
     }
@@ -275,6 +303,11 @@ export class CurveSwap extends Action('Curve') {
   public get actionName() {
     return `swap`
   }
+
+  public async liquidity(): Promise<number> {
+    return await this.pool.liquidity()
+  }
+
   public toString() {
     return `${
       this.protocol
@@ -346,6 +379,13 @@ export class CurveSwap extends Action('Curve') {
         SwapParams,
         SwapParams
       ],
+      // pools: [
+      //   ethers.constants.AddressZero,
+      //   ethers.constants.AddressZero,
+      //   ethers.constants.AddressZero,
+      //   ethers.constants.AddressZero,
+      //   ethers.constants.AddressZero,
+      // ] as [string, string, string, string, string],
     }
   }
 
@@ -387,25 +427,43 @@ export class CurveSwap extends Action('Curve') {
     predicted: TokenQuantity[]
   ): Promise<Value[]> {
     const [output] = await this.quote(predicted)
-    const lib = this.gen.Contract.createContract(this.router)
+    const lib = this.gen.Contract.createLibrary(this.routerCall)
 
     const { route, swapParams } = this.routeParams()
-    let call = lib['exchange(address[11],uint256[5][5],uint256,uint256)'](
-      route,
-      swapParams,
-      input,
-      output.amount
+
+    // function exchangeNew(
+    //     uint256 amountIn,
+    //     bytes memory encodedRouterCall
+    // ) external returns (uint256) {
+    //   (
+    //     address[11] memory route,
+    //     uint256[5][5] memory swapParams,
+    //     uint256 expected,
+    //     address router
+    // ) = abi.decode(
+    //     encodedRouterCall,
+    //     (address[11], uint256[5][5], uint256, address)
+    // );
+    const encodedStaticData = ethers.utils.defaultAbiCoder.encode(
+      ['address[11]', 'uint256[5][5]', 'uint256', 'address'],
+      [route, swapParams, output.amount, this.router.address]
     )
-    if (this.inputToken[0] === this.universe.wrappedNativeToken) {
-      call = call.withValue(input)
-    }
-    const outValue = planner.add(call)
 
-    if (outValue == null) {
-      throw new Error('Failed to get output value')
-    }
+    console.log(route, swapParams, output.amount, this.router.address)
+    console.log(encodedStaticData)
+    console.log(this.routerCall.address)
 
-    return [outValue]
+    return [
+      planner.add(
+        lib.exchangeNew(input, encodedStaticData),
+        `Curve: Swap ${predicted.join(', ')} -> ${output} on pool ${
+          this.address
+        }`,
+        `crv_${this.address.toShortString()}_${this.inputToken.join(
+          '_'
+        )}_${this.outputToken.join('_')}`
+      )!,
+    ]
   }
 
   get isTrade() {
@@ -440,7 +498,8 @@ export class CurveSwap extends Action('Curve') {
     public readonly inputTokenIndex: number,
     public readonly outputTokenIndex: number,
     private readonly gasEstimate_: bigint,
-    private readonly router: ICurveRouter
+    private readonly router: ICurveRouter,
+    private readonly routerCall: CurveRouterCall
   ) {
     super(
       pool.address,
@@ -557,6 +616,7 @@ export const loadCurve = async (universe: Universe) => {
           const lpToken = await universe.getToken(Address.from(pool.lpToken))
 
           return new CurvePool(
+            universe,
             Address.from(pool.address),
             lpToken,
             tokens,
@@ -638,86 +698,96 @@ export const loadCurve = async (universe: Universe) => {
   const interestingTokens = new Set<Token>([
     ...universe.commonTokensInfo.tokens.values(),
     ...universe.rTokensInfo.tokens,
+    universe.wrappedNativeToken,
+    universe.nativeToken,
   ])
 
   const poolsAdded = new Set<Address>()
-  for (const pool of pools) {
-    if (poolsAdded.has(pool.address)) {
-      continue
-    }
-    poolsAdded.add(pool.address)
-    if (
-      pool.meta.data.name.toLowerCase().includes('test') ||
-      pool.meta.isLending ||
-      pool.meta.isFake
-    ) {
-      continue
-    }
-    try {
-      const poolTokens = [
-        ...new Set([...pool.underlyingTokens, ...pool.tokens]),
-      ]
-      let shouldAddToGraph =
-        poolTokens.filter((t) => interestingTokens.has(t)).length > 1
 
-      if (!shouldAddToGraph) {
-        continue
+  const routerCallInst = CurveRouterCall__factory.connect(
+    universe.config.addresses.curveRouterCall.address,
+    universe.provider
+  )
+
+  await Promise.all(
+    pools.map(async (pool) => {
+      if (poolsAdded.has(pool.address)) {
+        return
+      }
+      poolsAdded.add(pool.address)
+      if (
+        pool.meta.data.name.toLowerCase().includes('test') ||
+        pool.meta.isLending ||
+        pool.meta.isFake
+      ) {
+        return
       }
       try {
-        if (
-          pool.poolType < 10 &&
-          poolTokens.every((t) => interestingTokens.has(t))
-        ) {
-          await addLpToken(universe, pool)
-          getPoolByLPMap.set(pool.lpToken, pool)
+        const poolTokens = [
+          ...new Set([...pool.underlyingTokens, ...pool.tokens]),
+        ]
+        let shouldAddToGraph =
+          poolTokens.filter((t) => interestingTokens.has(t)).length > 1
+
+        if (!shouldAddToGraph) {
+          return
+        }
+        try {
+          if (
+            pool.poolType < 10 &&
+            poolTokens.every((t) => interestingTokens.has(t))
+          ) {
+            await addLpToken(universe, pool)
+            getPoolByLPMap.set(pool.lpToken, pool)
+          }
+        } catch (e) {
+          console.log(`Failed to add: ${pool}`)
+          shouldAddToGraph = false
+          return
+        }
+
+        for (const token0 of pool.underlyingTokens) {
+          curveGraph.get(token0).pools.push(pool)
+
+          for (const token1 of pool.underlyingTokens) {
+            if (!shouldAddToGraph) {
+              break
+            }
+            if (token0 === token1) {
+              continue
+            }
+            const swap01 = new CurveSwap(
+              universe,
+              pool,
+              pool.getTokenIndex(token0),
+              pool.getTokenIndex(token1),
+              500000n,
+              routerInst,
+              routerCallInst
+            )
+
+            const swap10 = new CurveSwap(
+              universe,
+              pool,
+              pool.getTokenIndex(token1),
+              pool.getTokenIndex(token0),
+              250000n,
+              routerInst,
+              routerCallInst
+            )
+
+            curveGraph.get(token0).edges.get(token1).push(swap01)
+            curveGraph.get(token1).edges.get(token0).push(swap10)
+
+            universe.addAction(swap01)
+            universe.addAction(swap10)
+          }
         }
       } catch (e) {
-        console.log(`Failed to add: ${pool}`)
-        shouldAddToGraph = false
-        continue
+        console.log(e)
       }
-
-      for (const token0 of pool.underlyingTokens) {
-        curveGraph.get(token0).pools.push(pool)
-
-        for (const token1 of pool.underlyingTokens) {
-          if (!shouldAddToGraph) {
-            break
-          }
-          if (token0 === token1) {
-            continue
-          }
-          const swap01 = new CurveSwap(
-            universe,
-            pool,
-            pool.getTokenIndex(token0),
-            pool.getTokenIndex(token1),
-            500000n,
-            routerInst
-          )
-
-          const swap10 = new CurveSwap(
-            universe,
-            pool,
-            pool.getTokenIndex(token1),
-            pool.getTokenIndex(token0),
-            250000n,
-            routerInst
-          )
-
-          curveGraph.get(token0).edges.get(token1).push(swap01)
-          curveGraph.get(token1).edges.get(token0).push(swap10)
-
-          universe.addAction(swap01)
-          universe.addAction(swap10)
-        }
-      }
-    } catch (e) {
-      console.log(e)
-    }
-  }
-
-  console.log('Curve loaded!!')
+    })
+  )
 
   return {
     routerAddress,

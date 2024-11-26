@@ -3,7 +3,7 @@ import { DeployFunction } from 'hardhat-deploy/types'
 import { ethers } from 'hardhat'
 
 const boosterAddress = '0xF403C135812408BFbE8713b5A23a04b3D48AAE31'
-const pids = [185]
+const pids = [125, 156, 185, 238, 292, 339, 368, 369, 387]
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts()

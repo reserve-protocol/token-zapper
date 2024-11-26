@@ -15,6 +15,9 @@ import { createProtocolWithWrappers } from '../action/RewardableWrapper'
 import { DysonDepositAction } from '../action/Dyson'
 import { IDysonVault__factory } from '../contracts'
 import { ONE } from '../action/Action'
+import { setupBeefy } from './setupBeefy'
+import { setupYearn } from './setupYearn'
+import { setupDyson } from './setupDyson'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   await loadBaseTokenList(universe)
@@ -176,38 +179,12 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
   await setupStargateWrapper(universe, PROTOCOL_CONFIGS.stargate.wrappers, {})
 
+  // Set up Beefy
+  await setupBeefy(universe, PROTOCOL_CONFIGS.beefy)
+
+  // Set up Yearn
+  await setupYearn(universe, PROTOCOL_CONFIGS.yearn)
+
   // Set up Dyson
-  const depositToDyson = new DysonDepositAction(
-    universe,
-    universe.commonTokens['vAMM-hyUSD/eUSD'],
-    universe.commonTokens['dyson-hyUSDeUSD']
-  )
-  universe.addAction(depositToDyson)
-
-  universe.defineYieldPositionZap(
-    universe.commonTokens['vAMM-hyUSD/eUSD'],
-    universe.rTokens.hyUSD
-  )
-
-  universe.addSingleTokenPriceSource({
-    token: universe.commonTokens['dyson-hyUSDeUSD'],
-    priceFn: async () => {
-      const lpPrice = await universe.fairPrice(
-        universe.commonTokens['vAMM-hyUSD/eUSD'].one
-      )
-
-      if (lpPrice == null) {
-        throw Error(
-          `Failed to price ${universe.commonTokens['dyson-hyUSDeUSD']}: Missing price for vAMM-hyUSD/eUSD`
-        )
-      }
-
-      const rate = await IDysonVault__factory.connect(
-        universe.commonTokens['dyson-hyUSDeUSD'].address.address,
-        universe.provider
-      ).callStatic.getPricePerFullShare()
-
-      return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
-    },
-  })
+  await setupDyson(universe, PROTOCOL_CONFIGS.dyson)
 }

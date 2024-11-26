@@ -10,4 +10,5 @@ interface IGaugeStakeDAO is IERC20 {
 interface IVaultStakeDAO {
     function deposit(address _recipient, uint256 _amount, bool _earn) external;
     function withdraw(uint256 _shares) external;
+    function token() external view returns (IERC20);
 }

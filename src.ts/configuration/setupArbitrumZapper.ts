@@ -4,6 +4,7 @@ import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
 import { ArbitrumUniverse, PROTOCOL_CONFIGS } from './arbitrum'
 import { loadArbitrumTokenList } from './loadArbitrumTokenList'
 import { setupAaveV3 } from './setupAaveV3'
+import { setupBeefy } from './setupBeefy'
 import { setupCompoundV3 } from './setupCompV3'
 import { setupERC4626 } from './setupERC4626'
 import { setupUniswapRouter } from './setupUniswapRouter'
@@ -129,4 +130,7 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
       return vault
     })
   )
+
+  // Set up Beefy
+  await setupBeefy(universe, PROTOCOL_CONFIGS.beefy)
 }

@@ -120,34 +120,30 @@ export class ConvexStakeAction extends ConvexBase {
 
 type ConvexConfig = {
   boosterAddress: string
-  pids: number[]
-  crvTokens: Record<string, string>
   pidToCrvTokens: Record<number, string>
 }
 
 export const setupConvex = async (universe: Universe, config: ConvexConfig) => {
-  const { boosterAddress, pids, crvTokens, pidToCrvTokens } = config
+  const { boosterAddress, pidToCrvTokens } = config
 
   const convexBooster = IBooster__factory.connect(
     boosterAddress,
     universe.provider
   )
 
-  for (const pid of pids) {
-    const info = await convexBooster.poolInfo(pid)
+  for (const [pid, crvTokenAddress] of Object.entries(pidToCrvTokens)) {
+    const info = await convexBooster.poolInfo(Number(pid))
 
     const lpToken = await universe.getToken(Address.from(info.lptoken))
     const cvxToken = await universe.getToken(Address.from(info.token))
-    const crvToken = await universe.getToken(
-      Address.from(crvTokens[pidToCrvTokens[pid]])
-    )
+    const crvToken = await universe.getToken(Address.from(crvTokenAddress))
 
     const depositAction = new ConvexDepositAction(
       universe,
       lpToken,
       cvxToken,
       Address.from(boosterAddress),
-      pid
+      Number(pid)
     )
 
     const stakeAction = new ConvexStakeAction(

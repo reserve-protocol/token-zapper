@@ -1,5 +1,3 @@
-import { ONE } from '../action/Action'
-import { BeefyDepositAction } from '../action/Beefy'
 import { setupConvex } from '../action/Convex'
 import { loadCompV2Deployment } from '../action/CTokens'
 import {
@@ -7,20 +5,14 @@ import {
   ETHTokenVaultDepositAction,
 } from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
-import { StakeDAODepositAction } from '../action/StakeDAO'
-import { YearnDepositAction } from '../action/Yearn'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
-import {
-  IBeefyVault__factory,
-  IGaugeStakeDAO__factory,
-  IVaultYearn__factory,
-} from '../contracts'
 import { TokenQuantity } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
+import { setupBeefy } from './setupBeefy'
 import { setupChainlinkRegistry } from './setupChainLink'
 import { setupCompoundV3 } from './setupCompV3'
 import { setupConcentrator } from './setupConcentrator'
@@ -30,8 +22,10 @@ import { setupERC4626 } from './setupERC4626'
 import { loadEthereumTokenList } from './setupEthereumTokenList'
 import { setupFrxETH } from './setupFrxETH'
 import { setupRETH } from './setupRETH'
+import { setupStakeDAO } from './setupStakeDAO'
 import { setupUniswapRouter } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
+import { setupYearn } from './setupYearn'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await universe.provider.getNetwork()
@@ -149,6 +143,15 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   // Set up Convex
   await setupConvex(universe, PROTOCOL_CONFIGS.convex)
 
+  // Set up Beefy
+  await setupBeefy(universe, PROTOCOL_CONFIGS.beefy)
+
+  // Set up StakeDAO
+  await setupStakeDAO(universe, PROTOCOL_CONFIGS.stakeDAO)
+
+  // Set up Yearn
+  await setupYearn(universe, PROTOCOL_CONFIGS.yearn)
+
   universe.addPreferredRTokenInputToken(
     universe.rTokens['ETH+'],
     commonTokens.WETH
@@ -187,33 +190,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.addAction(depositToETHX)
 
-  const depositToBeefy = new BeefyDepositAction(
-    universe,
-    commonTokens['ETH+ETH-f'],
-    commonTokens['mooConvexETH+']
-  )
-  universe.addAction(depositToBeefy)
-
-  const stakeDAOVault = await IGaugeStakeDAO__factory.connect(
-    commonTokens['sdETH+ETH-f'].address.address,
-    universe.provider
-  ).callStatic.vault()
-
-  const depositToStakeDAO = new StakeDAODepositAction(
-    universe,
-    commonTokens['ETH+ETH-f'],
-    commonTokens['sdETH+ETH-f'],
-    Address.from(stakeDAOVault)
-  )
-  universe.addAction(depositToStakeDAO)
-
-  const depositToYearn = new YearnDepositAction(
-    universe,
-    commonTokens['ETH+ETH-f'],
-    commonTokens['yvCurve-ETH+-f']
-  )
-  universe.addAction(depositToYearn)
-
   const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
     universe,
     universe.commonTokens.USDe,
@@ -235,64 +211,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       return null
     }
   )
-
-  universe.addSingleTokenPriceSource({
-    token: universe.commonTokens['mooConvexETH+'],
-    priceFn: async () => {
-      const lpPrice = await universe.fairPrice(
-        universe.commonTokens['ETH+ETH-f'].one
-      )
-
-      if (lpPrice == null) {
-        throw Error(
-          `Failed to price ${universe.commonTokens['mooConvexETH+']}: Missing price for ETH+ETH-f`
-        )
-      }
-
-      const rate = await IBeefyVault__factory.connect(
-        universe.commonTokens['mooConvexETH+'].address.address,
-        universe.provider
-      ).callStatic.getPricePerFullShare()
-
-      return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
-    },
-  })
-
-  universe.addSingleTokenPriceSource({
-    token: universe.commonTokens['sdETH+ETH-f'],
-    priceFn: async () => {
-      const lpPrice = await universe.fairPrice(
-        universe.commonTokens['ETH+ETH-f'].one
-      )
-      if (lpPrice == null) {
-        throw Error(
-          `Failed to price ${universe.commonTokens['sdETH+ETH-f']}: Missing price for ETH+ETH-f`
-        )
-      }
-      return lpPrice
-    },
-  })
-
-  universe.addSingleTokenPriceSource({
-    token: universe.commonTokens['yvCurve-ETH+-f'],
-    priceFn: async () => {
-      const lpPrice = await universe.fairPrice(
-        universe.commonTokens['ETH+ETH-f'].one
-      )
-
-      if (lpPrice == null) {
-        throw Error(
-          `Failed to price ${universe.commonTokens['yvCurve-ETH+-f']}: Missing price for ETH+ETH-f`
-        )
-      }
-      const rate = await IVaultYearn__factory.connect(
-        universe.commonTokens['yvCurve-ETH+-f'].address.address,
-        universe.provider
-      ).callStatic.pricePerShare()
-
-      return universe.usd.from((lpPrice.amount * rate.toBigInt()) / ONE)
-    },
-  })
 
   universe.addSingleTokenPriceOracle({
     token: universe.commonTokens.ETHx,

@@ -73,7 +73,8 @@ export const COMMON_TOKENS = {
   'sdETH+ETH-f': '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C', // StakeDAO
   'yvCurve-ETH+-f': '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581', // Yearn
   'consETHETH-f': '0x70528C2Bc8328837969c033b658D8207c64D8E02', // Concentrator
-  'cvxETH+ETH-f': '0xA6A97C02885b08ABb4bf6D742796081eC54540fe', // Convex
+  'cvxETH+ETH-f': '0xA6A97C02885b08ABb4bf6D742796081eC54540fe', // Convex deposit
+  'crvETH+ETH-f': '0x90D5B65Af52654A2B230244a61DD4Ce3CFa4835f', // Convex stake
 } as const
 
 export const RTOKENS = {
@@ -169,14 +170,17 @@ export const PROTOCOL_CONFIGS = {
       stkcvx3Crv: '0xee0ac49885719DBF5FC1CDAFD9c752127E009fFa',
     },
 
-    crvTokens: {
-      'crvETH+ETH-f': '0x90D5B65Af52654A2B230244a61DD4Ce3CFa4835f',
-    },
-
-    pids: [185],
-
+    // created from the 06_convexvirtualerc20s script
     pidToCrvTokens: {
-      185: 'crvETH+ETH-f',
+      125: '0x867a9cF57c36De171A036DE4A0A364f6990f6248',
+      156: '0x8cF0E5399fEdf0fA6918d8c8a5E54e94C28a7989',
+      185: '0x90D5B65Af52654A2B230244a61DD4Ce3CFa4835f',
+      238: '0xC51b8e7c50f83d4E77708ff0Fa931F655A07afb2',
+      292: '0x17E7c7379fa5c121C4898760EACFfA7D73A0D160',
+      339: '0xbB085D1387706CE477C4E752c76C38070aC226cB',
+      368: '0x575b2E325ad326F6cc11fc7e1DC389cbD96d2FF0',
+      369: '0x354278Eb9c0a8b1f4Ab8231c0C4741DA05a76206',
+      387: '0xeEDD1B2dc2F30E55Eaa3Db1CF70F1C409B86368e',
     },
   },
 
@@ -271,12 +275,34 @@ export const PROTOCOL_CONFIGS = {
     vault: '0x59866ec5650e9ba00c51f6d681762b48b0ada3de',
     pid: 14,
   },
+  beefy: {
+    vaults: [
+      '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0',
+      '0x1817CFfc44c78d5aED61420bF48Cc273E504B7BE',
+    ],
+  },
+  stakeDAO: {
+    gauges: [
+      '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C',
+      '0x41639ABcA04c22e80326A96C8fE2882C97BaEb6e',
+    ],
+  },
+  yearn: {
+    vaults: [
+      '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581',
+      '0xBfBC4acAE2ceC91A5bC80eCA1C9290F92959f7c3',
+      '0x961Ad224fedDFa468c81acB3A9Cc2cC4731809f4',
+    ],
+  },
 }
 
 const NEEDS_ZEROED_OUT_FIRST = {
   '0xdAC17F958D2ee523a2206206994597C13D831ec7': 'USDT',
   ...Object.fromEntries(
-    Object.entries(PROTOCOL_CONFIGS.convex.crvTokens).map(([k, v]) => [v, k])
+    Object.entries(PROTOCOL_CONFIGS.convex.pidToCrvTokens).map(([k, v]) => [
+      v,
+      k,
+    ])
   ),
 }
 

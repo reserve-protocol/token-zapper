@@ -44,9 +44,8 @@ export class RTokenDeployment {
       (await this.contracts.rToken.callStatic.basketsNeeded()).toBigInt()
     )
     const tokenClass = await this.universe.tokenClass.get(this.rToken)
-    const out = (baskets.amount * 10n ** 18n) / supply.amount
-    const mult = tokenClass.from(1.0)
-    return tokenClass.from(out).invert().mul(mult)
+    const out = (baskets.amount * tokenClass.scale) / supply.amount
+    return tokenClass.from(out).invert()
   }
   public readonly unitBasket: () => Promise<PricedTokenQuantity[]>
   public readonly maxIssueable: () => Promise<TokenQuantity>

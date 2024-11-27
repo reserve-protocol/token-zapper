@@ -22,6 +22,16 @@ export const optimiseTrades = async (
       })
     )
   }
+  if (maxInputs.every((i) => i === 0)) {
+    return {
+      inputs: tradeActions.map(() => 0),
+      output: 0,
+      input: 0,
+      price: 0,
+      unspent: input.asNumber(),
+      outputs: tradeActions.map(() => 0),
+    }
+  }
 
   const gasPrice = universe.gasPrice
   const gasToken = universe.nativeToken
@@ -44,7 +54,6 @@ export const optimiseTrades = async (
     const outputQty = output[0].asNumber()
     const outputValue = outputQty * outputTokenPrice
     const price = outputValue / (inputValue + gasFeeUSD)
-
     return {
       price,
       inputQty,
@@ -93,6 +102,8 @@ export const optimiseTrades = async (
     // Pick the best one in terms of output pr inputput - gas
     results.sort((l, r) => r.result.price - l.result.price)
     const best = results[0]
+    // console.log(`${best.state.action}: Best`)
+    // console.log(state.map((i) => i.input).join(', '))
     best.state.input = best.newInput
     best.state.output = best.result.outputQty
   }

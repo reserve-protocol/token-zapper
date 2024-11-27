@@ -30,9 +30,10 @@ enum SplitNodeType {
   Standard,
   Trades,
 }
-const previousResults = new DefaultMap<SplitNode, Map<number, OptimisedTrade>>(
-  () => new Map()
-)
+const previousResults = new DefaultMap<
+  SplitNode,
+  Map<number, Promise<number[]>>
+>(() => new Map())
 const RESOLUTION = 10
 export class DagBuilder {
   public startNode!: DagNode
@@ -480,8 +481,9 @@ export class DagBuilder {
       () => new DefaultMap<Token, Set<BaseAction>>(() => new Set())
     )
     const spentTrades = new Set<BaseAction>()
+    console.log(`Trades available: ${tradeActions.length}`)
     for (const act of tradeActions) {
-      console.log(`Trades available: ${act.toString()}`)
+      console.log(`  ${act.toString()}`)
       const input = act.inputToken[0]
       const output = act.outputToken[0]
       byTokens.get(input).get(output).add(act)
@@ -702,7 +704,7 @@ export class DagBuilder {
       objectiveFn: (i) => {
         const qtyOut = i.outputs[0].asNumber()
         const inputValue =
-          i.inputsValue + i.txFee.price.asNumber() + i.dustValue ** 2
+          i.inputsValue + i.txFee.price.asNumber() + i.dustValue
         const price = inputValue / qtyOut
         return -price
       },
@@ -722,6 +724,57 @@ export class DagBuilder {
     }
 
     return result
+  }
+
+  public async splitTradeInputIntoNewOutput(trades: BaseAction[]) {
+    const byTokens = new DefaultMap<Token, DefaultMap<Token, BaseAction[]>>(
+      () => new DefaultMap<Token, BaseAction[]>(() => [])
+    )
+    for (const trade of trades) {
+      byTokens.get(trade.inputToken[0]).get(trade.outputToken[0]).push(trade)
+    }
+
+    for (const [inputToken, outputTokenMap] of byTokens.entries()) {
+      for (const [outputToken, trades] of outputTokenMap.entries()) {
+        console.log(
+          `Splitting ${trades.length} trades for ${inputToken} -> ${outputToken}`
+        )
+        const tradeSplitNode = this.createSplitNode(
+          inputToken,
+          trades.map(() => 1 / trades.length)
+        )
+        const consumers = this.takeOpenSet(outputToken)
+        const consumersSplit = this.createSplitNode(
+          outputToken,
+          consumers.map(() => 1 / consumers.length)
+        )
+        for (const consumer of consumers) {
+          this.forward(consumersSplit, outputToken, consumer)
+        }
+
+        const tradeNodes: ActionNode[] = []
+        for (const trade of trades) {
+          const tradeNode = new ActionNode(
+            [[1, inputToken]],
+            new SwapPlan(this.universe, [trade]),
+            [[1, outputToken]]
+          )
+          tradeNodes.push(tradeNode)
+          this.forward(tradeSplitNode, inputToken, tradeNode)
+          this.forward(tradeNode, outputToken, consumersSplit)
+        }
+        this.splitNodeEdges.set(tradeSplitNode.splitNodeIndex, tradeNodes)
+        this.splitNodeTypes.set(
+          tradeSplitNode.splitNodeIndex,
+          SplitNodeType.Trades
+        )
+        const current = this.openTokenSet.get(inputToken) ?? []
+        current.push(tradeSplitNode)
+        this.openTokenSet.set(inputToken, current)
+      }
+    }
+
+    this.matchBalances()
   }
 
   public async evaluate(
@@ -945,56 +998,91 @@ export class DagBuilder {
     const index = Math.floor((inputQty - start) / step)
     const keyInRange = index * step + start
     const prev = previousResultsMap.get(keyInRange)
+    const currentSplits = this.splitNodes[node.splitNodeIndex]
     if (prev) {
+      const out = await prev
+      for (let i = 0; i < out.length; i++) {
+        currentSplits[i] = out[i]
+      }
       return
     }
-    const tradeNodes = this.splitNodeEdges.get(node.splitNodeIndex)
-    const currentSplits = this.splitNodes[node.splitNodeIndex]
-    const edges = this.edges.get(node).get(input.token)
+    previousResultsMap.set(
+      keyInRange,
+      new Promise(async (resolve) => {
+        const calc = async () => {
+          const tradeNodes = this.splitNodeEdges.get(node.splitNodeIndex)
+          const edges = this.edges.get(node).get(input.token)
 
-    const tradeIndices = tradeNodes.map((i) => edges.indexOf(i))
-    let excessDim = -1
-    for (let i = 0; i < edges.length; i++) {
-      const edge = edges[i]
-      if (!(edge instanceof ActionNode) || !tradeNodes.includes(edge)) {
-        excessDim = i
-        break
-      }
-    }
-    const actions = tradeNodes.map((i) => unwrapAction(i.actions.steps[0]))
+          const tradeIndices = tradeNodes.map((i) => edges.indexOf(i))
+          let excessDim = -1
+          for (let i = 0; i < edges.length; i++) {
+            const edge = edges[i]
+            if (!(edge instanceof ActionNode) || !tradeNodes.includes(edge)) {
+              excessDim = i
+              break
+            }
+          }
+          const actions = tradeNodes.map((i) =>
+            unwrapAction(i.actions.steps[0])
+          )
 
-    const floorPrice =
-      mintPrices.get(input.token)?.get(actions[0].outputToken[0]) ?? Infinity
+          let floorPrice =
+            mintPrices.get(input.token)?.get(actions[0].outputToken[0]) ??
+            Infinity
+          if (floorPrice === 0) {
+            floorPrice = Infinity
+          }
 
-    const out = await optimiseTrades(
-      this.universe,
-      input,
-      actions,
-      floorPrice,
-      10
+          console.log(`optimising ${node.dotNode()}`)
+          console.log(
+            `floorPrice: ${floorPrice} actions: ${actions.map(
+              (i) => i.address
+            )}`
+          )
+          const out = await optimiseTrades(
+            this.universe,
+            input,
+            actions,
+            floorPrice,
+            10
+          )
+
+          if (out.outputs.every((i) => i === 0)) {
+            console.log(`${node.dotNode()}: not using`)
+            currentSplits.fill(0)
+            currentSplits[excessDim] = 1
+            return
+          }
+
+          if (excessDim !== -1) {
+            currentSplits[excessDim] = 0
+          }
+          if (out.unspent !== 0) {
+            if (excessDim === -1) {
+              throw new Error(`${node.dotNode()}: No excess dimension found`)
+            }
+            currentSplits[excessDim] = out.unspent
+          }
+          for (let i = 0; i < tradeIndices.length; i++) {
+            const index = tradeIndices[i]
+            const v = out.inputs[i]
+
+            currentSplits[index] = v
+          }
+          normalizeVector(currentSplits)
+          if (currentSplits.some((i) => isNaN(i))) {
+            throw new Error(`${node.dotNode()}: NaN splits`)
+          }
+        }
+        try {
+          await calc()
+        } finally {
+          resolve(currentSplits)
+        }
+      })
     )
-    // console.log(`${node.dotNode()}: ${out.outputs.join(', ')}`)
-    previousResultsMap.set(keyInRange, out)
 
-    if (excessDim !== -1) {
-      currentSplits[excessDim] = 0
-    }
-    if (out.unspent !== 0) {
-      if (excessDim === -1) {
-        throw new Error(`${node.dotNode()}: No excess dimension found`)
-      }
-      currentSplits[excessDim] = out.unspent
-    }
-    for (let i = 0; i < tradeIndices.length; i++) {
-      const index = tradeIndices[i]
-      const v = out.inputs[i]
-
-      currentSplits[index] = v
-    }
-    normalizeVector(currentSplits)
-    if (currentSplits.some((i) => isNaN(i))) {
-      throw new Error(`${node.dotNode()}: NaN splits`)
-    }
+    await previousResultsMap.get(keyInRange)!
   }
 
   private async derivative(
@@ -1354,6 +1442,7 @@ export class DagBuilder {
       throw new Error('Cannot optimise DAG, DAG is not constructed')
     }
     const copies: { dag: DagBuilder; splitIndex: number; dim: number }[] = []
+    let splitNodes = 0
     for (let i = 0; i < this.splitNodes.length; i++) {
       if (this.splitNodes[i].length === 0) {
         continue
@@ -1361,11 +1450,16 @@ export class DagBuilder {
       if (this.splitNodeTypes.get(i) !== SplitNodeType.Standard) {
         continue
       }
+      splitNodes += 1
       for (let j = 0; j < this.splitNodes[i].length; j++) {
         const dag = this.clone()
         copies.push({ dag, splitIndex: i, dim: j })
       }
     }
+
+    console.log(
+      `Optimising ${splitNodes} nodes with ${copies.length} total variables`
+    )
 
     let output = await this.evaluate(this.config.userInput, mintPrices)
     const initialOutput = output
@@ -1381,7 +1475,12 @@ export class DagBuilder {
     let derivative = this.splitNodes.map((vect) => vect.map(() => 0))
 
     let bestSoFar = {
-      output: output.outputsValue,
+      output: 0,
+      out: output,
+    }
+
+    let bestSoFarObjective = {
+      output: currentObjectiveValue,
       out: output,
     }
 
@@ -1396,7 +1495,7 @@ export class DagBuilder {
         opts.epsilon
       )
 
-      const learningRate = opts.learningRate(iteration)
+      let learningRate = opts.learningRate(iteration)
       let noChange = 0
 
       for (let step = 0; step < 10; step++) {
@@ -1417,11 +1516,12 @@ export class DagBuilder {
           }
           normalizeVector(this.splitNodes[i])
         }
+        learningRate *= 0.9
         const newOut = await this.evaluate(this.config.userInput, mintPrices)
 
         const newObjValue = opts.objectiveFn(newOut)
 
-        if (newObjValue === bestSoFar.output) {
+        if (newObjValue === bestSoFarObjective.output) {
           noChange += 1
         } else {
           noChange = 0
@@ -1432,19 +1532,25 @@ export class DagBuilder {
         }
 
         const worseResult = newObjValue < currentObjectiveValue
+        if (newObjValue > bestSoFarObjective.output) {
+          bestSoFarObjective = {
+            output: currentObjectiveValue,
+            out: newOut.clone(),
+          }
+          worseCount = 0
+        }
+        console.log(
+          `iteration ${iteration}: output=${newOut.outputs.join(
+            ', '
+          )}, dust=${newOut.dust.join(
+            ', '
+          )}, txFee=$ ${newOut.txFee.price.asNumber()}`
+        )
         if (newOut.outputsValue > bestSoFar.output) {
-          console.log(
-            `iteration ${iteration}: output=${newOut.outputs.join(
-              ', '
-            )}, dust=${newOut.dust.join(
-              ', '
-            )}, txFee=$ ${newOut.txFee.price.asNumber()}`
-          )
           bestSoFar = {
             output: newOut.outputsValue,
             out: newOut.clone(),
           }
-          worseCount = 0
         }
 
         output = newOut
@@ -1460,8 +1566,8 @@ export class DagBuilder {
         break
       }
       if (worseCount > opts.resetOnWorse) {
-        copyVectors(bestSoFar.out.dag.splitNodes, this.splitNodes)
-        currentObjectiveValue = bestSoFar.output
+        copyVectors(bestSoFarObjective.out.dag.splitNodes, this.splitNodes)
+        currentObjectiveValue = bestSoFarObjective.output
         worseCount = 0
       }
     }

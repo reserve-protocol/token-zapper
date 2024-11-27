@@ -121,7 +121,7 @@ const log10 = (x: bigint) => {
   }
   return BigInt(out - 1 <= 0 ? 1 : out - 1)
 }
-const RESOLUTION = 10n
+const RESOLUTION = 20n
 export class WrappedAction extends BaseAction {
   private readonly cachedResults: BlockCache<bigint, TokenQuantity[]>
   private readonly innerCache = new Map<bigint, Promise<TokenQuantity[]>>()

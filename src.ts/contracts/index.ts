@@ -104,6 +104,8 @@ export type { IRewardStaking } from "./contracts/Convex.sol/IRewardStaking";
 export { IRewardStaking__factory } from "./factories/contracts/Convex.sol/IRewardStaking__factory";
 export type { ICurveStableSwapNG } from "./contracts/CurveStableSwapNG.sol/ICurveStableSwapNG";
 export { ICurveStableSwapNG__factory } from "./factories/contracts/CurveStableSwapNG.sol/ICurveStableSwapNG__factory";
+export type { IDssLitePsm } from "./contracts/DAI.sol/IDssLitePsm";
+export { IDssLitePsm__factory } from "./factories/contracts/DAI.sol/IDssLitePsm__factory";
 export type { EnsoRouter } from "./contracts/EnsoRouter";
 export { EnsoRouter__factory } from "./factories/contracts/EnsoRouter__factory";
 export type { IAsset } from "./contracts/IAssetRegistry.sol/IAsset";

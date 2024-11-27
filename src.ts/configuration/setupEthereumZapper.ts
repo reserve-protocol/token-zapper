@@ -2,6 +2,7 @@ import { ONE } from '../action/Action'
 import { setupBalancer } from '../action/Balancer'
 import { BeefyDepositAction } from '../action/Beefy'
 import { loadCompV2Deployment } from '../action/CTokens'
+import { DssLitePsm } from '../action/DssLitePsm'
 import {
   ERC4626DepositAction,
   ETHTokenVaultDepositAction,
@@ -171,6 +172,20 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.addPreferredRTokenInputToken(
     universe.rTokens.hyUSD,
     commonTokens.USDC
+  )
+
+  const daiMint = new DssLitePsm(
+    universe,
+    Address.from('0xf6e72db5454dd049d0788e411b06cfaf16853042'),
+    universe.commonTokens.USDC,
+    universe.commonTokens.DAI,
+    async (input) => input * 1000000000000n
+  )
+
+  universe.mintableTokens.set(universe.commonTokens.DAI, daiMint)
+  universe.addAction(daiMint)
+  universe.mintRateProviders.set(universe.commonTokens.DAI, () =>
+    Promise.resolve(universe.commonTokens.USDC.one)
   )
 
   const depositToETHX = new ETHTokenVaultDepositAction(

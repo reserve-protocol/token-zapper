@@ -107,6 +107,12 @@ export class TxGen {
   }
 
   public async generate(signer: Address) {
+    console.log(`Generating tx for\n${this.dag.toDot()}`)
+    console.log(
+      `Expected output: ${this.dag.outputs.join(
+        ', '
+      )} dust=${this.dag.dust.join(', ')}`
+    )
     const emitIdContract = Contract.createLibrary(
       EmitId__factory.connect(
         this.universe.config.addresses.emitId.address,

@@ -17,6 +17,7 @@ import {
 import { Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
+import { BlockCache } from '../base/BlockBasedCache'
 
 export class CurvePool {
   [Symbol.toStringTag] = 'CurvePool'
@@ -504,22 +505,12 @@ export class CurveSwap extends Action('Curve') {
   get dependsOnRpc() {
     return true
   }
-
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const { route, swapParams } = this.routeParams()
-    try {
-      const out = await this.router.callStatic[
-        'get_dy(address[11],uint256[5][5],uint256)'
-      ](route, swapParams, amountIn.amount)
-      return [this.outputToken[0].from(out)]
-    } catch (e) {
-      // console.log('Failed with')
-      // console.log(route)
-      // console.log(swapParams)
-      throw e
-    }
+    const outputQty = await this.quoteCache.get(amountIn.amount)
+    return [outputQty]
   }
 
+  private quoteCache: BlockCache<bigint, TokenQuantity>
   public gasEstimate() {
     return this.gasEstimate_
   }
@@ -545,6 +536,19 @@ export class CurveSwap extends Action('Curve') {
         ),
       ]
     )
+    this.quoteCache = this.universe.createCache(async (amount: bigint) => {
+      const { route, swapParams } = this.routeParams()
+      const out = await this.router.callStatic[
+        'get_dy(address[11],uint256[5][5],uint256)'
+      ](route, swapParams, amount)
+
+      const outputQty = this.outputToken[0].from(out)
+
+      console.log(
+        `${this}: ${this.inputToken[0].from(amount)} -> ${outputQty}`
+      )
+      return outputQty
+    })
   }
 }
 
@@ -750,7 +754,9 @@ export const loadCurve = async (universe: Universe) => {
           ...new Set([...pool.underlyingTokens, ...pool.tokens]),
         ]
         let shouldAddToGraph =
-          poolTokens.filter((t) => interestingTokens.has(t)).length > 1
+          poolTokens.every((t) => interestingTokens.has(t)) ||
+          poolTokens.filter((t) => interestingTokens.has(t)).length >=
+            poolTokens.length - 1
 
         if (!shouldAddToGraph) {
           return

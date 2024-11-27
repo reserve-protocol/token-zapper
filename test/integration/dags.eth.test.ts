@@ -177,11 +177,70 @@ describe('dag builder', () => {
   })
 
   describe('Standard RToken zaps', () => {
+    it('10 WETH => ETH+', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
+        [universe.commonTokens.WETH.from(10.0)],
+        universe.rTokens['ETH+']
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
     it('1000 WETH => ETH+', async () => {
       const dag = await new DagSearcher(universe).buildDag(
         Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
         [universe.commonTokens.WETH.from(1000.0)],
         universe.rTokens['ETH+']
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('3.000.000 USDC => eUSD', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
+        [universe.commonTokens.USDC.from(3_000_000.0)],
+        universe.rTokens['eUSD']
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('10.000 USDC => eUSD', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
+        [universe.commonTokens.USDC.from(10_000.0)],
+        universe.rTokens['eUSD']
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('3.000.000 USDC => USD3', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
+        [universe.commonTokens.USDC.from(3_000_000.0)],
+        universe.rTokens['USD3']
       )
       console.log(dag.dag.toDot())
       console.log(

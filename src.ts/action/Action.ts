@@ -549,9 +549,13 @@ export const findTradeSize = async (
     return Infinity
   }
 
+  const inputTokenPrice = (await action.inputToken[0].price).asNumber()
   let searchSpan = maxInput.scalarDiv(2n)
   let input = maxInput
   for (let i = 0; i < iterations; i++) {
+    if (input.asNumber() * inputTokenPrice < 1) {
+      return 0
+    }
     const [outputAmount] = await action.quote([input])
     const price = outputAmount.asNumber() / input.asNumber()
 

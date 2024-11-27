@@ -375,21 +375,37 @@ class UniswapV3Swap extends Action('UniswapV3') {
       predictedInput.amount
     )
 
-    const minOut =
-      amountOut.amount - (amountOut.amount * this.outputSlippage) / FEE_SCALE
+    const minOut = amountOut.amount - amountOut.amount / 20n
     const out = planner.add(
       this.context.weirollRouterCall.exactInputSingle(
         input,
         minOut,
         this.context.config.router.address,
+        // address tokenIn;
+        // address tokenOut;
+        // uint24 fee;
+        // address recipient;
+        // uint256 amountIn;
+        // uint256 amountOutMinimum;
+        // uint160 sqrtPriceLimitX96;
         ethers.utils.defaultAbiCoder.encode(
-          ['address', 'address', 'uint256', 'uint24', 'uint160'],
+          [
+            'address',
+            'address',
+            'uint24',
+            'address',
+            'uint256',
+            'uint256',
+            'uint160',
+          ],
           [
             this.tokenIn.address.address,
             this.tokenOut.address.address,
-            predictedInput.amount,
             this.pool.fee,
-            sqrtPriceX96After,
+            this.universe.execAddress.address,
+            predictedInput.amount,
+            minOut,
+            0n,
           ]
         )
       ),

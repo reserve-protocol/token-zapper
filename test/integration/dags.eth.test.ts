@@ -137,9 +137,9 @@ beforeAll(async () => {
         maxSearchTimeMs: 60000,
       },
       async (uni) => {
-        uni.addTradeVenue(createKyberswap('Kyber', uni))
-        uni.addTradeVenue(createParaswap('paraswap', uni))
-        uni.addTradeVenue(createEnso('enso', uni, 1))
+        // uni.addTradeVenue(createKyberswap('Kyber', uni))
+        // uni.addTradeVenue(createParaswap('paraswap', uni))
+        // uni.addTradeVenue(createEnso('enso', uni, 1))
 
         await setupEthereumZapper(uni)
       },
@@ -179,7 +179,7 @@ describe('dag builder', () => {
   describe('Standard RToken zaps', () => {
     it('1000 WETH => ETH+', async () => {
       const dag = await new DagSearcher(universe).buildDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
         [universe.commonTokens.WETH.from(1000.0)],
         universe.rTokens['ETH+']
       )

@@ -26,9 +26,7 @@ import type {
 
 export interface ICurveRouterInterface extends utils.Interface {
   functions: {
-    "exchange(address[11],uint256[5][5],uint256,uint256,address[5],uint256)": FunctionFragment;
     "exchange(address[11],uint256[5][5],uint256,uint256)": FunctionFragment;
-    "exchange(address[11],uint256[5][5],uint256,uint256,address[5])": FunctionFragment;
     "exchange_multiple(address[9],uint256[3][4],uint256,uint256,address[4])": FunctionFragment;
     "get_dy(address[11],uint256[5][5],uint256,address[5])": FunctionFragment;
     "get_dy(address[11],uint256[5][5],uint256)": FunctionFragment;
@@ -36,69 +34,14 @@ export interface ICurveRouterInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "exchange(address[11],uint256[5][5],uint256,uint256,address[5],uint256)"
-      | "exchange(address[11],uint256[5][5],uint256,uint256)"
-      | "exchange(address[11],uint256[5][5],uint256,uint256,address[5])"
+      | "exchange"
       | "exchange_multiple"
       | "get_dy(address[11],uint256[5][5],uint256,address[5])"
       | "get_dy(address[11],uint256[5][5],uint256)"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "exchange(address[11],uint256[5][5],uint256,uint256,address[5],uint256)",
-    values: [
-      PromiseOrValue<string>[],
-      [
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ]
-      ],
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      [
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-      ],
-      PromiseOrValue<BigNumberish>
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "exchange(address[11],uint256[5][5],uint256,uint256)",
+    functionFragment: "exchange",
     values: [
       PromiseOrValue<string>[],
       [
@@ -140,58 +83,6 @@ export interface ICurveRouterInterface extends utils.Interface {
       ],
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "exchange(address[11],uint256[5][5],uint256,uint256,address[5])",
-    values: [
-      PromiseOrValue<string>[],
-      [
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ]
-      ],
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      [
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-      ]
     ]
   ): string;
   encodeFunctionData(
@@ -326,18 +217,7 @@ export interface ICurveRouterInterface extends utils.Interface {
     ]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "exchange(address[11],uint256[5][5],uint256,uint256,address[5],uint256)",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "exchange(address[11],uint256[5][5],uint256,uint256)",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "exchange(address[11],uint256[5][5],uint256,uint256,address[5])",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "exchange", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "exchange_multiple",
     data: BytesLike
@@ -381,7 +261,7 @@ export interface ICurveRouter extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    "exchange(address[11],uint256[5][5],uint256,uint256,address[5],uint256)"(
+    exchange(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -422,109 +302,6 @@ export interface ICurveRouter extends BaseContract {
       ],
       amount: PromiseOrValue<BigNumberish>,
       expected: PromiseOrValue<BigNumberish>,
-      pools: [
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-      ],
-      minAmount: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    "exchange(address[11],uint256[5][5],uint256,uint256)"(
-      route: PromiseOrValue<string>[],
-      swapParams: [
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ]
-      ],
-      amount: PromiseOrValue<BigNumberish>,
-      expected: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    "exchange(address[11],uint256[5][5],uint256,uint256,address[5])"(
-      route: PromiseOrValue<string>[],
-      swapParams: [
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ]
-      ],
-      amount: PromiseOrValue<BigNumberish>,
-      expected: PromiseOrValue<BigNumberish>,
-      pools: [
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-      ],
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -657,7 +434,7 @@ export interface ICurveRouter extends BaseContract {
     ): Promise<[BigNumber]>;
   };
 
-  "exchange(address[11],uint256[5][5],uint256,uint256,address[5],uint256)"(
+  exchange(
     route: PromiseOrValue<string>[],
     swapParams: [
       [
@@ -698,109 +475,6 @@ export interface ICurveRouter extends BaseContract {
     ],
     amount: PromiseOrValue<BigNumberish>,
     expected: PromiseOrValue<BigNumberish>,
-    pools: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>
-    ],
-    minAmount: PromiseOrValue<BigNumberish>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  "exchange(address[11],uint256[5][5],uint256,uint256)"(
-    route: PromiseOrValue<string>[],
-    swapParams: [
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ]
-    ],
-    amount: PromiseOrValue<BigNumberish>,
-    expected: PromiseOrValue<BigNumberish>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  "exchange(address[11],uint256[5][5],uint256,uint256,address[5])"(
-    route: PromiseOrValue<string>[],
-    swapParams: [
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ]
-    ],
-    amount: PromiseOrValue<BigNumberish>,
-    expected: PromiseOrValue<BigNumberish>,
-    pools: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>
-    ],
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -933,7 +607,7 @@ export interface ICurveRouter extends BaseContract {
   ): Promise<BigNumber>;
 
   callStatic: {
-    "exchange(address[11],uint256[5][5],uint256,uint256,address[5],uint256)"(
+    exchange(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -974,109 +648,6 @@ export interface ICurveRouter extends BaseContract {
       ],
       amount: PromiseOrValue<BigNumberish>,
       expected: PromiseOrValue<BigNumberish>,
-      pools: [
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-      ],
-      minAmount: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    "exchange(address[11],uint256[5][5],uint256,uint256)"(
-      route: PromiseOrValue<string>[],
-      swapParams: [
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ]
-      ],
-      amount: PromiseOrValue<BigNumberish>,
-      expected: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    "exchange(address[11],uint256[5][5],uint256,uint256,address[5])"(
-      route: PromiseOrValue<string>[],
-      swapParams: [
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ]
-      ],
-      amount: PromiseOrValue<BigNumberish>,
-      expected: PromiseOrValue<BigNumberish>,
-      pools: [
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-      ],
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1212,7 +783,7 @@ export interface ICurveRouter extends BaseContract {
   filters: {};
 
   estimateGas: {
-    "exchange(address[11],uint256[5][5],uint256,uint256,address[5],uint256)"(
+    exchange(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -1253,109 +824,6 @@ export interface ICurveRouter extends BaseContract {
       ],
       amount: PromiseOrValue<BigNumberish>,
       expected: PromiseOrValue<BigNumberish>,
-      pools: [
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-      ],
-      minAmount: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    "exchange(address[11],uint256[5][5],uint256,uint256)"(
-      route: PromiseOrValue<string>[],
-      swapParams: [
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ]
-      ],
-      amount: PromiseOrValue<BigNumberish>,
-      expected: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    "exchange(address[11],uint256[5][5],uint256,uint256,address[5])"(
-      route: PromiseOrValue<string>[],
-      swapParams: [
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ]
-      ],
-      amount: PromiseOrValue<BigNumberish>,
-      expected: PromiseOrValue<BigNumberish>,
-      pools: [
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-      ],
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1489,7 +957,7 @@ export interface ICurveRouter extends BaseContract {
   };
 
   populateTransaction: {
-    "exchange(address[11],uint256[5][5],uint256,uint256,address[5],uint256)"(
+    exchange(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -1530,109 +998,6 @@ export interface ICurveRouter extends BaseContract {
       ],
       amount: PromiseOrValue<BigNumberish>,
       expected: PromiseOrValue<BigNumberish>,
-      pools: [
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-      ],
-      minAmount: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    "exchange(address[11],uint256[5][5],uint256,uint256)"(
-      route: PromiseOrValue<string>[],
-      swapParams: [
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ]
-      ],
-      amount: PromiseOrValue<BigNumberish>,
-      expected: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    "exchange(address[11],uint256[5][5],uint256,uint256,address[5])"(
-      route: PromiseOrValue<string>[],
-      swapParams: [
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ],
-        [
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>,
-          PromiseOrValue<BigNumberish>
-        ]
-      ],
-      amount: PromiseOrValue<BigNumberish>,
-      expected: PromiseOrValue<BigNumberish>,
-      pools: [
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-      ],
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

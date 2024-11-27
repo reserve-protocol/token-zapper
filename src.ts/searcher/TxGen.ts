@@ -1,8 +1,10 @@
 import { defaultAbiCoder, ParamType } from '@ethersproject/abi'
 import { randomBytes } from 'crypto'
-import { hexlify } from 'ethers/lib/utils'
+import { hexDataSlice, hexlify } from 'ethers/lib/utils'
 import { plannerUtils } from '../action/Action'
+import { Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
+import { EmitId__factory, Zapper__factory } from '../contracts'
 import { Token, TokenQuantity } from '../entities/Token'
 import {
   Contract,
@@ -15,10 +17,81 @@ import { DagNode, DagPlanContext, EvaluatedDag } from './Dag'
 import {
   encodeCalldata,
   encodeProgramToZapERC20Params,
-  encodeTx,
 } from './ToTransactionArgs'
-import { EmitId__factory } from '../contracts'
-import { Address } from '../base/Address'
+import { Universe } from '../Universe'
+import { SimulateParams } from '../configuration/ZapSimulation'
+import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
+import { DagBuilder } from './DagBuilder'
+const iface = Zapper__factory.createInterface()
+const simulateAndParse = async (
+  universe: Universe,
+  simulationPayload: SimulateParams,
+  outputToken: Token,
+  dustTokens: Token[]
+) => {
+  const simulation = await universe.simulateZapFn(simulationPayload, universe)
+  try {
+    const parsed = iface.decodeFunctionResult(
+      'zapERC20',
+      simulation
+    )[0] as ZapperOutputStructOutput
+
+    return {
+      txFee: universe.nativeToken.from(
+        parsed.gasUsed.toBigInt() * universe.gasPrice
+      ),
+      amountOut: outputToken.from(parsed.amountOut),
+      dust: parsed.dust.map((d, index) => dustTokens[index].from(d)),
+    }
+  } catch (e) {
+    const [cmdIndex, target, message] = defaultAbiCoder.decode(
+      ['uint256', 'address', 'string'],
+      hexDataSlice(simulation, 4)
+    )
+    console.log(
+      `ExecutionFailed: cmdIndex=${cmdIndex}, target=${target}, message=${message}`
+    )
+    throw e
+  }
+}
+
+const evaluateProgram = async (
+  universe: Universe,
+  planner: Planner,
+  innerDag: DagBuilder,
+  dustTokens: Token[],
+  signer: Address,
+  minOutput: TokenQuantity
+) => {
+  const tx = encodeProgramToZapERC20Params(
+    planner,
+    innerDag.config.userInput[0],
+    innerDag.config.userOutput[0].token.wei,
+    [...dustTokens]
+  )
+  const data = encodeCalldata(tx)
+  let value = 0n
+  if (innerDag.config.userInput[0].token === universe.nativeToken) {
+    value = innerDag.config.userInput[0].amount
+  }
+  const simulationPayload = {
+    to: universe.config.addresses.zapperAddress.address,
+    from: signer.address,
+    data,
+    value,
+    setup: {
+      inputTokenAddress: innerDag.config.userInput[0].token.address.address,
+      userBalanceAndApprovalRequirements: innerDag.config.userInput[0].amount,
+    },
+  }
+
+  return await simulateAndParse(
+    universe,
+    simulationPayload,
+    innerDag.config.userOutput[0].token,
+    dustTokens
+  )
+}
 
 export class TxGen {
   private readonly zapIdBytes = randomBytes(32)
@@ -42,6 +115,7 @@ export class TxGen {
     )
     const nodes = this.dag.evaluated
     const planner = new Planner()
+    planner.add(emitIdContract.emitId(this.zapId))
 
     const allTokens = new Set<Token>()
     const innerDag = this.dag.dag
@@ -53,7 +127,7 @@ export class TxGen {
       }
     }
 
-    const ctx = new DagPlanContext(this.dag, planner, this.universe.execAddress)
+    const ctx = new DagPlanContext(this.dag, planner, signer, signer)
 
     const nodeInputs = new DefaultMap<DagNode, DefaultMap<Token, Value[]>>(
       () => new DefaultMap<Token, Value[]>(() => [])
@@ -110,74 +184,64 @@ export class TxGen {
         nodeInputs.get(node).get(token).push(value)
       }
     }
+    const outputBal = plannerUtils.erc20.balanceOf(
+      this.universe,
+      planner,
+      innerDag.config.userOutput[0].token,
+      this.universe.execAddress
+    )
+    plannerUtils.erc20.transfer(
+      this.universe,
+      planner,
+      outputBal,
+      innerDag.config.userOutput[0].token,
+      signer
+    )
+
+    const dustTokens = [...allTokens].filter(
+      (i) => !innerDag.config.outputTokenSet.has(i)
+    )
+    const testSimulation = await evaluateProgram(
+      this.universe,
+      planner,
+      innerDag,
+      dustTokens,
+      signer,
+      innerDag.config.userOutput[0].token.from(1n)
+    )
+
+    const minOutputWithSlippage = innerDag.config.userOutput[0].token.from(
+      testSimulation.amountOut.amount - testSimulation.amountOut.amount / 10000n
+    )
+
     // Add all input tokens to the set of tokens to transfer back to the user
-    for (const token of innerDag.config.inputTokenSet) {
-      tokensToTransferBackToUser.add(token)
-    }
-    for (const token of tokensToTransferBackToUser) {
+
+    for (const token of dustTokens) {
       let dest = ctx.outputRecipient
       if (!innerDag.config.outputTokenSet.has(token)) {
         dest = ctx.dustRecipient
       }
-      plannerUtils.erc20.transfer(
+      const bal = plannerUtils.erc20.balanceOf(
         this.universe,
         planner,
-        ctx.executionContractBalance.get(token),
         token,
         this.universe.execAddress
       )
+      plannerUtils.erc20.transfer(this.universe, planner, bal, token, dest)
     }
 
-    planner.add(emitIdContract.emitId(this.zapId))
-
-    const tx = encodeProgramToZapERC20Params(
+    const program = await evaluateProgram(
+      this.universe,
       planner,
-      innerDag.config.userInput[0],
-      innerDag.config.userOutput[0].token.wei,
-      [...allTokens]
+      innerDag,
+      dustTokens,
+      signer,
+      minOutputWithSlippage
     )
-    const data = encodeCalldata(tx)
-    let value = 0n
-    if (innerDag.config.userInput[0].token === this.universe.nativeToken) {
-      value = innerDag.config.userInput[0].amount
-    }
-    console.log(`Out program:`)
-    console.log(printPlan(planner, this.universe).join('\n'))
 
-    console.log(`Simulating...`)
-    const simulationPayload = {
-      to: this.universe.config.addresses.zapperAddress.address,
-      from: signer.address,
-      data,
-      value,
-      setup: {
-        inputTokenAddress: innerDag.config.userInput[0].token.address.address,
-        userBalanceAndApprovalRequirements: innerDag.config.userInput[0].amount,
-      },
-    }
     console.log(
-      JSON.stringify(
-        {
-          to: this.universe.config.addresses.zapperAddress.address,
-          from: signer.address,
-          data,
-          value: value.toString(),
-          setup: {
-            inputTokenAddress:
-              innerDag.config.userInput[0].token.address.address,
-            userBalanceAndApprovalRequirements:
-              innerDag.config.userInput[0].amount.toString(),
-          },
-        },
-        null,
-        2
-      )
+      `Simulation result: out = ${program.amountOut}, dust = ${testSimulation.dust}, txFee = ${program.txFee}`
     )
-    const simulation = await this.universe.simulateZapFn(
-      simulationPayload,
-      this.universe
-    )
-    console.log(`Simulation result:`)
-    console.log(simulation)
+    console.log(printPlan(planner, this.universe).join('\n'))
   }
 }

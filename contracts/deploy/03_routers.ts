@@ -8,40 +8,40 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   })
   console.log('uniV3RouterCall deployed to:', uniV3RouterCall.address)
 
-  const CurveStableSwapNGHelper = await hre.deployments.deploy(
-    'CurveStableSwapNGHelper',
-    {
-      from: deployer,
-    }
-  )
-  console.log(
-    'CurveStableSwapNGHelper deployed to:',
-    CurveStableSwapNGHelper.address
-  )
+  // const CurveStableSwapNGHelper = await hre.deployments.deploy(
+  //   'CurveStableSwapNGHelper',
+  //   {
+  //     from: deployer,
+  //   }
+  // )
+  // console.log(
+  //   'CurveStableSwapNGHelper deployed to:',
+  //   CurveStableSwapNGHelper.address
+  // )
 
-  if ((await hre.ethers.provider.getNetwork()).chainId === 8453) {
-    const SlipstreamRouterCall = await hre.deployments.deploy(
-      'SlipstreamRouterCall',
-      {
-        from: deployer,
-      }
-    )
-    console.log(
-      'SlipstreamRouterCall deployed to:',
-      SlipstreamRouterCall.address
-    )
-  }
+  // if ((await hre.ethers.provider.getNetwork()).chainId === 8453) {
+  //   const SlipstreamRouterCall = await hre.deployments.deploy(
+  //     'SlipstreamRouterCall',
+  //     {
+  //       from: deployer,
+  //     }
+  //   )
+  //   console.log(
+  //     'SlipstreamRouterCall deployed to:',
+  //     SlipstreamRouterCall.address
+  //   )
+  // }
 
-  const CurveCryptoFactoryHelper = await hre.deployments.deploy(
-    'CurveCryptoFactoryHelper',
-    {
-      from: deployer,
-    }
-  )
-  console.log(
-    'CurveCryptoFactoryHelper deployed to:',
-    CurveCryptoFactoryHelper.address
-  )
+  // const CurveCryptoFactoryHelper = await hre.deployments.deploy(
+  //   'CurveCryptoFactoryHelper',
+  //   {
+  //     from: deployer,
+  //   }
+  // )
+  // console.log(
+  //   'CurveCryptoFactoryHelper deployed to:',
+  //   CurveCryptoFactoryHelper.address
+  // )
 
   const BalancerCall = await hre.deployments.deploy('BalancerCall', {
     from: deployer,

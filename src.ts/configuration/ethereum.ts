@@ -104,7 +104,7 @@ export const ethereumConfig = makeConfig(
     balanceOf: '0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D',
     curveRouterCall: '0x9234dbD7AaaD37b7A185B6f694700C5466783A3d',
     ethBalanceOf: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
-    uniV3Router: '0x32F59e2881e1DC9a808DE8C37545FE33F2B617A9',
+    uniV3Router: '0x49B94B1feD319325fcBA107cc2777d6d7b4C4770',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
     curveCryptoFactoryHelper: '0xf4fe93bb762A0b890B08C96FE99a6F405c44B360',
 

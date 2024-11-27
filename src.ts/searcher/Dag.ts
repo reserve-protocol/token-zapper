@@ -8,7 +8,7 @@ import { Value, Planner, Contract } from '../tx-gen/Planner'
 import { DagBuilder } from './DagBuilder'
 import { SwapPlan } from './Swap'
 import { isAbstractAction, TradeAction, WrappedAction } from './TradeAction'
-import { plannerUtils } from '../action/Action'
+import { ONE, plannerUtils } from '../action/Action'
 import { Approval } from '../base/Approval'
 import { IERC20__factory } from '../contracts'
 import { constants } from 'ethers'
@@ -47,6 +47,16 @@ export class DagPlanContext {
       fractionAsBigInt,
       comment,
       name
+    )
+  }
+
+  public bnFraction(fraction: bigint, a: Value, comment: string = '') {
+    return plannerUtils.fraction(
+      this.universe,
+      this.planner,
+      a,
+      fraction,
+      comment
     )
   }
 
@@ -100,6 +110,9 @@ export class DagPlanContext {
   public readonly values: Map<Token, Value> = new Map()
 }
 export const normalizeVector = (vec: number[]) => {
+  if (vec.some((i) => isNaN(i))) {
+    throw new Error(`NaN in vector: ${vec.join(', ')}`)
+  }
   if (vec.length < 1) {
     return vec
   }
@@ -479,7 +492,7 @@ export class SplitNode extends DagNode {
   }
 
   toString() {
-    return `Split`
+    return `Split_${this.splitNodeIndex}`
   }
   public async evaluate(
     ctx: DagEvalContext,
@@ -511,6 +524,13 @@ export class SplitNode extends DagNode {
     }
     const [, consumers] = outEdge
     const splits = ctx.dag.splitNodes[this.splitNodeIndex]
+    if (splits.every((i) => i === 0)) {
+      return []
+    }
+
+    if (splits.some((i) => isNaN(i))) {
+      throw new Error(`SplitNode ${this.dotNode()} has NaN split values`)
+    }
 
     if (consumers.length !== splits.length) {
       throw new Error(
@@ -548,12 +568,32 @@ export class SplitNode extends DagNode {
         .join(', ')}`
     )
 
-    return splits.map(([splitValue, index]) => {
+    let sum = 0n
+    const splitsBigInts = splits.map(([splitValue, index]) => {
+      const fractionAsBigInt = BigInt(Math.floor(10 ** 18 * splitValue))
+      sum += fractionAsBigInt
+      return [index, fractionAsBigInt] as [number, bigint]
+    })
+
+    if (sum !== ONE) {
+      let used = 0n
+      for (const splitValue of splitsBigInts) {
+        let newValue = (splitValue[1] * ONE) / sum
+        used += newValue
+        if (used > ONE) {
+          newValue -= used - ONE
+          used = ONE
+        }
+        splitValue[1] = newValue
+      }
+    }
+
+    return splitsBigInts.map(([index, splitValue]) => {
       const consumer = nodes[index]
       return [
         token,
         consumer,
-        ctx.fraction(splitValue, value, `=> ${consumer.dotNode()}`),
+        ctx.bnFraction(splitValue, value, `=> ${consumer.dotNode()}`),
       ] as [Token, DagNode, Value]
     })
   }
@@ -640,6 +680,19 @@ export class EvaluatedDag {
     for (const node of evaluated) {
       this.reverseMap.set(node.node, node)
     }
+  }
+
+  public clone() {
+    return new EvaluatedDag(
+      this.dag.clone(),
+      [...this.evaluated],
+      this.inputs,
+      this.allOutputs_,
+      this.outputs_,
+      this.dust_,
+      this.unspent_,
+      this.txFee
+    )
   }
 
   public get unspentValue() {

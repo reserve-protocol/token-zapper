@@ -23,6 +23,11 @@ export class CurvePool {
 
   public readonly addressesInUse = new Set<Address>()
 
+  public actionToken(index: number) {
+    return this.underlyingTokens[index] === this.universe.nativeToken
+      ? this.universe.wrappedNativeToken
+      : this.underlyingTokens[index]
+  }
   public readonly liquidity: () => Promise<number>
   public readonly balances: () => Promise<TokenQuantity[]>
   constructor(
@@ -330,16 +335,32 @@ export class CurveSwap extends Action('Curve') {
   }
 
   get outputSlippage() {
-    return 5n
+    return 1n
   }
 
-  routeParams() {
+  private routeParams(plan: boolean = false) {
     const route: string[] = []
     const swapParams: number[][] = []
 
+    let inputTokenAddr =
+      this.pool.underlyingTokens[this.inputTokenIndex].address.address
+    let outputTokenAddr =
+      this.pool.underlyingTokens[this.outputTokenIndex].address.address
+    if (plan) {
+      if (
+        this.pool.underlyingTokens[this.inputTokenIndex] ===
+        this.universe.nativeToken
+      ) {
+        route.push(
+          this.universe.wrappedNativeToken.address.address,
+          this.universe.wrappedNativeToken.address.address
+        )
+        swapParams.push([0, 0, 8, 0, 0])
+        inputTokenAddr = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+      }
+    }
+
     type SwapParams = [number, number, number, number, number]
-    let inputTokenAddr = this.inputToken[0].address.address
-    let outputTokenAddr = this.outputToken[0].address.address
     route.push(inputTokenAddr, this.pool.address.address, outputTokenAddr)
     swapParams.push([
       this.inputTokenIndex,
@@ -348,6 +369,19 @@ export class CurveSwap extends Action('Curve') {
       this.pool.poolType,
       this.pool.underlyingTokens.length,
     ])
+
+    if (plan) {
+      if (
+        this.pool.underlyingTokens[this.outputTokenIndex] ===
+        this.universe.nativeToken
+      ) {
+        swapParams.push([0, 0, 8, 0, 0])
+        route.push(
+          this.universe.wrappedNativeToken.address.address,
+          this.universe.wrappedNativeToken.address.address
+        )
+      }
+    }
 
     while (route.length !== 11) {
       route.push(ethers.constants.AddressZero)
@@ -429,8 +463,9 @@ export class CurveSwap extends Action('Curve') {
     const [output] = await this.quote(predicted)
     const lib = this.gen.Contract.createLibrary(this.routerCall)
 
-    const { route, swapParams } = this.routeParams()
+    const { route, swapParams } = this.routeParams(true)
 
+    const minOut = output.amount - output.amount / 20n
     // function exchangeNew(
     //     uint256 amountIn,
     //     bytes memory encodedRouterCall
@@ -446,12 +481,8 @@ export class CurveSwap extends Action('Curve') {
     // );
     const encodedStaticData = ethers.utils.defaultAbiCoder.encode(
       ['address[11]', 'uint256[5][5]', 'uint256', 'address'],
-      [route, swapParams, output.amount, this.router.address]
+      [route, swapParams, minOut, this.router.address]
     )
-
-    console.log(route, swapParams, output.amount, this.router.address)
-    console.log(encodedStaticData)
-    console.log(this.routerCall.address)
 
     return [
       planner.add(
@@ -503,22 +534,14 @@ export class CurveSwap extends Action('Curve') {
   ) {
     super(
       pool.address,
-      [
-        pool.underlyingTokens[inputTokenIndex] === universe.nativeToken
-          ? universe.wrappedNativeToken
-          : pool.underlyingTokens[inputTokenIndex],
-      ],
-      [
-        pool.underlyingTokens[outputTokenIndex] === universe.nativeToken
-          ? universe.wrappedNativeToken
-          : pool.underlyingTokens[outputTokenIndex],
-      ],
+      [pool.actionToken(inputTokenIndex)],
+      [pool.actionToken(outputTokenIndex)],
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
       [
         new Approval(
-          pool.underlyingTokens[inputTokenIndex],
-          Address.from(curveInner.constants.ALIASES.registry_exchange)
+          pool.actionToken(inputTokenIndex),
+          Address.from(router.address)
         ),
       ]
     )

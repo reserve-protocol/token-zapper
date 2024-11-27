@@ -75,7 +75,8 @@ export class RTokenDeployment {
       assetRegistry: IAssetRegistry
     },
     public readonly mintEstimate: bigint,
-    public readonly burnEstimate: bigint
+    public readonly burnEstimate: bigint,
+    public readonly resolution: TokenQuantity
   ) {
     this.basket = this.unitBasket_.map((i) => i.token)
     this.burn = new BurnRTokenAction(this)
@@ -149,27 +150,6 @@ export class RTokenDeployment {
       return unit
     }, 12000)
 
-    const redeemUnit = universe.createCache(async (wholeUnits: bigint) => {
-      const { erc20s, quantities } =
-        await this.contracts.rTokenLens.callStatic.redeem(
-          this.contracts.assetRegistry.address,
-          this.contracts.basketHandler.address,
-          this.contracts.rToken.address,
-          wholeUnits * this.rToken.scale
-        )
-
-      const unit = await Promise.all(
-        erc20s.map((addr, index) =>
-          this.universe
-            .getToken(Address.from(addr))
-            .then((token) =>
-              token.from(quantities[index].toBigInt() / wholeUnits)
-            )
-        )
-      )
-      return unit
-    }, 12000)
-
     const ONE = 10n ** 18n
     const quoteMint = async (input: TokenQuantity[]) => {
       let unit = await unitBasket()
@@ -189,17 +169,6 @@ export class RTokenDeployment {
 
       return [this.rToken.from(baskets), ...dust]
     }
-
-    universe.addSingleTokenPriceSource({
-      token: this.rToken,
-      priceFn: async () => {
-        const [low, high] = (
-          await this.contracts.facade.price(this.rToken.address.address)
-        ).map((i) => i.toBigInt())
-        const mid = (low + high) / 2n
-        return this.universe.usd.from(mid / 10n ** 10n)
-      },
-    })
 
     const quoteRedeem = async ([input]: TokenQuantity[]) => {
       const unit = await unitBasket()
@@ -273,6 +242,19 @@ export class RTokenDeployment {
             ),
           ])
       )
+
+    uni.addSingleTokenPriceSource({
+      token: rToken,
+      priceFn: async () => {
+        const [low, high] = (await facade.price(rToken.address.address)).map(
+          (i) => i.toBigInt()
+        )
+        const mid = (low + high) / 2n
+        return uni.usd.from(mid / 10n ** 10n)
+      },
+    })
+    const rTokenPrice = await rToken.price
+
     return new RTokenDeployment(
       uni,
       rToken,
@@ -290,7 +272,8 @@ export class RTokenDeployment {
         assetRegistry: assetReg,
       },
       200000n + 100000n * BigInt(uniBasket.length),
-      200000n + 100000n * BigInt(uniBasket.length)
+      200000n + 100000n * BigInt(uniBasket.length),
+      rTokenPrice.into(rToken).invert()
     )
   }
 }

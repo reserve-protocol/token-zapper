@@ -5,11 +5,11 @@ import { Approval } from '../base/Approval'
 import {
   IRETH,
   IRETH__factory,
+  IRETHRouter,
+  IRETHRouter__factory,
   RocketDepositPoolInterface,
   RocketDepositPoolInterface__factory,
 } from '../contracts'
-import { IRETHRouter } from '../contracts/contracts/IRETHRouter'
-import { IRETHRouter__factory } from '../contracts/factories/contracts/IRETHRouter__factory'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import {

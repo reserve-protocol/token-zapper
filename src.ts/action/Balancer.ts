@@ -73,12 +73,12 @@ const query = `query GetPools(
 }`
 
 const callBalancerAddresses: Record<ChainId, Address> = {
-  [ChainIds.Base]: Address.from('0x300ab2038eac391f26d9f895dc61f8f66a548833'),
+  [ChainIds.Base]: Address.from('0x0000000000000000000000000000000000000000'),
   [ChainIds.Mainnet]: Address.from(
-    '0xe39b5e3b6d74016b2f6a9673d7d7493b6df549d5'
+    '0x4d0889452f049e527756C90F81D7bE417B85F0df'
   ),
   [ChainIds.Arbitrum]: Address.from(
-    '0xe39b5e3b6d74016b2f6a9673d7d7493b6df549d5'
+    '0x0000000000000000000000000000000000000000'
   ),
 }
 
@@ -295,7 +295,7 @@ export class BalancerSwap extends BaseAction {
     return [this.tokenOut.from(out)]
   }
   gasEstimate(): bigint {
-    return 350000n
+    return 350_000n
   }
   async plan(
     planner: Planner,
@@ -316,6 +316,8 @@ export class BalancerSwap extends BaseAction {
     //   uint256 deadline;
     //   IBalancerVault.SwapKind kind;
     // }
+    let minOut = predictedOutput[0].amount - predictedOutput[0].amount / 20n
+
     const encodedStaticData = ethers.utils.defaultAbiCoder.encode(
       [
         'uint256',
@@ -327,7 +329,7 @@ export class BalancerSwap extends BaseAction {
         'uint8',
       ],
       [
-        predictedOutput[0].amount,
+        minOut,
         this.tokenIn.address.address,
         this.tokenOut.address.address,
         this.pool.id,

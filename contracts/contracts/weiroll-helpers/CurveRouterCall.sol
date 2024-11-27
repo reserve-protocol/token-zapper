@@ -23,25 +23,6 @@ interface ICurveRouter {
         uint256 expected
     ) external payable returns (uint256);
 
-
-    function exchange(
-        address[11] calldata route,
-        uint256[5][5] calldata swapParams,
-        uint256 amount,
-        uint256 expected,
-        address[5] calldata pools
-    ) external payable returns (uint256);
-
-    function exchange(
-        address[11] calldata route,
-        uint256[5][5] calldata swapParams,
-        uint256 amount,
-        uint256 expected,
-        address[5] calldata pools,
-        uint256 minAmount
-    ) external payable returns (uint256);
-
-
     function exchange_multiple(
         address[9] calldata route,
         uint256[3][4] calldata swapParams,

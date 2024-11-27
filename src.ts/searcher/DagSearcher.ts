@@ -29,7 +29,11 @@ function generateAllCombinations<T>(
 // main tokens to visit + 5 additional steps. Up this number if it becomes a problem
 const MAX_ADDITIONAL_STEPS = 5
 
-const findUnderlyingTokens = async (universe: Universe, tokens: Token[]) => {
+const findUnderlyingTokens = async (
+  universe: Universe,
+  inputTradeSizeUSD: number,
+  tokens: Token[]
+) => {
   const allUnderlyingTokens = new Set<Token>()
   let numberOfLevels = 0
   const mintPrices = new DefaultMap<Token, DefaultMap<Token, number>>(
@@ -68,11 +72,21 @@ const findUnderlyingTokens = async (universe: Universe, tokens: Token[]) => {
     }
 
     if (universe.mintableTokens.has(outputToken)) {
-      const rate = await universe.mintRate.get(outputToken)
-      console.log(`${outputToken}: ${rate}`)
+      const txFeeUSD = (
+        await universe.nativeToken
+          .from(universe.gasPrice * mintAction.gasEstimate())
+          .price()
+      ).asNumber()
+      const rate = await universe.mintRate.get(outputToken) // Rate is exact midprice
+      const inputTokenPriceUSD = (await rate.token.price).asNumber()
+      const mintInoutQty = (inputTradeSizeUSD + txFeeUSD) / inputTokenPriceUSD
+      const mintOutputQty = (inputTradeSizeUSD / inputTokenPriceUSD) * rate.asNumber()
+
+      const mintPrice = mintOutputQty / mintInoutQty
+
       const inputToken = rate.token
       const out = Math.max(
-        rate.asNumber(),
+        mintPrice,
         mintPrices.get(inputToken).get(outputToken)
       )
       if (out === 0) {
@@ -148,9 +162,14 @@ export class DagSearcher {
       inputs.push(this.universe.nativeToken)
     }
 
-    const { byPhase, mintPrices } = await findUnderlyingTokens(this.universe, [
-      userOutput,
-    ])
+    const inputPrices = await Promise.all(userInput.map((i) => i.token.price))
+    const inputPriceSum = inputPrices.reduce((a, b) => a + b.asNumber(), 0)
+
+    const { byPhase, mintPrices } = await findUnderlyingTokens(
+      this.universe,
+      inputPriceSum,
+      [userOutput]
+    )
     for (const [_, edges] of mintPrices.entries()) {
       for (const [tokenOut, price] of edges.entries()) {
         for (const [tokenOutRate, rate] of mintPrices.get(tokenOut).entries()) {
@@ -244,10 +263,10 @@ export class DagSearcher {
 
         if (mintPrice !== 0) {
           const midPrice = (await this.universe.midPrices.get(edge)).asNumber()
-          console.log(`${edge} midPrice: ${midPrice} mintPrice: ${mintPrice}`)
-          if ((midPrice / mintPrice) < 0.999) {
+          if (midPrice / mintPrice < 0.999) {
             return
           }
+          console.log(`${edge} midPrice: ${midPrice} mintPrice: ${mintPrice}`)
         }
 
         tradeActions.add(edge)

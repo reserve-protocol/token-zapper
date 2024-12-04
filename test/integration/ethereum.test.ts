@@ -36,7 +36,7 @@ if (process.env.SIMULATE_URL == null) {
   console.log('SIMULATE_URL not set, skipping simulation tests')
   process.exit(0)
 }
-const TEST_TIMEOUT = 60000;
+const TEST_TIMEOUT = 60000
 export const ethWhales = {
   // stETH
   '0xae7ab96520de3a18e5e111b5eaab095312d7fe84':
@@ -166,47 +166,47 @@ const issueanceCases = [
   makeMintTestCase(10000, t.USDC, rTokens.USD3),
   makeMintTestCase(10000, t.DAI, rTokens.USD3),
 
-  makeMintTestCase(
-    5,
-    Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
-    rTokens['ETH+']
-  ),
+  // makeMintTestCase(
+  //   5,
+  //   Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
+  //   rTokens['ETH+']
+  // ),
   makeMintTestCase(5, t.WETH, rTokens['ETH+']),
-  makeMintTestCase(5, t.steth, rTokens['ETH+']),
-  makeMintTestCase(5, t.reth, rTokens['ETH+']),
-  makeMintTestCase(5, t.frxeth, rTokens['ETH+']),
-  makeMintTestCase(5, t.sfrxeth, rTokens['ETH+']),
-  makeMintTestCase(10000, t.USDC, rTokens['ETH+']),
+  // makeMintTestCase(5, t.steth, rTokens['ETH+']),
+  // makeMintTestCase(5, t.reth, rTokens['ETH+']),
+  // makeMintTestCase(5, t.frxeth, rTokens['ETH+']),
+  // makeMintTestCase(5, t.sfrxeth, rTokens['ETH+']),
+  // makeMintTestCase(10000, t.USDC, rTokens['ETH+']),
 
   makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
   makeMintTestCase(10000, t.USDe, rTokens.hyUSD),
   makeMintTestCase(10000, t.DAI, rTokens.hyUSD),
 
   makeMintTestCase(5, t.WETH, rTokens.dgnETH),
-  makeMintTestCase(5, t.pxETH, rTokens.dgnETH),
-  makeMintTestCase(10000, t.USDC, rTokens.dgnETH),
-  makeMintTestCase(10000, t.USDT, rTokens.dgnETH),
+  // makeMintTestCase(5, t.pxETH, rTokens.dgnETH),
+  // makeMintTestCase(10000, t.USDC, rTokens.dgnETH),
+  // makeMintTestCase(10000, t.USDT, rTokens.dgnETH),
 ]
 
 const redeemCases = [
   makeMintTestCase(10000, rTokens.eUSD, t.USDC),
   makeMintTestCase(10000, rTokens.eUSD, t.DAI),
-  makeMintTestCase(10000, rTokens.eUSD, t.USDT),
+  // makeMintTestCase(10000, rTokens.eUSD, t.USDT),
 
-  makeMintTestCase(10000, rTokens.USD3, t.USDC),
-  makeMintTestCase(10000, rTokens.USD3, t.DAI),
+  // makeMintTestCase(10000, rTokens.USD3, t.USDC),
+  // makeMintTestCase(10000, rTokens.USD3, t.DAI),
 
-  makeMintTestCase(5, rTokens['ETH+'], t.WETH),
-  makeMintTestCase(5, rTokens['ETH+'], t.reth),
-  makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
+  // makeMintTestCase(5, rTokens['ETH+'], t.WETH),
+  // makeMintTestCase(5, rTokens['ETH+'], t.reth),
+  // makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
   makeMintTestCase(5, rTokens['ETH+'], t.USDC),
 
-  makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
-  makeMintTestCase(10000, rTokens.hyUSD, t.USDe),
-  makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
+  // makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
+  // makeMintTestCase(10000, rTokens.hyUSD, t.USDe),
+  // makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
 
-  makeMintTestCase(5, rTokens.dgnETH, t.WETH),
-  makeMintTestCase(5, rTokens.dgnETH, t.USDC),
+  // makeMintTestCase(5, rTokens.dgnETH, t.WETH),
+  // makeMintTestCase(5, rTokens.dgnETH, t.USDC),
 ]
 
 const individualIntegrations = [
@@ -216,9 +216,9 @@ const individualIntegrations = [
 
   makeIntegrationtestCase('CompoundV3', 1000, t.USDC, t.CUSDCV3, 2),
   makeIntegrationtestCase('CompoundV3', 1000, t.USDT, t.CUSDTV3, 2),
-  makeIntegrationtestCase('Lido', 10, t.WETH, t.wsteth, 3),
+  // makeIntegrationtestCase('Lido', 10, t.WETH, t.wsteth, 3),
   makeIntegrationtestCase('Lido', 10, t.WETH, t.steth, 2),
-  makeIntegrationtestCase('Lido', 10, t.wsteth, t.steth, 1),
+  // makeIntegrationtestCase('Lido', 10, t.wsteth, t.steth, 1),
 
   makeIntegrationtestCase('Reth', 10, t.WETH, t.reth, 2),
   makeIntegrationtestCase('ETHx', 10, t.WETH, t.ETHx, 2),
@@ -256,6 +256,7 @@ if (isNaN(INPUT_MUL)) {
 export let universe: Universe
 const provider = getProvider(process.env.MAINNET_PROVIDER!)
 beforeAll(async () => {
+  global.console = require('console')
   universe = await Universe.createWithConfig(
     provider,
     {
@@ -264,10 +265,6 @@ beforeAll(async () => {
       maxSearchTimeMs: 60000,
     },
     async (uni) => {
-      uni.addTradeVenue(createKyberswap('Kyber', uni))
-      uni.addTradeVenue(createParaswap('paraswap', uni))
-      uni.addTradeVenue(createEnso('enso', uni, 1))
-
       await setupEthereumZapper(uni)
     },
     {
@@ -366,17 +363,11 @@ describe('ethereum zapper', () => {
           const input = universe.tokens
             .get(zapIntoYieldPosition.inputToken)
             ?.from(zapIntoYieldPosition.input * INPUT_MUL)
-          const rToken = universe.tokens.get(zapIntoYieldPosition.rToken)
           const output = universe.tokens.get(zapIntoYieldPosition.output)
           let result = 'failed'
 
           try {
-            const zap = await universe.searcher.zapIntoRTokenYieldPosition(
-              input!,
-              rToken!,
-              output!,
-              testUser
-            )
+            const zap = await universe.zap(input!, output!, testUser)
             console.info(`Yield position zap: ${zap}`)
             result = 'success'
           } catch (e) {

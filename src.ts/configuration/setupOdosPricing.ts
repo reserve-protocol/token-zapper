@@ -5,7 +5,6 @@ import { PriceOracle } from '../oracles/PriceOracle'
 export const setupOdosPricing = (universe: Universe) => {
   const baseUrl = `https://api.odos.xyz/pricing/token/${universe.chainId}`
   const doesNotWork = new Set<Token>()
-  const logger = universe.logger.child({ module: 'odos-pricing' })
   universe.oracles.push(
     new PriceOracle(
       universe.config.requoteTolerance,
@@ -21,7 +20,6 @@ export const setupOdosPricing = (universe: Universe) => {
             return null
           }
           const data: { currencyId: string; price: number } = await req.json()
-          logger.info(`${token} => ${data.price}`)
           return universe.usd.from(
             Math.floor(data.price * 100000000) / 100000000
           )

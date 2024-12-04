@@ -1,0 +1,38 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/CurveStableSwapNG.sol": {
+      "content": "// SPDX-License-Identifier: BlueOak-1.0.0\npragma solidity 0.8.17;\n\ninterface ICurveStableSwapNG {\n    function get_dx(int128 i, int128 j, uint256 dy, address pool) external view returns (uint256);\n    function get_dy(int128 i, int128 j, uint256 dx, address pool) external view returns (uint256);\n    function dynamic_fee(int128 i, int128 j, address pool) external view returns (uint256);\n    function calc_token_amount(\n        uint256[] calldata amounts,\n        bool isDeposit\n    ) external view returns (uint256);\n\n    function coins(uint256 i) external view returns (address);\n    function N_COINS() external view returns (uint256);\n\n    function calc_withdraw_one_coin(\n        uint256 amt,\n        int128 i\n    ) external view returns (uint256);\n    \n    function add_liquidity(\n        uint256[] calldata amounts,\n        uint256 minOut\n    )external returns (uint256);\n\n    function remove_liquidity(\n        uint256 amount,\n        uint256[] calldata mintOuts\n    ) external returns (uint256[] memory);\n    function remove_liquidity_one_coin(\n        uint256 amt,\n        int128 i,\n        uint256 mintOut\n    ) external returns (uint256);\n}\n\n\n"
+    },
+    "contracts/weiroll-helpers/Curvepools.sol": {
+      "content": "// SPDX-License-Identifier: BlueOak-1.0.0\npragma solidity 0.8.17;\n\nimport { ICurveStableSwapNG } from \"../CurveStableSwapNG.sol\";\n\ncontract CurveStableSwapNGHelper {\n    function addliquidity(\n        uint256 amount,\n        uint256 coinIdx,\n        ICurveStableSwapNG pool,\n        uint256 minOut\n    ) external returns (uint256) {\n        uint256[] memory amounts = new uint256[](pool.N_COINS());\n        amounts[coinIdx] = amount;\n        return pool.add_liquidity(amounts, minOut);\n    }\n}\n\n\ninterface ICurveCryptoFactory {\n    function add_liquidity(\n        uint256[2] calldata amounts,\n        uint256 minOut,\n        bool useEth\n    ) external returns (uint256);\n}\ncontract CurveCryptoFactoryHelper {\n    function addliquidity(\n        uint256 amount0,\n        uint256 amount1,\n        ICurveCryptoFactory pool,\n        uint256 minOut,\n        bool useEth\n    ) external returns (uint256) {\n        uint256[2] memory amounts;\n        amounts[0] = amount0;\n        amounts[1] = amount1;\n        return pool.add_liquidity(amounts, minOut, useEth);\n    }\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

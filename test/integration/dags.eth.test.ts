@@ -121,9 +121,18 @@ export let universe: EthereumUniverse
 const provider = getProvider(process.env.MAINNET_PROVIDER!)
 
 provider.on('debug', (log) => {
-  if (!initialized) {
+  if (
+    !initialized ||
+    log?.action !== 'request' ||
+    log?.request?.method !== 'eth_call' ||
+    log?.request?.params[0].to == null ||
+    log?.request?.params[0].data == null
+  ) {
     return
   }
+  // console.log(
+  //   log.request.params[0].to + ':' + log.request.params[0].data?.slice(0, 10)
+  // )
 })
 
 beforeAll(async () => {
@@ -177,9 +186,39 @@ describe('dag builder', () => {
   })
 
   describe('Standard RToken zaps', () => {
+    it('1 WETH => dgnETH', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.WETH.from(1.0)],
+        universe.rTokens.dgnETH
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('250 WETH => dgnETH', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.WETH.from(250.0)],
+        universe.rTokens.dgnETH
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
     it('10 WETH => ETH+', async () => {
       const dag = await new DagSearcher(universe).buildDag(
-        Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
         [universe.commonTokens.WETH.from(10.0)],
         universe.rTokens['ETH+']
       )
@@ -193,7 +232,7 @@ describe('dag builder', () => {
     }, 60000)
     it('1000 WETH => ETH+', async () => {
       const dag = await new DagSearcher(universe).buildDag(
-        Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
         [universe.commonTokens.WETH.from(1000.0)],
         universe.rTokens['ETH+']
       )
@@ -208,7 +247,7 @@ describe('dag builder', () => {
 
     it('3.000.000 USDC => eUSD', async () => {
       const dag = await new DagSearcher(universe).buildDag(
-        Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
         [universe.commonTokens.USDC.from(3_000_000.0)],
         universe.rTokens['eUSD']
       )
@@ -223,8 +262,39 @@ describe('dag builder', () => {
 
     it('10.000 USDC => eUSD', async () => {
       const dag = await new DagSearcher(universe).buildDag(
-        Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
         [universe.commonTokens.USDC.from(10_000.0)],
+        universe.rTokens['eUSD']
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('10.000 DAI => eUSD', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.DAI.from(10_000.0)],
+        universe.rTokens['eUSD']
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+
+    it('10.000 USDT => eUSD', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.USDT.from(10_000.0)],
         universe.rTokens['eUSD']
       )
       console.log(dag.dag.toDot())
@@ -238,9 +308,55 @@ describe('dag builder', () => {
 
     it('3.000.000 USDC => USD3', async () => {
       const dag = await new DagSearcher(universe).buildDag(
-        Address.from('0x6873d2bF137884A5078DB3387B6485cF7598D120'),
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
         [universe.commonTokens.USDC.from(3_000_000.0)],
         universe.rTokens['USD3']
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('10.000 USDC => hyusd', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.USDC.from(10_000.0)],
+        universe.rTokens.hyUSD
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+
+    it('10.000 DAI => hyusd', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.DAI.from(10_000.0)],
+        universe.rTokens.hyUSD
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('1.000.000 USDC => hyusd', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.USDC.from(1_000_000.0)],
+        universe.rTokens.hyUSD
       )
       console.log(dag.dag.toDot())
       console.log(

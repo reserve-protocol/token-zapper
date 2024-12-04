@@ -61,11 +61,11 @@ class CryptoFactoryPoolAddLiquidity extends CurveFactoryCryptoPoolBase {
     _: Address,
     predictedInputs: TokenQuantity[]
   ): Promise<null | Value[]> {
-    const lib = this.gen.Contract.createContract(
+    const lib = this.gen.Contract.createLibrary(
       new Contract(
-        this.pool.address.address,
+        this.pool.universe.config.addresses.curveCryptoFactoryHelper.address,
         [
-          'function add_liquidity(uint256[2], uint256 min_mint_amount, bool use_eth, address receiver) external returns (uint256)',
+          'function addliquidity(uint256 amount0,uint256 amount1,address pool,uint256 minOut,bool useEth) external returns (uint256)',
         ],
         this.pool.universe.provider
       )
@@ -73,8 +73,14 @@ class CryptoFactoryPoolAddLiquidity extends CurveFactoryCryptoPoolBase {
     const [minOut] = await this.quote(predictedInputs)
     return [
       planner.add(
-        lib.add_liquidity([inputs[0], inputs[1]], minOut.amount, false),
-        `CurveFactoryCryptoPool.add_liquidity(${predictedInputs.join(
+        lib.addliquidity(
+          inputs[0],
+          inputs[1],
+          this.pool.address.address,
+          minOut.amount - minOut.amount / 20n,
+          false
+        ),
+        `CurveFactoryCryptoPool.addliquidity(${predictedInputs.join(
           ', '
         )}) -> ${predictedInputs.join(', ')}`,
         `${this.protocol}_mint_${this.outputToken.join(
@@ -85,9 +91,14 @@ class CryptoFactoryPoolAddLiquidity extends CurveFactoryCryptoPoolBase {
   }
 
   public async quote([amt0, amt1]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    await this.pool.update()
-    const out = this.pool.pool.calcTokenAmount(amt0.amount, amt1.amount)
-    const outLp = this.pool.lpToken.from(out)
+    // await this.pool.update()
+    // const out = this.pool.pool.calcTokenAmount(amt0.amount, amt1.amount)
+
+    const outLP = (await this.pool.poolInstance.callStatic.calc_token_amount([
+      amt0.amount,
+      amt1.amount,
+    ])) as BigNumber
+    const outLp = this.pool.lpToken.from(outLP)
     return [outLp]
   }
   constructor(public readonly pool: CurveFactoryCryptoPool) {
@@ -219,6 +230,9 @@ export class CurveFactoryCryptoPool {
       min_amount: BigNumberish,
       use_eth: boolean
     ) => Promise<BigNumber[]>
+    calc_token_amount: (
+      amounts: [BigNumberish, BigNumberish]
+    ) => Promise<BigNumber>
   }
 
   public readonly lpTokenInstance: IERC20

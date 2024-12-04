@@ -408,16 +408,7 @@ class BalancerPool {
   public toString(): string {
     return `BalancePool(name="${this.name}", type=${
       this.poolType
-    }, tokens=${this.tokens
-      .map(
-        (token, index) =>
-          `${
-            this.weights[index] == null
-              ? ''
-              : (this.weights[index] * 100).toFixed(0) + ' %'
-          }${token}`
-      )
-      .join(', ')})`
+    }, tokens=${this.tokens.join(', ')})`
   }
 }
 export const setupBalancer = async (universe: Universe) => {

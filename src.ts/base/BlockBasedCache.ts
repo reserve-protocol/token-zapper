@@ -19,6 +19,10 @@ export class BlockCache<Input, Result extends NonNullable<any>, Key = Input> {
     return out.result
   }
 
+  public clear() {
+    this.cache.clear()
+  }
+
   public has(key: Input) {
     const a = this.cache.get(this.keyFn(key))
     return a != null

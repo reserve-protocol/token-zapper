@@ -49,16 +49,15 @@ export class DssLitePsm extends BaseAction {
     planner: Planner,
     inputs: Value[],
     destination: Address,
-    predictedInputs: TokenQuantity[]
+    _: TokenQuantity[]
   ): Promise<null | Value[]> {
     const contract = IDssLitePsm__factory.connect(
       this.address.address,
       this.universe.provider
     )
-    const input = predictedInputs[0]
-    const output = await this.rate(input.amount)
+    const input = inputs[0]
     const lib = Contract.createContract(contract)
 
-    return [planner.add(lib.sellGem(destination.address, input.amount))!]
+    return [planner.add(lib.sellGem(destination.address, input))!]
   }
 }

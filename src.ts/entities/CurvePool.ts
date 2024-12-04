@@ -201,8 +201,8 @@ export class CryptoswapPool {
     xp[1] += amountsp[1]
     const D = newtonD(A_gamma[0], A_gamma[1], xp, CryptoswapPool.constants)
     const d_token = (tokenSupply * D) / D0 - tokenSupply
-    const tokenFee = this._calcTokenFee(amountsp, xp)
-    return d_token - tokenFee
+    const feeQty = this._calcTokenFee(amountsp, xp) * 10n ** 12n
+    return d_token - (d_token * feeQty) / ONE
   }
 
   public getDy(i: bigint, j: bigint, dx: bigint): bigint {
@@ -251,9 +251,10 @@ export class CryptoswapPool {
   }
 
   private _calcTokenFee(amounts: bigint[], xp: bigint[]): bigint {
-    const fee = this._fee(xp)
+    const N = BigInt(amounts.length)
+    const fee = (this._fee(xp) * N) / (4n * (N - 1n))
     const S = sum(amounts)
-    const avg = S / BigInt(amounts.length)
+    const avg = S / N
     let Sdiff = 0n
     for (const _x of amounts) {
       if (_x > avg) {

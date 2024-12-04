@@ -371,9 +371,11 @@ class UniswapV3Swap extends Action('UniswapV3') {
     if (predictedInput.isZero) {
       return null
     }
+    this.quoteExactSingle.clear()
     const { amountOut, sqrtPriceX96After } = await this.quoteExactSingle.get(
       predictedInput.amount
     )
+    console.log(`${this}: ${predictedInput} -> ${amountOut}`)
 
     const minOut = amountOut.amount - amountOut.amount / 20n
     const out = planner.add(

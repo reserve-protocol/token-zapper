@@ -553,7 +553,7 @@ export const findTradeSize = async (
   let searchSpan = maxInput.scalarDiv(2n)
   let input = maxInput
   for (let i = 0; i < iterations; i++) {
-    if (input.asNumber() * inputTokenPrice < 1) {
+    if (input.asNumber() * inputTokenPrice < 1000) {
       return 0
     }
     const [outputAmount] = await action.quote([input])

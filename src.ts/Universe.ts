@@ -46,6 +46,8 @@ import { PerformanceMonitor } from './searcher/PerformanceMonitor'
 import { SwapPath } from './searcher/Swap'
 import { ToTransactionArgs } from './searcher/ToTransactionArgs'
 import { Contract } from './tx-gen/Planner'
+import { DagSearcher } from './searcher/DagSearcher'
+import { TxGen } from './searcher/TxGen'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -190,6 +192,9 @@ export class Universe<const UniverseConf extends Config = Config> {
     ttl: number = (12000 / this.config.requoteTolerance),
     keyFn?: (key: Input) => Key
   ): BlockCache<Input, Result, Key> {
+    if (ttl < 100) {
+      ttl = 12000 / ttl
+    }
     const cache = new BlockCache<Input, Result, Key>(fetch, ttl, Date.now(), keyFn as any)
     this.caches.push(cache)
     return cache
@@ -200,6 +205,9 @@ export class Universe<const UniverseConf extends Config = Config> {
     ttl: number = (12000 / this.config.requoteTolerance)
   ): () => Promise<Result> {
     let lastFetch: number = 0
+    if (ttl < 100) {
+      ttl = 12000 / ttl
+    }
     let lastResult: Promise<Result> | null = null
     return async () => {
       if (lastResult == null || Date.now() - lastFetch > ttl) {
@@ -802,7 +810,7 @@ export class Universe<const UniverseConf extends Config = Config> {
           })
         return out
       },
-      this.config.requoteTolerance,
+      60000,
       i => i.toString()
     )
     const pending = new Map<string, Promise<string>>()
@@ -976,14 +984,13 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (typeof rToken === 'string') {
       rToken = await this.getToken(Address.from(rToken))
     }
-    throw new Error("...")
-    // const out = await this.searcher.zapIntoRToken(
-    //   userInput,
-    //   rToken,
-    //   userAddress,
-    //   opts
-    // )
-    // return out.bestZapTx.tx
+    const searcher = new DagSearcher(this)
+    const dag = await searcher.buildDag(
+      userAddress,
+      [userInput],
+      rToken
+    )
+    return await new TxGen(dag).generate(userAddress)
   }
   public async redeem(
     rTokenQuantity: TokenQuantity,

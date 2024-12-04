@@ -10,6 +10,7 @@ import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { BlockCache } from '../base/BlockBasedCache'
+import { DefaultMap } from '../base/DefaultMap'
 
 const remapAddr = (addr: Address) => {
   if (addr === Address.ZERO) {
@@ -17,9 +18,9 @@ const remapAddr = (addr: Address) => {
   }
   return addr
 }
-export const combineAddreses = (token0: Token, token1: Token) => {
-  const addr0 = remapAddr(token0.address)
-  const addr1 = remapAddr(token1.address)
+export const combineAddreses = (token0: Address, token1: Address) => {
+  const addr0 = remapAddr(token0)
+  const addr1 = remapAddr(token1)
   if (addr0.integer === addr1.integer) {
     throw new Error(
       `Cannot combine addresses of the same token: ${token0} and ${token1}`
@@ -36,7 +37,7 @@ export class TradeAction extends BaseAction {
     public readonly to: Token
   ) {
     super(
-      combineAddreses(from, to),
+      combineAddreses(from.address, to.address),
       [from],
       [to],
       InteractionConvention.None,
@@ -105,26 +106,19 @@ export class TradeAction extends BaseAction {
 }
 
 const log2 = (x: bigint) => {
-  let out = 0
-  while (x !== 0n) {
-    x /= 2n
-    out++
-  }
-  return BigInt(out - 1 <= 0 ? 1 : out - 1)
+  let out = 0n
+  while ((x >>= 1n)) out++
+  return out
 }
 
-const log10 = (x: bigint) => {
-  let out = 0
-  while (x !== 0n) {
-    x /= 10n
-    out++
-  }
-  return BigInt(out - 1 <= 0 ? 1 : out - 1)
-}
-const RESOLUTION = 20n
+const RESOLUTION = 5n
+const globalCache = new DefaultMap<
+  BaseAction,
+  Map<bigint, Promise<TokenQuantity[]>>
+>(() => new Map())
 export class WrappedAction extends BaseAction {
   private readonly cachedResults: BlockCache<bigint, TokenQuantity[]>
-  private readonly innerCache = new Map<bigint, Promise<TokenQuantity[]>>()
+  private readonly innerCache: Map<bigint, Promise<TokenQuantity[]>>
   private block: number = 0
   constructor(
     public readonly universe: Universe,
@@ -138,6 +132,8 @@ export class WrappedAction extends BaseAction {
       wrapped.proceedsOptions,
       wrapped.approvals
     )
+
+    this.innerCache = globalCache.get(wrapped)
 
     this.cachedResults = universe.createCache(async (amountIn) => {
       const inp = this.inputToken[0].from(amountIn)
@@ -203,13 +199,10 @@ export class WrappedAction extends BaseAction {
       const tokenOut = this.outputToken[0]
 
       const x0 = tokenIn.from(in0).into(tokenOut)
-      const slope = s.div(tokenIn.from(range))
+      const slope = s.into(tokenOut).div(tokenIn.from(range).into(tokenOut))
       const d = amountIn.into(tokenOut).sub(x0)
 
       const approx = slope.mul(d).add(q0)
-      // console.log(
-      //   `${this}: ${in0} ${amountIn.amount} ${in1} => ${approx.asNumber()}`
-      // )
       return [approx]
     } catch (e) {
       return [this.outputToken[0].zero]
@@ -382,6 +375,114 @@ export class NativeInputWrapper extends BaseAction {
     }
 
     return out
+  }
+}
+
+export class MultiStepAction extends BaseAction {
+  public toString(): string {
+    return `${this.inputToken.join(', ')} ${
+      this.steps.length
+    } actions -> ${this.outputToken.join(', ')}`
+  }
+  public get protocol(): string {
+    return this.steps.map((i) => i.protocol).join('-')
+  }
+  public async liquidity(): Promise<number> {
+    const liquidity = await Promise.all(this.steps.map((i) => i.liquidity()))
+    return liquidity.reduce((acc, i) => Math.min(acc, i), Infinity)
+  }
+  async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+    let out = amountsIn
+    for (const step of this.steps) {
+      out = await step.quote(out)
+    }
+    return out
+  }
+  gasEstimate(): bigint {
+    return this.steps.reduce((acc, i) => acc + i.gasEstimate(), 0n)
+  }
+  async plan(
+    planner: Planner,
+    inputs: Value[],
+    _: Address,
+    predictedInputs: TokenQuantity[]
+  ): Promise<null | Value[]> {
+    let out = inputs
+    let predictedOut = predictedInputs
+    for (const step of this.steps) {
+      let before: null | Value = null
+      if (!step.returnsOutput) {
+        before = this.genUtils.erc20.balanceOf(
+          this.universe,
+          planner,
+          step.outputToken[0],
+          this.universe.execAddress
+        )
+      }
+      const stepOut = await step.plan(
+        planner,
+        out,
+        this.universe.execAddress,
+        predictedOut
+      )
+      predictedOut = await step.quote(predictedOut)
+      if (stepOut != null) {
+        out = stepOut
+        continue
+      }
+      const after = this.genUtils.erc20.balanceOf(
+        this.universe,
+        planner,
+        step.outputToken[0],
+        this.universe.execAddress
+      )
+      out = [
+        this.genUtils.sub(
+          this.universe,
+          planner,
+          before!,
+          after,
+          `Balance after ${step.protocol}`,
+          `${step}_out`
+        ),
+      ]
+    }
+    return out
+  }
+  private addrsInUse: Set<Address> | null = null
+  constructor(
+    public readonly universe: Universe,
+    public readonly steps: BaseAction[]
+  ) {
+    super(
+      steps.reduce((acc, i) => combineAddreses(acc, i.address), Address.ZERO),
+      steps[0].inputToken,
+      steps[steps.length - 1].outputToken,
+      steps[0].interactionConvention,
+      DestinationOptions.Callee,
+      steps.flatMap((i) => i.approvals)
+    )
+  }
+
+  get isTrade() {
+    return true
+  }
+  get dependsOnRpc() {
+    return this.steps.some((i) => i.dependsOnRpc)
+  }
+  get oneUsePrZap() {
+    return this.steps.every((i) => i.oneUsePrZap)
+  }
+  get addressesInUse() {
+    if (this.addrsInUse == null) {
+      this.addrsInUse = new Set<Address>()
+      for (const step of this.steps) {
+        for (const addr of step.addressesInUse) {
+          this.addrsInUse.add(addr)
+        }
+      }
+    }
+    return this.addrsInUse
   }
 }
 

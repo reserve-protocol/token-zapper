@@ -113,15 +113,17 @@ export class ZapTxStats {
       dust: TokenQuantity[]
     }
   ) {
-    const [inputValue, outputValue, ...dustValue] = await Promise.all(
-      [input.input, input.output, ...input.dust].map(async (i) => {
-        const price = await result.universe.fairPrice(i)
-        if (price == null) {
-          throw new Error('No price found for ' + i)
-        }
-        return new PricedTokenQuantity(i, price)
-      })
-    )
+    const [inputValue, outputValue, ...dustValue] = (
+      await Promise.all(
+        [input.input, input.output, ...input.dust].map(async (i) => {
+          const price = await result.universe.fairPrice(i)
+          if (price == null) {
+            return null
+          }
+          return new PricedTokenQuantity(i, price)
+        })
+      )
+    ).filter((i) => i != null)
 
     const totalValueUSD = dustValue.reduce(
       (a, b) => a.add(b.price),

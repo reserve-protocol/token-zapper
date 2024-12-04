@@ -295,7 +295,6 @@ export class CurveIntegration {
     universe: UniverseWithCommonBaseTokens,
     config: ICurveConfig
   ) {
-    const curveApi = await loadCurve(universe)
     const normalCurvePoolList = await loadPoolList(universe)
     const ngPoolList = await Promise.all(
       config.specialCases.map(async ({ pool, type }) => {
@@ -311,6 +310,9 @@ export class CurveIntegration {
         throw new Error(`Unknown type ${type}`)
       })
     )
+
+
+    const curveApi = await loadCurve(universe)
 
     const specialCasePools = await convertPoolListIntoMaps(ngPoolList)
 

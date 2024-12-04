@@ -77,8 +77,8 @@ export interface CurveCryptoFactoryHelper extends BaseContract {
 
   functions: {
     addliquidity(
-      amount: PromiseOrValue<BigNumberish>,
-      coinIdx: PromiseOrValue<BigNumberish>,
+      amount0: PromiseOrValue<BigNumberish>,
+      amount1: PromiseOrValue<BigNumberish>,
       pool: PromiseOrValue<string>,
       minOut: PromiseOrValue<BigNumberish>,
       useEth: PromiseOrValue<boolean>,
@@ -87,8 +87,8 @@ export interface CurveCryptoFactoryHelper extends BaseContract {
   };
 
   addliquidity(
-    amount: PromiseOrValue<BigNumberish>,
-    coinIdx: PromiseOrValue<BigNumberish>,
+    amount0: PromiseOrValue<BigNumberish>,
+    amount1: PromiseOrValue<BigNumberish>,
     pool: PromiseOrValue<string>,
     minOut: PromiseOrValue<BigNumberish>,
     useEth: PromiseOrValue<boolean>,
@@ -97,8 +97,8 @@ export interface CurveCryptoFactoryHelper extends BaseContract {
 
   callStatic: {
     addliquidity(
-      amount: PromiseOrValue<BigNumberish>,
-      coinIdx: PromiseOrValue<BigNumberish>,
+      amount0: PromiseOrValue<BigNumberish>,
+      amount1: PromiseOrValue<BigNumberish>,
       pool: PromiseOrValue<string>,
       minOut: PromiseOrValue<BigNumberish>,
       useEth: PromiseOrValue<boolean>,
@@ -110,8 +110,8 @@ export interface CurveCryptoFactoryHelper extends BaseContract {
 
   estimateGas: {
     addliquidity(
-      amount: PromiseOrValue<BigNumberish>,
-      coinIdx: PromiseOrValue<BigNumberish>,
+      amount0: PromiseOrValue<BigNumberish>,
+      amount1: PromiseOrValue<BigNumberish>,
       pool: PromiseOrValue<string>,
       minOut: PromiseOrValue<BigNumberish>,
       useEth: PromiseOrValue<boolean>,
@@ -121,8 +121,8 @@ export interface CurveCryptoFactoryHelper extends BaseContract {
 
   populateTransaction: {
     addliquidity(
-      amount: PromiseOrValue<BigNumberish>,
-      coinIdx: PromiseOrValue<BigNumberish>,
+      amount0: PromiseOrValue<BigNumberish>,
+      amount1: PromiseOrValue<BigNumberish>,
       pool: PromiseOrValue<string>,
       minOut: PromiseOrValue<BigNumberish>,
       useEth: PromiseOrValue<boolean>,

@@ -5,29 +5,15 @@ import { DefaultMap } from '../base/DefaultMap'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Universe } from '../Universe'
 import { DagBuilder } from './DagBuilder'
-import { DagBuilderConfig, EvaluatedDag } from './Dag'
+import { DagBuilderConfig } from './Dag'
 import { SwapPlan } from './Swap'
-import { NativeInputWrapper, WrappedAction } from './TradeAction'
-import { Planner, Value } from '../tx-gen/Planner'
+import {
+  MultiStepAction,
+  NativeInputWrapper,
+  WrappedAction,
+} from './TradeAction'
 import { TxGen } from './TxGen'
-
-function generateAllCombinations<T>(
-  list: T[][],
-  n: number = 0,
-  result: T[][] = [],
-  current: T[] = []
-) {
-  if (n === list.length) result.push(current)
-  else
-    list[n].forEach((item) => {
-      generateAllCombinations(list, n + 1, result, [...current, item])
-    })
-  return result
-}
-
-// Dags could technically span all tokens, instead we limit the number of steps to
-// main tokens to visit + 5 additional steps. Up this number if it becomes a problem
-const MAX_ADDITIONAL_STEPS = 5
+import { bfs } from '../exchange-graph/BFS'
 
 const findUnderlyingTokens = async (
   universe: Universe,
@@ -51,7 +37,6 @@ const findUnderlyingTokens = async (
   while (tokensToExplore.length !== 0) {
     const node = tokensToExplore.pop()!
     const { token: outputToken, depth } = node
-    console.log('outputToken', outputToken.toString(), 'depth', depth)
     numberOfLevels = Math.max(numberOfLevels, depth + 1)
     level.get(outputToken).push(depth)
 
@@ -68,10 +53,7 @@ const findUnderlyingTokens = async (
 
     const mintAction = universe.getMintAction(outputToken) ?? graphActions[0]
 
-    console.log('mintAction', mintAction?.toString())
-
     if (mintAction == null) {
-      console.log('mintAction is null for ' + outputToken)
       continue
     }
 
@@ -82,13 +64,10 @@ const findUnderlyingTokens = async (
           .price()
       ).asNumber()
       const rate = await universe.mintRate.get(outputToken) // Rate is exact midprice
-      console.log('rate', rate.toString())
       const inputTokenPriceUSD = (await rate.token.price).asNumber()
       const mintInoutQty = (inputTradeSizeUSD + txFeeUSD) / inputTokenPriceUSD
-      console.log('mintInoutQty', mintInoutQty)
       const mintOutputQty =
         (inputTradeSizeUSD / inputTokenPriceUSD) * rate.asNumber()
-      console.log('mintOutputQty', mintOutputQty)
       const mintPrice = mintOutputQty / mintInoutQty
 
       const inputToken = rate.token
@@ -96,7 +75,7 @@ const findUnderlyingTokens = async (
         mintPrice,
         mintPrices.get(inputToken).get(outputToken)
       )
-      console.log(`${inputToken} -> ${outputToken}: ${out}`)
+      // console.log(`${inputToken} -> ${outputToken}: ${out}`)
       if (out === 0) {
         mintPrices.get(inputToken).delete(outputToken)
       } else {
@@ -173,7 +152,7 @@ export class DagSearcher {
     const inputPrices = await Promise.all(userInput.map((i) => i.price()))
     const inputPriceSum = inputPrices.reduce((a, b) => a + b.asNumber(), 0)
 
-    console.log('inputPriceSum', inputPriceSum)
+    // console.log('inputPriceSum', inputPriceSum)
     const { byPhase, mintPrices } = await findUnderlyingTokens(
       this.universe,
       inputPriceSum,
@@ -188,11 +167,11 @@ export class DagSearcher {
         }
       }
     }
-    for (const [tokenIn, edges] of mintPrices.entries()) {
-      for (const [tokenOut, price] of edges.entries()) {
-        console.log(`${tokenIn} -> ${tokenOut}: ${price}`)
-      }
-    }
+    // for (const [tokenIn, edges] of mintPrices.entries()) {
+    //   for (const [tokenOut, price] of edges.entries()) {
+    //     console.log(`${tokenIn} -> ${tokenOut}: ${price}`)
+    //   }
+    // }
 
     const wrapAction = (i: BaseAction) => {
       let act = i
@@ -233,7 +212,7 @@ export class DagSearcher {
       const mintActions = new DefaultMap<
         Token,
         DefaultMap<Token, BaseAction[]>
-      >(() => new DefaultMap<Token, BaseAction[]>((t) => []))
+      >(() => new DefaultMap<Token, BaseAction[]>(() => []))
       const checkIfAddrUsed = (edge: BaseAction, addrs: Set<Address>) => {
         if (edge.oneUsePrZap) {
           for (const addr of edge.addressesInUse) {
@@ -273,29 +252,29 @@ export class DagSearcher {
         if (mintPrice !== 0) {
           const midPrice = (await this.universe.midPrices.get(edge)).asNumber()
           if (midPrice / mintPrice < 0.998) {
-            console.log(
-              `rejecting ${edge} midPrice: ${midPrice} mintPrice: ${mintPrice}`
-            )
             return
           }
-          console.log(
-            `adding ${edge} midPrice: ${midPrice} mintPrice: ${mintPrice}`
-          )
         } else {
           try {
             const liq = await edge.liquidity()
-            console.log(`${edge} liq: ${liq} inputPriceSum: ${inputPriceSum}`)
+            // console.log(`${edge} liq: ${liq} inputPriceSum: ${inputPriceSum}`)
             if (liq < inputPriceSum / 10) {
               return
             }
-            const mid = (await this.universe.midPrices.get(edge)).asNumber()
-            const price = (await edge.outputToken[0].price).asNumber()
-            if (mid / price < 0.998) {
+            const inputTokenPrice = (await edge.inputToken[0].price).asNumber()
+            const mid =
+              inputTokenPrice /
+              (await this.universe.midPrices.get(edge)).asNumber()
+            const outputTokenPrice = (
+              await edge.outputToken[0].price
+            ).asNumber()
+
+            const outputValue = inputTokenPrice * mid
+
+            if (outputValue / outputTokenPrice < 0.998) {
               return
             }
-            console.log(`add ${edge} midPrice: ${mid} price: ${price}`)
           } catch (e) {
-            console.log(`${edge} failed to get liquidity or midprice`)
             return
           }
         }
@@ -311,10 +290,12 @@ export class DagSearcher {
       const phaseTokens = new Set([...phase, ...dag.openTokens])
 
       for (const token of phaseTokens) {
+        let addedEdge = false
         const vertex = this.universe.graph.vertices.get(token)
         const mintEdge = this.universe.getMintAction(token)
         if (mintEdge != null) {
           addMainEdge(mintEdge)
+          addedEdge = true
         } else {
           for (const inputQty of userInput) {
             if (inputQty.token === token) {
@@ -327,6 +308,7 @@ export class DagSearcher {
               if (edge.isTrade) {
                 continue
               }
+              addedEdge = true
               addMainEdge(edge)
             }
           }
@@ -340,8 +322,46 @@ export class DagSearcher {
             if (!edge.inputToken.every((t) => nextPhase.includes(t))) {
               continue
             }
-            console.log(`Testing ${edge}`)
+            addedEdge = true
             await addTradeEdge(edge)
+          }
+        }
+        if (addedEdge) {
+          continue
+        }
+
+        // Explore a 2-step path
+
+        for (const inputQty of userInput) {
+          const path = bfs(
+            this.universe,
+            this.universe.graph,
+            inputQty.token,
+            token,
+            2
+          )
+          const possiblePlans = path.steps
+            .map((i) => i.convertToSingularPaths())
+            .flat()
+
+          const paths = await Promise.all(
+            possiblePlans.map(async (plan) => plan.quote([inputQty]))
+          )
+          paths.sort((r, l) => l.compare(r))
+
+          for (let i = 0; i < paths.length; i++) {
+            const path = paths[i]
+            const plan = path.swapPlan
+            if (!plan.addresesInUse.every((i) => !addrsUsed.has(i))) {
+              continue
+            }
+            for (const addr of plan.addresesInUse) {
+              addrsUsed.add(addr)
+            }
+            const wrappedAct = wrapAction(
+              new MultiStepAction(this.universe, plan.steps.map(wrapAction))
+            )
+            tradeActions.add(wrappedAct)
           }
         }
       }
@@ -351,22 +371,76 @@ export class DagSearcher {
           openSet.delete(tok)
         }
       }
-      if (openSet.size !== 0) {
+
+      const remainingOpenSet = [...openSet]
+
+      for (const tok of remainingOpenSet) {
         const trades: BaseAction[] = []
         for (const act of [...tradeActions]) {
-          if (openSet.has(act.outputToken[0])) {
-            console.log(`Adding ${act} to trades to get ${act.outputToken[0]}`)
-            trades.push(act)
+          if (
+            dag.config.inputTokenSet.has(act.inputToken[0]) &&
+            act.outputToken[0] === tok
+          ) {
+            trades.push(wrapAction(act))
             tradeActions.delete(act)
           }
         }
-        for (const act of trades) {
-          openSet.delete(act.outputToken[0])
+
+        if (trades.length !== 0) {
+          openSet.delete(tok)
+          await dag.splitTradeInputIntoNewOutput(trades)
         }
-        // Will fork off split node
-        await dag.splitTradeInputIntoNewOutput(trades)
       }
-      if (openSet.size > 0) {
+      if (openSet.size !== 0) {
+        const trades: BaseAction[] = []
+        for (const inp of userInput) {
+          for (const out of openSet) {
+            const path = bfs(
+              this.universe,
+              this.universe.graph,
+              inp.token,
+              out,
+              2
+            )
+            const possiblePlans = path.steps
+              .map((i) => i.convertToSingularPaths())
+              .flat()
+            const paths = (
+              await Promise.all(
+                possiblePlans.map(async (plan) =>
+                  plan.quote([inp]).catch(() => null)
+                )
+              )
+            ).filter((i) => i !== null)
+            paths.sort((r, l) => l.compare(r))
+            for (const path of paths) {
+              const plan = path.swapPlan
+
+              if (!plan.addresesInUse.every((i) => !addrsUsed.has(i))) {
+                continue
+              }
+              for (const addr of plan.addresesInUse) {
+                addrsUsed.add(addr)
+              }
+              trades.push(
+                wrapAction(
+                  new MultiStepAction(this.universe, plan.steps.map(wrapAction))
+                )
+              )
+              openSet.delete(out)
+            }
+          }
+          await dag.splitTradeInputIntoNewOutput(trades)
+          // console.log('After splitTradeInputIntoNewOutput')
+          // dag.debugToDot()
+        }
+      }
+      if (openSet.size !== 0) {
+        // console.log('Missing tokens', [...openSet].join(', '))
+        // console.log('Trade actions:')
+        for (const t of tradeActions) {
+          console.log('  ', t.toString())
+        }
         throw new Error('Open set is not fully consumed')
       }
 

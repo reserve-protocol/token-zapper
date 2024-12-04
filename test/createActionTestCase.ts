@@ -26,15 +26,8 @@ export const createActionTestCase = (
     let result = 'failed'
 
     try {
-      const zap = await universe.searcher.debugZapIntoToken(
-        input!,
-        output!,
-        testUser,
-        {
-          maxHops: testCase.maxHops,
-        }
-      )
-      logger.info(`Action ${testName}: ${zap.bestZapTx.tx}`)
+      const zap = await universe.zap(input!, output!, testUser)
+      logger.info(`Action ${testName}: ${zap}`)
       result = 'success'
     } catch (e) {
       logger.error(`${testName} = ${e.message}`)

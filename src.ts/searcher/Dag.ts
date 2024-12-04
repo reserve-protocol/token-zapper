@@ -6,12 +6,13 @@ import { Token, TokenQuantity, PricedTokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { Value, Planner, Contract } from '../tx-gen/Planner'
 import { DagBuilder } from './DagBuilder'
-import { SwapPlan } from './Swap'
+import { SwapPath, SwapPlan } from './Swap'
 import { isAbstractAction, TradeAction, WrappedAction } from './TradeAction'
-import { ONE, plannerUtils } from '../action/Action'
+import { BaseAction, ONE, plannerUtils } from '../action/Action'
 import { Approval } from '../base/Approval'
 import { IERC20__factory } from '../contracts'
 import { constants } from 'ethers'
+import { BlockCache } from '../base/BlockBasedCache'
 
 export class DagEvalContext {
   public gasUsed: bigint = 0n
@@ -355,12 +356,30 @@ export class OutputNode extends DagNode {
   }
 }
 export class ActionNode extends DagNode {
+  private readonly cachedResults: BlockCache<TokenQuantity[], SwapPath, string>
   constructor(
     public readonly inputProportions: [number, Token][],
     public actions: SwapPlan,
     public readonly outputProportions: [number, Token][]
   ) {
     super(inputProportions, outputProportions)
+    this.cachedResults = actions.universe.createCache<
+      TokenQuantity[],
+      SwapPath,
+      string
+    >(
+      async (input) => {
+        const out = await this.actions.quote(input)
+        // console.log(
+        //   `${this.dotNode()}: ${this.inputs.join(', ')} => ${out.outputs.join(
+        //     ', '
+        //   )}`
+        // )
+        return out
+      },
+      12000,
+      (input) => input.join(',')
+    )
   }
 
   public get supportsDynamicInput() {
@@ -387,7 +406,7 @@ export class ActionNode extends DagNode {
     if (inputs.every((i) => i.isZero)) {
       return []
     }
-    const path = await this.actions.quote(inputs)
+    const path = await this.cachedResults.get(inputs)
 
     const out: [DagNode, TokenQuantity][] = []
     for (const output of [...path.outputs, ...path.dust]) {
@@ -633,7 +652,7 @@ export class EvaluatedNode {
   }
 
   public abstractAction(): {
-    action: TradeAction | WrappedAction
+    action: BaseAction
     inputs: TokenQuantity
     expectedOutputs: TokenQuantity
   } | null {

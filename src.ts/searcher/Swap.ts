@@ -101,28 +101,6 @@ class BasePath {
   }
 }
 
-export class SwapPath1to1 extends BasePath {
-  constructor(
-    public readonly input: TokenQuantity,
-    steps: SingleSwap[],
-    public readonly output: TokenQuantity,
-    stats: PathStats
-  ) {
-    super(stats, steps, [input], [output])
-  }
-}
-
-export class SwapPath1toN extends BasePath {
-  constructor(
-    public readonly input: TokenQuantity,
-    steps: SingleSwap[],
-    outputs: TokenQuantity[],
-    stats: PathStats
-  ) {
-    super(stats, steps, [input], outputs)
-  }
-}
-
 /**
  * A SwapPath groups a set of SingleSwap's together. The output of one SingleSwap is the input of the next.
  * A SwapPath may be optimized, as long as the input's and output's remain the same.
@@ -152,6 +130,7 @@ export class SwapPath {
   }
 
   constructor(
+    public readonly swapPlan: SwapPlan,
     public readonly inputs: TokenQuantity[],
     public readonly steps: SingleSwap[],
     public readonly outputs: TokenQuantity[],
@@ -436,6 +415,7 @@ export class SwapPlan {
     const legAmount = amts.toTokenQuantities()
     if (legAmount.length === 0) {
       return new SwapPath(
+        this,
         input,
         swaps,
         this.outputs.map((i) => i.zero),
@@ -456,6 +436,7 @@ export class SwapPlan {
     const output = this.outputs.map((i) => amts.get(i))
 
     return new SwapPath(
+      this,
       input,
       swaps,
       output.map((i) => i.sub(i.fpMul(slippage, FEE_SCALE))),

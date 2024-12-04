@@ -106,14 +106,14 @@ export const ethereumConfig = makeConfig(
     ethBalanceOf: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
     uniV3Router: '0x49B94B1feD319325fcBA107cc2777d6d7b4C4770',
     curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
-    curveCryptoFactoryHelper: '0xf4fe93bb762A0b890B08C96FE99a6F405c44B360',
+    curveCryptoFactoryHelper: '0xfbbcdad39d42f49c170cbc5396e740f18e9d6866',
 
     usdc: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
   },
   {
     blocktime: 12000,
     blockGasLimit: 30000000n,
-    requoteTolerance: 1,
+    requoteTolerance: 2,
   }
 )
 

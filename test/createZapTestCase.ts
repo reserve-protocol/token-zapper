@@ -22,7 +22,7 @@ export const createZapTestCase = async (
     const zap =
       type === 'Issueance'
         ? await universe.zap(input!, output!, testUser)
-        : await universe.redeem(input!, output!, testUser)
+        : await universe.zap(input!, output!, testUser)
     logger.info(`${type}: ${zap}`)
     result = 'success'
   } catch (e) {

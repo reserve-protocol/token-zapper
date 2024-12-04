@@ -22,6 +22,7 @@ import { Universe } from '../Universe'
 import { SimulateParams } from '../configuration/ZapSimulation'
 import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
 import { DagBuilder } from './DagBuilder'
+import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 const iface = Zapper__factory.createInterface()
 const simulateAndParse = async (
   universe: Universe,
@@ -51,6 +52,7 @@ const simulateAndParse = async (
     console.log(
       `ExecutionFailed: cmdIndex=${cmdIndex}, target=${target}, message=${message}`
     )
+
     throw e
   }
 }
@@ -84,13 +86,41 @@ const evaluateProgram = async (
       userBalanceAndApprovalRequirements: innerDag.config.userInput[0].amount,
     },
   }
-
-  return await simulateAndParse(
-    universe,
-    simulationPayload,
-    innerDag.config.userOutput[0].token,
-    dustTokens
-  )
+  // console.log(
+  //   JSON.stringify(
+  //     {
+  //       to: universe.config.addresses.zapperAddress.address,
+  //       from: signer.address,
+  //       data,
+  //       value: value.toString(),
+  //       block: universe.currentBlock,
+  //     },
+  //     null,
+  //     2
+  //   )
+  // )
+  try {
+    return {
+      res: await simulateAndParse(
+        universe,
+        simulationPayload,
+        innerDag.config.userOutput[0].token,
+        dustTokens
+      ),
+      tx: {
+        tx: {
+          to: universe.config.addresses.zapperAddress.address,
+          from: signer.address,
+          data,
+          value,
+        },
+        params: tx,
+      },
+    }
+  } catch (e) {
+    console.log(printPlan(planner, universe).join('\n'))
+    throw e
+  }
 }
 
 export class TxGen {
@@ -175,6 +205,7 @@ export class TxGen {
           )
           if (node.node.supportsDynamicInput) {
             val = ctx.executionContractBalance.get(token)
+            ctx.executionContractBalance.delete(token)
           }
 
           return [token, val, qty] as [Token, Value, TokenQuantity]
@@ -207,7 +238,7 @@ export class TxGen {
     const dustTokens = [...allTokens].filter(
       (i) => !innerDag.config.outputTokenSet.has(i)
     )
-    const testSimulation = await evaluateProgram(
+    const { res: testSimulation } = await evaluateProgram(
       this.universe,
       planner,
       innerDag,
@@ -244,10 +275,29 @@ export class TxGen {
       signer,
       minOutputWithSlippage
     )
+    const result = {
+      universe: this.universe,
+      zapId: this.zapIdStr,
+      startTime: Date.now(),
+      blockNumber: this.blockNumber,
+      tokenPrices: new Map(),
+    }
 
-    console.log(
-      `Simulation result: out = ${program.amountOut}, dust = ${testSimulation.dust}, txFee = ${program.txFee}`
+    const stats = await ZapTxStats.create(result, {
+      gasUnits: program.res.txFee.amount,
+      input: innerDag.config.userInput[0],
+      output: innerDag.config.userOutput[0],
+      dust: testSimulation.dust,
+    })
+
+    return ZapTransaction.create(
+      result,
+      planner,
+      {
+        tx: program.tx.tx,
+        params: program.tx.params,
+      },
+      stats
     )
-    console.log(printPlan(planner, this.universe).join('\n'))
   }
 }

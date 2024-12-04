@@ -17,9 +17,7 @@ import {
   IGaugeStakeDAO__factory,
   IVaultYearn__factory,
 } from '../contracts'
-import { TokenQuantity } from '../entities/Token'
 import { TokenType } from '../entities/TokenClass'
-import { SwapPlan } from '../searcher/Swap'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
@@ -204,6 +202,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     commonTokens['mooConvexETH+']
   )
   universe.addAction(depositToBeefy)
+  universe.mintableTokens.set(commonTokens['mooConvexETH+'], depositToBeefy)
 
   const stakeDAOVault = await IGaugeStakeDAO__factory.connect(
     commonTokens['sdETH+ETH-f'].address.address,
@@ -217,6 +216,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     Address.from(stakeDAOVault)
   )
   universe.addAction(depositToStakeDAO)
+  universe.mintableTokens.set(commonTokens['sdETH+ETH-f'], depositToStakeDAO)
 
   const depositToYearn = new YearnDepositAction(
     universe,
@@ -224,6 +224,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     commonTokens['yvCurve-ETH+-f']
   )
   universe.addAction(depositToYearn)
+  universe.mintableTokens.set(commonTokens['yvCurve-ETH+-f'], depositToYearn)
 
   const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
     universe,
@@ -232,7 +233,21 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     1n
   )
 
+  universe.tokenType.set(
+    universe.commonTokens.USDe,
+    Promise.resolve(TokenType.OtherMintable)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.sUSDe,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.USDe,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+
   universe.addAction(depositTosUSDe)
+  universe.mintableTokens.set(universe.commonTokens.sUSDe, depositTosUSDe)
 
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['mooConvexETH+'],
@@ -371,6 +386,4 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     oracleAddress: Address.from('0xfF30586cD0F29eD462364C7e81375FC0C71219b1'),
     priceToken: universe.usd,
   })
-
-  console.log('DONE')
 }

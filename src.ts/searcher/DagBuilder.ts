@@ -1209,8 +1209,9 @@ export class DagBuilder {
           }
 
           if (
-            this.splitNodeTypes.get(parentSplitNodes[0].splitNodeIndex) !==
-            SplitNodeType.Standard
+            this.splitNodeTypes.get(
+              (parentSplitNodes[0] as SplitNode).splitNodeIndex
+            ) !== SplitNodeType.Standard
           ) {
             continue
           }

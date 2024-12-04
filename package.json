@@ -7,7 +7,6 @@
   "version": "3.14.3",
   "description": "A library to help convert tokens into RTokens and back",
   "keywords": [],
-  "module": "./lib.esm/index.js",
   "sideEffects": false,
   "files": [
     ".eslintrc.js",
@@ -20,14 +19,12 @@
     "README.md",
     "tsconfig.commonjs.json",
     "tsconfig.eslint.json",
-    "tsconfig.esm.json",
     "tsconfig.json",
     "tsconfig.test.json",
     "tsconfig.types.json",
     "./src.ts/**/*",
     "./test/**/*",
     "./lib.commonjs/**/*",
-    "./lib.esm/**/*",
     "./types/**/*"
   ],
   "types": "./types/index.d.ts",
@@ -35,7 +32,6 @@
   "main": "./lib.commonjs/index.js",
   "exports": {
     ".": {
-      "import": "./lib.esm/index.js",
       "types": "./types/index.d.ts",
       "require": "./lib.commonjs/index.js"
     }
@@ -54,12 +50,11 @@
     "singleQuote": true
   },
   "scripts": {
-    "clean": "rm -rf dist/ lib.esm/ lib.commonjs/ types/",
+    "clean": "rm -rf dist/ lib.commonjs/ types/",
     "build:types": "tsc --project tsconfig.types.json",
-    "build": "npm run clean && npm run build:contracts && npm run build:typechain && npm run build:esm && npm run build:commonjs && npm run build:types",
+    "build": "npm run clean && npm run build:contracts && npm run build:typechain && npm run build:commonjs && npm run build:types",
     "build:contracts": "cd contracts/ && npm run compile:contracts && npm run copy:artifacts",
     "build:typechain": "rm -rf contracts/artifacts/ && rm -rf contracts/cache/ && rm -rf src/contracts && cd contracts/ && npx hardhat compile",
-    "build:esm": "tsc --project tsconfig.esm.json && cp -r src.ts/configuration/data/ lib.esm/configuration/data",
     "build:commonjs": "tsc --project tsconfig.commonjs.json && cp -r src.ts/configuration/data/ lib.commonjs/configuration/data",
     "test:unit": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --testPathPattern 'test/unit'",
     "integration:eth": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/ethereum.test.ts'",
@@ -107,7 +102,7 @@
     "ts-node": "10.9.1",
     "tsconfig-paths": "4.1.1",
     "typechain": "8.3.2",
-    "typescript": "5.3.3",
+    "typescript": "5.7.2",
     "winston": "^3.15.0"
   },
   "dependencies": {

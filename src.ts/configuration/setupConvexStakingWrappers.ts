@@ -14,10 +14,7 @@ import {
   IBooster__factory,
 } from '../contracts'
 import { Token, TokenQuantity } from '../entities/Token'
-import {
-  BasketTokenSourcingRuleApplication,
-  PostTradeAction,
-} from '../searcher/BasketTokenSourcingRules'
+
 import { UniverseWithCommonBaseTokens } from '../searcher/UniverseWithERC20GasTokenDefined'
 import {
   Contract,

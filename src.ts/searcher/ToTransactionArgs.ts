@@ -1,4 +1,3 @@
-import { type PermitTransferFrom } from '@uniswap/permit2-sdk'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Planner } from '../tx-gen/Planner'
 import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper.sol/Zapper'
@@ -15,7 +14,7 @@ export type ToTransactionArgs = Partial<{
   internalTradeSlippage?: bigint
   gasLimit?: number
   permit2: {
-    permit: PermitTransferFrom
+    permit?: any
     signature: string
   }
 
@@ -53,7 +52,7 @@ export const encodeCalldata = (payload: ZapERC20ParamsStruct) => {
 
 export const encodePermit2Calldata = (
   payload: ZapERC20ParamsStruct,
-  permit: PermitTransferFrom,
+  permit: any,
   signature: string
 ) => {
   return zapperInterface.encodeFunctionData('zapERC20WithPermit2', [

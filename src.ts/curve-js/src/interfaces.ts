@@ -42,7 +42,7 @@ export interface IPoolData {
     symbol: string,
     reference_asset: REFERENCE_ASSET,
     swap_address: string,
-    implementation: string,
+    implementation?: string,
     token_address: string,
     gauge_address: string,
     deposit_address?: string,

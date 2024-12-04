@@ -618,9 +618,9 @@ export const loadCurve = async (universe: Universe) => {
       .filter((i) => i != null)
 
     const pools = poolsUnfiltered.filter(
-      ({ pool }) =>
-        pool.underlyingDecimals.every((i) => i !== 0) &&
-        pool.wrappedDecimals.every((i) => i !== 0)
+      (p) =>
+        p.pool.underlyingDecimals.every((i) => i !== 0) &&
+        p.pool.wrappedDecimals.every((i) => i !== 0)
     )
 
     const tokenAddresses = [

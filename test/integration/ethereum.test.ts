@@ -166,11 +166,11 @@ const issueanceCases = [
   makeMintTestCase(10000, t.USDC, rTokens.USD3),
   makeMintTestCase(10000, t.DAI, rTokens.USD3),
 
-  // makeMintTestCase(
-  //   5,
-  //   Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
-  //   rTokens['ETH+']
-  // ),
+  makeMintTestCase(
+    5,
+    Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
+    rTokens['ETH+']
+  ),
   makeMintTestCase(5, t.WETH, rTokens['ETH+']),
   // makeMintTestCase(5, t.steth, rTokens['ETH+']),
   // makeMintTestCase(5, t.reth, rTokens['ETH+']),

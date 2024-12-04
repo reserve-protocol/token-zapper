@@ -44,8 +44,11 @@ export const encodeProgramToZapERC20Params = (
 
 const zapperInterface = Zapper__factory.createInterface()
 
-export const encodeCalldata = (payload: ZapERC20ParamsStruct) => {
-  return payload.tokenIn === '0x0000000000000000000000000000000000000000'
+export const encodeCalldata = (
+  payload: ZapERC20ParamsStruct,
+  ethereumInput: boolean
+) => {
+  return ethereumInput
     ? zapperInterface.encodeFunctionData('zapETH', [payload])
     : zapperInterface.encodeFunctionData('zapERC20', [payload])
 }

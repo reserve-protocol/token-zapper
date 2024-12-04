@@ -186,6 +186,20 @@ describe('dag builder', () => {
   })
 
   describe('Standard RToken zaps', () => {
+    it('1 ETH => ETH+', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.nativeToken.from(1.0)],
+        universe.rTokens['ETH+']
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
     it('1 WETH => dgnETH', async () => {
       const dag = await new DagSearcher(universe).buildDag(
         Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
@@ -290,7 +304,6 @@ describe('dag builder', () => {
       console.log(dag.toDot())
     }, 60000)
 
-
     it('10.000 USDT => eUSD', async () => {
       const dag = await new DagSearcher(universe).buildDag(
         Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
@@ -335,7 +348,6 @@ describe('dag builder', () => {
       )
       console.log(dag.toDot())
     }, 60000)
-
 
     it('10.000 DAI => hyusd', async () => {
       const dag = await new DagSearcher(universe).buildDag(

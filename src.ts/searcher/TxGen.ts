@@ -63,7 +63,8 @@ const evaluateProgram = async (
   innerDag: DagBuilder,
   dustTokens: Token[],
   signer: Address,
-  minOutput: TokenQuantity
+  minOutput: TokenQuantity,
+  opts: { ethereumInput: boolean }
 ) => {
   const tx = encodeProgramToZapERC20Params(
     planner,
@@ -71,9 +72,9 @@ const evaluateProgram = async (
     innerDag.config.userOutput[0].token.wei,
     [...dustTokens]
   )
-  const data = encodeCalldata(tx)
+  const data = encodeCalldata(tx, opts.ethereumInput)
   let value = 0n
-  if (innerDag.config.userInput[0].token === universe.nativeToken) {
+  if (opts.ethereumInput) {
     value = innerDag.config.userInput[0].amount
   }
   const simulationPayload = {
@@ -86,19 +87,6 @@ const evaluateProgram = async (
       userBalanceAndApprovalRequirements: innerDag.config.userInput[0].amount,
     },
   }
-  // console.log(
-  //   JSON.stringify(
-  //     {
-  //       to: universe.config.addresses.zapperAddress.address,
-  //       from: signer.address,
-  //       data,
-  //       value: value.toString(),
-  //       block: universe.currentBlock,
-  //     },
-  //     null,
-  //     2
-  //   )
-  // )
   try {
     return {
       res: await simulateAndParse(
@@ -136,7 +124,7 @@ export class TxGen {
     this.blockNumber = dag.dag.universe.currentBlock
   }
 
-  public async generate(signer: Address) {
+  public async generate(signer: Address, opts: { ethereumInput: boolean }) {
     console.log(`Generating tx for\n${this.dag.toDot()}`)
     console.log(
       `Expected output: ${this.dag.outputs.join(
@@ -244,7 +232,8 @@ export class TxGen {
       innerDag,
       dustTokens,
       signer,
-      innerDag.config.userOutput[0].token.from(1n)
+      innerDag.config.userOutput[0].token.from(1n),
+      opts
     )
 
     const minOutputWithSlippage = innerDag.config.userOutput[0].token.from(
@@ -273,7 +262,8 @@ export class TxGen {
       innerDag,
       dustTokens,
       signer,
-      minOutputWithSlippage
+      minOutputWithSlippage,
+      opts
     )
     const result = {
       universe: this.universe,

@@ -990,7 +990,9 @@ export class Universe<const UniverseConf extends Config = Config> {
       [userInput],
       rToken
     )
-    return await new TxGen(dag).generate(userAddress)
+    return await new TxGen(dag).generate(userAddress, {
+      ethereumInput: userInput.token === this.nativeToken,
+    })
   }
   public async redeem(
     rTokenQuantity: TokenQuantity,
@@ -998,20 +1000,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     userAddress: Address | string,
     opts?: ToTransactionArgs
   ) {
-    if (typeof userAddress === 'string') {
-      userAddress = Address.from(userAddress)
-    }
-    if (typeof outputToken === 'string') {
-      outputToken = await this.getToken(Address.from(outputToken))
-    }
-    throw new Error("...")
-    // const out = await this.searcher.redeem(
-    //   rTokenQuantity,
-    //   outputToken,
-    //   userAddress,
-    //   opts
-    // )
-    // return out.bestZapTx.tx
+    return await this.zap(rTokenQuantity, outputToken, userAddress, opts)
   }
 
   get approvalAddress() {

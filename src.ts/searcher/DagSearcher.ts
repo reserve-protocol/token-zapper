@@ -144,8 +144,12 @@ export class DagSearcher {
     })
 
     await this.universe.initialized
-    const inputs = userInput.map((i) => i.token)
-    if (inputs.includes(this.universe.wrappedNativeToken)) {
+    const eth = this.universe.nativeToken
+    const weth = this.universe.wrappedNativeToken
+    const inputs = userInput
+      .map((i) => i.token)
+      .map((i) => (i === eth ? weth : i))
+    if (inputs.includes(weth)) {
       inputs.push(this.universe.nativeToken)
     }
 
@@ -189,7 +193,7 @@ export class DagSearcher {
       new DagBuilderConfig(
         this.universe,
         logger,
-        userInput,
+        userInput.map((i) => (i.token === eth ? i.into(weth) : i)),
         [1],
         [userOutput.one],
         [1]
@@ -257,7 +261,6 @@ export class DagSearcher {
         } else {
           try {
             const liq = await edge.liquidity()
-            // console.log(`${edge} liq: ${liq} inputPriceSum: ${inputPriceSum}`)
             if (liq < inputPriceSum / 10) {
               return
             }
@@ -484,7 +487,6 @@ export class DagSearcher {
       mintPrices,
       [...tradeActions].map(wrapAction)
     )
-    await new TxGen(out).generate(signer)
     return out
   }
 }

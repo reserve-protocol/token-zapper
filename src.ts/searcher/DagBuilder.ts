@@ -690,9 +690,6 @@ export class DagBuilder {
       }
     }
 
-    console.log('Finalizing DAG:')
-    console.log(this.toDot())
-
     /**
      * Run's the initial optimisation phase, this phase will try to
      * optimise for average price of output token

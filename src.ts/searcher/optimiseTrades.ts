@@ -17,8 +17,6 @@ export const optimiseTrades = async (
     await Promise.all(
       tradeActions.map(async (action, index) => {
         const maxSize = await universe.getMaxTradeSize(action, floorPrice)
-
-        console.log(`${action}: Max input for action ${maxSize.asNumber()} / ${floorPrice}`)
         maxInputs[index] = maxSize.asNumber()
       })
     )

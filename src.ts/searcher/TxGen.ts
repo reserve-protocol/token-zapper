@@ -41,6 +41,7 @@ const simulateAndParse = async (
       txFee: universe.nativeToken.from(
         parsed.gasUsed.toBigInt() * universe.gasPrice
       ),
+      gasUnits: parsed.gasUsed.toBigInt(),
       amountOut: outputToken.from(parsed.amountOut),
       dust: parsed.dust.map((d, index) => dustTokens[index].from(d)),
     }
@@ -274,10 +275,12 @@ export class TxGen {
     }
 
     const stats = await ZapTxStats.create(result, {
-      gasUnits: program.res.txFee.amount,
+      gasUnits: program.res.gasUnits,
       input: innerDag.config.userInput[0],
-      output: innerDag.config.userOutput[0],
-      dust: testSimulation.dust,
+      output: program.res.amountOut,
+      dust: testSimulation.dust.filter(
+        (i) => i.token !== program.res.amountOut.token && i.amount > 100000n
+      ),
     })
 
     return ZapTransaction.create(

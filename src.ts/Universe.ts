@@ -712,12 +712,16 @@ export class Universe<const UniverseConf extends Config = Config> {
   public midPrices: BlockCache<Action, TokenQuantity>;
   private _maxTradeSizes: DefaultMap<Action, Promise<BlockCache<number, TokenQuantity>>> = new DefaultMap(async edge => {
     if (!edge.is1to1) {
-      throw new Error('Edge is not 1-to-1')
+      throw new Error(
+        `${edge}: is not 1-to-1`
+      )
     }
     const inputToken = edge.inputToken[0]
     const liquidity = (await edge.liquidity()) * 0.5
     if (!isFinite(liquidity)) {
-      throw new Error('Liquidity is not finite')
+      throw new Error(
+        `${edge}: has infinite liquidity`
+      )
     }
 
     const inputTokenPrice = (await inputToken.price).asNumber()

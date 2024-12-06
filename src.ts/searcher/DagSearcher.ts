@@ -439,8 +439,8 @@ export class DagSearcher {
         }
       }
       if (openSet.size !== 0) {
-        // console.log('Missing tokens', [...openSet].join(', '))
-        // console.log('Trade actions:')
+        console.log('Missing tokens', [...openSet].join(', '))
+        console.log('Trade actions:')
         for (const t of tradeActions) {
           console.log('  ', t.toString())
         }

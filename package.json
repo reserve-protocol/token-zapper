@@ -60,6 +60,7 @@
     "integration:eth": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/ethereum.test.ts'",
     "integration:eth:dags": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/dags.eth.test.ts'",
     "integration:base": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/base.test.ts'",
+    "integration:base:dags": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/dags.base.test.ts'",
     "integration:arbitrum": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/arbitrum.test.ts'",
     "format": "npm run prettier:fix",
     "curve:all": "npm run curve:mainnet && npm run curve:base && npm run curve:arbitrum",

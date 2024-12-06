@@ -40,7 +40,17 @@ export const getPoolType = (poolType: number) => {
 }
 abstract class BaseV2AerodromeAction extends Action('BaseAerodromeStablePool') {
   public get outputSlippage(): bigint {
-    return 5n
+    return 1n
+  }
+
+  public async liquidity(): Promise<number> {
+    const out = await this.pool.reserves()
+    const prices = await Promise.all(
+      out.map((t) => t.price().then((i) => i.asNumber()))
+    )
+
+    const sum = prices.reduce((a, b) => a + b, 0)
+    return sum
   }
 
   abstract get actionName(): string
@@ -224,6 +234,15 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
   get actionName(): string {
     return 'swapCL'
   }
+  public async liquidity(): Promise<number> {
+    const out = await this.pool.reserves()
+    const prices = await Promise.all(
+      out.map((t) => t.price().then((i) => i.asNumber()))
+    )
+
+    const sum = prices.reduce((a, b) => a + b, 0)
+    return sum
+  }
 
   get isTrade() {
     return true
@@ -267,19 +286,13 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
 
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const result =
-      await this.pool.context.mixedRouter.callStatic.quoteExactInputSingleV3(
-        {
-          tokenIn: this.input.address.address,
-          tokenOut: this.output.address.address,
-          amountIn: amountIn.amount,
-          tickSpacing: this.pool.tickSpacing,
-          sqrtPriceLimitX96: 0,
-        },
-        {
-          from: '0xF2d98377d80DADf725bFb97E91357F1d81384De2',
-          gasLimit: 5_000_000,
-        }
-      )
+      await this.pool.context.mixedRouter.callStatic.quoteExactInputSingleV3({
+        tokenIn: this.input.address.address,
+        tokenOut: this.output.address.address,
+        amountIn: amountIn.amount,
+        tickSpacing: this.pool.tickSpacing,
+        sqrtPriceLimitX96: 0,
+      })
 
     return [this.output.from(result.amountOut.toBigInt())]
   }
@@ -422,7 +435,7 @@ class AeropoolSwap extends BaseV2AerodromeAction {
 
 const FEE_DIVISOR = 10000n
 class AerodromeStablePool {
-  private reserves: () => Promise<TokenQuantity[]>
+  public reserves: () => Promise<TokenQuantity[]>
   private totalSupply: () => Promise<TokenQuantity>
 
   public readonly actions: {
@@ -445,7 +458,15 @@ class AerodromeStablePool {
     this.factory = Address.from(data.factory)
     this.reserves = this.universe.createCachedProducer(async () => {
       if (this.poolType === AerodromePoolType.CL) {
-        throw new Error('Not used')
+        const balance0 = await this.universe.balanceOf(
+          this.token0,
+          this.poolAddress
+        )
+        const balance1 = await this.universe.balanceOf(
+          this.token1,
+          this.poolAddress
+        )
+        return [balance0, balance1]
       }
       const { reserveA, reserveB } =
         await context.router.callStatic.getReserves(
@@ -643,6 +664,7 @@ class AerodromeStablePool {
           universe.addAction(inst.actions.addLiquidity!)
           universe.addAction(inst.actions.removeLiquidity!)
 
+          universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
           await universe.defineLPToken(
             inst.lpToken,
             async (amt) => await inst.quoteRemoveLiquidity(amt),

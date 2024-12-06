@@ -171,6 +171,7 @@ export const createProtocolWithWrappers = (
       )
 
       const deposit = new RewardableERC20WrapperDeposit(rewardable, wrapper)
+      universe.mintableTokens.set(wrapper, deposit)
       const withdraw = new RewardableERC20WrapperWithdraw(rewardable, wrapper)
 
       universe.addSingleTokenPriceSource({

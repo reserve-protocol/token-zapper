@@ -7,7 +7,7 @@ import {
   Address,
   BaseUniverse,
   DagSearcher,
-  ethereumConfig,
+  baseConfig,
   setupBaseZapper,
   Universe,
 } from '../../src.ts/index'
@@ -78,7 +78,7 @@ if (isNaN(INPUT_MUL)) {
 
 let initialized = false
 export let universe: BaseUniverse
-const provider = getProvider(process.env.MAINNET_PROVIDER!)
+const provider = getProvider(process.env.BASE_PROVIDER!)
 
 provider.on('debug', (log) => {
   if (
@@ -90,9 +90,9 @@ provider.on('debug', (log) => {
   ) {
     return
   }
-  console.log(
-    log.request.params[0].to + ':' + log.request.params[0].data?.slice(0, 10)
-  )
+  // console.log(
+  //   log.request.params[0].to + ':' + log.request.params[0].data?.slice(0, 10)
+  // )
 })
 
 beforeAll(async () => {
@@ -101,7 +101,7 @@ beforeAll(async () => {
     universe = (await Universe.createWithConfig(
       provider,
       {
-        ...ethereumConfig,
+        ...baseConfig,
         searcherMinRoutesToProduce: 1,
         maxSearchTimeMs: 60000,
       },
@@ -147,6 +147,51 @@ describe('dag builder', () => {
         Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
         [universe.commonTokens.WETH.from(10.0)],
         universe.rTokens.bsd
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('1000 WETH => bsdETH', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.WETH.from(1000.0)],
+        universe.rTokens.bsd
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('10.000 USDC => hyUSD', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.USDC.from(10_000.0)],
+        universe.rTokens.hyUSD
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('1.000.000 USDC => hyUSD', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.USDC.from(1_000_000.0)],
+        universe.rTokens.hyUSD
       )
       console.log(dag.dag.toDot())
       console.log(

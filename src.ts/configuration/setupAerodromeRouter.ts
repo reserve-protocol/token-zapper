@@ -88,7 +88,7 @@ export const setupAerodromeRouter = async (universe: Universe) => {
             if (addr === Address.ZERO) {
               return
             }
-            const inst = await aerodromeContext.definePool(addr, data)
+            await aerodromeContext.definePool(addr, data)
           } catch (e) {
             console.log(e)
           }

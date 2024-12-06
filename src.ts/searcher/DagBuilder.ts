@@ -695,18 +695,17 @@ export class DagBuilder {
      * optimise for average price of output token
      */
     const result = await this.optimiseDag({
-      iterations: 50,
+      iterations: 150,
       objectiveFn: (i) => {
-        const qtyOut = i.outputs[0].asNumber()
+        const qtyOut = i.outputs[0].asNumber() * 2
         const inputValue =
-          i.inputsValue + i.txFee.price.asNumber() + i.dustValue
+          i.inputsValue + i.txFee.price.asNumber() + i.dustValue * 10
         const price = inputValue / qtyOut
         return -price
       },
-      epsilon: 0.0001,
-      resetOnWorse: 5,
-      global: true,
-      learningRate: (i) => 0.1 / (i + 1),
+      epsilon: 0.00001,
+      resetOnWorse: 15,
+      learningRate: (i) => 0.05 / (i + 1),
       mintPrices,
     })
 
@@ -1477,9 +1476,21 @@ export class DagBuilder {
     learningRate: (iteration: number) => number
     epsilon: number
     resetOnWorse: number
-    global: boolean
     mintPrices?: Map<Token, Map<Token, number>>
   }) {
+    if (opts.mintPrices) {
+      for (const [tokenIn, edges] of opts.mintPrices.entries()) {
+        for (const [tokenOut, price] of edges.entries()) {
+          if (tokenIn === tokenOut) {
+            opts.mintPrices.delete(tokenIn)
+            continue
+          }
+          console.log(
+            `floorprice: ${tokenIn.symbol} => ${tokenOut.symbol}: ${price}`
+          )
+        }
+      }
+    }
     const mintPrices = opts.mintPrices ?? new Map()
 
     if (!this.isDagConstructed) {
@@ -1541,7 +1552,6 @@ export class DagBuilder {
       )
 
       let learningRate = opts.learningRate(iteration)
-      let noChange = 0
 
       for (let step = 0; step < 10; step++) {
         for (let i = 0; i < this.splitNodes.length; i++) {
@@ -1564,16 +1574,6 @@ export class DagBuilder {
         const newOut = await this.evaluate(this.config.userInput, mintPrices)
 
         const newObjValue = opts.objectiveFn(newOut)
-
-        if (newObjValue === bestSoFarObjective.output) {
-          noChange += 1
-        } else {
-          noChange = 0
-        }
-
-        if (noChange > 3) {
-          break
-        }
 
         const worseResult = newObjValue < currentObjectiveValue
         if (newObjValue > bestSoFarObjective.output) {
@@ -1606,9 +1606,6 @@ export class DagBuilder {
         }
       }
 
-      if (noChange > 3) {
-        break
-      }
       if (worseCount > opts.resetOnWorse) {
         copyVectors(bestSoFarObjective.out.dag.splitNodes, this.splitNodes)
         currentObjectiveValue = bestSoFarObjective.output

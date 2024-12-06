@@ -12,13 +12,17 @@ import { setupUniswapV3Router } from './setupUniswapRouter'
 import { setupAerodromeRouter } from './setupAerodromeRouter'
 import { setupERC4626 } from './setupERC4626'
 import { createProtocolWithWrappers } from '../action/RewardableWrapper'
+import { TokenType } from '../entities/TokenClass'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
+  const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
+  logger.info('Loading base token list')
   await loadBaseTokenList(universe)
+  logger.info('Loading wsteth')
   const wsteth = await universe.getToken(
     Address.from('0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452')
   )
-
+  logger.info('Registering USD price oracles')
   const registry: OffchainOracleRegistry = new OffchainOracleRegistry(
     universe.config.requoteTolerance,
     'BaseOracles',
@@ -65,6 +69,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     () => universe.currentBlock,
     universe.provider
   )
+
   Object.entries(PROTOCOL_CONFIGS.usdPriceOracles).map(
     ([tokenAddress, oracleAddress]) => {
       registry.register(
@@ -86,6 +91,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
 
   universe.oracles.push(registry)
 
+  logger.info('Setting up wrapped gas token')
   await setupWrappedGasToken(universe)
 
   // Load compound v3
@@ -94,6 +100,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     await setupCompoundV3('CompV3', universe, PROTOCOL_CONFIGS.compV3)
   )
 
+  logger.info('Setting up AAVEV3')
   // Set up AAVEV2
   universe.addIntegration(
     'aaveV3',
@@ -106,6 +113,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     priceToken: universe.usd,
   })
 
+  logger.info('Setting up UniswapV3')
   const router = await setupUniswapV3Router(universe)
   universe.addIntegration('uniswapV3', await router.venue())
 
@@ -119,21 +127,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     await aerodromeWrappers.addWrapper(wrapperToken)
   }
 
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens.bsd,
-    universe.commonTokens.WETH
-  )
-
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens.bsd,
-    universe.nativeToken
-  )
-
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens.hyUSD,
-    universe.commonTokens.USDC
-  )
-
+  logger.info('Setting up preferred rTokens')
   await Promise.all(
     PROTOCOL_CONFIGS.erc4626.map(async ([addr, proto]) => {
       const vault = await setupERC4626(universe, {
@@ -145,6 +139,32 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     })
   )
 
+  universe.tokenType.set(
+    universe.commonTokens.cbETH,
+    Promise.resolve(TokenType.Asset)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.wstETH,
+    Promise.resolve(TokenType.Asset)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.hyUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.bsd,
+    Promise.resolve(universe.nativeToken)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.cbETH,
+    Promise.resolve(universe.nativeToken)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.wstETH,
+    Promise.resolve(universe.nativeToken)
+  )
+
+  logger.info('Setting up stargate')
   // Set up stargate
   await setupStargate(
     universe,
@@ -153,4 +173,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     {}
   )
   await setupStargateWrapper(universe, PROTOCOL_CONFIGS.stargate.wrappers, {})
+
+  logger.info('Done setting up base zapper')
 }

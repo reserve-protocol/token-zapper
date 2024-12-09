@@ -17,7 +17,7 @@ export class PriceOracle extends Cached<Token, TokenQuantity | null> {
         if (!this.supports(k)) {
           return null
         }
-        const v = await fetchPrice(k)
+        const v = await fetchPrice(k).catch(() => null)
         if (v == null) {
           return null
         }

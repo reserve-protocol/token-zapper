@@ -12,7 +12,10 @@ export class BlockCache<Input, Result extends NonNullable<any>, Key = Input> {
     const k = this.keyFn(key)
     let out = this.cache.get(k)
     if (out == null) {
-      const res = this.fetch(key)
+      const res = this.fetch(key).catch((e) => {
+        this.cache.delete(k)
+        throw e
+      })
       out = { result: res, time: this.currentBlock }
       this.cache.set(k, out)
     }

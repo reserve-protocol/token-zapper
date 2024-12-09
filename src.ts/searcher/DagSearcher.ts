@@ -208,16 +208,17 @@ export class DagSearcher {
     const outputTokenClass = await this.universe.tokenClass.get(userOutput)
     const outputUnderlying = await this.universe.underlyingToken.get(userOutput)
     for (const input of userInput) {
+      if (input.token === weth && outputTokenClass === eth) {
+        continue
+      }
       const inputUnderyling = await this.universe.underlyingToken.get(
         input.token
       )
-      const inputTokenClass = await this.universe.tokenClass.get(input.token)
 
       if (
-        !(
-          inputTokenClass !== outputTokenClass ||
-          inputUnderyling !== outputUnderlying
-        )
+        inputUnderyling === outputUnderlying ||
+        input.token === outputTokenClass ||
+        input.token === outputUnderlying
       ) {
         continue
       }
@@ -227,8 +228,6 @@ export class DagSearcher {
 
       const newInputQty = inputPrice.div(outputPrice)
 
-      userInput[userInput.indexOf(input)] = newInputQty
-
       // Convert input to output token class
       const path = bfs(
         this.universe,
@@ -237,13 +236,18 @@ export class DagSearcher {
         outputTokenClass,
         2
       )
+
       const possiblePlans = path.steps
         .map((i) => i.convertToSingularPaths())
         .flat()
 
-      const paths = await Promise.all(
-        possiblePlans.map(async (plan) => plan.quote([input]))
-      )
+      const paths = (
+        await Promise.all(
+          possiblePlans.map(async (plan) =>
+            plan.quote([input]).catch(() => null)
+          )
+        )
+      ).filter((i) => i !== null)
       paths.sort((r, l) => l.compare(r))
 
       const trades: BaseAction[] = []
@@ -264,7 +268,11 @@ export class DagSearcher {
         trades.push(wrappedAct)
       }
 
-      dag.tradeUserInputFor(trades, input.token, outputTokenClass)
+      if (trades.length !== 0) {
+        console.log(`Trading input ${input.token} for ${outputTokenClass}`)
+        dag.tradeUserInputFor(trades, input.token, outputTokenClass)
+        userInput[userInput.indexOf(input)] = newInputQty
+      }
     }
 
     for (let i = 0; i < byPhase.length; i++) {

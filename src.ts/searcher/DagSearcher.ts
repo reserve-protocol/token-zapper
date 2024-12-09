@@ -12,7 +12,6 @@ import {
   NativeInputWrapper,
   WrappedAction,
 } from './TradeAction'
-import { TxGen } from './TxGen'
 import { bfs } from '../exchange-graph/BFS'
 
 const findUnderlyingTokens = async (
@@ -157,11 +156,13 @@ export class DagSearcher {
     const inputPriceSum = inputPrices.reduce((a, b) => a + b.asNumber(), 0)
 
     // console.log('inputPriceSum', inputPriceSum)
+
     const { byPhase, mintPrices } = await findUnderlyingTokens(
       this.universe,
       inputPriceSum,
       [userOutput]
     )
+
     for (const [_, edges] of mintPrices.entries()) {
       for (const [tokenOut, price] of edges.entries()) {
         for (const [tokenOutRate, rate] of mintPrices.get(tokenOut).entries()) {
@@ -199,10 +200,72 @@ export class DagSearcher {
         [1]
       )
     )
+
     const addrsUsed = new Set<Address>()
     const addrsUsedTrade = new Set<Address>()
 
     const tradeActions = new Set<BaseAction>()
+    const outputTokenClass = await this.universe.tokenClass.get(userOutput)
+    const outputUnderlying = await this.universe.underlyingToken.get(userOutput)
+    for (const input of userInput) {
+      const inputUnderyling = await this.universe.underlyingToken.get(
+        input.token
+      )
+      const inputTokenClass = await this.universe.tokenClass.get(input.token)
+
+      if (
+        !(
+          inputTokenClass !== outputTokenClass ||
+          inputUnderyling !== outputUnderlying
+        )
+      ) {
+        continue
+      }
+
+      const inputPrice = (await input.price()).into(outputTokenClass)
+      const outputPrice = (await outputTokenClass.price).into(outputTokenClass)
+
+      const newInputQty = inputPrice.div(outputPrice)
+
+      userInput[userInput.indexOf(input)] = newInputQty
+
+      // Convert input to output token class
+      const path = bfs(
+        this.universe,
+        this.universe.graph,
+        input.token,
+        outputTokenClass,
+        2
+      )
+      const possiblePlans = path.steps
+        .map((i) => i.convertToSingularPaths())
+        .flat()
+
+      const paths = await Promise.all(
+        possiblePlans.map(async (plan) => plan.quote([input]))
+      )
+      paths.sort((r, l) => l.compare(r))
+
+      const trades: BaseAction[] = []
+      for (let i = 0; i < paths.length; i++) {
+        const path = paths[i]
+        const plan = path.swapPlan
+        if (!plan.addresesInUse.every((i) => !addrsUsed.has(i))) {
+          continue
+        }
+        for (const addr of plan.addresesInUse) {
+          addrsUsed.add(addr)
+        }
+        const wrappedAct =
+          plan.steps.length > 1
+            ? new MultiStepAction(this.universe, plan.steps.map(wrapAction))
+            : wrapAction(plan.steps[0])
+
+        trades.push(wrappedAct)
+      }
+
+      dag.tradeUserInputFor(trades, input.token, outputTokenClass)
+    }
 
     for (let i = 0; i < byPhase.length; i++) {
       dag.matchBalances()
@@ -361,8 +424,9 @@ export class DagSearcher {
             for (const addr of plan.addresesInUse) {
               addrsUsed.add(addr)
             }
-            const wrappedAct = wrapAction(
-              new MultiStepAction(this.universe, plan.steps.map(wrapAction))
+            const wrappedAct = new MultiStepAction(
+              this.universe,
+              plan.steps.map(wrapAction)
             )
             tradeActions.add(wrappedAct)
           }

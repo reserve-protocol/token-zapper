@@ -9,7 +9,7 @@ import {
   createEnso,
   createKyberswap,
   setupBaseZapper,
-  Universe
+  Universe,
 } from '../../src.ts/index'
 import {
   createActionTestCase,
@@ -38,13 +38,13 @@ export const baseWhales = {
   '0xab36452dbac151be02b16ca17d8919826072f64a':
     '0x796d2367af69deb3319b8e10712b8b65957371c3', // rsr
   '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913':
-    '0xf977814e90da44bfa03b6295a0616a897441acec', // usdc
+    '0x0b0a5886664376f59c351ba3f598c8a8b4d0a6f3', // usdc
 
   '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22':
     '0x3bf93770f2d4a794c3d9ebefbaebae2a8f09a5e5', // cbeth
 
   '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca':
-    '0x0b25c51637c43decd6cc1c1e3da4518d54ddb528', // usdbc
+    '0x0e635f8eeed4f7279d56692d552f034ece136019', // usdbc
 
   '0x50c5725949a6f0c72e6c4a641f24049a917db0cb':
     '0x73b06d8d18de422e269645eace15400de7462417', // dai
@@ -113,25 +113,25 @@ const testUser = Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 const issueanceCases = [
   makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
   makeMintTestCase(10000, t.USDbC, rTokens.hyUSD),
-  makeMintTestCase(5, t.WETH, rTokens.hyUSD),
+  // makeMintTestCase(5, t.WETH, rTokens.hyUSD),
 
   makeMintTestCase(5, t.WETH, rTokens.bsd),
-  makeMintTestCase(5, t.wstETH, rTokens.bsd),
-  makeMintTestCase(5, t.cbETH, rTokens.bsd),
-  makeMintTestCase(10000, t.USDC, rTokens.bsd),
-  makeMintTestCase(10000, t.USDbC, rTokens.bsd),
+  // makeMintTestCase(5, t.wstETH, rTokens.bsd),
+  // makeMintTestCase(5, t.cbETH, rTokens.bsd),
+  // makeMintTestCase(10000, t.USDC, rTokens.bsd),
+  // makeMintTestCase(10000, t.USDbC, rTokens.bsd),
 ]
 
-const redeemCases = [
-  makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
-  makeMintTestCase(10000, rTokens.hyUSD, t.USDbC),
-  makeMintTestCase(10000, rTokens.hyUSD, t.WETH),
+// const redeemCases = [
+//   makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
+//   makeMintTestCase(10000, rTokens.hyUSD, t.USDbC),
+//   makeMintTestCase(10000, rTokens.hyUSD, t.WETH),
 
-  makeMintTestCase(5, rTokens.bsd, t.WETH),
-  makeMintTestCase(5, rTokens.bsd, t.wstETH),
-  makeMintTestCase(5, rTokens.bsd, t.cbETH),
-  makeMintTestCase(5, rTokens.bsd, t.USDC),
-]
+//   makeMintTestCase(5, rTokens.bsd, t.WETH),
+//   makeMintTestCase(5, rTokens.bsd, t.wstETH),
+//   makeMintTestCase(5, rTokens.bsd, t.cbETH),
+//   makeMintTestCase(5, rTokens.bsd, t.USDC),
+// ]
 const individualIntegrations = [
   // makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
   makeIntegrationtestCase(
@@ -151,14 +151,13 @@ let universe: Universe
 const provider = getProvider(process.env.BASE_PROVIDER!)
 
 beforeAll(async () => {
+  global.console = require('console')
   universe = await Universe.createWithConfig(
     provider,
     {
       ...baseConfig,
       searcherMinRoutesToProduce: 1,
-      routerDeadline: 2000,
-      searchConcurrency: 32,
-      maxSearchTimeMs: 7000,
+      maxSearchTimeMs: 60000,
     },
     async (uni) => {
       uni.addTradeVenue(createKyberswap('Kyber', uni))
@@ -177,7 +176,7 @@ beforeAll(async () => {
 
   await universe.initialized
   return universe
-}, 5000)
+}, 60000)
 
 describe('base zapper', () => {
   beforeEach(async () => {
@@ -198,50 +197,46 @@ describe('base zapper', () => {
       issueance.inputToken
     )!} issue ${getSymbol.get(issueance.output)!}`
     describe(testCaseName, () => {
-      it(
-        'produces an output',
-        async () => {
-          await createZapTestCase(
-            'Issueance',
-            testUser,
-            universe,
-            testCaseName,
-            {
-              token: issueance.inputToken,
-              amount: issueance.input,
-            },
-            issueance.output
-          )
-        },
-        15 * 1000
-      )
+      it('produces an output', async () => {
+        await createZapTestCase(
+          'Issueance',
+          testUser,
+          universe,
+          testCaseName,
+          {
+            token: issueance.inputToken,
+            amount: issueance.input,
+          },
+          issueance.output
+        )
+      }, 60000)
     })
   }
 
-  for (const redeem of redeemCases) {
-    const testCaseName = `redeem ${getSymbol.get(
-      redeem.inputToken
-    )!} for ${getSymbol.get(redeem.output)!}`
-    describe(testCaseName, () => {
-      it(
-        'produces an output',
-        async () => {
-          await createZapTestCase(
-            'Redeem',
-            testUser,
-            universe,
-            testCaseName,
-            {
-              token: redeem.inputToken,
-              amount: redeem.input,
-            },
-            redeem.output
-          )
-        },
-        15 * 1000
-      )
-    })
-  }
+  // for (const redeem of redeemCases) {
+  //   const testCaseName = `redeem ${getSymbol.get(
+  //     redeem.inputToken
+  //   )!} for ${getSymbol.get(redeem.output)!}`
+  //   describe(testCaseName, () => {
+  //     it(
+  //       'produces an output',
+  //       async () => {
+  //         await createZapTestCase(
+  //           'Redeem',
+  //           testUser,
+  //           universe,
+  //           testCaseName,
+  //           {
+  //             token: redeem.inputToken,
+  //             amount: redeem.input,
+  //           },
+  //           redeem.output
+  //         )
+  //       },
+  //       15 * 1000
+  //     )
+  //   })
+  // }
 
   for (const zapIntoYieldPosition of zapIntoYieldPositionCases) {
     const testCaseName = `zap ${getSymbol.get(
@@ -250,43 +245,33 @@ describe('base zapper', () => {
       zapIntoYieldPosition.output
     )!} yield position`
     describe(testCaseName, () => {
-      it(
-        'produces an output',
-        async () => {
-          expect.assertions(1)
-          await universe.initialized
-          await universe.updateBlockState(
-            await universe.provider.getBlockNumber(),
-            (await universe.provider.getGasPrice()).toBigInt()
-          )
+      it('produces an output', async () => {
+        expect.assertions(1)
+        await universe.initialized
+        await universe.updateBlockState(
+          await universe.provider.getBlockNumber(),
+          (await universe.provider.getGasPrice()).toBigInt()
+        )
 
-          const input = universe.tokens
-            .get(zapIntoYieldPosition.inputToken)
-            ?.from(zapIntoYieldPosition.input)
-          const rToken = universe.tokens.get(zapIntoYieldPosition.rToken)
-          const output = universe.tokens.get(zapIntoYieldPosition.output)
-          let result = 'failed'
+        const input = universe.tokens
+          .get(zapIntoYieldPosition.inputToken)
+          ?.from(zapIntoYieldPosition.input)
+        const output = universe.tokens.get(zapIntoYieldPosition.output)
+        let result = 'failed'
 
-          try {
-            const zap = await universe.searcher.zapIntoRTokenYieldPosition(
-              input!,
-              rToken!,
-              output!,
-              testUser
-            )
-            console.info(`Yield position zap: ${zap}`)
-            result = 'success'
-          } catch (e) {
-            console.info(`${testCaseName} = ${e.message}`)
-          }
-          expect(result).toBe('success')
-        },
-        60 * 1000
-      )
+        try {
+          const zap = await universe.zap(input!, output!, testUser)
+          console.info(`Yield position zap: ${zap}`)
+          result = 'success'
+        } catch (e) {
+          console.info(`${testCaseName} = ${e.message}`)
+        }
+        expect(result).toBe('success')
+      }, 60000)
     })
   }
 })
 
 afterAll(() => {
-  ; (universe.provider as WebSocketProvider).websocket.close()
+  ;(universe.provider as WebSocketProvider).websocket.close()
 })

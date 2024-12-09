@@ -46,6 +46,7 @@ const simulateAndParse = async (
       dust: parsed.dust.map((d, index) => dustTokens[index].from(d)),
     }
   } catch (e) {
+    console.log(simulation)
     const [cmdIndex, target, message] = defaultAbiCoder.decode(
       ['uint256', 'address', 'string'],
       hexDataSlice(simulation, 4)

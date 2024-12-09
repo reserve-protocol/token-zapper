@@ -95,7 +95,7 @@ export class Universe<const UniverseConf extends Config = Config> {
         return this.underlyingToken.get(base)
       }
     }
-    
+
     return token
   })
 
@@ -390,7 +390,7 @@ export class Universe<const UniverseConf extends Config = Config> {
             if (results >= this.config.routerMinResults) {
               const delta = Date.now() - start
 
-              // We're essentially 
+              // We're essentially
               const toWait = delta > 2500 ? 500 : (2500 - delta) / 2 + 500;
 
               setTimeout(() => {
@@ -774,16 +774,21 @@ export class Universe<const UniverseConf extends Config = Config> {
     )
 
     this.midPrices = this.createCache(async (edge: Action) => {
-      if (!edge.is1to1) {
-        throw new Error(`${edge} is not 1to1`)
+      try {
+        if (!edge.is1to1) {
+          throw new Error(`${edge} is not 1to1`)
+        }
+        const inputToken = edge.inputToken[0]
+        const outputToken = edge.outputToken[0]
+        const outputSize = (await edge.quote([inputToken.one.scalarMul(10n)]))[0]
+        return outputToken.from(outputSize.asNumber() / 10)
+      } catch (e) {
+        console.log(`Error finding mid price for ${edge}: ${e}`)
+        throw e
       }
-      const inputToken = edge.inputToken[0]
-      const outputToken = edge.outputToken[0]
-      const outputSize = (await edge.quote([inputToken.one.scalarMul(10n)]))[0]
-      return outputToken.from(outputSize.asNumber() / 10)
     }, 12000)
 
-    
+
 
     this.wrappedNativeToken = Token.createToken(
       this,
@@ -882,11 +887,11 @@ export class Universe<const UniverseConf extends Config = Config> {
           throw new Error(`${mint} returned ${out.length} outputs, expected 1`)
         }
         const outN = 1 / out[0].asNumber()
-        
+
         const rate = mint.inputToken[0].from(outN)
         const ratePrice = (await rate.price()).asNumber()
         const inputTokenPrice = (await mint.inputToken[0].price).asNumber()
-        
+
         return mint.inputToken[0].from(
           1/(ratePrice/inputTokenPrice)
         )
@@ -989,14 +994,20 @@ export class Universe<const UniverseConf extends Config = Config> {
       rToken = await this.getToken(Address.from(rToken))
     }
     const searcher = new DagSearcher(this)
-    const dag = await searcher.buildDag(
-      userAddress,
-      [userInput],
-      rToken
-    )
-    return await new TxGen(dag).generate(userAddress, {
-      ethereumInput: userInput.token === this.nativeToken,
-    })
+    try {
+      console.log(`Building DAG for ${userInput} -> ${rToken}`)
+      const dag = await searcher.buildDag(
+        userAddress,
+        [userInput],
+        rToken
+      )
+      return await new TxGen(dag).generate(userAddress, {
+        ethereumInput: userInput.token === this.nativeToken,
+      })
+    } catch (e) {
+      console.log(`Error zapping: ${e}`)
+      throw e
+    }
   }
   public async redeem(
     rTokenQuantity: TokenQuantity,

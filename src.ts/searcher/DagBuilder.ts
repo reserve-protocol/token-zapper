@@ -462,10 +462,43 @@ export class DagBuilder {
     return chain
   }
 
+  public async tradeUserInputFor(
+    trades: BaseAction[],
+    prevInputToken: Token,
+    newInputToken: Token
+  ) {
+    this.balanceNodeTip.delete(prevInputToken)
+
+    const splitNode = this.createSplitNode(
+      prevInputToken,
+      trades.map(() => 1 / trades.length)
+    )
+    const prev = this.balanceNodeStart.get(prevInputToken)
+    if (prev == null) {
+      throw new Error('No start node for ' + prevInputToken)
+    }
+    this.forward(prev, prevInputToken, splitNode)
+    const outnodeNode = new BalanceNode(newInputToken)
+    this.balanceNodeTip.set(newInputToken, outnodeNode)
+
+    const tradeNodes: ActionNode[] = []
+    for (const trade of trades) {
+      const tradeNode = new ActionNode(
+        [[1, prevInputToken]],
+        new SwapPlan(this.universe, [trade]),
+        [[1, newInputToken]]
+      )
+      tradeNodes.push(tradeNode)
+      this.forward(splitNode, prevInputToken, tradeNode)
+      this.forward(tradeNode, newInputToken, outnodeNode)
+    }
+  }
+
   public async finalize(
     mintPrices: Map<Token, Map<Token, number>>,
     tradeActions: BaseAction[]
   ) {
+    console.log('Finalizing DAG:')
     for (const [t, node] of this.balanceNodeTip.entries()) {
       if (node === this.outputNode) {
         continue
@@ -689,6 +722,9 @@ export class DagBuilder {
         splits[i] = 1 / splits.length
       }
     }
+
+    console.log('Final DAG:')
+    console.log(this.toDot())
 
     /**
      * Run's the initial optimisation phase, this phase will try to

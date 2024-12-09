@@ -13,12 +13,13 @@ import { setupAerodromeRouter } from './setupAerodromeRouter'
 import { setupERC4626 } from './setupERC4626'
 import { createProtocolWithWrappers } from '../action/RewardableWrapper'
 import { TokenType } from '../entities/TokenClass'
+import { setupOdosPricing } from './setupOdosPricing'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
+  setupOdosPricing(universe)
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
   logger.info('Loading base token list')
   await loadBaseTokenList(universe)
-  logger.info('Loading wsteth')
   const wsteth = await universe.getToken(
     Address.from('0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452')
   )
@@ -117,16 +118,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   const router = await setupUniswapV3Router(universe)
   universe.addIntegration('uniswapV3', await router.venue())
 
-  await setupAerodromeRouter(universe)
-  const aerodromeWrappers = createProtocolWithWrappers(universe, 'aerodrome')
-
-  for (const wrapperAddress of Object.values(
-    PROTOCOL_CONFIGS.aerodrome.lpPoolWrappers
-  )) {
-    const wrapperToken = await universe.getToken(Address.from(wrapperAddress))
-    await aerodromeWrappers.addWrapper(wrapperToken)
-  }
-
   logger.info('Setting up preferred rTokens')
   await Promise.all(
     PROTOCOL_CONFIGS.erc4626.map(async ([addr, proto]) => {
@@ -152,6 +143,30 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     Promise.resolve(universe.commonTokens.USDC)
   )
   universe.tokenClass.set(
+    universe.commonTokens.USDbC,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.underlyingToken.set(
+    universe.commonTokens.USDbC,
+    Promise.resolve(universe.commonTokens.USDbC)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.USDbC,
+    Promise.resolve(TokenType.Asset)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.DAI,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.meUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens['wsAMM-eUSD/USDC'],
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
     universe.rTokens.bsd,
     Promise.resolve(universe.nativeToken)
   )
@@ -174,5 +189,14 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
   await setupStargateWrapper(universe, PROTOCOL_CONFIGS.stargate.wrappers, {})
 
+  await setupAerodromeRouter(universe)
+  const aerodromeWrappers = createProtocolWithWrappers(universe, 'aerodrome')
+
+  for (const wrapperAddress of Object.values(
+    PROTOCOL_CONFIGS.aerodrome.lpPoolWrappers
+  )) {
+    const wrapperToken = await universe.getToken(Address.from(wrapperAddress))
+    await aerodromeWrappers.addWrapper(wrapperToken)
+  }
   logger.info('Done setting up base zapper')
 }

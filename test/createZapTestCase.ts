@@ -26,6 +26,7 @@ export const createZapTestCase = async (
     logger.info(`${type}: ${zap}`)
     result = 'success'
   } catch (e) {
+    console.log(e)
     logger.error(`${testCaseName} = ${e.message}`)
   }
   expect(result).toBe('success')

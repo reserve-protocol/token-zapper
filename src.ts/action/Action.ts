@@ -541,36 +541,41 @@ export const findTradeSize = async (
   eps: number = 1e-4,
   iterations: number = 32
 ) => {
-  if (!action.is1to1) {
-    throw new Error(`${action}: Unimplemented for non-1to1 trades`)
-  }
-  const liquidity = await action.liquidity()
-  if (!isFinite(liquidity)) {
-    return Infinity
-  }
-
-  const inputTokenPrice = (await action.inputToken[0].price).asNumber()
-  let searchSpan = maxInput.scalarDiv(2n)
-  let input = maxInput
-  for (let i = 0; i < iterations; i++) {
-    if (input.asNumber() * inputTokenPrice < 1000) {
-      return 0
+  try {
+    if (!action.is1to1) {
+      throw new Error(`${action}: Unimplemented for non-1to1 trades`)
     }
-    const [outputAmount] = await action.quote([input])
-    const price = outputAmount.asNumber() / input.asNumber()
-
-    const diff = Math.abs(limitPrice - price)
-
-    if (diff < eps && price > limitPrice) {
-      break
+    const liquidity = await action.liquidity()
+    if (!isFinite(liquidity)) {
+      return Infinity
     }
 
-    if (price < limitPrice) {
-      input = input.sub(searchSpan)
-    } else {
-      input = input.add(searchSpan)
+    const inputTokenPrice = (await action.inputToken[0].price).asNumber()
+    let searchSpan = maxInput.scalarDiv(2n)
+    let input = maxInput
+    for (let i = 0; i < iterations; i++) {
+      if (input.asNumber() * inputTokenPrice < 1000) {
+        return 0
+      }
+      const [outputAmount] = await action.quote([input])
+      const price = outputAmount.asNumber() / input.asNumber()
+
+      const diff = Math.abs(limitPrice - price)
+
+      if (diff < eps && price > limitPrice) {
+        break
+      }
+
+      if (price < limitPrice) {
+        input = input.sub(searchSpan)
+      } else {
+        input = input.add(searchSpan)
+      }
+      searchSpan = searchSpan.scalarDiv(2n)
     }
-    searchSpan = searchSpan.scalarDiv(2n)
+    return input.asNumber()
+  } catch (e) {
+    console.log(`Error finding trade size for ${action}: ${e}`)
+    throw e
   }
-  return input.asNumber()
 }

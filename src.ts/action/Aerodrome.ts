@@ -294,7 +294,7 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
         sqrtPriceLimitX96: 0,
       })
 
-    return [this.output.from(result.amountOut.toBigInt())]
+    return [this.output.from(result.amountOut)]
   }
 
   gasEstimate(): bigint {
@@ -649,35 +649,62 @@ class AerodromeStablePool {
       pool
     )
 
-    if (inst.poolType === AerodromePoolType.CL) {
-      universe.addAction(inst.actions.t0for1)
-      universe.addAction(inst.actions.t1for0)
-    } else {
-      const supply = await inst.totalSupply()
-      if (supply.amount >= inst.lpToken.scale) {
+    const interestingTokens = new Set([
+      ...Object.values(universe.commonTokens),
+      ...Object.values(universe.rTokens),
+    ])
+
+    if (
+      interestingTokens.has(lpToken) ||
+      interestingTokens.has(token0) ||
+      interestingTokens.has(token1)
+    ) {
+      try {
+        const liq = (
+          await Promise.all((await inst.reserves()).map((i) => i.price()))
+        )
+          .map((i) => i.asNumber())
+          .reduce((a, b) => a + b, 0)
+        if (liq < 100_000) {
+          return inst
+        }
+      } catch (e) {
+        return inst
+      }
+
+      if (inst.poolType === AerodromePoolType.CL) {
         universe.addAction(inst.actions.t0for1)
         universe.addAction(inst.actions.t1for0)
+      } else {
+        const supply = await inst.totalSupply()
+        if (supply.amount >= inst.lpToken.scale) {
+          universe.addAction(inst.actions.t0for1)
+          universe.addAction(inst.actions.t1for0)
 
-        try {
-          await inst.actions.removeLiquidity!.quote([inst.lpToken.one])
+          try {
+            await inst.actions.removeLiquidity!.quote([inst.lpToken.one])
 
-          universe.addAction(inst.actions.addLiquidity!)
-          universe.addAction(inst.actions.removeLiquidity!)
+            universe.addAction(inst.actions.addLiquidity!)
+            universe.addAction(inst.actions.removeLiquidity!)
 
-          universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
-          await universe.defineLPToken(
-            inst.lpToken,
-            async (amt) => await inst.quoteRemoveLiquidity(amt),
-            async (amts) => {
-              const q0 = await inst.quoteAddLiquidity(amts[0])
-              const q1 = await inst.quoteAddLiquidity(amts[1])
-              if (q0.liquidity.amount < q1.liquidity.amount) {
-                return q0.liquidity
+            universe.mintableTokens.set(
+              inst.lpToken,
+              inst.actions.addLiquidity!
+            )
+            await universe.defineLPToken(
+              inst.lpToken,
+              async (amt) => await inst.quoteRemoveLiquidity(amt),
+              async (amts) => {
+                const q0 = await inst.quoteAddLiquidity(amts[0])
+                const q1 = await inst.quoteAddLiquidity(amts[1])
+                if (q0.liquidity.amount < q1.liquidity.amount) {
+                  return q0.liquidity
+                }
+                return q1.liquidity
               }
-              return q1.liquidity
-            }
-          )
-        } catch (e) {}
+            )
+          } catch (e) {}
+        }
       }
     }
 

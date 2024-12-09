@@ -116,6 +116,8 @@ const makeZapIntoYieldPositionTestCase = (
 }
 const testUser = Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 const issueanceCases = [
+  makeMintTestCase(5, t.WETH, rTokens.RIVOTKN),
+
   makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
   makeMintTestCase(10000, t.USDbC, rTokens.hyUSD),
   makeMintTestCase(5, t.WETH, rTokens.hyUSD),

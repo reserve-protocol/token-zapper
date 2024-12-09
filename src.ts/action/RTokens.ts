@@ -5,6 +5,7 @@ import { Action, DestinationOptions, InteractionConvention } from './Action'
 
 import { Approval } from '../base/Approval'
 import {
+  IAsset__factory,
   IAssetRegistry,
   IAssetRegistry__factory,
   IBasketHandler,
@@ -90,8 +91,8 @@ export class RTokenDeployment {
     uni: Universe,
     facadeAddress: Address,
     rToken: Token,
-    mintEstimate: bigint = 1000000n,
-    burnEstimate: bigint = 1000000n
+    mintEstimate = 1000000n,
+    burnEstimate = 1000000n
   ) {
     // console.log('loading ' + rToken)
     const rTokenInst = IRToken__factory.connect(
@@ -125,6 +126,35 @@ export class RTokenDeployment {
             )
           )
       )
+
+    uni.addSingleTokenPriceSource({
+      token: rToken,
+      priceFn: async () => {
+        const { low, high } = await facade.callStatic.price(
+          rToken.address.address
+        )
+        const out = uni.usd.fromScale18BN(
+          (low.toBigInt() + high.toBigInt()) / 2n
+        )
+        return out
+      },
+    })
+    for (const token of uniBasket) {
+      const assetInst = IAsset__factory.connect(
+        token.token.address.address,
+        uni.provider
+      )
+      uni.addSingleTokenPriceSource({
+        token: token.token,
+        priceFn: async () => {
+          const { low, high } = await assetInst.callStatic.price()
+          const out = uni.usd.fromScale18BN(
+            (low.toBigInt() + high.toBigInt()) / 2n
+          )
+          return out
+        },
+      })
+    }
     return new RTokenDeployment(
       uni,
       rToken,
@@ -169,9 +199,14 @@ abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
 
 export class MintRTokenAction extends ReserveRTokenBase {
   action = 'issue'
-  async plan(planner: Planner, _: Value[], destination: Address, predictedInput: TokenQuantity[]) {
-
-    const totalSupply = await this.rTokenDeployment.contracts.rToken.totalSupply();
+  async plan(
+    planner: Planner,
+    _: Value[],
+    destination: Address,
+    predictedInput: TokenQuantity[]
+  ) {
+    const totalSupply =
+      await this.rTokenDeployment.contracts.rToken.totalSupply()
     if (totalSupply.isZero()) {
       const quote = (await this.quote(predictedInput))[0]
       planner.add(
@@ -269,12 +304,18 @@ export class BurnRTokenAction extends ReserveRTokenBase {
   }
 
   async quote_([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const supply = await this.rTokenDeployment.supply();
+    const supply = await this.rTokenDeployment.supply()
 
     if (supply === 0n) {
-      const [erc20s, amts] = await this.rTokenDeployment.contracts.basketHandler.callStatic.quote(amountIn.amount, 0);
+      const [erc20s, amts] =
+        await this.rTokenDeployment.contracts.basketHandler.callStatic.quote(
+          amountIn.amount,
+          0
+        )
       return amts.map((amt, i) => {
-        const output = this.outputToken.find((tok) => tok.address.address === erc20s[i])
+        const output = this.outputToken.find(
+          (tok) => tok.address.address === erc20s[i]
+        )
         if (output == null) {
           throw new Error('Failed to find output token')
         }

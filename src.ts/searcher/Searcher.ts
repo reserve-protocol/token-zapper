@@ -93,7 +93,7 @@ export const findPrecursorTokenSet = async (
   const rTokenPrice = await searcher.fairPrice(rToken.one)
   if (inputTokenPrice == null || rTokenPrice == null) {
     searcher.loggers.searching.error(
-      'Failed to get fair price for input/output token'
+      `Failed to get fair price for input/output token. inputTokenPrice: ${inputTokenPrice}, rTokenPrice: ${rTokenPrice}`
     )
     throw new Error('Failed to get fair price for input/output token')
   }

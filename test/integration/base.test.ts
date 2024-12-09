@@ -34,7 +34,6 @@ if (process.env.SIMULATE_URL == null) {
 }
 
 export const baseWhales = {
-  // main base toks
   '0xab36452dbac151be02b16ca17d8919826072f64a':
     '0x796d2367af69deb3319b8e10712b8b65957371c3', // rsr
   '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913':

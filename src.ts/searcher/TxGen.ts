@@ -276,7 +276,7 @@ export class TxGen {
     }
 
     const stats = await ZapTxStats.create(result, {
-      gasUnits: program.res.gasUnits,
+      gasUnits: program.res.gasUnits + program.res.gasUnits / 6n,
       input: innerDag.config.userInput[0],
       output: program.res.amountOut,
       dust: testSimulation.dust.filter(

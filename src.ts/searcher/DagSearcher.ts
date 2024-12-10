@@ -304,6 +304,9 @@ export class DagSearcher {
         return false
       }
       const addMainEdge = (edge: BaseAction) => {
+        if (inputs.includes(edge.outputToken[0])) {
+          return
+        }
         if (checkIfAddrUsed(edge, addrsUsed)) {
           return
         }
@@ -319,6 +322,9 @@ export class DagSearcher {
         }
       }
       const addTradeEdge = async (edge: BaseAction) => {
+        if (inputs.includes(edge.outputToken[0])) {
+          return
+        }
         if (checkIfAddrUsed(edge, addrsUsed)) {
           return
         }

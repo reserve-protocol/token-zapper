@@ -4,7 +4,7 @@ import { DefaultMap } from '../base/DefaultMap'
 import { PricedTokenQuantity, Token, TokenQuantity } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { SwapPlan } from './Swap'
-import { unwrapAction, WrappedAction } from './TradeAction'
+import { unwrapAction } from './TradeAction'
 import { BaseAction } from '../action/Action'
 import {
   EvaluatedDag,
@@ -33,7 +33,8 @@ const previousResults = new DefaultMap<
   SplitNode,
   Map<number, Promise<number[]>>
 >(() => new Map())
-const RESOLUTION = 10
+
+const RESOLUTION = 5
 export class DagBuilder {
   public startNode!: DagNode
   public outputNode!: OutputNode
@@ -730,9 +731,10 @@ export class DagBuilder {
      * Run's the initial optimisation phase, this phase will try to
      * optimise for average price of output token
      */
+    const start = Date.now()
 
-    const result = await this.optimiseDag({
-      iterations: 150,
+    let result = await this.optimiseDag({
+      iterations: 100,
       objectiveFn: (i) => {
         if (
           i.outputs.length === 0 ||
@@ -751,11 +753,41 @@ export class DagBuilder {
         const price = inputValue / qtyOut
         return -price
       },
-      epsilon: 0.0001,
-      resetOnWorse: 5,
-      learningRate: (i) => 0.2 / (i + 1) ** 1.25,
+      epsilon: 0.00001,
+      resetOnWorse: 10,
+      learningRate: (i) => 0.25 / (i + 1) ** 1.35,
       mintPrices,
     })
+    for (let i = 0; i < 10; i++) {
+      if (Date.now() - start > 2000) {
+        break
+      }
+      result = await result.dag.optimiseDag({
+        iterations: 100,
+        objectiveFn: (i) => {
+          if (
+            i.outputs.length === 0 ||
+            i.outputs[0] === null ||
+            i.outputs[0].token == null ||
+            !this.config.outputTokenSet.has(i.outputs[0].token)
+          ) {
+            return -Infinity
+          }
+          const qtyOut = i.outputs[0].asNumber() * 2
+          if (typeof qtyOut !== 'number' || qtyOut <= 0.00001) {
+            return -Infinity
+          }
+          const inputValue =
+            i.inputsValue + i.txFee.price.asNumber() + i.dustValue
+          const price = inputValue / qtyOut
+          return -price
+        },
+        epsilon: 0.00001,
+        resetOnWorse: 10,
+        learningRate: (i) => 0.25 / (i + 1) ** 1.35,
+        mintPrices,
+      })
+    }
 
     previousResults.clear()
 
@@ -1623,7 +1655,7 @@ export class DagBuilder {
 
       let learningRate = opts.learningRate(iteration)
 
-      for (let step = 0; step < 10; step++) {
+      for (let step = 0; step < 20; step++) {
         for (let i = 0; i < this.splitNodes.length; i++) {
           if (
             this.splitNodes[i].length <= 0 &&
@@ -1641,6 +1673,7 @@ export class DagBuilder {
           }
           normalizeVector(this.splitNodes[i])
         }
+        learningRate *= 0.9
         const newOut = await this.evaluate(this.config.userInput, mintPrices)
 
         const newObjValue = opts.objectiveFn(newOut)

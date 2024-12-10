@@ -24,7 +24,7 @@ export class ZapperOracleAggregator extends PriceOracle {
       const oracles = this.universe.singleTokenPriceOracles.get(token)!
       await Promise.all(
         oracles.map(async (oracle) => {
-          const out = await oracle.quote(token)
+          const out = await oracle.quote(token).catch(() => null)
           if (out == null) {
             return
           }
@@ -97,47 +97,33 @@ export class ZapperTokenQuantityPrice extends Cached<
       return qty
     }
     const universe = this.universe
-    // if (universe.singleTokenPriceOracles.has(qty.token)) {
-    //   const out = (
-    //     await universe.singleTokenPriceOracles
-    //       .get(qty.token)
-    //       ?.quote(qty.token)
-    //       .catch((i) => null)
-    //   )
-    //     ?.into(universe.usd)
-    //     .mul(qty.into(universe.usd))
-
-    //   if (out != null && !out.isZero) {
-    //     return out
-    //   }
-    // }
     const wrappedToken = universe.wrappedTokens.get(qty.token)
-    if (
-      !universe.singleTokenPriceOracles.has(qty.token) &&
-      wrappedToken != null
-    ) {
-      const outTokens = await wrappedToken.burn.quote([qty])
-      const sums = await Promise.all(
-        outTokens.map(async (qty) => await this.get(qty))
-      )
-      const out = sums.reduce((l, r) => l.add(r))
 
-      const qtyInto = qty.into(out.token)
-      const unitPrice =
-        qty.amount === qty.token.scale
-          ? out
-          : qtyInto.isZero
-          ? out.token.zero
-          : out.div(qtyInto)
-      this.latestPrices.set(qty.token, unitPrice)
+    if (wrappedToken != null) {
+      try {
+        const outTokens = await wrappedToken.burn.quote([qty])
+        const sums = await Promise.all(
+          outTokens.map(async (qty) => await this.get(qty))
+        )
+        const out = sums.reduce((l, r) => l.add(r))
 
-      return out
-    } else {
-      return (await this.tokenPrice(qty.token))
-        .into(qty.token)
-        .mul(qty)
-        .into(universe.usd)
+        const qtyInto = qty.into(out.token)
+        const unitPrice =
+          qty.amount === qty.token.scale
+            ? out
+            : qtyInto.isZero
+            ? out.token.zero
+            : out.div(qtyInto)
+        this.latestPrices.set(qty.token, unitPrice)
+
+        return out
+      } catch (e) {}
     }
+
+    return (await this.tokenPrice(qty.token))
+      .into(qty.token)
+      .mul(qty)
+      .into(universe.usd)
   }
 
   private async tokenPrice(token: Token) {

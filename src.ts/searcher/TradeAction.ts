@@ -111,7 +111,7 @@ const log2 = (x: bigint) => {
   return out
 }
 
-const RESOLUTION = 5n
+const RESOLUTION = 8n
 const globalCache = new DefaultMap<
   BaseAction,
   Map<bigint, Promise<TokenQuantity[]>>

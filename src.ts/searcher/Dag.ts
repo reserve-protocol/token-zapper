@@ -796,7 +796,7 @@ export class EvaluatedDag {
           continue
         }
         const val = qty.asNumber()
-        if (val < 0.0001) {
+        if (val === 0) {
           continue
         }
         const price = node.hasPrice ? ', price=' + node.price : ''

@@ -758,7 +758,7 @@ export class DagBuilder {
       learningRate: (i) => 0.25 / (i + 1) ** 1.35,
       mintPrices,
     })
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 3; i++) {
       if (Date.now() - start > 2000) {
         break
       }

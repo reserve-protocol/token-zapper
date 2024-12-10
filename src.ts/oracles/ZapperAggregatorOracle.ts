@@ -21,12 +21,20 @@ export class ZapperOracleAggregator extends PriceOracle {
     let samples = 0n
 
     if (this.universe.singleTokenPriceOracles.has(token)) {
-      const oracle = this.universe.singleTokenPriceOracles.get(token)!
-      const out = await oracle.quote(token)
-      if (out == null) {
-        throw new Error('Unable to price ' + token)
+      const oracles = this.universe.singleTokenPriceOracles.get(token)!
+      await Promise.all(
+        oracles.map(async (oracle) => {
+          const out = await oracle.quote(token)
+          if (out == null) {
+            return
+          }
+          sum = sum.add(out)
+          samples += 1n
+        })
+      )
+      if (samples !== 0n) {
+        return sum.scalarDiv(samples)
       }
-      return out
     }
 
     await Promise.all(

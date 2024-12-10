@@ -36,7 +36,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     universe.commonTokens.wstETH,
     Promise.resolve(TokenType.Asset)
   )
-  
+
   universe.underlyingToken.set(
     universe.commonTokens.USDbC,
     Promise.resolve(universe.commonTokens.USDbC)
@@ -53,6 +53,17 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     token: universe.commonTokens.DEGEN,
     priceFn: async () => await priceViaOdos(universe.commonTokens.DEGEN),
   })
+
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens.wstETH,
+    priceFn: async () => await priceViaOdos(universe.commonTokens.wstETH),
+  })
+
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens.cbETH,
+    priceFn: async () => await priceViaOdos(universe.commonTokens.cbETH),
+  })
+
   universe.tokenType.set(
     universe.commonTokens.WELL,
     Promise.resolve(TokenType.Asset)
@@ -85,7 +96,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     token: universe.commonTokens.cbBTC,
     priceFn: async () => await priceViaOdos(universe.commonTokens.cbBTC),
   })
-  
+
   logger.info('Registering USD price oracles')
   const registry: OffchainOracleRegistry = new OffchainOracleRegistry(
     universe.config.requoteTolerance,

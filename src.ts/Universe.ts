@@ -519,7 +519,7 @@ export class Universe<const UniverseConf extends Config = Config> {
    */
   public readonly oracle: ZapperTokenQuantityPrice
 
-  public readonly singleTokenPriceOracles = new Map<Token, PriceOracle>()
+  public readonly singleTokenPriceOracles = new DefaultMap<Token, PriceOracle[]>(() => [])
   public async addSingleTokenPriceOracle(opts: {
     token: Token
     oracleAddress: Address
@@ -532,7 +532,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       oracleAddress,
       priceToken
     )
-    this.singleTokenPriceOracles.set(token, oracle)
+    this.singleTokenPriceOracles.get(token).push(oracle)
     // this.oracles.push(oracle)
     return oracle
   }
@@ -553,7 +553,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       token,
       priceFn
     )
-    this.singleTokenPriceOracles.set(token, oracle)
+    this.singleTokenPriceOracles.get(token).push(oracle)
     return oracle
   }
   async fairPrice(qty: TokenQuantity): Promise<TokenQuantity | null> {

@@ -732,7 +732,7 @@ export class DagBuilder {
      */
 
     const result = await this.optimiseDag({
-      iterations: 100,
+      iterations: 150,
       objectiveFn: (i) => {
         if (
           i.outputs.length === 0 ||

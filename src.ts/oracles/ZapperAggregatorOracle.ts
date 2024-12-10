@@ -82,12 +82,27 @@ export class ZapperTokenQuantityPrice extends Cached<
 
   private async quoteFn(qty: TokenQuantity) {
     if (qty.amount === 0n) {
+      console.log('0')
       return this.universe.usd.zero
     }
     if (qty.token == this.universe.usd) {
       return qty
     }
     const universe = this.universe
+    // if (universe.singleTokenPriceOracles.has(qty.token)) {
+    //   const out = (
+    //     await universe.singleTokenPriceOracles
+    //       .get(qty.token)
+    //       ?.quote(qty.token)
+    //       .catch((i) => null)
+    //   )
+    //     ?.into(universe.usd)
+    //     .mul(qty.into(universe.usd))
+
+    //   if (out != null && !out.isZero) {
+    //     return out
+    //   }
+    // }
     const wrappedToken = universe.wrappedTokens.get(qty.token)
     if (
       !universe.singleTokenPriceOracles.has(qty.token) &&

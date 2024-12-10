@@ -44,7 +44,27 @@ export class RTokenDeployment {
       (await this.contracts.rToken.callStatic.basketsNeeded()).toBigInt()
     )
     const tokenClass = await this.universe.tokenClass.get(this.rToken)
-    const out = (baskets.amount * tokenClass.scale) / supply.amount
+    const amount = supply.amount
+
+    if (amount === 0n) {
+      const classPrice = await tokenClass.price
+      const ourPrice = await this.contracts.facade.callStatic.price(
+        this.rToken.address.address
+      )
+      const ourPriceUSD = this.universe.usd.from(
+        (((ourPrice.low.toBigInt() + ourPrice.high.toBigInt()) / 2n) *
+          this.universe.usd.scale) /
+          10n ** 18n
+      )
+
+      console.log(this.rToken + ' => ' + ourPriceUSD)
+      console.log(tokenClass + ' => ' + classPrice)
+
+      const out = ourPriceUSD.div(classPrice).into(tokenClass)
+      console.log('exchangeRate: ' + out)
+      return out
+    }
+    const out = (baskets.amount * tokenClass.scale) / amount
     return tokenClass.from(out).invert().mul(tokenClass.from(0.99))
   }
   public readonly unitBasket: () => Promise<PricedTokenQuantity[]>
@@ -130,6 +150,22 @@ export class RTokenDeployment {
     })
 
     const unitBasket = universe.createCachedProducer(async () => {
+      const supply = await this.supply()
+      if (supply.amount < this.rToken.scale) {
+        const { erc20s, quantities } = await this.contracts.basketHandler.quote(
+          this.rToken.scale,
+          0
+        )
+        const unit = await Promise.all(
+          erc20s.map((addr, index) =>
+            this.universe
+              .getToken(Address.from(addr))
+              .then((token) => token.from(quantities[index]))
+          )
+        )
+
+        return unit
+      }
       const { erc20s, quantities } =
         await this.contracts.rTokenLens.callStatic.redeem(
           this.contracts.assetRegistry.address,
@@ -149,8 +185,30 @@ export class RTokenDeployment {
       return unit
     }, 12000)
 
+    for (const token of this.basket) {
+      const asset = IAsset__factory.connect(
+        token.address.address,
+        this.universe.provider
+      )
+      this.universe.addSingleTokenPriceSource({
+        token,
+        priceFn: async () => {
+          const price = await asset.callStatic.price()
+          const out = this.universe.usd.from(
+            (((price.low.toBigInt() + price.high.toBigInt()) / 2n) *
+              this.universe.usd.scale) /
+              ONE
+          )
+          return out
+        },
+      })
+    }
+
     const ONE = 10n ** 18n
     const quoteMint = async (input: TokenQuantity[]) => {
+      if (input.some((i) => i.amount === 0n)) {
+        return [this.rToken.zero, ...input]
+      }
       let unit = await unitBasket()
       if (unit.length !== input.length) {
         throw new Error('Invalid input length')

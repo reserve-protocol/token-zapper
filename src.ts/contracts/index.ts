@@ -72,6 +72,8 @@ export type { IVariableDebtToken } from "./contracts/AaveV3.sol/IVariableDebtTok
 export { IVariableDebtToken__factory } from "./factories/contracts/AaveV3.sol/IVariableDebtToken__factory";
 export type { IAerodromeFactory } from "./contracts/Aerodrome.sol/IAerodromeFactory";
 export { IAerodromeFactory__factory } from "./factories/contracts/Aerodrome.sol/IAerodromeFactory__factory";
+export type { IAerodromePool } from "./contracts/Aerodrome.sol/IAerodromePool";
+export { IAerodromePool__factory } from "./factories/contracts/Aerodrome.sol/IAerodromePool__factory";
 export type { IAerodromeRouter } from "./contracts/Aerodrome.sol/IAerodromeRouter";
 export { IAerodromeRouter__factory } from "./factories/contracts/Aerodrome.sol/IAerodromeRouter__factory";
 export type { IAerodromeSugar } from "./contracts/Aerodrome.sol/IAerodromeSugar";

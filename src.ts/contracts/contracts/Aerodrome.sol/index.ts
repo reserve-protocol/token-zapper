@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { IAerodromeFactory } from "./IAerodromeFactory";
+export type { IAerodromePool } from "./IAerodromePool";
 export type { IAerodromeRouter } from "./IAerodromeRouter";
 export type { IAerodromeSugar } from "./IAerodromeSugar";
 export type { IMixedRouteQuoterV1 } from "./IMixedRouteQuoterV1";

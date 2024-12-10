@@ -106,7 +106,10 @@ beforeAll(async () => {
         maxSearchTimeMs: 60000,
       },
       async (uni) => {
-        await setupBaseZapper(uni as any as BaseUniverse)
+        await setupBaseZapper(uni as any as BaseUniverse).catch((e) => {
+          console.log(e)
+          process.exit(1)
+        })
       },
       {
         simulateZapFn: makeCustomRouterSimulator(
@@ -142,6 +145,21 @@ describe('dag builder', () => {
   })
 
   describe('Standard RToken zaps', () => {
+    it('10 WETH => RIVOTKN', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.WETH.from(10.0)],
+        universe.rTokens.RIVOTKN
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
     it('10 WETH => bsdETH', async () => {
       const dag = await new DagSearcher(universe).buildDag(
         Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),

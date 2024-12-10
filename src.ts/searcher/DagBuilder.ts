@@ -730,18 +730,31 @@ export class DagBuilder {
      * Run's the initial optimisation phase, this phase will try to
      * optimise for average price of output token
      */
+
+
     const result = await this.optimiseDag({
-      iterations: 150,
+      iterations: 100,
       objectiveFn: (i) => {
-        const qtyOut = i.outputs[0].asNumber() * 2
+        if (
+          i.outputs.length === 0 ||
+          i.outputs[0] === null ||
+          i.outputs[0].token == null ||
+          !this.config.outputTokenSet.has(i.outputs[0].token)
+        ) {
+          return -Infinity
+        }
+        const qtyOut = i.outputs[0]?.asNumber() * 2 ?? 0
+        if (qtyOut <= 0.00001) {
+          return -Infinity
+        }
         const inputValue =
-          i.inputsValue + i.txFee.price.asNumber() + i.dustValue * 10
+          i.inputsValue + i.txFee.price.asNumber() + i.dustValue
         const price = inputValue / qtyOut
         return -price
       },
-      epsilon: 0.00001,
-      resetOnWorse: 15,
-      learningRate: (i) => 0.05 / (i + 1),
+      epsilon: 0.0001,
+      resetOnWorse: 5,
+      learningRate: (i) => 0.2 / (i + 1) ** 1.25,
       mintPrices,
     })
 
@@ -992,11 +1005,22 @@ export class DagBuilder {
       prices: pricedUnspent.map((i) => i[1]),
     }
 
-    const allOutputs = nodeInputs.get(this.outputNode).toTokenQuantities()
+    const allOutputs__ = nodeInputs.get(this.outputNode).toTokenQuantities()
+    const outputQtys = allOutputs__.filter((i) =>
+      this.config.outputTokenSet.has(i.token)
+    )
+    const dustQtys = allOutputs__.filter(
+      (i) => !this.config.outputTokenSet.has(i.token)
+    )
+    const allOutputs = [...outputQtys, ...dustQtys]
     const pricedAllOutputs = await Promise.all(
       allOutputs.map(
         async (i) =>
-          [i.token, await i.price().then((i) => i.asNumber())] as const
+          [
+            i.token,
+            i.amount < 1000n ? 0 : await i.price().then((i) => i.asNumber()),
+            i,
+          ] as const
       )
     )
 
@@ -1178,12 +1202,16 @@ export class DagBuilder {
         i.dag.splitNodes[i.splitIndex][i.dim] += eps
         normalizeVector(i.dag.splitNodes[i.splitIndex])
         const newValue = objectiveFn(await i.dag.evaluate())
+        if (!isFinite(newValue)) {
+          derivative[i.splitIndex][i.dim] = 0
+          return
+        }
         let dimensionGradient = (newValue - currentValue) / eps
         globalMagnitude += dimensionGradient ** 2
         if (isNaN(dimensionGradient) || !isFinite(dimensionGradient)) {
           dimensionGradient = 0
         }
-        derivative[i.splitIndex][i.dim] = 0
+
         derivative[i.splitIndex][i.dim] = dimensionGradient
       })
     )
@@ -1579,13 +1607,20 @@ export class DagBuilder {
     let worseCount = 0
 
     for (let iteration = 0; iteration < opts.iterations; iteration++) {
-      await this.derivative(
+      const mag = await this.derivative(
         copies,
         currentObjectiveValue,
         opts.objectiveFn,
         derivative,
         opts.epsilon
       )
+
+      if (mag === 0) {
+        copyVectors(bestSoFarObjective.out.dag.splitNodes, this.splitNodes)
+        currentObjectiveValue = bestSoFarObjective.output
+        worseCount = 0
+        continue
+      }
 
       let learningRate = opts.learningRate(iteration)
 
@@ -1620,13 +1655,13 @@ export class DagBuilder {
           worseCount = 0
         }
         if (newOut.outputsValue > bestSoFar.output) {
-          // console.log(
-          //   `iteration ${iteration}: output=${newOut.outputs.join(
-          //     ', '
-          //   )}, dust=${newOut.dust.join(
-          //     ', '
-          //   )}, txFee=$ ${newOut.txFee.price.asNumber()}`
-          // )
+          console.log(
+            `iteration ${iteration}: output=${newOut.outputs.join(
+              ', '
+            )}, dust=${newOut.dust.join(
+              ', '
+            )}, txFee=$ ${newOut.txFee.price.asNumber()}`
+          )
           bestSoFar = {
             output: newOut.outputsValue,
             out: newOut.clone(),

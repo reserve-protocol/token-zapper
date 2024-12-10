@@ -140,9 +140,9 @@ export class Universe<const UniverseConf extends Config = Config> {
       }
       return token;
     }
-    const tokenPrice = (await this.fairPrice(token.one))?.asNumber() ?? 0;
+    const tokenPrice = (await token.price)?.asNumber() ?? 0;
     if (tokenPrice == 0) {
-      throw new Error('Failed to get price')
+      throw new Error(`Failed to classify ${token}: Unable to price it`)
     }
     if (this.lpTokens.has(token)) {
       const poolTokens = (await this.lpTokens.get(token)!.lpRedeem(token.one)).map(i => i.token)
@@ -157,7 +157,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
     const ethPrice = (await this.fairPrice(this.wrappedNativeToken.one))?.asNumber() ?? 0;
     if (ethPrice == 0) {
-      throw new Error('Failed to get eth price')
+      throw new Error(`Failed to get eth price for ${token}`)
     }
     if (Math.abs(ethPrice - tokenPrice) < ethPrice * 0.15) {
       return this.wrappedNativeToken
@@ -541,6 +541,13 @@ export class Universe<const UniverseConf extends Config = Config> {
     priceFn: () => Promise<TokenQuantity>
   }) {
     const { token, priceFn } = opts;
+    // console.log(`Adding price oracle for ${token.address}`)
+    // if (token === null) {
+    //   throw new Error(`Token is null`)
+    // }
+    // if (this.singleTokenPriceOracles.has(token)) {
+    //   console.log(`Price oracle for ${token} already defined`)
+    // }
     const oracle = PriceOracle.createSingleTokenOracle(
       this,
       token,
@@ -549,7 +556,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.singleTokenPriceOracles.set(token, oracle)
     return oracle
   }
-  async fairPrice(qty: TokenQuantity) {
+  async fairPrice(qty: TokenQuantity): Promise<TokenQuantity | null> {
+    if (qty.token === this.nativeToken) {
+      return await this.fairPrice(qty.into(this.wrappedNativeToken))
+    }
     const perfStart = this.perf.begin('fairPrice', qty.token.symbol)
     let out: TokenQuantity | null = await this.fairPriceCache.get(qty)
     if (out.amount === 0n) {
@@ -813,10 +823,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     this.oracle = new ZapperTokenQuantityPrice(this)
     this.fairPriceCache = this.createCache<TokenQuantity, TokenQuantity, string>(
       async (qty: TokenQuantity) => {
-        const out = await this.oracle.quote(qty).catch((e) => {
-            console.log(e)
-            return this.usd.zero
-          })
+        if (qty.token === this.usd) {
+          return qty
+        }
+        const out = await this.oracle.quote(qty)
         return out
       },
       60000,

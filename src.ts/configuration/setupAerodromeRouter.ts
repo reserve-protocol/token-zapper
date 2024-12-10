@@ -1,3 +1,4 @@
+import { ethers } from 'ethers'
 import { Universe } from '../Universe'
 import {
   AerodromeContext,
@@ -7,6 +8,7 @@ import {
 import { Address } from '../base/Address'
 import {
   IAerodromeFactory__factory,
+  IAerodromePool__factory,
   IAerodromeRouter__factory,
   IAerodromeSugar__factory,
   IMixedRouteQuoterV1__factory,
@@ -57,6 +59,34 @@ export const setupAerodromeRouter = async (universe: Universe) => {
     Address.from(config.swapRouter)
   )
 
+  const loadPoolExplicit = async (addr: Address) => {
+    const poolInst = IAerodromePool__factory.connect(
+      addr.address,
+      universe.provider
+    )
+    const [token0Addr, token1Addr, isStable, factoryAddr] = await Promise.all([
+      poolInst.token0(),
+      poolInst.token1(),
+      poolInst.stable(),
+      poolInst.factory(),
+    ])
+    const [token0, token1] = await Promise.all([
+      universe.getToken(Address.from(token0Addr)),
+      universe.getToken(Address.from(token1Addr)),
+    ])
+    const factory = Address.from(factoryAddr)
+    const def = {
+      lp: addr.address,
+      poolType: isStable ? 0 : -1,
+      token0: token0.address.address,
+      token1: token1.address.address,
+      factory: factory.address,
+      poolFee: ethers.BigNumber.from(30),
+    }
+
+    const out = await aerodromeContext.definePool(addr, def)
+  }
+
   const loadPools = async (count: number, start: number) => {
     return await Promise.all(
       (
@@ -74,7 +104,10 @@ export const setupAerodromeRouter = async (universe: Universe) => {
               factory
             )
             await aerodromeContext.definePool(Address.from(addr), data)
-          } catch (e) {}
+          } catch (e) {
+            console.log('Failed to load pool: ' + data)
+            console.log(e)
+          }
         } else {
           try {
             const factoryInst = IAerodromeFactory__factory.connect(
@@ -89,12 +122,20 @@ export const setupAerodromeRouter = async (universe: Universe) => {
               return
             }
             await aerodromeContext.definePool(addr, data)
-          } catch (e) {}
+          } catch (e) {
+            console.log('Failed to load pool: ' + data)
+            console.log(e)
+          }
         }
       })
     )
   }
+
   await loadPools(1000, 0)
   await loadPools(1000, 1000)
   await loadPools(1000, 2000)
+
+  await loadPoolExplicit(
+    Address.from('0x2578365B3dfA7FfE60108e181EFb79FeDdec2319')
+  ).catch((e) => console.log(e))
 }

@@ -16,13 +16,76 @@ import { TokenType } from '../entities/TokenClass'
 import { setupOdosPricing } from './setupOdosPricing'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
-  setupOdosPricing(universe)
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
+
   logger.info('Loading base token list')
   await loadBaseTokenList(universe)
-  const wsteth = await universe.getToken(
-    Address.from('0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452')
+  console.log(`setupBaseZapper`)
+  const priceViaOdos = setupOdosPricing(universe)
+
+  logger.info('Setting up wrapped gas token')
+  await setupWrappedGasToken(universe)
+
+  console.log(`done`)
+
+  universe.tokenType.set(
+    universe.commonTokens.cbETH,
+    Promise.resolve(TokenType.Asset)
   )
+  universe.tokenType.set(
+    universe.commonTokens.wstETH,
+    Promise.resolve(TokenType.Asset)
+  )
+  
+  universe.underlyingToken.set(
+    universe.commonTokens.USDbC,
+    Promise.resolve(universe.commonTokens.USDbC)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.USDbC,
+    Promise.resolve(TokenType.Asset)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.DEGEN,
+    Promise.resolve(TokenType.Asset)
+  )
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens.DEGEN,
+    priceFn: async () => await priceViaOdos(universe.commonTokens.DEGEN),
+  })
+  universe.tokenType.set(
+    universe.commonTokens.WELL,
+    Promise.resolve(TokenType.Asset)
+  )
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens.WELL,
+    priceFn: async () => await priceViaOdos(universe.commonTokens.WELL),
+  })
+  universe.tokenType.set(
+    universe.commonTokens.AERO,
+    Promise.resolve(TokenType.Asset)
+  )
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens.AERO,
+    priceFn: async () => await priceViaOdos(universe.commonTokens.AERO),
+  })
+  universe.tokenType.set(
+    universe.commonTokens.MOG,
+    Promise.resolve(TokenType.Asset)
+  )
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens.MOG,
+    priceFn: async () => await priceViaOdos(universe.commonTokens.MOG),
+  })
+  universe.tokenType.set(
+    universe.commonTokens.cbBTC,
+    Promise.resolve(TokenType.Asset)
+  )
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens.cbBTC,
+    priceFn: async () => await priceViaOdos(universe.commonTokens.cbBTC),
+  })
+  
   logger.info('Registering USD price oracles')
   const registry: OffchainOracleRegistry = new OffchainOracleRegistry(
     universe.config.requoteTolerance,
@@ -37,28 +100,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
           return null
         }
         return universe.usd.from(await oracle.callStatic.latestAnswer())
-      }
-      if (token === wsteth) {
-        const oraclewstethToEth = registry.getOracle(
-          token.address,
-          universe.nativeToken.address
-        )
-        const oracleethToUsd = registry.getOracle(
-          universe.nativeToken.address,
-          universe.usd.address
-        )
-        if (oraclewstethToEth == null || oracleethToUsd == null) {
-          return null
-        }
-        const oneWSTInETH = universe.nativeToken.from(
-          await oraclewstethToEth.callStatic.latestAnswer()
-        )
-
-        const oneETHInUSD = (await universe.fairPrice(
-          universe.nativeToken.one
-        ))!
-        const priceOfOnewsteth = oneETHInUSD.mul(oneWSTInETH.into(universe.usd))
-        return priceOfOnewsteth
       }
 
       const oracle = registry.getOracle(token.address, universe.usd.address)
@@ -80,20 +121,8 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
       )
     }
   )
-  Object.entries(PROTOCOL_CONFIGS.ethPriceOracles).map(
-    ([tokenAddress, oracleAddress]) => {
-      registry.register(
-        Address.from(tokenAddress),
-        universe.nativeToken.address,
-        Address.from(oracleAddress)
-      )
-    }
-  )
 
   universe.oracles.push(registry)
-
-  logger.info('Setting up wrapped gas token')
-  await setupWrappedGasToken(universe)
 
   // Load compound v3
   universe.addIntegration(
@@ -130,55 +159,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     })
   )
 
-  universe.tokenType.set(
-    universe.commonTokens.cbETH,
-    Promise.resolve(TokenType.Asset)
-  )
-  universe.tokenType.set(
-    universe.commonTokens.wstETH,
-    Promise.resolve(TokenType.Asset)
-  )
-  universe.tokenClass.set(
-    universe.rTokens.hyUSD,
-    Promise.resolve(universe.commonTokens.USDC)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.USDbC,
-    Promise.resolve(universe.commonTokens.USDC)
-  )
-  universe.underlyingToken.set(
-    universe.commonTokens.USDbC,
-    Promise.resolve(universe.commonTokens.USDbC)
-  )
-  universe.tokenType.set(
-    universe.commonTokens.USDbC,
-    Promise.resolve(TokenType.Asset)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.DAI,
-    Promise.resolve(universe.commonTokens.USDC)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.meUSD,
-    Promise.resolve(universe.commonTokens.USDC)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens['wsAMM-eUSD/USDC'],
-    Promise.resolve(universe.commonTokens.USDC)
-  )
-  universe.tokenClass.set(
-    universe.rTokens.bsd,
-    Promise.resolve(universe.nativeToken)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.cbETH,
-    Promise.resolve(universe.nativeToken)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.wstETH,
-    Promise.resolve(universe.nativeToken)
-  )
-
   logger.info('Setting up stargate')
   // Set up stargate
   await setupStargate(
@@ -198,5 +178,58 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     const wrapperToken = await universe.getToken(Address.from(wrapperAddress))
     await aerodromeWrappers.addWrapper(wrapperToken)
   }
+
+  universe.tokenClass.set(
+    universe.rTokens.hyUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.RIVOTKN,
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.USDbC,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.DEGEN,
+    Promise.resolve(universe.commonTokens.DEGEN)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.WELL,
+    Promise.resolve(universe.commonTokens.WELL)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.AERO,
+    Promise.resolve(universe.commonTokens.AERO)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.MOG,
+    Promise.resolve(universe.commonTokens.MOG)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.cbBTC,
+    Promise.resolve(universe.commonTokens.cbBTC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.DAI,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.meUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.bsd,
+    Promise.resolve(universe.wrappedNativeToken)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.cbETH,
+    Promise.resolve(universe.wrappedNativeToken)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.wstETH,
+    Promise.resolve(universe.wrappedNativeToken)
+  )
   logger.info('Done setting up base zapper')
 }

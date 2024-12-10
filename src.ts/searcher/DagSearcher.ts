@@ -163,6 +163,11 @@ export class DagSearcher {
       [userOutput]
     )
 
+    for (let phaseId = 0; phaseId < byPhase.length; phaseId++) {
+      const phase = byPhase[phaseId]
+      console.log(`${phaseId}: ${phase.join(', ')}`)
+    }
+
     for (const [_, edges] of mintPrices.entries()) {
       for (const [tokenOut, price] of edges.entries()) {
         for (const [tokenOutRate, rate] of mintPrices.get(tokenOut).entries()) {
@@ -441,7 +446,9 @@ export class DagSearcher {
         }
       }
       const openSet = new Set(dag.openTokens)
+      
       for (const act of actions) {
+        
         for (const tok of act.outputToken) {
           openSet.delete(tok)
         }

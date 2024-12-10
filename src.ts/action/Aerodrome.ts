@@ -12,7 +12,7 @@ import {
   IMixedRouteQuoterV1,
   SlipstreamRouterCall,
 } from '../contracts'
-import { SwapLpStructOutput } from '../contracts/contracts/Aerodrome.sol/IAerodromeSugar'
+import { SwapLpStructOutput as SwapLpStructOutputDef } from '../contracts/contracts/Aerodrome.sol/IAerodromeSugar'
 import { Token, TokenQuantity } from '../entities/Token'
 import { CommandFlags, Contract, Planner, Value } from '../tx-gen/Planner'
 import {
@@ -22,12 +22,18 @@ import {
   InteractionConvention,
   ONE,
 } from './Action'
+import { TokenType } from '../entities/TokenClass'
 
 export enum AerodromePoolType {
   STABLE = 'STABLE',
   VOLATILE = 'VOLATILE',
   CL = 'CL',
 }
+
+type SwapLpStructOutput = Pick<
+  SwapLpStructOutputDef,
+  'poolType' | 'token0' | 'token1' | 'factory' | 'lp' | 'poolFee'
+>
 
 export const getPoolType = (poolType: number) => {
   if (poolType === 0) {
@@ -61,6 +67,14 @@ abstract class BaseV2AerodromeAction extends Action('BaseAerodromeStablePool') {
   public get returnsOutput(): boolean {
     return false
   }
+
+  public get oneUsePrZap(): boolean {
+    return true
+  }
+  public get addressesInUse(): Set<Address> {
+    return new Set([this.pool.address])
+  }
+
   public constructor(
     public readonly pool: AerodromeStablePool,
     inputs: Token[],
@@ -100,7 +114,11 @@ class AeropoolAddLiquidity extends BaseV2AerodromeAction {
   }
 
   async quoteWithDust(amountsIn: TokenQuantity[]) {
-    const q = await this.pool.quoteAdd2Liquidity(amountsIn)
+    const q = await this.pool.quoteAdd2Liquidity(amountsIn).catch((e) => {
+      console.log(`${amountsIn.join(', ')} -> ${this}: failed`)
+      console.log(e)
+      throw e
+    })
     return {
       output: [q.liquidity],
       dust: q.remaining,
@@ -234,6 +252,14 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
   get actionName(): string {
     return 'swapCL'
   }
+
+  public get oneUsePrZap() {
+    return true
+  }
+  public get addressesInUse(): Set<Address> {
+    return new Set([this.pool.address])
+  }
+
   public async liquidity(): Promise<number> {
     const out = await this.pool.reserves()
     const prices = await Promise.all(
@@ -252,9 +278,6 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
     return true
   }
 
-  public get oneUsePrZap() {
-    return true
-  }
   public get returnsOutput() {
     return true
   }
@@ -434,6 +457,7 @@ class AeropoolSwap extends BaseV2AerodromeAction {
 }
 
 const FEE_DIVISOR = 10000n
+const MAX_NUM = 2n ** 256n - 1n
 class AerodromeStablePool {
   public reserves: () => Promise<TokenQuantity[]>
   private totalSupply: () => Promise<TokenQuantity>
@@ -586,8 +610,13 @@ class AerodromeStablePool {
     return [this.token0.from(amountA), this.token1.from(amountB)]
   }
   public async quoteAdd2Liquidity([amount0, amount1]: TokenQuantity[]) {
-    const q0 = await this.quoteAddLiquidity(amount0)
-    const q1 = await this.quoteAddLiquidity(amount1)
+    const MAX_RES = {
+      amount0: this.token0.from(MAX_NUM),
+      amount1: this.token1.from(MAX_NUM),
+      liquidity: this.lpToken.from(0),
+    }
+    const q0 = amount0.isZero ? MAX_RES : await this.quoteAddLiquidity(amount0)
+    const q1 = amount1.isZero ? MAX_RES : await this.quoteAddLiquidity(amount1)
     const q = q0.liquidity.amount < q1.liquidity.amount ? q0 : q1
     const rem0 = amount0.sub(q.amount0)
     const rem1 = amount1.sub(q.amount1)
@@ -649,62 +678,123 @@ class AerodromeStablePool {
       pool
     )
 
+    const interestingPools = new Set([
+      Address.from('0x2C4909355b0C036840819484c3A882A95659aBf3'),
+      Address.from('0x89D0F320ac73dd7d9513FFC5bc58D1161452a657'),
+      Address.from('0x2578365B3dfA7FfE60108e181EFb79FeDdec2319'),
+      Address.from('0x4A311ac4563abc30E71D0631C88A6232C1309ac5'),
+      Address.from('0x7f670f78B17dEC44d5Ef68a48740b6f8849cc2e6'),
+    ])
+
     const interestingTokens = new Set([
       ...Object.values(universe.commonTokens),
       ...Object.values(universe.rTokens),
     ])
 
-    if (
-      interestingTokens.has(lpToken) ||
-      interestingTokens.has(token0) ||
-      interestingTokens.has(token1)
-    ) {
-      try {
-        const liq = (
-          await Promise.all((await inst.reserves()).map((i) => i.price()))
+    if (!interestingPools.has(inst.address)) {
+      if (!(interestingTokens.has(token0) && interestingTokens.has(token1))) {
+        return inst
+      }
+    }
+
+    if (inst.poolType === AerodromePoolType.CL) {
+      universe.addAction(inst.actions.t0for1)
+      universe.addAction(inst.actions.t1for0)
+    } else {
+      universe.tokenType.set(inst.lpToken, Promise.resolve(TokenType.LPToken))
+      universe.addSingleTokenPriceSource({
+        token: inst.lpToken,
+        priceFn: async () => {
+          try {
+            const [[balance0, balance1], totalSupply] = await Promise.all([
+              inst.reserves(),
+              inst.totalSupply(),
+            ])
+            const [price0, price1] = await Promise.all([
+              await balance0.price(),
+              await balance1.price(),
+            ])
+
+            const out =
+              (price0.asNumber() + price1.asNumber()) / totalSupply.asNumber()
+            const v = universe.usd.from(out)
+            console.log(`${lpToken}: ${v.asNumber()}`)
+            return v
+          } catch (e) {
+            console.log(
+              `LpTokenPrice provider: Failed to get price for ${inst.lpToken}`,
+              e
+            )
+            throw e
+          }
+        },
+      })
+
+      // try {
+      //   const [cls0, cls1] = await Promise.all([
+      //     universe.tokenClass.get(token0),
+      //     universe.tokenClass.get(token1),
+      //   ])
+      //   if (cls0 == cls1) {
+      //     universe.tokenClass.set(lpToken, Promise.resolve(cls0))
+      //   } else {
+      //     universe.tokenClass.set(lpToken, Promise.resolve(lpToken))
+      //   }
+      // } catch (e) {
+      //   universe.tokenClass.set(lpToken, Promise.resolve(lpToken))
+      // }
+
+      if (interestingPools.has(inst.address)) {
+        universe.addAction(inst.actions.t0for1)
+        universe.addAction(inst.actions.t1for0)
+        universe.addAction(inst.actions.addLiquidity!)
+        universe.addAction(inst.actions.removeLiquidity!)
+        universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
+        await universe.defineLPToken(
+          inst.lpToken,
+          async (amt) => await inst.quoteRemoveLiquidity(amt),
+          async (amts) => {
+            const q0 = await inst.quoteAddLiquidity(amts[0])
+            const q1 = await inst.quoteAddLiquidity(amts[1])
+            if (q0.liquidity.amount < q1.liquidity.amount) {
+              return q0.liquidity
+            }
+            return q1.liquidity
+          }
         )
-          .map((i) => i.asNumber())
-          .reduce((a, b) => a + b, 0)
-        if (liq < 100_000) {
-          return inst
-        }
-      } catch (e) {
+
         return inst
       }
 
-      if (inst.poolType === AerodromePoolType.CL) {
+      const supply = await inst.totalSupply()
+
+      if (
+        supply.amount >= inst.lpToken.scale ||
+        interestingPools.has(inst.address)
+      ) {
         universe.addAction(inst.actions.t0for1)
         universe.addAction(inst.actions.t1for0)
-      } else {
-        const supply = await inst.totalSupply()
-        if (supply.amount >= inst.lpToken.scale) {
-          universe.addAction(inst.actions.t0for1)
-          universe.addAction(inst.actions.t1for0)
 
-          try {
-            await inst.actions.removeLiquidity!.quote([inst.lpToken.one])
+        try {
+          await inst.actions.removeLiquidity!.quote([inst.lpToken.one])
 
-            universe.addAction(inst.actions.addLiquidity!)
-            universe.addAction(inst.actions.removeLiquidity!)
+          universe.addAction(inst.actions.addLiquidity!)
+          universe.addAction(inst.actions.removeLiquidity!)
 
-            universe.mintableTokens.set(
-              inst.lpToken,
-              inst.actions.addLiquidity!
-            )
-            await universe.defineLPToken(
-              inst.lpToken,
-              async (amt) => await inst.quoteRemoveLiquidity(amt),
-              async (amts) => {
-                const q0 = await inst.quoteAddLiquidity(amts[0])
-                const q1 = await inst.quoteAddLiquidity(amts[1])
-                if (q0.liquidity.amount < q1.liquidity.amount) {
-                  return q0.liquidity
-                }
-                return q1.liquidity
+          universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
+          await universe.defineLPToken(
+            inst.lpToken,
+            async (amt) => await inst.quoteRemoveLiquidity(amt),
+            async (amts) => {
+              const q0 = await inst.quoteAddLiquidity(amts[0])
+              const q1 = await inst.quoteAddLiquidity(amts[1])
+              if (q0.liquidity.amount < q1.liquidity.amount) {
+                return q0.liquidity
               }
-            )
-          } catch (e) {}
-        }
+              return q1.liquidity
+            }
+          )
+        } catch (e) {}
       }
     }
 

@@ -731,7 +731,6 @@ export class DagBuilder {
      * optimise for average price of output token
      */
 
-
     const result = await this.optimiseDag({
       iterations: 100,
       objectiveFn: (i) => {
@@ -743,8 +742,8 @@ export class DagBuilder {
         ) {
           return -Infinity
         }
-        const qtyOut = i.outputs[0]?.asNumber() * 2 ?? 0
-        if (qtyOut <= 0.00001) {
+        const qtyOut = i.outputs[0].asNumber() * 2
+        if (typeof qtyOut !== 'number' || qtyOut <= 0.00001) {
           return -Infinity
         }
         const inputValue =

@@ -145,6 +145,21 @@ describe('dag builder', () => {
   })
 
   describe('Standard RToken zaps', () => {
+    it('0.1 WETH => BSDX', async () => {
+      const dag = await new DagSearcher(universe).buildDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.WETH.from(0.1)],
+        universe.rTokens.BSDX
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
     it('10 WETH => RIVOTKN', async () => {
       const dag = await new DagSearcher(universe).buildDag(
         Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),

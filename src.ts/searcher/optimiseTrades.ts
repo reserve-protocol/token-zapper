@@ -48,8 +48,9 @@ export const optimiseTrades = async (
     const gas = action.gasEstimate()
     const txFee = gasPrice * gas
     const gasFeeUSD = gasToken.from(txFee).asNumber() * gasTokenPrice
-
-    const output = await action.quote([input])
+    const output = await action.quote([input]).catch((e) => {
+      return action.outputToken.map((i) => i.zero)
+    })
     const outputQty = output[0].asNumber()
     const outputValue = outputQty * outputTokenPrice
     const price = outputValue / (inputValue + gasFeeUSD)

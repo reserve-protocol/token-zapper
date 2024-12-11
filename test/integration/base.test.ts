@@ -108,9 +108,9 @@ const makeZapIntoYieldPositionTestCase = (
     output: output,
   }
 }
-const testUser = Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
+const testUser = Address.from(process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 const issueanceCases = [
-  makeMintTestCase(5, t.WETH, rTokens.RIVOTKN),
+  makeMintTestCase(5, t.WETH, rTokens.BSDX),
   makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
   makeMintTestCase(10000, t.USDbC, rTokens.hyUSD),
   // makeMintTestCase(5, t.WETH, rTokens.hyUSD),
@@ -122,16 +122,18 @@ const issueanceCases = [
   // makeMintTestCase(10000, t.USDbC, rTokens.bsd),
 ]
 
-// const redeemCases = [
-//   makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
-//   makeMintTestCase(10000, rTokens.hyUSD, t.USDbC),
-//   makeMintTestCase(10000, rTokens.hyUSD, t.WETH),
+const redeemCases = [
+  makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
+  // makeMintTestCase(10000, rTokens.hyUSD, t.USDbC),
+  makeMintTestCase(10000, rTokens.hyUSD, t.WETH),
 
-//   makeMintTestCase(5, rTokens.bsd, t.WETH),
-//   makeMintTestCase(5, rTokens.bsd, t.wstETH),
-//   makeMintTestCase(5, rTokens.bsd, t.cbETH),
-//   makeMintTestCase(5, rTokens.bsd, t.USDC),
-// ]
+  makeMintTestCase(5, rTokens.bsd, t.WETH),
+  // makeMintTestCase(5, rTokens.bsd, t.wstETH),
+  // makeMintTestCase(5, rTokens.bsd, t.cbETH),
+  makeMintTestCase(5, rTokens.bsd, t.USDC),
+
+  makeMintTestCase(150.0, rTokens.BSDX, t.WETH),
+]
 const individualIntegrations = [
   // makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
   makeIntegrationtestCase(
@@ -213,30 +215,30 @@ describe('base zapper', () => {
     })
   }
 
-  // for (const redeem of redeemCases) {
-  //   const testCaseName = `redeem ${getSymbol.get(
-  //     redeem.inputToken
-  //   )!} for ${getSymbol.get(redeem.output)!}`
-  //   describe(testCaseName, () => {
-  //     it(
-  //       'produces an output',
-  //       async () => {
-  //         await createZapTestCase(
-  //           'Redeem',
-  //           testUser,
-  //           universe,
-  //           testCaseName,
-  //           {
-  //             token: redeem.inputToken,
-  //             amount: redeem.input,
-  //           },
-  //           redeem.output
-  //         )
-  //       },
-  //       15 * 1000
-  //     )
-  //   })
-  // }
+  for (const redeem of redeemCases) {
+    const testCaseName = `redeem ${getSymbol.get(
+      redeem.inputToken
+    )!} for ${getSymbol.get(redeem.output)!}`
+    describe(testCaseName, () => {
+      it(
+        'produces an output',
+        async () => {
+          await createZapTestCase(
+            'Redeem',
+            testUser,
+            universe,
+            testCaseName,
+            {
+              token: redeem.inputToken,
+              amount: redeem.input,
+            },
+            redeem.output
+          )
+        },
+        60000
+      )
+    })
+  }
 
   for (const zapIntoYieldPosition of zapIntoYieldPositionCases) {
     const testCaseName = `zap ${getSymbol.get(

@@ -19,7 +19,7 @@ const BASE_CONFIG = {
   router: '0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43',
   mixedRouter: '0x0A5aA5D3a4d28014f967Bf0f29EAA3FF9807D5c6',
   swapRouter: '0xBE6D8f0d05cC4be24d5167a3eF062215bE6D18a5',
-  routerCaller: '0x1bAD8D90b5CE307215f851A047044a731D796bCd',
+  routerCaller: '0xeA698DeEAD412456dbc488F8A9066326D98C3435',
   sugar: '0xc301856b4262e49e9239ec8a2d0c754d5ae317c0',
 }
 const routers: Record<number, typeof BASE_CONFIG> = {

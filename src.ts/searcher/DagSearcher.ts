@@ -14,6 +14,16 @@ import {
 } from './TradeAction'
 import { bfs } from '../exchange-graph/BFS'
 
+const wrapAction = (universe: Universe, i: BaseAction) => {
+  let act = i
+  if (act.is1to1 && act.inputToken[0] === universe.nativeToken) {
+    act = new NativeInputWrapper(universe, act)
+  }
+  if (act.dependsOnRpc) {
+    act = new WrappedAction(universe, act)
+  }
+  return act
+}
 const findUnderlyingTokens = async (
   universe: Universe,
   inputTradeSizeUSD: number,
@@ -128,7 +138,108 @@ export class DagSearcher {
     })
   }
 
-  public async buildDag(
+  public async buildZapOutDag(
+    signer: Address,
+    userInput: TokenQuantity,
+    userOutput: Token
+  ) {
+    const logger = this.logger.child({
+      input: userInput.token.toString(),
+      output: userOutput.toString(),
+    })
+
+    const userInputPrice = (await userInput.price()).asNumber()
+
+    const dag = await DagBuilder.create(
+      this.universe,
+      new DagBuilderConfig(
+        this.universe,
+        logger,
+        [userInput],
+        [1],
+        [userOutput.one],
+        [1]
+      )
+    )
+    const weth = this.universe.wrappedNativeToken
+    const eth = this.universe.nativeToken
+    const current = [userInput.token]
+    const unwrappedTokens = new Set<Token>()
+    while (current.length !== 0) {
+      let token = current.pop()!
+      if (userOutput === token) {
+        continue
+      }
+      if (token === weth) {
+        unwrappedTokens.add(eth)
+        continue
+      }
+      const burnAction = this.universe.wrappedTokens.get(token)?.burn
+      if (burnAction == null) {
+        unwrappedTokens.add(token === eth ? weth : token)
+        continue
+      }
+      current.push(...burnAction.outputToken)
+      dag.unwrapInput(wrapAction(this.universe, burnAction))
+    }
+
+    const addrsInUse = new Set<Address>()
+    for (const token of unwrappedTokens) {
+      if (token === userOutput) {
+        continue
+      }
+      const path = bfs(this.universe, this.universe.graph, token, userOutput, 2)
+
+      const possiblePlans = path.steps
+        .map((i) => i.convertToSingularPaths())
+        .flat()
+
+      const tokenPrice = (await token.price).asNumber()
+      const inputSizeNumber = userInputPrice / tokenPrice
+      const inputSize = token.from(inputSizeNumber)
+      const paths = (
+        await Promise.all(
+          possiblePlans
+            .filter((i) => i.is1to1)
+            .map(async (plan) =>
+              plan.quote([inputSize]).catch((e) => {
+                console.log(`${plan}: Failed to quote`)
+                console.log(e)
+
+                return null
+              })
+            )
+        )
+      ).filter((i) => i !== null)
+      paths.sort((r, l) => l.compare(r))
+
+      const trades = new Set<BaseAction>()
+
+      for (const path of paths) {
+        if (path.swapPlan.addresesInUse.some((i) => addrsInUse.has(i))) {
+          // console.log(`${path.swapPlan.addresesInUse.join(', ')} already used`)
+          continue
+        }
+        for (const addr of path.swapPlan.addresesInUse) {
+          addrsInUse.add(addr)
+        }
+
+        const trade = new MultiStepAction(
+          this.universe,
+          path.swapPlan.steps.map((i) => wrapAction(this.universe, i))
+        )
+        trades.add(trade)
+      }
+      dag.tradeUserInputFor([...trades], token, userOutput, true)
+    }
+    dag.closeOpenSet()
+    dag.simplify()
+    const out = await dag.evaluate()
+
+    return out
+  }
+
+  public async buildZapInDag(
     signer: Address,
     userInput: TokenQuantity[],
     userOutput: Token
@@ -182,17 +293,6 @@ export class DagSearcher {
     //     console.log(`${tokenIn} -> ${tokenOut}: ${price}`)
     //   }
     // }
-
-    const wrapAction = (i: BaseAction) => {
-      let act = i
-      if (act.is1to1 && act.inputToken[0] === this.universe.nativeToken) {
-        act = new NativeInputWrapper(this.universe, act)
-      }
-      if (act.dependsOnRpc) {
-        act = new WrappedAction(this.universe, act)
-      }
-      return act
-    }
 
     const dag = await DagBuilder.create(
       this.universe,
@@ -267,8 +367,11 @@ export class DagSearcher {
         }
         const wrappedAct =
           plan.steps.length > 1
-            ? new MultiStepAction(this.universe, plan.steps.map(wrapAction))
-            : wrapAction(plan.steps[0])
+            ? new MultiStepAction(
+                this.universe,
+                plan.steps.map((i) => wrapAction(this.universe, i))
+              )
+            : wrapAction(this.universe, plan.steps[0])
 
         trades.push(wrappedAct)
       }
@@ -445,16 +548,15 @@ export class DagSearcher {
             }
             const wrappedAct = new MultiStepAction(
               this.universe,
-              plan.steps.map(wrapAction)
+              plan.steps.map((i) => wrapAction(this.universe, i))
             )
             tradeActions.add(wrappedAct)
           }
         }
       }
       const openSet = new Set(dag.openTokens)
-      
+
       for (const act of actions) {
-        
         for (const tok of act.outputToken) {
           openSet.delete(tok)
         }
@@ -469,7 +571,7 @@ export class DagSearcher {
             dag.config.inputTokenSet.has(act.inputToken[0]) &&
             act.outputToken[0] === tok
           ) {
-            trades.push(wrapAction(act))
+            trades.push(wrapAction(this.universe, act))
             tradeActions.delete(act)
           }
         }
@@ -512,7 +614,11 @@ export class DagSearcher {
               }
               trades.push(
                 wrapAction(
-                  new MultiStepAction(this.universe, plan.steps.map(wrapAction))
+                  this.universe,
+                  new MultiStepAction(
+                    this.universe,
+                    plan.steps.map((i) => wrapAction(this.universe, i))
+                  )
                 )
               )
               openSet.delete(out)
@@ -548,7 +654,7 @@ export class DagSearcher {
       })
 
       const toSwapPlan = (i: BaseAction) => {
-        return new SwapPlan(this.universe, [wrapAction(i)])
+        return new SwapPlan(this.universe, [wrapAction(this.universe, i)])
       }
       await dag.replaceOpenSet(allActions.map(toSwapPlan))
     }
@@ -570,7 +676,7 @@ export class DagSearcher {
 
     const out = await dag.finalize(
       mintPrices,
-      [...tradeActions].map(wrapAction)
+      [...tradeActions].map((i) => wrapAction(this.universe, i))
     )
     return out
   }

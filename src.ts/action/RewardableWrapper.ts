@@ -186,6 +186,11 @@ export const createProtocolWithWrappers = (
       })
       universe.addAction(deposit)
       universe.addAction(withdraw)
+      universe.wrappedTokens.set(wrapper, {
+        mint: deposit,
+        burn: withdraw,
+        allowAggregatorSearcher: true,
+      })
       return {
         deposit,
         withdraw,

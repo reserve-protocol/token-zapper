@@ -29,6 +29,7 @@ export interface SlipstreamRouterCallInterface extends utils.Interface {
     "exactInput(uint256,uint256,address,address,bytes)": FunctionFragment;
     "exactInputSingle(uint256,uint256,address,bytes)": FunctionFragment;
     "exactInputSingleV2(uint256,uint256,address,address,bytes)": FunctionFragment;
+    "removeLiquidity(uint256,uint256,uint256,bytes)": FunctionFragment;
   };
 
   getFunction(
@@ -37,6 +38,7 @@ export interface SlipstreamRouterCallInterface extends utils.Interface {
       | "exactInput"
       | "exactInputSingle"
       | "exactInputSingleV2"
+      | "removeLiquidity"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -78,6 +80,15 @@ export interface SlipstreamRouterCallInterface extends utils.Interface {
       PromiseOrValue<BytesLike>
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "removeLiquidity",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>
+    ]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "addLiquidityV2",
@@ -90,6 +101,10 @@ export interface SlipstreamRouterCallInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "exactInputSingleV2",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "removeLiquidity",
     data: BytesLike
   ): Result;
 
@@ -157,6 +172,14 @@ export interface SlipstreamRouterCall extends BaseContract {
       encoding: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    removeLiquidity(
+      amount: PromiseOrValue<BigNumberish>,
+      expectedA: PromiseOrValue<BigNumberish>,
+      expectedB: PromiseOrValue<BigNumberish>,
+      encoding: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   addLiquidityV2(
@@ -190,6 +213,14 @@ export interface SlipstreamRouterCall extends BaseContract {
     expected: PromiseOrValue<BigNumberish>,
     router: PromiseOrValue<string>,
     recipient: PromiseOrValue<string>,
+    encoding: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  removeLiquidity(
+    amount: PromiseOrValue<BigNumberish>,
+    expectedA: PromiseOrValue<BigNumberish>,
+    expectedB: PromiseOrValue<BigNumberish>,
     encoding: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -229,6 +260,14 @@ export interface SlipstreamRouterCall extends BaseContract {
       encoding: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    removeLiquidity(
+      amount: PromiseOrValue<BigNumberish>,
+      expectedA: PromiseOrValue<BigNumberish>,
+      expectedB: PromiseOrValue<BigNumberish>,
+      encoding: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {};
@@ -268,6 +307,14 @@ export interface SlipstreamRouterCall extends BaseContract {
       encoding: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    removeLiquidity(
+      amount: PromiseOrValue<BigNumberish>,
+      expectedA: PromiseOrValue<BigNumberish>,
+      expectedB: PromiseOrValue<BigNumberish>,
+      encoding: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -302,6 +349,14 @@ export interface SlipstreamRouterCall extends BaseContract {
       expected: PromiseOrValue<BigNumberish>,
       router: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
+      encoding: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    removeLiquidity(
+      amount: PromiseOrValue<BigNumberish>,
+      expectedA: PromiseOrValue<BigNumberish>,
+      expectedB: PromiseOrValue<BigNumberish>,
       encoding: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

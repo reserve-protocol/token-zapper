@@ -1006,7 +1006,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     const searcher = new DagSearcher(this)
     try {
       console.log(`Building DAG for ${userInput} -> ${rToken}`)
-      const dag = await searcher.buildDag(
+      const dag = await searcher.buildZapInDag(
         userAddress,
         [userInput],
         rToken
@@ -1020,12 +1020,35 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
   }
   public async redeem(
-    rTokenQuantity: TokenQuantity,
+    inputQty: TokenQuantity,
     outputToken: Token | string,
     userAddress: Address | string,
     opts?: ToTransactionArgs
   ) {
-    return await this.zap(rTokenQuantity, outputToken, userAddress, opts)
+    if (inputQty.token === this.nativeToken) {
+      throw new Error('Native token cannot be used as input')
+    }
+    if (typeof userAddress === 'string') {
+      userAddress = Address.from(userAddress)
+    }
+    if (typeof outputToken === 'string') {
+      outputToken = await this.getToken(Address.from(outputToken))
+    }
+    const searcher = new DagSearcher(this)
+    try {
+      console.log(`Building DAG for ${inputQty} -> ${outputToken}`)
+      const dag = await searcher.buildZapOutDag(
+        userAddress,
+        inputQty,
+        outputToken
+      )
+      return await new TxGen(await dag.dag.evaluate()).generate(userAddress, {
+        ethereumInput: false
+      })
+    } catch (e) {
+      console.log(`Error zapping: ${e}`)
+      throw e
+    }
   }
 
   get approvalAddress() {

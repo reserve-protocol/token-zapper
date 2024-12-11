@@ -93,6 +93,12 @@ export class DagBuilder {
     return this.openTokenSet.size === 0
   }
 
+  public closeOpenSet() {
+    this.openTokenSet.clear()
+    this.balanceNodeTip.clear()
+    this.balanceNodeStart.clear()
+  }
+
   public toDot() {
     try {
       const sorted = this.getSorted()
@@ -466,7 +472,8 @@ export class DagBuilder {
   public async tradeUserInputFor(
     trades: BaseAction[],
     prevInputToken: Token,
-    newInputToken: Token
+    newInputToken: Token,
+    createTradeNode: boolean = true
   ) {
     this.balanceNodeTip.delete(prevInputToken)
 
@@ -479,8 +486,13 @@ export class DagBuilder {
       throw new Error('No start node for ' + prevInputToken)
     }
     this.forward(prev, prevInputToken, splitNode)
-    const outnodeNode = new BalanceNode(newInputToken)
-    this.balanceNodeTip.set(newInputToken, outnodeNode)
+
+    const outnodeNode = this.config.outputTokenSet.has(newInputToken)
+      ? this.outputNode
+      : new BalanceNode(newInputToken)
+    if (!this.balanceNodeTip.has(newInputToken)) {
+      this.balanceNodeTip.set(newInputToken, outnodeNode)
+    }
 
     const tradeNodes: ActionNode[] = []
     for (const trade of trades) {
@@ -493,13 +505,45 @@ export class DagBuilder {
       this.forward(splitNode, prevInputToken, tradeNode)
       this.forward(tradeNode, newInputToken, outnodeNode)
     }
+    if (createTradeNode) {
+      this.splitNodeEdges.set(splitNode.splitNodeIndex, tradeNodes)
+      this.splitNodeTypes.set(splitNode.splitNodeIndex, SplitNodeType.Trades)
+    }
+  }
+
+  public async unwrapInput(action: BaseAction) {
+    if (action.inputToken.length !== 1) {
+      throw new Error('unwrapInput: action must have 1 input token')
+    }
+    const inputToken = action.inputToken[0]
+    const currentTip = this.balanceNodeTip.get(inputToken)
+    this.balanceNodeTip.delete(inputToken)
+    const node = new ActionNode(
+      [[1, inputToken]],
+      new SwapPlan(this.universe, [action]),
+      action.outputToken.map((i) => [1, i] as [number, Token])
+    )
+    this.forward(currentTip, inputToken, node)
+    for (const outputToken of action.outputToken) {
+      if (
+        !this.balanceNodeTip.has(outputToken) &&
+        !this.config.outputTokenSet.has(outputToken)
+      ) {
+        const balNode = new BalanceNode(outputToken)
+        this.balanceNodeTip.set(outputToken, balNode)
+        this.balanceNodeStart.set(outputToken, balNode)
+        this.forward(node, outputToken, balNode)
+      } else {
+        this.forward(node, outputToken, this.outputNode)
+      }
+    }
   }
 
   public async finalize(
     mintPrices: Map<Token, Map<Token, number>>,
     tradeActions: BaseAction[]
   ) {
-    console.log('Finalizing DAG:')
+    // console.log('Finalizing DAG:')
     for (const [t, node] of this.balanceNodeTip.entries()) {
       if (node === this.outputNode) {
         continue
@@ -724,8 +768,8 @@ export class DagBuilder {
       }
     }
 
-    console.log('Final DAG:')
-    console.log(this.toDot())
+    // console.log('Final DAG:')
+    // console.log(this.toDot())
 
     /**
      * Run's the initial optimisation phase, this phase will try to
@@ -968,8 +1012,7 @@ export class DagBuilder {
           if (node instanceof SplitNode) {
             if (
               this.splitNodeTypes.get(node.splitNodeIndex) ===
-                SplitNodeType.Trades &&
-              mintPrices.size !== 0
+              SplitNodeType.Trades
             ) {
               await this.findBestTradesSplits(mintPrices, ctx, node, inputs)
             }
@@ -1177,6 +1220,7 @@ export class DagBuilder {
             floorPrice,
             10
           )
+          // console.log(JSON.stringify(out, null, 2))
 
           if (out.outputs.every((i) => i === 0)) {
             currentSplits.fill(0)

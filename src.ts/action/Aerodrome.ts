@@ -218,16 +218,24 @@ class AeropoolRemoveLiquidity extends BaseV2AerodromeAction {
     destination: Address,
     predictedInputs: TokenQuantity[]
   ): Promise<null | Value[]> {
+    const [amount0, amount1] = await this.quote(predictedInputs)
     planner.add(
-      this.pool.context.weirollV2Router.removeLiquidity(
-        this.pool.token0.address.address,
-        this.pool.token1.address.address,
-        this.pool.isStable,
+      this.pool.context.weirollAerodromeRouterCaller.removeLiquidity(
         input,
-        predictedInputs[0].amount,
-        predictedInputs[1].amount,
-        destination.address,
-        2n ** 64n - 1n
+        amount0.amount - amount0.amount / 20n,
+        amount1.amount - amount1.amount / 20n,
+        defaultAbiCoder.encode(
+          // (address, address, bool, address, address, uint256)
+          ['address', 'address', 'bool', 'address', 'address', 'uint256'],
+          [
+            this.pool.token0.address.address,
+            this.pool.token1.address.address,
+            this.pool.isStable,
+            destination.address,
+            this.pool.context.router.address,
+            Math.floor(Date.now() / 1000) + 20 * 60,
+          ]
+        )
       ),
       `${this.protocol}:${this.actionName}(${predictedInputs.join(
         ', '
@@ -747,8 +755,15 @@ class AerodromeStablePool {
       if (interestingPools.has(inst.address)) {
         universe.addAction(inst.actions.t0for1)
         universe.addAction(inst.actions.t1for0)
+
         universe.addAction(inst.actions.addLiquidity!)
         universe.addAction(inst.actions.removeLiquidity!)
+
+        universe.wrappedTokens.set(inst.lpToken, {
+          mint: inst.actions.addLiquidity!,
+          burn: inst.actions.removeLiquidity!,
+          allowAggregatorSearcher: true,
+        })
         universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
         await universe.defineLPToken(
           inst.lpToken,
@@ -780,6 +795,12 @@ class AerodromeStablePool {
 
           universe.addAction(inst.actions.addLiquidity!)
           universe.addAction(inst.actions.removeLiquidity!)
+
+          universe.wrappedTokens.set(inst.lpToken, {
+            mint: inst.actions.addLiquidity!,
+            burn: inst.actions.removeLiquidity!,
+            allowAggregatorSearcher: true,
+          })
 
           universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
           await universe.defineLPToken(

@@ -89,6 +89,19 @@ const evaluateProgram = async (
       userBalanceAndApprovalRequirements: innerDag.config.userInput[0].amount,
     },
   }
+  // console.log(
+  //   JSON.stringify(
+  //     {
+  //       blockNumber: universe.currentBlock,
+  //       to: simulationPayload.to,
+  //       from: simulationPayload.from,
+  //       data: simulationPayload.data,
+  //       value: simulationPayload.value.toString(),
+  //     },
+  //     null,
+  //     2
+  //   )
+  // )
   try {
     return {
       res: await simulateAndParse(

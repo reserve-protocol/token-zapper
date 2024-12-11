@@ -921,6 +921,28 @@ contract SlipstreamRouterCall {
         }
     }
 
+    function removeLiquidity(
+        uint256 amount,
+        uint256 expectedA,
+        uint256 expectedB,
+        bytes memory encoding
+    ) external {
+        (address tokenA, address tokenB, bool stable, address dest, address router, uint256 deadline) = abi.decode(
+            encoding,
+            (address, address, bool, address, address, uint256)
+        );
+        IAerodromeRouter(router).removeLiquidity(
+            tokenA,
+            tokenB,
+            stable,
+            amount,
+            expectedA,
+            expectedB,
+            dest,
+            deadline
+        );
+    }
+
 
     function exactInputSingleV2(
         uint256 amountIn,

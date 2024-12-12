@@ -481,15 +481,19 @@ export class DagBuilder {
     newInputToken: Token,
     createTradeNode: boolean = true
   ) {
-    this.balanceNodeTip.delete(prevInputToken)
-
     const splitNode = this.createSplitNode(
       prevInputToken,
       trades.map(() => 1 / trades.length)
     )
-    const prev = this.balanceNodeStart.get(prevInputToken)
+    let prev = this.balanceNodeTip.get(prevInputToken)
     if (prev == null) {
       throw new Error('No start node for ' + prevInputToken)
+    }
+    if (!(prev instanceof SplitNode)) {
+      const newPrev = this.createSplitNode(prevInputToken, [1])
+      this.forward(prev, prevInputToken, newPrev)
+      this.balanceNodeTip.set(prevInputToken, newPrev)
+      prev = newPrev
     }
     this.forward(prev, prevInputToken, splitNode)
 

@@ -130,6 +130,7 @@ const redeemCases = [
   makeMintTestCase(5, rTokens.bsd, t.WETH),
   makeMintTestCase(150, rTokens.bsd, t.USDC),
   makeMintTestCase(150, rTokens.BSDX, t.WETH),
+  makeMintTestCase(30, rTokens.BSDX, t.WETH),
 ]
 const individualIntegrations = [
   // makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),

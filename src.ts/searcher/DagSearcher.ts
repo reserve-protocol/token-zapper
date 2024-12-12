@@ -206,7 +206,12 @@ const tradeUserInput = async (
 ) => {
   const steps = await findTradePaths(universe, addrsInUse, qty, to)
   for (const step of steps) {
-    dag.tradeUserInputFor(step, qty.token, to)
+    dag.tradeUserInputFor(
+      step,
+      step[0].inputToken[0],
+      step[0].outputToken[0],
+      true
+    )
   }
 }
 

@@ -35,13 +35,11 @@ const previousResults = new DefaultMap<
 >(() => new Map())
 
 const RESOLUTION = 5
+
 export class DagBuilder {
   public startNode!: DagNode
   public outputNode!: OutputNode
 
-  public readonly edges = new DefaultMap<DagNode, DefaultMap<Token, DagNode[]>>(
-    () => new DefaultMap<Token, DagNode[]>(() => [])
-  )
   public readonly dependencies = new DefaultMap<DagNode, DagNode[]>(() => [])
 
   public balanceNodeTip = new DefaultMap<Token, DagNode>((token) => {
@@ -51,6 +49,14 @@ export class DagBuilder {
     return new BalanceNode(token)
   })
   private balanceNodeStart = new Map<Token, DagNode>()
+
+  public readonly edges = new DefaultMap<DagNode, DefaultMap<Token, DagNode[]>>(
+    () => {
+      return new DefaultMap<Token, DagNode[]>(() => {
+        return []
+      })
+    }
+  )
 
   public splitNodes: number[][] = []
   public splitNodeTypes = new DefaultMap<number, SplitNodeType>(
@@ -490,8 +496,12 @@ export class DagBuilder {
     const outnodeNode = this.config.outputTokenSet.has(newInputToken)
       ? this.outputNode
       : new BalanceNode(newInputToken)
-    if (!this.balanceNodeTip.has(newInputToken)) {
+    if (
+      outnodeNode !== this.outputNode &&
+      !this.balanceNodeTip.has(newInputToken)
+    ) {
       this.balanceNodeTip.set(newInputToken, outnodeNode)
+      this.balanceNodeStart.set(newInputToken, outnodeNode)
     }
 
     const tradeNodes: ActionNode[] = []

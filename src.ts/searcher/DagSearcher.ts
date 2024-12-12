@@ -6,7 +6,7 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { Universe } from '../Universe'
 import { DagBuilder } from './DagBuilder'
 import { ActionNode, DagBuilderConfig } from './Dag'
-import { SwapPlan } from './Swap'
+import { SingleSwap, SwapPlan } from './Swap'
 import {
   MultiStepAction,
   NativeInputWrapper,
@@ -14,6 +14,8 @@ import {
   WrappedAction,
 } from './TradeAction'
 import { bfs } from '../exchange-graph/BFS'
+
+const LONGEST_TUNNEL_DEPTH = 3
 
 const wrapAction = (universe: Universe, i: BaseAction) => {
   let act = i
@@ -130,6 +132,84 @@ const findUnderlyingTokens = async (
   }
 }
 
+const DEFAULT_TUNNEL_OPTS = {}
+
+type TunnelOpts = Partial<typeof DEFAULT_TUNNEL_OPTS>
+
+const findTradePaths = async (
+  universe: Universe,
+  addrsInUse: Set<Address>,
+  qty: TokenQuantity,
+  to: Token
+) => {
+  const paths = (
+    await Promise.all(
+      bfs(universe, universe.graph, qty.token, to, LONGEST_TUNNEL_DEPTH)
+        .steps.map((i) => i.convertToSingularPaths())
+        .flat()
+        .filter(
+          (i) =>
+            i.steps.every((i) => i.is1to1) &&
+            i.addresesInUse.every((i) => !addrsInUse.has(i))
+        )
+        .map((i) => i.quote([qty]).catch(() => null))
+    )
+  ).filter((i) => i !== null)
+  paths.sort((l, r) => r.outputValue.asNumber() - l.outputValue.asNumber())
+  if (paths.length === 0) {
+    throw new Error('No paths found')
+  }
+
+  const fromToken = new DefaultMap<Token, DefaultMap<Token, BaseAction[]>>(
+    () => new DefaultMap<Token, BaseAction[]>(() => [])
+  )
+  for (const path of paths) {
+    for (const step of path.steps) {
+      fromToken
+        .get(step.inputs[0].token)
+        .get(step.outputs[0].token)
+        .push(step.action)
+    }
+  }
+
+  const bestPath = paths[0]
+  const out: BaseAction[][] = []
+  for (let s = 0; s < bestPath.steps.length; s++) {
+    const tokenIn = bestPath.steps[s].inputs[0].token
+    const tokenOut = bestPath.steps[s].outputs[0].token
+    const actions = fromToken.get(tokenIn).get(tokenOut)
+    const actionsArray: BaseAction[] = []
+    for (const action of actions) {
+      for (const addr of action.addressesInUse) {
+        if (addrsInUse.has(addr)) {
+          continue
+        }
+        actionsArray.push(action)
+        addrsInUse.add(addr)
+      }
+    }
+    if (actionsArray.length === 0) {
+      throw new Error('No actions found')
+    }
+    out.push(actionsArray)
+  }
+  return out
+}
+
+const tradeUserInput = async (
+  universe: Universe,
+  addrsInUse: Set<Address>,
+  dag: DagBuilder,
+  qty: TokenQuantity,
+  to: Token,
+  opts: TunnelOpts = DEFAULT_TUNNEL_OPTS
+) => {
+  const steps = await findTradePaths(universe, addrsInUse, qty, to)
+  for (const step of steps) {
+    dag.tradeUserInputFor(step, qty.token, to)
+  }
+}
+
 export class DagSearcher {
   private readonly logger: winston.Logger
   constructor(public readonly universe: Universe) {
@@ -149,8 +229,6 @@ export class DagSearcher {
       output: userOutput.toString(),
     })
 
-    const userInputPrice = (await userInput.price()).asNumber()
-
     const dag = await DagBuilder.create(
       this.universe,
       new DagBuilderConfig(
@@ -166,6 +244,7 @@ export class DagSearcher {
     const eth = this.universe.nativeToken
     const current = [userInput.token]
     const unwrappedTokens = new Set<Token>()
+    const inputValue = (await userInput.price()).asNumber()
     while (current.length !== 0) {
       let token = current.pop()!
       if (userOutput === token) {
@@ -193,61 +272,11 @@ export class DagSearcher {
       if (token === userOutput) {
         continue
       }
-      for (let i = 1; i <= 3; i++) {
-        const path = bfs(
-          this.universe,
-          this.universe.graph,
-          token,
-          userOutput,
-          i
-        )
 
-        const possiblePlans = path.steps
-          .map((i) => i.convertToSingularPaths())
-          .flat()
+      const tokenPrice = (await token.price).asNumber()
+      const inputQty = token.from(inputValue / tokenPrice)
 
-        const tokenPrice = (await token.price).asNumber()
-        const inputSizeNumber = userInputPrice / tokenPrice
-        const inputSize = token.from(inputSizeNumber)
-        const paths = (
-          await Promise.all(
-            possiblePlans
-              .filter((i) => i.is1to1)
-              .map(async (plan) =>
-                plan.quote([inputSize]).catch((e) => {
-                  console.log(`${plan}: Failed to quote`)
-                  console.log(e)
-
-                  return null
-                })
-              )
-          )
-        ).filter((i) => i !== null)
-        paths.sort((r, l) => l.compare(r))
-
-        const trades = new Set<BaseAction>()
-
-        for (const path of paths) {
-          if (path.swapPlan.addresesInUse.some((i) => addrsInUse.has(i))) {
-            // console.log(`${path.swapPlan.addresesInUse.join(', ')} already used`)
-            continue
-          }
-          for (const addr of path.swapPlan.addresesInUse) {
-            addrsInUse.add(addr)
-          }
-
-          const trade = new MultiStepAction(
-            this.universe,
-            path.swapPlan.steps.map((i) => wrapAction(this.universe, i))
-          )
-          trades.add(trade)
-        }
-        if (trades.size === 0) {
-          continue
-        }
-        dag.tradeUserInputFor([...trades], token, userOutput, true)
-        break
-      }
+      await tradeUserInput(this.universe, addrsInUse, dag, inputQty, userOutput)
     }
 
     dag.closeOpenSet()
@@ -338,6 +367,9 @@ export class DagSearcher {
     const outputTokenClass = await this.universe.tokenClass.get(userOutput)
     const outputUnderlying = await this.universe.underlyingToken.get(userOutput)
     for (const input of userInput) {
+      if (outputTokenClass === userOutput) {
+        continue
+      }
       if (input.token === weth && outputTokenClass === eth) {
         continue
       }
@@ -357,55 +389,13 @@ export class DagSearcher {
       const outputPrice = (await outputTokenClass.price).into(outputTokenClass)
 
       const newInputQty = inputPrice.div(outputPrice)
-
-      // Convert input to output token class
-      const path = bfs(
+      await tradeUserInput(
         this.universe,
-        this.universe.graph,
-        input.token,
-        outputTokenClass,
-        2
+        addrsUsed,
+        dag,
+        newInputQty,
+        outputTokenClass
       )
-
-      const possiblePlans = path.steps
-        .map((i) => i.convertToSingularPaths())
-        .flat()
-
-      const paths = (
-        await Promise.all(
-          possiblePlans.map(async (plan) =>
-            plan.quote([input]).catch(() => null)
-          )
-        )
-      ).filter((i) => i !== null)
-      paths.sort((r, l) => l.compare(r))
-
-      const trades: BaseAction[] = []
-      for (let i = 0; i < paths.length; i++) {
-        const path = paths[i]
-        const plan = path.swapPlan
-        if (!plan.addresesInUse.every((i) => !addrsUsed.has(i))) {
-          continue
-        }
-        for (const addr of plan.addresesInUse) {
-          addrsUsed.add(addr)
-        }
-        const wrappedAct =
-          plan.steps.length > 1
-            ? new MultiStepAction(
-                this.universe,
-                plan.steps.map((i) => wrapAction(this.universe, i))
-              )
-            : wrapAction(this.universe, plan.steps[0])
-
-        trades.push(wrappedAct)
-      }
-
-      if (trades.length !== 0) {
-        console.log(`Trading input ${input.token} for ${outputTokenClass}`)
-        dag.tradeUserInputFor(trades, input.token, outputTokenClass)
-        userInput[userInput.indexOf(input)] = newInputQty
-      }
     }
 
     for (let i = 0; i < byPhase.length; i++) {
@@ -607,60 +597,19 @@ export class DagSearcher {
         }
       }
       if (openSet.size !== 0) {
-        const trades: BaseAction[] = []
         for (const inp of userInput) {
           for (const out of openSet) {
-            const path = bfs(
+            const paths = await findTradePaths(
               this.universe,
-              this.universe.graph,
-              inp.token,
-              out,
-              2
+              addrsUsed,
+              inp,
+              out
             )
-            const possiblePlans = path.steps
-              .map((i) => i.convertToSingularPaths())
-              .flat()
-            const paths = (
-              await Promise.all(
-                possiblePlans.map(async (plan) =>
-                  plan.quote([inp]).catch(() => null)
-                )
-              )
-            ).filter((i) => i !== null)
-            paths.sort((r, l) => l.compare(r))
-            for (const path of paths) {
-              const plan = path.swapPlan
-
-              if (!plan.addresesInUse.every((i) => !addrsUsed.has(i))) {
-                continue
-              }
-              for (const addr of plan.addresesInUse) {
-                addrsUsed.add(addr)
-              }
-              trades.push(
-                wrapAction(
-                  this.universe,
-                  new MultiStepAction(
-                    this.universe,
-                    plan.steps.map((i) => wrapAction(this.universe, i))
-                  )
-                )
-              )
-              openSet.delete(out)
+            for (const trades of paths) {
+              await dag.splitTradeInputIntoNewOutput(trades)
             }
           }
-          await dag.splitTradeInputIntoNewOutput(trades)
-          // console.log('After splitTradeInputIntoNewOutput')
-          // dag.debugToDot()
         }
-      }
-      if (openSet.size !== 0) {
-        console.log('Missing tokens', [...openSet].join(', '))
-        console.log('Trade actions:')
-        for (const t of tradeActions) {
-          console.log('  ', t.toString())
-        }
-        throw new Error('Open set is not fully consumed')
       }
 
       const actionsArray = [...actions]

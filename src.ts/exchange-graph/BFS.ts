@@ -39,6 +39,10 @@ class BFSSearchResult {
     public readonly steps: ChoicesPrStep[],
     public readonly output: Token
   ) {}
+
+  public get found() {
+    return this.steps.length > 0
+  }
 }
 class OpenSetNode {
   private constructor(

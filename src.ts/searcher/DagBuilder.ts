@@ -44,7 +44,7 @@ export class DagBuilder {
   )
   public readonly dependencies = new DefaultMap<DagNode, DagNode[]>(() => [])
 
-  private balanceNodeTip = new DefaultMap<Token, DagNode>((token) => {
+  public balanceNodeTip = new DefaultMap<Token, DagNode>((token) => {
     if (!this.balanceNodeStart.has(token)) {
       return this.outputNode
     }

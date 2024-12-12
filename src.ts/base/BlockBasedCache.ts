@@ -14,7 +14,7 @@ export class BlockCache<Input, Result extends NonNullable<any>, Key = Input> {
     if (out == null) {
       const res = this.fetch(key).catch((e) => {
         this.cache.delete(k)
-        throw e
+        throw new Error(e)
       })
       out = { result: res, time: this.currentBlock }
       this.cache.set(k, out)

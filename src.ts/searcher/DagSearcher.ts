@@ -5,11 +5,12 @@ import { DefaultMap } from '../base/DefaultMap'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Universe } from '../Universe'
 import { DagBuilder } from './DagBuilder'
-import { DagBuilderConfig } from './Dag'
+import { ActionNode, DagBuilderConfig } from './Dag'
 import { SwapPlan } from './Swap'
 import {
   MultiStepAction,
   NativeInputWrapper,
+  unwrapAction,
   WrappedAction,
 } from './TradeAction'
 import { bfs } from '../exchange-graph/BFS'
@@ -183,57 +184,81 @@ export class DagSearcher {
       dag.unwrapInput(wrapAction(this.universe, burnAction))
     }
 
+    for (const balanceTips of dag.balanceNodeTip.keys()) {
+      unwrappedTokens.add(balanceTips)
+    }
+
     const addrsInUse = new Set<Address>()
     for (const token of unwrappedTokens) {
       if (token === userOutput) {
         continue
       }
-      const path = bfs(this.universe, this.universe.graph, token, userOutput, 2)
-
-      const possiblePlans = path.steps
-        .map((i) => i.convertToSingularPaths())
-        .flat()
-
-      const tokenPrice = (await token.price).asNumber()
-      const inputSizeNumber = userInputPrice / tokenPrice
-      const inputSize = token.from(inputSizeNumber)
-      const paths = (
-        await Promise.all(
-          possiblePlans
-            .filter((i) => i.is1to1)
-            .map(async (plan) =>
-              plan.quote([inputSize]).catch((e) => {
-                console.log(`${plan}: Failed to quote`)
-                console.log(e)
-
-                return null
-              })
-            )
+      for (let i = 1; i <= 3; i++) {
+        const path = bfs(
+          this.universe,
+          this.universe.graph,
+          token,
+          userOutput,
+          i
         )
-      ).filter((i) => i !== null)
-      paths.sort((r, l) => l.compare(r))
 
-      const trades = new Set<BaseAction>()
+        const possiblePlans = path.steps
+          .map((i) => i.convertToSingularPaths())
+          .flat()
 
-      for (const path of paths) {
-        if (path.swapPlan.addresesInUse.some((i) => addrsInUse.has(i))) {
-          // console.log(`${path.swapPlan.addresesInUse.join(', ')} already used`)
+        const tokenPrice = (await token.price).asNumber()
+        const inputSizeNumber = userInputPrice / tokenPrice
+        const inputSize = token.from(inputSizeNumber)
+        const paths = (
+          await Promise.all(
+            possiblePlans
+              .filter((i) => i.is1to1)
+              .map(async (plan) =>
+                plan.quote([inputSize]).catch((e) => {
+                  console.log(`${plan}: Failed to quote`)
+                  console.log(e)
+
+                  return null
+                })
+              )
+          )
+        ).filter((i) => i !== null)
+        paths.sort((r, l) => l.compare(r))
+
+        const trades = new Set<BaseAction>()
+
+        for (const path of paths) {
+          if (path.swapPlan.addresesInUse.some((i) => addrsInUse.has(i))) {
+            // console.log(`${path.swapPlan.addresesInUse.join(', ')} already used`)
+            continue
+          }
+          for (const addr of path.swapPlan.addresesInUse) {
+            addrsInUse.add(addr)
+          }
+
+          const trade = new MultiStepAction(
+            this.universe,
+            path.swapPlan.steps.map((i) => wrapAction(this.universe, i))
+          )
+          trades.add(trade)
+        }
+        if (trades.size === 0) {
           continue
         }
-        for (const addr of path.swapPlan.addresesInUse) {
-          addrsInUse.add(addr)
-        }
-
-        const trade = new MultiStepAction(
-          this.universe,
-          path.swapPlan.steps.map((i) => wrapAction(this.universe, i))
-        )
-        trades.add(trade)
+        dag.tradeUserInputFor([...trades], token, userOutput, true)
+        break
       }
-      dag.tradeUserInputFor([...trades], token, userOutput, true)
     }
+
     dag.closeOpenSet()
     dag.simplify()
+
+    for (const node of dag.edges.keys()) {
+      if (node instanceof ActionNode) {
+        node.actions.steps[0] = unwrapAction(node.actions.steps[0])
+      }
+    }
+
     const out = await dag.evaluate()
 
     return out

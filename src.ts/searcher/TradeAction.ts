@@ -440,8 +440,8 @@ export class MultiStepAction extends BaseAction {
         this.genUtils.sub(
           this.universe,
           planner,
-          before!,
           after,
+          before!,
           `Balance after ${step.protocol}`,
           `${step}_out`
         ),

@@ -13,7 +13,7 @@ import {
   printPlan,
   Value,
 } from '../tx-gen/Planner'
-import { DagNode, DagPlanContext, EvaluatedDag } from './Dag'
+import { BalanceNode, DagNode, DagPlanContext, EvaluatedDag } from './Dag'
 import {
   encodeCalldata,
   encodeProgramToZapERC20Params,
@@ -182,6 +182,9 @@ export class TxGen {
 
     const tokensToTransferBackToUser = new Set<Token>()
     for (const node of nodes) {
+      if (node.node instanceof BalanceNode) {
+        continue
+      }
       const outgoingEdges = innerDag.edges.get(node.node)
       for (const [token, consumers] of outgoingEdges) {
         for (const consumer of consumers) {
@@ -219,6 +222,7 @@ export class TxGen {
         const summed = inputs.reduce((acc, input) => ctx.add(acc, input))
         return [token, summed, qty] as [Token, Value, TokenQuantity]
       })
+
       const result = await node.node.plan(ctx, consumers, inputs)
       for (const [token, node, value] of result) {
         nodeInputs.get(node).get(token).push(value)

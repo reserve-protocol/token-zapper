@@ -59,13 +59,15 @@ export const baseWhales = {
 
   // rtokens
   '0xcc7ff230365bd730ee4b352cc2492cedac49383e':
-    '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb', // hyusd
+    '0xAbEaA41fd6a7464b1203b24486526b0461a5ceA4', // hyusd
   '0xcb327b99ff831bf8223cced12b1338ff3aa322ff':
     '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb', // bsdeth
   '0xfe0d6d83033e313691e96909d2188c150b834285':
     '0x1ef46018244179810dec43291d693cb2bf7f40e5', // iusdc
   '0xc9a3e2b3064c1c0546d3d0edc0a748e9f93cf18d':
     '0x6f1d6b86d4ad705385e751e6e88b0fdfdbadf298', // vaya
+
+  '0x8f0987ddb485219c767770e2080e5cc01ddc772a': '0x03d03a026e71979be3b08d44b01eae4c5ff9da99'
 }
 
 const getProvider = (url: string) => {
@@ -123,16 +125,11 @@ const issueanceCases = [
 ]
 
 const redeemCases = [
-  makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
-  // makeMintTestCase(10000, rTokens.hyUSD, t.USDbC),
-  makeMintTestCase(10000, rTokens.hyUSD, t.WETH),
-
+  makeMintTestCase(10, rTokens.hyUSD, t.USDC),
+  makeMintTestCase(10, rTokens.hyUSD, t.WETH),
   makeMintTestCase(5, rTokens.bsd, t.WETH),
-  // makeMintTestCase(5, rTokens.bsd, t.wstETH),
-  // makeMintTestCase(5, rTokens.bsd, t.cbETH),
-  makeMintTestCase(5, rTokens.bsd, t.USDC),
-
-  makeMintTestCase(150.0, rTokens.BSDX, t.WETH),
+  makeMintTestCase(150, rTokens.bsd, t.USDC),
+  makeMintTestCase(150, rTokens.BSDX, t.WETH),
 ]
 const individualIntegrations = [
   // makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),

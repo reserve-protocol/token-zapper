@@ -209,7 +209,6 @@ describe('dag builder', () => {
       console.log(res.toDot())
     }, 60000)
 
-
     it('30 BSDX => ETH', async () => {
       const dag = await new DagSearcher(universe).buildZapOutDag(
         Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
@@ -309,6 +308,21 @@ describe('dag builder', () => {
       const dag = await new DagSearcher(universe).buildZapInDag(
         Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
         [universe.commonTokens.WETH.from(1000.0)],
+        universe.rTokens.bsd
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('1.000.000 USDC => bsdETH', async () => {
+      const dag = await new DagSearcher(universe).buildZapInDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        [universe.commonTokens.USDC.from(1_000_000.0)],
         universe.rTokens.bsd
       )
       console.log(dag.dag.toDot())

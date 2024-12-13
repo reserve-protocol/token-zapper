@@ -493,7 +493,7 @@ export class SplitNode extends DagNode {
       )
     }
     const splits = dag.splitNodes[this.splitNodeIndex]
-    return splits.map((split, index) => {
+    const newValue = splits.map((split, index) => {
       const token = this.inputToken
       const consumers = outgoingEdges.find(([tok]) => tok === token)
       if (consumers == null) {
@@ -508,6 +508,7 @@ export class SplitNode extends DagNode {
         split * 100
       ).toFixed(2)}% ${token}"]`
     })
+    return newValue
   }
 
   toString() {
@@ -534,6 +535,8 @@ export class SplitNode extends DagNode {
     if (inputs.every((i) => i.token !== inputs[0].token)) {
       throw new Error('SplitNode must have same token as input')
     }
+
+    const splits = ctx.dag.splitNodes[this.splitNodeIndex]
     const input = inputs.reduce((l, r) => l.add(r), inputs[0].token.zero)
     const outEdge = outgoingEdges.find(([token]) => token === input.token) as
       | null
@@ -542,7 +545,6 @@ export class SplitNode extends DagNode {
       throw new Error(`No consumers for ${input.token}`)
     }
     const [, consumers] = outEdge
-    const splits = ctx.dag.splitNodes[this.splitNodeIndex]
     if (splits.every((i) => i === 0)) {
       return []
     }

@@ -132,7 +132,9 @@ const findUnderlyingTokens = async (
   }
 }
 
-const DEFAULT_TUNNEL_OPTS = {}
+const DEFAULT_TUNNEL_OPTS = {
+  dontExplorePaths: new Set<Token>(),
+}
 
 type TunnelOpts = Partial<typeof DEFAULT_TUNNEL_OPTS>
 
@@ -140,7 +142,8 @@ const findTradePaths = async (
   universe: Universe,
   addrsInUse: Set<Address>,
   qty: TokenQuantity,
-  to: Token
+  to: Token,
+  opts: TunnelOpts = DEFAULT_TUNNEL_OPTS
 ) => {
   const paths = (
     await Promise.all(
@@ -149,15 +152,19 @@ const findTradePaths = async (
         .flat()
         .filter(
           (i) =>
-            i.steps.every((i) => i.is1to1) &&
-            i.addresesInUse.every((i) => !addrsInUse.has(i))
+            i.steps.every(
+              (i) =>
+                i.is1to1 &&
+                (opts.dontExplorePaths == null ||
+                  !opts.dontExplorePaths.has(i.outputToken[0]))
+            ) && i.addresesInUse.every((i) => !addrsInUse.has(i))
         )
         .map((i) => i.quote([qty]).catch(() => null))
     )
   ).filter((i) => i !== null)
   paths.sort((l, r) => r.outputValue.asNumber() - l.outputValue.asNumber())
   if (paths.length === 0) {
-    throw new Error('No paths found')
+    throw new Error(`Failed to find any trade paths from ${qty.token} to ${to}`)
   }
 
   const fromToken = new DefaultMap<Token, DefaultMap<Token, BaseAction[]>>(
@@ -204,7 +211,7 @@ const tradeUserInput = async (
   to: Token,
   opts: TunnelOpts = DEFAULT_TUNNEL_OPTS
 ) => {
-  const steps = await findTradePaths(universe, addrsInUse, qty, to)
+  const steps = await findTradePaths(universe, addrsInUse, qty, to, opts)
   for (const step of steps) {
     dag.tradeUserInputFor(
       step,
@@ -303,6 +310,8 @@ export class DagSearcher {
     userInput: TokenQuantity[],
     userOutput: Token
   ) {
+    const inputSet = new Set(userInput.map((i) => i.token))
+
     const timer = this.universe.perf.begin(
       'dag-builder',
       `${userInput.map((i) => i.token).join(',')} -> ${userOutput}`
@@ -371,7 +380,12 @@ export class DagSearcher {
     const tradeActions = new Set<BaseAction>()
     const outputTokenClass = await this.universe.tokenClass.get(userOutput)
     const outputUnderlying = await this.universe.underlyingToken.get(userOutput)
-    for (const input of userInput) {
+
+    const outputTokenPrice = (await userOutput.price).asNumber()
+
+    const underlyingTokens = new Set(byPhase.flat())
+    for (let i = 0; i < userInput.length; i++) {
+      const input = userInput[i]
       if (outputTokenClass === userOutput) {
         continue
       }
@@ -390,18 +404,30 @@ export class DagSearcher {
         continue
       }
 
-      const inputPrice = (await input.price()).into(outputTokenClass)
-      const outputPrice = (await outputTokenClass.price).into(outputTokenClass)
+      const userInputValue = (await input.price()).asNumber()
 
-      const newInputQty = inputPrice.div(outputPrice)
+      console.log(
+        `Will find a trade from ${input} -> ${outputTokenClass}, ignore underlyingTokens: ${[
+          ...underlyingTokens,
+        ].join(', ')}`
+      )
       await tradeUserInput(
         this.universe,
         addrsUsed,
         dag,
-        newInputQty,
-        outputTokenClass
+        input,
+        outputTokenClass,
+        {
+          dontExplorePaths: underlyingTokens,
+        }
       )
+      const expectedOutputSize = userInputValue / outputTokenPrice
+      userInput[i] = outputTokenClass.from(expectedOutputSize)
+      dag.balanceNodeTip.delete(input.token)
     }
+    dag.debugToDot()
+
+    const tradesUsed = new Set([...addrsUsed])
 
     for (let i = 0; i < byPhase.length; i++) {
       dag.matchBalances()
@@ -601,14 +627,23 @@ export class DagSearcher {
           await dag.splitTradeInputIntoNewOutput(trades)
         }
       }
+
       if (openSet.size !== 0) {
         for (const inp of userInput) {
           for (const out of openSet) {
+            console.log(
+              `Will find a trade from ${inp} -> ${out} dontExplorePaths: ${[
+                ...inputSet,
+              ].join(', ')} addrsInUse=${[...addrsUsed].join(', ')}`
+            )
             const paths = await findTradePaths(
               this.universe,
-              addrsUsed,
+              tradesUsed,
               inp,
-              out
+              out,
+              {
+                dontExplorePaths: inputSet,
+              }
             )
             for (const trades of paths) {
               await dag.splitTradeInputIntoNewOutput(trades)

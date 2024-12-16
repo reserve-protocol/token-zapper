@@ -15,7 +15,7 @@ import {
 } from './TradeAction'
 import { bfs } from '../exchange-graph/BFS'
 
-const LONGEST_TUNNEL_DEPTH = 3
+const LONGEST_TUNNEL_DEPTH = 2
 
 const wrapAction = (universe: Universe, i: BaseAction) => {
   let act = i
@@ -152,19 +152,28 @@ const findTradePaths = async (
         .flat()
         .filter(
           (i) =>
-            i.steps.every(
-              (i) =>
-                i.is1to1 &&
-                (opts.dontExplorePaths == null ||
-                  !opts.dontExplorePaths.has(i.outputToken[0]))
-            ) && i.addresesInUse.every((i) => !addrsInUse.has(i))
+            i.steps.every((i) => {
+              if (!i.is1to1) {
+                return false
+              }
+              if (opts.dontExplorePaths == null) {
+                return true
+              }
+              return !opts.dontExplorePaths.has(i.outputToken[0])
+            }) && i.addresesInUse.every((i) => !addrsInUse.has(i))
         )
         .map((i) => i.quote([qty]).catch(() => null))
     )
   ).filter((i) => i !== null)
   paths.sort((l, r) => r.outputValue.asNumber() - l.outputValue.asNumber())
   if (paths.length === 0) {
-    throw new Error(`Failed to find any trade paths from ${qty.token} to ${to}`)
+    throw new Error(
+      `Failed to find any trade paths from ${
+        qty.token
+      } to ${to}, don't explore paths=${[...(opts.dontExplorePaths ?? [])].join(
+        ', '
+      )}`
+    )
   }
 
   const fromToken = new DefaultMap<Token, DefaultMap<Token, BaseAction[]>>(
@@ -196,7 +205,11 @@ const findTradePaths = async (
       }
     }
     if (actionsArray.length === 0) {
-      throw new Error('No actions found')
+      console.log(`Addreses in use: ${[...addrsInUse].join(', ')}`)
+      console.log(
+        `Don't explore paths: ${[...(opts.dontExplorePaths ?? [])].join(', ')}`
+      )
+      throw new Error(`No actions found: from=${qty.token} to=${to}`)
     }
     out.push(actionsArray)
   }
@@ -302,7 +315,7 @@ export class DagSearcher {
 
     const out = await dag.evaluate()
 
-    return out
+    return await out.dag.evaluate()
   }
 
   public async buildZapInDag(
@@ -361,11 +374,6 @@ export class DagSearcher {
         }
       }
     }
-    // for (const [tokenIn, edges] of mintPrices.entries()) {
-    //   for (const [tokenOut, price] of edges.entries()) {
-    //     console.log(`${tokenIn} -> ${tokenOut}: ${price}`)
-    //   }
-    // }
 
     const dag = await DagBuilder.create(
       this.universe,

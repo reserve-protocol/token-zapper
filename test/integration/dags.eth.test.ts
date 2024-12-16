@@ -200,6 +200,21 @@ describe('dag builder', () => {
       )
       console.log(dag.toDot())
     }, 60000)
+
+    it('1,000.0 ETHPlus => WETH', async () => {
+      const dag = await new DagSearcher(universe).buildZapOutDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        universe.rTokens['ETH+'].from(1_000.0),
+        universe.commonTokens.WETH
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
   })
 
   describe('Standard RToken zaps', () => {

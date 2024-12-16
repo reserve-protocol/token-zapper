@@ -310,6 +310,11 @@ export class DagSearcher {
     userInput: TokenQuantity[],
     userOutput: Token
   ) {
+    userInput = userInput.map((i) =>
+      i.token === this.universe.nativeToken
+        ? i.into(this.universe.wrappedNativeToken)
+        : i
+    )
     const inputSet = new Set(userInput.map((i) => i.token))
 
     const timer = this.universe.perf.begin(

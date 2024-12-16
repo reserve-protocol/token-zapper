@@ -381,6 +381,27 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     console.log('Failed to load balancer')
   }
 
+  universe.tokenClass.set(
+    universe.rTokens['ETH+'],
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.dgnETH,
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.eUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.hyUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.USD3,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+
   universe.addSingleTokenPriceOracle({
     token: universe.commonTokens.sUSD,
     oracleAddress: Address.from('0xfF30586cD0F29eD462364C7e81375FC0C71219b1'),

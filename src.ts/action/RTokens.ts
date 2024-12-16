@@ -57,15 +57,12 @@ export class RTokenDeployment {
           10n ** 18n
       )
 
-      console.log(this.rToken + ' => ' + ourPriceUSD)
-      console.log(tokenClass + ' => ' + classPrice)
-
       const out = ourPriceUSD.div(classPrice).into(tokenClass)
-      console.log('exchangeRate: ' + out)
+
       return out
     }
     const out = (baskets.amount * tokenClass.scale) / amount
-    return tokenClass.from(out).invert().mul(tokenClass.from(0.99))
+    return tokenClass.from(out).invert()
   }
   public readonly unitBasket: () => Promise<PricedTokenQuantity[]>
   public readonly maxIssueable: () => Promise<TokenQuantity>

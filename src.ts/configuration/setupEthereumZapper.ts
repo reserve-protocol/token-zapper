@@ -103,21 +103,23 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   // console.log(aaveV3.describe().join('\n'))
 
-  try {
-    const router = await setupUniswapV3Router(universe)
-    const venue = await router.venue()
-    const uniswap = universe.addIntegration('uniswapV3', venue)
-    universe.addTradeVenue(uniswap)
-  } catch (e) {
-    console.log('Failed to load uniswapV3')
-    console.log(e)
-  }
-
   await universe.addSingleTokenPriceOracle({
     token: commonTokens.apxETH,
     oracleAddress: Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea'),
     priceToken: eth,
   })
+
+  const initUniswap = async () => {
+    try {
+      const router = await setupUniswapV3Router(universe)
+      const venue = await router.venue()
+      const uniswap = universe.addIntegration('uniswapV3', venue)
+      universe.addTradeVenue(uniswap)
+    } catch (e) {
+      console.log('Failed to load uniswapV3')
+      console.log(e)
+    }
+  }
 
   // Set up RETH
   await setupRETH(universe, PROTOCOL_CONFIGS.rocketPool)
@@ -361,29 +363,68 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.commonTokens.sfrxeth,
     Promise.resolve(TokenType.OtherMintable)
   )
-  console.log('Loading curve')
-  try {
-    const curve = await CurveIntegration.load(universe, PROTOCOL_CONFIGS.curve)
-    universe.integrations.curve = curve
-    universe.addIntegration(
-      'convex',
-      await setupConvexStakingWrappers(universe, curve, PROTOCOL_CONFIGS.convex)
-    )
-  } catch (e) {
-    console.log(e)
-    console.log('Failed to load curve')
+  const initCurve = async () => {
+    console.log('Loading curve')
+
+    try {
+      const curve = await CurveIntegration.load(
+        universe,
+        PROTOCOL_CONFIGS.curve
+      )
+      universe.integrations.curve = curve
+      universe.addIntegration(
+        'convex',
+        await setupConvexStakingWrappers(
+          universe,
+          curve,
+          PROTOCOL_CONFIGS.convex
+        )
+      )
+    } catch (e) {
+      console.log(e)
+      console.log('Failed to load curve')
+    }
   }
-  console.log('Setting up balancer')
-  try {
-    await setupBalancer(universe)
-  } catch (e) {
-    console.log(e)
-    console.log('Failed to load balancer')
+  const initBalancer = async () => {
+    console.log('Loading balancer')
+
+    try {
+      await setupBalancer(universe)
+    } catch (e) {
+      console.log(e)
+      console.log('Failed to load balancer')
+    }
   }
 
+  const tasks = [initUniswap, initBalancer, initCurve]
+  await Promise.all(tasks.map((task) => task()))
+  universe.tokenClass.set(
+    universe.rTokens.USD3,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.eUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.hyUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.preferredToken.set(
+    universe.rTokens['ETH+'],
+    universe.commonTokens.WETH
+  )
+  universe.preferredToken.set(
+    universe.rTokens.dgnETH,
+    universe.commonTokens.WETH
+  )
   universe.tokenClass.set(
     universe.rTokens['ETH+'],
     Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.USDC,
+    Promise.resolve(universe.commonTokens.USDC)
   )
   universe.tokenClass.set(
     universe.rTokens.dgnETH,

@@ -29,9 +29,10 @@ import { Graph } from '../exchange-graph/Graph'
 import { SwapPlan } from '../searcher/Swap'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
 import baseFallbackPoolList from './data/base/uniswap.json'
+import ethereumFallbackPoolList from './data/ethereum/uniswap.json'
 
 const fallbackDataPoolLists: Record<number, any> = {
-  1: [],
+  1: ethereumFallbackPoolList,
   8453: baseFallbackPoolList,
 }
 const top100PoolsQuery = `{
@@ -97,7 +98,7 @@ const loadPoolsFromSubgraph = async (
     throw new Error('THEGRAPH_API_KEY is not set')
   }
   let poolData = fallbackDataPoolLists[ctx.universe.chainId]?.data
-    .pools as any[]
+    ?.pools as any[]
   try {
     const url = `https://gateway.thegraph.com/api/${SUBGRAPH_API_TOKEN}/subgraphs/id/${subgraphId}`
     const response = await fetch(url, {

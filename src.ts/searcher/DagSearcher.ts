@@ -146,6 +146,9 @@ const findTradePaths = async (
   to: Token,
   opts: TunnelOpts = DEFAULT_TUNNEL_OPTS
 ) => {
+  if (opts.dontExplorePaths != null) {
+    opts.dontExplorePaths.delete(to)
+  }
   let paths = (
     await Promise.all(
       bfs(universe, universe.graph, qty.token, to, LONGEST_TUNNEL_DEPTH)

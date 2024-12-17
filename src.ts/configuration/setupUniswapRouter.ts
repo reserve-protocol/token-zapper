@@ -24,12 +24,16 @@ import { Contract, Planner, Value } from '../tx-gen/Planner'
 
 import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { DefaultMap } from '../base/DefaultMap'
-import { FEE_SCALE } from '../base/constants'
 import { bfs } from '../exchange-graph/BFS'
 import { Graph } from '../exchange-graph/Graph'
 import { SwapPlan } from '../searcher/Swap'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
+import baseFallbackPoolList from './data/base/uniswap.json'
 
+const fallbackDataPoolLists: Record<number, any> = {
+  1: [],
+  8453: baseFallbackPoolList,
+}
 const top100PoolsQuery = `{
   pools(
     first: 250,
@@ -92,31 +96,41 @@ const loadPoolsFromSubgraph = async (
   if (!SUBGRAPH_API_TOKEN) {
     throw new Error('THEGRAPH_API_KEY is not set')
   }
-  const url = `https://gateway.thegraph.com/api/${SUBGRAPH_API_TOKEN}/subgraphs/id/${subgraphId}`
-  const response = await fetch(url, {
-    method: 'POST',
-    body: JSON.stringify({
-      query: top100PoolsQuery,
-    }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch pools from subgraph: ${response.statusText}`
-    )
-  }
-  const data: {
-    data: {
-      pools: {
-        id: string
-        feeTier: number
-        token0: { id: string }
-        token1: { id: string }
-      }[]
+  let poolData = fallbackDataPoolLists[ctx.universe.chainId]?.data
+    .pools as any[]
+  try {
+    const url = `https://gateway.thegraph.com/api/${SUBGRAPH_API_TOKEN}/subgraphs/id/${subgraphId}`
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        query: top100PoolsQuery,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: AbortSignal.timeout(2000),
+    })
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch pools from subgraph: ${response.statusText}`
+      )
     }
-  } = await response.json()
+    const data: {
+      data: {
+        pools: {
+          id: string
+          feeTier: number
+          token0: { id: string }
+          token1: { id: string }
+        }[]
+      }
+    } = await response.json()
+    if (Array.isArray(data.data.pools)) {
+      poolData = data.data.pools
+    } else {
+      ctx.universe.logger.info('Using fallback data')
+    }
+  } catch (e) {}
 
   const interestingTokens = new Set<Token>([
     ...ctx.universe.commonTokensInfo.tokens,
@@ -126,7 +140,7 @@ const loadPoolsFromSubgraph = async (
   ])
 
   const pools = await Promise.all(
-    data.data.pools.map(async (pool) => {
+    poolData.map(async (pool) => {
       const poolAddress = Address.from(pool.id)
       const token0 = await ctx.universe.getToken(Address.from(pool.token0.id))
       const token1 = await ctx.universe.getToken(Address.from(pool.token1.id))

@@ -58,7 +58,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     token: universe.commonTokens.wstETH,
     priceFn: async () => await priceViaOdos(universe.commonTokens.wstETH),
   })
-
+  universe.preferredToken.set(universe.rTokens.BSDX, universe.commonTokens.WETH)
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens.cbETH,
     priceFn: async () => await priceViaOdos(universe.commonTokens.cbETH),

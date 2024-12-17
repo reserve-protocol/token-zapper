@@ -782,8 +782,8 @@ export class DagBuilder {
       }
     }
 
-    // console.log('Final DAG:')
-    // console.log(this.toDot())
+    console.log('Final DAG:')
+    console.log(this.toDot())
 
     /**
      * Run's the initial optimisation phase, this phase will try to
@@ -1018,63 +1018,69 @@ export class DagBuilder {
 
       evaluating.set(
         node,
-        node.evaluate(ctx, consumers, inputs).then(async (outputResult) => {
-          const inputsValues = await Promise.all(
-            inputs.map((i) => i.price().then((i) => i.asNumber()))
-          )
-          const nodeInputValue = inputsValues.reduce((l, r) => l + r, 0)
-          if (node instanceof SplitNode) {
-            if (
-              this.splitNodeTypes.get(node.splitNodeIndex) ===
-              SplitNodeType.Trades
-            ) {
-              await this.findBestTradesSplits(mintPrices, ctx, node, inputs)
-            }
-          }
-          const outputValue = await Promise.all(
-            outputResult.map((i) => i[1].price().then((i) => i.asNumber()))
-          ).then((i) => i.reduce((l, r) => l + r, 0))
-
-          let price = 0
-          if (
-            outputResult.length !== 0 &&
-            !outputResult[0][1].isZero &&
-            node instanceof ActionNode
-          ) {
-            if (node.actions.is1to1) {
-              const out = outputResult[0][1].asNumber()
-              if (out !== 0) {
-                price = out / inputs[0].asNumber()
+        node
+          .evaluate(ctx, consumers, inputs)
+          .then(async (outputResult) => {
+            const inputsValues = await Promise.all(
+              inputs.map((i) => i.price().then((i) => i.asNumber()))
+            )
+            const nodeInputValue = inputsValues.reduce((l, r) => l + r, 0)
+            if (node instanceof SplitNode) {
+              if (
+                this.splitNodeTypes.get(node.splitNodeIndex) ===
+                SplitNodeType.Trades
+              ) {
+                await this.findBestTradesSplits(mintPrices, ctx, node, inputs)
               }
             }
-          }
+            const outputValue = await Promise.all(
+              outputResult.map((i) => i[1].price().then((i) => i.asNumber()))
+            ).then((i) => i.reduce((l, r) => l + r, 0))
 
-          ctx.gasUsed += node.gasEstimate
-
-          if (
-            outputResult.length === 0 ||
-            outputResult.every((i) => i[1].isZero)
-          ) {
-            for (const qty of inputs) {
-              nodeInputs.get(this.outputNode).add(qty)
+            let price = 0
+            if (
+              outputResult.length !== 0 &&
+              !outputResult[0][1].isZero &&
+              node instanceof ActionNode
+            ) {
+              if (node.actions.is1to1) {
+                const out = outputResult[0][1].asNumber()
+                if (out !== 0) {
+                  price = out / inputs[0].asNumber()
+                }
+              }
             }
-          }
 
-          for (const [consumer, qty] of outputResult) {
-            nodeInputs.get(consumer).add(qty)
-          }
+            ctx.gasUsed += node.gasEstimate
 
-          evaluated.push(
-            new EvaluatedNode(
-              node,
-              inputs,
-              nodeInputValue,
-              outputValue,
-              outputResult,
-              price
+            if (
+              outputResult.length === 0 ||
+              outputResult.every((i) => i[1].isZero)
+            ) {
+              for (const qty of inputs) {
+                nodeInputs.get(this.outputNode).add(qty)
+              }
+            }
+
+            for (const [consumer, qty] of outputResult) {
+              nodeInputs.get(consumer).add(qty)
+            }
+
+            evaluated.push(
+              new EvaluatedNode(
+                node,
+                inputs,
+                nodeInputValue,
+                outputValue,
+                outputResult,
+                price
+              )
             )
-          )
-        })
+          })
+          .catch((e) => {
+            evaluated.push(new EvaluatedNode(node, inputs, 0, 0, [], 0))
+            nodeInputs.get(this.outputNode).addQtys(inputs)
+          })
       )
     }
     await Promise.all(evaluating.values())

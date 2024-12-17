@@ -6,9 +6,6 @@ import { makeCustomRouterSimulator } from '../../src.ts/configuration/ChainConfi
 import { EthereumUniverse } from '../../src.ts/configuration/ethereum'
 import {
   Address,
-  createEnso,
-  createKyberswap,
-  createParaswap,
   DagSearcher,
   ethereumConfig,
   setupEthereumZapper,
@@ -206,6 +203,21 @@ describe('dag builder', () => {
         Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
         universe.rTokens['ETH+'].from(1_000.0),
         universe.commonTokens.WETH
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('1,000.0 ETHPlus => USDC', async () => {
+      const dag = await new DagSearcher(universe).buildZapOutDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        universe.rTokens['ETH+'].from(1_000.0),
+        universe.commonTokens.USDC
       )
       console.log(dag.dag.toDot())
       console.log(

@@ -14,8 +14,9 @@ import {
   WrappedAction,
 } from './TradeAction'
 import { bfs } from '../exchange-graph/BFS'
+import { constructToken } from '@paraswap/sdk'
 
-const LONGEST_TUNNEL_DEPTH = 2
+const LONGEST_TUNNEL_DEPTH = 3
 
 const wrapAction = (universe: Universe, i: BaseAction) => {
   let act = i
@@ -145,7 +146,7 @@ const findTradePaths = async (
   to: Token,
   opts: TunnelOpts = DEFAULT_TUNNEL_OPTS
 ) => {
-  const paths = (
+  let paths = (
     await Promise.all(
       bfs(universe, universe.graph, qty.token, to, LONGEST_TUNNEL_DEPTH)
         .steps.map((i) => i.convertToSingularPaths())
@@ -165,6 +166,9 @@ const findTradePaths = async (
         .map((i) => i.quote([qty]).catch(() => null))
     )
   ).filter((i) => i !== null)
+
+  const shortestPath = Math.min(...paths.map((i) => i.steps.length))
+  paths = paths.filter((i) => i.steps.length === shortestPath)
   paths.sort((l, r) => r.outputValue.asNumber() - l.outputValue.asNumber())
   if (paths.length === 0) {
     throw new Error(
@@ -292,30 +296,98 @@ export class DagSearcher {
       unwrappedTokens.add(balanceTips)
     }
 
-    const addrsInUse = new Set<Address>()
-    for (const token of unwrappedTokens) {
-      if (token === userOutput) {
-        continue
+    const computeSellDirectly = async (dag: DagBuilder) => {
+      const addrsInUse = new Set<Address>()
+      for (const token of unwrappedTokens) {
+        if (token === userOutput) {
+          continue
+        }
+
+        const tokenPrice = (await token.price).asNumber()
+        const inputQty = token.from(inputValue / tokenPrice)
+
+        await tradeUserInput(
+          this.universe,
+          addrsInUse,
+          dag,
+          inputQty,
+          userOutput
+        )
       }
 
-      const tokenPrice = (await token.price).asNumber()
-      const inputQty = token.from(inputValue / tokenPrice)
+      dag.closeOpenSet()
+      dag.simplify()
 
-      await tradeUserInput(this.universe, addrsInUse, dag, inputQty, userOutput)
-    }
-
-    dag.closeOpenSet()
-    dag.simplify()
-
-    for (const node of dag.edges.keys()) {
-      if (node instanceof ActionNode) {
-        node.actions.steps[0] = unwrapAction(node.actions.steps[0])
+      for (const node of dag.edges.keys()) {
+        if (node instanceof ActionNode) {
+          node.actions.steps[0] = unwrapAction(node.actions.steps[0])
+        }
       }
+
+      const out = await dag.evaluate()
+
+      return await out.dag.evaluate()
     }
 
-    const out = await dag.evaluate()
+    const computeSellIndirectly = async (dag: DagBuilder, midToken: Token) => {
+      const addrsInUse = new Set<Address>()
+      let midTokenQty = midToken.from(0)
+      const midTokenPrice = (await midToken.price).asNumber()
+      for (const token of unwrappedTokens) {
+        if (token === userOutput) {
+          continue
+        }
 
-    return await out.dag.evaluate()
+        const tokenPrice = (await token.price).asNumber()
+        const inputQty = token.from(inputValue / tokenPrice)
+
+        await tradeUserInput(this.universe, addrsInUse, dag, inputQty, midToken)
+
+        const outTokenQty = midToken.from(inputValue / midTokenPrice)
+
+        midTokenQty = midTokenQty.add(outTokenQty)
+      }
+      await tradeUserInput(
+        this.universe,
+        addrsInUse,
+        dag,
+        midTokenQty,
+        userOutput
+      )
+
+      dag.closeOpenSet()
+      dag.simplify()
+
+      for (const node of dag.edges.keys()) {
+        if (node instanceof ActionNode) {
+          node.actions.steps[0] = unwrapAction(node.actions.steps[0])
+        }
+      }
+
+      const out = await dag.evaluate()
+
+      return await out.dag.evaluate()
+    }
+
+    const caseSellDirectly = dag.clone()
+    const caseSellIndirectly = dag.clone()
+    const midToken = await this.universe.tokenClass.get(userInput.token)
+    if (midToken === userOutput) {
+      return await computeSellDirectly(caseSellDirectly)
+    }
+    const [a, b] = await Promise.all([
+      computeSellDirectly(caseSellDirectly).catch(() => null),
+      computeSellIndirectly(caseSellIndirectly, midToken).catch(() => null),
+    ])
+
+    if (a == null) {
+      return b!
+    }
+    if (b == null) {
+      return a!
+    }
+
+    return a.outputsValue > b.outputsValue ? a! : b!
   }
 
   public async buildZapInDag(
@@ -391,12 +463,18 @@ export class DagSearcher {
     const addrsUsedTrade = new Set<Address>()
 
     const tradeActions = new Set<BaseAction>()
-    const outputTokenClass = await this.universe.tokenClass.get(userOutput)
+    const underlyingTokens = new Set(byPhase.flat())
+
+    let outputTokenClass = await this.universe.tokenClass.get(userOutput)
+    if (outputTokenClass === userOutput) {
+      outputTokenClass =
+        this.universe.preferredToken.get(userOutput) ?? userOutput
+      underlyingTokens.delete(outputTokenClass)
+    }
     const outputUnderlying = await this.universe.underlyingToken.get(userOutput)
 
-    const outputTokenPrice = (await userOutput.price).asNumber()
+    const outputTokenPrice = (await outputTokenClass.price).asNumber()
 
-    const underlyingTokens = new Set(byPhase.flat())
     for (let i = 0; i < userInput.length; i++) {
       const input = userInput[i]
       if (outputTokenClass === userOutput) {
@@ -435,6 +513,9 @@ export class DagSearcher {
         }
       )
       const expectedOutputSize = userInputValue / outputTokenPrice
+      dag.config.inputTokenSet.delete(userInput[i].token)
+      dag.config.inputTokenSet.add(outputTokenClass)
+
       userInput[i] = outputTokenClass.from(expectedOutputSize)
       dag.balanceNodeTip.delete(input.token)
     }
@@ -442,6 +523,7 @@ export class DagSearcher {
 
     const tradesUsed = new Set([...addrsUsed])
 
+    const wethDeposit = this.universe.getMintAction(weth)!
     for (let i = 0; i < byPhase.length; i++) {
       dag.matchBalances()
       if (dag.isDagConstructed) {
@@ -466,6 +548,9 @@ export class DagSearcher {
         return false
       }
       const addMainEdge = (edge: BaseAction) => {
+        if (edge === wethDeposit) {
+          return
+        }
         if (inputs.includes(edge.outputToken[0])) {
           return
         }
@@ -535,6 +620,7 @@ export class DagSearcher {
       }
 
       const phaseTokens = new Set([...phase, ...dag.openTokens])
+      console.log(`user input=${userInput.join(', ')}`)
 
       for (const token of phaseTokens) {
         let addedEdge = false

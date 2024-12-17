@@ -90,7 +90,7 @@ export class Universe<const UniverseConf extends Config = Config> {
         return this.underlyingToken.get(mint.inputToken[0])
       }
     }
-    for(const [base, tok] of this.yieldPositionZaps.entries()) {
+    for(const [tok, base] of this.yieldPositionZaps.entries()) {
       if (tok === token) {
         return this.underlyingToken.get(base)
       }
@@ -541,13 +541,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     priceFn: () => Promise<TokenQuantity>
   }) {
     const { token, priceFn } = opts;
-    // console.log(`Adding price oracle for ${token.address}`)
-    // if (token === null) {
-    //   throw new Error(`Token is null`)
-    // }
-    // if (this.singleTokenPriceOracles.has(token)) {
-    //   console.log(`Price oracle for ${token} already defined`)
-    // }
+
     const oracle = PriceOracle.createSingleTokenOracle(
       this,
       token,

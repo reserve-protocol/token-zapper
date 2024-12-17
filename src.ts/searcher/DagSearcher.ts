@@ -6,7 +6,7 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { Universe } from '../Universe'
 import { DagBuilder } from './DagBuilder'
 import { ActionNode, BalanceNode, DagBuilderConfig } from './Dag'
-import { SingleSwap, SwapPlan } from './Swap'
+import { SwapPlan } from './Swap'
 import {
   MultiStepAction,
   NativeInputWrapper,
@@ -14,7 +14,6 @@ import {
   WrappedAction,
 } from './TradeAction'
 import { bfs } from '../exchange-graph/BFS'
-import { constructToken } from '@paraswap/sdk'
 
 const LONGEST_TUNNEL_DEPTH = 3
 
@@ -423,23 +422,34 @@ export class DagSearcher {
     await this.universe.initialized
     const eth = this.universe.nativeToken
     const weth = this.universe.wrappedNativeToken
-    const inputs = userInput
-      .map((i) => i.token)
-      .map((i) => (i === eth ? weth : i))
-    if (inputs.includes(weth)) {
-      inputs.push(this.universe.nativeToken)
-    }
 
     const inputPrices = await Promise.all(userInput.map((i) => i.price()))
     const inputPriceSum = inputPrices.reduce((a, b) => a + b.asNumber(), 0)
 
     // console.log('inputPriceSum', inputPriceSum)
 
-    const { byPhase, mintPrices } = await findUnderlyingTokens(
+    let { byPhase, mintPrices } = await findUnderlyingTokens(
       this.universe,
       inputPriceSum,
       [userOutput]
     )
+
+    const lastPhase = byPhase[byPhase.length - 1]
+    if (
+      lastPhase.length === 1 &&
+      lastPhase[0] === eth &&
+      byPhase.some((i) => i.includes(weth))
+    ) {
+      for (let i = 0; i < byPhase.length - 1; i++) {
+        const idx = byPhase[i].indexOf(weth)
+        if (idx !== -1) {
+          byPhase[i].splice(idx, 1)
+        }
+      }
+      lastPhase[0] = weth
+
+      byPhase = byPhase.filter((i) => i.length !== 0)
+    }
 
     for (let phaseId = 0; phaseId < byPhase.length; phaseId++) {
       const phase = byPhase[phaseId]
@@ -529,6 +539,13 @@ export class DagSearcher {
       dag.balanceNodeTip.delete(input.token)
     }
 
+    const inputs = userInput
+      .map((i) => i.token)
+      .map((i) => (i === eth ? weth : i))
+    if (inputs.includes(weth)) {
+      inputs.push(this.universe.nativeToken)
+    }
+
     const tradesUsed = new Set([...addrsUsed])
 
     const wethDeposit = this.universe.getMintAction(weth)!
@@ -601,20 +618,21 @@ export class DagSearcher {
             if (liq < inputPriceSum / 10) {
               return
             }
-            const inputTokenPrice = (await edge.inputToken[0].price).asNumber()
-            const mid =
-              inputTokenPrice /
-              (await this.universe.midPrices.get(edge)).asNumber()
-            const outputTokenPrice = (
-              await edge.outputToken[0].price
-            ).asNumber()
+            // const inputTokenPrice = (await edge.inputToken[0].price).asNumber()
+            // const mid =
+            //   inputTokenPrice /
+            //   (await this.universe.midPrices.get(edge)).asNumber()
+            // const outputTokenPrice = (
+            //   await edge.outputToken[0].price
+            // ).asNumber()
 
-            const outputValue = inputTokenPrice * mid
+            // const outputValue = inputTokenPrice * mid
 
-            if (outputValue / outputTokenPrice < 0.998) {
-              return
-            }
+            // if (outputValue / outputTokenPrice < 0.998) {
+            //   return
+            // }
           } catch (e) {
+            console.log(e)
             return
           }
         }
@@ -628,7 +646,11 @@ export class DagSearcher {
       }
 
       const phaseTokens = new Set([...phase, ...dag.openTokens])
-      console.log(`user input=${userInput.join(', ')}`)
+      console.log(
+        `user input=${userInput.join(', ')}, ${phaseTokens}=${[
+          ...phaseTokens,
+        ].join(', ')}`
+      )
 
       for (const token of phaseTokens) {
         let addedEdge = false

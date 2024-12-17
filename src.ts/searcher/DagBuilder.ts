@@ -22,6 +22,7 @@ import {
   PricedTokenQuantities,
 } from './Dag'
 import { optimiseTrades } from './optimiseTrades'
+import { wait } from '../base/controlflow'
 
 type ObjectiveFunction = (dag: EvaluatedDag) => number
 
@@ -1022,69 +1023,63 @@ export class DagBuilder {
 
       evaluating.set(
         node,
-        node
-          .evaluate(ctx, consumers, inputs)
-          .then(async (outputResult) => {
-            const inputsValues = await Promise.all(
-              inputs.map((i) => i.price().then((i) => i.asNumber()))
-            )
-            const nodeInputValue = inputsValues.reduce((l, r) => l + r, 0)
-            if (node instanceof SplitNode) {
-              if (
-                this.splitNodeTypes.get(node.splitNodeIndex) ===
-                SplitNodeType.Trades
-              ) {
-                await this.findBestTradesSplits(mintPrices, ctx, node, inputs)
-              }
-            }
-            const outputValue = await Promise.all(
-              outputResult.map((i) => i[1].price().then((i) => i.asNumber()))
-            ).then((i) => i.reduce((l, r) => l + r, 0))
-
-            let price = 0
+        node.evaluate(ctx, consumers, inputs).then(async (outputResult) => {
+          const inputsValues = await Promise.all(
+            inputs.map((i) => i.price().then((i) => i.asNumber()))
+          )
+          const nodeInputValue = inputsValues.reduce((l, r) => l + r, 0)
+          if (node instanceof SplitNode) {
             if (
-              outputResult.length !== 0 &&
-              !outputResult[0][1].isZero &&
-              node instanceof ActionNode
+              this.splitNodeTypes.get(node.splitNodeIndex) ===
+              SplitNodeType.Trades
             ) {
-              if (node.actions.is1to1) {
-                const out = outputResult[0][1].asNumber()
-                if (out !== 0) {
-                  price = out / inputs[0].asNumber()
-                }
+              await this.findBestTradesSplits(mintPrices, ctx, node, inputs)
+            }
+          }
+          const outputValue = await Promise.all(
+            outputResult.map((i) => i[1].price().then((i) => i.asNumber()))
+          ).then((i) => i.reduce((l, r) => l + r, 0))
+
+          let price = 0
+          if (
+            outputResult.length !== 0 &&
+            !outputResult[0][1].isZero &&
+            node instanceof ActionNode
+          ) {
+            if (node.actions.is1to1) {
+              const out = outputResult[0][1].asNumber()
+              if (out !== 0) {
+                price = out / inputs[0].asNumber()
               }
             }
+          }
 
-            ctx.gasUsed += node.gasEstimate
+          ctx.gasUsed += node.gasEstimate
 
-            if (
-              outputResult.length === 0 ||
-              outputResult.every((i) => i[1].isZero)
-            ) {
-              for (const qty of inputs) {
-                nodeInputs.get(this.outputNode).add(qty)
-              }
+          if (
+            outputResult.length === 0 ||
+            outputResult.every((i) => i[1].isZero)
+          ) {
+            for (const qty of inputs) {
+              nodeInputs.get(this.outputNode).add(qty)
             }
+          }
 
-            for (const [consumer, qty] of outputResult) {
-              nodeInputs.get(consumer).add(qty)
-            }
+          for (const [consumer, qty] of outputResult) {
+            nodeInputs.get(consumer).add(qty)
+          }
 
-            evaluated.push(
-              new EvaluatedNode(
-                node,
-                inputs,
-                nodeInputValue,
-                outputValue,
-                outputResult,
-                price
-              )
+          evaluated.push(
+            new EvaluatedNode(
+              node,
+              inputs,
+              nodeInputValue,
+              outputValue,
+              outputResult,
+              price
             )
-          })
-          .catch((e) => {
-            evaluated.push(new EvaluatedNode(node, inputs, 0, 0, [], 0))
-            nodeInputs.get(this.outputNode).addQtys(inputs)
-          })
+          )
+        })
       )
     }
     await Promise.all(evaluating.values())
@@ -1642,6 +1637,25 @@ export class DagBuilder {
     mintPrices?: Map<Token, Map<Token, number>>
   }) {
     if (opts.mintPrices) {
+      const mintPrices = opts.mintPrices
+
+      const eth = this.universe.nativeToken
+      const weth = this.universe.wrappedNativeToken
+
+      const wethPrices = mintPrices.get(weth) ?? new Map()
+      const ethPrices = mintPrices.get(eth) ?? new Map()
+      opts.mintPrices.set(eth, wethPrices)
+      wethPrices.set(eth, 1)
+      ethPrices.set(weth, 1)
+      mintPrices.set(weth, wethPrices)
+      if (mintPrices.has(eth)) {
+        for (const [tokenOut, price] of ethPrices.entries()) {
+          const current = wethPrices.get(tokenOut)
+          if (current == null || current === 0) {
+            wethPrices.set(tokenOut, price)
+          }
+        }
+      }
       for (const [tokenIn, edges] of opts.mintPrices.entries()) {
         for (const [tokenOut, price] of edges.entries()) {
           if (tokenIn === tokenOut) {

@@ -611,7 +611,6 @@ export const loadCurve = async (universe: Universe) => {
             wrappedCoinAddresses: pool.wrappedCoinAddresses.map(Address.from),
           }
         } catch (e) {
-          console.log(id)
           return null
         }
       })

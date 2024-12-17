@@ -94,13 +94,25 @@ export const setupERC4626s = async (
   }[]
 ) => {
   const deployments = await Promise.all(
-    config.map((cfg) =>
-      setupERC4626(universe, {
+    config.map(async (cfg) => {
+      const dep = await setupERC4626(universe, {
         protocol: cfg.protocol,
         vaultAddress: cfg.vaultAddress,
         slippage: cfg.slippage,
       })
-    )
+
+      universe.addSingleTokenPriceSource({
+        token: dep.shareToken,
+        priceFn: async () => {
+          const assetPrice = await dep.assetToken.price
+          const assets = await dep.burn.quote([dep.shareToken.one])
+
+          return universe.usd.from(assets[0].asNumber() * assetPrice.asNumber())
+        },
+      })
+
+      return dep
+    })
   )
   return deployments
 }

@@ -72,7 +72,7 @@ export const ethWhales = {
     '0xf977814e90da44bfa03b6295a0616a897441acec',
   // usdc
   '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48':
-    '0xd6153f5af5679a75cc85d8974463545181f48772',
+    '0x28c6c06298d514db089934071355e5743bf21d60',
   // mim
   '0x99d8a9c45b2eca8864373a26d1459e3dff1e17f3':
     '0x25431341a5800759268a6ac1d3cd91c029d7d9ca',
@@ -176,7 +176,7 @@ const issueanceCases = [
   // makeMintTestCase(5, t.reth, rTokens['ETH+']),
   // makeMintTestCase(5, t.frxeth, rTokens['ETH+']),
   // makeMintTestCase(5, t.sfrxeth, rTokens['ETH+']),
-  // makeMintTestCase(10000, t.USDC, rTokens['ETH+']),
+  makeMintTestCase(10000, t.USDC, rTokens['ETH+']),
 
   makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
   makeMintTestCase(10000, t.USDe, rTokens.hyUSD),

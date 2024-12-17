@@ -90,7 +90,6 @@ export class ZapperTokenQuantityPrice extends Cached<
 
   private async quoteFn(qty: TokenQuantity) {
     if (qty.amount === 0n) {
-      console.log('0')
       return this.universe.usd.zero
     }
     if (qty.token == this.universe.usd) {

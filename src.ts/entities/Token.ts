@@ -297,6 +297,18 @@ export class TokenQuantity {
   }
 
   public async price() {
+    if (this.token.universe.singleTokenPriceOracles.has(this.token)) {
+      const tokenprice = (
+        await this.token.universe.singleTokenPriceOracles
+          .get(this.token)[0]
+          .quote(this.token)
+      )?.asNumber()
+      if (tokenprice != null) {
+        return this.token.universe.usd
+          .from(tokenprice * this.asNumber())
+          .into(this.token)
+      }
+    }
     const out = await this.token.universe.fairPrice(this.token.one)
     if (out == null) {
       throw new Error(`Failed to price ${this.token}`)

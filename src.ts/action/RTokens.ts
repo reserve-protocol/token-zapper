@@ -81,7 +81,7 @@ export class RTokenDeployment {
     public readonly universe: Universe,
     public readonly rToken: Token,
     private unitBasket_: TokenQuantity[],
-    private assets: IAsset[],
+    private assets: [Token, IAsset][],
     public readonly contracts: {
       facade: IFacade
       basketHandler: IBasketHandler
@@ -182,11 +182,7 @@ export class RTokenDeployment {
       return unit
     }, 12000)
 
-    for (const token of this.basket) {
-      const asset = IAsset__factory.connect(
-        token.address.address,
-        this.universe.provider
-      )
+    for (const [token, asset] of assets) {
       this.universe.addSingleTokenPriceSource({
         token,
         priceFn: async () => {
@@ -291,6 +287,12 @@ export class RTokenDeployment {
                   .toAsset(addr)
                   .then((assetAddress) =>
                     IAsset__factory.connect(assetAddress, uni.provider)
+                  )
+                  .then(async (assetAddr) =>
+                    Promise.all([
+                      uni.getToken(Address.from(addr)),
+                      assetAddr,
+                    ] as const)
                   )
               )
             ),

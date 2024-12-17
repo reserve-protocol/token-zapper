@@ -26,6 +26,12 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   logger.info('Setting up wrapped gas token')
   await setupWrappedGasToken(universe)
 
+  await universe.addSingleTokenPriceOracle({
+    token: universe.commonTokens.eUSD,
+    oracleAddress: Address.from('0x9b2C948dbA5952A1f5Ab6fA16101c1392b8da1ab'),
+    priceToken: universe.usd,
+  })
+
   console.log(`done`)
 
   universe.tokenType.set(
@@ -136,59 +142,71 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   universe.oracles.push(registry)
 
   // Load compound v3
-  universe.addIntegration(
-    'compoundV3',
-    await setupCompoundV3('CompV3', universe, PROTOCOL_CONFIGS.compV3)
-  )
-
-  logger.info('Setting up AAVEV3')
-  // Set up AAVEV2
-  universe.addIntegration(
-    'aaveV3',
-    await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
-  )
-
-  await universe.addSingleTokenPriceOracle({
-    token: universe.commonTokens.eUSD,
-    oracleAddress: Address.from('0x9b2C948dbA5952A1f5Ab6fA16101c1392b8da1ab'),
-    priceToken: universe.usd,
-  })
-
-  logger.info('Setting up UniswapV3')
-  const router = await setupUniswapV3Router(universe)
-  universe.addIntegration('uniswapV3', await router.venue())
-
-  logger.info('Setting up preferred rTokens')
-  await Promise.all(
-    PROTOCOL_CONFIGS.erc4626.map(async ([addr, proto]) => {
-      const vault = await setupERC4626(universe, {
-        vaultAddress: addr,
-        protocol: proto,
-        slippage: 1n,
-      })
-      return vault
-    })
-  )
-
-  logger.info('Setting up stargate')
-  // Set up stargate
-  await setupStargate(
-    universe,
-    PROTOCOL_CONFIGS.stargate.tokens,
-    PROTOCOL_CONFIGS.stargate.router,
-    {}
-  )
-  await setupStargateWrapper(universe, PROTOCOL_CONFIGS.stargate.wrappers, {})
-
-  await setupAerodromeRouter(universe)
-  const aerodromeWrappers = createProtocolWithWrappers(universe, 'aerodrome')
-
-  for (const wrapperAddress of Object.values(
-    PROTOCOL_CONFIGS.aerodrome.lpPoolWrappers
-  )) {
-    const wrapperToken = await universe.getToken(Address.from(wrapperAddress))
-    await aerodromeWrappers.addWrapper(wrapperToken)
+  const initCompound = async () => {
+    universe.addIntegration(
+      'compoundV3',
+      await setupCompoundV3('CompV3', universe, PROTOCOL_CONFIGS.compV3)
+    )
   }
+
+  const initAave = async () => {
+    logger.info('Setting up AAVEV3')
+    universe.addIntegration(
+      'aaveV3',
+      await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
+    )
+  }
+
+  const initUni = async () => {
+    logger.info('Setting up UniswapV3')
+    const router = await setupUniswapV3Router(universe)
+    universe.addIntegration('uniswapV3', await router.venue())
+  }
+
+  const initERC4626 = async () => {
+    logger.info('Setting up preferred rTokens')
+    await Promise.all(
+      PROTOCOL_CONFIGS.erc4626.map(async ([addr, proto]) => {
+        const vault = await setupERC4626(universe, {
+          vaultAddress: addr,
+          protocol: proto,
+          slippage: 1n,
+        })
+        return vault
+      })
+    )
+  }
+  const setupStarGate_ = async () => {
+    logger.info('Setting up stargate')
+    // Set up stargate
+    await setupStargate(
+      universe,
+      PROTOCOL_CONFIGS.stargate.tokens,
+      PROTOCOL_CONFIGS.stargate.router,
+      {}
+    )
+    await setupStargateWrapper(universe, PROTOCOL_CONFIGS.stargate.wrappers, {})
+  }
+  const setupAero = async () => {
+    await setupAerodromeRouter(universe)
+    const aerodromeWrappers = createProtocolWithWrappers(universe, 'aerodrome')
+
+    for (const wrapperAddress of Object.values(
+      PROTOCOL_CONFIGS.aerodrome.lpPoolWrappers
+    )) {
+      const wrapperToken = await universe.getToken(Address.from(wrapperAddress))
+      await aerodromeWrappers.addWrapper(wrapperToken)
+    }
+  }
+  const tasks = [
+    initCompound(),
+    initAave(),
+    initUni(),
+    initERC4626(),
+    setupStarGate_(),
+    setupAero(),
+  ]
+  await Promise.all(tasks)
 
   universe.tokenClass.set(
     universe.rTokens.hyUSD,
@@ -243,4 +261,5 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     Promise.resolve(universe.wrappedNativeToken)
   )
   logger.info('Done setting up base zapper')
+  await Promise.all(tasks)
 }

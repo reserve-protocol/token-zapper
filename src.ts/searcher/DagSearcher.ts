@@ -5,7 +5,7 @@ import { DefaultMap } from '../base/DefaultMap'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Universe } from '../Universe'
 import { DagBuilder } from './DagBuilder'
-import { ActionNode, DagBuilderConfig } from './Dag'
+import { ActionNode, BalanceNode, DagBuilderConfig } from './Dag'
 import { SingleSwap, SwapPlan } from './Swap'
 import {
   MultiStepAction,
@@ -291,6 +291,7 @@ export class DagSearcher {
       current.push(...burnAction.outputToken)
       dag.unwrapInput(wrapAction(this.universe, burnAction))
     }
+    dag.debugToDot()
 
     for (const balanceTips of dag.balanceNodeTip.keys()) {
       unwrappedTokens.add(balanceTips)
@@ -333,6 +334,11 @@ export class DagSearcher {
       const addrsInUse = new Set<Address>()
       let midTokenQty = midToken.from(0)
       const midTokenPrice = (await midToken.price).asNumber()
+
+      if (!dag.balanceNodeTip.has(midToken)) {
+        dag.balanceNodeTip.set(midToken, new BalanceNode(midToken))
+      }
+
       for (const token of unwrappedTokens) {
         if (token === userOutput) {
           continue
@@ -519,7 +525,6 @@ export class DagSearcher {
       userInput[i] = outputTokenClass.from(expectedOutputSize)
       dag.balanceNodeTip.delete(input.token)
     }
-    dag.debugToDot()
 
     const tradesUsed = new Set([...addrsUsed])
 

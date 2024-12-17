@@ -499,6 +499,8 @@ export class DagBuilder {
 
     const outnodeNode = this.config.outputTokenSet.has(newInputToken)
       ? this.outputNode
+      : this.balanceNodeTip.has(newInputToken)
+      ? this.balanceNodeTip.get(newInputToken)!
       : new BalanceNode(newInputToken)
     if (
       outnodeNode !== this.outputNode &&
@@ -539,16 +541,18 @@ export class DagBuilder {
     )
     this.forward(currentTip, inputToken, node)
     for (const outputToken of action.outputToken) {
-      if (
-        !this.balanceNodeTip.has(outputToken) &&
-        !this.config.outputTokenSet.has(outputToken)
-      ) {
+      if (this.config.outputTokenSet.has(outputToken)) {
+        this.forward(node, outputToken, this.outputNode)
+        continue
+      }
+      if (!this.balanceNodeTip.has(outputToken)) {
         const balNode = new BalanceNode(outputToken)
         this.balanceNodeTip.set(outputToken, balNode)
         this.balanceNodeStart.set(outputToken, balNode)
         this.forward(node, outputToken, balNode)
       } else {
-        this.forward(node, outputToken, this.outputNode)
+        const balanceNode = this.balanceNodeTip.get(outputToken)!
+        this.forward(node, outputToken, balanceNode)
       }
     }
   }

@@ -1,4 +1,3 @@
-import { constants } from 'ethers'
 import { type Universe } from '../Universe'
 import { makeConfig } from './ChainConfiguration'
 
@@ -269,6 +268,7 @@ export const PROTOCOL_CONFIGS = {
 
       // wrapped cUSDTV3
       '0xbeD348315d7327Cd81d26338c11976674825bb14',
+      '0xEB74EC1d4C1DAB412D5d6674F6833FD19d3118Ce',
     ],
   },
   concentrator: {

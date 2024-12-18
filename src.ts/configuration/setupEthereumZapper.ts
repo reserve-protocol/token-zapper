@@ -175,6 +175,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   universe.mintableTokens.set(universe.commonTokens.DAI, daiMint)
   universe.addAction(daiMint)
+
   universe.mintRateProviders.set(universe.commonTokens.DAI, () =>
     Promise.resolve(universe.commonTokens.USDC.one)
   )

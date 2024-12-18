@@ -327,6 +327,8 @@ export class DagSearcher {
         }
       }
 
+      console.log(dag.toDot())
+
       const out = await dag.evaluate()
 
       return await out.dag.evaluate()

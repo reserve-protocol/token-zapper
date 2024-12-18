@@ -185,27 +185,15 @@ export const ERC4626DepositAction = (proto: string) =>
         this.universe.provider
       )
 
-      const rateFn = this.universe.createCache(
-        async (amt: bigint) => {
-          const inputToken = this.inputToken[0]
-          if (amt < 1n) {
-            amt = 1n
-          }
-          const rate = await this.inst.callStatic.previewDeposit(
-            amt * inputToken.scale
-          )
-          return inputToken.from(rate.toBigInt() / amt)
-        },
-        24000,
-        mapKey
-      )
-
       this.quote = async ([amountIn]: TokenQuantity[]) => {
-        const inputToken = this.inputToken[0]
-        let res = amountIn.amount / inputToken.scale
-        const rate = await rateFn.get(res)
-        return [rate.mul(amountIn).into(this.outputToken[0])]
+        const amtOut = await this.inst.callStatic.previewDeposit(
+          amountIn.amount
+        )
+        return [this.outputToken[0].from(amtOut)]
       }
+    }
+    get dependsOnRpc(): boolean {
+      return true
     }
 
     toString(): string {
@@ -261,6 +249,9 @@ export const ERC4626WithdrawAction = (proto: string) =>
 
     public quote: (amountIn: TokenQuantity[]) => Promise<TokenQuantity[]>
 
+    get dependsOnRpc(): boolean {
+      return true
+    }
     constructor(
       readonly universe: Universe,
       readonly underlying: Token,
@@ -280,23 +271,10 @@ export const ERC4626WithdrawAction = (proto: string) =>
         this.shareToken.address.address,
         this.universe.provider
       )
-      const rateFn = this.universe.createCache(
-        async (amt: bigint) => {
-          const inputToken = this.inputToken[0]
-          if (amt < 1n) {
-            amt = 1n
-          }
-          const rate = await this.inst.callStatic.previewRedeem(amt)
-          return inputToken.from(rate.toBigInt() / amt)
-        },
-        24000,
-        mapKey
-      )
       this.quote = async ([amountIn]: TokenQuantity[]) => {
         const inputToken = this.inputToken[0]
-        let res = amountIn.amount / inputToken.scale
-        const rate = await rateFn.get(res)
-        return [rate.mul(amountIn).into(this.outputToken[0])]
+        const amtOut = await this.inst.callStatic.previewRedeem(amountIn.amount)
+        return [this.outputToken[0].from(amtOut)]
       }
     }
     toString(): string {

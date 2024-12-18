@@ -227,6 +227,51 @@ describe('dag builder', () => {
       )
       console.log(dag.toDot())
     }, 60000)
+
+    it('1,000,000.0 eUSD => USDC', async () => {
+      const dag = await new DagSearcher(universe).buildZapOutDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        universe.rTokens['eUSD'].from(1_000_000.0),
+        universe.commonTokens.USDC
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('1,000,000.0 eUSD => weth', async () => {
+      const dag = await new DagSearcher(universe).buildZapOutDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        universe.rTokens['eUSD'].from(1_000_000.0),
+        universe.commonTokens.WETH
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
+
+    it('1,000,000.0 USD3 => USDC', async () => {
+      const dag = await new DagSearcher(universe).buildZapOutDag(
+        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        universe.rTokens['USD3'].from(1_000_000.0),
+        universe.commonTokens.USDC
+      )
+      console.log(dag.dag.toDot())
+      console.log(
+        `Result ${dag.outputs.join(', ')} - output value: ${
+          dag.outputsValue
+        } - dust value: ${dag.dustValue}`
+      )
+      console.log(dag.toDot())
+    }, 60000)
   })
 
   describe('Standard RToken zaps', () => {

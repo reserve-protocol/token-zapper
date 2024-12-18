@@ -406,22 +406,38 @@ export class ActionNode extends DagNode {
     if (inputs.every((i) => i.isZero)) {
       return []
     }
-    const path = await this.cachedResults.get(inputs)
-
-    const out: [DagNode, TokenQuantity][] = []
-    for (const output of [...path.outputs, ...path.dust]) {
-      const edges = outgoingEdges.find(([token]) => token === output.token)
-
-      if (edges == null || edges[1].length !== 1) {
-        throw new Error(
-          `${this.dotNode()}: Each output token must have exactly one consumer. Got ${
-            edges == null ? 0 : edges[1].length
-          } for ${output.token}`
+    try {
+      const totalInputSize = (
+        await Promise.all(inputs.map(async (i) => (await i.price()).asNumber()))
+      ).reduce((l, r) => l + r, 0)
+      if (totalInputSize < 0.001) {
+        console.log(
+          `${this.actions}: small input?!, input=${inputs.join(', ')} ${inputs
+            .map((i) => i.token.decimals)
+            .join(', ')}`
         )
+        return []
       }
-      out.push([edges[1][0], output])
+      const path = await this.cachedResults.get(inputs)
+
+      const out: [DagNode, TokenQuantity][] = []
+      for (const output of [...path.outputs, ...path.dust]) {
+        const edges = outgoingEdges.find(([token]) => token === output.token)
+
+        if (edges == null || edges[1].length !== 1) {
+          throw new Error(
+            `${this.dotNode()}: Each output token must have exactly one consumer. Got ${
+              edges == null ? 0 : edges[1].length
+            } for ${output.token}`
+          )
+        }
+        out.push([edges[1][0], output])
+      }
+      return out
+    } catch (e) {
+      console.log(`${this.actions}: Failed, input=${inputs.join(', ')}`)
+      throw e
     }
-    return out
   }
 
   public async plan(

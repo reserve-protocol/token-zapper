@@ -143,14 +143,15 @@ class CryptoFactoryPoolRemoveLiquidity extends CurveFactoryCryptoPoolBase {
     planner: Planner,
     [input]: Value[],
     _: Address,
-    [amt0, amt1]: TokenQuantity[]
+    [lpAmt]: TokenQuantity[]
   ) {
+    const [amt0, amt1] = await this.quote([lpAmt])
     const lib = this.gen.Contract.createContract(this.pool.poolInstance)
     planner.add(
       lib.remove_liquidity(
         input,
         encodeArg(
-          [amt0.amount, amt1.amount],
+          [amt0.amount - amt0.amount / 100n, amt1.amount - amt1.amount / 100n],
           ParamType.fromString('uint256[2]')
         ),
         false

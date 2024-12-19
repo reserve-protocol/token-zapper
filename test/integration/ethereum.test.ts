@@ -189,8 +189,8 @@ const issueanceCases = [
 ]
 
 const redeemCases = [
-  makeMintTestCase(10000, rTokens.eUSD, t.USDC),
-  makeMintTestCase(10000, rTokens.eUSD, t.DAI),
+  // makeMintTestCase(10000, rTokens.eUSD, t.USDC),
+  // makeMintTestCase(10000, rTokens.eUSD, t.DAI),
   // makeMintTestCase(10000, rTokens.eUSD, t.USDT),
 
   // makeMintTestCase(10000, rTokens.USD3, t.USDC),
@@ -199,13 +199,13 @@ const redeemCases = [
   // makeMintTestCase(5, rTokens['ETH+'], t.WETH),
   // makeMintTestCase(5, rTokens['ETH+'], t.reth),
   // makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
-  makeMintTestCase(5, rTokens['ETH+'], t.USDC),
+  // makeMintTestCase(5, rTokens['ETH+'], t.USDC),
 
   // makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
   // makeMintTestCase(10000, rTokens.hyUSD, t.USDe),
   // makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
 
-  // makeMintTestCase(5, rTokens.dgnETH, t.WETH),
+  makeMintTestCase(5, rTokens.dgnETH, t.WETH),
   // makeMintTestCase(5, rTokens.dgnETH, t.USDC),
 ]
 

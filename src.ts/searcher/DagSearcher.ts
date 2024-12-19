@@ -819,10 +819,66 @@ export class DagSearcher {
       }
     }
 
-    const out = await dag.finalize(
-      mintPrices,
-      [...tradeActions].map((i) => wrapAction(this.universe, i))
+    const allActions = [...tradeActions].map((i) =>
+      wrapAction(this.universe, i)
     )
-    return out
+
+    const withoutDirectTrade = allActions.filter(
+      (i) =>
+        !(
+          i.inputToken[0] === userInput[0].token &&
+          i.outputToken[0] === userOutput
+        )
+    )
+
+    for (const [_, edges] of mintPrices.entries()) {
+      for (const [tokenOut, price] of edges.entries()) {
+        if (price === 0) {
+          edges.delete(tokenOut)
+          continue
+        }
+      }
+    }
+    const wethPrices = mintPrices.get(weth)
+    for (const [tokenOut, price] of wethPrices.entries()) {
+      if (wethPrices.has(tokenOut)) {
+        continue
+      }
+      wethPrices.set(tokenOut, price)
+    }
+
+    for (const action of allActions) {
+      console.log(`  ${action}`)
+    }
+
+    const createMintprices = () => {
+      const out = new Map([...mintPrices])
+      for (const [tokenIn, edges] of out.entries()) {
+        for (const [tokenOut, price] of edges.entries()) {
+          out.get(tokenIn)!.set(tokenOut, price)
+        }
+      }
+      return out
+    }
+
+    const makeStandard = async () => {
+      return await dag
+        .clone()
+        .finalize(createMintprices(), allActions)
+        .catch(() => null)
+    }
+    const makeWithoutDirectTrade = async () => {
+      return await dag
+        .clone()
+        .finalize(createMintprices(), withoutDirectTrade)
+        .catch(() => null)
+    }
+
+    const results = (
+      await Promise.all([makeStandard(), makeWithoutDirectTrade()])
+    ).filter((i) => i != null)
+
+    results.sort((l, r) => r.outputsValue - l.outputsValue)
+    return results[0]
   }
 }

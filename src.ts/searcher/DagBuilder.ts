@@ -52,7 +52,10 @@ export class DagBuilder {
   private balanceNodeStart = new Map<Token, DagNode>()
 
   public readonly edges = new DefaultMap<DagNode, DefaultMap<Token, DagNode[]>>(
-    () => {
+    (node) => {
+      if (node == null) {
+        throw new Error('Invalid')
+      }
       return new DefaultMap<Token, DagNode[]>(() => {
         return []
       })
@@ -115,6 +118,9 @@ export class DagBuilder {
         out += '  ' + node.dotNode() + '\n'
       }
       for (const node of sorted) {
+        if (node == null) {
+          continue
+        }
         const outgoing = [...this.edges.get(node).entries()]
         for (const s of node.dotEdges(this, outgoing)) {
           out += '  ' + s + '\n'
@@ -199,6 +205,9 @@ export class DagBuilder {
   }
 
   private forward(from: DagNode, token: Token, next: DagNode) {
+    if (next == null) {
+      throw new Error('Invalid forwrad')
+    }
     if (from === next) {
       return
     }
@@ -401,6 +410,9 @@ export class DagBuilder {
     all.add(this.outputNode)
     while (openSet.length !== 0) {
       const node = openSet.pop()!
+      if (node == null) {
+        continue
+      }
       sorted.push(node)
       seen.add(node)
       all.add(node)
@@ -408,6 +420,9 @@ export class DagBuilder {
         ([_, nodes]) => nodes
       )
       for (const consumer of consumers) {
+        if (consumer == null) {
+          continue
+        }
         all.add(consumer)
         if (seen.has(consumer)) {
           continue
@@ -603,8 +618,13 @@ export class DagBuilder {
       inputNode: DagNode,
       outputNode: DagNode
     ) => {
+      if (inputNode == null) {
+        throw new Error(`Invalid input node: ${inputNode}`)
+      }
       const startNode = inputNode
-      const consumer = this.edges.get(startNode).get(inputToken)[0]
+      const consumer =
+        this.edges.get(startNode).get(inputToken)[0] ??
+        this.balanceNodeStart.get(inputToken)
       this.unforward(startNode, inputToken, consumer)
       const splitNode = this.createSplitNode(inputToken, [
         1,
@@ -787,8 +807,8 @@ export class DagBuilder {
       }
     }
 
-    console.log('Final DAG:')
-    console.log(this.toDot())
+    // console.log('Final DAG:')
+    // console.log(this.toDot())
 
     /**
      * Run's the initial optimisation phase, this phase will try to

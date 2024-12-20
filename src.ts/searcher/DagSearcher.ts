@@ -861,24 +861,21 @@ export class DagSearcher {
       return out
     }
 
-    const makeStandard = async () => {
-      return await dag
-        .clone()
-        .finalize(createMintprices(), allActions)
-        .catch(() => null)
-    }
-    const makeWithoutDirectTrade = async () => {
-      return await dag
-        .clone()
-        .finalize(createMintprices(), withoutDirectTrade)
-        .catch(() => null)
-    }
+    // const makeStandard = async () => {
+    //   return
+    // }
+    // const makeWithoutDirectTrade = async () => {
+    //   return await dag
+    //     .clone()
+    //     .finalize(createMintprices(), withoutDirectTrade)
+    //     .catch(() => null)
+    // }
 
-    const results = (
-      await Promise.all([makeStandard(), makeWithoutDirectTrade()])
-    ).filter((i) => i != null)
+    // const results = (
+    //   await Promise.all([makeStandard(), makeWithoutDirectTrade()])
+    // ).filter((i) => i != null)
 
-    results.sort((l, r) => r.outputsValue - l.outputsValue)
-    return results[0]
+    // results.sort((l, r) => r.outputsValue - l.outputsValue)
+    return await dag.finalize(createMintprices(), allActions).catch(() => null)
   }
 }

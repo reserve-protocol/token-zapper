@@ -436,7 +436,7 @@ export class ActionNode extends DagNode {
       return out
     } catch (e) {
       console.log(`${this.actions}: Failed, input=${inputs.join(', ')}`)
-      throw e
+      return []
     }
   }
 

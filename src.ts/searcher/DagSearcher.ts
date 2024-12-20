@@ -876,6 +876,9 @@ export class DagSearcher {
     // ).filter((i) => i != null)
 
     // results.sort((l, r) => r.outputsValue - l.outputsValue)
-    return await dag.finalize(createMintprices(), allActions)
+
+    const actionsToUse =
+      this.universe.chainId === 1 ? allActions : withoutDirectTrade
+    return await dag.finalize(createMintprices(), actionsToUse)
   }
 }

@@ -876,6 +876,6 @@ export class DagSearcher {
     // ).filter((i) => i != null)
 
     // results.sort((l, r) => r.outputsValue - l.outputsValue)
-    return await dag.finalize(createMintprices(), allActions).catch(() => null)
+    return await dag.finalize(createMintprices(), allActions)
   }
 }

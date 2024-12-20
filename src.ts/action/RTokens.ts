@@ -1,4 +1,4 @@
-import { type Universe } from '../Universe'
+import { Universe } from '../Universe'
 import { Address } from '../base/Address'
 import {
   PricedTokenQuantity,
@@ -27,6 +27,7 @@ import {
 } from '../contracts'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import { MultiInputUnit } from './MultiInputAction'
+import { DagSearcher } from '../searcher/DagSearcher'
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction
@@ -39,6 +40,13 @@ export class RTokenDeployment {
 
   public readonly supply: () => Promise<TokenQuantity>
   public async exchangeRate() {
+    const underlyingTokens = new Set([
+      ...(await Promise.all(
+        this.basket.map(
+          async (token) => await this.universe.underlyingToken.get(token)
+        )
+      )),
+    ]).size
     const supply = await this.supply()
     const baskets = this.rToken.from(
       (await this.contracts.rToken.callStatic.basketsNeeded()).toBigInt()
@@ -62,7 +70,9 @@ export class RTokenDeployment {
       return out
     }
     const out = (baskets.amount * tokenClass.scale) / amount
-    return tokenClass.from(out).invert()
+    let res = tokenClass.from(out).invert()
+
+    return res
   }
   public readonly unitBasket: () => Promise<PricedTokenQuantity[]>
   public readonly maxIssueable: () => Promise<TokenQuantity>

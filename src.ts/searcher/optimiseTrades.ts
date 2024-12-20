@@ -6,9 +6,14 @@ export const optimiseTrades = async (
   universe: Universe,
   input: TokenQuantity,
   tradeActions: BaseAction[],
-  floorPrice: number = Infinity,
+  floorPrice: number,
   parts: number = 10
 ) => {
+  console.log(`Optimising trades between ${input} and`)
+  for (const action of tradeActions) {
+    console.log(`  ${action}`)
+  }
+  console.log(`floor price ${floorPrice}`)
   const inputToken = input.token
   const outputToken = tradeActions[0].outputToken[0]
 

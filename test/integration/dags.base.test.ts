@@ -22,8 +22,8 @@ if (process.env.MAINNET_PROVIDER == null) {
  *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
-if (process.env.SIMULATE_URL == null) {
-  console.log('SIMULATE_URL not set, skipping simulation tests')
+if (process.env.SIMULATE_URL_BASE == null) {
+  console.log('SIMULATE_URL_BASE not set, skipping simulation tests')
   process.exit(0)
 }
 export const baseWhales = {
@@ -113,7 +113,7 @@ beforeAll(async () => {
       },
       {
         simulateZapFn: makeCustomRouterSimulator(
-          process.env.SIMULATE_URL!,
+          process.env.SIMULATE_URL_BASE!,
           baseWhales
         ),
       }

@@ -327,8 +327,6 @@ export class DagSearcher {
         }
       }
 
-      console.log(dag.toDot())
-
       const out = await dag.evaluate()
 
       return await out.dag.evaluate()
@@ -403,7 +401,9 @@ export class DagSearcher {
   public async buildZapInDag(
     signer: Address,
     userInput: TokenQuantity[],
-    userOutput: Token
+    userOutput: Token,
+    includeDirectTrade: boolean = true,
+    optimisationSteps = 100
   ) {
     userInput = userInput.map((i) =>
       i.token === this.universe.nativeToken
@@ -451,11 +451,6 @@ export class DagSearcher {
       lastPhase[0] = weth
 
       byPhase = byPhase.filter((i) => i.length !== 0)
-    }
-
-    for (let phaseId = 0; phaseId < byPhase.length; phaseId++) {
-      const phase = byPhase[phaseId]
-      console.log(`${phaseId}: ${phase.join(', ')}`)
     }
 
     for (const [_, edges] of mintPrices.entries()) {
@@ -518,11 +513,6 @@ export class DagSearcher {
 
       const userInputValue = (await input.price()).asNumber()
 
-      console.log(
-        `Will find a trade from ${input} -> ${outputTokenClass}, ignore underlyingTokens: ${[
-          ...underlyingTokens,
-        ].join(', ')}`
-      )
       await tradeUserInput(
         this.universe,
         addrsUsed,
@@ -648,11 +638,6 @@ export class DagSearcher {
       }
 
       const phaseTokens = new Set([...phase, ...dag.openTokens])
-      console.log(
-        `user input=${userInput.join(', ')}, ${phaseTokens}=${[
-          ...phaseTokens,
-        ].join(', ')}`
-      )
 
       for (const token of phaseTokens) {
         let addedEdge = false
@@ -847,10 +832,6 @@ export class DagSearcher {
       wethPrices.set(tokenOut, price)
     }
 
-    for (const action of allActions) {
-      console.log(`  ${action}`)
-    }
-
     const createMintprices = () => {
       const out = new Map([...mintPrices])
       for (const [tokenIn, edges] of out.entries()) {
@@ -860,25 +841,14 @@ export class DagSearcher {
       }
       return out
     }
-
-    // const makeStandard = async () => {
-    //   return
-    // }
-    // const makeWithoutDirectTrade = async () => {
-    //   return await dag
-    //     .clone()
-    //     .finalize(createMintprices(), withoutDirectTrade)
-    //     .catch(() => null)
-    // }
-
-    // const results = (
-    //   await Promise.all([makeStandard(), makeWithoutDirectTrade()])
-    // ).filter((i) => i != null)
-
-    // results.sort((l, r) => r.outputsValue - l.outputsValue)
-
-    const actionsToUse =
-      this.universe.chainId === 1 ? allActions : withoutDirectTrade
-    return await dag.finalize(createMintprices(), actionsToUse)
+    const actionsToUse = includeDirectTrade ? allActions : withoutDirectTrade
+    for (const action of actionsToUse) {
+      console.log(`  ${action}`)
+    }
+    return await dag.finalize(
+      createMintprices(),
+      actionsToUse,
+      optimisationSteps
+    )
   }
 }

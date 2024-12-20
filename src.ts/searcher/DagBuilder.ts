@@ -575,7 +575,8 @@ export class DagBuilder {
 
   public async finalize(
     mintPrices: Map<Token, Map<Token, number>>,
-    tradeActions: BaseAction[]
+    tradeActions: BaseAction[],
+    optimisationSteps: number
   ) {
     // console.log('Finalizing DAG:')
     for (const [t, node] of this.balanceNodeTip.entries()) {
@@ -817,7 +818,7 @@ export class DagBuilder {
     const start = Date.now()
 
     let result = await this.optimiseDag({
-      iterations: 100,
+      iterations: optimisationSteps,
       objectiveFn: (i) => {
         if (
           i.outputs.length === 0 ||
@@ -969,7 +970,7 @@ export class DagBuilder {
 
   public async evaluate(
     inputs: TokenQuantity[] = this.config.userInput,
-    mintPrices: Map<Token, Map<Token, number>> = new Map()
+    mintPrices?: Map<Token, Map<Token, number>>
   ) {
     const endPerf = this.universe.perf.begin(
       `dag.evaluate`,
@@ -1048,7 +1049,7 @@ export class DagBuilder {
             inputs.map((i) => i.price().then((i) => i.asNumber()))
           )
           const nodeInputValue = inputsValues.reduce((l, r) => l + r, 0)
-          if (node instanceof SplitNode) {
+          if (node instanceof SplitNode && mintPrices != null) {
             if (
               this.splitNodeTypes.get(node.splitNodeIndex) ===
               SplitNodeType.Trades
@@ -1241,13 +1242,11 @@ export class DagBuilder {
               break
             }
           }
-          const actions = tradeNodes.map((i) =>
-            unwrapAction(i.actions.steps[0])
-          )
 
           let floorPrice =
-            mintPrices.get(input.token)?.get(actions[0].outputToken[0]) ??
-            Infinity
+            mintPrices
+              .get(input.token)
+              ?.get(tradeNodes[0].actions.steps[0].outputToken[0]) ?? Infinity
           if (floorPrice === 0) {
             floorPrice = Infinity
           }
@@ -1255,7 +1254,7 @@ export class DagBuilder {
           const out = await optimiseTrades(
             this.universe,
             input,
-            actions,
+            tradeNodes.map((i) => i.actions.steps[0]),
             floorPrice,
             10
           )
@@ -1656,38 +1655,6 @@ export class DagBuilder {
     resetOnWorse: number
     mintPrices?: Map<Token, Map<Token, number>>
   }) {
-    if (opts.mintPrices) {
-      const mintPrices = opts.mintPrices
-
-      const eth = this.universe.nativeToken
-      const weth = this.universe.wrappedNativeToken
-
-      const wethPrices = mintPrices.get(weth) ?? new Map()
-      const ethPrices = mintPrices.get(eth) ?? new Map()
-      opts.mintPrices.set(eth, wethPrices)
-      wethPrices.set(eth, 1)
-      ethPrices.set(weth, 1)
-      mintPrices.set(weth, wethPrices)
-      if (mintPrices.has(eth)) {
-        for (const [tokenOut, price] of ethPrices.entries()) {
-          const current = wethPrices.get(tokenOut)
-          if (current == null || current === 0) {
-            wethPrices.set(tokenOut, price)
-          }
-        }
-      }
-      for (const [tokenIn, edges] of opts.mintPrices.entries()) {
-        for (const [tokenOut, price] of edges.entries()) {
-          if (tokenIn === tokenOut) {
-            opts.mintPrices.delete(tokenIn)
-            continue
-          }
-          console.log(
-            `floorprice: ${tokenIn.symbol} => ${tokenOut.symbol}: ${price}`
-          )
-        }
-      }
-    }
     const mintPrices = opts.mintPrices ?? new Map()
 
     if (!this.isDagConstructed) {

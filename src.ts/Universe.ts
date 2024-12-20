@@ -857,11 +857,11 @@ export class Universe<const UniverseConf extends Config = Config> {
     const native = this.nativeToken
     const wrappedNative = this.wrappedNativeToken
     this.mintRate = this.createCache(async (token: Token) => {
-      if (this.mintRateProviders.has(token)) {
-        return await this.mintRateProviders.get(token)!()
-      }
-      if (token === wrappedNative) {
-        return native.one
+        if (this.mintRateProviders.has(token)) {
+          return await this.mintRateProviders.get(token)!()
+        }
+        if (token === wrappedNative) {
+          return native.one
         }
         if (!this.mintableTokens.has(token)) {
           throw new Error(`${token} is not mintable`)
@@ -896,10 +896,9 @@ export class Universe<const UniverseConf extends Config = Config> {
         const ratePrice = (await rate.price()).asNumber()
         const inputTokenPrice = (await mint.inputToken[0].price).asNumber()
 
-        return mint.inputToken[0].from(
-          1/(ratePrice/inputTokenPrice)
-        )
-      }
+        return mint.inputToken[0].from(1/(ratePrice/inputTokenPrice))
+      },
+      1000 * 60 * 10,
     )
   }
 

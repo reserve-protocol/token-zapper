@@ -4,7 +4,7 @@
     "access": "public",
     "tag": "latest"
   },
-  "version": "4.0.0-alpha27",
+  "version": "4.0.0-alpha28",
   "description": "A library to help convert tokens into RTokens and back",
   "keywords": [],
   "sideEffects": false,

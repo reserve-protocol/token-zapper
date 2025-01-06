@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 
 import {
+  BaseAction,
   findTradeSize,
   type BaseAction as Action,
 } from './action/Action'
@@ -48,6 +49,7 @@ import { ToTransactionArgs } from './searcher/ToTransactionArgs'
 import { Contract } from './tx-gen/Planner'
 import { DagSearcher } from './searcher/DagSearcher'
 import { TxGen } from './searcher/TxGen'
+import { NativeInputWrapper } from './searcher/TradeAction'
 
 type TokenList<T> = {
   [K in keyof T]: Token

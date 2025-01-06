@@ -502,3 +502,14 @@ export const unwrapAction = (action: BaseAction): BaseAction => {
   }
   return action
 }
+
+export const wrapAction = (universe: Universe, i: BaseAction) => {
+  let act = i
+  if (act.is1to1 && act.inputToken[0] === universe.nativeToken) {
+    act = new NativeInputWrapper(universe, act)
+  }
+  if (act.dependsOnRpc) {
+    act = new WrappedAction(universe, act)
+  }
+  return act
+}

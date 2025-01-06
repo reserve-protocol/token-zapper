@@ -7,26 +7,11 @@ import { Universe } from '../Universe'
 import { DagBuilder } from './DagBuilder'
 import { ActionNode, BalanceNode, DagBuilderConfig } from './Dag'
 import { SwapPlan } from './Swap'
-import {
-  MultiStepAction,
-  NativeInputWrapper,
-  unwrapAction,
-  WrappedAction,
-} from './TradeAction'
+import { MultiStepAction, wrapAction, unwrapAction } from './TradeAction'
 import { bfs } from '../exchange-graph/BFS'
 
 const LONGEST_TUNNEL_DEPTH = 3
 
-const wrapAction = (universe: Universe, i: BaseAction) => {
-  let act = i
-  if (act.is1to1 && act.inputToken[0] === universe.nativeToken) {
-    act = new NativeInputWrapper(universe, act)
-  }
-  if (act.dependsOnRpc) {
-    act = new WrappedAction(universe, act)
-  }
-  return act
-}
 const findUnderlyingTokens = async (
   universe: Universe,
   inputTradeSizeUSD: number,

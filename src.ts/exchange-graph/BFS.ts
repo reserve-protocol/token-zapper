@@ -122,11 +122,11 @@ export const bfs = (
 
 export const shortestPath = (
   ctx: Universe,
-  graph: Graph,
   start: Token,
   end: Token,
   addressesUsed: Set<Address> = new Set()
 ) => {
+  const graph = ctx.graph
   const visited = new Set<Token>()
   const toVisit: {
     path: Token[]
@@ -207,9 +207,6 @@ export const shortestPath = (
   results.sort((l, r) => l.weight - r.weight)
   if (results.length === 0) {
     return []
-  }
-  for (const result of results) {
-    console.log(result.weight, result.path.join(' -> '))
   }
   return results[0].path
 }

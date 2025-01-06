@@ -22,7 +22,6 @@ import {
   PricedTokenQuantities,
 } from './Dag'
 import { optimiseTrades } from './optimiseTrades'
-import { wait } from '../base/controlflow'
 
 type ObjectiveFunction = (dag: EvaluatedDag) => number
 
@@ -817,6 +816,32 @@ export class DagBuilder {
      */
     const start = Date.now()
 
+    // for (let splitId = 0; splitId < this.splitNodes.length; splitId++) {
+    //   const split = this.splitNodes[splitId]
+    //   if (split.length === 0) {
+    //     continue
+    //   }
+    //   const splitType = this.splitNodeTypes.get(splitId)
+    //   if (splitType !== SplitNodeType.Trades) {
+    //     continue
+    //   }
+    //   const tradeEdges = this.splitNodeEdges.get(splitId)
+    //   const edges = this.edges.get(tradeEdges[0])
+    //   if (edges.size === tradeEdges.length) {
+    //     continue
+    //   }
+    //   const tokenIn = tradeEdges[0].actions.steps[0].inputToken[0]
+    //   const tokenOut = tradeEdges[0].actions.steps[0].outputToken[0]
+    //   if (mintPrices.get(tokenIn)?.has(tokenOut)) {
+    //     continue
+    //   }
+    //   if (mintPrices.get(tokenIn)?.get(tokenOut) !== 0) {
+    //     continue
+    //   }
+    //   console.log(`Split ${splitId} set to standard split`)
+    //   this.splitNodeTypes.set(splitId, SplitNodeType.Standard)
+    // }
+
     let result = await this.optimiseDag({
       iterations: optimisationSteps,
       objectiveFn: (i) => {
@@ -1229,7 +1254,6 @@ export class DagBuilder {
       keyInRange,
       new Promise(async (resolve) => {
         const calc = async () => {
-          // console.log(`Optimising trades for split node index: ${node.splitNodeIndex}`)
           const tradeNodes = this.splitNodeEdges.get(node.splitNodeIndex)
           const edges = this.edges.get(node).get(input.token)
 
@@ -1243,18 +1267,17 @@ export class DagBuilder {
             }
           }
 
+          const acts = tradeNodes.map((i) => i.actions.steps[0])
+
           let floorPrice =
             mintPrices
               .get(input.token)
               ?.get(tradeNodes[0].actions.steps[0].outputToken[0]) ?? Infinity
-          if (floorPrice === 0) {
-            floorPrice = Infinity
-          }
 
           const out = await optimiseTrades(
             this.universe,
             input,
-            tradeNodes.map((i) => i.actions.steps[0]),
+            acts,
             floorPrice,
             10
           )

@@ -9,20 +9,28 @@ export const optimiseTrades = async (
   floorPrice: number,
   parts: number = 10
 ) => {
-  console.log(`Optimising trades between ${input} and`)
-  for (const action of tradeActions) {
-    console.log(`  ${action}`)
-  }
-  console.log(`floor price ${floorPrice}`)
   const inputToken = input.token
   const outputToken = tradeActions[0].outputToken[0]
 
   const maxInputs = tradeActions.map((i) => Infinity)
+  const [gasTokenPrice, inputTokenPrice, outputTokenPrice] = await Promise.all([
+    universe.nativeToken.price,
+    inputToken.price,
+    outputToken.price,
+  ]).then((prices) => prices.map((i) => i.asNumber()))
   if (isFinite(floorPrice)) {
     await Promise.all(
       tradeActions.map(async (action, index) => {
         const maxSize = await universe.getMaxTradeSize(action, floorPrice)
-        maxInputs[index] = maxSize.asNumber()
+        const liq = (await action.liquidity()) / 20 / inputTokenPrice
+        maxInputs[index] = Math.min(maxSize.asNumber(), liq)
+      })
+    )
+  } else if (tradeActions.length > 1) {
+    await Promise.all(
+      tradeActions.map(async (action, index) => {
+        const liq = (await action.liquidity()) / 20 / inputTokenPrice
+        maxInputs[index] = liq
       })
     )
   }
@@ -39,11 +47,7 @@ export const optimiseTrades = async (
 
   const gasPrice = universe.gasPrice
   const gasToken = universe.nativeToken
-  const [gasTokenPrice, inputTokenPrice, outputTokenPrice] = await Promise.all([
-    universe.nativeToken.price,
-    inputToken.price,
-    outputToken.price,
-  ]).then((prices) => prices.map((i) => i.asNumber()))
+
   const evaluteAction = async (
     action: BaseAction,
     inputQty: number,
@@ -109,7 +113,7 @@ export const optimiseTrades = async (
     const best = results[0]
     // console.log(`${best.state.action}: Best`)
     // console.log(state.map((i) => i.input).join(', '))
-    best.state.input = best.newInput
+    best.state.input = Math.min(best.newInput, best.state.maxInput)
     best.state.output = best.result.outputQty
   }
   for (let i = 0; i < parts; i++) {

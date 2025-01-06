@@ -18,6 +18,23 @@ export class DefaultMap<A, B> extends Map<A, B> {
     super()
   }
 
+  clone(): DefaultMap<A, B> {
+    const out = new DefaultMap<A, B>(this.defaultFn)
+    for (const [k, v] of this) {
+      if (
+        typeof v === 'object' &&
+        v != null &&
+        'clone' in v &&
+        typeof v.clone === 'function'
+      ) {
+        out.set(k, v.clone())
+      } else {
+        out.set(k, v)
+      }
+    }
+    return out
+  }
+
   get(key: A): B {
     let out = super.get(key)
     if (out == null) {

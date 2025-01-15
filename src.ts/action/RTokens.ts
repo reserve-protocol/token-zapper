@@ -27,7 +27,6 @@ import {
 } from '../contracts'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import { MultiInputUnit } from './MultiInputAction'
-import { DagSearcher } from '../searcher/DagSearcher'
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction

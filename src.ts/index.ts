@@ -22,8 +22,6 @@ import { setupEthereumZapper } from './configuration/setupEthereumZapper'
 import { loadTokens } from './configuration/loadTokens'
 import { makeConfig } from './configuration/ChainConfiguration'
 import { JsonRpcProvider } from '@ethersproject/providers'
-export * from "./searcher/Dag"
-export * from "./searcher/DagSearcher"
 import {
   ChainId,
   ChainIds,

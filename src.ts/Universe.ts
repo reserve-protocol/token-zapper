@@ -47,9 +47,7 @@ import { PerformanceMonitor } from './searcher/PerformanceMonitor'
 import { SwapPath } from './searcher/Swap'
 import { ToTransactionArgs } from './searcher/ToTransactionArgs'
 import { Contract } from './tx-gen/Planner'
-import { DagSearcher } from './searcher/DagSearcher'
 import { TxGen } from './searcher/TxGen'
-import { NativeInputWrapper } from './searcher/TradeAction'
 import { TokenFlowGraphRegistry, TokenFlowGraphSearcher } from './searcher/TokenFlowGraph'
 
 type TokenList<T> = {

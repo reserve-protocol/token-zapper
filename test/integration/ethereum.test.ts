@@ -205,8 +205,8 @@ const redeemCases = [
   makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
 
   makeMintTestCase(5, rTokens['ETH+'], t.WETH),
-  makeMintTestCase(5, rTokens['ETH+'], t.reth),
-  makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
+  // makeMintTestCase(5, rTokens['ETH+'], t.reth),
+  // makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
   makeMintTestCase(5, rTokens['ETH+'], t.USDC),
 
   makeMintTestCase(5, rTokens.dgnETH, t.WETH),

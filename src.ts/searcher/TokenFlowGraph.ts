@@ -23,33 +23,6 @@ export class NodeProxy {
     return this.id === this.graph.end.id
   }
 
-  private recipientNodes_: number[] = []
-
-  private sourceNodes_: number[] = []
-
-  private recipientsMap() {
-    this.checkVersion()
-    const recipients = new DefaultMap<number, Token[]>(() => [])
-    for (const edge of this.outgoingEdges()) {
-      recipients.get(edge.recipient.id).push(edge.token)
-    }
-    this.recipientNodes_ = [...recipients.keys()]
-  }
-
-  private sourcesMap() {
-    this.checkVersion()
-    const sources = new DefaultMap<number, Token[]>(() => [])
-    for (const edge of this.incomingEdges()) {
-      sources.get(edge.source.id).push(edge.token)
-    }
-    this.sourceNodes_ = [...sources.keys()]
-  }
-
-  public get sources() {
-    this.sourcesMap()
-    return this.sourceNodes_
-  }
-
   public get receivesInput() {
     if (this.isStartNode) {
       return true
@@ -233,15 +206,23 @@ export class NodeProxy {
     return node
   }
 
-  public get inputs() {
+  public get inputs(): ReadonlyArray<Token> {
     return this.nodeData.inputs
+  }
+
+  public addOutputs(outputs: Token[]) {
+    this.nodeData.addOutputs(outputs)
+  }
+
+  public addInputs(inputs: Token[]) {
+    this.nodeData.addInputs(inputs)
   }
 
   public get action() {
     return this.nodeData.action
   }
 
-  public get outputs() {
+  public get outputs(): ReadonlyArray<Token> {
     return this.nodeData.outputs
   }
 
@@ -607,14 +588,40 @@ class Node {
   public readonly name: string
   public readonly nodeId: string = `node_${nodeCounter++}`
 
+  private inputs_: Token[] = []
+  private outputs_: Token[] = []
+  public get inputs() {
+    return this.inputs_
+  }
+  public get outputs() {
+    return this.outputs_
+  }
+  public addOutputs(tokens: Token[]) {
+    for (const token of tokens) {
+      if (this.outputs_.includes(token)) {
+        continue
+      }
+      this.outputs_.push(token)
+    }
+  }
+  public addInputs(tokens: Token[]) {
+    for (const token of tokens) {
+      if (this.inputs_.includes(token)) {
+        continue
+      }
+      this.inputs_.push(token)
+    }
+  }
   public constructor(
-    public inputs: Token[] = [],
+    inputs: Token[] = [],
     public readonly action: TokenFlowGraph | BaseAction | null = null,
-    public outputs: Token[] = [],
+    outputs: Token[] = [],
     public nodeType: NodeType = NodeType.Action,
     name: string = '',
     public inlinedGraph: InlinedGraphRef | null = null
   ) {
+    this.addInputs(inputs)
+    this.addOutputs(outputs)
     this.name = name
     if (name.length === 0) {
       if (action != null) {
@@ -641,9 +648,9 @@ class Node {
 
   public clone() {
     return new Node(
-      this.inputs,
+      [...this.inputs],
       this.action,
-      this.outputs,
+      [...this.outputs],
       this.nodeType,
       this.name,
       this.inlinedGraph
@@ -963,11 +970,7 @@ export class TokenFlowGraph {
     if (!this.tokens.has(token)) {
       this.tokens.set(token, this.tokens.size)
     }
-    const idx = this.tokens.get(token)
-    if (idx == null) {
-      throw new Error(`Token ${token} not found in graph`)
-    }
-    return idx
+    return this.tokens.get(token)!
   }
   private graphId = graphId++
   private subgraphs = 0
@@ -1045,11 +1048,10 @@ export class TokenFlowGraph {
     const tasks: Promise<NodeResult | null>[] = []
 
     const task = async (node: NodeProxy) => {
-      const dependencies = this._incomingEdges[node.id]
-        .filter((edge) => !resolved[edge.source])
-        .map((edge) => awaiting[edge.source])
+      const dependencies = this._incomingEdges[node.id].map(
+        (edge) => awaiting[edge.source]
+      )
       await Promise.all(dependencies)
-      // console.log(`STARTING ${node.nodeId} ${deps.join(', ')}`)
       if (allNodeInputs[node.id].every((i) => i === 0n)) {
         return null
       } else {
@@ -1095,6 +1097,9 @@ export class TokenFlowGraph {
       gasUnits,
       this.outputs[0]
     )
+    if (out.outputValue === 0) {
+      console.log(this.outputs.join(', '))
+    }
     // process.exit(0)
     return new TFGResult(out, nodeResults, this)
   }
@@ -1103,8 +1108,8 @@ export class TokenFlowGraph {
     const graph = new TokenFlowGraph(this.name)
     graph._nodes = [...this._nodes]
     graph.subgraphs = this.subgraphs
-    graph.inputs.push(...this.inputs)
-    graph.outputs.push(...this.outputs)
+    graph.start.addInputs(this.inputs)
+    graph.end.addOutputs(this.outputs)
     graph.tokens = new Map([...this.tokens])
     graph._outgoingEdges = this._outgoingEdges.map(
       (edge) => edge?.clone() ?? null
@@ -1228,6 +1233,8 @@ export class TokenFlowGraph {
     min?: number,
     inlinedGraph: InlinedGraphRef | null = null
   ) {
+    inputs = [...inputs]
+    outputs = [...outputs]
     if (action instanceof TokenFlowGraph) {
       this.subgraphs++
     }
@@ -1300,15 +1307,14 @@ export class TokenFlowGraph {
     this.checkNodeExists(sourceId)
     this.checkNodeExists(recipientId)
     const fromNode = this._nodes[sourceId]!
-    if (!fromNode.outputs.includes(token)) {
-      fromNode.outputs.push(token)
-    }
+    fromNode.addOutputs([token])
+
     const toNode = this._nodes[recipientId]!
-    if (!toNode.inputs.includes(token)) {
-      toNode.inputs.push(token)
-    }
+    toNode.addInputs([token])
     if (recipientId === this._endIndex) {
-      this.data[recipientId].outputs = this.data[recipientId].inputs
+      for (const token of this.data[recipientId].inputs) {
+        this.data[recipientId].addOutputs([token])
+      }
     }
 
     const outgoing = this._outgoingEdges[sourceId]!
@@ -1408,14 +1414,15 @@ export class TokenFlowGraph {
     for (const output of outputs) {
       this.getTokenId(output)
     }
-    this.start.inputs.push(...inputs)
-    this.end.outputs.push(...outputs)
+    this.start.addInputs(inputs)
+    this.end.addOutputs(outputs)
   }
 }
 
 export class TokenFlowGraphBuilder {
-  public readonly graph: TokenFlowGraph
-  private readonly tokenBalanceNodes = new DefaultMap<Token, number>(
+  public graph: TokenFlowGraph
+  public parentInputs = new Set<Token>()
+  private tokenBalanceNodes = new DefaultMap<Token, number>(
     (token) =>
       this.graph.newNode(
         null,
@@ -1426,6 +1433,21 @@ export class TokenFlowGraphBuilder {
       ).id
   )
 
+  public clone() {
+    const out = new TokenFlowGraphBuilder(
+      this.universe,
+      [...this.inputs],
+      [...this.outputs],
+      this.name
+    )
+    out.addParentInputs(this.parentInputs)
+    out.graph = this.graph.clone()
+    for (const [token, id] of this.tokenBalanceNodes.entries()) {
+      out.tokenBalanceNodes.set(token, id)
+    }
+    return out
+  }
+
   public static nullGraph(universe: Universe, tokens: Token[]) {
     return new TokenFlowGraphBuilder(universe, tokens, tokens)
   }
@@ -1434,13 +1456,12 @@ export class TokenFlowGraphBuilder {
     return this.graph.toDot(true)
   }
 
-  public get outputs() {
+  public get outputs(): ReadonlyArray<Token> {
     return this.graph._nodes[this.graph._endIndex]!.outputs
   }
-  public get inputs() {
+  public get inputs(): ReadonlyArray<Token> {
     return this.graph._nodes[this.graph._startIndex]!.inputs
   }
-  public readonly parentInputs = new Set<Token>()
   public isTokenDerived(token: Token) {
     if (this.parentInputs.has(token)) {
       return true
@@ -1457,7 +1478,7 @@ export class TokenFlowGraphBuilder {
   public addInputTokens(tokens: Token[]) {
     for (const token of tokens) {
       if (!this.graph.start.inputs.includes(token)) {
-        this.graph.start.inputs.push(token)
+        this.graph.start.addInputs([token])
         const node = this.getTokenNode(token)
         this.graph.start.forward(token, 1, node)
       }
@@ -1467,7 +1488,7 @@ export class TokenFlowGraphBuilder {
   public addOutputTokens(tokens: Token[]) {
     for (const token of tokens) {
       if (!this.graph.end.outputs.includes(token)) {
-        this.graph.end.outputs.push(token)
+        this.graph.end.addOutputs([token])
         const node = this.getTokenNode(token)
         node.forward(token, 1, this.graph.end)
       }
@@ -1487,13 +1508,8 @@ export class TokenFlowGraphBuilder {
     name: string = `graph_${graphId++}`
   ) {
     this.graph = new TokenFlowGraph(name)
-    const outs = this.graph.end.outputs
     this.addInputTokens(inputs)
-    for (const token of outputs) {
-      outs.push(token)
-      const balanceNode = this.getTokenNode(token)
-      balanceNode.forward(token, 1, this.graph.end)
-    }
+    this.addOutputTokens(outputs)
   }
 
   public addAction(action: BaseAction, outputs: Token[] = action.outputToken) {
@@ -1602,7 +1618,11 @@ export class TokenFlowGraphRegistry {
   }
 
   public find(input: Token, output: Token) {
-    return this.db.get(input).get(output)
+    const out = this.db.get(input).get(output)
+    if (out != null) {
+      // return out.clone()
+    }
+    return null
   }
 }
 
@@ -1817,8 +1837,8 @@ const removeUselessNodes = (graph: TokenFlowGraph): TokenFlowGraph => {
       node.action,
       node.nodeType,
       node.name,
-      node.inputs,
-      node.outputs,
+      [...node.inputs],
+      [...node.outputs],
       graph._outgoingEdges[node.id]?.min,
       node.inlinedGraph
     )
@@ -1881,8 +1901,8 @@ const removeNodes = (graph: TokenFlowGraph, unusedNodes: NodeProxy[]) => {
       node.action,
       node.nodeType,
       node.name,
-      node.inputs,
-      node.outputs,
+      [...node.inputs],
+      [...node.outputs],
       graph._outgoingEdges[node.id]?.min,
       node.inlinedGraph
     )
@@ -2073,9 +2093,7 @@ const optimise = async (
     return [...out].map((id) => g.getNode(id))
   }
 
-  console.log('Running first round of optimisation')
   let bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
-  console.log(bestSoFar.result.outputs.join(', '))
   if (bestSoFar.result.outputValue === 0) {
     throw new Error('No output value')
   }
@@ -2110,7 +2128,6 @@ const optimise = async (
     const edge = g._outgoingEdges[optimisationNodes[nodeId]]!.edges[0]
     edge.min = 1 / edge.parts.length / 2
     edge.normalize()
-    console.log(g._nodes[optimisationNodes[nodeId]].nodeId)
   }
   for (let i = 0; i < steps; i++) {
     const size = scale * (1 - i / steps) ** 2
@@ -2182,6 +2199,11 @@ const optimise = async (
   }
   g = removeNodes(g, findNodesWithoutSources(g))
 
+  console.log(
+    `Final graph for ${bestSoFar.result.inputs.join(', ')} -> ${
+      bestSoFar.result.output.token
+    }`
+  )
   console.log(g.toDot().join('\n'))
   console.log(bestSoFar.result.outputs.join(', '))
 
@@ -2449,7 +2471,6 @@ export class TokenFlowGraphSearcher {
     const proportions: TokenQuantity[] = await a.mint.inputProportions()
 
     const outputSet = new Set<Token>()
-    const basketTokensWithoutSteps: Token[] = []
     for (const qty of proportions) {
       const basketToken = qty.token
       if (!this.universe.isTokenBurnable(basketToken)) {
@@ -2498,8 +2519,6 @@ export class TokenFlowGraphSearcher {
         )
       }
     }
-
-    console.log(rTokenRedeemGraph.graph.toDot().join('\n'))
 
     return rTokenRedeemGraph
   }
@@ -2619,8 +2638,6 @@ export class TokenFlowGraphSearcher {
     parent: TokenFlowGraphBuilder,
     token: Token
   ): Promise<TokenFlowGraphBuilder> {
-    console.log(`Finding ${token} redemption graph`)
-
     let out: TokenFlowGraphBuilder
     if (this.universe.rTokensInfo.tokens.has(token)) {
       out = await this.rTokenRedeemGraph(parent, token)
@@ -2654,9 +2671,10 @@ export class TokenFlowGraphSearcher {
           const outputTokenNode = out.getTokenNode(outputToken)
           subgraphNode.forward(outputToken, 1, outputTokenNode)
         }
-        out.addOutputTokens(subgraphNode.outputs)
+        out.addOutputTokens([...subgraphNode.outputs])
       }
     }
+
     return out
   }
 
@@ -2685,7 +2703,7 @@ export class TokenFlowGraphSearcher {
 
       const redeemNode = graph.addSubgraphNode(
         redemptionGraph.graph,
-        `${input} -> ${output} (redeem)`
+        `${input} (redeem)`
       )
       inputNode.forward(inputToken, 1, redeemNode)
 
@@ -2697,11 +2715,35 @@ export class TokenFlowGraphSearcher {
           outputToken !== inTokCls &&
           outputTokenNode.recipients.length === 0
         ) {
-          const outputToTokClsNode = graph.addSubgraphNode(
-            (await this.search1To1Graph(outputToken, inTokCls, true)).graph
+          const direct = findAllWaysToGetFromAToB(
+            this.universe,
+            outputToken,
+            inTokCls
           )
-          outputTokenNode.forward(outputToken, 1, outputToTokClsNode)
-          outputToTokClsNode.forward(inTokCls, 1, graph.getTokenNode(inTokCls))
+          if (direct.length !== 0) {
+            const directGraph = TokenFlowGraphBuilder.createSingleStep(
+              this.universe,
+              outputToken.one,
+              direct,
+              `${outputToken} -> ${inTokCls} (direct)`
+            )
+            const directNode = graph.addSubgraphNode(
+              directGraph.graph,
+              `${outputToken} -> ${inTokCls} (direct)`
+            )
+            outputTokenNode.forward(outputToken, 1, directNode)
+            directNode.forward(inTokCls, 1, graph.getTokenNode(inTokCls))
+          } else {
+            const outputToTokClsNode = graph.addSubgraphNode(
+              (await this.search1To1Graph(outputToken, inTokCls, true)).graph
+            )
+            outputTokenNode.forward(outputToken, 1, outputToTokClsNode)
+            outputToTokClsNode.forward(
+              inTokCls,
+              1,
+              graph.getTokenNode(inTokCls)
+            )
+          }
         }
       }
 

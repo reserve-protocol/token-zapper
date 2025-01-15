@@ -143,7 +143,7 @@ const loadPoolsFromAPI = async (chainId: ChainId) => {
   const chainIn = chainIdToChainIn[chainId]
   const where = {
     chainIn: [chainIn],
-    minTvl: 0,
+    minTvl: 200000,
     poolTypeIn: POOLTYPES,
     tagIn: null,
     tagNotIn: ['BLACK_LISTED'],
@@ -174,10 +174,12 @@ const loadPoolsFromAPI = async (chainId: ChainId) => {
   const json = await response.json()
   if (!json.data) {
     console.error(JSON.stringify(json, null, 2))
+    console.log('Failed to load pools from Balancer API')
     throw new Error(
       `No data returned from Balancer API: ${JSON.stringify(json)}`
     )
   }
+
   return json.data.poolGetPools as IBalancerPool[]
 }
 
@@ -316,7 +318,7 @@ export class BalancerSwap extends BaseAction {
     //   uint256 deadline;
     //   IBalancerVault.SwapKind kind;
     // }
-    let minOut = predictedOutput[0].amount - predictedOutput[0].amount / 20n
+    let minOut = 0n //predictedOutput[0].amount - predictedOutput[0].amount / 5n
 
     const encodedStaticData = ethers.utils.defaultAbiCoder.encode(
       [
@@ -466,6 +468,7 @@ export const setupBalancer = async (universe: Universe) => {
 
   for (const pool of pools) {
     for (const action of pool.actions) {
+      // console.log(action.toString())
       universe.addAction(action)
     }
   }

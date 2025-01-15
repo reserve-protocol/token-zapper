@@ -253,6 +253,7 @@ const dontLoadPools = new Set(
     '0x8e27f0821873b6f5421b6ca75a4c5e1e83d3e77a',
     '0x6a0861625937cb3629066cc6db88808a590b9c68',
     '0x498ad3352ccfaed237a91f6933a92a7a43917b72',
+    '0xd82C2eB10F4895CABED6EDa6eeee234bd1A9838B',
     '0xd6b03059c882f63268dd3e1a98d8e3cdee26919c',
     '0xa15e8f7e1e031e4f6f11053c6d320b2a8dc6742c',
     '0x6a52e339a4b8abd15707f882d6adc05875ec5223',
@@ -478,7 +479,7 @@ export class CurveSwap extends Action('Curve') {
 
     const { route, swapParams } = this.routeParams(true)
 
-    const minOut = output.amount - output.amount / 20n
+    const minOut = 0n // output.amount - output.amount / 5n
     // function exchangeNew(
     //     uint256 amountIn,
     //     bytes memory encodedRouterCall

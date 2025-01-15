@@ -70,6 +70,7 @@ const evaluateProgram = async (
   minOutput: TokenQuantity,
   opts: { ethereumInput: boolean }
 ) => {
+  // console.log(printPlan(planner, universe).join('\n'))
   const tx = encodeProgramToZapERC20Params(planner, inputs[0], minOutput, [
     ...dustTokens.slice(1),
   ])
@@ -223,8 +224,7 @@ const planNode = async (
   inputs: [Token, Value, TokenQuantity][]
 ): Promise<[Token, NodeProxy, Value][]> => {
   if (node.isEndNode) {
-    console.log(inputs.map((i) => i[2]).join(', '))
-    for (const [token, value] of inputs) {
+    for (const token of node.inputs) {
       let recipient =
         ctx.dag.result.output.token === token
           ? ctx.outputRecipient
@@ -339,6 +339,9 @@ export class TxGen {
       )
     )
     const nodes = this.result.nodeResults
+
+    // console.log(this.graph.toDot().join('\n'))
+
     const planner = new Planner()
     planner.add(emitIdContract.emitId(this.zapId))
 
@@ -434,10 +437,11 @@ export class TxGen {
       this.result.result.output.token.wei,
       opts
     )
-    console.log(
-      testSimulation.amountOut.toString(),
-      testSimulation.dust.join(', ')
-    )
+    // console.log(
+    //   'outputs',
+    //   testSimulation.amountOut.toString(),
+    //   testSimulation.dust.join(', ')
+    // )
 
     const minOutputWithSlippage = this.result.result.output.token.from(
       testSimulation.amountOut.amount - testSimulation.amountOut.amount / 10000n

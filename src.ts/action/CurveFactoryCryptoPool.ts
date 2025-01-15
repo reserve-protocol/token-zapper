@@ -128,36 +128,39 @@ class CryptoFactoryPoolRemoveLiquidity extends CurveFactoryCryptoPoolBase {
       balance0: bal0,
       balance1: bal1,
     } = await this.pool.poolInfo()
-    const [token0, token1] = this.pool.allPoolTokens
     return [
-      bal0
-        .fpMul(amount.amount, amount.token.scale)
-        .div(totalSupply.into(token0)),
-      bal1
-        .fpMul(amount.amount, amount.token.scale)
-        .div(totalSupply.into(token1)),
+      bal0.token.from((bal0.amount * amount.amount) / totalSupply.amount),
+      bal1.token.from((bal1.amount * amount.amount) / totalSupply.amount),
     ]
   }
 
   async plan(
     planner: Planner,
     [input]: Value[],
-    _: Address,
+    dest: Address,
     [lpAmt]: TokenQuantity[]
   ) {
     const [amt0, amt1] = await this.quote([lpAmt])
+    console.log(lpAmt.toString(), amt0.toString(), amt1.toString())
     const lib = this.gen.Contract.createContract(this.pool.poolInstance)
     planner.add(
       lib.remove_liquidity(
         input,
         encodeArg(
-          [amt0.amount - amt0.amount / 100n, amt1.amount - amt1.amount / 100n],
+          [amt0.amount - amt0.amount / 50n, amt1.amount - amt1.amount / 50n],
           ParamType.fromString('uint256[2]')
         ),
-        false
-      )
+        false,
+        dest.address
+      ),
+      `${this.protocol}.${
+        this.actionName
+      }(${lpAmt.toString()}) -> ${amt0.toString()}, ${amt1.toString()}`
     )
     return null
+  }
+  get actionName() {
+    return 'remove_liquidity'
   }
 
   constructor(public readonly pool: CurveFactoryCryptoPool) {
@@ -224,7 +227,8 @@ export class CurveFactoryCryptoPool {
     remove_liquidity: (
       amount: BigNumberish,
       amounts: [BigNumberish, BigNumberish],
-      use_eth: boolean
+      use_eth: boolean,
+      recipient: string
     ) => Promise<[BigNumber, BigNumber]>
     add_liquidity: (
       amounts: [BigNumberish, BigNumberish],

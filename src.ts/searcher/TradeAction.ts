@@ -140,12 +140,7 @@ export class WrappedAction extends BaseAction {
 
     this.cachedResults = universe.createCache(async (amountIn) => {
       const inp = this.inputToken[0].from(amountIn)
-      const out = await this.wrapped.quote([inp])
-      if (out.length !== 1) {
-        throw new Error('Expected single output')
-      }
-
-      return out
+      return await this.wrapped.quote([inp])
     }, 12000)
   }
 
@@ -154,6 +149,9 @@ export class WrappedAction extends BaseAction {
   }
   get dependsOnRpc() {
     return false
+  }
+  get is1to1() {
+    return this.wrapped.is1to1
   }
 
   get returnsOutput(): boolean {
@@ -182,7 +180,7 @@ export class WrappedAction extends BaseAction {
   async quoteInnerQuote(amountIn: TokenQuantity): Promise<TokenQuantity[]> {
     try {
       if (amountIn.isZero) {
-        return [this.outputToken[0].zero]
+        return this.outputToken.map((i) => i.zero)
       }
       const orderOfMagnitude = log2(amountIn.amount)
 
@@ -196,23 +194,30 @@ export class WrappedAction extends BaseAction {
       in1 = in1 - (RESOLUTION - (lowerTick + 1n)) * parts
       range = in1 - in0
 
-      const [[q0], [q1]] = await Promise.all([
+      const [outs0, outs1] = await Promise.all([
         this.cachedResults.get(in0),
         this.cachedResults.get(in1),
       ])
 
-      const s = q1.sub(q0)
+      const s = outs0.map((t, index) => outs1[index].sub(t))
       const tokenIn = amountIn.token
-      const tokenOut = this.outputToken[0]
+      const outputTokens = this.outputToken
 
-      const x0 = tokenIn.from(in0).into(tokenOut)
-      const slope = s.into(tokenOut).div(tokenIn.from(range).into(tokenOut))
-      const d = amountIn.into(tokenOut).sub(x0)
+      const slopes = s.map((t, index) =>
+        t
+          .into(outputTokens[index])
+          .div(tokenIn.from(range).into(outputTokens[index]))
+      )
 
-      const approx = slope.mul(d).add(q0)
-      return [approx]
+      const approx = slopes.map((t, index) => {
+        const x0 = tokenIn.from(in0).into(outputTokens[index])
+        const d = amountIn.into(outputTokens[index]).sub(x0)
+
+        return t.mul(d).add(x0)
+      })
+      return approx
     } catch (e) {
-      return [this.outputToken[0].zero]
+      return this.outputToken.map((i) => i.zero)
     }
   }
   async quote(inputs: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -227,7 +232,11 @@ export class WrappedAction extends BaseAction {
         out = this.quoteInnerQuote(amountIn)
         this.innerCache.set(amountIn.amount, out)
       }
-      return await out
+      const res = await out
+      if (this.outputToken.length !== 1) {
+        console.log(inputs[0].toString() + ' -> ' + res.join(', '))
+      }
+      return res
     } else if (inputs.length === 2) {
       const out = await this.dim2Cache.quote(inputs)
       // console.log(`Quote 2d cache ${this.wrapped.protocol} ${inputs} -> ${out}`)

@@ -31,88 +31,13 @@ export const combineAddreses = (token0: Address, token1: Address) => {
   return Address.fromBuffer(Buffer.from(arrayify(hexZeroPad(hexlify(val), 20))))
 }
 
-export class TradeAction extends BaseAction {
-  constructor(
-    public readonly universe: Universe,
-    public readonly from: Token,
-    public readonly to: Token
-  ) {
-    super(
-      combineAddreses(from.address, to.address),
-      [from],
-      [to],
-      InteractionConvention.None,
-      DestinationOptions.Recipient,
-      []
-    )
-  }
-
-  get oneUsePrZap(): boolean {
-    return true
-  }
-
-  get addressesInUse() {
-    return new Set([this.address])
-  }
-
-  get protocol(): string {
-    return `Trade ${this.from} -> ${this.to}`
-  }
-
-  toString(): string {
-    return `Trade(${this.from} -> ${this.to})`
-  }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const [priceIn, priceOut] = await Promise.all([
-      this.universe.fairPrice(amountIn),
-      this.universe.fairPrice(this.outputToken[0].one),
-    ])
-    if (priceIn == null || priceOut == null) {
-      throw new Error(`Unable to find price for ${this.from} or ${this.to}`)
-    }
-    const outToken = this.outputToken[0]
-    const amountOut = priceIn.into(outToken).div(priceOut.into(outToken))
-
-    let slippage = 0.9999
-    if (priceIn.amount > 25000_00000000n) {
-      slippage *= 0.999
-    }
-    if (priceIn.amount > 100000_00000000n) {
-      slippage *= 0.999
-    }
-    if (priceIn.amount > 200000_00000000n) {
-      slippage *= 0.99
-    }
-
-    return [amountOut.mul(outToken.from(slippage))]
-  }
-  gasEstimate(): bigint {
-    return 250_000n
-  }
-  get isTrade() {
-    return true
-  }
-  get dependsOnRpc() {
-    return false
-  }
-
-  plan(
-    planner: Planner,
-    inputs: Value[],
-    destination: Address,
-    predictedInputs: TokenQuantity[]
-  ): Promise<null | Value[]> {
-    throw new Error('Abstract Action')
-  }
-}
-
 const log2 = (x: bigint) => {
   let out = 0n
   while ((x >>= 1n)) out++
   return out
 }
 
-const RESOLUTION = 8n
+const RESOLUTION = 10n
 const globalCache = new DefaultMap<
   BaseAction,
   Map<bigint, Promise<TokenQuantity[]>>
@@ -194,27 +119,24 @@ export class WrappedAction extends BaseAction {
       in1 = in1 - (RESOLUTION - (lowerTick + 1n)) * parts
       range = in1 - in0
 
-      const [outs0, outs1] = await Promise.all([
+      const [y0, y1] = await Promise.all([
         this.cachedResults.get(in0),
         this.cachedResults.get(in1),
       ])
 
-      const s = outs0.map((t, index) => outs1[index].sub(t))
+      const dys = y0.map((t, index) => y1[index].sub(t))
       const tokenIn = amountIn.token
-      const outputTokens = this.outputToken
 
-      const slopes = s.map((t, index) =>
-        t
-          .into(outputTokens[index])
-          .div(tokenIn.from(range).into(outputTokens[index]))
-      )
+      const x = amountIn
+      const x0 = tokenIn.from(in0)
+      const dx = tokenIn.from(range)
 
-      const approx = slopes.map((t, index) => {
-        const x0 = tokenIn.from(in0).into(outputTokens[index])
-        const d = amountIn.into(outputTokens[index]).sub(x0)
+      const progression = x.sub(x0).div(dx)
 
-        return t.mul(d).add(x0)
+      const approx = dys.map((dy, index) => {
+        return progression.into(dy.token).mul(dy).add(y0[index])
       })
+
       return approx
     } catch (e) {
       return this.outputToken.map((i) => i.zero)
@@ -233,9 +155,9 @@ export class WrappedAction extends BaseAction {
         this.innerCache.set(amountIn.amount, out)
       }
       const res = await out
-      if (this.outputToken.length !== 1) {
-        console.log(inputs[0].toString() + ' -> ' + res.join(', '))
-      }
+      // if (this.outputToken.length !== 1) {
+      //   console.log(inputs[0].toString() + ' -> ' + res.join(', '))
+      // }
       return res
     } else if (inputs.length === 2) {
       const out = await this.dim2Cache.quote(inputs)
@@ -511,10 +433,6 @@ export class MultiStepAction extends BaseAction {
     }
     return this.addrsInUse
   }
-}
-
-export const isAbstractAction = (action: BaseAction): action is TradeAction => {
-  return action instanceof TradeAction
 }
 
 export const isWrappedAction = (

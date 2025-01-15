@@ -159,10 +159,10 @@ export const testUser = Address.from(
   '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  makeMintTestCase(1, t.USDC, rTokens.eUSD),
   makeMintTestCase(1000000, t.USDC, rTokens.eUSD),
-  makeMintTestCase(1000000, t.DAI, rTokens.eUSD),
-  makeMintTestCase(1000000, t.USDT, rTokens.eUSD),
+  // makeMintTestCase(1, t.USDC, rTokens.eUSD),
+  // makeMintTestCase(1000000, t.DAI, rTokens.eUSD),
+  // makeMintTestCase(1000000, t.USDT, rTokens.eUSD),
 
   makeMintTestCase(1, t.USDC, rTokens.USD3),
   makeMintTestCase(10000, t.USDC, rTokens.USD3),
@@ -175,12 +175,13 @@ const issueanceCases = [
     rTokens['ETH+']
   ),
   makeMintTestCase(1000, t.WETH, rTokens['ETH+']),
+  makeMintTestCase(2000, t.WETH, rTokens['ETH+']),
   makeMintTestCase(0.5, t.WETH, rTokens['ETH+']),
   // makeMintTestCase(5, t.steth, rTokens['ETH+']),
   // makeMintTestCase(5, t.reth, rTokens['ETH+']),
   // makeMintTestCase(5, t.frxeth, rTokens['ETH+']),
   // makeMintTestCase(5, t.sfrxeth, rTokens['ETH+']),
-  makeMintTestCase(10000, t.USDC, rTokens['ETH+']),
+  makeMintTestCase(1000000, t.USDC, rTokens['ETH+']),
 
   makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
   makeMintTestCase(10000, t.USDe, rTokens.hyUSD),

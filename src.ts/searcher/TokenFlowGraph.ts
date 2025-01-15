@@ -1064,7 +1064,11 @@ export class TokenFlowGraph {
           beforeEvaluate
         )
 
-        // console.log(`${node.nodeId} -> ${res.outputs.join(', ')}`)
+        // console.log(
+        //   `${res.inputs.join(', ')} -> ${node.nodeId} -> ${res.outputs.join(
+        //     ', '
+        //   )}`
+        // )
 
         gasUnits += res.gas
         return res
@@ -1097,9 +1101,9 @@ export class TokenFlowGraph {
       gasUnits,
       this.outputs[0]
     )
-    if (out.outputValue === 0) {
-      console.log(this.outputs.join(', '))
-    }
+    // if (out.outputValue === 0) {
+    //   console.log(this.outputs.join(', '))
+    // }
     // process.exit(0)
     return new TFGResult(out, nodeResults, this)
   }
@@ -2101,7 +2105,7 @@ const optimise = async (
     throw new Error('Bad graph')
   }
 
-  const DECAY = 0.99
+  const DECAY = 0.5
   const steps = opts?.optimisationSteps ?? 25
   let scale = 4
 

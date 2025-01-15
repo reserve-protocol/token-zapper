@@ -230,15 +230,12 @@ const planNode = async (
           ? ctx.outputRecipient
           : ctx.dustRecipient
 
-      const val =
-        value instanceof ReturnValue
-          ? value
-          : plannerUtils.erc20.balanceOf(
-              ctx.universe,
-              ctx.planner,
-              token,
-              ctx.thisAddress
-            )
+      const val = plannerUtils.erc20.balanceOf(
+        ctx.universe,
+        ctx.planner,
+        token,
+        ctx.thisAddress
+      )
 
       plannerUtils.erc20.transfer(
         ctx.universe,

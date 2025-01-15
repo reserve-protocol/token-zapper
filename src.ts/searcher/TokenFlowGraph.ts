@@ -2053,8 +2053,6 @@ const optimise = async (
     optimisationSteps?: number
   }
 ) => {
-  console.log(graph.toDot().join('\n'))
-
   const inlined = inlineTFGs(graph.graph)
   let g = removeUselessNodes(inlined)
 
@@ -2102,7 +2100,6 @@ const optimise = async (
     bestSoFar,
     opts?.minimizeDustSteps ?? 20
   )
-  console.log(g.toDot().join('\n'))
 
   let optimisationNodes = locateNodes(g)
 
@@ -2179,7 +2176,6 @@ const optimise = async (
       g._outgoingEdges[optimisationNodes[bestNodeToChange]]!.edges[0].setParts(
         tmp[bestNodeToChange]
       )
-      console.log(bestSoFar.result.outputs.join(', '))
     } else {
       scale = scale * DECAY
     }
@@ -2473,7 +2469,6 @@ export class TokenFlowGraphSearcher {
       [...outputSet],
       `${a.rToken} redeem`
     )
-    console.log([...outputSet].join(', '))
 
     const redeemNode = rTokenRedeemGraph.addAction(a.burn)
     const rTokenNode = rTokenRedeemGraph.getTokenNode(a.rToken)
@@ -2662,7 +2657,6 @@ export class TokenFlowGraphSearcher {
         out.addOutputTokens(subgraphNode.outputs)
       }
     }
-    console.log(out.graph.toDot().join('\n'))
     return out
   }
 

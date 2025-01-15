@@ -14,7 +14,6 @@ abstract class BaseAaveV2 extends Action('SAV2Token') {
     return this.wrapper.reserve
   }
   public abstract readonly wrapper: AaveV2Wrapper
-  public abstract readonly actionName: string
 
   async plan(
     planner: Planner,
@@ -32,7 +31,7 @@ abstract class BaseAaveV2 extends Action('SAV2Token') {
     return null
   }
   protected abstract planAction(input: Value): FunctionCall
-  
+
   get saToken() {
     return this.wrapper.saToken
   }
@@ -70,7 +69,9 @@ abstract class BaseAaveV2 extends Action('SAV2Token') {
 }
 
 export class MintSAV2TokensAction extends BaseAaveV2 {
-  public actionName: string = 'deposit'
+  public get actionName() {
+    return 'deposit'
+  }
 
   protected planAction(input: Value): FunctionCall {
     return this.lib.deposit(this.universe.execAddress.address, input, 0, true)
@@ -94,7 +95,9 @@ export class MintSAV2TokensAction extends BaseAaveV2 {
   }
 }
 export class BurnSAV2TokensAction extends BaseAaveV2 {
-  public actionName: string = 'withdraw'
+  public get actionName() {
+    return 'withdraw'
+  }
 
   protected planAction(input: Value): FunctionCall {
     return this.lib.withdraw(this.universe.execAddress.address, input, true)
@@ -157,6 +160,8 @@ export class AaveV2Wrapper {
   }
 
   toString() {
-    return `IStaticATokenLM(${this.saToken}[${this.saToken.address.toShortString()}], ${this.reserveToken})`
+    return `IStaticATokenLM(${
+      this.saToken
+    }[${this.saToken.address.toShortString()}], ${this.reserveToken})`
   }
 }

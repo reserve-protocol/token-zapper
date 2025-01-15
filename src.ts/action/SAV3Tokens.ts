@@ -13,7 +13,6 @@ abstract class BaseAaveV3 extends Action('SAV3Token') {
     return this.wrapper.reserve
   }
   public abstract readonly wrapper: AaveV3Wrapper
-  public abstract readonly actionName: string
 
   async plan(
     planner: Planner,
@@ -68,7 +67,9 @@ abstract class BaseAaveV3 extends Action('SAV3Token') {
 }
 
 export class MintSAV3TokensAction extends BaseAaveV3 {
-  public actionName: string = 'deposit'
+  public get actionName() {
+    return 'deposit'
+  }
 
   protected planAction(input: Value): FunctionCall {
     return this.lib.deposit(
@@ -97,7 +98,9 @@ export class MintSAV3TokensAction extends BaseAaveV3 {
   }
 }
 export class BurnSAV3TokensAction extends BaseAaveV3 {
-  public actionName: string = 'redeem'
+  public get actionName() {
+    return 'redeem'
+  }
 
   protected planAction(input: Value): FunctionCall {
     return this.lib.redeem(
@@ -107,7 +110,6 @@ export class BurnSAV3TokensAction extends BaseAaveV3 {
       true
     )
   }
-
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const rate = await this.getRate()

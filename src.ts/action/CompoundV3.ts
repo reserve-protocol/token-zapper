@@ -32,10 +32,13 @@ export abstract class BaseCometAction extends Action('CompV3') {
   gasEstimate() {
     return BigInt(250000n)
   }
+  get actionName() {
+    return this.actionName_
+  }
   constructor(
     public readonly mainAddress: Address,
     public readonly comet: Comet,
-    public readonly actionName: string,
+    private readonly actionName_: string,
     opts: {
       inputToken: Token[]
       outputToken: Token[]

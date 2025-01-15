@@ -274,7 +274,6 @@ interface ICurveConfig {
   }[]
 }
 
-
 export class CurveIntegration {
   private constructor(
     public readonly universe: UniverseWithCommonBaseTokens,
@@ -310,7 +309,6 @@ export class CurveIntegration {
         throw new Error(`Unknown type ${type}`)
       })
     )
-
 
     const curveApi = await loadCurve(universe)
 

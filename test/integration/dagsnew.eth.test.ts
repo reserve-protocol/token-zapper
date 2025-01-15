@@ -187,12 +187,16 @@ describe('dag builder', () => {
       // const steth = universe.commonTokens.steth
       const wsteth = universe.commonTokens.wsteth
 
-      const searcher = new TokenFlowGraphSearcher(
-        universe,
-        [universe.wrappedNativeToken.from(1.0)],
-        [[1, wsteth]]
-      )
-      await searcher.search()
+      try {
+        const searcher = universe.tfgSearcher
+        const g = await searcher.search1To1(
+          universe.wrappedNativeToken.from(100),
+          universe.rTokens.dgnETH
+        )
+        console.log(g.toDot().join('\n'))
+      } catch (e) {
+        console.log(e)
+      }
       // const actions = [
       //   ...universe.graph.vertices.get(steth).incomingEdges.values(),
       // ]
@@ -220,5 +224,7 @@ describe('dag builder', () => {
 })
 
 afterAll(() => {
-  ;(provider as WebSocketProvider).websocket.close()
+  if (provider instanceof WebSocketProvider) {
+    ;(provider as WebSocketProvider).websocket.close()
+  }
 })

@@ -18,6 +18,7 @@ import * as gen from '../tx-gen/Planner'
 
 import { ParamType } from '@ethersproject/abi'
 import { Approval } from '../base/Approval'
+import { wrapAction, wrapGasToken } from '../searcher/TradeAction'
 
 abstract class BaseFrxETH extends Action('FrxETH') {
   public get supportsDynamicInput() {
@@ -236,7 +237,10 @@ export const setupFrxETH = async (
   const frxETH = await universe.getToken(Address.from(config.frxeth))
   const sfrxETH = await universe.getToken(Address.from(config.sfrxeth))
 
-  const mintFrxETH = new FrxETHMint(universe, frxETH, poolInst)
+  const mintFrxETH = wrapGasToken(
+    universe,
+    new FrxETHMint(universe, frxETH, poolInst)
+  )
 
   const burnSfrxETH = new SFrxETHburn(universe, frxETH, sfrxETH, vaultInst)
   const mintSfrxETH = new SFrxETHMint(universe, frxETH, sfrxETH, vaultInst)

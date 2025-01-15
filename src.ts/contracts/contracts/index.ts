@@ -39,6 +39,8 @@ import type * as iStargadeWrapperSol from "./IStargadeWrapper.sol";
 export type { iStargadeWrapperSol };
 import type * as iStargateRouterSol from "./IStargateRouter.sol";
 export type { iStargateRouterSol };
+import type * as pxethSol from "./PXETH.sol";
+export type { pxethSol };
 import type * as preventTamperingSol from "./PreventTampering.sol";
 export type { preventTamperingSol };
 import type * as stakeDaoSol from "./StakeDAO.sol";

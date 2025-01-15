@@ -32,8 +32,8 @@ if (process.env.MAINNET_PROVIDER == null) {
  *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
-if (process.env.SIMULATE_URL == null) {
-  console.log('SIMULATE_URL not set, skipping simulation tests')
+if (process.env.SIMULATE_URL_MAINNET == null) {
+  console.log('SIMULATE_URL_MAINNET not set, skipping simulation tests')
   process.exit(0)
 }
 const TEST_TIMEOUT = 60000
@@ -159,11 +159,14 @@ export const testUser = Address.from(
   '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  makeMintTestCase(10000, t.USDC, rTokens.eUSD),
-  makeMintTestCase(10000, t.DAI, rTokens.eUSD),
-  makeMintTestCase(10000, t.USDT, rTokens.eUSD),
+  makeMintTestCase(1, t.USDC, rTokens.eUSD),
+  makeMintTestCase(1000000, t.USDC, rTokens.eUSD),
+  makeMintTestCase(1000000, t.DAI, rTokens.eUSD),
+  makeMintTestCase(1000000, t.USDT, rTokens.eUSD),
 
+  makeMintTestCase(1, t.USDC, rTokens.USD3),
   makeMintTestCase(10000, t.USDC, rTokens.USD3),
+  makeMintTestCase(1000000, t.USDC, rTokens.USD3),
   makeMintTestCase(10000, t.DAI, rTokens.USD3),
 
   makeMintTestCase(
@@ -171,7 +174,8 @@ const issueanceCases = [
     Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
     rTokens['ETH+']
   ),
-  makeMintTestCase(5, t.WETH, rTokens['ETH+']),
+  makeMintTestCase(1000, t.WETH, rTokens['ETH+']),
+  makeMintTestCase(0.5, t.WETH, rTokens['ETH+']),
   // makeMintTestCase(5, t.steth, rTokens['ETH+']),
   // makeMintTestCase(5, t.reth, rTokens['ETH+']),
   // makeMintTestCase(5, t.frxeth, rTokens['ETH+']),
@@ -183,30 +187,30 @@ const issueanceCases = [
   makeMintTestCase(10000, t.DAI, rTokens.hyUSD),
 
   makeMintTestCase(5, t.WETH, rTokens.dgnETH),
+  makeMintTestCase(10000, t.USDC, rTokens.dgnETH),
   // makeMintTestCase(5, t.pxETH, rTokens.dgnETH),
-  // makeMintTestCase(10000, t.USDC, rTokens.dgnETH),
   // makeMintTestCase(10000, t.USDT, rTokens.dgnETH),
 ]
 
 const redeemCases = [
-  // makeMintTestCase(10000, rTokens.eUSD, t.USDC),
-  // makeMintTestCase(10000, rTokens.eUSD, t.DAI),
-  // makeMintTestCase(10000, rTokens.eUSD, t.USDT),
+  makeMintTestCase(10000, rTokens.eUSD, t.USDC),
+  makeMintTestCase(10000, rTokens.eUSD, t.DAI),
+  makeMintTestCase(10000, rTokens.eUSD, t.USDT),
 
-  // makeMintTestCase(10000, rTokens.USD3, t.USDC),
-  // makeMintTestCase(10000, rTokens.USD3, t.DAI),
+  makeMintTestCase(10000, rTokens.USD3, t.USDC),
+  makeMintTestCase(10000, rTokens.USD3, t.DAI),
 
-  // makeMintTestCase(5, rTokens['ETH+'], t.WETH),
-  // makeMintTestCase(5, rTokens['ETH+'], t.reth),
-  // makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
-  // makeMintTestCase(5, rTokens['ETH+'], t.USDC),
+  makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
+  makeMintTestCase(10000, rTokens.hyUSD, t.USDe),
+  makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
 
-  // makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
-  // makeMintTestCase(10000, rTokens.hyUSD, t.USDe),
-  // makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
+  makeMintTestCase(5, rTokens['ETH+'], t.WETH),
+  makeMintTestCase(5, rTokens['ETH+'], t.reth),
+  makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
+  makeMintTestCase(5, rTokens['ETH+'], t.USDC),
 
   makeMintTestCase(5, rTokens.dgnETH, t.WETH),
-  // makeMintTestCase(5, rTokens.dgnETH, t.USDC),
+  makeMintTestCase(5, rTokens.dgnETH, t.USDC),
 ]
 
 const individualIntegrations = [
@@ -254,7 +258,23 @@ if (isNaN(INPUT_MUL)) {
   throw new Error('INPUT_MUL must be a number')
 }
 export let universe: Universe
+let requestCount = 0
+
 const provider = getProvider(process.env.MAINNET_PROVIDER!)
+provider.on('debug', (log) => {
+  if (
+    log?.action !== 'request' ||
+    log?.request?.method !== 'eth_call' ||
+    log?.request?.params[0].to == null ||
+    log?.request?.params[0].data == null
+  ) {
+    return
+  }
+  requestCount += 1
+  // console.log(
+  //   log.request.params[0].to + ':' + log.request.params[0].data?.slice(0, 10)
+  // )
+})
 beforeAll(async () => {
   global.console = require('console')
   universe = await Universe.createWithConfig(
@@ -269,13 +289,15 @@ beforeAll(async () => {
     },
     {
       simulateZapFn: makeCustomRouterSimulator(
-        process.env.SIMULATE_URL!,
+        process.env.SIMULATE_URL_MAINNET!,
         ethWhales
       ),
     }
   )
 
   await universe.initialized
+  console.log(`requestCount init: ${requestCount}`)
+  requestCount = 0
   return universe
 }, 30000)
 
@@ -312,6 +334,8 @@ describe('ethereum zapper', () => {
             },
             issueance.output
           )
+          console.log(`requestCount: ${requestCount}`)
+          requestCount = 0
         },
         TEST_TIMEOUT
       )

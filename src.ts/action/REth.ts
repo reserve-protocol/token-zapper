@@ -11,6 +11,7 @@ import {
   RocketDepositPoolInterface__factory,
 } from '../contracts'
 import { type Token, type TokenQuantity } from '../entities/Token'
+import { wrapAction, wrapGasToken } from '../searcher/TradeAction'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import {
   Action,
@@ -26,9 +27,9 @@ export class RocketPoolContext {
   public readonly routerInstance: IRETHRouter
   public readonly poolContract: RocketDepositPoolInterface
   public readonly rethContract: IRETH
-  public readonly routerToReth: RouterETHToRETH
-  public readonly poolDeposit: ETHToRETH
-  public readonly routerToETH: RouterRETHToETH
+  public readonly routerToReth: BaseAction
+  public readonly poolDeposit: BaseAction
+  public readonly routerToETH: BaseAction
 
   public async mintRate(rethAmount: TokenQuantity) {
     return this.universe.nativeToken
@@ -53,10 +54,18 @@ export class RocketPoolContext {
       universe.provider
     )
 
-    this.poolDeposit = new ETHToRETH(this, this.universe)
-
-    this.routerToReth = new RouterETHToRETH(this.universe, this)
-    this.routerToETH = new RouterRETHToETH(this.universe, this)
+    this.poolDeposit = wrapGasToken(
+      universe,
+      new ETHToRETH(this, this.universe)
+    )
+    this.routerToReth = wrapGasToken(
+      this.universe,
+      new RouterETHToRETH(this.universe, this)
+    )
+    this.routerToETH = wrapGasToken(
+      this.universe,
+      new RouterRETHToETH(this.universe, this)
+    )
   }
 
   public gasEstimate(): bigint {
@@ -118,6 +127,10 @@ abstract class RouterPoolRouterBase extends Action('RocketpoolRouter') {
     return true
   }
 
+  public get returnsOutput(): boolean {
+    return false
+  }
+
   get isTrade(): boolean {
     return true
   }
@@ -152,7 +165,7 @@ export class ETHToRETH extends BaseAction {
     return 1n
   }
   public get isTrade(): boolean {
-    return false
+    return true
   }
   public get oneUsePrZap(): boolean {
     return false
@@ -161,7 +174,7 @@ export class ETHToRETH extends BaseAction {
     return true
   }
   public get dependsOnRpc(): boolean {
-    return false
+    return true
   }
   async plan(planner: Planner, [input]: Value[]) {
     const poolLib = Contract.createContract(this.context.poolContract)

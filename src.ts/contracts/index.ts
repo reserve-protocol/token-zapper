@@ -176,6 +176,8 @@ export type { SelfDestruct } from "./contracts/PreventTampering.sol/SelfDestruct
 export { SelfDestruct__factory } from "./factories/contracts/PreventTampering.sol/SelfDestruct__factory";
 export type { TestPreventTampering } from "./contracts/PreventTampering.sol/TestPreventTampering";
 export { TestPreventTampering__factory } from "./factories/contracts/PreventTampering.sol/TestPreventTampering__factory";
+export type { IPXETH } from "./contracts/PXETH.sol/IPXETH";
+export { IPXETH__factory } from "./factories/contracts/PXETH.sol/IPXETH__factory";
 export type { RTokenLens } from "./contracts/RTokenLens";
 export { RTokenLens__factory } from "./factories/contracts/RTokenLens__factory";
 export type { IGaugeStakeDAO } from "./contracts/StakeDAO.sol/IGaugeStakeDAO";

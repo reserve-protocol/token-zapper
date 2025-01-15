@@ -29,6 +29,9 @@ abstract class CurveFactoryCryptoPoolBase extends Action(
   public get oneUsePrZap() {
     return true
   }
+  public get dependsOnRpc(): boolean {
+    return true
+  }
   public get addressesInUse(): Set<Address> {
     return new Set([this.address])
   }
@@ -91,9 +94,6 @@ class CryptoFactoryPoolAddLiquidity extends CurveFactoryCryptoPoolBase {
   }
 
   public async quote([amt0, amt1]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    // await this.pool.update()
-    // const out = this.pool.pool.calcTokenAmount(amt0.amount, amt1.amount)
-
     const outLP = (await this.pool.poolInstance.callStatic.calc_token_amount([
       amt0.amount,
       amt1.amount,

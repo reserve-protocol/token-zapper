@@ -17,8 +17,7 @@ export const setupRETH = async (
     reth,
     Address.from(rethRouterAddress)
   )
-
-  universe.mintableTokens.set(reth, rethRouter.poolDeposit)
+  // universe.mintableTokens.set(reth, rethRouter.poolDeposit)
   universe.addAction(rethRouter.poolDeposit)
   // universe.addAction(rethRouter.routerToReth)
   // universe.addAction(rethRouter.routerToETH)

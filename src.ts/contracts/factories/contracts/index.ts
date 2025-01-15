@@ -20,6 +20,7 @@ export * as iRewardableErc20Sol from "./IRewardableERC20.sol";
 export * as isAtokenSol from "./ISAtoken.sol";
 export * as iStargadeWrapperSol from "./IStargadeWrapper.sol";
 export * as iStargateRouterSol from "./IStargateRouter.sol";
+export * as pxethSol from "./PXETH.sol";
 export * as preventTamperingSol from "./PreventTampering.sol";
 export * as stakeDaoSol from "./StakeDAO.sol";
 export * as yearnSol from "./Yearn.sol";

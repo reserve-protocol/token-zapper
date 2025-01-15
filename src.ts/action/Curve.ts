@@ -18,6 +18,7 @@ import { Token, type TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 import { BlockCache } from '../base/BlockBasedCache'
+import { wrapGasToken } from '../searcher/TradeAction'
 
 export class CurvePool {
   [Symbol.toStringTag] = 'CurvePool'
@@ -295,7 +296,6 @@ const dontLoadPools = new Set(
     '0x386ec09db6f961b9e28b3dab174ad9567e57b90c',
     '0x14756A5eD229265F86990e749285bDD39Fe0334F',
 
-    '0x7fb53345f1b21ab5d9510adb38f7d3590be6364b',
     '0x383e6b4437b59fff47b619cba855ca29342a8559',
     '0xaec7db1be1be14af32d00bbf31487a03cb6925ed',
     '0x02ac4107893ba767177d69851dcd87bedc63ab22',
@@ -751,7 +751,7 @@ export const loadCurve = async (universe: Universe) => {
     universe.provider
   )
 
-  const allowedPoolTypes = [1, 2, 10, 20]
+  const allowedPoolTypes = [1, 2, 3, 10, 20, 30]
 
   await Promise.all(
     pools.map(async (pool) => {
@@ -801,7 +801,7 @@ export const loadCurve = async (universe: Universe) => {
             pool.meta.isMeta ||
             pool.meta.isMetaFactory
           ) {
-            if (pool.meta.metaCoinIdx !== i) {
+            if (i !== 0) {
               continue
             }
           }
@@ -816,28 +816,40 @@ export const loadCurve = async (universe: Universe) => {
             if (token0 === token1) {
               continue
             }
-            const swap01 = new CurveSwap(
+            const swap01 = wrapGasToken(
               universe,
-              pool,
-              pool.getTokenIndex(token0),
-              pool.getTokenIndex(token1),
-              250_000n,
-              routerInst,
-              routerCallInst
+              new CurveSwap(
+                universe,
+                pool,
+                pool.getTokenIndex(token0),
+                pool.getTokenIndex(token1),
+                250_000n,
+                routerInst,
+                routerCallInst
+              )
             )
 
-            const swap10 = new CurveSwap(
+            const swap10 = wrapGasToken(
               universe,
-              pool,
-              pool.getTokenIndex(token1),
-              pool.getTokenIndex(token0),
-              250_000n,
-              routerInst,
-              routerCallInst
+              new CurveSwap(
+                universe,
+                pool,
+                pool.getTokenIndex(token1),
+                pool.getTokenIndex(token0),
+                250_000n,
+                routerInst,
+                routerCallInst
+              )
             )
 
-            curveGraph.get(token0).edges.get(token1).push(swap01)
-            curveGraph.get(token1).edges.get(token0).push(swap10)
+            curveGraph
+              .get(swap01.inputToken[0])
+              .edges.get(swap01.outputToken[0])
+              .push(swap01)
+            curveGraph
+              .get(swap10.inputToken[0])
+              .edges.get(swap10.outputToken[0])
+              .push(swap10)
 
             universe.addAction(swap01)
             universe.addAction(swap10)

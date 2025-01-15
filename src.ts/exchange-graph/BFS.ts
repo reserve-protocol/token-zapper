@@ -1,4 +1,4 @@
-import { type BaseAction as Action } from '../action/Action'
+import { BaseAction, type BaseAction as Action } from '../action/Action'
 import { Address } from '../base/Address'
 import { type Token } from '../entities/Token'
 import { SwapPlan } from '../searcher/Swap'
@@ -120,11 +120,45 @@ export const bfs = (
   return new BFSSearchResult(start, paths, end)
 }
 
+export const mintPath1To1 = (ctx: Universe, start: Token, end: Token) => {
+  return shortestPath(ctx, start, end, (act) => act.is1to1 && !act.isTrade)
+}
+
+export const mintPath = (
+  ctx: Universe,
+  start: Token,
+  end: Token
+): Token[][] => {
+  const p = shortestPath(ctx, start, end, (act) => !act.isTrade)
+
+  if (p.length === 0) {
+    return []
+  }
+  const steps: Token[][] = []
+  for (let i = 0; i < p.length - 1; i++) {
+    const input = p[i]
+    const stepTokens: Token[] = []
+    const output = p[i + 1]
+    const act = ctx.graph.vertices
+      .get(input)
+      .outgoingEdges.get(output)!
+      .find((act) => !act.isTrade)
+    if (act == null) {
+      return []
+    }
+    for (const tok of act.inputToken) {
+      stepTokens.push(tok)
+    }
+    steps.push(stepTokens)
+  }
+  return steps
+}
+
 export const shortestPath = (
   ctx: Universe,
   start: Token,
   end: Token,
-  addressesUsed: Set<Address> = new Set()
+  predicate: (act: BaseAction) => boolean
 ) => {
   const graph = ctx.graph
   const visited = new Set<Token>()
@@ -143,7 +177,6 @@ export const shortestPath = (
     weight: number
   }[] = []
   visited.add(start)
-  const incompatibleActions = new Set<Action>()
   while (toVisit.length !== 0) {
     const node = toVisit.shift()!
 
@@ -158,26 +191,7 @@ export const shortestPath = (
     for (const [nextToken, actions] of graph.vertices
       .get(previous)
       .outgoingEdges.entries()) {
-      if (
-        actions.some((action) => {
-          if (action.isTrade) {
-            return true
-          }
-          if (!action.oneUsePrZap) {
-            return false
-          }
-          if (incompatibleActions.has(action)) {
-            return true
-          }
-          for (const addr of action.addressesInUse) {
-            if (addressesUsed.has(addr)) {
-              incompatibleActions.add(action)
-              return true
-            }
-          }
-          return false
-        })
-      ) {
+      if (!actions.some((action) => predicate(action))) {
         continue
       }
 

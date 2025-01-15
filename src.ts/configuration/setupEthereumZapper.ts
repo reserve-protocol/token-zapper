@@ -18,6 +18,7 @@ import {
   IVaultYearn__factory,
 } from '../contracts'
 import { TokenType } from '../entities/TokenClass'
+import { wrapGasToken } from '../searcher/TradeAction'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
@@ -29,6 +30,7 @@ import { setupERC4626 } from './setupERC4626'
 import { loadEthereumTokenList } from './setupEthereumTokenList'
 import { setupFrxETH } from './setupFrxETH'
 import { setupOdosPricing } from './setupOdosPricing'
+import { setupPXETH } from './setupPXETH'
 import { setupRETH } from './setupRETH'
 import { setupUniswapV3Router } from './setupUniswapRouter'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
@@ -103,11 +105,12 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   // console.log(aaveV3.describe().join('\n'))
 
-  await universe.addSingleTokenPriceOracle({
-    token: commonTokens.apxETH,
-    oracleAddress: Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea'),
-    priceToken: eth,
-  })
+  await setupPXETH(
+    universe,
+    commonTokens.pxETH,
+    commonTokens.apxETH,
+    Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea')
+  )
 
   const initUniswap = async () => {
     try {
@@ -180,12 +183,15 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     Promise.resolve(universe.commonTokens.USDC.one)
   )
 
-  const depositToETHX = new ETHTokenVaultDepositAction(
+  const depositToETHX = wrapGasToken(
     universe,
-    universe.commonTokens.ETHx,
-    Address.from('0xcf5EA1b38380f6aF39068375516Daf40Ed70D299'),
-    1n,
-    'ETHX'
+    new ETHTokenVaultDepositAction(
+      universe,
+      universe.commonTokens.ETHx,
+      Address.from('0xcf5EA1b38380f6aF39068375516Daf40Ed70D299'),
+      1n,
+      'ETHX'
+    )
   )
   universe.addAction(depositToETHX)
   universe.mintableTokens.set(universe.commonTokens.ETHx, depositToETHX)
@@ -233,11 +239,11 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.tokenClass.set(
     universe.commonTokens.sUSDe,
-    Promise.resolve(universe.commonTokens.USDC)
+    Promise.resolve(universe.commonTokens.USDe)
   )
   universe.tokenClass.set(
     universe.commonTokens.USDe,
-    Promise.resolve(universe.commonTokens.USDC)
+    Promise.resolve(universe.commonTokens.USDe)
   )
 
   universe.addAction(depositTosUSDe)

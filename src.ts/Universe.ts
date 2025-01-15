@@ -50,6 +50,7 @@ import { Contract } from './tx-gen/Planner'
 import { DagSearcher } from './searcher/DagSearcher'
 import { TxGen } from './searcher/TxGen'
 import { NativeInputWrapper } from './searcher/TradeAction'
+import { TokenFlowGraphRegistry, TokenFlowGraphSearcher } from './searcher/TokenFlowGraph'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -232,8 +233,86 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this._gasTokenPrice ?? this.usd.from(3000)
   }
 
+  public isTokenMintable(token: Token) {
+    if (token === this.nativeToken || token === this.wrappedNativeToken) {
+      return false
+    }
+    try {
+      this.getMintAction(token)
+      return true
+    } catch (e) {
+      return false
+    }
+  }
+
+  public isTokenBurnable(token: Token) {
+    if (token === this.nativeToken || token === this.wrappedNativeToken) {
+      return false
+    }
+    try {
+      const wrappable = this.wrappedTokens.get(token)
+      if (wrappable?.burn) {
+        return true
+      }
+      return false
+    } catch (e) {
+      return false
+    }
+  }
   public getMintAction(token: Token) {
-    return this.mintableTokens.get(token)
+    const mint = this.mintableTokens.get(token)
+    if (mint == null) {
+      const wrappable = this.wrappedTokens.get(token)
+      if (wrappable) {
+        return wrappable.mint
+      }
+      throw new Error(`No mint action found for ${token}`)
+    }
+    return mint
+  }
+
+  public getBurnAction(token: Token) {
+    const burn = this.wrappedTokens.get(token)?.burn
+    if (burn == null) {
+      throw new Error(`No burn action found for ${token}`)
+    }
+    return burn
+  }
+
+  public async underlyingTokens(token: Token): Promise<Token[]> {
+    if (this.rTokenDeployments.has(token)) {
+      const rTokenDeployment = this.rTokenDeployments.get(token)!
+      const out: Token[] = []
+      for (const basketToken of rTokenDeployment.basket) {
+        const underlying = await this.underlyingTokens(basketToken)
+        if (underlying.length === 0) {
+          underlying.push(basketToken)
+        }
+        out.push(...underlying)
+      }
+      return out
+    } else if (this.lpTokens.has(token)) {
+      const lpToken = this.lpTokens.get(token)!
+      const out: Token[] = []
+      for (const tok of lpToken.poolTokens) {
+        const underlying = await this.underlyingTokens(tok)
+        if (underlying.length === 0) {
+          underlying.push(tok)
+        }
+        out.push(...underlying)
+      }
+      return out
+    } 
+    const underlying = await this.underlyingToken.get(token)
+      if (underlying !== token) {
+        const underlyingTokens = await this.underlyingTokens(underlying)
+        if (underlyingTokens.length === 0) {
+          return [underlying]
+        } else {
+          return underlyingTokens
+        }
+      }
+      return []
   }
 
   public async quoteGas(units: bigint) {
@@ -986,6 +1065,9 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
   }
 
+  private readonly tfgReg = new TokenFlowGraphRegistry()
+  public readonly tfgSearcher = new TokenFlowGraphSearcher(this, this.tfgReg)
+
   public async zap(
     userInput: TokenQuantity,
     rToken: Token | string,
@@ -998,16 +1080,18 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (typeof rToken === 'string') {
       rToken = await this.getToken(Address.from(rToken))
     }
-    const searcher = new DagSearcher(this)
     try {
+      const isNative = userInput.token === this.nativeToken
+      userInput = isNative ? userInput.into(this.wrappedNativeToken) : userInput
       console.log(`Building DAG for ${userInput} -> ${rToken}`)
-      const dag = await searcher.buildZapInDag(
-        userAddress,
-        [userInput],
+      const tfg = await this.tfgSearcher.search1To1(
+        userInput,
         rToken
       )
-      return await new TxGen(dag).generate(userAddress, {
-        ethereumInput: userInput.token === this.nativeToken,
+      const res = await tfg.evaluate(this, [userInput])
+      console.log(`Expected output: ${res.result.inputs.join(', ')} -> ${res.result.outputs.join(', ')}`)
+      return await new TxGen(this, res).generate(userAddress, {
+        ethereumInput: isNative,
       })
     } catch (e) {
       console.log(`Error zapping: ${e}`)
@@ -1020,30 +1104,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     userAddress: Address | string,
     opts?: ToTransactionArgs
   ) {
-    if (inputQty.token === this.nativeToken) {
-      throw new Error('Native token cannot be used as input')
-    }
-    if (typeof userAddress === 'string') {
-      userAddress = Address.from(userAddress)
-    }
-    if (typeof outputToken === 'string') {
-      outputToken = await this.getToken(Address.from(outputToken))
-    }
-    const searcher = new DagSearcher(this)
-    try {
-      console.log(`Building DAG for ${inputQty} -> ${outputToken}`)
-      const dag = await searcher.buildZapOutDag(
-        userAddress,
-        inputQty,
-        outputToken
-      )
-      return await new TxGen(await dag.dag.evaluate()).generate(userAddress, {
-        ethereumInput: false
-      })
-    } catch (e) {
-      console.log(`Error zapping: ${e}`)
-      throw e
-    }
+    return await this.zap(inputQty, outputToken, userAddress, opts)
   }
 
   get approvalAddress() {

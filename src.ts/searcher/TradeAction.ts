@@ -11,6 +11,7 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { BlockCache } from '../base/BlockBasedCache'
 import { DefaultMap } from '../base/DefaultMap'
+import { Dim2Cache } from './MultiDimCache'
 
 const remapAddr = (addr: Address) => {
   if (addr === Address.ZERO) {
@@ -118,6 +119,7 @@ const globalCache = new DefaultMap<
 >(() => new Map())
 export class WrappedAction extends BaseAction {
   private readonly cachedResults: BlockCache<bigint, TokenQuantity[]>
+  private readonly dim2Cache: Dim2Cache
   private readonly innerCache: Map<bigint, Promise<TokenQuantity[]>>
   private block: number = 0
   constructor(
@@ -133,6 +135,7 @@ export class WrappedAction extends BaseAction {
       wrapped.approvals
     )
 
+    this.dim2Cache = new Dim2Cache(universe, wrapped)
     this.innerCache = globalCache.get(wrapped)
 
     this.cachedResults = universe.createCache(async (amountIn) => {
@@ -151,6 +154,10 @@ export class WrappedAction extends BaseAction {
   }
   get dependsOnRpc() {
     return false
+  }
+
+  get returnsOutput(): boolean {
+    return this.wrapped.returnsOutput
   }
 
   get oneUsePrZap(): boolean {
@@ -208,17 +215,25 @@ export class WrappedAction extends BaseAction {
       return [this.outputToken[0].zero]
     }
   }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+  async quote(inputs: TokenQuantity[]): Promise<TokenQuantity[]> {
     if (this.block !== this.universe.currentBlock) {
       this.innerCache.clear()
       this.block = this.universe.currentBlock
     }
-    let out = this.innerCache.get(amountIn.amount)
-    if (out == null) {
-      out = this.quoteInnerQuote(amountIn)
-      this.innerCache.set(amountIn.amount, out)
+    if (inputs.length === 1) {
+      const amountIn = inputs[0]
+      let out = this.innerCache.get(amountIn.amount)
+      if (out == null) {
+        out = this.quoteInnerQuote(amountIn)
+        this.innerCache.set(amountIn.amount, out)
+      }
+      return await out
+    } else if (inputs.length === 2) {
+      const out = await this.dim2Cache.quote(inputs)
+      // console.log(`Quote 2d cache ${this.wrapped.protocol} ${inputs} -> ${out}`)
+      return [out]
     }
-    return await out
+    throw new Error('Invalid number of inputs')
   }
   gasEstimate(): bigint {
     return this.wrapped.gasEstimate()
@@ -239,6 +254,9 @@ export class WrappedAction extends BaseAction {
 }
 
 export class NativeInputWrapper extends BaseAction {
+  get returnsOutput(): boolean {
+    return this.wrapped.returnsOutput
+  }
   constructor(
     private readonly universe: Universe,
     public readonly wrapped: BaseAction
@@ -501,6 +519,17 @@ export const unwrapAction = (action: BaseAction): BaseAction => {
     action = action.wrapped
   }
   return action
+}
+
+export const wrapGasToken = <T extends BaseAction>(
+  universe: Universe,
+  i: T
+): T => {
+  let act: BaseAction = i
+  if (act.inputToken.some((i) => i === universe.nativeToken)) {
+    act = new NativeInputWrapper(universe, act)
+  }
+  return act as T
 }
 
 export const wrapAction = (universe: Universe, i: BaseAction) => {

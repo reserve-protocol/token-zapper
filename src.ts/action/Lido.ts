@@ -10,6 +10,7 @@ import { constants } from 'ethers'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import * as gen from '../tx-gen/Planner'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
+import { wrapGasToken } from '../searcher/TradeAction'
 
 export class LidoDeployment {
   public readonly contracts: {
@@ -78,11 +79,10 @@ export class LidoDeployment {
 
     const wrap = new STETHToWSTETH(this)
     const unwrap = new WSTETHToSTETH(this)
-    const stake = new ETHToSTETH(this)
+    const stake = wrapGasToken(this.universe, new ETHToSTETH(this))
     universe.defineMintable(wrap, unwrap, true)
     universe.addAction(stake, steth.address)
     universe.mintableTokens.set(steth, stake)
-    
 
     this.actions = {
       stake: {
@@ -145,7 +145,7 @@ abstract class BaseLidoAction extends Action('Lido') {
     return true
   }
   get returnsOutput() {
-    return false
+    return true
   }
   async plan(
     planner: gen.Planner,
@@ -158,7 +158,7 @@ abstract class BaseLidoAction extends Action('Lido') {
     if (out == null) {
       throw new Error('Failed to plan action')
     }
-    return null
+    return [out]
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {

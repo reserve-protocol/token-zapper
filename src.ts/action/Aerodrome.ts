@@ -105,6 +105,10 @@ class AeropoolAddLiquidity extends BaseV2AerodromeAction {
     return 'addLiquidity'
   }
 
+  public get returnsOutput() {
+    return true
+  }
+
   get dustTokens(): Token[] {
     return [this.pool.token0, this.pool.token1]
   }
@@ -150,32 +154,33 @@ class AeropoolAddLiquidity extends BaseV2AerodromeAction {
     inputs: Value[],
     destination: Address,
     minAmounts: TokenQuantity[]
-  ): Promise<null | Value[]> {
-    planner.add(
-      this.pool.context.weirollAerodromeRouterCaller.addLiquidityV2(
-        inputs[0],
-        inputs[1],
-        minAmounts[0].amount - minAmounts[0].amount / 5n,
-        minAmounts[1].amount - minAmounts[1].amount / 5n,
-        defaultAbiCoder.encode(
-          ['address', 'address', 'bool', 'address', 'address'],
-          [
-            this.pool.token0.address.address,
-            this.pool.token1.address.address,
-            this.pool.isStable,
-            destination.address,
-            this.pool.context.router.address,
-          ]
-        )
-      ),
-      `${this.protocol}:${this.actionName}(${minAmounts.join(
-        ', '
-      )}) => ${minAmounts.join(', ')}`,
-      `${this.protocol}_mint_${this.outputToken.join(
-        ', '
-      )}_using_${this.inputToken.join('_')}`
-    )
-    return null
+  ) {
+    return [
+      planner.add(
+        this.pool.context.weirollAerodromeRouterCaller.addLiquidityV2(
+          inputs[0],
+          inputs[1],
+          minAmounts[0].amount - minAmounts[0].amount / 5n,
+          minAmounts[1].amount - minAmounts[1].amount / 5n,
+          defaultAbiCoder.encode(
+            ['address', 'address', 'bool', 'address', 'address'],
+            [
+              this.pool.token0.address.address,
+              this.pool.token1.address.address,
+              this.pool.isStable,
+              destination.address,
+              this.pool.context.router.address,
+            ]
+          )
+        ),
+        `${this.protocol}:${this.actionName}(${minAmounts.join(
+          ', '
+        )}) => ${minAmounts.join(', ')}`,
+        `${this.protocol}_mint_${this.outputToken.join(
+          ', '
+        )}_using_${this.inputToken.join('_')}`
+      )!,
+    ]
   }
 
   public constructor(public readonly pool: AerodromeStablePool) {
@@ -409,6 +414,10 @@ class AeropoolSwap extends BaseV2AerodromeAction {
     return false
   }
 
+  public get returnsOutput() {
+    return true
+  }
+
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [this.outputToken[0].from(await this.pool.getAmountOut(amountIn))]
   }
@@ -433,34 +442,34 @@ class AeropoolSwap extends BaseV2AerodromeAction {
     [input]: Value[],
     destination: Address,
     predictedInputs: TokenQuantity[]
-  ): Promise<null | Value[]> {
+  ) {
     const [minAmount] = await this.quoteWithSlippage(predictedInputs)
 
-    planner.add(
-      this.pool.context.weirollAerodromeRouterCaller.exactInputSingleV2(
-        input,
-        minAmount.amount - minAmount.amount / 20n,
-        this.pool.context.router.address,
-        destination.address,
-        defaultAbiCoder.encode(
-          ['address', 'address', 'bool', 'address'],
-          [
-            this.inputToken[0].address.address,
-            this.outputToken[0].address.address,
-            this.pool.isStable,
-            this.pool.factory.address,
-          ]
-        )
-      ),
-      `${this.protocol}:${this.actionName}(${predictedInputs.join(
-        ', '
-      )}) => ${minAmount}`,
-      `${this.protocol}_swap_${predictedInputs.join(
-        '_'
-      )}_for_${this.outputToken.join('_')}`
-    )
-
-    return null
+    return [
+      planner.add(
+        this.pool.context.weirollAerodromeRouterCaller.exactInputSingleV2(
+          input,
+          minAmount.amount - minAmount.amount / 20n,
+          this.pool.context.router.address,
+          destination.address,
+          defaultAbiCoder.encode(
+            ['address', 'address', 'bool', 'address'],
+            [
+              this.inputToken[0].address.address,
+              this.outputToken[0].address.address,
+              this.pool.isStable,
+              this.pool.factory.address,
+            ]
+          )
+        ),
+        `${this.protocol}:${this.actionName}(${predictedInputs.join(
+          ', '
+        )}) => ${minAmount}`,
+        `${this.protocol}_swap_${predictedInputs.join(
+          '_'
+        )}_for_${this.outputToken.join('_')}`
+      )!,
+    ]
   }
 }
 

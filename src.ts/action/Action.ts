@@ -311,6 +311,10 @@ export abstract class BaseAction {
     return 'Unknown'
   }
 
+  get actionName(): string {
+    return this.constructor.name
+  }
+
   get dustTokens(): Token[] {
     return []
   }
@@ -425,7 +429,9 @@ export abstract class BaseAction {
 
     if (out == null) {
       if (this.returnsOutput) {
-        throw new Error('Action did not return output as expected')
+        throw new Error(
+          this.protocol + ': Action did not return output as expected'
+        )
       }
       return this.outputBalanceOf(universe, planner)
     }

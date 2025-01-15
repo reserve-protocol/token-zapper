@@ -11,6 +11,7 @@ import {
   setupBaseZapper,
   Universe,
 } from '../../src.ts/index'
+import { TokenFlowGraphSearcher } from '../../src.ts/searcher/TokenFlowGraph'
 dotenv.config()
 
 if (process.env.MAINNET_PROVIDER == null) {
@@ -43,7 +44,7 @@ export const baseWhales = {
     '0x73b06d8d18de422e269645eace15400de7462417', // dai
 
   '0x4200000000000000000000000000000000000006':
-    '0x0250f06fc76297fe28d0981f0566f1c0445b3cfe', // weth
+    '0xD4a0e0b9149BCee3C920d2E00b5dE09138fd8bb7', // weth
 
   '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452':
     '0x99cbc45ea5bb7ef3a5bc08fb1b7e56bb2442ef0d', // wsteth
@@ -135,6 +136,8 @@ beforeAll(async () => {
   }
 }, 30000)
 
+const signer = Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
+
 describe('dag builder', () => {
   beforeEach(async () => {
     await universe.updateBlockState(
@@ -147,7 +150,7 @@ describe('dag builder', () => {
   describe('Standard RToken redeems', () => {
     it('10 bsdETH => weth', async () => {
       const dag = await new DagSearcher(universe).buildZapOutDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         universe.rTokens.bsd.from(10.0),
         universe.commonTokens.WETH
       )
@@ -163,7 +166,7 @@ describe('dag builder', () => {
 
     it('300 bsdETH => weth', async () => {
       const dag = await new DagSearcher(universe).buildZapOutDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         universe.rTokens.bsd.from(300.0),
         universe.commonTokens.WETH
       )
@@ -179,7 +182,7 @@ describe('dag builder', () => {
 
     it('300 bsdETH => USDC', async () => {
       const dag = await new DagSearcher(universe).buildZapOutDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         universe.rTokens.bsd.from(300.0),
         universe.commonTokens.USDC
       )
@@ -195,7 +198,7 @@ describe('dag builder', () => {
 
     it('10.000 hyUSD => USDC', async () => {
       const dag = await new DagSearcher(universe).buildZapOutDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         universe.rTokens.hyUSD.from(10_000.0),
         universe.commonTokens.USDC
       )
@@ -211,7 +214,7 @@ describe('dag builder', () => {
 
     it('1.000.000 hyUSD => USDC', async () => {
       const dag = await new DagSearcher(universe).buildZapOutDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         universe.rTokens.hyUSD.from(1_000_000.0),
         universe.commonTokens.USDC
       )
@@ -227,7 +230,7 @@ describe('dag builder', () => {
 
     it('1.000.000 hyUSD => WETH', async () => {
       const dag = await new DagSearcher(universe).buildZapOutDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         universe.rTokens.hyUSD.from(1_000_000.0),
         universe.commonTokens.WETH
       )
@@ -243,7 +246,7 @@ describe('dag builder', () => {
 
     it('30 BSDX => WETH', async () => {
       const dag = await new DagSearcher(universe).buildZapOutDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         universe.rTokens.BSDX.from(30.0),
         universe.commonTokens.WETH
       )
@@ -259,7 +262,7 @@ describe('dag builder', () => {
 
     it('10.000 BSDX => ETH', async () => {
       const dag = await new DagSearcher(universe).buildZapOutDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         universe.rTokens.BSDX.from(10_000.0),
         universe.commonTokens.WETH
       )
@@ -275,7 +278,7 @@ describe('dag builder', () => {
 
     it('1.000.000 BSDX => ETH', async () => {
       const dag = await new DagSearcher(universe).buildZapOutDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         universe.rTokens.BSDX.from(1_000_000.0),
         universe.commonTokens.WETH
       )
@@ -293,7 +296,7 @@ describe('dag builder', () => {
   describe('Standard RToken zaps', () => {
     it('0.1 WETH => BSDX', async () => {
       const dag = await new DagSearcher(universe).buildZapInDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         [universe.commonTokens.WETH.from(0.1)],
         universe.rTokens.BSDX
       )
@@ -308,7 +311,7 @@ describe('dag builder', () => {
 
     it('100 WETH => BSDX', async () => {
       const dag = await new DagSearcher(universe).buildZapInDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         [universe.commonTokens.WETH.from(100.0)],
         universe.rTokens.BSDX
       )
@@ -321,9 +324,22 @@ describe('dag builder', () => {
       console.log(dag.toDot())
     }, 60000)
 
+    it('100 WETH into BSDX new', async () => {
+      try {
+        const g = await universe.zap(
+          universe.wrappedNativeToken.from(50),
+          universe.rTokens.BSDX,
+          signer
+        )
+        console.log(g.toString())
+      } catch (e) {
+        console.log(e)
+      }
+    }, 60000)
+
     it('10 WETH => bsdETH', async () => {
       const dag = await new DagSearcher(universe).buildZapInDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         [universe.commonTokens.WETH.from(10.0)],
         universe.rTokens.bsd
       )
@@ -338,7 +354,7 @@ describe('dag builder', () => {
 
     it('1000 WETH => bsdETH', async () => {
       const dag = await new DagSearcher(universe).buildZapInDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         [universe.commonTokens.WETH.from(1000.0)],
         universe.rTokens.bsd
       )
@@ -353,7 +369,7 @@ describe('dag builder', () => {
 
     it('1.000 USDC => BSDX', async () => {
       const dag = await new DagSearcher(universe).buildZapInDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         [universe.commonTokens.USDC.from(1000.0)],
         universe.rTokens.BSDX
       )
@@ -368,7 +384,7 @@ describe('dag builder', () => {
 
     it('1.000.000 USDC => bsdETH', async () => {
       const dag = await new DagSearcher(universe).buildZapInDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         [universe.commonTokens.USDC.from(1_000_000.0)],
         universe.rTokens.bsd
       )
@@ -383,7 +399,7 @@ describe('dag builder', () => {
 
     it('10.000 USDC => hyUSD', async () => {
       const dag = await new DagSearcher(universe).buildZapInDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         [universe.commonTokens.USDC.from(10_000.0)],
         universe.rTokens.hyUSD
       )
@@ -398,7 +414,7 @@ describe('dag builder', () => {
 
     it('1.000.000 USDC => hyUSD', async () => {
       const dag = await new DagSearcher(universe).buildZapInDag(
-        Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2'),
+        signer,
         [universe.commonTokens.USDC.from(1_000_000.0)],
         universe.rTokens.hyUSD
       )

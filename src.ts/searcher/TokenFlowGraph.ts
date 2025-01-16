@@ -7,6 +7,7 @@ import { Queue } from './Queue'
 import { unwrapAction, wrapAction } from './TradeAction'
 import { optimiseTrades } from './optimiseTrades'
 import { Address } from '../base/Address'
+import { SearcherOptions } from '../configuration/ChainConfiguration'
 
 export class NodeProxy {
   private version: number
@@ -2175,10 +2176,14 @@ const optimise = async (
   graph: TokenFlowGraphBuilder,
   inputs: TokenQuantity[],
   opts?: {
-    minimizeDustSteps?: number
+    optsDustPhase1Steps?: number
+    optsDustPhase2Steps?: number
     optimisationSteps?: number
   }
 ) => {
+  const optimisationSteps = opts?.optimisationSteps ?? 15
+  const minimiseDustPhase1Steps = opts?.optsDustPhase1Steps ?? 15
+  const minimiseDustPhase2Steps = opts?.optsDustPhase2Steps ?? 5
   console.log(graph.graph.toDot().join('\n'))
   const inlined = inlineTFGs(graph.graph)
   let g = removeUselessNodes(inlined)
@@ -2208,7 +2213,7 @@ const optimise = async (
   }
 
   const DECAY = 0.5
-  const steps = opts?.optimisationSteps ?? 25
+
   let scale = 2
 
   const isResultBetter = (previous: TFGResult, newResult: TFGResult) => {
@@ -2223,7 +2228,7 @@ const optimise = async (
     () => optimiserEvaluation.evaluate(inputs),
     bestSoFar,
     [...g.nodes()].filter((n) => n.nodeType === NodeType.SplitWithDust),
-    opts?.minimizeDustSteps ?? 20
+    minimiseDustPhase1Steps
   )
 
   let optimisationNodes = [...g.nodes()].filter((n) => n.isOptimisable)
@@ -2237,8 +2242,8 @@ const optimise = async (
     edge.min = 1 / edge.parts.length / 2
     edge.normalize()
   }
-  for (let i = 0; i < steps; i++) {
-    const size = scale * (1 - i / steps) ** 2
+  for (let i = 0; i < optimisationSteps; i++) {
+    const size = scale * (1 - i / optimisationSteps) ** 2
 
     let bestThisIteration = bestSoFar
     let bestNodeToChange = -1
@@ -2318,23 +2323,10 @@ const optimise = async (
       () => optimiserEvaluation.evaluate(inputs),
       bestSoFar,
       [...g.nodes()].filter((n) => n.nodeType === NodeType.SplitWithDust),
-      20
+      minimiseDustPhase2Steps
     )
-
     console.log(bestSoFar.result.outputs.join(', '))
   }
-
-  // const optimiserEvaluation2 = evaluationOptimiser(universe, g)
-
-  // bestSoFar = await minimizeDust(
-  //   g,
-  //   () => optimiserEvaluation2.evaluate(inputs),
-  //   bestSoFar,
-  //   [...g.nodes()].filter(
-  //     (n) => n.nodeType === NodeType.SplitWithDust || n.isFanout
-  //   ),
-  //   10
-  // )
 
   console.log(
     `Final graph for ${bestSoFar.result.inputs.join(', ')} -> ${
@@ -2811,11 +2803,15 @@ export class TokenFlowGraphSearcher {
     return out
   }
 
-  public async search1To1(input: TokenQuantity, output: Token) {
+  public async search1To1(
+    input: TokenQuantity,
+    output: Token,
+    opts: SearcherOptions
+  ) {
     let inputToken = input.token
     const prev = this.registry.find(inputToken, output)
     if (prev != null) {
-      return await optimise(this.universe, prev, [input])
+      return await optimise(this.universe, prev, [input], opts)
     }
 
     let graph = TokenFlowGraphBuilder.create1To1(
@@ -2968,6 +2964,6 @@ export class TokenFlowGraphSearcher {
       subgraph.getTokenNode(inputToken).forward(inputToken, 1, outputNode)
     }
     this.registry.define(inputToken, output, graph)
-    return await optimise(this.universe, graph, [input])
+    return await optimise(this.universe, graph, [input], opts)
   }
 }

@@ -1,16 +1,10 @@
 import { arrayify, hexZeroPad, hexlify } from 'ethers/lib/utils'
 import { Universe } from '../Universe'
-import {
-  BaseAction,
-  DestinationOptions,
-  InteractionConvention,
-} from '../action/Action'
+import { BaseAction, DestinationOptions } from '../action/Action'
 import { Address } from '../base/Address'
 import { GAS_TOKEN_ADDRESS } from '../base/constants'
-import { Token, TokenQuantity } from '../entities/Token'
+import { TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
-import { BlockCache } from '../base/BlockBasedCache'
-import { DefaultMap } from '../base/DefaultMap'
 import { Dim1Cache, Dim2Cache, MultiDimCache } from './MultiDimCache'
 
 const remapAddr = (addr: Address) => {

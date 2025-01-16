@@ -386,7 +386,6 @@ class UniswapV3Swap extends Action('UniswapV3') {
     if (predictedInput.isZero) {
       return null
     }
-    this.quoteExactSingle.clear()
     const { amountOut, sqrtPriceX96After } = await this.quoteExactSingle.get(
       predictedInput.amount
     )
@@ -504,7 +503,8 @@ class UniswapV3Swap extends Action('UniswapV3') {
           gasEstimate: this._gasEstimate,
           sqrtPriceX96After: out.sqrtPriceX96After.toBigInt(),
         }
-      }
+      },
+      12000
     )
   }
 

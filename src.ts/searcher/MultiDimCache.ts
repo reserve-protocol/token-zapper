@@ -10,8 +10,6 @@ const log2 = (x: bigint) => {
   return out
 }
 
-const RESOLUTION = 10n
-
 type QuoteWithDustResult = {
   output: TokenQuantity[]
   dust: TokenQuantity[]
@@ -94,17 +92,17 @@ export interface MultiDimCache {
   quoteWithDust: (amountIn: TokenQuantity[]) => Promise<QuoteWithDustResult>
 }
 
-const inputIntoRanges = (amountIn: TokenQuantity) => {
+const inputIntoRanges = (resolution: bigint, amountIn: TokenQuantity) => {
   const orderOfMagnitude = log2(amountIn.amount)
 
   let in0 = 2n ** orderOfMagnitude
   let in1 = 2n ** (orderOfMagnitude + 1n)
   let range = in1 - in0
 
-  const parts = range / RESOLUTION
+  const parts = range / resolution
   const lowerTick = (amountIn.amount - in0) / parts
   in0 = in0 + lowerTick * parts
-  in1 = in1 - (RESOLUTION - (lowerTick + 1n)) * parts
+  in1 = in1 - (resolution - (lowerTick + 1n)) * parts
   range = in1 - in0
 
   return [in0, in1, range]
@@ -134,7 +132,10 @@ export class Dim1Cache implements MultiDimCache {
       return this.zeroResult()
     }
     try {
-      const [in0, in1, range] = inputIntoRanges(amountIn)
+      const [in0, in1, range] = inputIntoRanges(
+        this.universe.config.cacheResolution,
+        amountIn
+      )
 
       const [y0s, y1s] = await Promise.all([
         this.cachedResults.get(in0),
@@ -216,8 +217,9 @@ export class Dim2Cache implements MultiDimCache {
     x: TokenQuantity,
     y: TokenQuantity
   ): Promise<QuoteWithDustResult> {
-    const [xin0, xin1] = inputIntoRanges(x)
-    const [yin0, yin1] = inputIntoRanges(y)
+    const resolution = this.universe.config.cacheResolution
+    const [xin0, xin1] = inputIntoRanges(resolution, x)
+    const [yin0, yin1] = inputIntoRanges(resolution, y)
     const cols0 = this.cachedResults.get(xin0)
     const cols1 = this.cachedResults.get(xin1)
 

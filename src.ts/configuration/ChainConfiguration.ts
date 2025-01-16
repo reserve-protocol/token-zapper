@@ -27,6 +27,13 @@ const defaultSearcherOptions = {
 
   largeZapThreshold: 300000,
   largeZapSearchTime: 6000,
+
+  // New options
+  optimisationSteps: 10,
+  minimiseDustPhase1Steps: 10,
+  minimiseDustPhase2Steps: 5,
+
+  cacheResolution: 4n
 }
 
 export type SearcherOptions = typeof defaultSearcherOptions & {

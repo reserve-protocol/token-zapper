@@ -577,7 +577,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   public async balanceOf(token: Token, account: Address) {
-    return await this.approvalsStore.queryBalance(token, account, this)
+    return await this.approvalsStore.queryBalance(token, account)
   }
 
   private readonly blockState = {
@@ -989,9 +989,9 @@ export class Universe<const UniverseConf extends Config = Config> {
     for (const router of this.tradeVenues) {
       router.router.onBlock(block, this.config.requoteTolerance)
     }
-    for (const cache of this.caches) {
-      cache.onBlock(block)
-    }
+    // for (const cache of this.caches) {
+    //   cache.onBlock(block)
+    // }
     this.blockState.currentBlock = block
     this.blockState.gasPrice = gasPrice
     this._gasTokenPrice = await this.fairPrice(this.nativeToken.one)
@@ -1084,7 +1084,8 @@ export class Universe<const UniverseConf extends Config = Config> {
       console.log(`Building DAG for ${userInput} -> ${rToken}`)
       const tfg = await this.tfgSearcher.search1To1(
         userInput,
-        rToken
+        rToken,
+        this.config
       )
       const res = await tfg.evaluate(this, [userInput])
       console.log(`Expected output: ${res.result.inputs.join(', ')} -> ${res.result.outputs.filter(i => i.amount >10n).join(', ')}`)

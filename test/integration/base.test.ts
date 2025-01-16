@@ -14,6 +14,7 @@ import {
   makeIntegrationtestCase,
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
+import { DefaultMap } from '../../src.ts/base/DefaultMap'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -113,9 +114,9 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  makeMintTestCase(10000, t.USDC, rTokens.bsd),
+  // makeMintTestCase(10000, t.USDC, rTokens.bsd),
   // makeMintTestCase(5, t.WETH, rTokens.bsd),
-  // makeMintTestCase(50, t.WETH, rTokens.BSDX),
+  makeMintTestCase(50, t.WETH, rTokens.BSDX),
   // makeMintTestCase(5, t.USDC, rTokens.bsd),
   // makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
   // makeMintTestCase(10000, t.USDbC, rTokens.hyUSD),
@@ -131,10 +132,10 @@ const issueanceCases = [
 const redeemCases = [
   // makeMintTestCase(10, rTokens.hyUSD, t.USDC),
   // makeMintTestCase(10, rTokens.hyUSD, t.WETH),
-  // makeMintTestCase(5, rTokens.bsd, t.WETH),
+  makeMintTestCase(5, rTokens.bsd, t.WETH),
   // makeMintTestCase(150, rTokens.bsd, t.USDC),
   // makeMintTestCase(150, rTokens.BSDX, t.WETH),
-  makeMintTestCase(1000, rTokens.BSDX, t.WETH),
+  // makeMintTestCase(1000, rTokens.BSDX, t.WETH),
 ]
 const individualIntegrations = [
   // makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
@@ -154,6 +155,41 @@ const zapIntoYieldPositionCases: ReturnType<
 let universe: Universe
 const provider = getProvider(process.env.BASE_PROVIDER!)
 
+let requestCount = 0
+let initialized = false
+const dupRequestCounter = new DefaultMap<string, number>(() => 0)
+// provider.on('debug', (log) => {
+//   if (
+//     log?.action !== 'request' ||
+//     log?.request?.method !== 'eth_call' ||
+//     log?.request?.params[0].to == null ||
+//     log?.request?.params[0].data == null
+//   ) {
+//     return
+//   }
+//   requestCount += 1
+//   if (initialized) {
+//     const req =
+//       log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
+//     dupRequestCounter.get(req)
+//     dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
+//   }
+// })
+const emitReqCount = (msg?: string, dups?: boolean) => {
+  if (requestCount > 0) {
+    console.log(`${msg} Request count: ${requestCount}`)
+    requestCount = 0
+
+    if (dups) {
+      for (const [req, count] of dupRequestCounter.entries()) {
+        if (count > 1) {
+          console.log(`${req} count: ${count}`)
+        }
+      }
+    }
+  }
+  dupRequestCounter.clear()
+}
 beforeAll(async () => {
   global.console = require('console')
   console.log(`Setting up`)
@@ -177,6 +213,8 @@ beforeAll(async () => {
   console.log(`Setting up done`)
 
   await universe.initialized
+  emitReqCount('Initialized')
+  initialized = true
   return universe
 }, 60000)
 
@@ -211,6 +249,7 @@ describe('base zapper', () => {
           },
           issueance.output
         )
+        emitReqCount(testCaseName, true)
       }, 60000)
     })
   }
@@ -232,6 +271,7 @@ describe('base zapper', () => {
           },
           redeem.output
         )
+        emitReqCount(testCaseName, true)
       }, 60000)
     })
   }

@@ -13,405 +13,408 @@ import type {
   PopulatedTransaction,
   Signer,
   utils,
-} from 'ethers'
-import type { FunctionFragment, Result } from '@ethersproject/abi'
-import type { Listener, Provider } from '@ethersproject/providers'
+} from "ethers";
+import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
   TypedEvent,
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from '../../common'
+} from "../../common";
 
-export type ExecuteOutputStruct = { dust: PromiseOrValue<BigNumberish>[] }
+export type ExecuteOutputStruct = { dust: PromiseOrValue<BigNumberish>[] };
 
-export type ExecuteOutputStructOutput = [BigNumber[]] & { dust: BigNumber[] }
+export type ExecuteOutputStructOutput = [BigNumber[]] & { dust: BigNumber[] };
 
 export interface ZapperExecutorInterface extends utils.Interface {
   functions: {
-    'add(uint256,uint256)': FunctionFragment
-    'assertEqual(uint256,uint256)': FunctionFragment
-    'assertLarger(uint256,uint256)': FunctionFragment
-    'execute(bytes32[],bytes[],address[])': FunctionFragment
-    'fpMul(uint256,uint256,uint256)': FunctionFragment
-    'mintMaxRToken(address,address,address)': FunctionFragment
-    'rawCall(address,uint256,bytes)': FunctionFragment
-    'sub(uint256,uint256)': FunctionFragment
-  }
+    "add(uint256,uint256)": FunctionFragment;
+    "assertEqual(uint256,uint256)": FunctionFragment;
+    "assertLarger(uint256,uint256)": FunctionFragment;
+    "execute(bytes32[],bytes[],address[])": FunctionFragment;
+    "fpMul(uint256,uint256,uint256)": FunctionFragment;
+    "mintMaxRToken(address,address,address)": FunctionFragment;
+    "rawCall(address,uint256,bytes)": FunctionFragment;
+    "sub(uint256,uint256)": FunctionFragment;
+  };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | 'add'
-      | 'assertEqual'
-      | 'assertLarger'
-      | 'execute'
-      | 'fpMul'
-      | 'mintMaxRToken'
-      | 'rawCall'
-      | 'sub'
-  ): FunctionFragment
+      | "add"
+      | "assertEqual"
+      | "assertLarger"
+      | "execute"
+      | "fpMul"
+      | "mintMaxRToken"
+      | "rawCall"
+      | "sub"
+  ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: 'add',
+    functionFragment: "add",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'assertEqual',
+    functionFragment: "assertEqual",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'assertLarger',
+    functionFragment: "assertLarger",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'execute',
+    functionFragment: "execute",
     values: [
       PromiseOrValue<BytesLike>[],
       PromiseOrValue<BytesLike>[],
       PromiseOrValue<string>[]
     ]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'fpMul',
+    functionFragment: "fpMul",
     values: [
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'mintMaxRToken',
+    functionFragment: "mintMaxRToken",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>
     ]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'rawCall',
+    functionFragment: "rawCall",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BytesLike>
     ]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'sub',
+    functionFragment: "sub",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
-  ): string
+  ): string;
 
-  decodeFunctionResult(functionFragment: 'add', data: BytesLike): Result
-  decodeFunctionResult(functionFragment: 'assertEqual', data: BytesLike): Result
+  decodeFunctionResult(functionFragment: "add", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: 'assertLarger',
+    functionFragment: "assertEqual",
     data: BytesLike
-  ): Result
-  decodeFunctionResult(functionFragment: 'execute', data: BytesLike): Result
-  decodeFunctionResult(functionFragment: 'fpMul', data: BytesLike): Result
+  ): Result;
   decodeFunctionResult(
-    functionFragment: 'mintMaxRToken',
+    functionFragment: "assertLarger",
     data: BytesLike
-  ): Result
-  decodeFunctionResult(functionFragment: 'rawCall', data: BytesLike): Result
-  decodeFunctionResult(functionFragment: 'sub', data: BytesLike): Result
+  ): Result;
+  decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "fpMul", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "mintMaxRToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "rawCall", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "sub", data: BytesLike): Result;
 
-  events: {}
+  events: {};
 }
 
 export interface ZapperExecutor extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this
-  attach(addressOrName: string): this
-  deployed(): Promise<this>
+  connect(signerOrProvider: Signer | Provider | string): this;
+  attach(addressOrName: string): this;
+  deployed(): Promise<this>;
 
-  interface: ZapperExecutorInterface
+  interface: ZapperExecutorInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>
+  ): Promise<Array<TEvent>>;
 
   listeners<TEvent extends TypedEvent>(
     eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>
-  listeners(eventName?: string): Array<Listener>
+  ): Array<TypedListener<TEvent>>;
+  listeners(eventName?: string): Array<Listener>;
   removeAllListeners<TEvent extends TypedEvent>(
     eventFilter: TypedEventFilter<TEvent>
-  ): this
-  removeAllListeners(eventName?: string): this
-  off: OnEvent<this>
-  on: OnEvent<this>
-  once: OnEvent<this>
-  removeListener: OnEvent<this>
+  ): this;
+  removeAllListeners(eventName?: string): this;
+  off: OnEvent<this>;
+  on: OnEvent<this>;
+  once: OnEvent<this>;
+  removeListener: OnEvent<this>;
 
   functions: {
     add(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>
+    ): Promise<[BigNumber]>;
 
     assertEqual(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[boolean]>
+    ): Promise<[boolean]>;
 
     assertLarger(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[boolean]>
+    ): Promise<[boolean]>;
 
     execute(
       commands: PromiseOrValue<BytesLike>[],
       state: PromiseOrValue<BytesLike>[],
       tokens: PromiseOrValue<string>[],
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>
+    ): Promise<ContractTransaction>;
 
     fpMul(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       scale: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>
+    ): Promise<[BigNumber]>;
 
     mintMaxRToken(
       facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>
+    ): Promise<ContractTransaction>;
 
     rawCall(
       to: PromiseOrValue<string>,
       value: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>
+    ): Promise<ContractTransaction>;
 
     sub(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>
-  }
+    ): Promise<[BigNumber]>;
+  };
 
   add(
     a: PromiseOrValue<BigNumberish>,
     b: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<BigNumber>
+  ): Promise<BigNumber>;
 
   assertEqual(
     a: PromiseOrValue<BigNumberish>,
     b: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<boolean>
+  ): Promise<boolean>;
 
   assertLarger(
     a: PromiseOrValue<BigNumberish>,
     b: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<boolean>
+  ): Promise<boolean>;
 
   execute(
     commands: PromiseOrValue<BytesLike>[],
     state: PromiseOrValue<BytesLike>[],
     tokens: PromiseOrValue<string>[],
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>
+  ): Promise<ContractTransaction>;
 
   fpMul(
     a: PromiseOrValue<BigNumberish>,
     b: PromiseOrValue<BigNumberish>,
     scale: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<BigNumber>
+  ): Promise<BigNumber>;
 
   mintMaxRToken(
     facade: PromiseOrValue<string>,
     token: PromiseOrValue<string>,
     recipient: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>
+  ): Promise<ContractTransaction>;
 
   rawCall(
     to: PromiseOrValue<string>,
     value: PromiseOrValue<BigNumberish>,
     data: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>
+  ): Promise<ContractTransaction>;
 
   sub(
     a: PromiseOrValue<BigNumberish>,
     b: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<BigNumber>
+  ): Promise<BigNumber>;
 
   callStatic: {
     add(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     assertEqual(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<boolean>
+    ): Promise<boolean>;
 
     assertLarger(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<boolean>
+    ): Promise<boolean>;
 
     execute(
       commands: PromiseOrValue<BytesLike>[],
       state: PromiseOrValue<BytesLike>[],
       tokens: PromiseOrValue<string>[],
       overrides?: CallOverrides
-    ): Promise<ExecuteOutputStructOutput>
+    ): Promise<ExecuteOutputStructOutput>;
 
     fpMul(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       scale: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     mintMaxRToken(
       facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<void>
+    ): Promise<void>;
 
     rawCall(
       to: PromiseOrValue<string>,
       value: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<[boolean, string] & { success: boolean; out: string }>
+    ): Promise<[boolean, string] & { success: boolean; out: string }>;
 
     sub(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
-  }
+    ): Promise<BigNumber>;
+  };
 
-  filters: {}
+  filters: {};
 
   estimateGas: {
     add(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     assertEqual(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     assertLarger(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     execute(
       commands: PromiseOrValue<BytesLike>[],
       state: PromiseOrValue<BytesLike>[],
       tokens: PromiseOrValue<string>[],
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     fpMul(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       scale: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     mintMaxRToken(
       facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     rawCall(
       to: PromiseOrValue<string>,
       value: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     sub(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
-  }
+    ): Promise<BigNumber>;
+  };
 
   populateTransaction: {
     add(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
     assertEqual(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
     assertLarger(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
     execute(
       commands: PromiseOrValue<BytesLike>[],
       state: PromiseOrValue<BytesLike>[],
       tokens: PromiseOrValue<string>[],
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
     fpMul(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       scale: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
     mintMaxRToken(
       facade: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
     rawCall(
       to: PromiseOrValue<string>,
       value: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
     sub(
       a: PromiseOrValue<BigNumberish>,
       b: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>
-  }
+    ): Promise<PopulatedTransaction>;
+  };
 }

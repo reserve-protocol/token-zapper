@@ -23,6 +23,7 @@ import {
   ONE,
 } from './Action'
 import { TokenType } from '../entities/TokenClass'
+import { BlockCache } from '../base/BlockBasedCache'
 
 export enum AerodromePoolType {
   STABLE = 'STABLE',
@@ -50,7 +51,7 @@ abstract class BaseV2AerodromeAction extends Action('BaseAerodromeStablePool') {
   }
 
   public async liquidity(): Promise<number> {
-    const out = await this.pool.reserves()
+    const out = await this.pool.context.getReserves(this.pool)
     const prices = await Promise.all(
       out.map((t) => t.price().then((i) => i.asNumber()))
     )
@@ -274,7 +275,7 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
   }
 
   public async liquidity(): Promise<number> {
-    const out = await this.pool.reserves()
+    const out = await this.pool.context.getReserves(this.pool)
     const prices = await Promise.all(
       out.map((t) => t.price().then((i) => i.asNumber()))
     )
@@ -301,6 +302,8 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
     return 0n
   }
 
+  private readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
+
   public constructor(
     public readonly pool: AerodromeStablePool,
     public readonly input: Token,
@@ -314,6 +317,27 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
       DestinationOptions.Callee,
       [new Approval(input, pool.context.aerodromeSwapRouterAddr)]
     )
+
+    this.quoteCache = this.pool.context.universe.createCache(
+      async (amountIn: bigint) => {
+        return [
+          this.output.from(
+            (
+              await this.pool.context.mixedRouter.callStatic.quoteExactInputSingleV3(
+                {
+                  tokenIn: this.input.address.address,
+                  tokenOut: this.output.address.address,
+                  amountIn: amountIn,
+                  tickSpacing: this.pool.tickSpacing,
+                  sqrtPriceLimitX96: 0,
+                }
+              )
+            ).amountOut
+          ),
+        ]
+      },
+      12000
+    )
   }
 
   public toString(): string {
@@ -321,16 +345,7 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
   }
 
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const result =
-      await this.pool.context.mixedRouter.callStatic.quoteExactInputSingleV3({
-        tokenIn: this.input.address.address,
-        tokenOut: this.output.address.address,
-        amountIn: amountIn.amount,
-        tickSpacing: this.pool.tickSpacing,
-        sqrtPriceLimitX96: 0,
-      })
-
-    return [this.output.from(result.amountOut)]
+    return await this.quoteCache.get(amountIn.amount)
   }
 
   gasEstimate(): bigint {
@@ -476,7 +491,6 @@ class AeropoolSwap extends BaseV2AerodromeAction {
 const FEE_DIVISOR = 10000n
 const MAX_NUM = 2n ** 256n - 1n
 class AerodromeStablePool {
-  public reserves: () => Promise<TokenQuantity[]>
   private totalSupply: () => Promise<TokenQuantity>
 
   public readonly actions: {
@@ -494,31 +508,12 @@ class AerodromeStablePool {
     public readonly lpToken: Token,
     public readonly token0: Token,
     public readonly token1: Token,
-    private readonly data: SwapLpStructOutput
+    public readonly data: SwapLpStructOutput,
+    private readonly reserves: (
+      pool: AerodromeStablePool
+    ) => Promise<TokenQuantity[]>
   ) {
     this.factory = Address.from(data.factory)
-    this.reserves = this.universe.createCachedProducer(async () => {
-      if (this.poolType === AerodromePoolType.CL) {
-        const balance0 = await this.universe.balanceOf(
-          this.token0,
-          this.poolAddress
-        )
-        const balance1 = await this.universe.balanceOf(
-          this.token1,
-          this.poolAddress
-        )
-        return [balance0, balance1]
-      }
-      const { reserveA, reserveB } =
-        await context.router.callStatic.getReserves(
-          this.token0.address.address,
-          this.token1.address.address,
-          this.data.poolType === 0,
-          this.data.factory
-        )
-
-      return [this.token0.from(reserveA), this.token1.from(reserveB)]
-    })
 
     this.actions =
       this.poolType === AerodromePoolType.CL
@@ -542,18 +537,8 @@ class AerodromeStablePool {
       this.totalSupply = async () => this.lpToken.zero
       return
     }
-    const erc20Inst = IERC20__factory.connect(
-      this.lpToken.address.address,
-      this.universe.provider
-    )
-    this.totalSupply = this.universe.createCachedProducer(async () => {
-      try {
-        const totalSupply = await erc20Inst.callStatic.totalSupply()
-        return this.lpToken.from(totalSupply)
-      } catch (e) {
-        return this.lpToken.from(0)
-      }
-    })
+    this.totalSupply = () =>
+      this.universe.approvalsStore.totalSupply(this.lpToken)
   }
 
   public get poolFee() {
@@ -582,7 +567,7 @@ class AerodromeStablePool {
       amountIn.token.from((amountIn.amount * this.poolFee) / FEE_DIVISOR)
     )
 
-    const reserves = await this.reserves()
+    const reserves = await this.reserves(this)
 
     let [_reserve0, _reserve1] = reserves.map((i) => i.amount)
 
@@ -612,7 +597,7 @@ class AerodromeStablePool {
 
   private async direction(amountIn: TokenQuantity) {
     const D0FOR1 = amountIn.token == this.token0
-    const reserves = await this.reserves()
+    const reserves = await this.reserves(this)
     const [reserveA, reserveB] = D0FOR1
       ? [reserves[0], reserves[1]]
       : [reserves[1], reserves[0]]
@@ -621,7 +606,7 @@ class AerodromeStablePool {
 
   public async quoteRemoveLiquidity(lpTokens: TokenQuantity) {
     const supply = await this.totalSupply()
-    const [reserveA, reserveB] = await this.reserves()
+    const [reserveA, reserveB] = await this.reserves(this)
     const amountA = (lpTokens.amount * reserveA.amount) / supply.amount
     const amountB = (lpTokens.amount * reserveB.amount) / supply.amount
     return [this.token0.from(amountA), this.token1.from(amountB)]
@@ -696,7 +681,8 @@ class AerodromeStablePool {
       lpToken,
       token0,
       token1,
-      pool
+      pool,
+      context.getReserves
     )
 
     const interestingPools = new Set([
@@ -728,7 +714,7 @@ class AerodromeStablePool {
         priceFn: async () => {
           try {
             const [[balance0, balance1], totalSupply] = await Promise.all([
-              inst.reserves(),
+              inst.reserves(inst),
               inst.totalSupply(),
             ])
             const [price0, price1] = await Promise.all([
@@ -912,6 +898,9 @@ const quoteLiquidity = (
 }
 
 export class AerodromeContext {
+  public readonly getReserves: (
+    pool: AerodromeStablePool
+  ) => Promise<TokenQuantity[]>
   public readonly weirollV2Router: Contract
   public readonly weirollAerodromeRouterCaller: Contract
 
@@ -929,6 +918,32 @@ export class AerodromeContext {
   ) {
     this.weirollV2Router = Contract.createContract(router, CommandFlags.CALL)
     this.weirollAerodromeRouterCaller = Contract.createLibrary(callslip)
+
+    const reservesCache = this.universe.createCache(
+      async (pool: AerodromeStablePool) => {
+        if (pool.poolType === AerodromePoolType.CL) {
+          const balance0 = await this.universe.balanceOf(
+            pool.token0,
+            pool.poolAddress
+          )
+          const balance1 = await this.universe.balanceOf(
+            pool.token1,
+            pool.poolAddress
+          )
+          return [balance0, balance1]
+        }
+        const { reserveA, reserveB } = await this.router.callStatic.getReserves(
+          pool.token0.address.address,
+          pool.token1.address.address,
+          pool.data.poolType === 0,
+          pool.data.factory
+        )
+
+        return [pool.token0.from(reserveA), pool.token1.from(reserveB)]
+      },
+      12000
+    )
+    this.getReserves = (pool: AerodromeStablePool) => reservesCache.get(pool)
   }
 
   public async definePool(address: Address, pool: SwapLpStructOutput) {

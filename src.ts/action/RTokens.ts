@@ -117,11 +117,7 @@ export class RTokenDeployment {
       12000
     )
 
-    const getSupply = universe.createCachedProducer(
-      async () =>
-        rToken.from((await this.contracts.rToken.totalSupply()).toBigInt()),
-      12000
-    )
+    const getSupply = () => this.universe.approvalsStore.totalSupply(rToken)
 
     const getIssueanceUnit = universe.createCachedProducer(async () => {
       const unit = await this.contracts.facade.callStatic

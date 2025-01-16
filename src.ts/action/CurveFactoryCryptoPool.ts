@@ -269,14 +269,11 @@ export class CurveFactoryCryptoPool {
       const [bal0, bal1, totalSupply] = (await Promise.all([
         this.poolInstance.callStatic.balances(0),
         this.poolInstance.callStatic.balances(1),
-        IERC20__factory.connect(
-          this.lpToken.address.address,
-          this.universe.provider
-        ).callStatic.totalSupply(),
-      ])) as [BigNumber, BigNumber, BigNumber]
+        this.universe.approvalsStore.totalSupply(this.lpToken),
+      ])) as [BigNumber, BigNumber, TokenQuantity]
       const [token0, token1] = this.allPoolTokens
       return {
-        totalSupply: this.lpToken.from(totalSupply),
+        totalSupply: totalSupply,
         balance0: token0.from(bal0),
         balance1: token1.from(bal1),
       }

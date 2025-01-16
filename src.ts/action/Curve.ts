@@ -682,8 +682,7 @@ export const loadCurve = async (universe: Universe) => {
     }
     const noBal = await universe.approvalsStore.queryBalance(
       pool.underlyingTokens[0],
-      pool.address,
-      universe
+      pool.address
     )
     if (noBal.isZero) {
       throw new Error(

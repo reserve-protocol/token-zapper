@@ -61,7 +61,7 @@ export const decodeSimulationFunctionOutput = (data: string) => {
 
 export type SimulateZapTransactionFunction = (
   params: SimulateParams,
-  universe: Universe,
+  universe: Universe
 ) => Promise<string>
 
 /**
@@ -123,7 +123,7 @@ export const createSimulatorThatUsesOneOfReservesCallManyProxies = (
       from: input.from,
       to: input.to,
       data: input.data,
-      gasLimit: 10_000_000,
+      gasLimit: 20_000_000,
       value: '0x' + input.value.toString(16),
 
       quantity:

@@ -11,7 +11,7 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { Planner, Value } from '../tx-gen/Planner'
 import { BlockCache } from '../base/BlockBasedCache'
 import { DefaultMap } from '../base/DefaultMap'
-import { Dim2Cache } from './MultiDimCache'
+import { Dim1Cache, Dim2Cache, MultiDimCache } from './MultiDimCache'
 
 const remapAddr = (addr: Address) => {
   if (addr === Address.ZERO) {
@@ -31,21 +31,8 @@ export const combineAddreses = (token0: Address, token1: Address) => {
   return Address.fromBuffer(Buffer.from(arrayify(hexZeroPad(hexlify(val), 20))))
 }
 
-const log2 = (x: bigint) => {
-  let out = 0n
-  while ((x >>= 1n)) out++
-  return out
-}
-
-const RESOLUTION = 10n
-const globalCache = new DefaultMap<
-  BaseAction,
-  Map<bigint, Promise<TokenQuantity[]>>
->(() => new Map())
 export class WrappedAction extends BaseAction {
-  private readonly cachedResults: BlockCache<bigint, TokenQuantity[]>
-  private readonly dim2Cache: Dim2Cache
-  private readonly innerCache: Map<bigint, Promise<TokenQuantity[]>>
+  private readonly cache: MultiDimCache
   private block: number = 0
   constructor(
     public readonly universe: Universe,
@@ -59,14 +46,13 @@ export class WrappedAction extends BaseAction {
       wrapped.proceedsOptions,
       wrapped.approvals
     )
-
-    this.dim2Cache = new Dim2Cache(universe, wrapped)
-    this.innerCache = globalCache.get(wrapped)
-
-    this.cachedResults = universe.createCache(async (amountIn) => {
-      const inp = this.inputToken[0].from(amountIn)
-      return await this.wrapped.quote([inp])
-    }, 12000)
+    if (wrapped.inputToken.length === 1) {
+      this.cache = new Dim1Cache(universe, wrapped)
+    } else if (wrapped.inputToken.length === 2) {
+      this.cache = new Dim2Cache(universe, wrapped)
+    } else {
+      throw new Error('Invalid number of inputs')
+    }
   }
 
   get isTrade() {
@@ -91,6 +77,10 @@ export class WrappedAction extends BaseAction {
     return this.wrapped.liquidity()
   }
 
+  get dustTokens() {
+    return this.wrapped.dustTokens
+  }
+
   get addressesInUse() {
     return this.wrapped.addressesInUse
   }
@@ -102,70 +92,27 @@ export class WrappedAction extends BaseAction {
   toString(): string {
     return this.wrapped.toString()
   }
-  async quoteInnerQuote(amountIn: TokenQuantity): Promise<TokenQuantity[]> {
-    try {
-      if (amountIn.isZero) {
-        return this.outputToken.map((i) => i.zero)
-      }
-      const orderOfMagnitude = log2(amountIn.amount)
-
-      let in0 = 2n ** orderOfMagnitude
-      let in1 = 2n ** (orderOfMagnitude + 1n)
-      let range = in1 - in0
-
-      const parts = range / RESOLUTION
-      const lowerTick = (amountIn.amount - in0) / parts
-      in0 = in0 + lowerTick * parts
-      in1 = in1 - (RESOLUTION - (lowerTick + 1n)) * parts
-      range = in1 - in0
-
-      const [y0, y1] = await Promise.all([
-        this.cachedResults.get(in0),
-        this.cachedResults.get(in1),
-      ])
-
-      const dys = y0.map((t, index) => y1[index].sub(t))
-      const tokenIn = amountIn.token
-
-      const x = amountIn
-      const x0 = tokenIn.from(in0)
-      const dx = tokenIn.from(range)
-
-      const progression = x.sub(x0).div(dx)
-
-      const approx = dys.map((dy, index) => {
-        return progression.into(dy.token).mul(dy).add(y0[index])
-      })
-
-      return approx
-    } catch (e) {
-      return this.outputToken.map((i) => i.zero)
-    }
-  }
   async quote(inputs: TokenQuantity[]): Promise<TokenQuantity[]> {
-    if (this.block !== this.universe.currentBlock) {
-      this.innerCache.clear()
-      this.block = this.universe.currentBlock
-    }
-    if (inputs.length === 1) {
-      const amountIn = inputs[0]
-      let out = this.innerCache.get(amountIn.amount)
-      if (out == null) {
-        out = this.quoteInnerQuote(amountIn)
-        this.innerCache.set(amountIn.amount, out)
-      }
-      const res = await out
-      // if (this.outputToken.length !== 1) {
-      //   console.log(inputs[0].toString() + ' -> ' + res.join(', '))
-      // }
-      return res
-    } else if (inputs.length === 2) {
-      const out = await this.dim2Cache.quote(inputs)
-      // console.log(`Quote 2d cache ${this.wrapped.protocol} ${inputs} -> ${out}`)
-      return [out]
-    }
-    throw new Error('Invalid number of inputs')
+    return this.quoteWithDust(inputs).then((i) => i.output)
   }
+  async quoteWithDust(
+    inputs: TokenQuantity[]
+  ): Promise<{ output: TokenQuantity[]; dust: TokenQuantity[] }> {
+    try {
+      const out = await this.cache.quoteWithDust(inputs)
+      // console.log(
+      //   `quoteWithDust ${inputs.join(', ')} =>${this} => ${out.output.join(
+      //     ', '
+      //   )} ${out.dust.join(', ')}`
+      // )
+
+      return out
+    } catch (e) {
+      console.log(e)
+      throw e
+    }
+  }
+
   gasEstimate(): bigint {
     return this.wrapped.gasEstimate()
   }
@@ -258,6 +205,14 @@ export class NativeInputWrapper extends BaseAction {
       }
       return i
     })
+  }
+  get dustTokens() {
+    return this.wrapped.dustTokens
+  }
+  async quoteWithDust(
+    inputs: TokenQuantity[]
+  ): Promise<{ output: TokenQuantity[]; dust: TokenQuantity[] }> {
+    return await this.wrapped.quoteWithDust(inputs)
   }
   gasEstimate(): bigint {
     return this.wrapped.gasEstimate()

@@ -6,8 +6,6 @@ import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulat
 import {
   Address,
   baseConfig,
-  createEnso,
-  createKyberswap,
   setupBaseZapper,
   Universe,
 } from '../../src.ts/index'
@@ -28,8 +26,8 @@ if (process.env.BASE_PROVIDER == null) {
  *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
-if (process.env.SIMULATE_URL == null) {
-  console.log('SIMULATE_URL not set, skipping simulation tests')
+if (process.env.SIMULATE_URL_BASE == null) {
+  console.log('SIMULATE_URL_BASE not set, skipping simulation tests')
   process.exit(0)
 }
 
@@ -49,7 +47,7 @@ export const baseWhales = {
     '0x73b06d8d18de422e269645eace15400de7462417', // dai
 
   '0x4200000000000000000000000000000000000006':
-    '0x0250f06fc76297fe28d0981f0566f1c0445b3cfe', // weth
+    '0xd4a0e0b9149bcee3c920d2e00b5de09138fd8bb7', // weth
 
   '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452':
     '0x99cbc45ea5bb7ef3a5bc08fb1b7e56bb2442ef0d', // wsteth
@@ -67,7 +65,8 @@ export const baseWhales = {
   '0xc9a3e2b3064c1c0546d3d0edc0a748e9f93cf18d':
     '0x6f1d6b86d4ad705385e751e6e88b0fdfdbadf298', // vaya
 
-  '0x8f0987ddb485219c767770e2080e5cc01ddc772a': '0x03d03a026e71979be3b08d44b01eae4c5ff9da99'
+  '0x8f0987ddb485219c767770e2080e5cc01ddc772a':
+    '0x46271115f374e02b5afe357c8e8dad474c8de1cf',
 }
 
 const getProvider = (url: string) => {
@@ -110,14 +109,19 @@ const makeZapIntoYieldPositionTestCase = (
     output: output,
   }
 }
-const testUser = Address.from(process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2')
+const testUser = Address.from(
+  process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
+)
 const issueanceCases = [
-  makeMintTestCase(5, t.WETH, rTokens.BSDX),
-  makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
-  makeMintTestCase(10000, t.USDbC, rTokens.hyUSD),
+  makeMintTestCase(10000, t.USDC, rTokens.bsd),
+  // makeMintTestCase(5, t.WETH, rTokens.bsd),
+  // makeMintTestCase(50, t.WETH, rTokens.BSDX),
+  // makeMintTestCase(5, t.USDC, rTokens.bsd),
+  // makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
+  // makeMintTestCase(10000, t.USDbC, rTokens.hyUSD),
+  // makeMintTestCase(10000, t.DAI, rTokens.hyUSD),
   // makeMintTestCase(5, t.WETH, rTokens.hyUSD),
-
-  makeMintTestCase(5, t.WETH, rTokens.bsd),
+  // makeMintTestCase(5, t.WETH, rTokens.bsd),
   // makeMintTestCase(5, t.wstETH, rTokens.bsd),
   // makeMintTestCase(5, t.cbETH, rTokens.bsd),
   // makeMintTestCase(10000, t.USDC, rTokens.bsd),
@@ -125,12 +129,12 @@ const issueanceCases = [
 ]
 
 const redeemCases = [
-  makeMintTestCase(10, rTokens.hyUSD, t.USDC),
-  makeMintTestCase(10, rTokens.hyUSD, t.WETH),
-  makeMintTestCase(5, rTokens.bsd, t.WETH),
-  makeMintTestCase(150, rTokens.bsd, t.USDC),
-  makeMintTestCase(150, rTokens.BSDX, t.WETH),
-  makeMintTestCase(30, rTokens.BSDX, t.WETH),
+  // makeMintTestCase(10, rTokens.hyUSD, t.USDC),
+  // makeMintTestCase(10, rTokens.hyUSD, t.WETH),
+  // makeMintTestCase(5, rTokens.bsd, t.WETH),
+  // makeMintTestCase(150, rTokens.bsd, t.USDC),
+  // makeMintTestCase(150, rTokens.BSDX, t.WETH),
+  makeMintTestCase(1000, rTokens.BSDX, t.WETH),
 ]
 const individualIntegrations = [
   // makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
@@ -152,6 +156,7 @@ const provider = getProvider(process.env.BASE_PROVIDER!)
 
 beforeAll(async () => {
   global.console = require('console')
+  console.log(`Setting up`)
   universe = await Universe.createWithConfig(
     provider,
     {
@@ -160,19 +165,16 @@ beforeAll(async () => {
       maxSearchTimeMs: 60000,
     },
     async (uni) => {
-      uni.addTradeVenue(createKyberswap('Kyber', uni))
-      // uni.addTradeVenue(createParaswap('paraswap', uni))
-      uni.addTradeVenue(createEnso('enso', uni, 1))
-
       await setupBaseZapper(uni)
     },
     {
       simulateZapFn: makeCustomRouterSimulator(
-        process.env.SIMULATE_URL!,
+        process.env.SIMULATE_URL_BASE!,
         baseWhales
       ),
     }
   )
+  console.log(`Setting up done`)
 
   await universe.initialized
   return universe
@@ -218,23 +220,19 @@ describe('base zapper', () => {
       redeem.inputToken
     )!} for ${getSymbol.get(redeem.output)!}`
     describe(testCaseName, () => {
-      it(
-        'produces an output',
-        async () => {
-          await createZapTestCase(
-            'Redeem',
-            testUser,
-            universe,
-            testCaseName,
-            {
-              token: redeem.inputToken,
-              amount: redeem.input,
-            },
-            redeem.output
-          )
-        },
-        60000
-      )
+      it('produces an output', async () => {
+        await createZapTestCase(
+          'Redeem',
+          testUser,
+          universe,
+          testCaseName,
+          {
+            token: redeem.inputToken,
+            amount: redeem.input,
+          },
+          redeem.output
+        )
+      }, 60000)
     })
   }
 

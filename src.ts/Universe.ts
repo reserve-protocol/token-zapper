@@ -1087,7 +1087,7 @@ export class Universe<const UniverseConf extends Config = Config> {
         rToken
       )
       const res = await tfg.evaluate(this, [userInput])
-      console.log(`Expected output: ${res.result.inputs.join(', ')} -> ${res.result.outputs.join(', ')}`)
+      console.log(`Expected output: ${res.result.inputs.join(', ')} -> ${res.result.outputs.filter(i => i.amount >10n).join(', ')}`)
       return await new TxGen(this, res).generate(userAddress, {
         ethereumInput: isNative,
       })

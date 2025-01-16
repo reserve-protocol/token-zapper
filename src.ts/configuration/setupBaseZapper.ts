@@ -218,7 +218,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
   universe.tokenClass.set(
     universe.commonTokens.USDbC,
-    Promise.resolve(universe.commonTokens.USDC)
+    Promise.resolve(universe.commonTokens.USDbC)
   )
   universe.tokenClass.set(
     universe.commonTokens.DEGEN,
@@ -242,7 +242,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
   universe.tokenClass.set(
     universe.commonTokens.DAI,
-    Promise.resolve(universe.commonTokens.USDC)
+    Promise.resolve(universe.commonTokens.DAI)
   )
   universe.tokenClass.set(
     universe.commonTokens.meUSD,
@@ -252,6 +252,10 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     universe.rTokens.bsd,
     Promise.resolve(universe.wrappedNativeToken)
   )
+  // universe.tokenClass.set(
+  //   universe.rTokens.BSDX,
+  //   Promise.resolve(universe.wrappedNativeToken)
+  // )
   universe.tokenClass.set(
     universe.commonTokens.cbETH,
     Promise.resolve(universe.wrappedNativeToken)

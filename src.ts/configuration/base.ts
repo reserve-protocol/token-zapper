@@ -26,7 +26,7 @@ export const RTOKENS = {
   hyUSD: '0xCc7FF230365bD730eE4B352cC2492CEdAC49383e',
   bsd: '0xcb327b99ff831bf8223cced12b1338ff3aa322ff',
   RIVOTKN: '0xd7a1c6d60d3c152aaae4f685f419f364153afe4e',
-  BSDX: '0x8f0987ddb485219c767770e2080e5cc01ddc772a'
+  BSDX: '0x8f0987ddb485219c767770e2080e5cc01ddc772a',
 } as const
 
 export const baseConfig = makeConfig(

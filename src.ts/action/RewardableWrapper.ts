@@ -9,6 +9,7 @@ import {
   IRewardableERC20Wrapper__factory,
 } from '../contracts'
 import * as gen from '../tx-gen/Planner'
+import { wrapGasToken } from '../searcher/TradeAction'
 
 export const createProtocolWithWrappers = (
   universe: Universe,
@@ -184,8 +185,8 @@ export const createProtocolWithWrappers = (
           return out
         },
       })
-      universe.addAction(deposit)
-      universe.addAction(withdraw)
+      universe.addAction(wrapGasToken(universe, deposit))
+      universe.addAction(wrapGasToken(universe, withdraw))
       universe.wrappedTokens.set(wrapper, {
         mint: deposit,
         burn: withdraw,

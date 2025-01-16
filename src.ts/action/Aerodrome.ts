@@ -635,8 +635,12 @@ class AerodromeStablePool {
     const q0 = amount0.isZero ? MAX_RES : await this.quoteAddLiquidity(amount0)
     const q1 = amount1.isZero ? MAX_RES : await this.quoteAddLiquidity(amount1)
     const q = q0.liquidity.amount < q1.liquidity.amount ? q0 : q1
-    const rem0 = amount0.sub(q.amount0)
-    const rem1 = amount1.sub(q.amount1)
+    const rem0 = amount0.gt(q.amount0)
+      ? amount0.sub(q.amount0)
+      : this.token0.zero
+    const rem1 = amount1.gt(q.amount1)
+      ? amount1.sub(q.amount1)
+      : this.token1.zero
     return {
       liquidity: q.liquidity,
       amounts: [q.amount0, q.amount1],

@@ -33,7 +33,7 @@ const defaultSearcherOptions = {
   minimiseDustPhase1Steps: 10,
   minimiseDustPhase2Steps: 5,
 
-  cacheResolution: 4n
+  cacheResolution: 4
 }
 export const getDefaultSearcherOptions = () => {
   return defaultSearcherOptions

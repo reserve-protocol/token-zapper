@@ -126,6 +126,8 @@ export class Dim1Cache implements MultiDimCache {
   private get inputToken() {
     return this.wrapped.inputToken[0]
   }
+
+  private cacheResolution: bigint
   constructor(
     public readonly universe: Universe,
     public readonly wrapped: BaseAction
@@ -134,6 +136,8 @@ export class Dim1Cache implements MultiDimCache {
       return await this.wrapped.quoteWithDust([this.inputToken.from(amountIn)])
     }, 12000)
     this.innerCache = globalCache.get(wrapped)
+
+    this.cacheResolution = BigInt(this.universe.config.cacheResolution)
   }
 
   private async quoteInnerQuote(
@@ -143,10 +147,7 @@ export class Dim1Cache implements MultiDimCache {
       return this.zeroResult()
     }
     try {
-      const [in0, in1, range] = inputIntoRanges(
-        this.universe.config.cacheResolution,
-        amountIn
-      )
+      const [in0, in1, range] = inputIntoRanges(this.cacheResolution, amountIn)
 
       const [y0s, y1s] = await Promise.all([
         this.cachedResults.get(in0),
@@ -208,6 +209,7 @@ export class Dim2Cache implements MultiDimCache {
   >
   private readonly innerCache: Map<string, Promise<QuoteWithDustResult>>
 
+  private readonly cacheResolution: bigint
   constructor(
     private readonly universe: Universe,
     private readonly wrapped: BaseAction
@@ -222,15 +224,16 @@ export class Dim2Cache implements MultiDimCache {
       }, 12000)
     })
     this.innerCache = globalCache2d.get(this.wrapped)
+
+    this.cacheResolution = BigInt(this.universe.config.cacheResolution)
   }
 
   private async sample(
     x: TokenQuantity,
     y: TokenQuantity
   ): Promise<QuoteWithDustResult> {
-    const resolution = this.universe.config.cacheResolution
-    const [xin0, xin1, xrange] = inputIntoRanges(resolution, x)
-    const [yin0, yin1, yrange] = inputIntoRanges(resolution, y)
+    const [xin0, xin1, xrange] = inputIntoRanges(this.cacheResolution, x)
+    const [yin0, yin1, yrange] = inputIntoRanges(this.cacheResolution, y)
     const cols0 = this.cachedResults.get(xin0)
     const cols1 = this.cachedResults.get(xin1)
 

@@ -285,27 +285,32 @@ provider.on('debug', (log) => {
 })
 beforeAll(async () => {
   global.console = require('console')
-  universe = await Universe.createWithConfig(
-    provider,
-    {
-      ...ethereumConfig,
-      ...searcherOptions,
-    },
-    async (uni) => {
-      await setupEthereumZapper(uni)
-    },
-    {
-      simulateZapFn: makeCustomRouterSimulator(
-        process.env.SIMULATE_URL_MAINNET!,
-        ethWhales
-      ),
-    }
-  )
+  try {
+    universe = await Universe.createWithConfig(
+      provider,
+      {
+        ...ethereumConfig,
+        ...searcherOptions,
+      },
+      async (uni) => {
+        await setupEthereumZapper(uni)
+      },
+      {
+        simulateZapFn: makeCustomRouterSimulator(
+          process.env.SIMULATE_URL_MAINNET!,
+          ethWhales
+        ),
+      }
+    )
 
-  await universe.initialized
-  console.log(`requestCount init: ${requestCount}`)
-  requestCount = 0
-  return universe
+    await universe.initialized
+    console.log(`requestCount init: ${requestCount}`)
+    requestCount = 0
+    return universe
+  } catch (e) {
+    console.error(e)
+    process.exit(1)
+  }
 }, 30000)
 
 describe('ethereum zapper', () => {

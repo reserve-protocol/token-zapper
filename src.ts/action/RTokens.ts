@@ -91,6 +91,7 @@ export class RTokenDeployment {
     public readonly rToken: Token,
     private unitBasket_: TokenQuantity[],
     private assets: [Token, IAsset][],
+    public readonly backingManager: Address,
     public readonly contracts: {
       facade: IFacade
       basketHandler: IBasketHandler
@@ -304,16 +305,23 @@ export class RTokenDeployment {
           ])
       )
 
+    const rTokenPricer = uni.createCachedProducer(async () => {
+      const [low, high] = (await facade.price(rToken.address.address)).map(
+        (i) => i.toBigInt()
+      )
+      const mid = (low + high) / 2n
+      return uni.usd.from(mid / 10n ** 10n)
+    }, 60000)
+
     uni.addSingleTokenPriceSource({
       token: rToken,
       priceFn: async () => {
-        const [low, high] = (await facade.price(rToken.address.address)).map(
-          (i) => i.toBigInt()
-        )
-        const mid = (low + high) / 2n
-        return uni.usd.from(mid / 10n ** 10n)
+        return await rTokenPricer()
       },
     })
+    const backingManager = Address.from(
+      await mainInst.callStatic.backingManager()
+    )
     const rTokenPrice = await rToken.price
 
     return new RTokenDeployment(
@@ -321,6 +329,7 @@ export class RTokenDeployment {
       rToken,
       uniBasket,
       assets,
+      backingManager,
       {
         facade,
         basketHandler: basketHandlerInst,

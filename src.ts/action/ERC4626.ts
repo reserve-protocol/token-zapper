@@ -85,6 +85,10 @@ export class ETHTokenVaultDepositAction extends BaseAction {
     return this.proto
   }
   public readonly inst: ETHTokenVault
+
+  public get dependsOnRpc(): boolean {
+    return true
+  }
   public quote: (amountIn: TokenQuantity[]) => Promise<TokenQuantity[]>
   constructor(
     readonly universe: Universe,
@@ -105,25 +109,11 @@ export class ETHTokenVaultDepositAction extends BaseAction {
       vaultAddress.address,
       this.universe.provider
     )
-    const rateFn = this.universe.createCache(
-      async (amt: bigint) => {
-        const inputToken = this.inputToken[0]
-        if (amt < 1n) {
-          amt = 1n
-        }
-        const rate = await this.inst.callStatic.previewDeposit(
-          amt * inputToken.scale
-        )
-        return inputToken.from(rate.toBigInt() / amt)
-      },
-      24000,
-      mapKey
-    )
-
     this.quote = async ([amountIn]: TokenQuantity[]) => {
-      const inputToken = this.inputToken[0]
-      const rate = await rateFn.get(amountIn.amount / inputToken.scale)
-      return [rate.mul(amountIn).into(this.outputToken[0])]
+      const outputQty = (
+        await this.inst.callStatic.previewDeposit(amountIn.amount)
+      ).toBigInt()
+      return [this.outputToken[0].from(outputQty)]
     }
   }
 
@@ -160,6 +150,10 @@ export const ERC4626DepositAction = (proto: string) =>
       )
       return [out!]
     }
+
+    public get dependsOnRpc(): boolean {
+      return true
+    }
     gasEstimate() {
       return BigInt(150_000n)
     }
@@ -191,9 +185,6 @@ export const ERC4626DepositAction = (proto: string) =>
         )
         return [this.outputToken[0].from(amtOut)]
       }
-    }
-    get dependsOnRpc(): boolean {
-      return true
     }
 
     toString(): string {

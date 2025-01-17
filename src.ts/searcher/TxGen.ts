@@ -491,8 +491,6 @@ export class TxGen {
       (i) => i.token !== program.res.amountOut.token && i.amount > 1000n
     )
 
-    console.log('dust', testSimulation.dust.join(', '))
-
     const stats = await ZapTxStats.create(result, {
       gasUnits: program.res.gasUnits + program.res.gasUnits / 6n,
       input: this.result.result.inputs[0],

@@ -14,7 +14,6 @@ import {
   DestinationOptions,
   InteractionConvention,
 } from './Action'
-import { BlockCache } from '../base/BlockBasedCache'
 import { CryptoswapPool } from '../entities/CurvePool'
 
 abstract class CurveFactoryCryptoPoolBase extends Action(

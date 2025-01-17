@@ -14,6 +14,14 @@ import { simulationUrls } from '../base/constants'
 import { Config } from '../configuration/ChainConfiguration'
 import { logger } from '../logger'
 import { Universe } from '../Universe'
+import { Address } from '../base/Address'
+import {
+  IERC20__factory,
+  IRToken__factory,
+  IWrappedERC20__factory,
+  IWrappedNative__factory,
+} from '../contracts'
+import { Token } from '../entities/Token'
 export interface SimulateParams {
   // Zapper address on the chain
   to: string
@@ -147,6 +155,28 @@ export const createSimulatorThatUsesOneOfReservesCallManyProxies = (
   }
 }
 
+const ETH_256 = '0x56bc75e2d6310000000'
+type AddressLike = string | Address | Token
+const getAddrStr = (addr: AddressLike) => {
+  if (typeof addr === 'string') {
+    return addr
+  }
+  if (addr instanceof Address) {
+    return addr.address
+  }
+  return addr.address.address
+}
+const rTokenInterface = IRToken__factory.createInterface()
+const erc20Interface = IERC20__factory.createInterface()
+const wethInterface = IWrappedNative__factory.createInterface()
+
+const bigintToHexStr = (n: bigint) => {
+  let str = n.toString(16)
+  if (str.length % 2 !== 0) {
+    str = '0' + str
+  }
+  return '0x' + str
+}
 export const makeCustomRouterSimulator = (
   url: string,
   whales: Record<string, string>,
@@ -157,65 +187,148 @@ export const makeCustomRouterSimulator = (
   )
 
   return async (input: SimulateParams, universe: Universe) => {
-    const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
+    const token = await universe.getToken(
+      Address.from(input.setup.inputTokenAddress.toLowerCase())
+    )
 
-    if (whale == null) {
-      console.log(
-        'No whale for token ' +
-          input.setup.inputTokenAddress +
-          ', so will not fund the sender with funds'
+    const moveFunds: any[] = []
+    const stateOverride: any = {}
+    const transactions: any[] = []
+
+    const addBalance = (address: AddressLike, balance?: bigint) => {
+      stateOverride[getAddrStr(address)] = {
+        balance: balance != null ? bigintToHexStr(balance) : ETH_256,
+      }
+    }
+
+    const addTransaction = (
+      from: AddressLike,
+      to: AddressLike,
+      data: string,
+      gas: bigint = 15_000_000n,
+      value: bigint = 0n
+    ) => {
+      transactions.push({
+        from: getAddrStr(from),
+        to: getAddrStr(to),
+        data,
+        gas: bigintToHexStr(gas),
+        value: bigintToHexStr(value),
+      })
+    }
+
+    const approvals: any[] = []
+
+    const addApproval = (
+      token: AddressLike,
+      owner: AddressLike,
+      spender: AddressLike,
+      value: bigint = constants.MaxUint256.toBigInt()
+    ) => {
+      approvals.push({
+        owner: getAddrStr(owner),
+        token: getAddrStr(token),
+        spender: getAddrStr(spender),
+        value: bigintToHexStr(value),
+      })
+    }
+
+    addBalance(input.from)
+
+    if (token === universe.nativeToken) {
+      addBalance(
+        input.from,
+        input.setup.userBalanceAndApprovalRequirements + 0x56bc75e2d6310000000n
+      )
+    } else {
+      addApproval(
+        token,
+        input.from,
+        input.to,
+        input.setup.userBalanceAndApprovalRequirements
       )
     }
 
-    const body = {
-      setupApprovals: [
-        {
-          owner: input.from,
-          token: input.setup.inputTokenAddress,
-          spender: input.to,
-          value: '0x' + constants.MaxUint256.toBigInt().toString(16),
-        },
-      ],
-      moveFunds:
-        whale != null
-          ? [
-              {
-                owner: whale,
-                token: input.setup.inputTokenAddress,
-                spender: input.from,
-                quantity:
-                  '0x' +
-                  input.setup.userBalanceAndApprovalRequirements.toString(16),
-              },
-            ]
-          : [],
-      transactions: [
-        {
-          from: input.from,
-          to: input.to,
-          data: input.data,
-          gas: '0x' + (15_000_000).toString(16),
-          gasPrice: '0x' + universe.gasPrice.toString(16),
-          value: '0x' + input.value.toString(16),
-        },
-      ],
-      stateOverride: {
-        [input.from]: {
-          balance: '0x56bc75e2d6310000000',
-        } as Partial<{ balance: string; code: string }>,
-      },
+    if (token === universe.wrappedNativeToken) {
+      addBalance(
+        input.from,
+        input.setup.userBalanceAndApprovalRequirements + 0x56bc75e2d6310000000n
+      )
+      addTransaction(
+        input.from,
+        token,
+        wethInterface.encodeFunctionData('deposit'),
+        15_000_000n,
+        input.setup.userBalanceAndApprovalRequirements
+      )
+    } else if (universe.rTokensInfo.tokens.has(token)) {
+      const rTokenDeployment = universe.getRTokenDeployment(token)
+      addBalance(rTokenDeployment.backingManager)
+
+      const extra = input.setup.userBalanceAndApprovalRequirements / 10n
+      const mintQty = input.setup.userBalanceAndApprovalRequirements + extra
+
+      addTransaction(
+        rTokenDeployment.backingManager,
+        token,
+        rTokenInterface.encodeFunctionData('mint', [mintQty])
+      )
+      addTransaction(
+        rTokenDeployment.backingManager,
+        token,
+        rTokenInterface.encodeFunctionData('setBasketsNeeded', [
+          (
+            await rTokenDeployment.contracts.rToken.callStatic.basketsNeeded()
+          ).toBigInt() - mintQty,
+        ])
+      )
+      addTransaction(
+        rTokenDeployment.backingManager,
+        token,
+        erc20Interface.encodeFunctionData('transfer', [
+          input.from,
+          input.setup.userBalanceAndApprovalRequirements,
+        ])
+      )
+    } else {
+      const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
+
+      if (whale) {
+        stateOverride[whale] = {
+          balance: ETH_256,
+        }
+      }
+
+      if (whale == null) {
+        universe.logger.warn(
+          'No whale for token ' +
+            input.setup.inputTokenAddress +
+            ', so will not fund the sender with funds'
+        )
+      }
+      moveFunds.push({
+        owner: whale,
+        token: input.setup.inputTokenAddress,
+        spender: input.from,
+        quantity:
+          '0x' + input.setup.userBalanceAndApprovalRequirements.toString(16),
+      })
     }
+
+    addTransaction(input.from, input.to, input.data, 20_000_000n, input.value)
+
+    const body = {
+      setupApprovals: approvals,
+      moveFunds: moveFunds,
+      transactions: transactions,
+      stateOverride: stateOverride,
+    }
+
     // if (addreses) {
     //   body.stateOverride[addreses.executorAddress.address] = {
     //     code: byteCode,
     //   }
     // }
-
-    if (whale) {
-      body.stateOverride[whale] = {
-        balance: '0x56bc75e2d6310000000',
-      }
-    }
 
     const encodedBody = JSON.stringify(body, null, 2)
     const resp = await fetch(url, {

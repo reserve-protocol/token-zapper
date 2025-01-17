@@ -15,11 +15,21 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 import { DefaultMap } from '../../src.ts/base/DefaultMap'
+import { getDefaultSearcherOptions } from '../../src.ts/configuration/ChainConfiguration'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
   console.log('BASE_PROVIDER not set, skipping tests')
   process.exit(0)
+}
+
+const searcherOptions = {
+  ...getDefaultSearcherOptions(),
+  searcherMinRoutesToProduce: 1,
+  maxSearchTimeMs: 60000,
+  optimisationSteps: 15,
+  minimiseDustPhase1Steps: 10,
+  minimiseDustPhase2Steps: 10,
 }
 
 /** !!
@@ -47,27 +57,11 @@ export const baseWhales = {
   '0x50c5725949a6f0c72e6c4a641f24049a917db0cb':
     '0x73b06d8d18de422e269645eace15400de7462417', // dai
 
-  '0x4200000000000000000000000000000000000006':
-    '0xd4a0e0b9149bcee3c920d2e00b5de09138fd8bb7', // weth
-
   '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452':
     '0x99cbc45ea5bb7ef3a5bc08fb1b7e56bb2442ef0d', // wsteth
 
   '0xcfa3ef56d303ae4faaba0592388f19d7c3399fb4':
     '0x5400dbb270c956e8985184335a1c62aca6ce1333',
-
-  // rtokens
-  '0xcc7ff230365bd730ee4b352cc2492cedac49383e':
-    '0xAbEaA41fd6a7464b1203b24486526b0461a5ceA4', // hyusd
-  '0xcb327b99ff831bf8223cced12b1338ff3aa322ff':
-    '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb', // bsdeth
-  '0xfe0d6d83033e313691e96909d2188c150b834285':
-    '0x1ef46018244179810dec43291d693cb2bf7f40e5', // iusdc
-  '0xc9a3e2b3064c1c0546d3d0edc0a748e9f93cf18d':
-    '0x6f1d6b86d4ad705385e751e6e88b0fdfdbadf298', // vaya
-
-  '0x8f0987ddb485219c767770e2080e5cc01ddc772a':
-    '0x46271115f374e02b5afe357c8e8dad474c8de1cf',
 }
 
 const getProvider = (url: string) => {
@@ -86,11 +80,7 @@ const getSymbol = new Map(
     .map(([k, v]) => [v, k])
 )
 
-const makeMintTestCase = (
-  input: number,
-  inputToken: Address,
-  output: Address
-) => {
+const makeTestCase = (input: number, inputToken: Address, output: Address) => {
   return {
     input,
     inputToken,
@@ -114,31 +104,29 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  makeMintTestCase(10000, t.USDC, rTokens.bsd),
-  makeMintTestCase(100, t.WETH, rTokens.bsd),
+  makeTestCase(10000, t.USDC, rTokens.bsd),
+  makeTestCase(100, t.WETH, rTokens.bsd),
+  makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  makeTestCase(10000, t.USDbC, rTokens.hyUSD),
+  makeTestCase(10000, t.DAI, rTokens.hyUSD),
+  makeTestCase(5, t.WETH, rTokens.hyUSD),
+
   // makeMintTestCase(50, t.WETH, rTokens.BSDX),
-  // makeMintTestCase(5, t.USDC, rTokens.bsd),
-  makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
-  makeMintTestCase(10000, t.USDbC, rTokens.hyUSD),
-  makeMintTestCase(10000, t.DAI, rTokens.hyUSD),
-  makeMintTestCase(5, t.WETH, rTokens.hyUSD),
-  // makeMintTestCase(5, t.WETH, rTokens.bsd),
-  // makeMintTestCase(5, t.wstETH, rTokens.bsd),
-  // makeMintTestCase(5, t.cbETH, rTokens.bsd),
-  // makeMintTestCase(10000, t.USDC, rTokens.bsd),
-  // makeMintTestCase(10000, t.USDbC, rTokens.bsd),
 ]
 
 const redeemCases = [
-  // makeMintTestCase(10, rTokens.hyUSD, t.USDC),
-  // makeMintTestCase(10, rTokens.hyUSD, t.WETH),
-  makeMintTestCase(5, rTokens.bsd, t.WETH),
-  // makeMintTestCase(150, rTokens.bsd, t.USDC),
-  // makeMintTestCase(150, rTokens.BSDX, t.WETH),
-  // makeMintTestCase(1000, rTokens.BSDX, t.WETH),
+  makeTestCase(50, rTokens.bsd, t.WETH),
+  // makeTestCase(50, rTokens.hyUSD, t.USDC),
+
+  makeTestCase(100000, rTokens.hyUSD, t.WETH),
+  makeTestCase(100000, rTokens.hyUSD, t.USDbC),
+  makeTestCase(100000, rTokens.hyUSD, t.DAI),
+  makeTestCase(100000, rTokens.hyUSD, t.USDC),
+
+  // makeTestCase(10000, rTokens.BSDX, t.WETH),
 ]
 const individualIntegrations = [
-  // makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
+  makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
   makeIntegrationtestCase(
     'wsAMM-eUSD/USDC',
     10000,
@@ -158,23 +146,23 @@ const provider = getProvider(process.env.BASE_PROVIDER!)
 let requestCount = 0
 let initialized = false
 const dupRequestCounter = new DefaultMap<string, number>(() => 0)
-provider.on('debug', (log) => {
-  if (
-    log?.action !== 'request' ||
-    log?.request?.method !== 'eth_call' ||
-    log?.request?.params[0].to == null ||
-    log?.request?.params[0].data == null
-  ) {
-    return
-  }
-  requestCount += 1
-  if (initialized) {
-    const req =
-      log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
-    dupRequestCounter.get(req)
-    dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
-  }
-})
+// provider.on('debug', (log) => {
+//   if (
+//     log?.action !== 'request' ||
+//     log?.request?.method !== 'eth_call' ||
+//     log?.request?.params[0].to == null ||
+//     log?.request?.params[0].data == null
+//   ) {
+//     return
+//   }
+//   requestCount += 1
+//   if (initialized) {
+//     const req =
+//       log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
+//     dupRequestCounter.get(req)
+//     dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
+//   }
+// })
 const emitReqCount = (msg?: string, dups?: boolean) => {
   if (requestCount > 0) {
     console.log(`${msg} Request count: ${requestCount}`)
@@ -197,8 +185,7 @@ beforeAll(async () => {
     provider,
     {
       ...baseConfig,
-      searcherMinRoutesToProduce: 1,
-      maxSearchTimeMs: 60000,
+      ...searcherOptions,
     },
     async (uni) => {
       await setupBaseZapper(uni)

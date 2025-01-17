@@ -7,7 +7,10 @@ import { Queue } from './Queue'
 import { unwrapAction, wrapAction } from './TradeAction'
 import { optimiseTrades } from './optimiseTrades'
 import { Address } from '../base/Address'
-import { SearcherOptions } from '../configuration/ChainConfiguration'
+import {
+  ILoggerType,
+  SearcherOptions,
+} from '../configuration/ChainConfiguration'
 
 export class NodeProxy {
   private version: number
@@ -2188,6 +2191,114 @@ const minimizeDust = async (
   return currentResult
 }
 
+const optimiseGlobal = async (
+  g: TokenFlowGraph,
+  universe: Universe,
+  inputs: TokenQuantity[],
+  optimisationSteps: number = 15,
+  bestSoFar: TFGResult,
+  logger: ILoggerType
+) => {
+  const isResultBetter = (previous: TFGResult, newResult: TFGResult) => {
+    return newResult.result.price < previous.result.price
+  }
+  const DECAY = 0.5
+  let scale = 3
+  let optimisationNodes = [...g.nodes()].filter((n) => n.isOptimisable)
+
+  const tmp = optimisationNodes.map((node) =>
+    g._outgoingEdges[node.id]!.edges[0].parts.map(() => 0)
+  )
+  for (let nodeIndex = 0; nodeIndex < optimisationNodes.length; nodeIndex++) {
+    const node = optimisationNodes[nodeIndex]
+    const edge = g._outgoingEdges[node.id]!.edges[0]
+    edge.min = 1 / edge.parts.length / 2
+    edge.normalize()
+  }
+  for (let i = 0; i < optimisationSteps; i++) {
+    const size = scale * (1 - i / optimisationSteps) ** 2
+
+    let bestThisIteration = bestSoFar
+    let bestNodeToChange = -1
+    for (
+      let optimisationNodeIndex = 0;
+      optimisationNodeIndex < optimisationNodes.length;
+      optimisationNodeIndex++
+    ) {
+      const node = optimisationNodes[optimisationNodeIndex]
+      const nodeId = node.id
+      if (!bestSoFar.nodeResults.find((r) => r.node.id === nodeId)) {
+        logger.debug(`Node ${node.nodeId} not in bestSoFar`)
+        continue
+      }
+      const edge = g._outgoingEdges[nodeId]!.edges[0]
+      if (edge.parts.length === 0) {
+        continue
+      }
+
+      edge.normalize()
+      let before = [...edge.inner]
+      const tmpNode = tmp[optimisationNodeIndex]
+      for (let i = 0; i < tmpNode.length; i++) {
+        tmpNode[i] = edge.inner[i]
+      }
+
+      for (let paramIndex = 0; paramIndex < edge.parts.length; paramIndex++) {
+        if (edge.parts[paramIndex] === edge.sum) {
+          continue
+        }
+
+        const prev = edge.parts[paramIndex]
+
+        let change = size
+
+        let s = 0
+        edge.parts[paramIndex] += change
+        for (let i = 0; i < edge.parts.length; i++) {
+          s += edge.parts[i]
+        }
+        for (let i = 0; i < edge.parts.length; i++) {
+          edge.parts[i] = edge.parts[i] / s
+        }
+        edge.sum = 1
+        edge.calculateProportionsAsBigInt()
+
+        if (prev === 0 && edge.inner[paramIndex] === 0) {
+          edge.setParts(before)
+          continue
+        }
+
+        const res = await g.evaluate(universe, inputs)
+        if (
+          isFinite(res.result.price) &&
+          isResultBetter(bestThisIteration, res)
+        ) {
+          bestThisIteration = res
+          bestNodeToChange = optimisationNodeIndex
+          for (let i = 0; i < edge.parts.length; i++) {
+            tmpNode[i] = edge.inner[i]
+          }
+        }
+        edge.setParts(before)
+        edge.sum = 1
+      }
+    }
+    if (bestNodeToChange !== -1) {
+      bestSoFar = bestThisIteration
+      logger.debug(
+        `${i}: ${bestSoFar.result.outputs
+          .filter((i) => i.amount > 10n)
+          .join(', ')}`
+      )
+      g._outgoingEdges[
+        optimisationNodes[bestNodeToChange].id
+      ]!.edges[0].setParts(tmp[bestNodeToChange])
+    } else {
+      scale = scale * DECAY
+    }
+  }
+}
+
 const optimise = async (
   universe: Universe,
   graph: TokenFlowGraphBuilder,
@@ -2232,14 +2343,6 @@ const optimise = async (
     throw new Error('Bad graph')
   }
 
-  const DECAY = 0.5
-
-  let scale = 3
-
-  const isResultBetter = (previous: TFGResult, newResult: TFGResult) => {
-    return newResult.result.price < previous.result.price
-  }
-
   g = removeNodes(g, findNodesWithoutSources(g))
   const optimiserEvaluation = evaluationOptimiser(universe, g)
 
@@ -2251,99 +2354,24 @@ const optimise = async (
     minimiseDustPhase1Steps
   )
 
-  let optimisationNodes = [...g.nodes()].filter((n) => n.isOptimisable)
-
-  const tmp = optimisationNodes.map((node) =>
-    g._outgoingEdges[node.id]!.edges[0].parts.map(() => 0)
-  )
-  for (let nodeIndex = 0; nodeIndex < optimisationNodes.length; nodeIndex++) {
-    const node = optimisationNodes[nodeIndex]
-    const edge = g._outgoingEdges[node.id]!.edges[0]
-    edge.min = 1 / edge.parts.length / 2
-    edge.normalize()
-  }
-  for (let i = 0; i < optimisationSteps; i++) {
-    const size = scale * (1 - i / optimisationSteps) ** 2
-
-    let bestThisIteration = bestSoFar
-    let bestNodeToChange = -1
-    for (
-      let optimisationNodeIndex = 0;
-      optimisationNodeIndex < optimisationNodes.length;
-      optimisationNodeIndex++
-    ) {
-      const node = optimisationNodes[optimisationNodeIndex]
-      const nodeId = node.id
-      if (!bestSoFar.nodeResults.find((r) => r.node.id === nodeId)) {
-        logger.debug(`Node ${node.nodeId} not in bestSoFar`)
-        continue
-      }
-      const edge = g._outgoingEdges[nodeId]!.edges[0]
-      if (edge.parts.length === 0) {
-        continue
-      }
-
-      edge.normalize()
-      let before = [...edge.inner]
-      const tmpNode = tmp[optimisationNodeIndex]
-      for (let i = 0; i < tmpNode.length; i++) {
-        tmpNode[i] = edge.inner[i]
-      }
-
-      for (let paramIndex = 0; paramIndex < edge.parts.length; paramIndex++) {
-        if (edge.parts[paramIndex] === edge.sum) {
-          logger.debug(`Param ${paramIndex} is already at sum`)
-          continue
-        }
-
-        const prev = edge.parts[paramIndex]
-
-        let change = size
-
-        let s = 0
-        edge.parts[paramIndex] += change
-        for (let i = 0; i < edge.parts.length; i++) {
-          s += edge.parts[i]
-        }
-        for (let i = 0; i < edge.parts.length; i++) {
-          edge.parts[i] = edge.parts[i] / s
-        }
-        edge.sum = 1
-        edge.calculateProportionsAsBigInt()
-
-        if (prev === 0 && edge.inner[paramIndex] === 0) {
-          edge.setParts(before)
-          continue
-        }
-
-        const res = await g.evaluate(universe, inputs)
-        if (
-          isFinite(res.result.price) &&
-          isResultBetter(bestThisIteration, res)
-        ) {
-          bestThisIteration = res
-          bestNodeToChange = optimisationNodeIndex
-          for (let i = 0; i < edge.parts.length; i++) {
-            tmpNode[i] = edge.inner[i]
-          }
-        }
-        edge.setParts(before)
-        edge.sum = 1
-      }
-    }
-    if (bestNodeToChange !== -1) {
-      bestSoFar = bestThisIteration
-      g._outgoingEdges[
-        optimisationNodes[bestNodeToChange].id
-      ]!.edges[0].setParts(tmp[bestNodeToChange])
-    } else {
-      scale = scale * DECAY
-    }
-  }
   g = removeNodes(g, findNodesWithoutSources(g))
 
+  await optimiseGlobal(
+    g,
+    universe,
+    inputs,
+    optimisationSteps,
+    bestSoFar,
+    logger
+  )
+
+  logger.debug(
+    `Result after global optimisation: ${bestSoFar.result.outputs
+      .filter((i) => i.amount > 10n)
+      .join(', ')}`
+  )
+
   if (bestSoFar.result.dustValue > 10) {
-    console.log('Minimising dust again')
     bestSoFar = await minimizeDust(
       g,
       () => optimiserEvaluation.evaluate(inputs),
@@ -2366,6 +2394,7 @@ const optimise = async (
   const valueSlippage =
     bestSoFar.result.inputValue / bestSoFar.result.totalValue
   if (1 - valueSlippage > maxValueSlippage) {
+    logger.info(bestSoFar.result.outputs.join(', '))
     logger.error(
       `Value slippage is too high: ${((1 - valueSlippage) * 100).toFixed(
         2
@@ -2379,7 +2408,7 @@ const optimise = async (
 
   const dustFraction = bestSoFar.result.dustValue / bestSoFar.result.totalValue
   if (dustFraction > maxDustFraction) {
-    console.log(bestSoFar.result.outputs.join(', '))
+    logger.info(bestSoFar.result.outputs.join(', '))
     logger.error(
       `Dust fraction is too high: ${((1 - dustFraction) * 100).toFixed(
         2

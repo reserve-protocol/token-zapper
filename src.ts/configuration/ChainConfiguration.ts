@@ -35,6 +35,9 @@ const defaultSearcherOptions = {
 
   cacheResolution: 4n
 }
+export const getDefaultSearcherOptions = () => {
+  return defaultSearcherOptions
+}
 
 export type SearcherOptions = typeof defaultSearcherOptions & {
   simulateZapTransaction?: SimulateZapTransactionFunction

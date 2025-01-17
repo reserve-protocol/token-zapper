@@ -4,6 +4,7 @@ import { ethers } from 'ethers'
 import { WebSocketProvider } from '@ethersproject/providers'
 import {
   convertAddressObject,
+  getDefaultSearcherOptions,
   makeCustomRouterSimulator,
 } from '../../src.ts/configuration/ChainConfiguration'
 import {
@@ -22,6 +23,15 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 dotenv.config()
+
+const searcherOptions = {
+  ...getDefaultSearcherOptions(),
+  searcherMinRoutesToProduce: 1,
+  maxSearchTimeMs: 60000,
+  optimisationSteps: 25,
+  minimiseDustPhase1Steps: 10,
+  minimiseDustPhase2Steps: 20,
+}
 
 if (process.env.MAINNET_PROVIDER == null) {
   console.log('MAINNET_PROVIDER not set, skipping tests')
@@ -282,8 +292,7 @@ beforeAll(async () => {
     provider,
     {
       ...ethereumConfig,
-      searcherMinRoutesToProduce: 1,
-      maxSearchTimeMs: 60000,
+      ...searcherOptions,
     },
     async (uni) => {
       await setupEthereumZapper(uni)

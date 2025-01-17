@@ -2116,9 +2116,18 @@ const minimizeDust = async (
   })
 
   for (let iter = 0; iter < steps; iter++) {
-    const scale = 1 - iter / steps
-    let startValue = currentResult.result.dustValue
+    const startValue = currentResult.result.dustValue
+
+    const progression = iter / steps
+    const scale = 1 - progression
     for (let i = 0; i < nodes.length; i++) {
+      if (
+        currentResult.result.dustValue < 10 &&
+        currentResult.result.dustValue / currentResult.result.totalValue <
+          0.0001
+      ) {
+        return currentResult
+      }
       const node = nodes[i]
       if (!dustTokens.find((d) => node.tokenToSplitMap.has(d))) {
         continue
@@ -2146,8 +2155,16 @@ const minimizeDust = async (
 
       dustValues.sort((a, b) => a.value - b.value)
       const higestDustQty = dustValues[dustValues.length - 1]
+      const lowestDustQty = dustValues[0]
       const fraction = 1 - higestDustQty.asFraction
+      const prev = node.splits.parts[higestDustQty.splitIndex]
       node.splits.parts[higestDustQty.splitIndex] *= fraction
+      const removed = prev - node.splits.parts[higestDustQty.splitIndex]
+
+      if (lowestDustQty !== higestDustQty) {
+        node.splits.parts[lowestDustQty.splitIndex] += removed * 0.5
+      }
+
       node.splits.normalize()
       const newRes = await evaluate()
       if (newRes.result.dustValue > currentResult.result.dustValue) {
@@ -2175,16 +2192,19 @@ const optimise = async (
   universe: Universe,
   graph: TokenFlowGraphBuilder,
   inputs: TokenQuantity[],
+  outputs: Token[],
   opts?: {
     optsDustPhase1Steps?: number
     optsDustPhase2Steps?: number
     optimisationSteps?: number
   }
 ) => {
+  const logger = universe.logger.child({
+    prefix: `optimiser ${inputs.join(', ')} -> ${outputs.join(', ')}`,
+  })
   const optimisationSteps = opts?.optimisationSteps ?? 15
   const minimiseDustPhase1Steps = opts?.optsDustPhase1Steps ?? 15
   const minimiseDustPhase2Steps = opts?.optsDustPhase2Steps ?? 5
-  console.log(graph.graph.toDot().join('\n'))
   const inlined = inlineTFGs(graph.graph)
   let g = removeUselessNodes(inlined)
   const findNodesWithoutSources = (g: TokenFlowGraph) => {
@@ -2214,7 +2234,7 @@ const optimise = async (
 
   const DECAY = 0.5
 
-  let scale = 2
+  let scale = 3
 
   const isResultBetter = (previous: TFGResult, newResult: TFGResult) => {
     return newResult.result.price < previous.result.price
@@ -2255,7 +2275,7 @@ const optimise = async (
       const node = optimisationNodes[optimisationNodeIndex]
       const nodeId = node.id
       if (!bestSoFar.nodeResults.find((r) => r.node.id === nodeId)) {
-        // console.log(`Node ${node.nodeId} not in bestSoFar`)
+        logger.debug(`Node ${node.nodeId} not in bestSoFar`)
         continue
       }
       const edge = g._outgoingEdges[nodeId]!.edges[0]
@@ -2272,9 +2292,11 @@ const optimise = async (
 
       for (let paramIndex = 0; paramIndex < edge.parts.length; paramIndex++) {
         if (edge.parts[paramIndex] === edge.sum) {
-          // console.log(`Param ${paramIndex} is already at sum`)
+          logger.debug(`Param ${paramIndex} is already at sum`)
           continue
         }
+
+        const prev = edge.parts[paramIndex]
 
         let change = size
 
@@ -2288,6 +2310,11 @@ const optimise = async (
         }
         edge.sum = 1
         edge.calculateProportionsAsBigInt()
+
+        if (prev === 0 && edge.inner[paramIndex] === 0) {
+          edge.setParts(before)
+          continue
+        }
 
         const res = await g.evaluate(universe, inputs)
         if (
@@ -2315,7 +2342,6 @@ const optimise = async (
   }
   g = removeNodes(g, findNodesWithoutSources(g))
 
-  console.log(bestSoFar.result.outputs.join(', '))
   if (bestSoFar.result.dustValue > 10) {
     console.log('Minimising dust again')
     bestSoFar = await minimizeDust(
@@ -2325,15 +2351,44 @@ const optimise = async (
       [...g.nodes()].filter((n) => n.nodeType === NodeType.SplitWithDust),
       minimiseDustPhase2Steps
     )
-    console.log(bestSoFar.result.outputs.join(', '))
   }
 
-  console.log(
+  logger.debug(
     `Final graph for ${bestSoFar.result.inputs.join(', ')} -> ${
       bestSoFar.result.output.token
     }`
   )
-  console.log(g.toDot().join('\n'))
+  logger.debug(g.toDot().join('\n'))
+
+  const maxValueSlippage = universe.config.zapMaxValueLoss / 100
+  const maxDustFraction = universe.config.zapMaxDustProduced / 100
+
+  const valueSlippage =
+    bestSoFar.result.inputValue / bestSoFar.result.totalValue
+  if (1 - valueSlippage > maxValueSlippage) {
+    logger.error(
+      `Value slippage is too high: ${((1 - valueSlippage) * 100).toFixed(
+        2
+      )}% for ${bestSoFar.result.inputs.join(', ')} -> ${
+        bestSoFar.result.output.token
+      } - Max allowed value slippage ${universe.config.zapMaxValueLoss}%`
+    )
+
+    throw new Error('Value slippage is too high')
+  }
+
+  const dustFraction = bestSoFar.result.dustValue / bestSoFar.result.totalValue
+  if (dustFraction > maxDustFraction) {
+    console.log(bestSoFar.result.outputs.join(', '))
+    logger.error(
+      `Dust fraction is too high: ${((1 - dustFraction) * 100).toFixed(
+        2
+      )}% for ${bestSoFar.result.inputs.join(', ')} -> ${
+        bestSoFar.result.output.token
+      } - Max allowed dust ${universe.config.zapMaxDustProduced}%`
+    )
+    throw new Error('Dust fraction is too high')
+  }
 
   return g
 }
@@ -2766,6 +2821,26 @@ export class TokenFlowGraphSearcher {
     let out: TokenFlowGraphBuilder
     if (this.universe.rTokensInfo.tokens.has(token)) {
       out = await this.rTokenRedeemGraph(parent, token)
+      if (parent.outputs.length === 1) {
+        const directTrades = findAllWaysToGetFromAToB(
+          this.universe,
+          token,
+          parent.outputs[0]
+        ).filter((i) => i.isTrade && i.is1to1)
+        if (directTrades.length !== 0) {
+          const directGraph = TokenFlowGraphBuilder.createSingleStep(
+            this.universe,
+            token.one,
+            directTrades,
+            `${token} -> ${parent.outputs[0]} (direct)`
+          )
+          out = fanOutGraphs(
+            this.universe,
+            [out, directGraph],
+            `${token} -> ${parent.outputs[0]}`
+          )
+        }
+      }
     } else {
       const burnAction = this.universe.getBurnAction(token)
 
@@ -2798,11 +2873,35 @@ export class TokenFlowGraphSearcher {
         }
         out.addOutputTokens([...subgraphNode.outputs])
       }
+
+      if (burnAction.outputToken.length === 1) {
+        const directTrades = findAllWaysToGetFromAToB(
+          this.universe,
+          token,
+          burnAction.outputToken[0]
+        ).filter((i) => i.isTrade && i.is1to1)
+        if (directTrades.length !== 0) {
+          const directGraph = TokenFlowGraphBuilder.createSingleStep(
+            this.universe,
+            token.one,
+            directTrades,
+            `${token} -> ${burnAction.outputToken[0]} (direct)`
+          )
+          out = fanOutGraphs(
+            this.universe,
+            [out, directGraph],
+            `${token} -> ${burnAction.outputToken[0]}`
+          )
+        }
+      }
     }
 
     return out
   }
 
+  /**
+   * Searcher algorithm that constructs a TFG to do a 1 to 1 zap (one input to one output)
+   */
   public async search1To1(
     input: TokenQuantity,
     output: Token,
@@ -2811,7 +2910,7 @@ export class TokenFlowGraphSearcher {
     let inputToken = input.token
     const prev = this.registry.find(inputToken, output)
     if (prev != null) {
-      return await optimise(this.universe, prev, [input], opts)
+      return await optimise(this.universe, prev, [input], [output], opts)
     }
 
     let graph = TokenFlowGraphBuilder.create1To1(
@@ -2882,23 +2981,14 @@ export class TokenFlowGraphSearcher {
         }
       }
 
+      if (targetToken === output) {
+        return optimise(this.universe, graph, [input], [output], opts)
+      }
+
       inputNode = graph.getTokenNode(targetToken)
       inputToken = targetToken
       graph.addParentInputs(new Set([targetToken]))
-
-      if (targetToken === output) {
-        return optimise(this.universe, graph, [input])
-      }
     }
-
-    // if (inputToken !== inTokCls) {
-    //   const g = await this.search1To1Graph(inputToken, inTokCls, true)
-    //   const node = graph.addSubgraphNode(g.graph)
-    //   inputNode.forward(inputToken, 1, node)
-    //   node.forward(inTokCls, 1, graph.getTokenNode(inTokCls))
-    //   inputNode = graph.getTokenNode(inTokCls)
-    //   inputToken = inTokCls
-    // }
 
     if (outTokCls !== output && inTokCls !== outTokCls) {
       for (const outToken of inputNode.outputs) {
@@ -2964,6 +3054,6 @@ export class TokenFlowGraphSearcher {
       subgraph.getTokenNode(inputToken).forward(inputToken, 1, outputNode)
     }
     this.registry.define(inputToken, output, graph)
-    return await optimise(this.universe, graph, [input], opts)
+    return await optimise(this.universe, graph, [input], [output], opts)
   }
 }

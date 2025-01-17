@@ -65,7 +65,7 @@ const computeOutputs2d = (
   return out
 }
 
-const comoputeFactors = (
+const computeFactors = (
   x: TokenQuantity,
   x1: TokenQuantity,
   x2: TokenQuantity,
@@ -74,6 +74,9 @@ const comoputeFactors = (
   y2: TokenQuantity
 ) => {
   const divisor = x2.sub(x1).mul(y2.sub(y1))
+  if (divisor.isZero) {
+    return [x.token.one, x.token.zero, x.token.zero, x.token.zero]
+  }
 
   const x2subx = x2.sub(x)
   const y2suby = y2.sub(y)
@@ -98,8 +101,16 @@ const inputIntoRanges = (resolution: bigint, amountIn: TokenQuantity) => {
   let in0 = 2n ** orderOfMagnitude
   let in1 = 2n ** (orderOfMagnitude + 1n)
   let range = in1 - in0
-
-  const parts = range / resolution
+  if (range === 0n) {
+    range = 1n
+  }
+  if (resolution >= range) {
+    resolution = 1n
+  }
+  let parts = range / resolution
+  if (parts === 0n) {
+    parts = 1n
+  }
   const lowerTick = (amountIn.amount - in0) / parts
   in0 = in0 + lowerTick * parts
   in1 = in1 - (resolution - (lowerTick + 1n)) * parts
@@ -218,8 +229,8 @@ export class Dim2Cache implements MultiDimCache {
     y: TokenQuantity
   ): Promise<QuoteWithDustResult> {
     const resolution = this.universe.config.cacheResolution
-    const [xin0, xin1] = inputIntoRanges(resolution, x)
-    const [yin0, yin1] = inputIntoRanges(resolution, y)
+    const [xin0, xin1, xrange] = inputIntoRanges(resolution, x)
+    const [yin0, yin1, yrange] = inputIntoRanges(resolution, y)
     const cols0 = this.cachedResults.get(xin0)
     const cols1 = this.cachedResults.get(xin1)
 
@@ -235,7 +246,7 @@ export class Dim2Cache implements MultiDimCache {
     const x1 = x.token.from(xin1)
     const y1 = y.token.from(yin1)
 
-    const [f0, f1, f2, f3] = comoputeFactors(x, x0, x1, y, y0, y1)
+    const [f0, f1, f2, f3] = computeFactors(x, x0, x1, y, y0, y1)
     const outputs = computeOutputs2d(
       p00.output,
       p01.output,

@@ -114,14 +114,14 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  // makeMintTestCase(10000, t.USDC, rTokens.bsd),
-  // makeMintTestCase(5, t.WETH, rTokens.bsd),
-  makeMintTestCase(50, t.WETH, rTokens.BSDX),
+  makeMintTestCase(10000, t.USDC, rTokens.bsd),
+  makeMintTestCase(100, t.WETH, rTokens.bsd),
+  // makeMintTestCase(50, t.WETH, rTokens.BSDX),
   // makeMintTestCase(5, t.USDC, rTokens.bsd),
-  // makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
-  // makeMintTestCase(10000, t.USDbC, rTokens.hyUSD),
-  // makeMintTestCase(10000, t.DAI, rTokens.hyUSD),
-  // makeMintTestCase(5, t.WETH, rTokens.hyUSD),
+  makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
+  makeMintTestCase(10000, t.USDbC, rTokens.hyUSD),
+  makeMintTestCase(10000, t.DAI, rTokens.hyUSD),
+  makeMintTestCase(5, t.WETH, rTokens.hyUSD),
   // makeMintTestCase(5, t.WETH, rTokens.bsd),
   // makeMintTestCase(5, t.wstETH, rTokens.bsd),
   // makeMintTestCase(5, t.cbETH, rTokens.bsd),
@@ -158,23 +158,23 @@ const provider = getProvider(process.env.BASE_PROVIDER!)
 let requestCount = 0
 let initialized = false
 const dupRequestCounter = new DefaultMap<string, number>(() => 0)
-// provider.on('debug', (log) => {
-//   if (
-//     log?.action !== 'request' ||
-//     log?.request?.method !== 'eth_call' ||
-//     log?.request?.params[0].to == null ||
-//     log?.request?.params[0].data == null
-//   ) {
-//     return
-//   }
-//   requestCount += 1
-//   if (initialized) {
-//     const req =
-//       log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
-//     dupRequestCounter.get(req)
-//     dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
-//   }
-// })
+provider.on('debug', (log) => {
+  if (
+    log?.action !== 'request' ||
+    log?.request?.method !== 'eth_call' ||
+    log?.request?.params[0].to == null ||
+    log?.request?.params[0].data == null
+  ) {
+    return
+  }
+  requestCount += 1
+  if (initialized) {
+    const req =
+      log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
+    dupRequestCounter.get(req)
+    dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
+  }
+})
 const emitReqCount = (msg?: string, dups?: boolean) => {
   if (requestCount > 0) {
     console.log(`${msg} Request count: ${requestCount}`)

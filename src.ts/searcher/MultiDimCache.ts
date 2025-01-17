@@ -3,6 +3,7 @@ import { BaseAction } from '../action/Action'
 import { BlockCache } from '../base/BlockBasedCache'
 import { DefaultMap } from '../base/DefaultMap'
 import { TokenQuantity } from '../entities/Token'
+import { unwrapAction } from './TradeAction'
 
 const log2 = (x: bigint) => {
   let out = 0n
@@ -23,6 +24,63 @@ const globalCache2d = new DefaultMap<
   BaseAction,
   Map<string, Promise<QuoteWithDustResult>>
 >(() => new Map())
+
+const globalBlockCache = new WeakMap<
+  BaseAction,
+  BlockCache<bigint, QuoteWithDustResult>
+>()
+const globalBlockCache2d = new WeakMap<
+  BaseAction,
+  Map<bigint, BlockCache<bigint, QuoteWithDustResult>>
+>()
+
+const get1DBlockCache = (action: BaseAction) => {
+  const baseAct = unwrapAction(action)
+  let cache = globalBlockCache.get(baseAct)
+  if (cache == null) {
+    cache = new BlockCache(
+      async (amountIn) => {
+        return await action.quoteWithDust([
+          baseAct.inputToken[0].from(amountIn),
+        ])
+      },
+      0,
+      12000
+    )
+    globalBlockCache.set(baseAct, cache)
+  }
+  return cache
+}
+
+const get2DBlockCache = (baseAct: BaseAction) => {
+  let cache = globalBlockCache2d.get(baseAct)
+  if (cache == null) {
+    cache = new Map()
+    globalBlockCache2d.set(baseAct, cache)
+  }
+  return cache
+}
+
+const get2DBlockCacheRow = (
+  rowCaches: Map<bigint, BlockCache<bigint, QuoteWithDustResult>>,
+  row: bigint,
+  baseAct: BaseAction
+) => {
+  let rowCache = rowCaches.get(row)
+  if (rowCache == null) {
+    rowCache = new BlockCache(
+      async (col) => {
+        return await baseAct.quoteWithDust([
+          baseAct.inputToken[0].from(row),
+          baseAct.inputToken[1].from(col),
+        ])
+      },
+      0,
+      12000
+    )
+  }
+  return rowCache
+}
 
 const computeOutputs1d = (
   y0: TokenQuantity[],
@@ -123,18 +181,12 @@ export class Dim1Cache implements MultiDimCache {
   private readonly innerCache: Map<bigint, Promise<QuoteWithDustResult>>
   private block: number = 0
 
-  private get inputToken() {
-    return this.wrapped.inputToken[0]
-  }
-
   private cacheResolution: bigint
   constructor(
     public readonly universe: Universe,
     public readonly wrapped: BaseAction
   ) {
-    this.cachedResults = universe.createCache(async (amountIn) => {
-      return await this.wrapped.quoteWithDust([this.inputToken.from(amountIn)])
-    }, 12000)
+    this.cachedResults = get1DBlockCache(wrapped)
     this.innerCache = globalCache.get(wrapped)
 
     this.cacheResolution = BigInt(this.universe.config.cacheResolution)
@@ -203,10 +255,11 @@ export class Dim1Cache implements MultiDimCache {
 
 export class Dim2Cache implements MultiDimCache {
   private block: number = 0
-  private readonly cachedResults: DefaultMap<
+  private readonly rowCaches: Map<
     bigint,
     BlockCache<bigint, QuoteWithDustResult>
   >
+  private readonly baseAct: BaseAction
   private readonly innerCache: Map<string, Promise<QuoteWithDustResult>>
 
   private readonly cacheResolution: bigint
@@ -214,16 +267,11 @@ export class Dim2Cache implements MultiDimCache {
     private readonly universe: Universe,
     private readonly wrapped: BaseAction
   ) {
-    this.cachedResults = new DefaultMap((xbn: bigint) => {
-      const x = this.wrapped.inputToken[0].from(xbn)
-      return universe.createCache<bigint, QuoteWithDustResult>(async (ybn) => {
-        return await this.wrapped.quoteWithDust([
-          x,
-          this.wrapped.inputToken[1].from(ybn),
-        ])
-      }, 12000)
-    })
     this.innerCache = globalCache2d.get(this.wrapped)
+
+    this.baseAct = unwrapAction(this.wrapped)
+
+    this.rowCaches = get2DBlockCache(this.baseAct)
 
     this.cacheResolution = BigInt(this.universe.config.cacheResolution)
   }
@@ -232,10 +280,11 @@ export class Dim2Cache implements MultiDimCache {
     x: TokenQuantity,
     y: TokenQuantity
   ): Promise<QuoteWithDustResult> {
-    const [xin0, xin1, xrange] = inputIntoRanges(this.cacheResolution, x)
-    const [yin0, yin1, yrange] = inputIntoRanges(this.cacheResolution, y)
-    const cols0 = this.cachedResults.get(xin0)
-    const cols1 = this.cachedResults.get(xin1)
+    const [xin0, xin1] = inputIntoRanges(this.cacheResolution, x)
+    const [yin0, yin1] = inputIntoRanges(this.cacheResolution, y)
+
+    const cols0 = get2DBlockCacheRow(this.rowCaches, xin0, this.baseAct)
+    const cols1 = get2DBlockCacheRow(this.rowCaches, xin1, this.baseAct)
 
     const [p00, p01, p10, p11] = await Promise.all([
       cols0.get(yin0),

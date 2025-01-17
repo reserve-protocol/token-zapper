@@ -9,9 +9,6 @@ import {
 } from '../../src.ts/configuration/ChainConfiguration'
 import {
   Address,
-  createEnso,
-  createKyberswap,
-  createParaswap,
   ethereumConfig,
   ethereumProtocolConfigs,
   setupEthereumZapper,

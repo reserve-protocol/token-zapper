@@ -133,21 +133,21 @@ const loadPoolsFromSubgraph = async (
     }
   } catch (e) {}
 
-  const interestingTokens = new Set<Token>([
-    ...ctx.universe.commonTokensInfo.tokens,
-    ...ctx.universe.rTokensInfo.tokens,
-    ctx.universe.nativeToken,
-    ctx.universe.wrappedNativeToken,
-  ])
+  // const interestingTokens = new Set<Token>([
+  //   ...ctx.universe.commonTokensInfo.tokens,
+  //   ...ctx.universe.rTokensInfo.tokens,
+  //   ctx.universe.nativeToken,
+  //   ctx.universe.wrappedNativeToken,
+  // ])
 
   const pools = await Promise.all(
     poolData.map(async (pool) => {
       const poolAddress = Address.from(pool.id)
       const token0 = await ctx.universe.getToken(Address.from(pool.token0.id))
       const token1 = await ctx.universe.getToken(Address.from(pool.token1.id))
-      if (!interestingTokens.has(token0) && !interestingTokens.has(token1)) {
-        return null
-      }
+      // if (!interestingTokens.has(token0) && !interestingTokens.has(token1)) {
+      //   return null
+      // }
       return await ctx.definePool(poolAddress, async () => {
         const fee = BigInt(pool.feeTier)
         const tickSpacing = await ctx.tickSpacing.get(fee)

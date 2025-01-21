@@ -95,15 +95,10 @@ export interface ZapperInterface extends utils.Interface {
     "zapERC20((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
     "zapERC20WithPermit2((address,uint256,bytes32[],bytes[],address[],uint256,address),((address,uint256),uint256,uint256),bytes)": FunctionFragment;
     "zapETH((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
-    "zapToETH((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic:
-      | "zapERC20"
-      | "zapERC20WithPermit2"
-      | "zapETH"
-      | "zapToETH"
+    nameOrSignatureOrTopic: "zapERC20" | "zapERC20WithPermit2" | "zapETH"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -122,10 +117,6 @@ export interface ZapperInterface extends utils.Interface {
     functionFragment: "zapETH",
     values: [ZapERC20ParamsStruct]
   ): string;
-  encodeFunctionData(
-    functionFragment: "zapToETH",
-    values: [ZapERC20ParamsStruct]
-  ): string;
 
   decodeFunctionResult(functionFragment: "zapERC20", data: BytesLike): Result;
   decodeFunctionResult(
@@ -133,7 +124,6 @@ export interface ZapperInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "zapETH", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "zapToETH", data: BytesLike): Result;
 
   events: {};
 }
@@ -181,11 +171,6 @@ export interface Zapper extends BaseContract {
       params: ZapERC20ParamsStruct,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    zapToETH(
-      params: ZapERC20ParamsStruct,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
   };
 
   zapERC20(
@@ -205,11 +190,6 @@ export interface Zapper extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  zapToETH(
-    params: ZapERC20ParamsStruct,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   callStatic: {
     zapERC20(
       params: ZapERC20ParamsStruct,
@@ -224,11 +204,6 @@ export interface Zapper extends BaseContract {
     ): Promise<ZapperOutputStructOutput>;
 
     zapETH(
-      params: ZapERC20ParamsStruct,
-      overrides?: CallOverrides
-    ): Promise<ZapperOutputStructOutput>;
-
-    zapToETH(
       params: ZapERC20ParamsStruct,
       overrides?: CallOverrides
     ): Promise<ZapperOutputStructOutput>;
@@ -253,11 +228,6 @@ export interface Zapper extends BaseContract {
       params: ZapERC20ParamsStruct,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
-
-    zapToETH(
-      params: ZapERC20ParamsStruct,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -274,11 +244,6 @@ export interface Zapper extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     zapETH(
-      params: ZapERC20ParamsStruct,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    zapToETH(
       params: ZapERC20ParamsStruct,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

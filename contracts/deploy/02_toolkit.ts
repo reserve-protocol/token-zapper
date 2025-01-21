@@ -8,18 +8,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // })
   // console.log('BalanceOf deployed to:', balanceOf.address)
 
-  const curveRouterCall = await hre.deployments.deploy('CurveRouterCall', {
+  // const curveRouterCall = await hre.deployments.deploy('CurveRouterCall', {
+  //   from: deployer,
+  // })
+  // console.log('curveRouterCall deployed to:', curveRouterCall.address)
+
+  const folioHelper = await hre.deployments.deploy('DeployFolioHelper', {
     from: deployer,
   })
-  console.log('curveRouterCall deployed to:', curveRouterCall.address)
+  console.log('DeployFolioHelper deployed to:', folioHelper.address)
 
   // const ethhBalance = await hre.deployments.deploy('EthBalance', {
   //   from: deployer,
   // })
   // console.log('ethhBalance deployed to:', ethhBalance.address)
-
-
-  
 }
-func.tags = ["toolkit"]
+func.tags = ['toolkit']
 export default func

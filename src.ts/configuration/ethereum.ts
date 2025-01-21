@@ -1,8 +1,15 @@
-import { constants } from 'ethers'
 import { type Universe } from '../Universe'
 import { makeConfig } from './ChainConfiguration'
 
 import { ChainIds } from './ReserveAddresses'
+
+import deployments from '../../contracts/deployments.json'
+
+const mainnetDeployments = deployments[1][0]
+
+const contractAddress = (name: keyof typeof mainnetDeployments.contracts) => {
+  return mainnetDeployments.contracts[name].address
+}
 
 const chainId = ChainIds.Mainnet
 export const COMMON_TOKENS = {
@@ -12,6 +19,8 @@ export const COMMON_TOKENS = {
   WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
   ERC20GAS: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
   WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+
+  RSR: '0x320623bbfe443c84b46956ae37d946fb9b5d2453',
 
   MIM: '0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3',
   FRAX: '0x853d955acef822db058eb8505911ed77f175b99e',
@@ -71,6 +80,11 @@ export const COMMON_TOKENS = {
   'mooConvexETH+': '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0', // Beefy
   'sdETH+ETH-f': '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C', // StakeDAO
   'yvCurve-ETH+-f': '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581', // Yearn
+
+  UNI: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
+  LINK: '0x514910771af9ca656af840dff83e8264ecf986ca',
+  PEPE: '0x6982508145454ce325ddbe47a25d4ec3d2311933',
+  AAVE: '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
 } as const
 
 export const RTOKENS = {
@@ -93,20 +107,20 @@ export const ethereumConfig = makeConfig(
   COMMON_TOKENS,
   RTOKENS,
   {
-    emitId: '0x6d92146F63d95BF38eB6158856f95139B15C66Bb',
+    emitId: contractAddress('EmitId'),
     facadeAddress: '0x2C7ca56342177343A2954C250702Fd464f4d0613',
     oldFacadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
-    zapperAddress: '0xE988c8C49043C798F118BBCF769b210fD04c0bc3',
-    executorAddress: '0xb3805E5f44B97daB82BC00d63f7F8C5a56b96D8D',
+    zapperAddress: contractAddress('Zapper'),
+    executorAddress: contractAddress('ZapperExecutor'),
     wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-    rtokenLens: '0xE787491314A3Da6412Ac4DeEB39c0F8EfdE1b53C',
+    rtokenLens: contractAddress('RTokenLens'),
 
-    balanceOf: '0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D',
-    curveRouterCall: '0x9234dbD7AaaD37b7A185B6f694700C5466783A3d',
-    ethBalanceOf: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
-    uniV3Router: '0x49B94B1feD319325fcBA107cc2777d6d7b4C4770',
-    curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
-    curveCryptoFactoryHelper: '0xfbbcdad39d42f49c170cbc5396e740f18e9d6866',
+    balanceOf: contractAddress('BalanceOf'),
+    curveRouterCall: contractAddress('CurveRouterCall'),
+    ethBalanceOf: contractAddress('EthBalance'),
+    uniV3Router: contractAddress('UniV3RouterCall'),
+    curveStableSwapNGHelper: contractAddress('CurveStableSwapNGHelper'),
+    curveCryptoFactoryHelper: contractAddress('CurveCryptoFactoryHelper'),
 
     usdc: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
   },

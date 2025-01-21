@@ -188,16 +188,26 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     await setupStargateWrapper(universe, PROTOCOL_CONFIGS.stargate.wrappers, {})
   }
   const setupAero = async () => {
-    await setupAerodromeRouter(universe)
-    const aerodromeWrappers = createProtocolWithWrappers(universe, 'aerodrome')
+    try {
+      await setupAerodromeRouter(universe)
+      const aerodromeWrappers = createProtocolWithWrappers(
+        universe,
+        'aerodrome'
+      )
 
-    for (const wrapperAddress of Object.values(
-      PROTOCOL_CONFIGS.aerodrome.lpPoolWrappers
-    )) {
-      const wrapperToken = await universe.getToken(Address.from(wrapperAddress))
-      await aerodromeWrappers.addWrapper(wrapperToken)
+      for (const wrapperAddress of Object.values(
+        PROTOCOL_CONFIGS.aerodrome.lpPoolWrappers
+      )) {
+        const wrapperToken = await universe.getToken(
+          Address.from(wrapperAddress)
+        )
+        await aerodromeWrappers.addWrapper(wrapperToken)
+      }
+    } catch (e) {
+      console.log(e)
     }
   }
+  let done = 0
   const tasks = [
     initCompound(),
     initAave(),
@@ -205,7 +215,17 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     initERC4626(),
     setupStarGate_(),
     setupAero(),
-  ]
+  ].map((tsk) => {
+    return tsk
+      .catch((e) => {
+        console.error(e)
+      })
+      .finally(() => {
+        done++
+        console.log(`${done}/${tasks.length} done`)
+      })
+  })
+
   await Promise.all(tasks)
 
   universe.tokenClass.set(

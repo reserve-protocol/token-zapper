@@ -23,7 +23,12 @@
     "sourceMap": true,
     "target": "ESNext"
   },
-  "include": ["./src.ts/**/*.ts", "./src.ts/**/*.mts", "./src.ts/**/*.json"],
+  "include": [
+    "./src.ts/**/*.ts",
+    "./src.ts/**/*.mts",
+    "./src.ts/**/*.json",
+    "./contracts/deployments.json"
+  ],
   "exclude": [
     "./node_modules",
     "./build",

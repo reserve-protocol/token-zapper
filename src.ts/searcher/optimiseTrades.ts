@@ -2,6 +2,90 @@ import { Universe } from '../Universe'
 import { BaseAction } from '../action/Action'
 import { TokenQuantity } from '../entities/Token'
 
+/** Optimises trades solely in terms of output quantity ignoring tx fees */
+export const optimiseTradesInOutQty = async (
+  input: TokenQuantity,
+  tradeActions: BaseAction[],
+  parts: number = 10
+) => {
+  const inputToken = input.token
+
+  const maxInputs = tradeActions.map((i) => Infinity)
+  if (maxInputs.every((i) => i === 0)) {
+    return {
+      inputs: tradeActions.map(() => 0),
+      output: 0,
+      input: 0,
+      price: 0,
+      unspent: input.asNumber(),
+      outputs: tradeActions.map(() => 0),
+    }
+  }
+
+  const evaluteAction = async (action: BaseAction, inputQty: number) => {
+    const input = inputToken.from(inputQty)
+    const output = await action.quote([input]).catch((e) => {
+      return action.outputToken.map((i) => i.zero)
+    })
+    const outputQty = output[0].asNumber()
+    const price = outputQty / inputQty
+    return {
+      price,
+      inputQty,
+      inputValue: inputQty,
+      outputQty,
+      outputValue: outputQty,
+    }
+  }
+  const inputQty = input.asNumber()
+  const onePart = inputQty / parts
+  const state = tradeActions.map((action, index) => ({
+    input: 0,
+    output: 0,
+    index,
+    maxInput: maxInputs[index],
+    action,
+  }))
+  const step = async () => {
+    const eligible = state.filter((i) => i.input < i.maxInput)
+
+    if (eligible.length === 0) {
+      return
+    }
+
+    const results = await Promise.all(
+      state
+        .filter((i) => i.input < i.maxInput)
+        .map(async (state) => {
+          const newInput = Math.min(state.maxInput, state.input + onePart)
+          return {
+            result: await evaluteAction(state.action, newInput),
+            newInput,
+            state,
+          }
+        })
+    )
+    // Pick the best one in terms of output pr inputput - gas
+    results.sort((l, r) => r.result.price - l.result.price)
+    const best = results[0]
+    // console.log(`${best.state.action}: Best`)
+    // console.log(state.map((i) => i.input).join(', '))
+    best.state.input = Math.min(best.newInput, best.state.maxInput)
+    best.state.output = best.result.outputQty
+  }
+  for (let i = 0; i < parts; i++) {
+    await step()
+  }
+  const totalOutput = state.reduce((l, r) => l + r.output, 0)
+
+  return {
+    inputs: state.map((i) => i.input),
+    output: totalOutput,
+    outputs: state.map((i) => i.output),
+    price: inputQty / totalOutput,
+  }
+}
+
 export const optimiseTrades = async (
   universe: Universe,
   input: TokenQuantity,

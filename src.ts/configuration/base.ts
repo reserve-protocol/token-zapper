@@ -1,7 +1,15 @@
 import { ethers } from 'ethers'
 import { type Universe } from '../Universe'
-import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { makeConfig } from './ChainConfiguration'
+
+import deployments from '../../contracts/deployments.json'
+
+const baseDeployments = deployments[8453][0]
+
+const contractAddress = (name: keyof typeof baseDeployments.contracts) => {
+  return baseDeployments.contracts[name].address
+}
+
 export const COMMON_TOKENS = {
   USDC: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   USDbC: '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA',
@@ -20,6 +28,17 @@ export const COMMON_TOKENS = {
   AERO: '0x940181a94a35a4569e4529a3cdfb74e38fd98631',
   WELL: '0xA88594D404727625A9437C3f886C7643872296AE',
   cbBTC: '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf',
+
+  Virtuals: '0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b',
+  aiXBT: '0x4F9Fd6Be4a90f2620860d680c0d4d5Fb53d1A825',
+  Freysa: '0xb33Ff54b9F7242EF1593d2C9Bcd8f9df46c77935',
+  GAME: '0x1C4CcA7C5DB003824208aDDA61Bd749e55F463a3',
+  Cookie: '0xC0041EF357B183448B235a8Ea73Ce4E4eC8c265F',
+  Rei: '0x6B2504A03ca4D43d0D73776F6aD46dAb2F2a4cFD',
+  Toshi: '0xAC1Bd2486aAf3B5C0fc3Fd868558b082a531B2B4',
+  VaderAI: '0x731814e491571A2e9eE3c5b1F7f3b962eE8f4870',
+  Luna: '0x55cD6469F597452B5A7536e2CD98fDE4c1247ee4',
+  Henlo: '0x23A96680Ccde03Bd4Bdd9a3e9a0Cb56A5D27F7c9',
 } as const
 
 export const RTOKENS = {
@@ -39,19 +58,19 @@ export const baseConfig = makeConfig(
   COMMON_TOKENS,
   RTOKENS,
   {
-    emitId: '0xC7a942301d92024321995f7f748C2B0687a1Cb60',
+    emitId: contractAddress('EmitId'),
     facadeAddress: '0xEb2071e9B542555E90E6e4E1F83fa17423583991',
     oldFacadeAddress: '0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF',
-    zapperAddress: '0xaA560D5C2Fade67CF6836Ab793e56A79F09d4282',
-    executorAddress: '0x560740052F380669c90811f711f80B21306d4713',
+    zapperAddress: contractAddress('Zapper2'),
+    executorAddress: contractAddress('ZapperExecutor'),
     wrappedNative: '0x4200000000000000000000000000000000000006',
-    rtokenLens: '0x5cF5eD1715b6416710f106A3257E5C55B65EF418',
+    rtokenLens: contractAddress('RTokenLens'),
 
-    balanceOf: '0x9554DBb835886FC1f37835A1C83CeA3c20e5950A',
-    curveRouterCall: '0x1A7F7C1b870ad69D19a899B2A3BA6EBEea77033f',
-    ethBalanceOf: '0x858b62D160788864c65222d7a3777a19B370Abd8',
-    uniV3Router: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
-    curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
+    balanceOf: contractAddress('BalanceOf'),
+    curveRouterCall: contractAddress('CurveRouterCall'),
+    ethBalanceOf: contractAddress('EthBalance'),
+    uniV3Router: contractAddress('UniV3RouterCall'),
+    curveStableSwapNGHelper: ethers.constants.AddressZero,
     curveCryptoFactoryHelper: ethers.constants.AddressZero,
 
     usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',

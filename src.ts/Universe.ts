@@ -49,6 +49,10 @@ import { ToTransactionArgs } from './searcher/ToTransactionArgs'
 import { Contract } from './tx-gen/Planner'
 import { TxGen } from './searcher/TxGen'
 import { TokenFlowGraphRegistry, TokenFlowGraphSearcher } from './searcher/TokenFlowGraph'
+import { FolioContext } from './action/Folio'
+import { DeployFolioConfig, DeployFolioConfigJson } from './action/DeployFolioConfig'
+import { optimiseTrades } from './searcher/optimiseTrades'
+import { DexLiquidtyPriceStore } from './searcher/DexLiquidtyPriceStore'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -67,6 +71,7 @@ export type Integrations = Partial<{
   convex: ReserveConvex
 }>
 export class Universe<const UniverseConf extends Config = Config> {
+  public readonly folioContext: FolioContext
   private emitter = new EventEmitter()
   private yieldPositionZaps: Map<Token, Token> = new Map();
   public defineYieldPositionZap(yieldPosition: Token, rTokenInput: Token) {
@@ -847,6 +852,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       ]
     })
   ) {
+    this.folioContext = new FolioContext(this)
     const nativeToken = config.nativeToken
     this.nativeToken = Token.createToken(
       this,
@@ -980,6 +986,21 @@ export class Universe<const UniverseConf extends Config = Config> {
       1000 * 60 * 10,
     )
   }
+  
+  public readonly dexLiquidtyPriceStore = new DexLiquidtyPriceStore(this)
+  private hasDexMarkets_ = new DefaultMap<Token, boolean>(token => {
+    for (const [tokenIn, edges] of this.graph.vertices.get(token).incomingEdges) {
+      for (const edge of edges) {
+        if (edge.is1to1 && edge.isTrade) {
+          return true
+        }
+      }
+    }
+    return false
+  })
+  public hasDexMarkets(token: Token) {
+    return this.hasDexMarkets_.get(token)
+  }
 
 
   public async updateBlockState(block: number, gasPrice: bigint) {
@@ -1066,31 +1087,75 @@ export class Universe<const UniverseConf extends Config = Config> {
   private readonly tfgReg = new TokenFlowGraphRegistry()
   public readonly tfgSearcher = new TokenFlowGraphSearcher(this, this.tfgReg)
 
+
+  /**
+   * Will generate correct instructions to zap into a token that does not yet exist on chain
+   */
+  public async deployZap(
+    userInput: TokenQuantity,
+    caller: Address | string,
+    config: DeployFolioConfig | DeployFolioConfigJson,
+    opts?: ToTransactionArgs,
+  ) {
+    if (!(config instanceof DeployFolioConfig)) {
+      config = await DeployFolioConfig.create(this, config)
+    }
+    const recipient = Address.from(opts?.recipient ?? caller)
+    const dustRecipient = Address.from(opts?.dustRecipient ?? opts?.recipient ?? caller)
+
+    const deployTFG = await this.tfgSearcher.searchZapDeploy1ToFolio(
+      userInput,
+      config,
+      this.config
+    )
+
+    const userOption = Object.assign({
+      caller: Address.from(caller),
+      recipient: Address.from(recipient),
+      dustRecipient: Address.from(dustRecipient),
+    }, opts)
+
+
+    const expectedOutput = await deployTFG.evaluate(this, [userInput])
+    return await new TxGen(this, expectedOutput).generate({
+      ...userOption,
+      ethereumInput: false,
+      deployFolio: true,
+    })
+  }
+
   public async zap(
     userInput: TokenQuantity,
-    rToken: Token | string,
-    userAddress: Address | string,
+    outputToken: Token | string,
+    caller: Address | string,
     opts?: ToTransactionArgs
   ) {
-    if (typeof userAddress === 'string') {
-      userAddress = Address.from(userAddress)
-    }
-    if (typeof rToken === 'string') {
-      rToken = await this.getToken(Address.from(rToken))
+    const recipient = Address.from(opts?.recipient ?? caller)
+    const dustRecipient = Address.from(opts?.dustRecipient ?? opts?.recipient ?? caller)
+
+    const options = Object.assign({
+      caller: Address.from(caller),
+      recipient: Address.from(recipient),
+      dustRecipient: Address.from(dustRecipient),
+    }, opts)
+    if (typeof outputToken === 'string') {
+      outputToken = await this.getToken(Address.from(outputToken))
     }
     try {
       const isNative = userInput.token === this.nativeToken
       userInput = isNative ? userInput.into(this.wrappedNativeToken) : userInput
-      console.log(`Building DAG for ${userInput} -> ${rToken}`)
+      console.log(`Building DAG for ${userInput} -> ${outputToken}`)
       const tfg = await this.tfgSearcher.search1To1(
         userInput,
-        rToken,
+        outputToken,
         this.config
       )
       const res = await tfg.evaluate(this, [userInput])
       console.log(`Expected output: ${res.result.inputs.join(', ')} -> ${res.result.outputs.filter(i => i.amount >10n).join(', ')}`)
-      return await new TxGen(this, res).generate(userAddress, {
+      return await new TxGen(this, res).generate({
+        ...options,
         ethereumInput: isNative,
+        deployFolio: false
       })
     } catch (e) {
       console.log(`Error zapping: ${e}`)

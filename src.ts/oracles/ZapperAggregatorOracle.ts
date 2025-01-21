@@ -119,10 +119,42 @@ export class ZapperTokenQuantityPrice extends Cached<
       } catch (e) {}
     }
 
-    return (await this.tokenPrice(qty.token))
-      .into(qty.token)
-      .mul(qty)
-      .into(universe.usd)
+    try {
+      return (await this.tokenPrice(qty.token))
+        .into(qty.token)
+        .mul(qty)
+        .into(universe.usd)
+    } catch (e) {}
+
+    if (!universe.hasDexMarkets(qty.token)) {
+      throw new Error('Unable to price ' + qty)
+    }
+    console.log(`Trying dex markets to price ${qty}`)
+    const usdc = await universe.getToken(universe.config.addresses.usdc)
+    const [priceInWeth, priceInUsdc] = await Promise.all([
+      universe.dexLiquidtyPriceStore
+        .getPrice(qty, universe.wrappedNativeToken)
+        .catch(() => null),
+      universe.dexLiquidtyPriceStore.getPrice(qty, usdc).catch(() => null),
+    ])
+    console.log(`Got prices ${priceInWeth?.output} and ${priceInUsdc?.output}`)
+    const valueInWeth = priceInWeth
+      ? await this.universe.fairPrice(priceInWeth.output)
+      : null
+    const valueInUSDC =
+      (priceInUsdc
+        ? await this.universe.fairPrice(priceInUsdc.output)
+        : null) ?? priceInUsdc?.output.into(universe.usd)
+
+    console.log(`Got values ${valueInWeth} and ${valueInUSDC}`)
+    if (valueInUSDC != null && valueInWeth != null) {
+      return valueInWeth.amount > valueInUSDC.amount ? valueInWeth : valueInUSDC
+    }
+    const either = valueInUSDC || valueInWeth
+    if (either != null) {
+      return either
+    }
+    throw new Error('Unable to price ' + qty)
   }
 
   private async tokenPrice(token: Token) {

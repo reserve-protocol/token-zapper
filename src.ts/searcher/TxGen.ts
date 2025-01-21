@@ -11,7 +11,6 @@ import {
   LiteralValue,
   Planner,
   printPlan,
-  ReturnValue,
   Value,
 } from '../tx-gen/Planner'
 import {
@@ -25,11 +24,11 @@ import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { NodeProxy, TFGResult } from './TokenFlowGraph'
 import { Approval } from '../base/Approval'
 import { constants } from 'ethers/lib/ethers'
+
 const iface = Zapper__factory.createInterface()
 const simulateAndParse = async (
   universe: Universe,
   simulationPayload: SimulateParams,
-  outputToken: Token,
   dustTokens: Token[]
 ) => {
   const simulation = await universe.simulateZapFn(simulationPayload, universe)
@@ -44,7 +43,7 @@ const simulateAndParse = async (
         parsed.gasUsed.toBigInt() * universe.gasPrice
       ),
       gasUnits: parsed.gasUsed.toBigInt(),
-      amountOut: outputToken.from(parsed.amountOut),
+      amountOut: parsed.amountOut.toBigInt(),
       dust: parsed.dust.map((d, index) => dustTokens[index].from(d)),
     }
   } catch (e) {
@@ -67,15 +66,20 @@ const evaluateProgram = async (
   inputs: TokenQuantity[],
   dustTokens: Token[],
   signer: Address,
-  minOutput: TokenQuantity,
-  opts: { ethereumInput: boolean }
+  outputToken: Token | Address,
+  minOutput: bigint,
+  opts: TxGenOptions
 ) => {
+  const outputTokenAddress =
+    outputToken instanceof Address ? outputToken : outputToken.address
   // console.log(printPlan(planner, universe).join('\n'))
   const tx = encodeProgramToZapERC20Params(
     planner,
     inputs[0],
+    outputTokenAddress,
     minOutput,
-    dustTokens
+    dustTokens,
+    opts.recipient
   )
 
   // console.log(
@@ -90,7 +94,7 @@ const evaluateProgram = async (
   //   }),
   //   JSON.stringify(opts)
   // )
-  const data = encodeCalldata(tx, opts.ethereumInput)
+  const data = encodeCalldata(tx, { isDeployZap: opts.deployFolio ?? false })
   let value = 0n
   if (opts.ethereumInput) {
     value = inputs[0].amount
@@ -107,12 +111,7 @@ const evaluateProgram = async (
   }
   try {
     return {
-      res: await simulateAndParse(
-        universe,
-        simulationPayload,
-        minOutput.token,
-        dustTokens
-      ),
+      res: await simulateAndParse(universe, simulationPayload, dustTokens),
       tx: {
         tx: {
           to: universe.config.addresses.zapperAddress.address,
@@ -128,18 +127,38 @@ const evaluateProgram = async (
     throw e
   }
 }
+interface TxGenOptions {
+  caller: Address
+  recipient: Address
+  dustRecipient: Address
+  ethereumInput: boolean
+
+  deployFolio?: boolean
+}
 
 export class DagPlanContext {
   public readonly executionContractBalance = new DefaultMap<Token, Value>(
-    (token) => {
-      return plannerUtils.erc20.balanceOf(
-        this.universe,
-        this.planner,
-        token,
-        this.universe.execAddress
-      )
-    }
+    (token) => this.balanceOf(token.address)
   )
+
+  public balanceOf(token: Token | Address) {
+    return plannerUtils.erc20.balanceOf(
+      this.universe,
+      this.planner,
+      token,
+      this.universe.execAddress
+    )
+  }
+
+  public transfer(token: Token | Address, amount: Value, destination: Address) {
+    return plannerUtils.erc20.transfer(
+      this.universe,
+      this.planner,
+      amount,
+      token,
+      destination
+    )
+  }
 
   public fraction(
     fraction: number,
@@ -224,12 +243,23 @@ export class DagPlanContext {
     }
   }
 
+  public get caller() {
+    return this.opts.caller
+  }
+
+  public get recipient() {
+    return this.opts.recipient
+  }
+
+  public get dustRecipient() {
+    return this.opts.dustRecipient
+  }
+
   constructor(
     public readonly universe: Universe,
     public readonly dag: TFGResult,
     public readonly planner: Planner,
-    public readonly outputRecipient: Address,
-    public readonly dustRecipient: Address = outputRecipient
+    public readonly opts: TxGenOptions
   ) {}
   public readonly values: Map<Token, Value> = new Map()
 }
@@ -326,13 +356,14 @@ export class TxGen {
     return this.result.graph
   }
 
-  public async generate(signer: Address, opts: { ethereumInput: boolean }) {
+  public async generate(opts: TxGenOptions) {
     const emitIdContract = Contract.createLibrary(
       EmitId__factory.connect(
         this.universe.config.addresses.emitId.address,
         this.universe.provider
       )
     )
+    const outputToken = this.result.result.output.token
     const nodes = this.result.nodeResults
 
     // console.log(this.graph.toDot().join('\n'))
@@ -348,13 +379,7 @@ export class TxGen {
       }
     }
 
-    const ctx = new DagPlanContext(
-      this.universe,
-      this.result,
-      planner,
-      signer,
-      signer
-    )
+    const ctx = new DagPlanContext(this.universe, this.result, planner, opts)
 
     const nodeInputs = new DefaultMap<number, DefaultMap<Token, Value[]>>(
       () => new DefaultMap<Token, Value[]>(() => [])
@@ -419,15 +444,18 @@ export class TxGen {
       }
     }
 
+    let outputTokenAddress = outputToken.address
+    if (opts.deployFolio) {
+      outputTokenAddress =
+        await this.universe.folioContext.computeNextFolioTokenAddress()
+    }
+
     const dustTokens = this.graph.getDustTokens()
 
-    const outTokenBal = ctx.readBalance(this.result.result.output.token, true)
-    plannerUtils.erc20.transfer(
-      ctx.universe,
-      ctx.planner,
-      outTokenBal,
-      this.result.result.output.token,
-      ctx.outputRecipient
+    ctx.transfer(
+      outputTokenAddress,
+      ctx.balanceOf(outputTokenAddress),
+      ctx.recipient
     )
 
     const { res: testSimulation } = await evaluateProgram(
@@ -435,39 +463,24 @@ export class TxGen {
       planner,
       this.result.result.inputs,
       dustTokens,
-      signer,
-      this.result.result.output.token.wei,
+      ctx.caller,
+      outputTokenAddress,
+      outputToken.wei.amount,
       opts
     )
     for (const token of dustTokens) {
       let recipient =
         ctx.dag.result.output.token === token
-          ? ctx.outputRecipient
+          ? ctx.recipient
           : ctx.dustRecipient
 
-      const val = plannerUtils.erc20.balanceOf(
-        ctx.universe,
-        ctx.planner,
-        token,
-        ctx.thisAddress
-      )
+      const val = ctx.balanceOf(token)
 
-      plannerUtils.erc20.transfer(
-        ctx.universe,
-        ctx.planner,
-        val,
-        token,
-        recipient
-      )
+      ctx.transfer(token, val, recipient)
     }
-    // console.log(
-    //   'outputs',
-    //   testSimulation.amountOut.toString(),
-    //   testSimulation.dust.join(', ')
-    // )
 
-    const minOutputWithSlippage = this.result.result.output.token.from(
-      testSimulation.amountOut.amount - testSimulation.amountOut.amount / 10000n
+    const minOutputWithSlippage = outputToken.from(
+      testSimulation.amountOut - testSimulation.amountOut / 10000n
     )
 
     const program = await evaluateProgram(
@@ -475,8 +488,9 @@ export class TxGen {
       planner,
       this.result.result.inputs,
       dustTokens,
-      signer,
-      minOutputWithSlippage,
+      ctx.caller,
+      outputTokenAddress,
+      minOutputWithSlippage.amount,
       opts
     )
     const result = {
@@ -487,14 +501,12 @@ export class TxGen {
       tokenPrices: new Map(),
     }
 
-    const dustQtys = testSimulation.dust.filter(
-      (i) => i.token !== program.res.amountOut.token && i.amount > 1000n
-    )
+    const dustQtys = testSimulation.dust.filter((i) => i.amount > 1000n)
 
     const stats = await ZapTxStats.create(result, {
       gasUnits: program.res.gasUnits + program.res.gasUnits / 6n,
       input: this.result.result.inputs[0],
-      output: program.res.amountOut,
+      output: outputToken.from(program.res.amountOut),
       dust: dustQtys,
     })
 

@@ -39,11 +39,12 @@ export class ApprovalsStore {
         await IERC20__factory.connect(
           token.address.address,
           this.provider
-        ).totalSupply()
+        ).callStatic.totalSupply()
       )
     },
     0,
-    12000
+    12000,
+    (token) => token
   )
   constructor(private readonly provider: Provider) {}
 

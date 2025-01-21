@@ -3,8 +3,10 @@ import { Universe } from '../Universe'
 import {
   AerodromeContext,
   AerodromePoolType,
+  AerodromeStablePool,
   getPoolType,
 } from '../action/Aerodrome'
+import fs from 'fs'
 import { Address } from '../base/Address'
 import {
   IAerodromeFactory__factory,
@@ -84,58 +86,80 @@ export const setupAerodromeRouter = async (universe: Universe) => {
       poolFee: ethers.BigNumber.from(30),
     }
 
-    const out = await aerodromeContext.definePool(addr, def)
+    return await aerodromeContext.definePool(addr, def)
   }
 
-  const loadPools = async (count: number, start: number) => {
-    return await Promise.all(
-      (
-        await sugarInst.forSwaps(count, start)
-      ).map(async (data) => {
-        const { token0, token1, poolType, poolFee, factory } = data
+  if (!process.env.DEV) {
+    const loadPools = async (count: number, start: number) => {
+      const poolList = await sugarInst.forSwaps(count, start)
+      return (
+        await Promise.all(
+          poolList.map(async (data) => {
+            try {
+              const { token0, token1, poolType, poolFee, factory } = data
 
-        const typ = getPoolType(poolType)
-        if (typ !== AerodromePoolType.CL) {
-          try {
-            const addr = await routerInst.callStatic.poolFor(
-              token0,
-              token1,
-              typ === AerodromePoolType.STABLE,
-              factory
-            )
-            await aerodromeContext.definePool(Address.from(addr), data)
-          } catch (e) {
-            console.log('Failed to load pool: ' + data)
-            console.log(e)
-          }
-        } else {
-          try {
-            const factoryInst = IAerodromeFactory__factory.connect(
-              factory,
-              universe.provider
-            )
-            const addr = Address.from(
-              await factoryInst.callStatic.getPool(token0, token1, poolType)
-            )
+              const typ = getPoolType(poolType)
+              if (typ !== AerodromePoolType.CL) {
+                const addr = await routerInst.callStatic.poolFor(
+                  token0,
+                  token1,
+                  typ === AerodromePoolType.STABLE,
+                  factory
+                )
+                return await aerodromeContext.definePool(
+                  Address.from(addr),
+                  data
+                )
+              } else {
+                const factoryInst = IAerodromeFactory__factory.connect(
+                  factory,
+                  universe.provider
+                )
+                const addr = Address.from(
+                  await factoryInst.callStatic.getPool(token0, token1, poolType)
+                )
 
-            if (addr === Address.ZERO) {
-              return
+                if (addr === Address.ZERO) {
+                  return
+                }
+                return await aerodromeContext.definePool(addr, data)
+              }
+            } catch (e) {
+              console.log('Failed to load pool: ' + data)
+              console.log(e)
             }
-            await aerodromeContext.definePool(addr, data)
-          } catch (e) {
-            console.log('Failed to load pool: ' + data)
-            console.log(e)
-          }
-        }
-      })
+            return null
+          })
+        )
+      ).filter((p) => p != null)
+    }
+
+    await loadPools(1000, 0)
+    await loadPools(1000, 1000)
+    await loadPools(1000, 2000)
+  } else {
+    const pools: ReturnType<AerodromeStablePool['toJSON']>[] = JSON.parse(
+      fs.readFileSync(
+        'src.ts/configuration/data/base/aerodrome-pools.json',
+        'utf8'
+      )
+    )
+    await Promise.all(
+      pools.map(async (p) =>
+        aerodromeContext.definePool(Address.from(p.poolAddress), {
+          lp: p.lpToken,
+          poolType: p.poolType,
+          token0: p.token0,
+          token1: p.token1,
+          factory: p.factory,
+          poolFee: ethers.BigNumber.from(p.poolFee),
+        })
+      )
     )
   }
-
-  await loadPools(1000, 0)
-  await loadPools(1000, 1000)
-  await loadPools(1000, 2000)
-
+  console.log('Done loading pools')
   await loadPoolExplicit(
     Address.from('0x2578365B3dfA7FfE60108e181EFb79FeDdec2319')
   ).catch((e) => console.log(e))
+  console.log('Aerodrome setup done')
 }

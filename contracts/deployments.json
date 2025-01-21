@@ -1,0 +1,4033 @@
+{
+  "1": [
+    {
+      "name": "mainnet",
+      "chainId": "1",
+      "contracts": {
+        "BalanceOf": {
+          "address": "0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "BalanceOfFailed",
+              "type": "error"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "balanceOf",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "BalancerCall": {
+          "address": "0x4d0889452f049e527756C90F81D7bE417B85F0df",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "data",
+                  "type": "bytes"
+                }
+              ],
+              "name": "swap",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "CurveCryptoFactoryHelper": {
+          "address": "0xFBbcDad39D42f49C170cbC5396e740f18e9d6866",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amount0",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount1",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "contract ICurveCryptoFactory",
+                  "name": "pool",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minOut",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "useEth",
+                  "type": "bool"
+                }
+              ],
+              "name": "addliquidity",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "CurveRouterCall": {
+          "address": "0x9234dbD7AaaD37b7A185B6f694700C5466783A3d",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encodedRouterCall",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exchange",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encodedRouterCall",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exchangeNew",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "CurveStableSwapNGHelper": {
+          "address": "0xb543FD28b0588d0ED317ab746a537840212A95ed",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "coinIdx",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "contract ICurveStableSwapNG",
+                  "name": "pool",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minOut",
+                  "type": "uint256"
+                }
+              ],
+              "name": "addliquidity",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "EmitId": {
+          "address": "0x6d92146F63d95BF38eB6158856f95139B15C66Bb",
+          "abi": [
+            {
+              "anonymous": false,
+              "inputs": [
+                {
+                  "indexed": false,
+                  "internalType": "uint256",
+                  "name": "id",
+                  "type": "uint256"
+                }
+              ],
+              "name": "ReserveZapId",
+              "type": "event"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "id",
+                  "type": "uint256"
+                }
+              ],
+              "name": "emitId",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "EthBalance": {
+          "address": "0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "ethBalance",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "RTokenLens": {
+          "address": "0xE787491314A3Da6412Ac4DeEB39c0F8EfdE1b53C",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IAssetRegistry",
+                  "name": "assetRegistry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IBasketHandler",
+                  "name": "basketHandler",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IRToken",
+                  "name": "rToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amtRToken",
+                  "type": "uint256"
+                }
+              ],
+              "name": "redeem",
+              "outputs": [
+                {
+                  "internalType": "address[]",
+                  "name": "erc20s",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "uint256[]",
+                  "name": "quantities",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "UniV3RouterCall": {
+          "address": "0x49B94B1feD319325fcBA107cc2777d6d7b4C4770",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "path",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exactInput",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encodedRouterCall",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exactInputSingle",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "Zapper": {
+          "address": "0xE988c8C49043C798F118BBCF769b210fD04c0bc3",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IWrappedNative",
+                  "name": "wrappedNative_",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IPermit2",
+                  "name": "permit2_",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract ZapperExecutor",
+                  "name": "executor_",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "constructor"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapERC20",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "address",
+                          "name": "token",
+                          "type": "address"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "amount",
+                          "type": "uint256"
+                        }
+                      ],
+                      "internalType": "struct TokenPermissions",
+                      "name": "permitted",
+                      "type": "tuple"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "nonce",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "deadline",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct PermitTransferFrom",
+                  "name": "permit",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "signature",
+                  "type": "bytes"
+                }
+              ],
+              "name": "zapERC20WithPermit2",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapETH",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapToETH",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ]
+        },
+        "ZapperExecutor": {
+          "address": "0xb3805E5f44B97daB82BC00d63f7F8C5a56b96D8D",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "command_index",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "target",
+                  "type": "address"
+                },
+                {
+                  "internalType": "string",
+                  "name": "message",
+                  "type": "string"
+                }
+              ],
+              "name": "ExecutionFailed",
+              "type": "error"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "add",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "assertEqual",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "",
+                  "type": "bool"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "assertLarger",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "",
+                  "type": "bool"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "bytes32[]",
+                  "name": "commands",
+                  "type": "bytes32[]"
+                },
+                {
+                  "internalType": "bytes[]",
+                  "name": "state",
+                  "type": "bytes[]"
+                },
+                {
+                  "internalType": "contract IERC20[]",
+                  "name": "tokens",
+                  "type": "address[]"
+                }
+              ],
+              "name": "execute",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    }
+                  ],
+                  "internalType": "struct ExecuteOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "scale",
+                  "type": "uint256"
+                }
+              ],
+              "name": "fpMul",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "contract FacadeRead",
+                  "name": "facade",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract RToken",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                }
+              ],
+              "name": "mintMaxRToken",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "value",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "data",
+                  "type": "bytes"
+                }
+              ],
+              "name": "rawCall",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "success",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "out",
+                  "type": "bytes"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "sub",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "8453": [
+    {
+      "name": "base",
+      "chainId": "8453",
+      "contracts": {
+        "BalanceOf": {
+          "address": "0x9554DBb835886FC1f37835A1C83CeA3c20e5950A",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "BalanceOfFailed",
+              "type": "error"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "balanceOf",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "CurveRouterCall": {
+          "address": "0x1A7F7C1b870ad69D19a899B2A3BA6EBEea77033f",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encodedRouterCall",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exchange",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "DeployFolioHelper": {
+          "address": "0x267E2a3BaC8fbCC215C3e309E4405202Db801C01",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "deployer",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "expectedTokenAddress",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encodedFolioDeployerCall",
+                  "type": "bytes"
+                }
+              ],
+              "name": "deployFolio",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "EmitId": {
+          "address": "0xC7a942301d92024321995f7f748C2B0687a1Cb60",
+          "abi": [
+            {
+              "anonymous": false,
+              "inputs": [
+                {
+                  "indexed": false,
+                  "internalType": "uint256",
+                  "name": "id",
+                  "type": "uint256"
+                }
+              ],
+              "name": "ReserveZapId",
+              "type": "event"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "id",
+                  "type": "uint256"
+                }
+              ],
+              "name": "emitId",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "EthBalance": {
+          "address": "0x858b62D160788864c65222d7a3777a19B370Abd8",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "ethBalance",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "RTokenLens": {
+          "address": "0x5cF5eD1715b6416710f106A3257E5C55B65EF418",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IAssetRegistry",
+                  "name": "assetRegistry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IBasketHandler",
+                  "name": "basketHandler",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IRToken",
+                  "name": "rToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amtRToken",
+                  "type": "uint256"
+                }
+              ],
+              "name": "redeem",
+              "outputs": [
+                {
+                  "internalType": "address[]",
+                  "name": "erc20s",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "uint256[]",
+                  "name": "quantities",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "SlipstreamRouterCall": {
+          "address": "0xeA698DeEAD412456dbc488F8A9066326D98C3435",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountA",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountB",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "expectedA",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "expectedB",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encoding",
+                  "type": "bytes"
+                }
+              ],
+              "name": "addLiquidityV2",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOut",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "path",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exactInput",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encodedRouterCall",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exactInputSingle",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "contract IAerodromeRouter",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encoding",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exactInputSingleV2",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOut",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "expectedA",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "expectedB",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encoding",
+                  "type": "bytes"
+                }
+              ],
+              "name": "removeLiquidity",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "UniV3RouterCall": {
+          "address": "0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "path",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exactInput",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encodedRouterCall",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exactInputSingle",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "Zapper": {
+          "address": "0xaA560D5C2Fade67CF6836Ab793e56A79F09d4282",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IWrappedNative",
+                  "name": "wrappedNative_",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IPermit2",
+                  "name": "permit2_",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract ZapperExecutor",
+                  "name": "executor_",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "constructor"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapERC20",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "address",
+                          "name": "token",
+                          "type": "address"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "amount",
+                          "type": "uint256"
+                        }
+                      ],
+                      "internalType": "struct TokenPermissions",
+                      "name": "permitted",
+                      "type": "tuple"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "nonce",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "deadline",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct PermitTransferFrom",
+                  "name": "permit",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "signature",
+                  "type": "bytes"
+                }
+              ],
+              "name": "zapERC20WithPermit2",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapETH",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapToETH",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ]
+        },
+        "Zapper2": {
+          "address": "0xCe7cb4178B1EF36Cc5ecb72750E8d475568516c1",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IWrappedNative",
+                  "name": "wrappedNative_",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract ZapperExecutor",
+                  "name": "executor_",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "constructor"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "address",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "tokenOut",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "recipient",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapParams",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zap",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "address",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "tokenOut",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "recipient",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapParams",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapDeploy",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapERC20",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapETH",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapToETH",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ]
+        },
+        "ZapperExecutor": {
+          "address": "0x9702a1934929557ee94a0BF446F29106a71b52F3",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "command_index",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "target",
+                  "type": "address"
+                },
+                {
+                  "internalType": "string",
+                  "name": "message",
+                  "type": "string"
+                }
+              ],
+              "name": "ExecutionFailed",
+              "type": "error"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "add",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "assertEqual",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "",
+                  "type": "bool"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "assertLarger",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "",
+                  "type": "bool"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "bytes32[]",
+                  "name": "commands",
+                  "type": "bytes32[]"
+                },
+                {
+                  "internalType": "bytes[]",
+                  "name": "state",
+                  "type": "bytes[]"
+                },
+                {
+                  "internalType": "contract IERC20[]",
+                  "name": "tokens",
+                  "type": "address[]"
+                }
+              ],
+              "name": "execute",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    }
+                  ],
+                  "internalType": "struct ExecuteOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "scale",
+                  "type": "uint256"
+                }
+              ],
+              "name": "fpMul",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "contract FacadeRead",
+                  "name": "facade",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract RToken",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                }
+              ],
+              "name": "mintMaxRToken",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "value",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "data",
+                  "type": "bytes"
+                }
+              ],
+              "name": "rawCall",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "success",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "out",
+                  "type": "bytes"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "sub",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "31337": [
+    {
+      "name": "localhost",
+      "chainId": "31337",
+      "contracts": {
+        "RTokenLens": {
+          "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IAssetRegistry",
+                  "name": "assetRegistry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IBasketHandler",
+                  "name": "basketHandler",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IRToken",
+                  "name": "rToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amtRToken",
+                  "type": "uint256"
+                }
+              ],
+              "name": "redeem",
+              "outputs": [
+                {
+                  "internalType": "address[]",
+                  "name": "erc20s",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "uint256[]",
+                  "name": "quantities",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "Zapper": {
+          "address": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IWrappedNative",
+                  "name": "wrappedNative_",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IPermit2",
+                  "name": "permit2_",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract ZapperExecutor",
+                  "name": "executor_",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "constructor"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapERC20",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "address",
+                          "name": "token",
+                          "type": "address"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "amount",
+                          "type": "uint256"
+                        }
+                      ],
+                      "internalType": "struct TokenPermissions",
+                      "name": "permitted",
+                      "type": "tuple"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "nonce",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "deadline",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct PermitTransferFrom",
+                  "name": "permit",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "signature",
+                  "type": "bytes"
+                }
+              ],
+              "name": "zapERC20WithPermit2",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapETH",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ]
+        },
+        "ZapperExecutor": {
+          "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "command_index",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "target",
+                  "type": "address"
+                },
+                {
+                  "internalType": "string",
+                  "name": "message",
+                  "type": "string"
+                }
+              ],
+              "name": "ExecutionFailed",
+              "type": "error"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "add",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "assertEqual",
+              "outputs": [],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "assertLarger",
+              "outputs": [],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "bytes32[]",
+                  "name": "commands",
+                  "type": "bytes32[]"
+                },
+                {
+                  "internalType": "bytes[]",
+                  "name": "state",
+                  "type": "bytes[]"
+                },
+                {
+                  "internalType": "contract IERC20[]",
+                  "name": "tokens",
+                  "type": "address[]"
+                }
+              ],
+              "name": "execute",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    }
+                  ],
+                  "internalType": "struct ExecuteOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "scale",
+                  "type": "uint256"
+                }
+              ],
+              "name": "fpMul",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "contract RToken",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256[]",
+                  "name": "amts",
+                  "type": "uint256[]"
+                }
+              ],
+              "name": "issueRToken",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "contract FacadeRead",
+                  "name": "facade",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract RToken",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                }
+              ],
+              "name": "mintMaxRToken",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "value",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "data",
+                  "type": "bytes"
+                }
+              ],
+              "name": "rawCall",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "success",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "out",
+                  "type": "bytes"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "sub",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "hardhat",
+      "chainId": "31337",
+      "contracts": {}
+    }
+  ],
+  "42161": [
+    {
+      "name": "arbi",
+      "chainId": "42161",
+      "contracts": {
+        "BalanceOf": {
+          "address": "0xe18a821ea1f1796A0797CEa01A3f86ebEab0f9B6",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "BalanceOfFailed",
+              "type": "error"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "balanceOf",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "CurveRouterCall": {
+          "address": "0x8cE5ee761fF619c889F007CB4D708178E87C11D8",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encodedRouterCall",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exchange",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "CurveStableSwapNGHelper": {
+          "address": "0x323EB0B5e2a59d5565E59CBEb965f00298d3A2a1",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "coinIdx",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "contract ICurveStableSwapNG",
+                  "name": "pool",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "minOut",
+                  "type": "uint256"
+                }
+              ],
+              "name": "addliquidity",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "EmitId": {
+          "address": "0x66BC6029408a5dEB3ffacA6835119af963bB408a",
+          "abi": [
+            {
+              "anonymous": false,
+              "inputs": [
+                {
+                  "indexed": false,
+                  "internalType": "uint256",
+                  "name": "id",
+                  "type": "uint256"
+                }
+              ],
+              "name": "ReserveZapId",
+              "type": "event"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "id",
+                  "type": "uint256"
+                }
+              ],
+              "name": "emitId",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "EthBalance": {
+          "address": "0x0326bF8E7efEBAe81898d366c1491D196d143a4C",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "ethBalance",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "RTokenLens": {
+          "address": "0x52dfBD2119951ec6CAE28E554E95644b335b3297",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IAssetRegistry",
+                  "name": "assetRegistry",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IBasketHandler",
+                  "name": "basketHandler",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IRToken",
+                  "name": "rToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amtRToken",
+                  "type": "uint256"
+                }
+              ],
+              "name": "redeem",
+              "outputs": [
+                {
+                  "internalType": "address[]",
+                  "name": "erc20s",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "uint256[]",
+                  "name": "quantities",
+                  "type": "uint256[]"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "UniV3RouterCall": {
+          "address": "0x922eDac4D5c6702192473ec77a294edD834Fb2af",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "path",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exactInput",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encodedRouterCall",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exactInputSingle",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "Zapper": {
+          "address": "0x4F923E78dfD0A6F7308eE06Fc2739d0Be6314592",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IWrappedNative",
+                  "name": "wrappedNative_",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IPermit2",
+                  "name": "permit2_",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract ZapperExecutor",
+                  "name": "executor_",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "constructor"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapERC20",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "address",
+                          "name": "token",
+                          "type": "address"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "amount",
+                          "type": "uint256"
+                        }
+                      ],
+                      "internalType": "struct TokenPermissions",
+                      "name": "permitted",
+                      "type": "tuple"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "nonce",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "deadline",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct PermitTransferFrom",
+                  "name": "permit",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "signature",
+                  "type": "bytes"
+                }
+              ],
+              "name": "zapERC20WithPermit2",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapETH",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenIn",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountIn",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "contract IERC20",
+                      "name": "tokenOut",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct ZapERC20Params",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zapToETH",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ]
+        },
+        "ZapperExecutor": {
+          "address": "0xbD2F0B5e3a64Ef22e0b695180EE53247670AE904",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "command_index",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "target",
+                  "type": "address"
+                },
+                {
+                  "internalType": "string",
+                  "name": "message",
+                  "type": "string"
+                }
+              ],
+              "name": "ExecutionFailed",
+              "type": "error"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "add",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "assertEqual",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "",
+                  "type": "bool"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "assertLarger",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "",
+                  "type": "bool"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "bytes32[]",
+                  "name": "commands",
+                  "type": "bytes32[]"
+                },
+                {
+                  "internalType": "bytes[]",
+                  "name": "state",
+                  "type": "bytes[]"
+                },
+                {
+                  "internalType": "contract IERC20[]",
+                  "name": "tokens",
+                  "type": "address[]"
+                }
+              ],
+              "name": "execute",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    }
+                  ],
+                  "internalType": "struct ExecuteOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "scale",
+                  "type": "uint256"
+                }
+              ],
+              "name": "fpMul",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "contract FacadeRead",
+                  "name": "facade",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract RToken",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                }
+              ],
+              "name": "mintMaxRToken",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "value",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "data",
+                  "type": "bytes"
+                }
+              ],
+              "name": "rawCall",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "success",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "out",
+                  "type": "bytes"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "a",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "b",
+                  "type": "uint256"
+                }
+              ],
+              "name": "sub",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

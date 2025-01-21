@@ -8,24 +8,26 @@ export class BlockCache<Input, Result extends NonNullable<any>, Key = Input> {
     private keyFn: (key: Input) => Key = (x) => x as any as Key
   ) {}
 
-  public get(key: Input): Promise<Result> {
+  public async get(key: Input) {
     const k = this.keyFn(key)
-    let out = this.results.get(k)
-    if (out && out.time - Date.now() > this.TTL) {
-      this.results.delete(k)
-      out = undefined
-    }
+    let out = this.results.get(k) ?? null
+
     if (out == null) {
-      const res = this.fetch(key).catch((e) => {
-        setTimeout(() => {
-          this.results.delete(k)
-        }, 500)
-        throw new Error(e)
+      out = { result: this.fetch(key), time: Date.now() + this.TTL }
+      this.results.set(k, out)
+    } else {
+      if (out.time > Date.now()) {
+        return await out.result
+      }
+      out.result = this.fetch(key).catch((e) => {
+        console.log(e)
+        this.results.delete(k)
+        throw e
       })
-      out = { result: res, time: Date.now() }
+      out.time = Date.now() + this.TTL
       this.results.set(k, out)
     }
-    return out.result
+    return await out.result
   }
 
   public clear() {

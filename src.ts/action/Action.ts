@@ -153,23 +153,29 @@ export const plannerUtils = {
       universe: Universe,
       planner: gen.Planner,
       amount: gen.Value,
-      token: Token,
+      token: Token | Address,
       destination: Address
     ) {
+      const tokenAddress = token instanceof Address ? token : token.address
       const erc20 = gen.Contract.createContract(
-        IERC20__factory.connect(token.address.address, universe.provider)
+        IERC20__factory.connect(tokenAddress.address, universe.provider)
       )
       planner.add(erc20.transfer(destination.address, amount))
     },
     balanceOf(
       universe: Universe,
       planner: gen.Planner,
-      token: Token,
+      token: Token | Address,
       owner: Address,
       comment?: string,
       varName?: string
     ): gen.Value {
-      if (token == universe.nativeToken) {
+      const tokenAddress = token instanceof Address ? token : token.address
+
+      if (
+        token == universe.nativeToken ||
+        token === universe.nativeToken.address
+      ) {
         const lib = gen.Contract.createContract(
           EthBalance__factory.connect(
             universe.config.addresses.ethBalanceOf.address,
@@ -179,10 +185,10 @@ export const plannerUtils = {
         return planner.add(
           lib.ethBalance(owner.address),
           comment,
-          varName ?? `bal_${token.symbol}`
+          varName ?? `bal_${token}`
         )!
       }
-      if (useSpecialCaseBalanceOf.has(token.address)) {
+      if (useSpecialCaseBalanceOf.has(tokenAddress)) {
         const lib = gen.Contract.createContract(
           BalanceOf__factory.connect(
             universe.config.addresses.balanceOf.address,
@@ -190,18 +196,18 @@ export const plannerUtils = {
           )
         )
         return planner.add(
-          lib.balanceOf(token.address.address, owner.address),
+          lib.balanceOf(tokenAddress.address, owner.address),
           comment,
-          varName ?? `bal_${token.symbol}`
+          varName ?? `bal_${token}`
         )!
       }
       const erc20 = gen.Contract.createContract(
-        IERC20__factory.connect(token.address.address, universe.provider)
+        IERC20__factory.connect(tokenAddress.address, universe.provider)
       )
       return planner.add(
         erc20.balanceOf(owner.address),
         comment,
-        varName ?? `bal_${token.symbol}`
+        varName ?? `bal_${token}`
       )!
     },
   },

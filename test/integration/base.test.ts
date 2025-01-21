@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv'
-import { ethers } from 'ethers'
+import fs from 'fs'
 
 import { WebSocketProvider } from '@ethersproject/providers'
 import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
@@ -7,6 +7,7 @@ import {
   Address,
   baseConfig,
   setupBaseZapper,
+  TokenQuantity,
   Universe,
 } from '../../src.ts/index'
 import {
@@ -16,6 +17,8 @@ import {
 import { createZapTestCase } from '../createZapTestCase'
 import { DefaultMap } from '../../src.ts/base/DefaultMap'
 import { getDefaultSearcherOptions } from '../../src.ts/configuration/ChainConfiguration'
+import { getProvider } from './providerUtils'
+import { ONE } from '../../src.ts/action/Action'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -64,13 +67,6 @@ export const baseWhales = {
     '0x5400dbb270c956e8985184335a1c62aca6ce1333',
 }
 
-const getProvider = (url: string) => {
-  if (url.startsWith('ws')) {
-    return new ethers.providers.WebSocketProvider(url)
-  }
-  return new ethers.providers.JsonRpcProvider(url)
-}
-
 const t = baseConfig.addresses.commonTokens
 const rTokens = baseConfig.addresses.rTokens
 
@@ -105,11 +101,11 @@ const testUser = Address.from(
 )
 const issueanceCases = [
   makeTestCase(10000, t.USDC, rTokens.bsd),
-  makeTestCase(100, t.WETH, rTokens.bsd),
-  makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  makeTestCase(10000, t.USDbC, rTokens.hyUSD),
-  makeTestCase(10000, t.DAI, rTokens.hyUSD),
-  makeTestCase(5, t.WETH, rTokens.hyUSD),
+  // makeTestCase(100, t.WETH, rTokens.bsd),
+  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
+  // makeTestCase(10000, t.DAI, rTokens.hyUSD),
+  // makeTestCase(5, t.WETH, rTokens.hyUSD),
 
   // makeMintTestCase(50, t.WETH, rTokens.BSDX),
 ]
@@ -136,6 +132,82 @@ const individualIntegrations = [
   ),
 ]
 
+const basket = (str: string) => {
+  return str
+    .replace(/(  +)/g, ' ')
+    .replace(/, /g, ',')
+    .split(',')
+    .map((pair) => {
+      const [num, tok] = pair.split(' ')
+      return [Number(num), t[tok]] as [number, Address]
+    })
+}
+const makeFolioTestCase = (
+  input: number,
+  inputToken: Address,
+  basket: [number, Address][]
+) => {
+  return {
+    name: `folio ${input} ${getSymbol.get(inputToken)} -> ${basket
+      .map(([num, tok]) => `${num} ${getSymbol.get(tok)}`)
+      .join(',')}`,
+    input,
+    inputToken,
+    basket,
+  }
+}
+
+const folioTests = [
+  makeFolioTestCase(
+    10,
+    t.WETH,
+    basket(
+      '0.6067 Virtuals, 0.1258 aiXBT, 0.1004 Freysa, 0.0383 GAME, 0.0329 Cookie, 0.0246 Rei, 0.0218 Toshi, 0.0199 VaderAI, 0.0149 Luna, 0.0146 Henlo'
+    )
+  ),
+]
+
+const folioConfig = (
+  name: string,
+  symbol: string,
+  outputs: TokenQuantity[]
+) => ({
+  stToken: '0xaB36452DbAC151bE02b16Ca17d8919826072f64a',
+  basicDetails: {
+    assets: outputs.map((t) => t.token.address.address),
+    amounts: outputs.map((t) => t.amount),
+    name,
+    symbol,
+    initialShares: ONE,
+  },
+  additionalDetails: {
+    tradeDelay: 20n * 60n,
+    auctionLength: 20n * 60n,
+    feeRecipients: [],
+    folioFee: 0n,
+    mintingFee: 0n,
+  },
+  ownerGovParams: {
+    votingDelay: 20n * 60n,
+    votingPeriod: 20n * 60n,
+    proposalThreshold: ONE / 100n,
+    quorumPercent: (ONE / 100n) * 20n,
+    timelockDelay: 20n * 60n,
+    guardian: '0xaB36452DbAC151bE02b16Ca17d8919826072f64a',
+  },
+  tradingGovParams: {
+    votingDelay: 20n * 60n,
+    votingPeriod: 20n * 60n,
+    proposalThreshold: ONE / 100n,
+    quorumPercent: (ONE / 100n) * 20n,
+    timelockDelay: 20n * 60n,
+    guardian: '0xaB36452DbAC151bE02b16Ca17d8919826072f64a',
+  },
+  tradeLaunchers: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
+  vibesOfficers: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
+  existingTradeProposers: [],
+})
+
 const zapIntoYieldPositionCases: ReturnType<
   typeof makeZapIntoYieldPositionTestCase
 >[] = []
@@ -146,23 +218,23 @@ const provider = getProvider(process.env.BASE_PROVIDER!)
 let requestCount = 0
 let initialized = false
 const dupRequestCounter = new DefaultMap<string, number>(() => 0)
-// provider.on('debug', (log) => {
-//   if (
-//     log?.action !== 'request' ||
-//     log?.request?.method !== 'eth_call' ||
-//     log?.request?.params[0].to == null ||
-//     log?.request?.params[0].data == null
-//   ) {
-//     return
-//   }
-//   requestCount += 1
-//   if (initialized) {
-//     const req =
-//       log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
-//     dupRequestCounter.get(req)
-//     dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
-//   }
-// })
+
+provider.on('debug', (log) => {
+  if (log.action === 'response') {
+  } else if (log?.action == 'request') {
+    requestCount += 1
+  }
+
+  // if (initialized) {
+  //   const req =
+  //     log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
+  //   dupRequestCounter.get(req)
+  //   dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
+  // }
+})
+provider.on('error', (e) => {
+  console.log(e)
+})
 const emitReqCount = (msg?: string, dups?: boolean) => {
   if (requestCount > 0) {
     console.log(`${msg} Request count: ${requestCount}`)
@@ -179,30 +251,36 @@ const emitReqCount = (msg?: string, dups?: boolean) => {
   dupRequestCounter.clear()
 }
 beforeAll(async () => {
-  global.console = require('console')
-  console.log(`Setting up`)
-  universe = await Universe.createWithConfig(
-    provider,
-    {
-      ...baseConfig,
-      ...searcherOptions,
-    },
-    async (uni) => {
-      await setupBaseZapper(uni)
-    },
-    {
-      simulateZapFn: makeCustomRouterSimulator(
-        process.env.SIMULATE_URL_BASE!,
-        baseWhales
-      ),
-    }
-  )
-  console.log(`Setting up done`)
+  try {
+    global.console = require('console')
+    console.log(`Setting up`)
+    universe = await Universe.createWithConfig(
+      provider,
+      {
+        ...baseConfig,
+        ...searcherOptions,
+      },
+      async (uni) => {
+        await setupBaseZapper(uni)
+      },
+      {
+        simulateZapFn: makeCustomRouterSimulator(
+          process.env.SIMULATE_URL_BASE!,
+          baseWhales
+        ),
+      }
+    )
+    console.log(`Setting up done`)
 
-  await universe.initialized
-  emitReqCount('Initialized')
-  initialized = true
-  return universe
+    await universe.initialized
+
+    emitReqCount('Initialized')
+    initialized = true
+    return universe
+  } catch (e) {
+    console.error(e)
+    process.exit(1)
+  }
 }, 60000)
 
 describe('base zapper', () => {
@@ -211,6 +289,38 @@ describe('base zapper', () => {
       await provider.getBlockNumber(),
       (await provider.getGasPrice()).toBigInt()
     )
+  })
+
+  describe('folio', () => {
+    for (const testCase of folioTests) {
+      describe(testCase.name, () => {
+        it('produces the basket graph', async () => {
+          expect.assertions(1)
+          try {
+            const token = await universe.getToken(testCase.inputToken)
+            const targetBasket = await Promise.all(
+              testCase.basket.map(async ([num, tok]) => {
+                const t = await universe.getToken(tok)
+                const tokenPrice = await t.price
+                return tokenPrice.mul(t.from(num))
+              })
+            )
+            const out = await universe.deployZap(
+              token.from(testCase.input),
+              testUser,
+              folioConfig('AIBS', 'AI Basket', targetBasket)
+            )
+            console.log(out.toString())
+            expect(true).toBe(true)
+          } catch (e) {
+            console.error(e)
+            expect(true).toBe(false)
+
+            throw e
+          }
+        }, 60000)
+      })
+    }
   })
 
   describe('actions', () => {
@@ -298,5 +408,7 @@ describe('base zapper', () => {
 })
 
 afterAll(() => {
-  ;(universe.provider as WebSocketProvider).websocket.close()
+  if (universe.provider instanceof WebSocketProvider) {
+    ;(universe.provider as WebSocketProvider).destroy()
+  }
 })

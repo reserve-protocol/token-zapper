@@ -14,7 +14,7 @@ import {
 } from '../../src.ts/index'
 import { createZapTestCase } from '../createZapTestCase'
 import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
-import { logger } from '../../src.ts/logger'
+import { getProvider } from './providerUtils'
 dotenv.config()
 
 if (process.env.ARBITRUM_PROVIDER == null) {
@@ -53,13 +53,6 @@ export const arbiWhales = {
   [arbiTokens.knox]: '0x86ea1191a219989d2da3a85c949a12a92f8ed3db',
   [arbiTokens.usdm]: '0x426c4966fc76bf782a663203c023578b744e4c5e',
   [arbiTokens.arb]: '0xf3fc178157fb3c87548baa86f9d24ba38e649b588',
-}
-
-const getProvider = (url: string) => {
-  if (url.startsWith('ws')) {
-    return new ethers.providers.WebSocketProvider(url)
-  }
-  return new ethers.providers.JsonRpcProvider(url)
 }
 
 const t = arbiConfig.addresses.commonTokens
@@ -112,7 +105,10 @@ beforeAll(async () => {
       await setupArbitrumZapper(uni)
     },
     {
-      simulateZapFn: makeCustomRouterSimulator(process.env.SIMULATE_URL!, arbiWhales),
+      simulateZapFn: makeCustomRouterSimulator(
+        process.env.SIMULATE_URL!,
+        arbiWhales
+      ),
     }
   )
 

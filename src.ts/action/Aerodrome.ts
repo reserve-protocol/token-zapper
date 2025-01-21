@@ -5,7 +5,7 @@ import { Approval } from '../base/Approval'
 import { DefaultMap } from '../base/DefaultMap'
 import { GAS_TOKEN_ADDRESS, ZERO } from '../base/constants'
 
-import { utils } from 'ethers'
+import { BigNumber, utils } from 'ethers'
 import {
   IAerodromeRouter,
   IERC20__factory,
@@ -25,6 +25,14 @@ import {
 import { TokenType } from '../entities/TokenClass'
 import { BlockCache } from '../base/BlockBasedCache'
 
+const interestingPools = new Set([
+  Address.from('0x2C4909355b0C036840819484c3A882A95659aBf3'),
+  Address.from('0x89D0F320ac73dd7d9513FFC5bc58D1161452a657'),
+  Address.from('0x2578365B3dfA7FfE60108e181EFb79FeDdec2319'),
+  Address.from('0x4A311ac4563abc30E71D0631C88A6232C1309ac5'),
+  Address.from('0x7f670f78B17dEC44d5Ef68a48740b6f8849cc2e6'),
+])
+
 export enum AerodromePoolType {
   STABLE = 'STABLE',
   VOLATILE = 'VOLATILE',
@@ -43,6 +51,16 @@ export const getPoolType = (poolType: number) => {
     return AerodromePoolType.VOLATILE
   } else {
     return AerodromePoolType.CL
+  }
+}
+
+export const poolTypeToNumber = (poolType: AerodromePoolType) => {
+  if (poolType === AerodromePoolType.STABLE) {
+    return 0
+  } else if (poolType === AerodromePoolType.VOLATILE) {
+    return -1
+  } else {
+    return 1
   }
 }
 abstract class BaseV2AerodromeAction extends Action('BaseAerodromeStablePool') {
@@ -490,9 +508,20 @@ class AeropoolSwap extends BaseV2AerodromeAction {
 
 const FEE_DIVISOR = 10000n
 const MAX_NUM = 2n ** 256n - 1n
-class AerodromeStablePool {
+export class AerodromeStablePool {
   private totalSupply: () => Promise<TokenQuantity>
 
+  public toJSON() {
+    return {
+      poolType: poolTypeToNumber(this.poolType),
+      poolAddress: this.poolAddress.address,
+      lpToken: this.lpToken.address.address,
+      token0: this.token0.address.address,
+      token1: this.token1.address.address,
+      factory: this.factory.address,
+      poolFee: this.poolFee.toString(),
+    }
+  }
   public readonly actions: {
     addLiquidity?: AeropoolAddLiquidity
     removeLiquidity?: AeropoolRemoveLiquidity
@@ -666,131 +695,74 @@ class AerodromeStablePool {
     address: Address,
     pool: SwapLpStructOutput
   ) {
-    const universe = context.universe
-    const [lpToken, token0, token1] = await Promise.all([
-      getPoolType(pool.poolType) === AerodromePoolType.CL
-        ? universe.nativeToken
-        : universe.getToken(Address.from(pool.lp)),
-      universe.getToken(Address.from(pool.token0)),
-      universe.getToken(Address.from(pool.token1)),
-    ])
-
-    const inst = new AerodromeStablePool(
-      context,
-      address,
-      lpToken,
-      token0,
-      token1,
-      pool,
-      context.getReserves
-    )
-
-    const interestingPools = new Set([
-      Address.from('0x2C4909355b0C036840819484c3A882A95659aBf3'),
-      Address.from('0x89D0F320ac73dd7d9513FFC5bc58D1161452a657'),
-      Address.from('0x2578365B3dfA7FfE60108e181EFb79FeDdec2319'),
-      Address.from('0x4A311ac4563abc30E71D0631C88A6232C1309ac5'),
-      Address.from('0x7f670f78B17dEC44d5Ef68a48740b6f8849cc2e6'),
-    ])
-
-    const interestingTokens = new Set([
-      ...Object.values(universe.commonTokens),
-      ...Object.values(universe.rTokens),
-    ])
-
-    if (!interestingPools.has(inst.address)) {
-      if (!(interestingTokens.has(token0) && interestingTokens.has(token1))) {
-        return inst
+    let loaded = false
+    const timeout = AbortSignal.timeout(5000)
+    timeout.onabort = () => {
+      if (loaded) {
+        return
       }
+      console.log(
+        `${address} timed out ${pool.factory} ${pool.poolType} ${pool.token0} ${
+          pool.token1
+        } ${pool.poolFee.toString()} ${pool.poolType.toString()}`
+      )
     }
+    try {
+      const universe = context.universe
+      const [lpToken, token0, token1] = await Promise.all([
+        getPoolType(pool.poolType) === AerodromePoolType.CL
+          ? universe.nativeToken
+          : universe.getToken(Address.from(pool.lp)),
+        universe.getToken(Address.from(pool.token0)),
+        universe.getToken(Address.from(pool.token1)),
+      ])
 
-    if (inst.poolType === AerodromePoolType.CL) {
-      universe.addAction(inst.actions.t0for1)
-      universe.addAction(inst.actions.t1for0)
-    } else {
-      universe.tokenType.set(inst.lpToken, Promise.resolve(TokenType.LPToken))
-      universe.addSingleTokenPriceSource({
-        token: inst.lpToken,
-        priceFn: async () => {
-          try {
-            const [[balance0, balance1], totalSupply] = await Promise.all([
-              inst.reserves(inst),
-              inst.totalSupply(),
-            ])
-            const [price0, price1] = await Promise.all([
-              await balance0.price(),
-              await balance1.price(),
-            ])
+      const inst = new AerodromeStablePool(
+        context,
+        address,
+        lpToken,
+        token0,
+        token1,
+        pool,
+        context.getReserves
+      )
 
-            const out =
-              (price0.asNumber() + price1.asNumber()) / totalSupply.asNumber()
-            const v = universe.usd.from(out)
-            console.log(`${lpToken}: ${v.asNumber()}`)
-            return v
-          } catch (e) {
-            console.log(
-              `LpTokenPrice provider: Failed to get price for ${inst.lpToken}`,
-              e
-            )
-            throw e
-          }
-        },
-      })
-
-      // try {
-      //   const [cls0, cls1] = await Promise.all([
-      //     universe.tokenClass.get(token0),
-      //     universe.tokenClass.get(token1),
-      //   ])
-      //   if (cls0 == cls1) {
-      //     universe.tokenClass.set(lpToken, Promise.resolve(cls0))
-      //   } else {
-      //     universe.tokenClass.set(lpToken, Promise.resolve(lpToken))
-      //   }
-      // } catch (e) {
-      //   universe.tokenClass.set(lpToken, Promise.resolve(lpToken))
-      // }
-
-      if (interestingPools.has(inst.address)) {
+      if (inst.poolType === AerodromePoolType.CL) {
         universe.addAction(inst.actions.t0for1)
         universe.addAction(inst.actions.t1for0)
+      } else {
+        universe.tokenType.set(inst.lpToken, Promise.resolve(TokenType.LPToken))
+        universe.addSingleTokenPriceSource({
+          token: inst.lpToken,
+          priceFn: async () => {
+            try {
+              const [[balance0, balance1], totalSupply] = await Promise.all([
+                inst.reserves(inst),
+                inst.totalSupply(),
+              ])
+              const [price0, price1] = await Promise.all([
+                await balance0.price(),
+                await balance1.price(),
+              ])
 
-        universe.addAction(inst.actions.addLiquidity!)
-        universe.addAction(inst.actions.removeLiquidity!)
-
-        universe.wrappedTokens.set(inst.lpToken, {
-          mint: inst.actions.addLiquidity!,
-          burn: inst.actions.removeLiquidity!,
-          allowAggregatorSearcher: true,
-        })
-        universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
-        await universe.defineLPToken(
-          inst.lpToken,
-          async (amt) => await inst.quoteRemoveLiquidity(amt),
-          async (amts) => {
-            const q0 = await inst.quoteAddLiquidity(amts[0])
-            const q1 = await inst.quoteAddLiquidity(amts[1])
-            if (q0.liquidity.amount < q1.liquidity.amount) {
-              return q0.liquidity
+              const out =
+                (price0.asNumber() + price1.asNumber()) / totalSupply.asNumber()
+              const v = universe.usd.from(out)
+              console.log(`${lpToken}: ${v.asNumber()}`)
+              return v
+            } catch (e) {
+              console.log(
+                `LpTokenPrice provider: Failed to get price for ${inst.lpToken}`,
+                e
+              )
+              throw e
             }
-            return q1.liquidity
-          }
-        )
+          },
+        })
 
-        return inst
-      }
-
-      const supply = await inst.totalSupply()
-
-      if (
-        supply.amount >= inst.lpToken.scale ||
-        interestingPools.has(inst.address)
-      ) {
-        universe.addAction(inst.actions.t0for1)
-        universe.addAction(inst.actions.t1for0)
-
-        try {
-          await inst.actions.removeLiquidity!.quote([inst.lpToken.one])
+        if (interestingPools.has(inst.address)) {
+          universe.addAction(inst.actions.t0for1)
+          universe.addAction(inst.actions.t1for0)
 
           universe.addAction(inst.actions.addLiquidity!)
           universe.addAction(inst.actions.removeLiquidity!)
@@ -800,7 +772,6 @@ class AerodromeStablePool {
             burn: inst.actions.removeLiquidity!,
             allowAggregatorSearcher: true,
           })
-
           universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
           await universe.defineLPToken(
             inst.lpToken,
@@ -814,11 +785,58 @@ class AerodromeStablePool {
               return q1.liquidity
             }
           )
-        } catch (e) {}
-      }
-    }
 
-    return inst
+          return inst
+        }
+
+        const supply = await inst.totalSupply()
+
+        if (
+          supply.amount >= inst.lpToken.scale ||
+          interestingPools.has(inst.address)
+        ) {
+          universe.addAction(inst.actions.t0for1)
+          universe.addAction(inst.actions.t1for0)
+
+          try {
+            await inst.actions.removeLiquidity!.quote([inst.lpToken.one])
+
+            universe.addAction(inst.actions.addLiquidity!)
+            universe.addAction(inst.actions.removeLiquidity!)
+
+            universe.wrappedTokens.set(inst.lpToken, {
+              mint: inst.actions.addLiquidity!,
+              burn: inst.actions.removeLiquidity!,
+              allowAggregatorSearcher: true,
+            })
+
+            universe.mintableTokens.set(
+              inst.lpToken,
+              inst.actions.addLiquidity!
+            )
+            await universe.defineLPToken(
+              inst.lpToken,
+              async (amt) => await inst.quoteRemoveLiquidity(amt),
+              async (amts) => {
+                const q0 = await inst.quoteAddLiquidity(amts[0])
+                const q1 = await inst.quoteAddLiquidity(amts[1])
+                if (q0.liquidity.amount < q1.liquidity.amount) {
+                  return q0.liquidity
+                }
+                return q1.liquidity
+              }
+            )
+          } catch (e) {}
+        }
+      }
+
+      return inst
+    } catch (e) {
+      console.log(e)
+      throw e
+    } finally {
+      loaded = true
+    }
   }
 }
 const f = (x0: bigint, y: bigint) => {
@@ -958,6 +976,7 @@ export class AerodromeContext {
       return await inst
     }
     if (this.byLp.has(Address.from(pool.lp))) {
+      console.log('duplicate', pool.lp.toString())
       return await this.byLp.get(Address.from(pool.lp))!
     }
     const inst = AerodromeStablePool.create(this, address, pool)

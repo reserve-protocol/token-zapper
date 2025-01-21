@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv'
-import { ethers } from 'ethers'
+import fs from 'fs'
 
 import { WebSocketProvider } from '@ethersproject/providers'
 import {
@@ -12,6 +12,7 @@ import {
   ethereumConfig,
   ethereumProtocolConfigs,
   setupEthereumZapper,
+  TokenQuantity,
   Universe,
 } from '../../src.ts/index'
 import {
@@ -19,6 +20,8 @@ import {
   makeIntegrationtestCase,
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
+import { getProvider } from './providerUtils'
+import { ONE } from '../../src.ts/action/Action'
 dotenv.config()
 
 const searcherOptions = {
@@ -116,13 +119,6 @@ export const ethWhales = {
     '0x40e93a52f6af9fcd3b476aedadd7feabd9f7aba8',
 }
 
-const getProvider = (url: string) => {
-  if (url.startsWith('ws')) {
-    return new ethers.providers.WebSocketProvider(url)
-  }
-  return new ethers.providers.JsonRpcProvider(url)
-}
-
 const t = {
   ...ethereumConfig.addresses.commonTokens,
   ...convertAddressObject(ethereumProtocolConfigs.compV3.comets),
@@ -165,6 +161,7 @@ const makeZapIntoYieldPositionTestCase = (
 export const testUser = Address.from(
   '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
+
 const issueanceCases = [
   makeMintTestCase(1000000, t.USDC, rTokens.eUSD),
   // makeMintTestCase(1, t.USDC, rTokens.eUSD),
@@ -304,6 +301,11 @@ beforeAll(async () => {
     )
 
     await universe.initialized
+    // const tokens = [...universe.tokens.values()].map((i) => i.toJson())
+    // fs.writeFileSync(
+    //   'src.ts/configuration/data/ethereum/tokens.json',
+    //   JSON.stringify(tokens, null, 2)
+    // )
     console.log(`requestCount init: ${requestCount}`)
     requestCount = 0
     return universe
@@ -417,6 +419,8 @@ describe('ethereum zapper', () => {
   }
 })
 
-afterAll(() => {
-  ;(provider as WebSocketProvider).websocket.close()
+afterAll(async () => {
+  if ('destroy' in provider) {
+    await (provider as WebSocketProvider).destroy()
+  }
 })

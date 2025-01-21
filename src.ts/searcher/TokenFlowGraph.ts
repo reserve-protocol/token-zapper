@@ -4,13 +4,14 @@ import { DefaultMap } from '../base/DefaultMap'
 import { Token, TokenQuantity } from '../entities/Token'
 import { mintPath1To1, shortestPath } from '../exchange-graph/BFS'
 import { Queue } from './Queue'
-import { unwrapAction, wrapAction } from './TradeAction'
+import { combineAddreses, unwrapAction, wrapAction } from './TradeAction'
 import { optimiseTrades } from './optimiseTrades'
 import { Address } from '../base/Address'
 import {
   ILoggerType,
   SearcherOptions,
 } from '../configuration/ChainConfiguration'
+import { DeployFolioConfig } from '../action/DeployFolioConfig'
 
 export class NodeProxy {
   private version: number
@@ -33,6 +34,22 @@ export class NodeProxy {
       return true
     }
     return this.incomingEdges().some((i) => i.proportion > 0)
+  }
+
+  public get isDustOptimisable() {
+    return (
+      this.nodeType === NodeType.Both ||
+      this.nodeType === NodeType.SplitWithDust
+    )
+  }
+
+  public hasOutflows() {
+    this.checkVersion()
+    return (
+      this.graph._outgoingEdges[this.id]?.edges.some(
+        (e) => e.parts.length > 0
+      ) ?? false
+    )
   }
 
   public *dependents(): Iterable<NodeProxy> {
@@ -582,6 +599,7 @@ enum NodeType {
 
   Optimisation,
   Fanout,
+  Both,
 }
 class InlinedGraphRef {
   public constructor(
@@ -2350,7 +2368,7 @@ const optimise = async (
     g,
     () => optimiserEvaluation.evaluate(inputs),
     bestSoFar,
-    [...g.nodes()].filter((n) => n.nodeType === NodeType.SplitWithDust),
+    [...g.nodes()].filter((n) => n.isDustOptimisable),
     minimiseDustPhase1Steps
   )
 
@@ -2376,7 +2394,7 @@ const optimise = async (
       g,
       () => optimiserEvaluation.evaluate(inputs),
       bestSoFar,
-      [...g.nodes()].filter((n) => n.nodeType === NodeType.SplitWithDust),
+      [...g.nodes()].filter((n) => n.isDustOptimisable),
       minimiseDustPhase2Steps
     )
   }
@@ -2502,36 +2520,6 @@ export class TokenFlowGraphSearcher {
     )
 
     return fanOutGraphs(this.universe, [mintPath, tradeGraph], `${a} -> ${b}`)
-  }
-
-  private async lpTokenRedeemGraph(
-    parent: TokenFlowGraphBuilder,
-    lpToken: Token
-  ) {
-    const lpTokenDeployment = this.universe.lpTokens.get(lpToken)
-    if (lpTokenDeployment == null) {
-      throw new Error('No LP token found')
-    }
-    const redeemAction = this.universe.getBurnAction(lpToken)
-
-    const proportions = await redeemAction.outputProportions()
-    const g = new TokenFlowGraphBuilder(
-      this.universe,
-      [lpToken],
-      proportions.map((i) => i.token),
-      `${lpToken} redeem`
-    )
-
-    const lpRedeemNode = g.addAction(redeemAction)
-    const lpTokenNode = g.getTokenNode(lpToken)
-    lpTokenNode.forward(lpToken, 1, lpRedeemNode)
-
-    for (const { token } of proportions) {
-      const outputTokenNode = g.getTokenNode(token)
-      lpRedeemNode.forward(token, 1, outputTokenNode)
-      outputTokenNode.forward(token, 1, g.graph.end)
-    }
-    return g
   }
 
   private async rTokenIssueGraph(parent: TokenFlowGraphBuilder, rToken: Token) {
@@ -3084,5 +3072,155 @@ export class TokenFlowGraphSearcher {
     }
     this.registry.define(inputToken, output, graph)
     return await optimise(this.universe, graph, [input], [output], opts)
+  }
+
+  /**
+   * Search that constructs a TFG to do a 1 to n zap (one input to multiple outputs)
+   */
+  private async search1ToNGraph(
+    input: TokenQuantity,
+    outputs: TokenQuantity[],
+    opts: SearcherOptions
+  ) {
+    // const { token: basketRepresentationToken, mint } =
+    //   this.universe.folioContext.getSentinelToken(outputs)
+
+    const out = new TokenFlowGraphBuilder(
+      this.universe,
+      [input.token],
+      outputs.map((i) => i.token),
+      `${input} -> ${outputs.map((i) => i.token).join(', ')}`
+    )
+
+    out.addParentInputs(new Set([input.token]))
+
+    const dustProduced = new Set<Token>()
+
+    let proportions = await Promise.all(
+      outputs.map((i) => i.price().then((i) => i.asNumber()))
+    )
+    const sum = proportions.reduce((a, b) => a + b, 0)
+    proportions = proportions.map((i) => i / sum)
+
+    const tokensToSource = new DefaultMap<Token, number>(() => 0)
+    for (let i = 0; i < outputs.length; i++) {
+      const output = outputs[i]
+      const proportion = proportions[i]
+      if (this.universe.isTokenMintable(output.token)) {
+        const mintGraph = await this.tokenMintingGraph(out, output.token)
+
+        const mintGraphNode = out.addSubgraphNode(mintGraph.graph)
+
+        for (const inputToken of mintGraph.graph.inputs) {
+          const inputTokenNode = out.getTokenNode(inputToken)
+          inputTokenNode.forward(inputToken, proportion, mintGraphNode)
+          tokensToSource.mut(output.token, (v) => v + proportion)
+        }
+        for (const outputToken of mintGraph.graph.outputs) {
+          if (outputToken !== output.token) {
+            dustProduced.add(outputToken)
+          }
+          const outputTokenNode = out.getTokenNode(outputToken)
+          mintGraphNode.forward(outputToken, 1, outputTokenNode)
+        }
+      } else {
+        tokensToSource.set(output.token, proportion)
+      }
+    }
+
+    const inputTokenNode = out.getTokenNode(input.token)
+
+    for (const [precursorToken, proportion] of tokensToSource) {
+      const tradeNode = out.addSubgraphNode(
+        await this.search1To1Graph(input.token, precursorToken, true)
+      )
+      inputTokenNode.forward(input.token, proportion, tradeNode)
+
+      for (const outputToken of tradeNode.outputs) {
+        const outputTokenNode = out.getTokenNode(outputToken)
+        tradeNode.forward(outputToken, 1, outputTokenNode)
+      }
+    }
+    for (const dustToken of dustProduced) {
+      const dustTokenNode = out.getTokenNode(dustToken)
+      if (dustTokenNode.hasOutflows()) {
+        continue
+      }
+      dustTokenNode.forward(dustToken, 1, out.graph.end)
+    }
+    inputTokenNode.nodeType = NodeType.SplitWithDust
+    out.graph._outgoingEdges[inputTokenNode.id]!.min = 0
+    out.graph._outgoingEdges[inputTokenNode.id]!.edges[0].min = 0
+
+    return out
+    // return optimise(
+    //   this.universe,
+    //   out,
+    //   [input],
+    //   [basketRepresentationToken],
+    //   opts
+    // )
+  }
+
+  public async searchZapDeploy1ToFolio(
+    input: TokenQuantity,
+    config: DeployFolioConfig,
+    opts: SearcherOptions
+  ) {
+    const representationToken =
+      this.universe.folioContext.getSentinelToken(config)
+
+    const graph = await this.searchZap1ToFolio(
+      input,
+      representationToken.token,
+      opts
+    )
+
+    return graph
+  }
+
+  public async searchZap1ToFolio(
+    input: TokenQuantity,
+    output: Token,
+    opts: SearcherOptions
+  ) {
+    const out = new TokenFlowGraphBuilder(
+      this.universe,
+      [input.token],
+      [output],
+      `${input} -> ${output}`
+    )
+
+    const mint = this.universe.getMintAction(output)
+
+    const inputProportions = await mint.inputProportions()
+    const inputToBasketGraph = await this.search1ToNGraph(
+      input,
+      inputProportions,
+      opts
+    )
+    const inputToBasketNode = out.addSubgraphNode(inputToBasketGraph.graph)
+    for (const inputToken of inputToBasketGraph.graph.inputs) {
+      const inputTokenNode = out.getTokenNode(inputToken)
+      inputTokenNode.forward(inputToken, 1, inputToBasketNode)
+    }
+
+    for (const outputToken of inputToBasketGraph.graph.outputs) {
+      const outputTokenNode = out.getTokenNode(outputToken)
+      inputToBasketNode.forward(outputToken, 1, outputTokenNode)
+    }
+
+    const mintNode = out.addAction(mint)
+    for (const inputToken of mint.inputToken) {
+      const inputTokenNode = out.getTokenNode(inputToken)
+      inputTokenNode.forward(inputToken, 1, mintNode)
+    }
+
+    for (const dustToken of mint.dustTokens) {
+      mintNode.forward(dustToken, 1, out.graph.end)
+    }
+    mintNode.forward(output, 1, out.getTokenNode(output))
+
+    return optimise(this.universe, out, [input], [output], opts)
   }
 }

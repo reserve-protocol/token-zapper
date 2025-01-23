@@ -1,4 +1,3 @@
-import { ONE } from '../action/Action'
 import { setupBalancer } from '../action/Balancer'
 import { BeefyDepositAction, BeefyWithdrawAction } from '../action/Beefy'
 import { loadCompV2Deployment } from '../action/CTokens'
@@ -32,7 +31,7 @@ import { setupFrxETH } from './setupFrxETH'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupPXETH } from './setupPXETH'
 import { setupRETH } from './setupRETH'
-import { setupUniswapV3Router } from './setupUniswapRouter'
+import { setupUniswapV3 } from './setupUniswapV3'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
@@ -114,7 +113,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   const initUniswap = async () => {
     try {
-      const router = await setupUniswapV3Router(universe)
+      const router = await setupUniswapV3(universe)
       const venue = await router.venue()
       const uniswap = universe.addIntegration('uniswapV3', venue)
       universe.addTradeVenue(uniswap)

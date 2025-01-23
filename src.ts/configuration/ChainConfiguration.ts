@@ -23,7 +23,7 @@ const defaultSearcherOptions = {
   zapMaxValueLoss: 4, // 0.04 or 3%
 
   // total output value = output token value + dust value
-  zapMaxDustProduced: 2, // 0.02 or 2% of total output value
+  zapMaxDustProduced: 3, // 0.02 or 2% of total output value
 
   largeZapThreshold: 300000,
   largeZapSearchTime: 6000,

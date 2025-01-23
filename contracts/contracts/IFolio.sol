@@ -150,6 +150,11 @@ interface IGovernanceDeployer {
     ) external returns (address governor, address timelock);
 }
 
+struct GovRoles {
+    address[] existingTradeProposers;
+    address[] tradeLaunchers;
+    address[] vibesOfficers;
+}
 
 
 interface IFolioDeployer {
@@ -165,6 +170,7 @@ interface IFolioDeployer {
       address tradingTimelock
   );
 
+
   function folioImplementation() external view returns (address);
   function deployGovernedFolio(
     IVotes stToken,
@@ -172,9 +178,7 @@ interface IFolioDeployer {
     IFolio.FolioAdditionalDetails calldata additionalDetails,
     IGovernanceDeployer.GovParams calldata ownerGovParams,
     IGovernanceDeployer.GovParams calldata tradingGovParams,
-    address[] memory existingTradeProposers,
-    address[] memory tradeLaunchers,
-    address[] memory vibesOfficers
+    GovRoles calldata govRoles
 )
     external
     returns (

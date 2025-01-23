@@ -19,18 +19,23 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   //   CurveStableSwapNGHelper.address
   // )
 
-  if ((await hre.ethers.provider.getNetwork()).chainId === 8453) {
-    const SlipstreamRouterCall = await hre.deployments.deploy(
-      'SlipstreamRouterCall',
-      {
-        from: deployer,
-      }
-    )
-    console.log(
-      'SlipstreamRouterCall deployed to:',
-      SlipstreamRouterCall.address
-    )
-  }
+  // if ((await hre.ethers.provider.getNetwork()).chainId === 8453) {
+  //   const SlipstreamRouterCall = await hre.deployments.deploy(
+  //     'SlipstreamRouterCall',
+  //     {
+  //       from: deployer,
+  //     }
+  //   )
+  //   console.log(
+  //     'SlipstreamRouterCall deployed to:',
+  //     SlipstreamRouterCall.address
+  //   )
+  // }
+
+  const univ2swap = await hre.deployments.deploy('Univ2SwapHelper', {
+    from: deployer,
+  })
+  console.log('Univ2SwapHelper deployed to:', univ2swap.address)
 
   // const CurveCryptoFactoryHelper = await hre.deployments.deploy(
   //   'CurveCryptoFactoryHelper',

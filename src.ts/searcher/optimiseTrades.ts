@@ -24,7 +24,7 @@ export const optimiseTradesInOutQty = async (
 
   const evaluteAction = async (action: BaseAction, inputQty: number) => {
     const input = inputToken.from(inputQty)
-    const output = await action.quote([input]).catch((e) => {
+    const output = await action.quote([input]).catch(() => {
       return action.outputToken.map((i) => i.zero)
     })
     const outputQty = output[0].asNumber()

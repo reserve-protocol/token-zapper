@@ -1,23 +1,30 @@
+import { formatEther } from 'ethers/lib/utils'
 import { Universe } from '..'
 import { Address } from '../base/Address'
 import { TokenQuantity, Token } from '../entities/Token'
+import { ONE } from './Action'
 
 class BasicDetails {
   public constructor(
     public readonly basket: TokenQuantity[],
     public readonly name: string,
-    public readonly symbol: string,
-    public readonly initialShares: bigint
+    public readonly symbol: string
   ) {}
 
-  public serialize() {
+  public serialize(initialShares: bigint) {
     return {
       assets: this.basket.map((i) => i.token.address.address),
-      amounts: this.basket.map((i) => i.amount),
+      amounts: this.basket.map((i) => (i.amount * initialShares) / ONE),
       name: this.name,
       symbol: this.symbol,
-      initialShares: this.initialShares,
+      initialShares: initialShares,
     }
+  }
+
+  public toString() {
+    return `BasicDetails(${this.name}, ${this.symbol}, basket=${this.basket
+      .map((i) => i.toString())
+      .join(', ')})`
   }
 }
 class AdditionalDetails {
@@ -28,6 +35,16 @@ class AdditionalDetails {
     public readonly folioFee: bigint,
     public readonly mintingFee: bigint
   ) {}
+
+  public toString() {
+    return `AdditionalDetails(tradeDelay=${this.tradeDelay}s, auctionLength=${
+      this.auctionLength
+    }s, feeRecipients=${this.feeRecipients
+      .map((i) => i.toString())
+      .join(', ')}, folioFee=${formatEther(
+      this.folioFee
+    )}, mintingFee=${formatEther(this.mintingFee)})`
+  }
 
   public serialize() {
     return {
@@ -40,6 +57,11 @@ class AdditionalDetails {
   }
 }
 class FeeRecipient {
+  public toString() {
+    return `FeeRecipient(${this.recipient.address}, ${formatEther(
+      this.portion
+    )})`
+  }
   public constructor(
     public readonly recipient: Address,
     public readonly portion: bigint
@@ -52,6 +74,15 @@ class FeeRecipient {
   }
 }
 class GovParams {
+  public toString() {
+    return `GovParams(votingDelay=${this.votingDelay}s, votingPeriod=${
+      this.votingPeriod
+    }s, proposalThreshold=${formatEther(
+      this.proposalThreshold
+    )}, quorumPercent=${this.quorumPercent}%, timelockDelay=${
+      this.timelockDelay
+    }s, guardian=${this.guardian.address})`
+  }
   public constructor(
     public readonly votingDelay: bigint,
     public readonly votingPeriod: bigint,
@@ -72,6 +103,8 @@ class GovParams {
     }
   }
 }
+type StringEncodedHexOrIntegerOrBigInt = string | bigint
+
 export type GovParamsJson = {
   votingDelay: StringEncodedHexOrIntegerOrBigInt
   votingPeriod: StringEncodedHexOrIntegerOrBigInt
@@ -80,7 +113,6 @@ export type GovParamsJson = {
   timelockDelay: StringEncodedHexOrIntegerOrBigInt
   guardian: string
 }
-type StringEncodedHexOrIntegerOrBigInt = string | bigint
 export type DeployFolioConfigJson = {
   stToken: string
   basicDetails: {
@@ -88,7 +120,6 @@ export type DeployFolioConfigJson = {
     amounts: StringEncodedHexOrIntegerOrBigInt[]
     name: string
     symbol: string
-    initialShares: StringEncodedHexOrIntegerOrBigInt
   }
   additionalDetails: {
     tradeDelay: StringEncodedHexOrIntegerOrBigInt
@@ -108,6 +139,15 @@ export type DeployFolioConfigJson = {
 }
 
 export class DeployFolioConfig {
+  public toString() {
+    return `DeployFolioConfig(stToken=${
+      this.stToken
+    }, basicDetails=${this.basicDetails.toString()}, additionalDetails=${this.additionalDetails.toString()}, ownerGovParams=${this.ownerGovParams.toString()}, tradingGovParams=${this.tradingGovParams.toString()}, existingTradeProposers=${this.existingTradeProposers.join(
+      ', '
+    )}, tradeLaunchers=${this.tradeLaunchers.join(
+      ', '
+    )}, vibesOfficers=${this.vibesOfficers.join(', ')})`
+  }
   public constructor(
     public readonly stToken: Token,
     public readonly basicDetails: BasicDetails,
@@ -133,8 +173,7 @@ export class DeployFolioConfig {
       new BasicDetails(
         basket,
         json.basicDetails.name,
-        json.basicDetails.symbol,
-        BigInt(json.basicDetails.initialShares)
+        json.basicDetails.symbol
       ),
       new AdditionalDetails(
         BigInt(json.additionalDetails.tradeDelay),
@@ -167,16 +206,20 @@ export class DeployFolioConfig {
     )
   }
 
-  public serialize() {
+  public serialize(initialShares: bigint) {
     const out = [
       this.stToken.address.address,
-      this.basicDetails.serialize(),
+      this.basicDetails.serialize(initialShares),
       this.additionalDetails.serialize(),
       this.ownerGovParams.serialize(),
       this.tradingGovParams.serialize(),
-      this.existingTradeProposers.map((i) => i.address),
-      this.tradeLaunchers.map((i) => i.address),
-      this.vibesOfficers.map((i) => i.address),
+      {
+        existingTradeProposers: this.existingTradeProposers.map(
+          (i) => i.address
+        ),
+        tradeLaunchers: this.tradeLaunchers.map((i) => i.address),
+        vibesOfficers: this.vibesOfficers.map((i) => i.address),
+      },
     ] as const
 
     return out

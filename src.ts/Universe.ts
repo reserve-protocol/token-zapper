@@ -1100,6 +1100,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (!(config instanceof DeployFolioConfig)) {
       config = await DeployFolioConfig.create(this, config)
     }
+    this.logger.info(`Generating deploy folio:`);
+    this.logger.info(config.toString());
     const recipient = Address.from(opts?.recipient ?? caller)
     const dustRecipient = Address.from(opts?.dustRecipient ?? opts?.recipient ?? caller)
 
@@ -1120,7 +1122,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     return await new TxGen(this, expectedOutput).generate({
       ...userOption,
       ethereumInput: false,
-      deployFolio: true,
+      deployFolio: config,
     })
   }
 
@@ -1155,7 +1157,6 @@ export class Universe<const UniverseConf extends Config = Config> {
       return await new TxGen(this, res).generate({
         ...options,
         ethereumInput: isNative,
-        deployFolio: false
       })
     } catch (e) {
       console.log(`Error zapping: ${e}`)

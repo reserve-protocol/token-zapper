@@ -24,6 +24,7 @@ import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { NodeProxy, TFGResult } from './TokenFlowGraph'
 import { Approval } from '../base/Approval'
 import { constants } from 'ethers/lib/ethers'
+import { DeployFolioConfig } from '../action/DeployFolioConfig'
 
 const iface = Zapper__factory.createInterface()
 const simulateAndParse = async (
@@ -47,7 +48,6 @@ const simulateAndParse = async (
       dust: parsed.dust.map((d, index) => dustTokens[index].from(d)),
     }
   } catch (e) {
-    console.log(simulation)
     const [cmdIndex, target, message] = defaultAbiCoder.decode(
       ['uint256', 'address', 'string'],
       hexDataSlice(simulation, 4)
@@ -94,7 +94,9 @@ const evaluateProgram = async (
   //   }),
   //   JSON.stringify(opts)
   // )
-  const data = encodeCalldata(tx, { isDeployZap: opts.deployFolio ?? false })
+  const data = encodeCalldata(tx, {
+    isDeployZap: opts.deployFolio != null,
+  })
   let value = 0n
   if (opts.ethereumInput) {
     value = inputs[0].amount
@@ -109,6 +111,20 @@ const evaluateProgram = async (
       userBalanceAndApprovalRequirements: inputs[0].amount,
     },
   }
+
+  console.log(
+    JSON.stringify(
+      {
+        block: universe.currentBlock,
+        to: simulationPayload.to.toString(),
+        from: simulationPayload.from.toString(),
+        data: simulationPayload.data.toString(),
+        value: simulationPayload.value.toString(),
+      },
+      null,
+      2
+    )
+  )
   try {
     return {
       res: await simulateAndParse(universe, simulationPayload, dustTokens),
@@ -133,7 +149,7 @@ interface TxGenOptions {
   dustRecipient: Address
   ethereumInput: boolean
 
-  deployFolio?: boolean
+  deployFolio?: DeployFolioConfig
 }
 
 export class DagPlanContext {
@@ -357,6 +373,11 @@ export class TxGen {
   }
 
   public async generate(opts: TxGenOptions) {
+    const logger = this.universe.logger.child({
+      prefix: `TxGen`,
+      zapId: this.zapIdStr,
+      blockNumber: this.blockNumber,
+    })
     const emitIdContract = Contract.createLibrary(
       EmitId__factory.connect(
         this.universe.config.addresses.emitId.address,
@@ -447,10 +468,18 @@ export class TxGen {
     let outputTokenAddress = outputToken.address
     if (opts.deployFolio) {
       outputTokenAddress =
-        await this.universe.folioContext.computeNextFolioTokenAddress()
+        await this.universe.folioContext.computeNextFolioTokenAddress(
+          opts.deployFolio
+        )
+
+      logger.info(
+        `Generating deployZap, expected token addr should be '${outputTokenAddress}' based on config`
+      )
     }
 
-    const dustTokens = this.graph.getDustTokens()
+    const dustTokens = this.graph
+      .getDustTokens()
+      .filter((t) => t.address !== outputTokenAddress)
 
     ctx.transfer(
       outputTokenAddress,
@@ -501,6 +530,7 @@ export class TxGen {
       tokenPrices: new Map(),
     }
 
+    console.log(testSimulation.dust.join(', '))
     const dustQtys = testSimulation.dust.filter((i) => i.amount > 1000n)
 
     const stats = await ZapTxStats.create(result, {

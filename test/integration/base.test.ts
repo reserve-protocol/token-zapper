@@ -28,11 +28,10 @@ if (process.env.BASE_PROVIDER == null) {
 
 const searcherOptions = {
   ...getDefaultSearcherOptions(),
-  searcherMinRoutesToProduce: 1,
   maxSearchTimeMs: 60000,
   optimisationSteps: 15,
-  minimiseDustPhase1Steps: 10,
-  minimiseDustPhase2Steps: 10,
+  minimiseDustPhase1Steps: 15,
+  minimiseDustPhase2Steps: 25,
 }
 
 /** !!
@@ -96,6 +95,7 @@ const makeZapIntoYieldPositionTestCase = (
     output: output,
   }
 }
+
 const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
@@ -139,7 +139,7 @@ const basket = (str: string) => {
     .split(',')
     .map((pair) => {
       const [num, tok] = pair.split(' ')
-      return [Number(num), t[tok]] as [number, Address]
+      return [parseFloat(num), t[tok]] as [number, Address]
     })
 }
 const makeFolioTestCase = (
@@ -162,7 +162,7 @@ const folioTests = [
     10,
     t.WETH,
     basket(
-      '0.6067 Virtuals, 0.1258 aiXBT, 0.1004 Freysa, 0.0383 GAME, 0.0329 Cookie, 0.0246 Rei, 0.0218 Toshi, 0.0199 VaderAI, 0.0149 Luna, 0.0146 Henlo'
+      '0.6067 Virtuals, 0.1258 aiXBT, 0.1004 Freysa, 0.0383 GAME, 0.0329 Cookie, 0.0246 Rei, 0.0218 Toshi, 0.0199 VaderAI, 0.0295 Luna'
     )
   ),
 ]
@@ -172,36 +172,44 @@ const folioConfig = (
   symbol: string,
   outputs: TokenQuantity[]
 ) => ({
-  stToken: '0xaB36452DbAC151bE02b16Ca17d8919826072f64a',
+  stToken: '0x18846441bEE474529444C10F119e0B4a7C60aCbb',
   basicDetails: {
     assets: outputs.map((t) => t.token.address.address),
     amounts: outputs.map((t) => t.amount),
     name,
     symbol,
-    initialShares: ONE,
   },
   additionalDetails: {
-    tradeDelay: 20n * 60n,
-    auctionLength: 20n * 60n,
-    feeRecipients: [],
+    tradeDelay: 900n,
+    auctionLength: 900n,
+    feeRecipients: [
+      {
+        recipient: '0x18846441bEE474529444C10F119e0B4a7C60aCbb',
+        portion: 125000000000000100n,
+      },
+      {
+        recipient: '0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4',
+        portion: 874999999999999900n,
+      },
+    ],
     folioFee: 0n,
-    mintingFee: 0n,
+    mintingFee: 500000000000000n,
   },
   ownerGovParams: {
     votingDelay: 20n * 60n,
     votingPeriod: 20n * 60n,
     proposalThreshold: ONE / 100n,
-    quorumPercent: (ONE / 100n) * 20n,
+    quorumPercent: 20n,
     timelockDelay: 20n * 60n,
-    guardian: '0xaB36452DbAC151bE02b16Ca17d8919826072f64a',
+    guardian: '0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4',
   },
   tradingGovParams: {
     votingDelay: 20n * 60n,
     votingPeriod: 20n * 60n,
     proposalThreshold: ONE / 100n,
-    quorumPercent: (ONE / 100n) * 20n,
+    quorumPercent: 20n,
     timelockDelay: 20n * 60n,
-    guardian: '0xaB36452DbAC151bE02b16Ca17d8919826072f64a',
+    guardian: '0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4',
   },
   tradeLaunchers: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
   vibesOfficers: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
@@ -213,25 +221,25 @@ const zapIntoYieldPositionCases: ReturnType<
 >[] = []
 
 let universe: Universe
-const provider = getProvider(process.env.BASE_PROVIDER!)
+const provider = getProvider(process.env.BASE_PROVIDER!, false)
 
 let requestCount = 0
 let initialized = false
 const dupRequestCounter = new DefaultMap<string, number>(() => 0)
 
-provider.on('debug', (log) => {
-  if (log.action === 'response') {
-  } else if (log?.action == 'request') {
-    requestCount += 1
-  }
+// provider.on('debug', (log) => {
+//   if (log.action === 'response') {
+//   } else if (log?.action == 'request') {
+//     requestCount += 1
+//   }
 
-  // if (initialized) {
-  //   const req =
-  //     log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
-  //   dupRequestCounter.get(req)
-  //   dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
-  // }
-})
+//   // if (initialized) {
+//   //   const req =
+//   //     log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
+//   //   dupRequestCounter.get(req)
+//   //   dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
+//   // }
+// })
 provider.on('error', (e) => {
   console.log(e)
 })
@@ -253,7 +261,6 @@ const emitReqCount = (msg?: string, dups?: boolean) => {
 beforeAll(async () => {
   try {
     global.console = require('console')
-    console.log(`Setting up`)
     universe = await Universe.createWithConfig(
       provider,
       {
@@ -270,9 +277,17 @@ beforeAll(async () => {
         ),
       }
     )
-    console.log(`Setting up done`)
 
     await universe.initialized
+
+    // fs.writeFileSync(
+    //   'src.ts/configuration/data/base/tokens.json',
+    //   JSON.stringify(
+    //     [...universe.tokens.values()].map((t) => t.toJson()),
+    //     null,
+    //     2
+    //   )
+    // )
 
     emitReqCount('Initialized')
     initialized = true
@@ -298,15 +313,19 @@ describe('base zapper', () => {
           expect.assertions(1)
           try {
             const token = await universe.getToken(testCase.inputToken)
+            const inputQty = token.from(testCase.input)
+
             const targetBasket = await Promise.all(
               testCase.basket.map(async ([num, tok]) => {
                 const t = await universe.getToken(tok)
-                const tokenPrice = await t.price
-                return tokenPrice.mul(t.from(num))
+                const tokenPrice = (await t.price).asNumber()
+                const out = (1 / tokenPrice) * num
+                return t.from(out)
               })
             )
+
             const out = await universe.deployZap(
-              token.from(testCase.input),
+              inputQty,
               testUser,
               folioConfig('AIBS', 'AI Basket', targetBasket)
             )

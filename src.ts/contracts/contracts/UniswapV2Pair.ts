@@ -25,11 +25,16 @@ import type {
 
 export interface UniswapV2PairInterface extends utils.Interface {
   functions: {
+    "getReserves()": FunctionFragment;
     "swap(uint256,uint256,address,bytes)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "swap"): FunctionFragment;
+  getFunction(nameOrSignatureOrTopic: "getReserves" | "swap"): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "getReserves",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "swap",
     values: [
@@ -40,6 +45,10 @@ export interface UniswapV2PairInterface extends utils.Interface {
     ]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "getReserves",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "swap", data: BytesLike): Result;
 
   events: {};
@@ -72,6 +81,16 @@ export interface UniswapV2Pair extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    getReserves(
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, number] & {
+        reserve0: BigNumber;
+        reserve1: BigNumber;
+        blockTimestampLast: number;
+      }
+    >;
+
     swap(
       amount0Out: PromiseOrValue<BigNumberish>,
       amount1Out: PromiseOrValue<BigNumberish>,
@@ -80,6 +99,16 @@ export interface UniswapV2Pair extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
+
+  getReserves(
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber, BigNumber, number] & {
+      reserve0: BigNumber;
+      reserve1: BigNumber;
+      blockTimestampLast: number;
+    }
+  >;
 
   swap(
     amount0Out: PromiseOrValue<BigNumberish>,
@@ -90,6 +119,16 @@ export interface UniswapV2Pair extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    getReserves(
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, number] & {
+        reserve0: BigNumber;
+        reserve1: BigNumber;
+        blockTimestampLast: number;
+      }
+    >;
+
     swap(
       amount0Out: PromiseOrValue<BigNumberish>,
       amount1Out: PromiseOrValue<BigNumberish>,
@@ -102,6 +141,8 @@ export interface UniswapV2Pair extends BaseContract {
   filters: {};
 
   estimateGas: {
+    getReserves(overrides?: CallOverrides): Promise<BigNumber>;
+
     swap(
       amount0Out: PromiseOrValue<BigNumberish>,
       amount1Out: PromiseOrValue<BigNumberish>,
@@ -112,6 +153,8 @@ export interface UniswapV2Pair extends BaseContract {
   };
 
   populateTransaction: {
+    getReserves(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     swap(
       amount0Out: PromiseOrValue<BigNumberish>,
       amount1Out: PromiseOrValue<BigNumberish>,

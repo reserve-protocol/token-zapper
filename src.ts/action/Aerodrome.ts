@@ -338,21 +338,27 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
 
     this.quoteCache = this.pool.context.universe.createCache(
       async (amountIn: bigint) => {
-        return [
-          this.output.from(
-            (
-              await this.pool.context.mixedRouter.callStatic.quoteExactInputSingleV3(
-                {
-                  tokenIn: this.input.address.address,
-                  tokenOut: this.output.address.address,
-                  amountIn: amountIn,
-                  tickSpacing: this.pool.tickSpacing,
-                  sqrtPriceLimitX96: 0,
-                }
-              )
-            ).amountOut
-          ),
-        ]
+        try {
+          const outQuote =
+            await this.pool.context.mixedRouter.callStatic.quoteExactInputSingleV3(
+              {
+                tokenIn: this.input.address.address,
+                tokenOut: this.output.address.address,
+                amountIn: amountIn,
+                tickSpacing: this.pool.tickSpacing,
+                sqrtPriceLimitX96: 0,
+              }
+            )
+
+          return [this.output.from(outQuote.amountOut)]
+        } catch (e) {
+          console.log(
+            `Failed to quote ${this.inputToken[0].from(amountIn)} -> ${
+              this.pool
+            }  ${this.pool.address}`
+          )
+          throw e
+        }
       },
       12000
     )
@@ -510,6 +516,10 @@ const FEE_DIVISOR = 10000n
 const MAX_NUM = 2n ** 256n - 1n
 export class AerodromeStablePool {
   private totalSupply: () => Promise<TokenQuantity>
+
+  public toString() {
+    return `Aerodrome(${this.poolAddress}.${this.token0}:${this.token1})`
+  }
 
   public toJSON() {
     return {
@@ -726,6 +736,16 @@ export class AerodromeStablePool {
         pool,
         context.getReserves
       )
+      const weth = universe.wrappedNativeToken
+      if (inst.token0 === weth || inst.token1 === weth) {
+        const approxPoolValue =
+          (
+            await (await universe.balanceOf(weth, inst.poolAddress)).price()
+          ).asNumber() * 2
+        if (approxPoolValue < 100000) {
+          throw new Error('Pool is too small')
+        }
+      }
 
       if (inst.poolType === AerodromePoolType.CL) {
         universe.addAction(inst.actions.t0for1)
@@ -748,7 +768,6 @@ export class AerodromeStablePool {
               const out =
                 (price0.asNumber() + price1.asNumber()) / totalSupply.asNumber()
               const v = universe.usd.from(out)
-              console.log(`${lpToken}: ${v.asNumber()}`)
               return v
             } catch (e) {
               console.log(
@@ -832,7 +851,6 @@ export class AerodromeStablePool {
 
       return inst
     } catch (e) {
-      console.log(e)
       throw e
     } finally {
       loaded = true
@@ -976,7 +994,6 @@ export class AerodromeContext {
       return await inst
     }
     if (this.byLp.has(Address.from(pool.lp))) {
-      console.log('duplicate', pool.lp.toString())
       return await this.byLp.get(Address.from(pool.lp))!
     }
     const inst = AerodromeStablePool.create(this, address, pool)

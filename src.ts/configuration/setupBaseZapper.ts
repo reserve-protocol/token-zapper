@@ -8,12 +8,13 @@ import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
 import { setupCompoundV3 } from './setupCompV3'
 import { setupAaveV3 } from './setupAaveV3'
-import { setupUniswapV3Router } from './setupUniswapRouter'
+import { setupUniswapV3 } from './setupUniswapV3'
 import { setupAerodromeRouter } from './setupAerodromeRouter'
 import { setupERC4626 } from './setupERC4626'
 import { createProtocolWithWrappers } from '../action/RewardableWrapper'
 import { TokenType } from '../entities/TokenClass'
 import { setupOdosPricing } from './setupOdosPricing'
+import { setupUniswapV2 } from './setupUniswapV2'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
@@ -157,10 +158,14 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     )
   }
 
-  const initUni = async () => {
+  const initUni3 = async () => {
     logger.info('Setting up UniswapV3')
-    const router = await setupUniswapV3Router(universe)
+    const router = await setupUniswapV3(universe)
     universe.addIntegration('uniswapV3', await router.venue())
+  }
+  const initUni2 = async () => {
+    logger.info('Setting up UniswapV2')
+    await setupUniswapV2(universe)
   }
 
   const initERC4626 = async () => {
@@ -211,7 +216,8 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   const tasks = [
     initCompound(),
     initAave(),
-    initUni(),
+    initUni3(),
+    initUni2(),
     initERC4626(),
     setupStarGate_(),
     setupAero(),

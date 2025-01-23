@@ -12,3 +12,4 @@ export type { BalancerCall } from "./BalancerCall";
 export type { DeployFolioHelper } from "./DeployFolioHelper";
 export type { EmitId } from "./EmitId";
 export type { EthBalance } from "./EthBalance";
+export type { Univ2SwapHelper } from "./Univ2SwapHelper";

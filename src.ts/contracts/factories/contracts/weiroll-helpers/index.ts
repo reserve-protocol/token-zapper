@@ -9,3 +9,4 @@ export { BalancerCall__factory } from "./BalancerCall__factory";
 export { DeployFolioHelper__factory } from "./DeployFolioHelper__factory";
 export { EmitId__factory } from "./EmitId__factory";
 export { EthBalance__factory } from "./EthBalance__factory";
+export { Univ2SwapHelper__factory } from "./Univ2SwapHelper__factory";

@@ -241,19 +241,26 @@ const _abi = [
         type: "tuple",
       },
       {
-        internalType: "address[]",
-        name: "existingTradeProposers",
-        type: "address[]",
-      },
-      {
-        internalType: "address[]",
-        name: "tradeLaunchers",
-        type: "address[]",
-      },
-      {
-        internalType: "address[]",
-        name: "vibesOfficers",
-        type: "address[]",
+        components: [
+          {
+            internalType: "address[]",
+            name: "existingTradeProposers",
+            type: "address[]",
+          },
+          {
+            internalType: "address[]",
+            name: "tradeLaunchers",
+            type: "address[]",
+          },
+          {
+            internalType: "address[]",
+            name: "vibesOfficers",
+            type: "address[]",
+          },
+        ],
+        internalType: "struct GovRoles",
+        name: "govRoles",
+        type: "tuple",
       },
     ],
     name: "deployGovernedFolio",

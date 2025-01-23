@@ -72,9 +72,16 @@ export class FolioContext {
     return out
   }
 
-  public async computeNextFolioTokenAddress(): Promise<Address> {
+  public async computeNextFolioTokenAddress(
+    config: DeployFolioConfig
+  ): Promise<Address> {
     const deployer = this.folioDeployerAddress.address
-    const nonce = await this.universe.provider.getTransactionCount(deployer)
+    let nonce = (await this.universe.provider.getTransactionCount(deployer)) + 1
+
+    if (config.existingTradeProposers.length > 0) {
+      nonce += 1
+    }
+
     return Address.from(
       getContractAddress({
         from: deployer,
@@ -102,7 +109,7 @@ export class FolioContext {
       this.helperAddress.address,
       universe.provider
     )
-    this.deployerHelperWeiroll = Contract.createContract(
+    this.deployerHelperWeiroll = Contract.createLibrary(
       this.deployerHelperContract
     )
   }
@@ -113,38 +120,45 @@ const quoteFn = async (
   amountsIn: TokenQuantity[],
   outputToken: Token
 ) => {
-  let smallestUnit: bigint = ethers.constants.MaxUint256.toBigInt()
-  for (let i = 0; i < amountsIn.length; i++) {
-    const amountIn = amountsIn[i]
-    const basketQty = basket[i]
-    const amountOut = amountIn.div(basketQty).into(outputToken)
+  try {
+    let smallestUnit: bigint = ethers.constants.MaxUint256.toBigInt()
+    for (let i = 0; i < amountsIn.length; i++) {
+      const amountIn = amountsIn[i]
+      const basketQty = basket[i]
+      const amountOut = amountIn.div(basketQty).into(outputToken)
 
-    if (amountOut.amount < smallestUnit) {
-      smallestUnit = amountOut.amount
+      if (amountOut.amount < smallestUnit) {
+        smallestUnit = amountOut.amount
+      }
     }
-  }
-  const outQty = outputToken.from(smallestUnit)
-  return {
-    output: [outQty],
-    dust: amountsIn.map((inQty, index) => {
+    const outQty = outputToken.from(smallestUnit)
+    const out = amountsIn.map((inQty, index) => {
       const spent = basket[index].mul(outQty.into(inQty.token))
       if (spent.amount >= inQty.amount) {
         return inQty.token.zero
       }
       return inQty.sub(spent)
-    }),
+    })
+
+    return {
+      output: [outQty],
+      dust: out,
+    }
+  } catch (e) {
+    console.log(e)
+    return {
+      output: [],
+      dust: [],
+    }
   }
 }
 
 export class DeployMintFolioAction extends BaseAction {
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return (
-      await quoteFn(
-        this.config.basicDetails.basket,
-        amountsIn,
-        this.config.stToken
-      )
-    ).output
+    return (await this.quoteWithDust(amountsIn)).output
+  }
+  get dustTokens(): Token[] {
+    return this.inputToken
   }
   async inputProportions(): Promise<TokenQuantity[]> {
     const prices = await Promise.all(
@@ -153,21 +167,25 @@ export class DeployMintFolioAction extends BaseAction {
       )
     )
     const sum = prices.reduce((a, b) => a + b, 0)
-    return prices.map((i, index) => this.inputToken[index].from(i / sum))
+    const props = prices.map((i, index) => this.inputToken[index].from(i / sum))
+    return props
   }
   async quoteWithDust(
     amountsIn: TokenQuantity[]
   ): Promise<{ output: TokenQuantity[]; dust: TokenQuantity[] }> {
-    return await quoteFn(
+    const out = await quoteFn(
       this.config.basicDetails.basket,
       amountsIn,
-      this.config.stToken
+      this.expectedToken
     )
+
+    return out
   }
 
-  supportsDust(): boolean {
-    return true
+  get dependsOnRpc() {
+    return false
   }
+
   gasEstimate(): bigint {
     return 1800000n + BigInt(this.config.basicDetails.basket.length) * 200000n
   }
@@ -177,7 +195,13 @@ export class DeployMintFolioAction extends BaseAction {
     destination: Address,
     predictedInputs: TokenQuantity[]
   ) {
-    const serialized = this.config.serialize()
+    const quote = await this.quote(predictedInputs)
+
+    const expectedOutput = quote[0].amount
+
+    const serialized = this.config.serialize(
+      expectedOutput - expectedOutput / 1000n
+    )
     const encoded = this.context.deployerContract.interface.encodeFunctionData(
       'deployGovernedFolio',
       [
@@ -187,8 +211,6 @@ export class DeployMintFolioAction extends BaseAction {
         serialized[3],
         serialized[4],
         serialized[5],
-        serialized[6],
-        serialized[7],
       ]
     )
 
@@ -196,7 +218,8 @@ export class DeployMintFolioAction extends BaseAction {
       planner.add(
         this.context.deployerHelperWeiroll.deployFolio(
           this.context.folioDeployerAddress.address,
-          (await this.context.computeNextFolioTokenAddress()).address,
+          (await this.context.computeNextFolioTokenAddress(this.config))
+            .address,
           encoded
         )
       )!,
@@ -215,7 +238,7 @@ export class DeployMintFolioAction extends BaseAction {
       InteractionConvention.ApprovalRequired,
       DestinationOptions.Callee,
       config.basicDetails.basket.map(
-        (i) => new Approval(expectedToken, context.folioDeployerAddress)
+        (i) => new Approval(i.token, context.folioDeployerAddress)
       )
     )
     if (

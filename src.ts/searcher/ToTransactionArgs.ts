@@ -39,9 +39,11 @@ export const encodeCalldata = (
   payload: ZapParamsStruct,
   options: { isDeployZap: boolean }
 ) => {
-  return options.isDeployZap
+  const data = options.isDeployZap
     ? zapperInterface.encodeFunctionData('zapDeploy', [payload])
     : zapperInterface.encodeFunctionData('zap', [payload])
+
+  return data
 }
 
 export const encodeTx = (

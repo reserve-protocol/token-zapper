@@ -28,8 +28,8 @@ import { bfs } from '../exchange-graph/BFS'
 import { Graph } from '../exchange-graph/Graph'
 import { SwapPlan } from '../searcher/Swap'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
-import baseFallbackPoolList from './data/base/uniswap.json'
-import ethereumFallbackPoolList from './data/ethereum/uniswap.json'
+import baseFallbackPoolList from './data/base/uniswapv3.json'
+import ethereumFallbackPoolList from './data/ethereum/uniswapv3.json'
 
 const fallbackDataPoolLists: Record<number, any> = {
   1: ethereumFallbackPoolList,
@@ -37,10 +37,10 @@ const fallbackDataPoolLists: Record<number, any> = {
 }
 const top100PoolsQuery = `{
   pools(
-    first: 250,
+    first: 1000,
     where:{
-      volumeUSD_gt: 50000,
-      totalValueLockedUSD_gt: 100000,
+      volumeUSD_gt: 25000,
+      totalValueLockedUSD_gt: 200000,
       totalValueLockedUSD_lt: 500000000,
       txCount_gt: 100
     },
@@ -109,7 +109,7 @@ const loadPoolsFromSubgraph = async (
       headers: {
         'Content-Type': 'application/json',
       },
-      signal: AbortSignal.timeout(2000),
+      signal: AbortSignal.timeout(8000),
     })
     if (!response.ok) {
       throw new Error(
@@ -519,7 +519,7 @@ class UniswapV3Swap extends Action('UniswapV3') {
   }
 }
 
-export const setupUniswapV3Router = async (universe: Universe) => {
+export const setupUniswapV3 = async (universe: Universe) => {
   const chainId = universe.chainId
   if (!isChainIdSupported(chainId)) {
     throw new Error(`ChainId ${chainId} not supported`)

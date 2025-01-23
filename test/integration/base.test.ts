@@ -28,10 +28,10 @@ if (process.env.BASE_PROVIDER == null) {
 
 const searcherOptions = {
   ...getDefaultSearcherOptions(),
-  maxSearchTimeMs: 60000,
   optimisationSteps: 15,
-  minimiseDustPhase1Steps: 15,
-  minimiseDustPhase2Steps: 25,
+  minimiseDustPhase1Steps: 5,
+  minimiseDustPhase2Steps: 15,
+  cacheResolution: 4,
 }
 
 /** !!
@@ -223,7 +223,10 @@ const zapIntoYieldPositionCases: ReturnType<
 >[] = []
 
 let universe: Universe
-const provider = getProvider(process.env.BASE_PROVIDER!, Infinity)
+const provider = getProvider(
+  process.env.BASE_PROVIDER!,
+  process.env.THROTTLE ? parseInt(process.env.THROTTLE, 10) : Infinity
+)
 
 let requestCount = 0
 let initialized = false

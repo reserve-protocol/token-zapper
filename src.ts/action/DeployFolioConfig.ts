@@ -113,8 +113,7 @@ export type GovParamsJson = {
   timelockDelay: StringEncodedHexOrIntegerOrBigInt
   guardian: string
 }
-type BaseConfig = {
-  stToken: string
+type BaseConfigJSON = {
   basicDetails: {
     assets: string[]
     amounts: StringEncodedHexOrIntegerOrBigInt[]
@@ -137,12 +136,13 @@ type BaseConfig = {
 }
 
 export type DeployFolioConfigJson =
-  | (BaseConfig & {
+  | (BaseConfigJSON & {
       type: 'governed'
+      stToken: string
       ownerGovParams: GovParamsJson
       tradingGovParams: GovParamsJson
     })
-  | (BaseConfig & {
+  | (BaseConfigJSON & {
       type: 'ungoverned'
       owner: string
     })
@@ -151,16 +151,14 @@ export class DeployFolioConfig {
   public toString() {
     if (this.governance.type === 'governed') {
       return `DeployFolioConfig(stToken=${
-        this.stToken
+        this.governance.stToken
       }, basicDetails=${this.basicDetails.toString()}, additionalDetails=${this.additionalDetails.toString()}, ownerGovParams=${this.governance?.ownerGovParams.toString()}, tradingGovParams=${this.governance?.tradingGovParams.toString()}, existingTradeProposers=${this.existingTradeProposers.join(
         ', '
       )}, tradeLaunchers=${this.tradeLaunchers.join(
         ', '
       )}, vibesOfficers=${this.vibesOfficers.join(', ')})`
     } else {
-      return `DeployFolioConfig(stToken=${
-        this.stToken
-      }, basicDetails=${this.basicDetails.toString()}, additionalDetails=${this.additionalDetails.toString()}, owner=${
+      return `DeployFolioConfig(basicDetails=${this.basicDetails.toString()}, additionalDetails=${this.additionalDetails.toString()}, owner=${
         this.governance.owner.address
       }, existingTradeProposers=${this.existingTradeProposers.join(
         ', '
@@ -170,12 +168,12 @@ export class DeployFolioConfig {
     }
   }
   public constructor(
-    public readonly stToken: Token,
     public readonly basicDetails: BasicDetails,
     public readonly additionalDetails: AdditionalDetails,
     public readonly governance:
       | {
           type: 'governed'
+          stToken: Token
           ownerGovParams: GovParams
           tradingGovParams: GovParams
         }
@@ -199,7 +197,6 @@ export class DeployFolioConfig {
     )
 
     return new DeployFolioConfig(
-      await universe.getToken(Address.from(json.stToken)),
       new BasicDetails(
         basket,
         json.basicDetails.name,
@@ -217,6 +214,7 @@ export class DeployFolioConfig {
       json.type === 'governed'
         ? {
             type: 'governed',
+            stToken: await universe.getToken(Address.from(json.stToken)),
             ownerGovParams: new GovParams(
               BigInt(json.ownerGovParams.votingDelay),
               BigInt(json.ownerGovParams.votingPeriod),
@@ -250,7 +248,7 @@ export class DeployFolioConfig {
       throw new Error('Governance is not set')
     }
     const out = [
-      this.stToken.address.address,
+      governance.stToken.address.address,
       this.basicDetails.serialize(initialShares),
       this.additionalDetails.serialize(),
       governance.ownerGovParams.serialize(),

@@ -14,7 +14,7 @@ class OurProvider extends ethers.providers.WebSocketProvider {
 
   async destroy(): Promise<void> {
     // Wait until we have connected before trying to disconnect
-    if (this.websocket.readyState === WebSocket.CONNECTING) {
+    if (this.websocket.readyState === 0) {
       await new Promise((resolve) => {
         this.websocket.onopen = function () {
           resolve(true)

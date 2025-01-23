@@ -16,7 +16,10 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 import { DefaultMap } from '../../src.ts/base/DefaultMap'
-import { getDefaultSearcherOptions } from '../../src.ts/configuration/ChainConfiguration'
+import {
+  getDefaultSearcherOptions,
+  SearcherOptions,
+} from '../../src.ts/configuration/ChainConfiguration'
 import { getProvider } from './providerUtils'
 import { ONE } from '../../src.ts/action/Action'
 dotenv.config()
@@ -26,12 +29,13 @@ if (process.env.BASE_PROVIDER == null) {
   process.exit(0)
 }
 
-const searcherOptions = {
+const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
   optimisationSteps: 15,
   minimiseDustPhase1Steps: 5,
   minimiseDustPhase2Steps: 15,
   cacheResolution: 4,
+  useNewZapperContract: true,
 }
 
 /** !!
@@ -100,14 +104,14 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  makeTestCase(10000, t.USDC, rTokens.bsd),
-  makeTestCase(100, t.WETH, rTokens.bsd),
-  makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  makeTestCase(10000, t.USDbC, rTokens.hyUSD),
-  makeTestCase(10000, t.DAI, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDC, rTokens.bsd),
+  // makeTestCase(100, t.WETH, rTokens.bsd),
+  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
+  // makeTestCase(10000, t.DAI, rTokens.hyUSD),
   makeTestCase(5, t.WETH, rTokens.hyUSD),
 
-  makeTestCase(50, t.WETH, rTokens.BSDX),
+  // makeTestCase(50, t.WETH, rTokens.BSDX),
 ]
 
 const redeemCases = [

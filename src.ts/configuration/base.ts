@@ -61,8 +61,10 @@ export const baseConfig = makeConfig(
     emitId: contractAddress('EmitId'),
     facadeAddress: '0xEb2071e9B542555E90E6e4E1F83fa17423583991',
     oldFacadeAddress: '0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF',
-    zapperAddress: contractAddress('Zapper2'),
-    executorAddress: contractAddress('ZapperExecutor'),
+    zapperAddress: '0xaa560d5c2fade67cf6836ab793e56a79f09d4282',
+    zapper2Address: contractAddress('Zapper2'),
+    executorAddress: '0x560740052f380669c90811f711f80b21306d4713',
+    executorAddress2: contractAddress('ZapperExecutor'),
     wrappedNative: '0x4200000000000000000000000000000000000006',
     rtokenLens: contractAddress('RTokenLens'),
 

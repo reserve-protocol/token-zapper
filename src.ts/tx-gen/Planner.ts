@@ -983,7 +983,7 @@ const formatAddress = (address: string, universe: Universe): string => {
   if (universe.tokens.has(addr)) {
     return universe.tokens.get(addr)!.symbol
   }
-  if (universe.config.addresses.executorAddress === addr) {
+  if (universe.execAddress === addr) {
     return 'this'
   }
   const addrObj = Address.from(

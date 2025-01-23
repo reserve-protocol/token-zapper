@@ -227,8 +227,8 @@ export const ERC4626WithdrawAction = (proto: string) =>
       planner.add(
         lib.redeem(
           inputBal,
-          this.universe.config.addresses.executorAddress.address,
-          this.universe.config.addresses.executorAddress.address
+          this.universe.execAddress.address,
+          this.universe.execAddress.address
         )
       )
       return this.outputBalanceOf(this.universe, planner)

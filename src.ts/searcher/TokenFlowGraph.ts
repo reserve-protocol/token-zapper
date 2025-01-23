@@ -2455,6 +2455,7 @@ const optimise = async (
   }
 
   const dustFraction = bestSoFar.result.dustValue / bestSoFar.result.totalValue
+  console.log('dustFraction', dustFraction)
   if (dustFraction > maxDustFraction) {
     console.log(bestSoFar.result.outputs.join(', '))
     console.log(bestSoFar.result.dustValue)

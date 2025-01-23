@@ -749,9 +749,15 @@ export class Universe<const UniverseConf extends Config = Config> {
     return [...out]
   }
   get execAddress() {
+    if (this.config.useNewZapperContract && this.config.addresses.executorAddress2 != null) {
+      return this.config.addresses.executorAddress2
+    }
     return this.config.addresses.executorAddress
   }
   get zapperAddress() {
+    if (this.config.useNewZapperContract && this.config.addresses.zapper2Address != null) {
+      return this.config.addresses.zapper2Address
+    }
     return this.config.addresses.zapperAddress
   }
 
@@ -1097,6 +1103,11 @@ export class Universe<const UniverseConf extends Config = Config> {
     config: DeployFolioConfig | DeployFolioConfigJson,
     opts?: ToTransactionArgs,
   ) {
+    if (this.config.useNewZapperContract === false) {
+      throw new Error(
+        `To enable deployZap, you must set useNewZapperContract to true in your config`
+      )
+    }
     if (!(config instanceof DeployFolioConfig)) {
       config = await DeployFolioConfig.create(this, config)
     }

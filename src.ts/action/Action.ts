@@ -65,7 +65,7 @@ export const plannerUtils = {
     amount: gen.Value,
     destination: Address
   ) {
-    if (destination == universe.config.addresses.executorAddress) {
+    if (destination == universe.execAddress) {
       return
     }
     plannerUtils.erc20.transfer(universe, planner, amount, token, destination)

@@ -33,7 +33,10 @@ const defaultSearcherOptions = {
   minimiseDustPhase1Steps: 10,
   minimiseDustPhase2Steps: 5,
 
-  cacheResolution: 4
+  cacheResolution: 4,
+
+  // Use new contract for all zaps
+  useNewZapperContract: false
 }
 export const getDefaultSearcherOptions = () => {
   return defaultSearcherOptions
@@ -76,8 +79,10 @@ export const makeConfig = <
     facadeAddress: string
     oldFacadeAddress: string
     executorAddress: string
+    executorAddress2?: string
     emitId: string
     zapperAddress: string
+    zapper2Address?: string
     wrappedNative: string
     rtokenLens: string
 
@@ -88,6 +93,7 @@ export const makeConfig = <
     uniV3Router: string
     curveStableSwapNGHelper: string
     curveCryptoFactoryHelper: string
+
 
     usdc: string
   },

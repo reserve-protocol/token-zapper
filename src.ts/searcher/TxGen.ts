@@ -14,8 +14,10 @@ import {
   Value,
 } from '../tx-gen/Planner'
 import {
-  encodeCalldata,
-  encodeProgramToZapERC20Params,
+  encodeZapper2Calldata,
+  encodeZapERC20ParamsStruct,
+  encodeZapParamsStruct,
+  encodeZapperCalldata,
 } from './ToTransactionArgs'
 import { Universe } from '../Universe'
 import { SimulateParams } from '../configuration/ZapSimulation'
@@ -25,6 +27,8 @@ import { NodeProxy, TFGResult } from './TokenFlowGraph'
 import { Approval } from '../base/Approval'
 import { constants } from 'ethers/lib/ethers'
 import { DeployFolioConfig } from '../action/DeployFolioConfig'
+import { ZapParamsStruct } from '../contracts/contracts/Zapper2'
+import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper'
 
 const iface = Zapper__factory.createInterface()
 const simulateAndParse = async (
@@ -72,37 +76,56 @@ const evaluateProgram = async (
 ) => {
   const outputTokenAddress =
     outputToken instanceof Address ? outputToken : outputToken.address
-  // console.log(printPlan(planner, universe).join('\n'))
-  const tx = encodeProgramToZapERC20Params(
-    planner,
-    inputs[0],
-    outputTokenAddress,
-    minOutput,
-    dustTokens,
-    opts.recipient
-  )
+  let data: string
+  let params: ZapParamsStruct | ZapERC20ParamsStruct
+  if (universe.config.useNewZapperContract) {
+    const p = encodeZapParamsStruct(
+      planner,
+      inputs[0],
+      outputTokenAddress,
+      minOutput,
+      dustTokens,
+      opts.recipient
+    )
+    params = p
+    data = encodeZapper2Calldata(p, {
+      isDeployZap: opts.deployFolio != null,
+    })
+  } else {
+    const p = encodeZapERC20ParamsStruct(
+      planner,
+      inputs[0],
+      outputTokenAddress,
+      minOutput,
+      dustTokens
+    )
+    params = p
+    data = encodeZapperCalldata(p, {
+      ethInput: opts.ethereumInput,
+    })
+  }
 
-  // console.log(
-  //   JSON.stringify({
-  //     amountIn: tx.amountIn.toString(),
-  //     amountOut: tx.amountOut.toString(),
-  //     tokens: tx.tokens.map((t) => t.toString()).join(', '),
-  //     tokenIn: tx.tokenIn.toString(),
-  //     tokenOut: tx.tokenOut.toString(),
-  //     state: tx.state.join('\n'),
-  //     commands: tx.commands.map((c) => c.toString()).join('\n'),
-  //   }),
-  //   JSON.stringify(opts)
-  // )
-  const data = encodeCalldata(tx, {
-    isDeployZap: opts.deployFolio != null,
-  })
+  let to: Address
+  if (
+    opts.deployFolio ||
+    (universe.config.useNewZapperContract &&
+      opts.deployFolio == null &&
+      universe.config.addresses.zapper2Address != null)
+  ) {
+    if (universe.config.addresses.zapper2Address == null) {
+      throw new Error('Zapper2 address not set, cannot generate deployZap')
+    }
+    to = universe.config.addresses.zapper2Address
+  } else {
+    to = universe.config.addresses.zapperAddress
+  }
+
   let value = 0n
   if (opts.ethereumInput) {
     value = inputs[0].amount
   }
   const simulationPayload = {
-    to: universe.config.addresses.zapperAddress.address,
+    to: to.address,
     from: signer.address,
     data,
     value,
@@ -112,19 +135,9 @@ const evaluateProgram = async (
     },
   }
 
-  // console.log(
-  //   JSON.stringify(
-  //     {
-  //       block: universe.currentBlock,
-  //       to: simulationPayload.to.toString(),
-  //       from: simulationPayload.from.toString(),
-  //       data: simulationPayload.data.toString(),
-  //       value: simulationPayload.value.toString(),
-  //     },
-  //     null,
-  //     2
-  //   )
-  // )
+  console.log('to', to.address)
+  console.log('data', data)
+
   try {
     return {
       res: await simulateAndParse(universe, simulationPayload, dustTokens),
@@ -135,7 +148,7 @@ const evaluateProgram = async (
           data,
           value,
         },
-        params: tx,
+        params,
       },
     }
   } catch (e) {

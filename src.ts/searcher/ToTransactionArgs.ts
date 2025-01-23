@@ -1,18 +1,19 @@
 import { Token, TokenQuantity } from '../entities/Token'
 import { Planner } from '../tx-gen/Planner'
-import { Zapper2__factory } from '../contracts'
+import { Zapper2__factory, Zapper__factory } from '../contracts'
 import { parseHexStringIntoBuffer } from '../base/utils'
 import { Address } from '../base/Address'
 import { Universe } from '../Universe'
 import { TransactionRequest } from '@ethersproject/providers'
 import { ZapParamsStruct } from '../contracts/contracts/Zapper2'
+import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper'
 
 export type ToTransactionArgs = Partial<{
   recipient?: Address
   dustRecipient?: Address
 }>
 
-export const encodeProgramToZapERC20Params = (
+export const encodeZapParamsStruct = (
   planner: Planner,
   input: TokenQuantity,
   outputToken: Address,
@@ -32,16 +33,45 @@ export const encodeProgramToZapERC20Params = (
     recipient: recipient.address,
   }
 }
+export const encodeZapERC20ParamsStruct = (
+  planner: Planner,
+  input: TokenQuantity,
+  outputToken: Address,
+  minOutput: bigint,
+  tokens: Token[]
+): ZapERC20ParamsStruct => {
+  const plan = planner.plan()
+  return {
+    tokenIn: input.token.address.address,
+    amountIn: input.amount,
+    commands: plan.commands,
+    state: plan.state,
+    amountOut: minOutput,
+    tokenOut: outputToken.address,
+    tokens: tokens.map((i) => i.address.address),
+  }
+}
 
-const zapperInterface = Zapper2__factory.createInterface()
+const zapperInterface = Zapper__factory.createInterface()
+const zapper2Interface = Zapper2__factory.createInterface()
 
-export const encodeCalldata = (
+export const encodeZapper2Calldata = (
   payload: ZapParamsStruct,
   options: { isDeployZap: boolean }
 ) => {
   const data = options.isDeployZap
-    ? zapperInterface.encodeFunctionData('zapDeploy', [payload])
-    : zapperInterface.encodeFunctionData('zap', [payload])
+    ? zapper2Interface.encodeFunctionData('zapDeploy', [payload])
+    : zapper2Interface.encodeFunctionData('zap', [payload])
+
+  return data
+}
+export const encodeZapperCalldata = (
+  payload: ZapERC20ParamsStruct,
+  options: { ethInput: boolean }
+) => {
+  const data = options.ethInput
+    ? zapperInterface.encodeFunctionData('zapETH', [payload])
+    : zapperInterface.encodeFunctionData('zapERC20', [payload])
 
   return data
 }

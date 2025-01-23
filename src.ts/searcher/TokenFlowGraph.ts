@@ -2137,7 +2137,6 @@ const minimizeDust = async (
 
   const nodes = nodesToProcess.map((node) => {
     const splits = g._outgoingEdges[node.id]!.edges[0]
-    console.log(splits.parts.join(', '))
     splits.min = 0
     const tokenToSplitMap = new Map<Token, number>()
     for (let i = 0; i < splits.recipient.length; i++) {

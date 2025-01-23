@@ -86,6 +86,121 @@ const _abi = [
   {
     inputs: [
       {
+        components: [
+          {
+            internalType: "string",
+            name: "name",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "symbol",
+            type: "string",
+          },
+          {
+            internalType: "address[]",
+            name: "assets",
+            type: "address[]",
+          },
+          {
+            internalType: "uint256[]",
+            name: "amounts",
+            type: "uint256[]",
+          },
+          {
+            internalType: "uint256",
+            name: "initialShares",
+            type: "uint256",
+          },
+        ],
+        internalType: "struct IFolio.FolioBasicDetails",
+        name: "basicDetails",
+        type: "tuple",
+      },
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "tradeDelay",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "auctionLength",
+            type: "uint256",
+          },
+          {
+            components: [
+              {
+                internalType: "address",
+                name: "recipient",
+                type: "address",
+              },
+              {
+                internalType: "uint96",
+                name: "portion",
+                type: "uint96",
+              },
+            ],
+            internalType: "struct IFolio.FeeRecipient[]",
+            name: "feeRecipients",
+            type: "tuple[]",
+          },
+          {
+            internalType: "uint256",
+            name: "folioFee",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "mintingFee",
+            type: "uint256",
+          },
+        ],
+        internalType: "struct IFolio.FolioAdditionalDetails",
+        name: "additionalDetails",
+        type: "tuple",
+      },
+      {
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
+        internalType: "address[]",
+        name: "tradeProposers",
+        type: "address[]",
+      },
+      {
+        internalType: "address[]",
+        name: "tradeLaunchers",
+        type: "address[]",
+      },
+      {
+        internalType: "address[]",
+        name: "vibesOfficers",
+        type: "address[]",
+      },
+    ],
+    name: "deployFolio",
+    outputs: [
+      {
+        internalType: "address",
+        name: "folio_",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "folioAdmin_",
+        type: "address",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "contract IVotes",
         name: "stToken",
         type: "address",

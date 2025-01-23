@@ -167,11 +167,12 @@ const folioTests = [
   ),
 ]
 
-const folioConfig = (
+const governedDeployConfig = (
   name: string,
   symbol: string,
   outputs: TokenQuantity[]
 ) => ({
+  type: 'governed' as const,
   stToken: '0x18846441bEE474529444C10F119e0B4a7C60aCbb',
   basicDetails: {
     assets: outputs.map((t) => t.token.address.address),
@@ -179,6 +180,7 @@ const folioConfig = (
     name,
     symbol,
   },
+
   additionalDetails: {
     tradeDelay: 900n,
     auctionLength: 900n,
@@ -221,7 +223,7 @@ const zapIntoYieldPositionCases: ReturnType<
 >[] = []
 
 let universe: Universe
-const provider = getProvider(process.env.BASE_PROVIDER!, false)
+const provider = getProvider(process.env.BASE_PROVIDER!, Infinity)
 
 let requestCount = 0
 let initialized = false
@@ -323,12 +325,21 @@ describe('base zapper', () => {
                 return t.from(out)
               })
             )
-
-            const out = await universe.deployZap(
-              inputQty,
-              testUser,
-              folioConfig('AIBS', 'AI Basket', targetBasket)
+            const config = governedDeployConfig(
+              'AIBS',
+              'AI Basket',
+              targetBasket
             )
+
+            console.log(
+              JSON.stringify(
+                config,
+                (k, v) => (typeof v === 'bigint' ? v.toString() : v),
+                2
+              )
+            )
+
+            const out = await universe.deployZap(inputQty, testUser, config)
             console.log(out.toString())
             expect(true).toBe(true)
           } catch (e) {

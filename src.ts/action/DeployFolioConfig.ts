@@ -113,7 +113,7 @@ export type GovParamsJson = {
   timelockDelay: StringEncodedHexOrIntegerOrBigInt
   guardian: string
 }
-export type DeployFolioConfigJson = {
+type BaseConfig = {
   stToken: string
   basicDetails: {
     assets: string[]
@@ -131,32 +131,62 @@ export type DeployFolioConfigJson = {
     folioFee: StringEncodedHexOrIntegerOrBigInt
     mintingFee: StringEncodedHexOrIntegerOrBigInt
   }
-  ownerGovParams: GovParamsJson
-  tradingGovParams: GovParamsJson
   existingTradeProposers: string[]
   tradeLaunchers: string[]
   vibesOfficers: string[]
 }
 
+export type DeployFolioConfigJson =
+  | (BaseConfig & {
+      type: 'governed'
+      ownerGovParams: GovParamsJson
+      tradingGovParams: GovParamsJson
+    })
+  | (BaseConfig & {
+      type: 'ungoverned'
+      owner: string
+    })
+
 export class DeployFolioConfig {
   public toString() {
-    return `DeployFolioConfig(stToken=${
-      this.stToken
-    }, basicDetails=${this.basicDetails.toString()}, additionalDetails=${this.additionalDetails.toString()}, ownerGovParams=${this.ownerGovParams.toString()}, tradingGovParams=${this.tradingGovParams.toString()}, existingTradeProposers=${this.existingTradeProposers.join(
-      ', '
-    )}, tradeLaunchers=${this.tradeLaunchers.join(
-      ', '
-    )}, vibesOfficers=${this.vibesOfficers.join(', ')})`
+    if (this.governance.type === 'governed') {
+      return `DeployFolioConfig(stToken=${
+        this.stToken
+      }, basicDetails=${this.basicDetails.toString()}, additionalDetails=${this.additionalDetails.toString()}, ownerGovParams=${this.governance?.ownerGovParams.toString()}, tradingGovParams=${this.governance?.tradingGovParams.toString()}, existingTradeProposers=${this.existingTradeProposers.join(
+        ', '
+      )}, tradeLaunchers=${this.tradeLaunchers.join(
+        ', '
+      )}, vibesOfficers=${this.vibesOfficers.join(', ')})`
+    } else {
+      return `DeployFolioConfig(stToken=${
+        this.stToken
+      }, basicDetails=${this.basicDetails.toString()}, additionalDetails=${this.additionalDetails.toString()}, owner=${
+        this.governance.owner.address
+      }, existingTradeProposers=${this.existingTradeProposers.join(
+        ', '
+      )}, tradeLaunchers=${this.tradeLaunchers.join(
+        ', '
+      )}, vibesOfficers=${this.vibesOfficers.join(', ')})`
+    }
   }
   public constructor(
     public readonly stToken: Token,
     public readonly basicDetails: BasicDetails,
     public readonly additionalDetails: AdditionalDetails,
-    public readonly ownerGovParams: GovParams,
-    public readonly tradingGovParams: GovParams,
+    public readonly governance:
+      | {
+          type: 'governed'
+          ownerGovParams: GovParams
+          tradingGovParams: GovParams
+        }
+      | {
+          type: 'ungoverned'
+          owner: Address
+        },
     public readonly existingTradeProposers: Address[],
     public readonly tradeLaunchers: Address[],
-    public readonly vibesOfficers: Address[]
+    public readonly vibesOfficers: Address[],
+    public readonly slippage = 0.001
   ) {}
 
   public static async create(universe: Universe, json: DeployFolioConfigJson) {
@@ -184,35 +214,47 @@ export class DeployFolioConfig {
         BigInt(json.additionalDetails.folioFee),
         BigInt(json.additionalDetails.mintingFee)
       ),
-      new GovParams(
-        BigInt(json.ownerGovParams.votingDelay),
-        BigInt(json.ownerGovParams.votingPeriod),
-        BigInt(json.ownerGovParams.proposalThreshold),
-        BigInt(json.ownerGovParams.quorumPercent),
-        BigInt(json.ownerGovParams.timelockDelay),
-        Address.from(json.ownerGovParams.guardian)
-      ),
-      new GovParams(
-        BigInt(json.tradingGovParams.votingDelay),
-        BigInt(json.tradingGovParams.votingPeriod),
-        BigInt(json.tradingGovParams.proposalThreshold),
-        BigInt(json.tradingGovParams.quorumPercent),
-        BigInt(json.tradingGovParams.timelockDelay),
-        Address.from(json.tradingGovParams.guardian)
-      ),
+      json.type === 'governed'
+        ? {
+            type: 'governed',
+            ownerGovParams: new GovParams(
+              BigInt(json.ownerGovParams.votingDelay),
+              BigInt(json.ownerGovParams.votingPeriod),
+              BigInt(json.ownerGovParams.proposalThreshold),
+              BigInt(json.ownerGovParams.quorumPercent),
+              BigInt(json.ownerGovParams.timelockDelay),
+              Address.from(json.ownerGovParams.guardian)
+            ),
+            tradingGovParams: new GovParams(
+              BigInt(json.tradingGovParams.votingDelay),
+              BigInt(json.tradingGovParams.votingPeriod),
+              BigInt(json.tradingGovParams.proposalThreshold),
+              BigInt(json.tradingGovParams.quorumPercent),
+              BigInt(json.tradingGovParams.timelockDelay),
+              Address.from(json.tradingGovParams.guardian)
+            ),
+          }
+        : {
+            type: 'ungoverned',
+            owner: Address.from(json.owner),
+          },
       json.existingTradeProposers.map((i) => Address.from(i)),
       json.tradeLaunchers.map((i) => Address.from(i)),
       json.vibesOfficers.map((i) => Address.from(i))
     )
   }
 
-  public serialize(initialShares: bigint) {
+  public serializeGoverned(initialShares: bigint) {
+    const governance = this.governance
+    if (governance.type === 'ungoverned') {
+      throw new Error('Governance is not set')
+    }
     const out = [
       this.stToken.address.address,
       this.basicDetails.serialize(initialShares),
       this.additionalDetails.serialize(),
-      this.ownerGovParams.serialize(),
-      this.tradingGovParams.serialize(),
+      governance.ownerGovParams.serialize(),
+      governance.tradingGovParams.serialize(),
       {
         existingTradeProposers: this.existingTradeProposers.map(
           (i) => i.address
@@ -220,6 +262,22 @@ export class DeployFolioConfig {
         tradeLaunchers: this.tradeLaunchers.map((i) => i.address),
         vibesOfficers: this.vibesOfficers.map((i) => i.address),
       },
+    ] as const
+
+    return out
+  }
+
+  public serializeUnGoverned(initialShares: bigint) {
+    if (this.governance.type !== 'ungoverned') {
+      throw new Error('Governance is set')
+    }
+    const out = [
+      this.basicDetails.serialize(initialShares),
+      this.additionalDetails.serialize(),
+      this.governance.owner.address,
+      this.existingTradeProposers.map((i) => i.address),
+      this.tradeLaunchers.map((i) => i.address),
+      this.vibesOfficers.map((i) => i.address),
     ] as const
 
     return out

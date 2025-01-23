@@ -11,109 +11,112 @@ import type {
   PopulatedTransaction,
   Signer,
   utils,
-} from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+} from 'ethers'
+import type { FunctionFragment, Result } from '@ethersproject/abi'
+import type { Listener, Provider } from '@ethersproject/providers'
 import type {
   TypedEventFilter,
   TypedEvent,
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from "../../common";
+} from '../../common'
 
 export interface DeployFolioHelperInterface extends utils.Interface {
   functions: {
-    "deployFolio(address,address,bytes)": FunctionFragment;
-  };
+    'deployFolio(address,address,bool,bytes)': FunctionFragment
+  }
 
-  getFunction(nameOrSignatureOrTopic: "deployFolio"): FunctionFragment;
+  getFunction(nameOrSignatureOrTopic: 'deployFolio'): FunctionFragment
 
   encodeFunctionData(
-    functionFragment: "deployFolio",
+    functionFragment: 'deployFolio',
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
+      PromiseOrValue<boolean>,
       PromiseOrValue<BytesLike>
     ]
-  ): string;
+  ): string
 
-  decodeFunctionResult(
-    functionFragment: "deployFolio",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: 'deployFolio', data: BytesLike): Result
 
-  events: {};
+  events: {}
 }
 
 export interface DeployFolioHelper extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(signerOrProvider: Signer | Provider | string): this
+  attach(addressOrName: string): this
+  deployed(): Promise<this>
 
-  interface: DeployFolioHelperInterface;
+  interface: DeployFolioHelperInterface
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TEvent>>
 
   listeners<TEvent extends TypedEvent>(
     eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
+  ): Array<TypedListener<TEvent>>
+  listeners(eventName?: string): Array<Listener>
   removeAllListeners<TEvent extends TypedEvent>(
     eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  ): this
+  removeAllListeners(eventName?: string): this
+  off: OnEvent<this>
+  on: OnEvent<this>
+  once: OnEvent<this>
+  removeListener: OnEvent<this>
 
   functions: {
     deployFolio(
       deployer: PromiseOrValue<string>,
       expectedTokenAddress: PromiseOrValue<string>,
+      isGoverned: PromiseOrValue<boolean>,
       encodedFolioDeployerCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-  };
+    ): Promise<ContractTransaction>
+  }
 
   deployFolio(
     deployer: PromiseOrValue<string>,
     expectedTokenAddress: PromiseOrValue<string>,
+    isGoverned: PromiseOrValue<boolean>,
     encodedFolioDeployerCall: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  ): Promise<ContractTransaction>
 
   callStatic: {
     deployFolio(
       deployer: PromiseOrValue<string>,
       expectedTokenAddress: PromiseOrValue<string>,
+      isGoverned: PromiseOrValue<boolean>,
       encodedFolioDeployerCall: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
-  };
+    ): Promise<BigNumber>
+  }
 
-  filters: {};
+  filters: {}
 
   estimateGas: {
     deployFolio(
       deployer: PromiseOrValue<string>,
       expectedTokenAddress: PromiseOrValue<string>,
+      isGoverned: PromiseOrValue<boolean>,
       encodedFolioDeployerCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
+    ): Promise<BigNumber>
+  }
 
   populateTransaction: {
     deployFolio(
       deployer: PromiseOrValue<string>,
       expectedTokenAddress: PromiseOrValue<string>,
+      isGoverned: PromiseOrValue<boolean>,
       encodedFolioDeployerCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-  };
+    ): Promise<PopulatedTransaction>
+  }
 }

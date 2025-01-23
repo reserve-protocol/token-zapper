@@ -1115,8 +1115,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     )
 
 
-    
-
     const userOption = Object.assign({
       caller: Address.from(caller),
       recipient: Address.from(recipient),

@@ -1103,7 +1103,7 @@
           ]
         },
         "DeployFolioHelper": {
-          "address": "0x267E2a3BaC8fbCC215C3e309E4405202Db801C01",
+          "address": "0xC073223F307C5Eb12EB9e95779DFb61aeF0Ac4A6",
           "abi": [
             {
               "inputs": [
@@ -1116,6 +1116,11 @@
                   "internalType": "address",
                   "name": "expectedTokenAddress",
                   "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "isGoverned",
+                  "type": "bool"
                 },
                 {
                   "internalType": "bytes",

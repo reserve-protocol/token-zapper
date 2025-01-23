@@ -191,35 +191,54 @@ export class DeployMintFolioAction extends BaseAction {
   }
   async plan(
     planner: Planner,
-    inputs: Value[],
-    destination: Address,
+    _: Value[],
+    __: Address,
     predictedInputs: TokenQuantity[]
   ) {
     const quote = await this.quote(predictedInputs)
 
-    const expectedOutput = quote[0].amount
+    const slippage = this.config.slippage
 
-    const serialized = this.config.serialize(
-      expectedOutput - expectedOutput / 1000n
-    )
-    const encoded = this.context.deployerContract.interface.encodeFunctionData(
-      'deployGovernedFolio',
-      [
-        serialized[0],
-        serialized[1],
-        serialized[2],
-        serialized[3],
-        serialized[4],
-        serialized[5],
-      ]
-    )
+    const slippageAmount = quote[0].mul(quote[0].token.from(slippage))
+    const expectedOutput = quote[0].amount - slippageAmount.amount
 
+    let encoded: string
+    if (this.config.governance.type === 'governed') {
+      const serialized = this.config.serializeGoverned(expectedOutput)
+      encoded = this.context.deployerContract.interface.encodeFunctionData(
+        'deployGovernedFolio',
+        [
+          serialized[0],
+          serialized[1],
+          serialized[2],
+          serialized[3],
+          serialized[4],
+          serialized[5],
+        ]
+      )
+    } else {
+      const serialized = this.config.serializeUnGoverned(expectedOutput)
+      encoded = this.context.deployerContract.interface.encodeFunctionData(
+        'deployFolio',
+        [
+          serialized[0],
+          serialized[1],
+          serialized[2],
+          serialized[3],
+          serialized[4],
+          serialized[5],
+        ]
+      )
+    }
+
+    const expectedTokenAddress =
+      await this.context.computeNextFolioTokenAddress(this.config)
     return [
       planner.add(
         this.context.deployerHelperWeiroll.deployFolio(
           this.context.folioDeployerAddress.address,
-          (await this.context.computeNextFolioTokenAddress(this.config))
-            .address,
+          expectedTokenAddress.address,
+          this.config.governance.type === 'governed',
           encoded
         )
       )!,

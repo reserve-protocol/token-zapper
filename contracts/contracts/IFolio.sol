@@ -172,6 +172,15 @@ interface IFolioDeployer {
 
 
   function folioImplementation() external view returns (address);
+
+  function deployFolio(
+    IFolio.FolioBasicDetails calldata basicDetails,
+    IFolio.FolioAdditionalDetails calldata additionalDetails,
+    address owner,
+    address[] memory tradeProposers,
+    address[] memory tradeLaunchers,
+    address[] memory vibesOfficers
+) external returns (address folio_, address folioAdmin_);
   function deployGovernedFolio(
     IVotes stToken,
     IFolio.FolioBasicDetails calldata basicDetails,

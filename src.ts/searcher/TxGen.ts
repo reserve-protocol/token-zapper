@@ -112,19 +112,19 @@ const evaluateProgram = async (
     },
   }
 
-  console.log(
-    JSON.stringify(
-      {
-        block: universe.currentBlock,
-        to: simulationPayload.to.toString(),
-        from: simulationPayload.from.toString(),
-        data: simulationPayload.data.toString(),
-        value: simulationPayload.value.toString(),
-      },
-      null,
-      2
-    )
-  )
+  // console.log(
+  //   JSON.stringify(
+  //     {
+  //       block: universe.currentBlock,
+  //       to: simulationPayload.to.toString(),
+  //       from: simulationPayload.from.toString(),
+  //       data: simulationPayload.data.toString(),
+  //       value: simulationPayload.value.toString(),
+  //     },
+  //     null,
+  //     2
+  //   )
+  // )
   try {
     return {
       res: await simulateAndParse(universe, simulationPayload, dustTokens),
@@ -530,7 +530,7 @@ export class TxGen {
       tokenPrices: new Map(),
     }
 
-    console.log(testSimulation.dust.join(', '))
+    // console.log(testSimulation.dust.join(', '))
     const dustQtys = testSimulation.dust.filter((i) => i.amount > 1000n)
 
     const stats = await ZapTxStats.create(result, {

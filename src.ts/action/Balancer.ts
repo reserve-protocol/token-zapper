@@ -150,7 +150,7 @@ const loadPoolsFromAPI = async (chainId: ChainId) => {
     userAddress: null,
   }
   const variables = {
-    first: 100,
+    first: 250,
     orderBy: 'totalLiquidity',
     orderDirection: 'desc',
     skip: 0,

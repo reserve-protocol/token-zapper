@@ -71,7 +71,7 @@
     "prettier:check": "npm run prettier -- --check",
     "prettier:fix": "npm run prettier -- --write",
     "compile:contracts": "cd contracts/ && npx hardhat compile",
-    "copy:artifacts": "cp contracts/artifacts/contracts/Zapper.sol/Zapper.json src.ts/contracts/Zapper.json && cp contracts/artifacts/contracts/Zapper.sol/ZapperExecutor.json src.ts/contracts/ZapperExecutor.json"
+    "copy:artifacts": "cp contracts/artifacts/contracts/Zapper.sol/Zapper.json src.ts/contracts/Zapper.json && cp contracts/artifacts/contracts/ZapperExecutor.sol/ZapperExecutor.json src.ts/contracts/ZapperExecutor.json"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-verify": "1.1.1",

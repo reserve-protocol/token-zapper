@@ -101,13 +101,13 @@ const testUser = Address.from(
 )
 const issueanceCases = [
   makeTestCase(10000, t.USDC, rTokens.bsd),
-  // makeTestCase(100, t.WETH, rTokens.bsd),
-  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
-  // makeTestCase(10000, t.DAI, rTokens.hyUSD),
-  // makeTestCase(5, t.WETH, rTokens.hyUSD),
+  makeTestCase(100, t.WETH, rTokens.bsd),
+  makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  makeTestCase(10000, t.USDbC, rTokens.hyUSD),
+  makeTestCase(10000, t.DAI, rTokens.hyUSD),
+  makeTestCase(5, t.WETH, rTokens.hyUSD),
 
-  // makeMintTestCase(50, t.WETH, rTokens.BSDX),
+  makeTestCase(50, t.WETH, rTokens.BSDX),
 ]
 
 const redeemCases = [

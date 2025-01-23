@@ -1100,8 +1100,11 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (!(config instanceof DeployFolioConfig)) {
       config = await DeployFolioConfig.create(this, config)
     }
-    this.logger.info(`Generating deploy folio:`);
+    this.logger.info(`Finding deploy zap for config:`);
     this.logger.info(config.toString());
+
+    this.logger.info(`User input: ${userInput}`)
+    
     const recipient = Address.from(opts?.recipient ?? caller)
     const dustRecipient = Address.from(opts?.dustRecipient ?? opts?.recipient ?? caller)
 
@@ -1111,6 +1114,9 @@ export class Universe<const UniverseConf extends Config = Config> {
       this.config
     )
 
+
+    
+
     const userOption = Object.assign({
       caller: Address.from(caller),
       recipient: Address.from(recipient),
@@ -1119,6 +1125,8 @@ export class Universe<const UniverseConf extends Config = Config> {
 
 
     const expectedOutput = await deployTFG.evaluate(this, [userInput])
+    this.logger.info(`expected zap: ${userInput} -> ${expectedOutput.result.outputs.join(', ')} fee=${expectedOutput.result.txFee}`)
+
     return await new TxGen(this, expectedOutput).generate({
       ...userOption,
       ethereumInput: false,

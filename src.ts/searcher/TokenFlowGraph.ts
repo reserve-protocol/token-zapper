@@ -2264,10 +2264,9 @@ const optimiseGlobal = async (
     }
     edge.normalize()
   }
-  const MAX_SCALE = 1
+  const MAX_SCALE = 3
   for (let i = 0; i < optimisationSteps; i++) {
     const size = (MAX_SCALE / (1 + i * 0.5)) * (1 - i / optimisationSteps)
-    console.log(`Iteration ${i}, size ${size}`)
 
     let bestThisIteration = bestSoFar
     let bestNodeToChange = -1
@@ -2384,7 +2383,6 @@ const optimise = async (
     return [...out].map((id) => g.getNode(id))
   }
 
-  console.log(g.toDot().join('\n'))
   let bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
   if (bestSoFar.result.outputValue === 0) {
     console.log(bestSoFar.result.outputs.join(', '))
@@ -2407,9 +2405,6 @@ const optimise = async (
 
   g = removeNodes(g, findNodesWithoutSources(g))
 
-  console.log(g.toDot().join('\n'))
-  console.log(bestSoFar.result.outputs.join(', '))
-  console.log((await g.evaluate(universe, inputs)).result.outputs.join(', '))
   await optimiseGlobal(
     g,
     universe,

@@ -3,7 +3,7 @@ import { makeConfig } from './ChainConfiguration'
 
 import { ChainIds } from './ReserveAddresses'
 
-import deployments from '../../contracts/deployments.json'
+import deployments from '../contracts/deployments.json'
 
 const mainnetDeployments = deployments[1][0]
 

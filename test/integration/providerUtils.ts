@@ -75,9 +75,9 @@ class OurProvider extends ethers.providers.WebSocketProvider {
     })
   }
 }
-export const getProvider = (url: string, throttle: boolean = true) => {
+export const getProvider = (url: string, throttle: number = Infinity) => {
   if (url.startsWith('ws')) {
-    if (throttle == false) {
+    if (!isFinite(throttle)) {
       return new ethers.providers.WebSocketProvider(url)
     }
     return new OurProvider(url)

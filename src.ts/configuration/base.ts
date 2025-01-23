@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 import { type Universe } from '../Universe'
 import { makeConfig } from './ChainConfiguration'
 
-import deployments from '../../contracts/deployments.json'
+import deployments from '../contracts/deployments.json'
 
 const baseDeployments = deployments[8453][0]
 

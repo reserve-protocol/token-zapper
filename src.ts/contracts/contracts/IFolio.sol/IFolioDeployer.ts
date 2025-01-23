@@ -12,41 +12,41 @@ import type {
   PopulatedTransaction,
   Signer,
   utils,
-} from 'ethers'
+} from "ethers";
 import type {
   FunctionFragment,
   Result,
   EventFragment,
-} from '@ethersproject/abi'
-import type { Listener, Provider } from '@ethersproject/providers'
+} from "@ethersproject/abi";
+import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
   TypedEvent,
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from '../../common'
+} from "../../common";
 
 export type GovRolesStruct = {
-  existingTradeProposers: PromiseOrValue<string>[]
-  tradeLaunchers: PromiseOrValue<string>[]
-  vibesOfficers: PromiseOrValue<string>[]
-}
+  existingTradeProposers: PromiseOrValue<string>[];
+  tradeLaunchers: PromiseOrValue<string>[];
+  vibesOfficers: PromiseOrValue<string>[];
+};
 
 export type GovRolesStructOutput = [string[], string[], string[]] & {
-  existingTradeProposers: string[]
-  tradeLaunchers: string[]
-  vibesOfficers: string[]
-}
+  existingTradeProposers: string[];
+  tradeLaunchers: string[];
+  vibesOfficers: string[];
+};
 
 export declare namespace IFolio {
   export type FolioBasicDetailsStruct = {
-    name: PromiseOrValue<string>
-    symbol: PromiseOrValue<string>
-    assets: PromiseOrValue<string>[]
-    amounts: PromiseOrValue<BigNumberish>[]
-    initialShares: PromiseOrValue<BigNumberish>
-  }
+    name: PromiseOrValue<string>;
+    symbol: PromiseOrValue<string>;
+    assets: PromiseOrValue<string>[];
+    amounts: PromiseOrValue<BigNumberish>[];
+    initialShares: PromiseOrValue<BigNumberish>;
+  };
 
   export type FolioBasicDetailsStructOutput = [
     string,
@@ -55,30 +55,30 @@ export declare namespace IFolio {
     BigNumber[],
     BigNumber
   ] & {
-    name: string
-    symbol: string
-    assets: string[]
-    amounts: BigNumber[]
-    initialShares: BigNumber
-  }
+    name: string;
+    symbol: string;
+    assets: string[];
+    amounts: BigNumber[];
+    initialShares: BigNumber;
+  };
 
   export type FeeRecipientStruct = {
-    recipient: PromiseOrValue<string>
-    portion: PromiseOrValue<BigNumberish>
-  }
+    recipient: PromiseOrValue<string>;
+    portion: PromiseOrValue<BigNumberish>;
+  };
 
   export type FeeRecipientStructOutput = [string, BigNumber] & {
-    recipient: string
-    portion: BigNumber
-  }
+    recipient: string;
+    portion: BigNumber;
+  };
 
   export type FolioAdditionalDetailsStruct = {
-    tradeDelay: PromiseOrValue<BigNumberish>
-    auctionLength: PromiseOrValue<BigNumberish>
-    feeRecipients: IFolio.FeeRecipientStruct[]
-    folioFee: PromiseOrValue<BigNumberish>
-    mintingFee: PromiseOrValue<BigNumberish>
-  }
+    tradeDelay: PromiseOrValue<BigNumberish>;
+    auctionLength: PromiseOrValue<BigNumberish>;
+    feeRecipients: IFolio.FeeRecipientStruct[];
+    folioFee: PromiseOrValue<BigNumberish>;
+    mintingFee: PromiseOrValue<BigNumberish>;
+  };
 
   export type FolioAdditionalDetailsStructOutput = [
     BigNumber,
@@ -87,23 +87,23 @@ export declare namespace IFolio {
     BigNumber,
     BigNumber
   ] & {
-    tradeDelay: BigNumber
-    auctionLength: BigNumber
-    feeRecipients: IFolio.FeeRecipientStructOutput[]
-    folioFee: BigNumber
-    mintingFee: BigNumber
-  }
+    tradeDelay: BigNumber;
+    auctionLength: BigNumber;
+    feeRecipients: IFolio.FeeRecipientStructOutput[];
+    folioFee: BigNumber;
+    mintingFee: BigNumber;
+  };
 }
 
 export declare namespace IGovernanceDeployer {
   export type GovParamsStruct = {
-    votingDelay: PromiseOrValue<BigNumberish>
-    votingPeriod: PromiseOrValue<BigNumberish>
-    proposalThreshold: PromiseOrValue<BigNumberish>
-    quorumPercent: PromiseOrValue<BigNumberish>
-    timelockDelay: PromiseOrValue<BigNumberish>
-    guardian: PromiseOrValue<string>
-  }
+    votingDelay: PromiseOrValue<BigNumberish>;
+    votingPeriod: PromiseOrValue<BigNumberish>;
+    proposalThreshold: PromiseOrValue<BigNumberish>;
+    quorumPercent: PromiseOrValue<BigNumberish>;
+    timelockDelay: PromiseOrValue<BigNumberish>;
+    guardian: PromiseOrValue<string>;
+  };
 
   export type GovParamsStructOutput = [
     number,
@@ -113,27 +113,27 @@ export declare namespace IGovernanceDeployer {
     BigNumber,
     string
   ] & {
-    votingDelay: number
-    votingPeriod: number
-    proposalThreshold: BigNumber
-    quorumPercent: BigNumber
-    timelockDelay: BigNumber
-    guardian: string
-  }
+    votingDelay: number;
+    votingPeriod: number;
+    proposalThreshold: BigNumber;
+    quorumPercent: BigNumber;
+    timelockDelay: BigNumber;
+    guardian: string;
+  };
 }
 
 export interface IFolioDeployerInterface extends utils.Interface {
   functions: {
-    'deployGovernedFolio(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256),(uint48,uint32,uint256,uint256,uint256,address),(uint48,uint32,uint256,uint256,uint256,address),(address[],address[],address[]))': FunctionFragment
-    'folioImplementation()': FunctionFragment
-  }
+    "deployGovernedFolio(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256),(uint48,uint32,uint256,uint256,uint256,address),(uint48,uint32,uint256,uint256,uint256,address),(address[],address[],address[]))": FunctionFragment;
+    "folioImplementation()": FunctionFragment;
+  };
 
   getFunction(
-    nameOrSignatureOrTopic: 'deployGovernedFolio' | 'folioImplementation'
-  ): FunctionFragment
+    nameOrSignatureOrTopic: "deployGovernedFolio" | "folioImplementation"
+  ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: 'deployGovernedFolio',
+    functionFragment: "deployGovernedFolio",
     values: [
       PromiseOrValue<string>,
       IFolio.FolioBasicDetailsStruct,
@@ -142,83 +142,83 @@ export interface IFolioDeployerInterface extends utils.Interface {
       IGovernanceDeployer.GovParamsStruct,
       GovRolesStruct
     ]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'folioImplementation',
+    functionFragment: "folioImplementation",
     values?: undefined
-  ): string
+  ): string;
 
   decodeFunctionResult(
-    functionFragment: 'deployGovernedFolio',
+    functionFragment: "deployGovernedFolio",
     data: BytesLike
-  ): Result
+  ): Result;
   decodeFunctionResult(
-    functionFragment: 'folioImplementation',
+    functionFragment: "folioImplementation",
     data: BytesLike
-  ): Result
+  ): Result;
 
   events: {
-    'FolioDeployed(address,address,address)': EventFragment
-    'GovernedFolioDeployed(address,address,address,address,address,address)': EventFragment
-  }
+    "FolioDeployed(address,address,address)": EventFragment;
+    "GovernedFolioDeployed(address,address,address,address,address,address)": EventFragment;
+  };
 
-  getEvent(nameOrSignatureOrTopic: 'FolioDeployed'): EventFragment
-  getEvent(nameOrSignatureOrTopic: 'GovernedFolioDeployed'): EventFragment
+  getEvent(nameOrSignatureOrTopic: "FolioDeployed"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "GovernedFolioDeployed"): EventFragment;
 }
 
 export interface FolioDeployedEventObject {
-  folioOwner: string
-  folio: string
-  folioAdmin: string
+  folioOwner: string;
+  folio: string;
+  folioAdmin: string;
 }
 export type FolioDeployedEvent = TypedEvent<
   [string, string, string],
   FolioDeployedEventObject
->
+>;
 
-export type FolioDeployedEventFilter = TypedEventFilter<FolioDeployedEvent>
+export type FolioDeployedEventFilter = TypedEventFilter<FolioDeployedEvent>;
 
 export interface GovernedFolioDeployedEventObject {
-  stToken: string
-  folio: string
-  ownerGovernor: string
-  ownerTimelock: string
-  tradingGovernor: string
-  tradingTimelock: string
+  stToken: string;
+  folio: string;
+  ownerGovernor: string;
+  ownerTimelock: string;
+  tradingGovernor: string;
+  tradingTimelock: string;
 }
 export type GovernedFolioDeployedEvent = TypedEvent<
   [string, string, string, string, string, string],
   GovernedFolioDeployedEventObject
->
+>;
 
 export type GovernedFolioDeployedEventFilter =
-  TypedEventFilter<GovernedFolioDeployedEvent>
+  TypedEventFilter<GovernedFolioDeployedEvent>;
 
 export interface IFolioDeployer extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this
-  attach(addressOrName: string): this
-  deployed(): Promise<this>
+  connect(signerOrProvider: Signer | Provider | string): this;
+  attach(addressOrName: string): this;
+  deployed(): Promise<this>;
 
-  interface: IFolioDeployerInterface
+  interface: IFolioDeployerInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>
+  ): Promise<Array<TEvent>>;
 
   listeners<TEvent extends TypedEvent>(
     eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>
-  listeners(eventName?: string): Array<Listener>
+  ): Array<TypedListener<TEvent>>;
+  listeners(eventName?: string): Array<Listener>;
   removeAllListeners<TEvent extends TypedEvent>(
     eventFilter: TypedEventFilter<TEvent>
-  ): this
-  removeAllListeners(eventName?: string): this
-  off: OnEvent<this>
-  on: OnEvent<this>
-  once: OnEvent<this>
-  removeListener: OnEvent<this>
+  ): this;
+  removeAllListeners(eventName?: string): this;
+  off: OnEvent<this>;
+  on: OnEvent<this>;
+  once: OnEvent<this>;
+  removeListener: OnEvent<this>;
 
   functions: {
     deployGovernedFolio(
@@ -229,10 +229,10 @@ export interface IFolioDeployer extends BaseContract {
       tradingGovParams: IGovernanceDeployer.GovParamsStruct,
       govRoles: GovRolesStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>
+    ): Promise<ContractTransaction>;
 
-    folioImplementation(overrides?: CallOverrides): Promise<[string]>
-  }
+    folioImplementation(overrides?: CallOverrides): Promise<[string]>;
+  };
 
   deployGovernedFolio(
     stToken: PromiseOrValue<string>,
@@ -242,9 +242,9 @@ export interface IFolioDeployer extends BaseContract {
     tradingGovParams: IGovernanceDeployer.GovParamsStruct,
     govRoles: GovRolesStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>
+  ): Promise<ContractTransaction>;
 
-  folioImplementation(overrides?: CallOverrides): Promise<string>
+  folioImplementation(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
     deployGovernedFolio(
@@ -257,38 +257,38 @@ export interface IFolioDeployer extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [string, string, string, string, string, string] & {
-        folio: string
-        proxyAdmin: string
-        ownerGovernor: string
-        ownerTimelock: string
-        tradingGovernor: string
-        tradingTimelock: string
+        folio: string;
+        proxyAdmin: string;
+        ownerGovernor: string;
+        ownerTimelock: string;
+        tradingGovernor: string;
+        tradingTimelock: string;
       }
-    >
+    >;
 
-    folioImplementation(overrides?: CallOverrides): Promise<string>
-  }
+    folioImplementation(overrides?: CallOverrides): Promise<string>;
+  };
 
   filters: {
-    'FolioDeployed(address,address,address)'(
+    "FolioDeployed(address,address,address)"(
       folioOwner?: PromiseOrValue<string> | null,
       folio?: PromiseOrValue<string> | null,
       folioAdmin?: null
-    ): FolioDeployedEventFilter
+    ): FolioDeployedEventFilter;
     FolioDeployed(
       folioOwner?: PromiseOrValue<string> | null,
       folio?: PromiseOrValue<string> | null,
       folioAdmin?: null
-    ): FolioDeployedEventFilter
+    ): FolioDeployedEventFilter;
 
-    'GovernedFolioDeployed(address,address,address,address,address,address)'(
+    "GovernedFolioDeployed(address,address,address,address,address,address)"(
       stToken?: PromiseOrValue<string> | null,
       folio?: PromiseOrValue<string> | null,
       ownerGovernor?: null,
       ownerTimelock?: null,
       tradingGovernor?: null,
       tradingTimelock?: null
-    ): GovernedFolioDeployedEventFilter
+    ): GovernedFolioDeployedEventFilter;
     GovernedFolioDeployed(
       stToken?: PromiseOrValue<string> | null,
       folio?: PromiseOrValue<string> | null,
@@ -296,8 +296,8 @@ export interface IFolioDeployer extends BaseContract {
       ownerTimelock?: null,
       tradingGovernor?: null,
       tradingTimelock?: null
-    ): GovernedFolioDeployedEventFilter
-  }
+    ): GovernedFolioDeployedEventFilter;
+  };
 
   estimateGas: {
     deployGovernedFolio(
@@ -308,10 +308,10 @@ export interface IFolioDeployer extends BaseContract {
       tradingGovParams: IGovernanceDeployer.GovParamsStruct,
       govRoles: GovRolesStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
-    folioImplementation(overrides?: CallOverrides): Promise<BigNumber>
-  }
+    folioImplementation(overrides?: CallOverrides): Promise<BigNumber>;
+  };
 
   populateTransaction: {
     deployGovernedFolio(
@@ -322,10 +322,10 @@ export interface IFolioDeployer extends BaseContract {
       tradingGovParams: IGovernanceDeployer.GovParamsStruct,
       govRoles: GovRolesStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
     folioImplementation(
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>
-  }
+    ): Promise<PopulatedTransaction>;
+  };
 }

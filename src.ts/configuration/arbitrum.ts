@@ -3,7 +3,7 @@ import { type Universe } from '../Universe'
 import { BTC_TOKEN_ADDRESS, GAS_TOKEN_ADDRESS } from '../base/constants'
 import { makeConfig } from './ChainConfiguration'
 import { ChainIds, getAddressesForChain } from './ReserveAddresses'
-import deployments from '../../contracts/deployments.json'
+import deployments from '../contracts/deployments.json'
 
 const chainId = ChainIds.Arbitrum
 const reserveAddresses = getAddressesForChain(chainId)

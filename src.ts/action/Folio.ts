@@ -14,7 +14,7 @@ import {
 import { getContractAddress } from 'ethers/lib/utils'
 import { Approval } from '../base/Approval'
 import { DeployFolioConfig } from './DeployFolioConfig'
-import deployments from '../../contracts/deployments.json'
+import deployments from '../contracts/deployments.json'
 
 const config = (folioDeployerAddress: string, helperAddress: string) => ({
   deployer: Address.from(folioDeployerAddress),

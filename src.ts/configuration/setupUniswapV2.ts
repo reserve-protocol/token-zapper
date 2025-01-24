@@ -33,8 +33,8 @@ const configs: Record<ChainId, IUniswapV2Config> = {
     univ2swap: deployments[8453][0].contracts.Univ2SwapHelper.address,
   },
 }
-const pages = 6
-const pageSize = 250
+const pages = 4
+const pageSize = 400
 const fallbackDataPoolLists: Record<number, any> = {
   1: [],
   8453: [],
@@ -88,7 +88,7 @@ const loadPoolsFromSubgraph = async (
       headers: {
         'Content-Type': 'application/json',
       },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(4000),
     })
     if (!response.ok) {
       console.log(
@@ -137,7 +137,9 @@ const loadPoolsFromSubgraphWithRetry = async (
   for (let i = 0; i < 3; i++) {
     try {
       return await loadPoolsFromSubgraph(ctx, subgraphId, skip, block)
-    } catch (e) {}
+    } catch (e) {
+      console.log(`UniV2: Failed to load pools from subgraph: ${e}`)
+    }
     await wait(500)
   }
   return []
@@ -301,7 +303,9 @@ export const setupUniswapV2 = async (universe: Universe) => {
   const ctx = new UniswapV2Context(universe)
   const currentBlock = await universe.provider.getBlockNumber()
 
-  const loadBlock = Math.floor(currentBlock / (30 * 60 * 3)) * 30 * 60 * 3
+  // Go back 10 days
+  const loadBlock =
+    Math.floor(currentBlock / (30 * 60 * 24 * 10)) * 30 * 60 * 24 * 10
 
   const loadUniPools = async (): Promise<UniswapV2Pool[]> => {
     const pools = []

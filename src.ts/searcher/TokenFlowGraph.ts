@@ -792,7 +792,7 @@ const createResult = async (
     return {
       inputs,
       outputs,
-      dust: outputs.filter((o) => o.token !== output.token),
+      dust: outputs.filter((o) => o.token !== output.token && o.amount >= 1n),
       price,
       output,
       txFee,
@@ -2183,12 +2183,14 @@ const minimizeDust = async (
       if (
         currentResult.result.dustValue < 10 &&
         currentResult.result.dustValue / currentResult.result.totalValue <
-          0.0001
+          0.00001
       ) {
+        console.log('Minimise dust: Dust value is too low')
         return currentResult
       }
       const node = nodes[i]
       if (!dustTokens.find((d) => node.tokenToSplitMap.has(d))) {
+        console.log('Minimise dust: No dust tokens')
         continue
       }
       const before = [...node.splits.parts]
@@ -2202,29 +2204,32 @@ const minimizeDust = async (
             return {
               splitIndex: split!,
               value,
-              asFraction: asFraction * scale,
+              asFraction: asFraction,
               token: qty.token,
             }
           })
         )
       ).filter((d) => d.splitIndex != null)
       if (dustValues.length === 0) {
+        console.log('Minimise dust: No dust values')
         continue
       }
 
       dustValues.sort((a, b) => a.value - b.value)
       const higestDustQty = dustValues[dustValues.length - 1]
       const lowestDustQty = dustValues[0]
-      const fraction = 1 - higestDustQty.asFraction
+      // console.log(
+      //   `highest:${higestDustQty.token}.${higestDustQty.splitIndex}, lowest: ${lowestDustQty.token}.${lowestDustQty.splitIndex}`
+      // )
+      const fraction = 1 - higestDustQty.asFraction * scale
       const prev = node.splits.parts[higestDustQty.splitIndex]
       node.splits.parts[higestDustQty.splitIndex] *= fraction
       const removed = prev - node.splits.parts[higestDustQty.splitIndex]
 
       if (lowestDustQty !== higestDustQty) {
-        node.splits.parts[lowestDustQty.splitIndex] += removed * 0.15
+        node.splits.parts[lowestDustQty.splitIndex] += removed * 0.5
       }
 
-      node.splits.normalize()
       const newRes = await evaluate()
       if (
         newRes.result.outputQuantity < currentResult.result.outputQuantity ||
@@ -2232,14 +2237,13 @@ const minimizeDust = async (
       ) {
         node.splits.setParts(before)
       } else {
+        console.log('Minimise dust: ' + newRes.result.outputs.join(', '))
         currentResult = newRes
       }
     }
 
-    if (
-      currentResult.result.totalValue === currentResult.result.outputValue ||
-      currentResult.result.dust.filter((d) => d.amount > 1n).length === 0
-    ) {
+    if (currentResult.result.dustValue <= 1) {
+      console.log('Minimise dust: Breaking out, dust value  <= 1')
       break
     }
   }
@@ -2258,7 +2262,14 @@ const optimiseGlobal = async (
     return newResult.result.price < previous.result.price
   }
   let optimisationNodes = [...g.nodes()].filter((n) => n.isOptimisable)
+
   if (optimisationNodes.length === 0) {
+    optimisationNodes = [...g.nodes()].filter(
+      (n) => n.isDustOptimisable || n.isOptimisable
+    )
+  }
+  if (optimisationNodes.length === 0) {
+    console.log('Optimise global: No optimisation nodes')
     return
   }
 
@@ -2278,7 +2289,7 @@ const optimiseGlobal = async (
   }
   const MAX_SCALE = 3
   for (let i = 0; i < optimisationSteps; ) {
-    const size = (MAX_SCALE / (1 + i * 0.5)) * (1 - i / optimisationSteps)
+    const size = (MAX_SCALE / (1 + i)) * (1 - i / optimisationSteps)
 
     if (bestSoFar.result.outputValue > bestSoFar.result.inputValue) {
       i += 3
@@ -2307,31 +2318,23 @@ const optimiseGlobal = async (
       }
 
       edge.normalize()
-      let before = [...edge.inner]
+      let before = [...edge.parts]
       const tmpNode = tmp[optimisationNodeIndex]
       for (let i = 0; i < tmpNode.length; i++) {
-        tmpNode[i] = edge.inner[i]
+        tmpNode[i] = edge.parts[i]
       }
 
       for (let paramIndex = 0; paramIndex < edge.parts.length; paramIndex++) {
-        if (edge.parts[paramIndex] === edge.sum) {
-          continue
-        }
+        // if (edge.parts[paramIndex] === edge.sum) {
+        //   continue
+        // }
 
         const prev = edge.parts[paramIndex]
 
         let change = size
 
-        let s = 0
-        edge.parts[paramIndex] += change
-        for (let i = 0; i < edge.parts.length; i++) {
-          s += edge.parts[i]
-        }
-        for (let i = 0; i < edge.parts.length; i++) {
-          edge.parts[i] = edge.parts[i] / s
-        }
-        edge.sum = 1
-        edge.calculateProportionsAsBigInt()
+        edge.add(paramIndex, change)
+        edge.normalize()
 
         if (prev === 0 && edge.inner[paramIndex] === 0) {
           edge.setParts(before)
@@ -2339,6 +2342,7 @@ const optimiseGlobal = async (
         }
 
         const res = await g.evaluate(universe, inputs)
+
         if (
           isFinite(res.result.price) &&
           isResultBetter(bestThisIteration, res)
@@ -2350,13 +2354,12 @@ const optimiseGlobal = async (
           }
         }
         edge.setParts(before)
-        edge.sum = 1
       }
     }
     if (bestNodeToChange !== -1) {
       bestSoFar = bestThisIteration
-      logger.debug(
-        `${i}: ${bestSoFar.result.outputs
+      console.log(
+        `global optimiser ${i}: ${bestSoFar.result.outputs
           .filter((i) => i.amount > 10n)
           .join(', ')}`
       )
@@ -2412,7 +2415,6 @@ const optimise = async (
     throw new Error('Bad graph')
   }
 
-  g = removeNodes(g, findNodesWithoutSources(g))
   const optimiserEvaluation = evaluationOptimiser(universe, g)
 
   bestSoFar = await minimizeDust(
@@ -2441,6 +2443,7 @@ const optimise = async (
   )
 
   if (bestSoFar.result.dustValue > 10) {
+    console.log('minimise dust phase 2')
     bestSoFar = await minimizeDust(
       g,
       () => optimiserEvaluation.evaluate(inputs),
@@ -2515,9 +2518,27 @@ export class TokenFlowGraphSearcher {
     if (a === b) {
       return TokenFlowGraphBuilder.nullGraph(this.universe, [a])
     }
-    let path = allowTradesOnlyPath
-      ? shortestPath(this.universe, a, b, (act) => act.is1to1)
-      : mintPath1To1(this.universe, a, b)
+    const tokenClsB = await this.universe.tokenClass.get(b)
+
+    let prefixPath: Token[] = []
+    if (tokenClsB !== a) {
+      prefixPath = shortestPath(
+        this.universe,
+        a,
+        tokenClsB,
+        (act) => act.is1to1
+      )
+      if (prefixPath.length !== 0) {
+        a = tokenClsB
+      }
+    }
+
+    let path = [
+      ...prefixPath,
+      ...(allowTradesOnlyPath
+        ? shortestPath(this.universe, a, b, (act) => act.is1to1)
+        : mintPath1To1(this.universe, a, b)),
+    ]
 
     const steps: TokenFlowGraphBuilder[] = []
     const tokenPath: Token[] = []

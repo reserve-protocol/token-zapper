@@ -277,7 +277,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.tokenClass.set(
     universe.commonTokens.USDe,
-    Promise.resolve(universe.commonTokens.USDe)
+    Promise.resolve(universe.commonTokens.USDT)
   )
 
   universe.addAction(depositTosUSDe)

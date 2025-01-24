@@ -135,9 +135,6 @@ const evaluateProgram = async (
     },
   }
 
-  console.log('to', to.address)
-  console.log('data', data)
-
   try {
     return {
       res: await simulateAndParse(universe, simulationPayload, dustTokens),

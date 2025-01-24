@@ -84,7 +84,7 @@ export const encodeTx = (
   gasNeeded: bigint
 ) => {
   let tx = {
-    to: universe.config.addresses.zapperAddress.address,
+    to: universe.zapperAddress.address,
     data,
     gasLimit: gasNeeded,
     chainId: universe.chainId,

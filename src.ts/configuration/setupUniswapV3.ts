@@ -36,6 +36,30 @@ const fallbackDataPoolLists: Record<number, any> = {
   1: ethereumFallbackPoolList,
   8453: baseFallbackPoolList,
 }
+const configs: Record<ChainId, IUniswapV3Config> = {
+  [ChainIds.Mainnet]: {
+    subgraphId: '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV',
+    router: '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45',
+    quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
+    factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
+    pools: ['0xf649df4372d8bb3e6178e52fcd515519c78da348'],
+  },
+  [ChainIds.Arbitrum]: {
+    subgraphId: 'FQ6JYszEKApsBpAmiHesRsd9Ygc6mzmpNRANeVQFYoVX',
+    router: '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45',
+    quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
+    factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
+    pools: [],
+  },
+  [ChainIds.Base]: {
+    subgraphId: 'HMuAwufqZ1YCRmzL2SfHTVkzZovC9VL2UAKhjvRqKiR1',
+    router: '0x2626664c2603336e57b271c5c0b26f421741e481',
+    quoter: '0x3d4e44eb1374240ce5f1b871ab261cd16335b76a',
+    factory: '0x33128a8fc17869897dce68ed026d694621f6fdfd',
+    pools: [],
+  },
+}
+
 const pageSize = 250
 const pages = 6
 const top100PoolsQuery = `query GetPools(
@@ -46,7 +70,7 @@ const top100PoolsQuery = `query GetPools(
     first: ${pageSize}
     skip: $skip,
     where:{
-      totalValueLockedUSD_gt: 25000,
+      totalValueLockedUSD_gt: 45000,
       totalValueLockedUSD_lt: 500000000,
     },
     block:{
@@ -198,30 +222,6 @@ interface IUniswapV3Config {
   factory: string
   pools: string[]
 }
-const configs: Record<ChainId, IUniswapV3Config> = {
-  [ChainIds.Mainnet]: {
-    subgraphId: '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV',
-    router: '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45',
-    quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
-    factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
-    pools: ['0xf649df4372d8bb3e6178e52fcd515519c78da348'],
-  },
-  [ChainIds.Arbitrum]: {
-    subgraphId: 'FQ6JYszEKApsBpAmiHesRsd9Ygc6mzmpNRANeVQFYoVX',
-    router: '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45',
-    quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
-    factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
-    pools: [],
-  },
-  [ChainIds.Base]: {
-    subgraphId: 'HMuAwufqZ1YCRmzL2SfHTVkzZovC9VL2UAKhjvRqKiR1',
-    router: '0x2626664c2603336e57b271c5c0b26f421741e481',
-    quoter: '0x3d4e44eb1374240ce5f1b871ab261cd16335b76a',
-    factory: '0x33128a8fc17869897dce68ed026d694621f6fdfd',
-    pools: [],
-  },
-}
-
 const loadPoolsFromSubgraphWithRetry = async (
   ctx: UniswapV3Context,
   subgraphId: string,
@@ -575,7 +575,6 @@ export const setupUniswapV3 = async (universe: Universe) => {
   const currentBlock = await universe.provider.getBlockNumber()
   const loadBlock = Math.floor(currentBlock / (30 * 60 * 3)) * 30 * 60 * 3
 
-  console.log(loadBlock)
   const loadUniPools = async (): Promise<UniswapV3Pool[]> => {
     const pools = []
     for (let i = 0; i < pages; i++) {

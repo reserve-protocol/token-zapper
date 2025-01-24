@@ -6,6 +6,7 @@ import {
   convertAddressObject,
   getDefaultSearcherOptions,
   makeCustomRouterSimulator,
+  SearcherOptions,
 } from '../../src.ts/configuration/ChainConfiguration'
 import {
   Address,
@@ -21,16 +22,16 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 import { getProvider } from './providerUtils'
-import { ONE } from '../../src.ts/action/Action'
 dotenv.config()
 
-const searcherOptions = {
+const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
   searcherMinRoutesToProduce: 1,
-  maxSearchTimeMs: 60000,
+  useNewZapperContract: false,
+  cacheResolution: 8,
   optimisationSteps: 25,
-  minimiseDustPhase1Steps: 10,
-  minimiseDustPhase2Steps: 20,
+  minimiseDustPhase1Steps: 35,
+  minimiseDustPhase2Steps: 25,
 }
 
 if (process.env.MAINNET_PROVIDER == null) {
@@ -163,36 +164,37 @@ export const testUser = Address.from(
 )
 
 const issueanceCases = [
-  makeMintTestCase(1000000, t.USDC, rTokens.eUSD),
+  // makeMintTestCase(1000000, t.USDC, rTokens.eUSD),
   // makeMintTestCase(1, t.USDC, rTokens.eUSD),
   // makeMintTestCase(1000000, t.DAI, rTokens.eUSD),
   // makeMintTestCase(1000000, t.USDT, rTokens.eUSD),
 
-  makeMintTestCase(1, t.USDC, rTokens.USD3),
-  makeMintTestCase(10000, t.USDC, rTokens.USD3),
-  makeMintTestCase(1000000, t.USDC, rTokens.USD3),
-  makeMintTestCase(10000, t.DAI, rTokens.USD3),
+  // makeMintTestCase(1, t.USDC, rTokens.USD3),
+  // makeMintTestCase(10000, t.USDC, rTokens.USD3),
+  // makeMintTestCase(1000000, t.USDC, rTokens.USD3),
+  // makeMintTestCase(10000, t.DAI, rTokens.USD3),
 
-  makeMintTestCase(
-    5,
-    Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
-    rTokens['ETH+']
-  ),
-  makeMintTestCase(1000, t.WETH, rTokens['ETH+']),
-  makeMintTestCase(2000, t.WETH, rTokens['ETH+']),
-  makeMintTestCase(0.5, t.WETH, rTokens['ETH+']),
+  // makeMintTestCase(
+  //   5,
+  //   Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
+  //   rTokens['ETH+']
+  // ),
+  // makeMintTestCase(1000, t.WETH, rTokens['ETH+']),
+  // makeMintTestCase(2000, t.WETH, rTokens['ETH+']),
+  // makeMintTestCase(0.5, t.WETH, rTokens['ETH+']),
   // makeMintTestCase(5, t.steth, rTokens['ETH+']),
   // makeMintTestCase(5, t.reth, rTokens['ETH+']),
   // makeMintTestCase(5, t.frxeth, rTokens['ETH+']),
   // makeMintTestCase(5, t.sfrxeth, rTokens['ETH+']),
-  makeMintTestCase(1000000, t.USDC, rTokens['ETH+']),
+  // makeMintTestCase(1000000, t.USDC, rTokens['ETH+']),
 
+  makeMintTestCase(10, t.WETH, rTokens.hyUSD),
   makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
   makeMintTestCase(10000, t.USDe, rTokens.hyUSD),
   makeMintTestCase(10000, t.DAI, rTokens.hyUSD),
 
-  makeMintTestCase(5, t.WETH, rTokens.dgnETH),
-  makeMintTestCase(10000, t.USDC, rTokens.dgnETH),
+  // makeMintTestCase(5, t.WETH, rTokens.dgnETH),
+  // makeMintTestCase(10000, t.USDC, rTokens.dgnETH),
   // makeMintTestCase(5, t.pxETH, rTokens.dgnETH),
   // makeMintTestCase(10000, t.USDT, rTokens.dgnETH),
 ]

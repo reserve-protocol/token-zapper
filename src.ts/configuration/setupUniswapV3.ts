@@ -70,7 +70,7 @@ const top100PoolsQuery = `query GetPools(
     first: ${pageSize}
     skip: $skip,
     where:{
-      totalValueLockedUSD_gt: 45000,
+      totalValueLockedUSD_gt: 25000,
       totalValueLockedUSD_lt: 500000000,
     },
     block:{

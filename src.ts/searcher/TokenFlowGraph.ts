@@ -2521,7 +2521,7 @@ export class TokenFlowGraphSearcher {
     const tokenClsB = await this.universe.tokenClass.get(b)
 
     let prefixPath: Token[] = []
-    if (tokenClsB !== a) {
+    if (tokenClsB !== a && tokenClsB !== b) {
       prefixPath = shortestPath(
         this.universe,
         a,

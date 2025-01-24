@@ -31,10 +31,10 @@ if (process.env.BASE_PROVIDER == null) {
 
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
-  optimisationSteps: 15,
-  minimiseDustPhase1Steps: 5,
-  minimiseDustPhase2Steps: 15,
-  cacheResolution: 4,
+  optimisationSteps: 35,
+  minimiseDustPhase1Steps: 25,
+  minimiseDustPhase2Steps: 25,
+  cacheResolution: 8,
   useNewZapperContract: true,
 }
 

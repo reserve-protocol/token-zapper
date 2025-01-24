@@ -30,19 +30,27 @@ import { SwapPlan } from '../searcher/Swap'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
 import baseFallbackPoolList from './data/base/uniswapv3.json'
 import ethereumFallbackPoolList from './data/ethereum/uniswapv3.json'
+import { wait } from '../base/controlflow'
 
 const fallbackDataPoolLists: Record<number, any> = {
   1: ethereumFallbackPoolList,
   8453: baseFallbackPoolList,
 }
-const top100PoolsQuery = `{
+const pageSize = 250
+const pages = 6
+const top100PoolsQuery = `query GetPools(
+  $skip: Int=0,
+  $block: Int=0
+){
   pools(
-    first: 1000,
+    first: ${pageSize}
+    skip: $skip,
     where:{
-      volumeUSD_gt: 25000,
-      totalValueLockedUSD_gt: 200000,
+      totalValueLockedUSD_gt: 25000,
       totalValueLockedUSD_lt: 500000000,
-      txCount_gt: 100
+    },
+    block:{
+      number: $block
     },
     orderBy: volumeUSD,
     orderDirection: desc
@@ -89,66 +97,22 @@ const loadPools = async (ctx: UniswapV3Context, poolAddresses: Address[]) => {
     })
   )
 }
-const loadPoolsFromSubgraph = async (
+
+const definePoolFromPoolDataArray = async (
   ctx: UniswapV3Context,
-  subgraphId: string
+  poolData: {
+    id: string
+    feeTier: number
+    token0: { id: string }
+    token1: { id: string }
+  }[]
 ) => {
-  const SUBGRAPH_API_TOKEN = process.env.THEGRAPH_API_KEY
-  if (!SUBGRAPH_API_TOKEN) {
-    throw new Error('THEGRAPH_API_KEY is not set')
-  }
-  let poolData = fallbackDataPoolLists[ctx.universe.chainId]?.data
-    ?.pools as any[]
-  try {
-    const url = `https://gateway.thegraph.com/api/${SUBGRAPH_API_TOKEN}/subgraphs/id/${subgraphId}`
-    const response = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({
-        query: top100PoolsQuery,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: AbortSignal.timeout(8000),
-    })
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch pools from subgraph: ${response.statusText}`
-      )
-    }
-    const data: {
-      data: {
-        pools: {
-          id: string
-          feeTier: number
-          token0: { id: string }
-          token1: { id: string }
-        }[]
-      }
-    } = await response.json()
-    if (Array.isArray(data.data.pools)) {
-      poolData = data.data.pools
-    } else {
-      ctx.universe.logger.info('Using fallback data')
-    }
-  } catch (e) {}
-
-  // const interestingTokens = new Set<Token>([
-  //   ...ctx.universe.commonTokensInfo.tokens,
-  //   ...ctx.universe.rTokensInfo.tokens,
-  //   ctx.universe.nativeToken,
-  //   ctx.universe.wrappedNativeToken,
-  // ])
-
   const pools = await Promise.all(
     poolData.map(async (pool) => {
       const poolAddress = Address.from(pool.id)
-      const token0 = await ctx.universe.getToken(Address.from(pool.token0.id))
-      const token1 = await ctx.universe.getToken(Address.from(pool.token1.id))
-      // if (!interestingTokens.has(token0) && !interestingTokens.has(token1)) {
-      //   return null
-      // }
       return await ctx.definePool(poolAddress, async () => {
+        const token0 = await ctx.universe.getToken(Address.from(pool.token0.id))
+        const token1 = await ctx.universe.getToken(Address.from(pool.token1.id))
         const fee = BigInt(pool.feeTier)
         const tickSpacing = await ctx.tickSpacing.get(fee)
 
@@ -171,6 +135,61 @@ const loadPoolsFromSubgraph = async (
     })
   )
   return pools.filter((p) => p != null)
+}
+
+const loadPoolsFromSubgraph = async (
+  ctx: UniswapV3Context,
+  subgraphId: string,
+  offset: number,
+  block: number
+) => {
+  const SUBGRAPH_API_TOKEN = process.env.THEGRAPH_API_KEY
+  if (!SUBGRAPH_API_TOKEN) {
+    throw new Error('THEGRAPH_API_KEY is not set')
+  }
+  let poolData: any[] = []
+  const url = `https://gateway.thegraph.com/api/${SUBGRAPH_API_TOKEN}/subgraphs/id/${subgraphId}`
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({
+      query: top100PoolsQuery,
+      variables: {
+        block: block,
+        skip: offset,
+      },
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    signal: AbortSignal.timeout(10000),
+  })
+  if (!response.ok) {
+    console.log(response)
+    console.log(
+      `UniV3: Failed to fetch pools from subgraph: ${response.statusText}`
+    )
+    throw new Error(
+      `Failed to fetch pools from subgraph: ${response.statusText}`
+    )
+  }
+  const jsonResp: {
+    data: {
+      pools: {
+        id: string
+        feeTier: number
+        token0: { id: string }
+        token1: { id: string }
+      }[]
+    }
+  } = await response.json()
+  if (Array.isArray(jsonResp.data?.pools)) {
+    poolData = jsonResp.data.pools
+  } else {
+    console.log(jsonResp)
+    throw new Error('Failed to fetch pools from subgraph')
+  }
+
+  return await definePoolFromPoolDataArray(ctx, poolData)
 }
 interface IUniswapV3Config {
   subgraphId: string
@@ -195,12 +214,29 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     pools: [],
   },
   [ChainIds.Base]: {
-    subgraphId: 'GqzP4Xaehti8KSfQmv3ZctFSjnSUYZ4En5NRsiTbvZpz',
+    subgraphId: 'HMuAwufqZ1YCRmzL2SfHTVkzZovC9VL2UAKhjvRqKiR1',
     router: '0x2626664c2603336e57b271c5c0b26f421741e481',
     quoter: '0x3d4e44eb1374240ce5f1b871ab261cd16335b76a',
     factory: '0x33128a8fc17869897dce68ed026d694621f6fdfd',
     pools: [],
   },
+}
+
+const loadPoolsFromSubgraphWithRetry = async (
+  ctx: UniswapV3Context,
+  subgraphId: string,
+  offset: number,
+  block: number
+) => {
+  for (let i = 0; i < 3; i++) {
+    try {
+      return await loadPoolsFromSubgraph(ctx, subgraphId, offset, block)
+    } catch (e) {
+      console.error(e)
+    }
+    await wait(500)
+  }
+  return []
 }
 
 export type Direction = '0->1' | '1->0'
@@ -536,10 +572,33 @@ export const setupUniswapV3 = async (universe: Universe) => {
   })
   const additionalPoolsToLoad = config.pools.map(Address.from)
 
+  const currentBlock = await universe.provider.getBlockNumber()
+  const loadBlock = Math.floor(currentBlock / (30 * 60 * 3)) * 30 * 60 * 3
+
+  console.log(loadBlock)
+  const loadUniPools = async (): Promise<UniswapV3Pool[]> => {
+    const pools = []
+    for (let i = 0; i < pages; i++) {
+      pools.push(
+        ...(await loadPoolsFromSubgraphWithRetry(
+          ctx,
+          config.subgraphId,
+          i * pageSize,
+          loadBlock
+        ))
+      )
+    }
+    return pools
+  }
+
   const allPools = (
     await Promise.all([
-      loadPoolsFromSubgraph(ctx, config.subgraphId),
+      loadUniPools(),
       loadPools(ctx, additionalPoolsToLoad),
+      definePoolFromPoolDataArray(
+        ctx,
+        fallbackDataPoolLists[chainId]?.data?.pools as any[]
+      ),
     ])
   ).flat()
 
@@ -547,6 +606,8 @@ export const setupUniswapV3 = async (universe: Universe) => {
     universe.addAction(pool.swap01)
     universe.addAction(pool.swap10)
   }
+
+  console.log(`UniV3: Loaded ${allPools.length} pools`)
 
   return ctx
 }

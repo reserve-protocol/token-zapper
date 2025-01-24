@@ -212,12 +212,15 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
       console.log(e)
     }
   }
+  const setupUnis = async () => {
+    await setupUniswapV3(universe)
+    await setupUniswapV2(universe)
+  }
   let done = 0
   const tasks = [
     initCompound(),
     initAave(),
-    initUni3(),
-    initUni2(),
+    setupUnis(),
     initERC4626(),
     setupStarGate_(),
     setupAero(),

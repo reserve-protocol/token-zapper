@@ -2166,7 +2166,17 @@ const minimizeDust = async (
     return currentResult
   }
 
-  for (let iter = 0; iter < steps; iter++) {
+  const optimialValueOut =
+    currentResult.result.inputValue - currentResult.result.inputValue * 0.01
+
+  for (let iter = 0; iter < steps; ) {
+    if (currentResult.result.outputValue > currentResult.result.inputValue) {
+      iter += 3
+    } else if (currentResult.result.outputValue > optimialValueOut) {
+      iter += 2
+    } else {
+      iter += 1
+    }
     const progression = iter / steps
     const scale = 1 - progression
     for (let i = 0; i < nodes.length; i++) {
@@ -2252,6 +2262,9 @@ const optimiseGlobal = async (
     return
   }
 
+  const optimialValueOut =
+    bestSoFar.result.inputValue - bestSoFar.result.inputValue * 0.01
+
   const tmp = optimisationNodes.map((node) =>
     g._outgoingEdges[node.id]!.edges[0].parts.map(() => 0)
   )
@@ -2264,8 +2277,16 @@ const optimiseGlobal = async (
     edge.normalize()
   }
   const MAX_SCALE = 3
-  for (let i = 0; i < optimisationSteps; i++) {
+  for (let i = 0; i < optimisationSteps; ) {
     const size = (MAX_SCALE / (1 + i * 0.5)) * (1 - i / optimisationSteps)
+
+    if (bestSoFar.result.outputValue > bestSoFar.result.inputValue) {
+      i += 3
+    } else if (bestSoFar.result.outputValue > optimialValueOut) {
+      i += 2
+    } else {
+      i += 1
+    }
 
     let bestThisIteration = bestSoFar
     let bestNodeToChange = -1
@@ -3177,6 +3198,10 @@ export class TokenFlowGraphSearcher {
       )
 
       console.log(`Path: ${path.map((i) => i.toString()).join(' -> ')}`)
+
+      if (path.length < 2) {
+        throw new Error(`Failed to find path for ${input} -> ${precursorToken}`)
+      }
 
       for (let i = 0; i < path.length - 1; i++) {
         const input = path[i]

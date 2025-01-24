@@ -13,6 +13,7 @@ import deployments from '../contracts/deployments.json'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
 import { constants } from 'ethers'
 import { UniswapV2Pair__factory } from '../contracts/factories/contracts/UniswapV2Pair__factory'
+import { wait } from '../base/controlflow'
 
 interface IUniswapV2Config {
   subgraphId: string
@@ -32,6 +33,8 @@ const configs: Record<ChainId, IUniswapV2Config> = {
     univ2swap: deployments[8453][0].contracts.Univ2SwapHelper.address,
   },
 }
+const pages = 6
+const pageSize = 250
 const fallbackDataPoolLists: Record<number, any> = {
   1: [],
   8453: [],
@@ -39,13 +42,15 @@ const fallbackDataPoolLists: Record<number, any> = {
 }
 const loadPools = `query GetPools(
   $skip: Int=0
+  $block: Int=0
 ){
   pairs(
-    first: 1000
+    first: ${pageSize}
     skip: $skip,
-    where: {reserveUSD_gt:50000, reserveUSD_lt: 100000000000}
+    where: {reserveUSD_gt:5000, reserveUSD_lt: 100000000000}
     orderBy: volumeUSD
     orderDirection: desc
+    block: {number: $block}
   ) {
     id
     token0 {
@@ -60,7 +65,8 @@ const loadPools = `query GetPools(
 const loadPoolsFromSubgraph = async (
   ctx: UniswapV2Context,
   subgraphId: string,
-  skip: number
+  skip: number,
+  block: number
 ) => {
   const SUBGRAPH_API_TOKEN = process.env.THEGRAPH_API_KEY
   if (!SUBGRAPH_API_TOKEN) {
@@ -76,6 +82,7 @@ const loadPoolsFromSubgraph = async (
         query: loadPools,
         variables: {
           skip,
+          block,
         },
       }),
       headers: {
@@ -84,6 +91,9 @@ const loadPoolsFromSubgraph = async (
       signal: AbortSignal.timeout(10000),
     })
     if (!response.ok) {
+      console.log(
+        `UniV2: Failed to fetch pools from subgraph: ${response.statusText}`
+      )
       throw new Error(
         `Failed to fetch pools from subgraph: ${response.statusText}`
       )
@@ -103,8 +113,11 @@ const loadPoolsFromSubgraph = async (
     } else {
       ctx.universe.logger.info('Using fallback data')
     }
-  } catch (e) {}
+  } catch (e) {
+    throw e
+  }
 
+  console.log(`UniV2: Loaded ${poolData.length} pools from subgraph`)
   const pools = await Promise.all(
     poolData.map(async (pool) => {
       const poolAddress = Address.from(pool.id)
@@ -114,6 +127,20 @@ const loadPoolsFromSubgraph = async (
     })
   )
   return pools.filter((p) => p != null)
+}
+const loadPoolsFromSubgraphWithRetry = async (
+  ctx: UniswapV2Context,
+  subgraphId: string,
+  skip: number,
+  block: number
+) => {
+  for (let i = 0; i < 3; i++) {
+    try {
+      return await loadPoolsFromSubgraph(ctx, subgraphId, skip, block)
+    } catch (e) {}
+    await wait(500)
+  }
+  return []
 }
 export type Direction = '0->1' | '1->0'
 
@@ -272,13 +299,26 @@ export const setupUniswapV2 = async (universe: Universe) => {
     return
   }
   const ctx = new UniswapV2Context(universe)
+  const currentBlock = await universe.provider.getBlockNumber()
 
-  const allPools = (
-    await Promise.all([
-      loadPoolsFromSubgraph(ctx, config.subgraphId, 0),
-      loadPoolsFromSubgraph(ctx, config.subgraphId, 1000),
-    ])
-  ).flat()
+  const loadBlock = Math.floor(currentBlock / (30 * 60 * 3)) * 30 * 60 * 3
+
+  const loadUniPools = async (): Promise<UniswapV2Pool[]> => {
+    const pools = []
+    for (let i = 0; i < pages; i++) {
+      pools.push(
+        ...(await loadPoolsFromSubgraphWithRetry(
+          ctx,
+          config.subgraphId,
+          i * pageSize,
+          loadBlock
+        ))
+      )
+      await wait(500)
+    }
+    return pools
+  }
+  const allPools = (await Promise.all([loadUniPools()])).flat()
 
   for (const pool of allPools) {
     universe.addAction(pool.swap01)

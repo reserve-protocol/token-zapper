@@ -105,20 +105,7 @@ const evaluateProgram = async (
     })
   }
 
-  let to: Address
-  if (
-    opts.deployFolio ||
-    (universe.config.useNewZapperContract &&
-      opts.deployFolio == null &&
-      universe.config.addresses.zapper2Address != null)
-  ) {
-    if (universe.config.addresses.zapper2Address == null) {
-      throw new Error('Zapper2 address not set, cannot generate deployZap')
-    }
-    to = universe.config.addresses.zapper2Address
-  } else {
-    to = universe.config.addresses.zapperAddress
-  }
+  const to = universe.zapperAddress
 
   let value = 0n
   if (opts.ethereumInput) {
@@ -140,7 +127,7 @@ const evaluateProgram = async (
       res: await simulateAndParse(universe, simulationPayload, dustTokens),
       tx: {
         tx: {
-          to: universe.config.addresses.zapperAddress.address,
+          to: to.address,
           from: signer.address,
           data,
           value,

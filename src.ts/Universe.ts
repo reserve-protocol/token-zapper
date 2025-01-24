@@ -1190,7 +1190,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   get approvalAddress() {
-    return this.config.addresses.zapperAddress.address
+    return this.zapperAddress.address
   }
 }
 function shuffle<T>(array: T[]): T[] {

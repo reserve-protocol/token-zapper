@@ -1,0 +1,5502 @@
+[
+  {
+    "id": "0xE31c372a7Af875b3B5E0F3713B17ef51556da667",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x88A43bbDF9D098eEC7bCEda4e2494615dfD9bB9C",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    }
+  },
+  {
+    "id": "0x6d6391B9bD02Eefa00FA711fB1Cb828A6471d283",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x768BE13e1680b5ebE0024C42c896E3dB59ec0149",
+      "symbol": "SKI"
+    }
+  },
+  {
+    "id": "0x17A3Ad8c74c4947005aFEDa9965305ae2EB2518a",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xB1a03EdA10342529bBF8EB700a06C60441fEf25d",
+      "symbol": "MIGGLES"
+    }
+  },
+  {
+    "id": "0x6a77CDeC82EFf6A6A5D273F18C1c27CD3d71A588",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x85E90a5430AF45776548ADB82eE4cD9E33B08077",
+      "symbol": "DINO"
+    }
+  },
+  {
+    "id": "0x377FeeeD4820B3B28D1ab429509e7A0789824fCA",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9a26F5433671751C3276a065f57e5a02D2817973",
+      "symbol": "KEYCAT"
+    }
+  },
+  {
+    "id": "0xb08A99AB559E5456907278727a3b0d968C0A313b",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE3086852A4B125803C815a158249ae468A3254Ca",
+      "symbol": "$mfer"
+    }
+  },
+  {
+    "id": "0x16905890A1D02b6F824387419319Bf4188B961b0",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xBC45647eA894030a4E9801Ec03479739FA2485F0",
+      "symbol": "BENJI"
+    }
+  },
+  {
+    "id": "0xD1eAB29C8A0D457B8858B077e641506B07ED81BC",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE13B642F42a702E0046d9d7D23894fd35d2005ba",
+      "symbol": "Kekius"
+    }
+  },
+  {
+    "id": "0x55f3b570A62A346e98D88E20A36CC41c5da69980",
+    "token0": {
+      "id": "0x2F20Cf3466f80A5f7f532fCa553c8cbc9727FEf6",
+      "symbol": "AKUMA"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xa926342d7f9324A1DbDe8F5ab77c92706f289b5d",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xcdE172dc5ffC46D228838446c57C1227e0B82049",
+      "symbol": "BOOMER"
+    }
+  },
+  {
+    "id": "0x4F84A51F510a977544932588Ffd85244BaAa759f",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x686B1209b2DE12818aa69DD139530448d0c792b3",
+      "symbol": "$poop"
+    }
+  },
+  {
+    "id": "0xDE66c35e01ED8e619Bf092352338ef94f2327337",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xFF0C532FDB8Cd566Ae169C1CB157ff2Bdc83E105",
+      "symbol": "Fren Pet"
+    }
+  },
+  {
+    "id": "0x39a72B1292AAED73B9B5633e14f88fE9a89F400b",
+    "token0": {
+      "id": "0x0c41F1FC9022FEB69aF6dc666aBfE73C9FFDA7ce",
+      "symbol": "BTCB"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xc08Ae9e9ec06E3f5ee779178625c7180eFc9CF21",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xeD899bfDB28c8ad65307Fa40f4acAB113AE2E14c",
+      "symbol": "ROOST"
+    }
+  },
+  {
+    "id": "0x76Fc8DbF2022EE75612cb74ec80caF6b3ccFfb23",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x698DC45e4F10966f6D1D98e3bFd7071d8144C233",
+      "symbol": "PEPE"
+    }
+  },
+  {
+    "id": "0xEA8B7ED6170E0ea3703DdE6B496B065A8eCECd7B",
+    "token0": {
+      "id": "0x0C5142BC58f9A61AB8C3D2085DD2F4e550c5cE0B",
+      "symbol": "RUSSELL"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xE09278e1f6Af3a145ed6Bf565E435ADF0FA2eCa2",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x72Cc788B304528431467A14b8EFBD0Ef34d2F379",
+      "symbol": "AVA"
+    }
+  },
+  {
+    "id": "0xBE650AD18E512eF2d38c8A9198D802F93A9a1011",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x87c211144b1D9bDAA5A791B8099EA4123dC31D21",
+      "symbol": "BCP"
+    }
+  },
+  {
+    "id": "0xb718980B0Dc845e37DF9fbEF0A7411aB1d484A4D",
+    "token0": {
+      "id": "0x0f884a04d15A3cf4Aecda7de0288C3a611326839",
+      "symbol": "CJ"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x0b8A73DCc8355d0d778f3d33D7D859B1D6a6ccD4",
+    "token0": {
+      "id": "0x0e0c9756a3290cD782CF4aB73ac24D25291c9564",
+      "symbol": "ANIME"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x8A72f8C0184b825c724f0cC3D2229Cc6c36eA9d7",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xA6f774051dFb6b54869227fDA2DF9cb46f296c09",
+      "symbol": "SKICAT"
+    }
+  },
+  {
+    "id": "0xf012e803c8e73d185AC96d6C3F830893A1116E03",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4DD9077269Dd08899f2A9E73507125962b5BC87f",
+      "symbol": "Crash"
+    }
+  },
+  {
+    "id": "0xBfB7bD3637A57Ba278b831a01B35210ECAFa592C",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x6797B6244fA75F2e78cDFfC3a4eb169332b730cc",
+      "symbol": "EAI"
+    }
+  },
+  {
+    "id": "0x3F413FcCAEa59b8053d605AEa7ae847C02ed5D95",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xB166E8B140D35D9D8226E40C09f757BAC5A4d87d",
+      "symbol": "NPC"
+    }
+  },
+  {
+    "id": "0xE1BeD6AAdBa5471700f16A47EEe2504346B724aD",
+    "token0": {
+      "id": "0x3054E8F8fBA3055a42e5F5228A2A4e2AB1326933",
+      "symbol": "Zuzalu"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x51b8F730F8BF77236E6040Cc503A560B3C52E12c",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xFad8CB754230dbFd249Db0E8ECCb5142DD675a0d",
+      "symbol": "AEROBUD"
+    }
+  },
+  {
+    "id": "0x6CaA62e48A2d9f3a8EAcaAdcA2462Ed5dfe0c685",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x776aAef8D8760129A0398CF8674EE28cefc0EAb9",
+      "symbol": "FLOPPA"
+    }
+  },
+  {
+    "id": "0xF1cFaf629928D814046F981A1990d5bc56D793d3",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xF31e6D62BFC485857af2186eB3d8ee94b4379feD",
+      "symbol": "CHIDO"
+    }
+  },
+  {
+    "id": "0x12bcf75F37C790bb8FB4238520905Ae33394bb66",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x8a5F9a6b653ecbDb406f9EB5F0C8dDba10919Aec",
+      "symbol": "bloo"
+    }
+  },
+  {
+    "id": "0x7bCD8185B7f4171017397993345726E15457B1eE",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xd327d36EB6E1f250D191cD62497d08b4aaa843Ce",
+      "symbol": "FOMO"
+    }
+  },
+  {
+    "id": "0x3c64B80E4C6FcDBCca513C237cA582964F6bb9f2",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7Cf7132EdE0ca592A236b6198A681bB7B42dd5ae",
+      "symbol": "BOLT"
+    }
+  },
+  {
+    "id": "0xBa1963BB6c0D0d60Cea960AA37218d13b69503A1",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xfc48314ad4aD5bD36a84E8307b86A68A01D95d9C",
+      "symbol": "AION"
+    }
+  },
+  {
+    "id": "0x774D0266696c5d54d70bD7DDC5253ec0ECe91892",
+    "token0": {
+      "id": "0x3AfEae00a594fbf2E4049f924E3c6AC93296B6e8",
+      "symbol": "MAMBA"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x378551Ab1B395B1E12a49aE3914DD8066860770D",
+    "token0": {
+      "id": "0x7484a9fB40b16c4DFE9195Da399e808aa45E9BB9",
+      "symbol": "AGNT"
+    },
+    "token1": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    }
+  },
+  {
+    "id": "0xc4e0af42EC55b8A2C161A1801F2142Cb29fE2b0b",
+    "token0": {
+      "id": "0x013b6451E2B2131052D3473593bD786df5143fAF",
+      "symbol": "FRENCH"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x5811B4C18EA9a7a9F08821c37c60710059c72321",
+    "token0": {
+      "id": "0x3B1228C3eDe7e0898d57054Cd9B8f812d24315C1",
+      "symbol": "BRITT"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xec8995B9f8A9f7B369C93733fa2667A2e09fA7De",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xDe7a416ac821C77478340EEBaA21b68297025eF3",
+      "symbol": "BENI"
+    }
+  },
+  {
+    "id": "0x8aa4a4ac4FFEe5f12fe025ad031e693046811710",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x8300E8e6b258147972972dbCF87719DA7b817a9c",
+      "symbol": "PAT"
+    }
+  },
+  {
+    "id": "0x93efF1F9142F3A00B284876AD37E0cDD87C67477",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xbeB0fd48C2BA0F1AacaD2814605f09e08A96B94E",
+      "symbol": "GME"
+    }
+  },
+  {
+    "id": "0xDcfd79c489a86adF532Eb84F38dACA9BB545f9e6",
+    "token0": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    },
+    "token1": {
+      "id": "0xF0268c5F9aA95Baf5C25D646AAbB900Ac12F0800",
+      "symbol": "RGOAT"
+    }
+  },
+  {
+    "id": "0xd33805985642Fa9338e1Fa150cA811406F96F0dE",
+    "token0": {
+      "id": "0x2e1d332893Dc16124194E598a29866D2d5e8786b",
+      "symbol": "TRUMP"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x176567c44342EDda7AAE629f7CECaB246f22F69a",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x72499bdDb67F4CA150E1f522Ca82c87bc9fB18c8",
+      "symbol": "BONK"
+    }
+  },
+  {
+    "id": "0xDd52C6215c2D526e1C33b1e19C8156f4EFFcE169",
+    "token0": {
+      "id": "0x1b6A569DD61EdCe3C383f6D565e2f79Ec3a12980",
+      "symbol": "PEEZY"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x0aEdaA099A9878Cd546182dc02D7480CB77098C8",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD9eA93A38D1771C870128f9134D4622d331C04C8",
+      "symbol": "MABA"
+    }
+  },
+  {
+    "id": "0xf27082E96C0F57147CC49B1A915cB471041db0f9",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xdCe704A0622a8437200cb6076ee69B2Cf573827c",
+      "symbol": "SPEC"
+    }
+  },
+  {
+    "id": "0xcE5e3b19e824bc70Bb527A57f60F56d046A48aa5",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xaf07d812d1DCEc20BF741075Bc18660738d226Dd",
+      "symbol": "SNORT"
+    }
+  },
+  {
+    "id": "0x27435d0e12D6069143D101a01ec6af3fd110F9dD",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x42069dE48741Db40aeF864F8764432bBccbD0B69",
+      "symbol": "BETS"
+    }
+  },
+  {
+    "id": "0x0162cCBE8961b9e33c788c463F4c9428333b2D6f",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD98832e8a59156AcBEe4744B9A94A9989a728f36",
+      "symbol": "AGENT"
+    }
+  },
+  {
+    "id": "0xa987C7d9109AA93224Ba7481f5cA3caE51675556",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9bEec80e62aA257cED8b0edD8692f79EE8783777",
+      "symbol": "TIMI"
+    }
+  },
+  {
+    "id": "0xf87e9c413f5d50471aa46d13Fa69e5a09039205e",
+    "token0": {
+      "id": "0x252D223D0550BC6c137B003D90bc74F5341A2818",
+      "symbol": "BITBOT"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xB72366a832a1C1d8829F850E5456e49b8A75a530",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4C674b318b27c4061Fc94660922f504a4db6AE79",
+      "symbol": "OZMPC"
+    }
+  },
+  {
+    "id": "0x538ABdb009877e6BA296E026F108961ec933562D",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x88Faea256f789F8dD50dE54F9C807eEf24f71b16",
+      "symbol": "WOLF"
+    }
+  },
+  {
+    "id": "0xE9D1FdAA93f10ff117ea2253289b083144dfBF2e",
+    "token0": {
+      "id": "0x3f217c5366029F78C7d6e94513e32Aa80f7888aD",
+      "symbol": "BaseARBa"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x8Cfaf29a874eb387fB8D01bc96b7b0b5C2bBb35F",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xF8a99F2bF2ce5bb6cE4aafcf070D8723bc904Aa2",
+      "symbol": "CHRETT"
+    }
+  },
+  {
+    "id": "0x4DAd1171096AbbA835bf1D377Bb4f580B8B4a7E5",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x506BEb7965FC7053059006c7ab4C62c02C2D989F",
+      "symbol": "BWORM"
+    }
+  },
+  {
+    "id": "0xFFFEd65c9fdAF0818867E8b6d841FDB0631BC223",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xb56d0839998Fd79EFCD15c27cF966250AA58D6D3",
+      "symbol": "USA"
+    }
+  },
+  {
+    "id": "0xc1a6D4cCB0E913C7f785Fcc60811B34bc8CC801c",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xBA5E66FB16944Da22A62Ea4FD70ad02008744460",
+      "symbol": "TURBO"
+    }
+  },
+  {
+    "id": "0xF8bB13359C402F399b152Ca5df7a8B00eC2A6deE",
+    "token0": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    },
+    "token1": {
+      "id": "0xF5Bc3439f53A45607cCaD667AbC7DAF5A583633F",
+      "symbol": "AGENT"
+    }
+  },
+  {
+    "id": "0x7E5c0a14aA2Af95757D12bA1aa89b165B4304171",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xFe20C1B85ABa875EA8cecac8200bF86971968F3A",
+      "symbol": "BALD"
+    }
+  },
+  {
+    "id": "0x0Faa729d56071E8780579f407bdCb5E0832D773E",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x57eDc3F1fd42c0D48230e964b1C5184B9c89B2ed",
+      "symbol": "DKING"
+    }
+  },
+  {
+    "id": "0xF282E7C46be1A3758357a5961cf02e1f46a78b75",
+    "token0": {
+      "id": "0x2075f6E2147d4AC26036C9B4084f8E28b324397d",
+      "symbol": "CTO"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xbA8484d1bc98938A03f09aeBd97E9bF7b424c78D",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x478e03D45716dDa94F6DbC15A633B0D90c237E2F",
+      "symbol": "$SHAKA"
+    }
+  },
+  {
+    "id": "0x0B82D37adE6f098D3f2E1134aC2F1D1c1a00f816",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD88611A629265C9AF294FFDD2E7fa4546612273e",
+      "symbol": "MPRO"
+    }
+  },
+  {
+    "id": "0x68187F6d1B5fB20b03B994978E9664b57099ba3C",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xc9b6eF062Fab19D3F1eABc36b1f2E852AF1Acd18",
+      "symbol": "BALT"
+    }
+  },
+  {
+    "id": "0xa878A7944062C3984B214A6F7BC3970F4a6a5257",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7A8A5012022BCCBf3EA4b03cD2bb5583d915fb1A",
+      "symbol": "CHUCK"
+    }
+  },
+  {
+    "id": "0xfdcbf4764aEAa9A576Ad975E8677270027bcd617",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x689644B86075ed61C647596862c7403e1c474dbf",
+      "symbol": "BAMBOO"
+    }
+  },
+  {
+    "id": "0x82B4d5B215C3e3474c379D935E00f969688be57F",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x64cB1BAfc59bF93aeB90676885C63540cf4F4106",
+      "symbol": "Coin"
+    }
+  },
+  {
+    "id": "0x61E26cbc72A3623f75aA2828b39ab60cDb952c93",
+    "token0": {
+      "id": "0x3992B27dA26848C2b19CeA6Fd25ad5568B68AB98",
+      "symbol": "OM"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x0B1E820Eb65289896CbB6B152Ee1fa12ec3D2B18",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4d58608EFf50b691A3B76189aF2a7A123dF1e9ba",
+      "symbol": "BOYS"
+    }
+  },
+  {
+    "id": "0xE1c135D5F02941c9Bb61edc23B6C193D39100F23",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x6bd81aAd9B25Ad1E0b99c47eD01B34eAcF4B8bE7",
+      "symbol": "BODA"
+    }
+  },
+  {
+    "id": "0xde62b7f8f56e67b2983526F7Ae93FA15a8Bb860B",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xfF62dDfa80E513114C3a0bf4d6fFff1c1D17aADf",
+      "symbol": "Boe"
+    }
+  },
+  {
+    "id": "0x3e4C7d0c624Cc4C66A561F8383D9eb58BA810789",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x56c80Aa1Af0265a75d475420dCF8C1d063627199",
+      "symbol": "BUNNY"
+    }
+  },
+  {
+    "id": "0xA5C7015C81d2280032B031406048c75696bA77d5",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x6d3B8C76c5396642960243Febf736C6BE8b60562",
+      "symbol": "SKOP"
+    }
+  },
+  {
+    "id": "0xbb261929f33B69c201c8855BafdC341e1f0ddA23",
+    "token0": {
+      "id": "0x1687349bC6cF09D6ba53A649c1EC25759de6fE81",
+      "symbol": "MICKEY"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x08C03A6B5D51A8915bAe08A0F182Dab6fB2c059b",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9DE16c805A3227b9b92e39a446F9d56cf59fe640",
+      "symbol": "BENTO"
+    }
+  },
+  {
+    "id": "0x90116BaDa7c0c92484543A2f58584C2897573520",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7cdDA482A62f9F9fa9F724fDaF6e2904de7e5226",
+      "symbol": "Ai16z"
+    }
+  },
+  {
+    "id": "0x60DC51aB5Ad447f72D4C86ffFcCCB89038391471",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xF1B4ddF712E108cf43711B1C39f2fDDb0d5Ce243",
+      "symbol": "BASE"
+    }
+  },
+  {
+    "id": "0x01227583B488B1Ea8f518AE763D29Bf7FB89ef3d",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x80f45EaCF6537498ecc660e4e4A2D2F99e195Cf4",
+      "symbol": "PEPE"
+    }
+  },
+  {
+    "id": "0x90Ea5A6Ebe41d8191Fa43dB3967E915e44979F5E",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xF3708859C178709d5319ad5405Bc81511B72b9e9",
+      "symbol": "AETHER"
+    }
+  },
+  {
+    "id": "0x45f4Db10bb0102c133F1C70500124e4569F3eDcD",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x42069BAbe14fB1802C5CB0F50BB9D2Ad6FEf55e2",
+      "symbol": "FROK"
+    }
+  },
+  {
+    "id": "0x25646338f3d92D9c28a7Ab9eb543eFccFD67621B",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x92dc4Ab92eB16e781559e612F349916988013D5A",
+      "symbol": "WSB"
+    }
+  },
+  {
+    "id": "0x76a66e9A9F4D31Ce2eB89585FcF0b5d7701D36a7",
+    "token0": {
+      "id": "0x26F1bB40eA88B46CEB21557dC0FfAC7B7c0ad40f",
+      "symbol": "Alf"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xF5211BA5aAD081f05386D45aC5fCF7f51c8Dbd77",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xF878e27aFB649744EEC3c5c0d03bc9335703CFE3",
+      "symbol": "EOLAS"
+    }
+  },
+  {
+    "id": "0xfEa60036D200A28Edc2c5061d958603141E1B62C",
+    "token0": {
+      "id": "0x3cd0808304Ea14b565d0dC7dd31c034b9Bc1821e",
+      "symbol": "BE"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xeF9bCCfBa3A62e0A50d288A3031cA18f41f6c000",
+    "token0": {
+      "id": "0x30D19Fb77C3Ee5cFa97f73D72c6A1E509fa06AEf",
+      "symbol": "CONDO"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x47481b1b87fF51F5c1C3243c57Ac514D555D7E42",
+    "token0": {
+      "id": "0x30121D81F4407474a6D93F5c3060f14aAA098a61",
+      "symbol": "Labz"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x3c20FC69Ea74B91CF70389e4EBe90e6d05d841E8",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x94f35DBfeEff533C66Ed6cdeAe4c5fBA9e6e278a",
+      "symbol": "THL"
+    }
+  },
+  {
+    "id": "0xe12f00568B044743F579f9ffeA90604518A1F460",
+    "token0": {
+      "id": "0x36596B417C288FA954649e49AF86f7C75D77f8E4",
+      "symbol": "FCP"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x588A03a5364C3066D9d8E2dAD4e733E0e780e46a",
+    "token0": {
+      "id": "0x09579452bc3872727A5D105f342645792BB8a82b",
+      "symbol": "VARK"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x23588d2d6a82E1e45BbAA5CB34A8ba666BA4748C",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xd63Aaeec20f9B74d49F8dD8e319b6EDD564A7Dd0",
+      "symbol": "SHOGUN"
+    }
+  },
+  {
+    "id": "0x95Dd03e7dF28a7fDbB2e36A5675034937218A6Ae",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x80E3Ee7bAB68fEAea6e01c44df9daa5de53e4818",
+      "symbol": "DOGE"
+    }
+  },
+  {
+    "id": "0x7274e7ba268EC1349338a2D6083a7f03d410E8E8",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x8d285Df5bE4570097E84241090FCa8034AB18547",
+      "symbol": "ETHB"
+    }
+  },
+  {
+    "id": "0x03623367F4a833f23E8C917b3448DD31805E3D07",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7F65323E468939073eF3b5287C73f13951b0fF5b",
+      "symbol": "BLUE"
+    }
+  },
+  {
+    "id": "0x9e37938584d09a81BD3780dBD3ea0ff8D2a15eb2",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xbdB0e1c40A76c5113A023d685b419B90b01e3D61",
+      "symbol": "AIVA"
+    }
+  },
+  {
+    "id": "0x1B2F2Bd82c861804ade5Dd1ddd6553a9B5381537",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xBDf5bAfEE1291EEc45Ae3aadAc89BE8152D4E673",
+      "symbol": "CATA"
+    }
+  },
+  {
+    "id": "0xE42aa387F11A480bA03a2771C814E1398CFAe27D",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7f6F6720a73C0f54f95AB343D7eFeB1FA991F4F7",
+      "symbol": "WIF"
+    }
+  },
+  {
+    "id": "0xC93A2dD31490518D6a5a9A70C07867A11358a508",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD2e52695004789140914a1550b22952cd69C765e",
+      "symbol": "TRUMP"
+    }
+  },
+  {
+    "id": "0x343969ab5BB1c3Fc4C609134EAaF3De6CBDc8779",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD064c53f043d5aee2Ac9503B13eE012BF2def1d0",
+      "symbol": "DEFIDO"
+    }
+  },
+  {
+    "id": "0xE0b5a3c0540D085533E9A922E3AC92869cDC4F95",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x6223901eA64608c75Da8497d5eff15D19A1D8fd5",
+      "symbol": "Corgi"
+    }
+  },
+  {
+    "id": "0x7D22c7Ea116F07bB4F9b943032B38Dc1739D6663",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD3741ac9B3f280B0819191E4b30be4ECd990771e",
+      "symbol": "DOOMER"
+    }
+  },
+  {
+    "id": "0x10360ab063F3c4475959d799Fb5A764d59C564E8",
+    "token0": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    },
+    "token1": {
+      "id": "0xE2B1dc2D4A3b4E59FDF0c47B71A7A86391a8B35a",
+      "symbol": "RWA"
+    }
+  },
+  {
+    "id": "0xac9Fc647D92d8F7A7F8b81E8D4C5ab8b53E95571",
+    "token0": {
+      "id": "0x3639E6f4C224eBd1BF6373C3D97917d33E0492BB",
+      "symbol": "PACA"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xE10Cf6788ab478060629aF61Ac13D3a40259005E",
+    "token0": {
+      "id": "0x3ecced5b416e58664f04a39dD18935eB71D33B15",
+      "symbol": "BRIAN"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xF6d2f444eccbfDDC090F2B5c567C19aEB6b030ad",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xe8aAe6251c6Cf39927b0ff31399030C60BEC798f",
+      "symbol": "SUMI"
+    }
+  },
+  {
+    "id": "0x3b4b89aabf561405cB422A79977d32ca449BeEE3",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD27c288Fd69f228e0c02F79e5ecadff962E05a2b",
+      "symbol": "FIRE"
+    }
+  },
+  {
+    "id": "0xDcEA286D38F5ff4953F30522cF90605fA8311567",
+    "token0": {
+      "id": "0x1791B55e734DF69B4906a4178A83dbE63c4F8421",
+      "symbol": "BCHB"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x795D45B4C50C906fa0BC2A0aE99D9E862aAFAF2E",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x623cD3a3EdF080057892aaF8D773Bbb7A5C9b6e9",
+      "symbol": "SKYA"
+    }
+  },
+  {
+    "id": "0xbBEe749Ff0206160A753429744a448b552c345Ed",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x55027a5b06f4340cC4C82DCC74C90cA93dcb173E",
+      "symbol": "TAD"
+    }
+  },
+  {
+    "id": "0xc7cb7446546F01dD3e87f80B2A6d37fCe4EcA5cC",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x420b0FA3dE2EFCf2b2Fd04152Eb1Df36a09717cD",
+      "symbol": "KING"
+    }
+  },
+  {
+    "id": "0xcc7E4FA76705CE32746fA0A0de720f4046e72cE5",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x6263Ad921e11aB47ae85f1DaA725B8b3581BAeD3",
+      "symbol": "LUIGI"
+    }
+  },
+  {
+    "id": "0x8A29Ae6B3Fb39888E2Fd071B62F1C626D1ef3645",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xeB476e9aB6B1655860b3F40100678D0c1ceDB321",
+      "symbol": "AMEN"
+    }
+  },
+  {
+    "id": "0x1f1C087ba30fD40aAc548f37cdAC5391988e321A",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x85cf87e35Bf9D20380889016bac20e519324d928",
+      "symbol": "SKINUT"
+    }
+  },
+  {
+    "id": "0x870F9783501f79f66eecb19fa97F4BABf630b2A3",
+    "token0": {
+      "id": "0x315B8c9A1123c10228d469551033440441b41F0b",
+      "symbol": "BEATS"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x8cd2D9238574105eb25a1b0A00e9B33Eb15Cc165",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x8bFAc1b375bf2894D6F12fb2Eb48B1C1a7916789",
+      "symbol": "MEY"
+    }
+  },
+  {
+    "id": "0x7F436668c9466426737d97BcEfE9BFadD6AB854C",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xA4dc5a82839a148Ff172b5b8BA9d52e681FD2261",
+      "symbol": "PICA"
+    }
+  },
+  {
+    "id": "0x8e8285A78c480c4a4263511E80Fc116a30aAC793",
+    "token0": {
+      "id": "0x31b28012F61fc3600e1c076baFc9Fd997FB2DA90",
+      "symbol": "MRSMIGGLES"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x8F34dA8B8da3971BE46A60358b2A842fb88D04Ee",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x5597Ce42b315F29e42071d231dcd0158DA35B77b",
+      "symbol": "KENDU"
+    }
+  },
+  {
+    "id": "0x670ACfd5607bE0aa02d17255F583C03e07688A4F",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xc8e51Fefd7D595C217C7ab641513FAA4Ad522b26",
+      "symbol": "CRAPPY"
+    }
+  },
+  {
+    "id": "0x6D2f4db77E0e9E6554Cf23d2d093984a4abD9B26",
+    "token0": {
+      "id": "0x0718F45Bbf4781cE891e4e18182F025725F0fc95",
+      "symbol": "MISSER"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x87E210B3C279Cd67039e96b833F6407e547CEEd1",
+    "token0": {
+      "id": "0x015e7B67198C29462D6653BA72C8a6612DC21014",
+      "symbol": "WXFI"
+    },
+    "token1": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    }
+  },
+  {
+    "id": "0x60aBB870b1A8df16293791F2227FE1aa2B3709cF",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x461eE40928677644b8195662Ab91BcdaAE6Ef105",
+      "symbol": "Dook"
+    }
+  },
+  {
+    "id": "0x49173Ef899A422a8735B2AB7D6103A542e9E67f3",
+    "token0": {
+      "id": "0x097b1b242D3Ed90E191c5f83A62f41ABe16f6ceB",
+      "symbol": "Tokito"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xCA12D459d28eB7707614EC09Cc62ccE4039fC1a4",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4b61E2f1BBDEe6D746209a693156952936F1702C",
+      "symbol": "LAMBOW"
+    }
+  },
+  {
+    "id": "0x493AD7E1c509dE7c89e1963fe9005EaD49FdD19c",
+    "token0": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    },
+    "token1": {
+      "id": "0x8C9037D1Ef5c6D1f6816278C7AAF5491d24CD527",
+      "symbol": "MOXIE"
+    }
+  },
+  {
+    "id": "0xa4e028d28930F1ef1Ae8AcDDB1a53b231A518965",
+    "token0": {
+      "id": "0x1C22374032e7e5a1bbDe3D943F5DEB310db060DD",
+      "symbol": "onchain"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x228d69C0bcdE48eEb61e3eA734570Ca9B4Df687d",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7480527815ccAE421400Da01E052b120Cc4255E9",
+      "symbol": "WORKIE"
+    }
+  },
+  {
+    "id": "0xB9a573f1d363707741c6B30326FA794F0134440e",
+    "token0": {
+      "id": "0x3D1D651761D535Df881740AB50Ba4BD8a2EC2C00",
+      "symbol": "SYNDOG"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x9b41EB8A38f6e1fd7a8B5dA29d708225351c12c4",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xC2464FB6eDC12e4c0D3aA9B201497A27e6b7eF04",
+      "symbol": "BaseAI"
+    }
+  },
+  {
+    "id": "0xc7d9143A9753ba6f49FBBb5E803C949c1E310CeD",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9a532dba4b18E605541c4eA5E14bF70490044858",
+      "symbol": "HUH"
+    }
+  },
+  {
+    "id": "0x5820788B05E005272340fAd6D7c0da807868Fc09",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xCacdAe43dbD273AC1D89080b7f9D6E0a4a9aDd6E",
+      "symbol": "BPH"
+    }
+  },
+  {
+    "id": "0x7101FA70e5D071004Ad5a7000DC46Ff8A8C24199",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x8Fe815417913a93Ea99049FC0718ee1647A2a07c",
+      "symbol": "XSWAP"
+    }
+  },
+  {
+    "id": "0xF1A2e8eeB19617744cE8B2B020c397a97cA0D7F6",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xF0d7cB351589C4B1520bF8D31AFc87F7fb839C85",
+      "symbol": "LOCKIN"
+    }
+  },
+  {
+    "id": "0xD91654dD9aE63d74E2446afB7Cd4411EcC1b02e2",
+    "token0": {
+      "id": "0x3C5fdF0ee37D62C774025599E3b692D027746E24",
+      "symbol": "BONKEY"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xc6Ab683777b1E735f3303F0dA43808f11b12d704",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xbC1852F8940991d91BD2b09A5aBb5E7B8092a16C",
+      "symbol": "BasePrinter"
+    }
+  },
+  {
+    "id": "0x25152c43BA2B4376aa284F24A02F828054C22C0f",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9E2D9a783C2eC5e41A67ec75a703A94CC59B22fe",
+      "symbol": "JUJU"
+    }
+  },
+  {
+    "id": "0x1AAb0C9A388dFF81CCFb7B86393cF2AAA54342C6",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x5e432eeCd01C12ee7071Ee9219C2477a347DA192",
+      "symbol": "ARQX"
+    }
+  },
+  {
+    "id": "0x115621A7C92e589aE689A2b23fa38EaA75C64BDc",
+    "token0": {
+      "id": "0x39353a32ECeafE4979a8606512C046C3B6398CC4",
+      "symbol": "AIGPU"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x26D4Bb0EDb8f505eE25228a633040034b19ac4a9",
+    "token0": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    },
+    "token1": {
+      "id": "0xA5053C346f4759198bd6B64171db1Eff4CBA6331",
+      "symbol": "RFG"
+    }
+  },
+  {
+    "id": "0x7bE2C99F2289F98E6B84F21C4f3dBe05C2C33002",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xFaDb26Be94c1f959f900Bf88CD396b3E803481d6",
+      "symbol": "ESMX"
+    }
+  },
+  {
+    "id": "0x9c449D92b6Fcb8285b8175B8f9C5dc00F05B797C",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7D12aEb5d96d221071d176980D23c213d88d9998",
+      "symbol": "FCKN"
+    }
+  },
+  {
+    "id": "0x32b4Add9c71d1C034819dA2e1eBB9EA2D99195bD",
+    "token0": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    },
+    "token1": {
+      "id": "0x99FD6b95BeF16079398426f94F9fACa4d7570C61",
+      "symbol": "AEGNT"
+    }
+  },
+  {
+    "id": "0x09E98D1aacE718A5e4C1Dd7c6eB48E98CBaA05ed",
+    "token0": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    },
+    "token1": {
+      "id": "0xe2c86869216aC578bd62a4b8313770d9EE359A05",
+      "symbol": "EMT"
+    }
+  },
+  {
+    "id": "0x6183e613DDA1fa146c90bE6E1757AEf15baCAd9d",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x917F39Bb33B2483Dd19546b1E8D2f09ce481ee44",
+      "symbol": "PKT"
+    }
+  },
+  {
+    "id": "0x110751CBF035862f59A10528DD54b9Ac2b048906",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xdfBEA88C4842d30c26669602888d746D30F9D60d",
+      "symbol": "CAW"
+    }
+  },
+  {
+    "id": "0x1668aFFef786eD3Ba75ae293D73caEeEE9dBA992",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD1D7aa941c71Fd95E9d31bBd81937B3E71Bd6231",
+      "symbol": "ORCL"
+    }
+  },
+  {
+    "id": "0x9E6A565C2322f8646F2653352e771738A0EE75a3",
+    "token0": {
+      "id": "0x0A953Dd9Fc813feFaf6015b804c9dFA0624690C0",
+      "symbol": "COPI"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x75AecdEE325443441EAA8b2d159fcAA4d851C57e",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4D1647162c517656Db1434FdfcBeaA8a8f4C4AA0",
+      "symbol": "Integer"
+    }
+  },
+  {
+    "id": "0x38Cc6A1ee91d659eEEB859bd1ed852786c83F172",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x885129e35D247b01C4485Ef6B48564d0Ebc8C362",
+      "symbol": "Brett2.0"
+    }
+  },
+  {
+    "id": "0xD5a4DB4C5c7a0E2f7e539Be9c91786e21b425C96",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x860E7C04a066a31E86750521C30F854F4f08D178",
+      "symbol": "FUCK"
+    }
+  },
+  {
+    "id": "0xcD3E65c4C84674f37c38C050162326A860a40136",
+    "token0": {
+      "id": "0x3159fB5589aCD6bf9f82eB0eFe8382ED55aED8fD",
+      "symbol": "APU"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xD2e0E4A9B962E33Ed6d86819DA6afCac2F7F6De6",
+    "token0": {
+      "id": "0x1D69C205416c683E3D0EFc93b76A78Ee7755945c",
+      "symbol": "boots"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x5F09cca82d5D57e3319226249fe4Bfea527c4c3C",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xC890EB927871660C7259F0DCAaF3d8a7CE5fA8C1",
+      "symbol": "GMB"
+    }
+  },
+  {
+    "id": "0x9faB202C753a2328d35B243473C03f6e0e1CE15A",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4366c1568fD6167eEe67d25EF6980Da38e3421BC",
+      "symbol": "HOPPY"
+    }
+  },
+  {
+    "id": "0x7ef7A6E5b577A1C630e42291c25bCA791d402493",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x6dba065721435cfCa05CAa508f3316B637861373",
+      "symbol": "MOJO"
+    }
+  },
+  {
+    "id": "0x649dA51282bE4c59a5Aa55660d969C788e065eF3",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xA1EBB0922a7F43DF50B34ad9Bf2F602F88aaB869",
+      "symbol": "TICKLE"
+    }
+  },
+  {
+    "id": "0x66e7d196ea4A155f4f83641427f361Fe38b95Fb6",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xA0a2e84f6f19C09a095d4a83Ac8dE5a32D303a13",
+      "symbol": "LILB"
+    }
+  },
+  {
+    "id": "0x46d41EE568822c985A49a2D5E9409DeaF4b5E846",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7A31512FB17BE839B24276C211E941932c9D20E1",
+      "symbol": "Nippy"
+    }
+  },
+  {
+    "id": "0x11FeCB4cE8D61Ac65Ba2f64FD46A50bff9190594",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xdd32659B1e7a6A6B3C6e96Cd8a4c936bCfea0607",
+      "symbol": "TRAI"
+    }
+  },
+  {
+    "id": "0xED1CBac44F00530facd9640Da2c5F33e0f8f369A",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xf3B44Ce27e7EAFc044502EBA5241987F5e4F41F5",
+      "symbol": "MAXMRKT"
+    }
+  },
+  {
+    "id": "0xf0C1997bAdcE2140713C535f8190E9768CbF8F4C",
+    "token0": {
+      "id": "0x2972F737450EBb29434d4102CAF0880c0e768292",
+      "symbol": "PPAI"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x9eF68F487D4df1fFB68DEDA8cB0c0Cb6429B46d0",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xa7296CeFaE8477a81e23230ca5D3a3d6f49D3764",
+      "symbol": "FIT"
+    }
+  },
+  {
+    "id": "0x05c50dD8b021E2566caf903DD83A41dD6d806D63",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x60222751504796934bDDee8218F9725F0c95D2c1",
+      "symbol": "SIMP"
+    }
+  },
+  {
+    "id": "0x290e8561FD5E5c6117d2480b08ab884383d7444c",
+    "token0": {
+      "id": "0x06A63c498eF95AD1fA4FfF841955e512b4B2198a",
+      "symbol": "GLUTEU"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x3d5691bb69141A8fC8C741997528f1DCd53f82a3",
+    "token0": {
+      "id": "0x2D130f6002ccDc14a93217D733280C4e7BbD7B77",
+      "symbol": "JUMP"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x191D67bCD98dD9EBe1673b0BC03eF9C5BC2c7578",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x99f6215FB8D4040D1DEb54F9f87A4D5dE21cad70",
+      "symbol": "Toad"
+    }
+  },
+  {
+    "id": "0xdAA760bA65629DE05FC7756DC25091AeEEE79067",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9aEB3ac3Ca6C5A7Df8147a4dfe08CBF49F6bfbBc",
+      "symbol": "WOLF"
+    }
+  },
+  {
+    "id": "0x0243D4A7feb4765BdD781582da3f5BB87f66dDdb",
+    "token0": {
+      "id": "0x2e13AF731404F92Ff62541185a0D8E7C7e98275d",
+      "symbol": "CAPITAL"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x9a8Cd658EaEB87d6647f67096F1dF57B5D1f87CB",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xc849418f46A25D302f55d25c40a82C99404E5245",
+      "symbol": "KIKI"
+    }
+  },
+  {
+    "id": "0x3111822d67e73EEC34AA5D2cc57207ecaE62d8F8",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE0152DB15014349D085985E879446bcAe5d53094",
+      "symbol": "SPX6900"
+    }
+  },
+  {
+    "id": "0xB903363906F130d58357128Cd5F7395ec3A72564",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xb0E87796380172f911214208df966a84CceAaf82",
+      "symbol": "DOM"
+    }
+  },
+  {
+    "id": "0x72566Ce6a1b9D9eEAC40df2c121f2f9D95a9B973",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xBF3A2340221B9Ead8Fe0B6a1b2990E6E00Dea092",
+      "symbol": "DYOR"
+    }
+  },
+  {
+    "id": "0x906591C15e6ea1b1536d93a3327b0eC16b24181F",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x8730B6234045bF4497e646Ef92F106894512d02d",
+      "symbol": "MLEM"
+    }
+  },
+  {
+    "id": "0x2e93a280ed023B6d2f1ac29e28b6Be6e45128eAB",
+    "token0": {
+      "id": "0x05f71ebe98Ba6a6FEe97108e3bD06FB2A5C20dE5",
+      "symbol": "CRAPPY"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xD63E2aAa8E623Fa89f7Ce56d6D8d99969008fdEA",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x53081b67c58E52097Dfd34A5DE1CCB0C5920aE3C",
+      "symbol": "BILLNYE"
+    }
+  },
+  {
+    "id": "0xC538f64A4a1c2c9531b2c2529d5Dc197A5E145E3",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xaD6DA69f50d6c0AD5d881BbF797256494D4B891F",
+      "symbol": "AGENTPUDGY"
+    }
+  },
+  {
+    "id": "0x64DAc9E04ADeA1FB5bD4EEc761f603F8745d95da",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xA604b11d42173b09aC3AbE25795213408bB30C49",
+      "symbol": "ANGEL"
+    }
+  },
+  {
+    "id": "0xd1c6C46D7ADeb66423eF90d66892691D9cE9DfdC",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7fe3434ee5cfdeb4d7D3CdAB346bbB06fB28b8Cd",
+      "symbol": "XAI79A"
+    }
+  },
+  {
+    "id": "0xe37F5Ceb45e6b0E49CE00fbcF7Afc9261404547c",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xB7Cfe05915Ef0c040c6ddE2007c9ddaB26259E04",
+      "symbol": "MOLLY"
+    }
+  },
+  {
+    "id": "0xAEa29F04538D6075EABD362D0628472CC1569F24",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7475fa4C36344F1D633964F02564f37162299194",
+      "symbol": "SHIBUSSY"
+    }
+  },
+  {
+    "id": "0x71803ABF5D4282c38319b48d83886b9D01b97E4c",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4d70f1058b73198F12a76C193AEf5Db5dD75BabD",
+      "symbol": "NOMAI"
+    }
+  },
+  {
+    "id": "0xc963242b71fcEA9a22B7422D1af223D08239B010",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x53Ae20D42e16626dc41c7842D9ce876358082370",
+      "symbol": "AIOS"
+    }
+  },
+  {
+    "id": "0xa854492182DcBDA450Bcd9ee04870818484dD8ad",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xC53Eb9eCc247465e2E1fb16B2EdE3A6446053170",
+      "symbol": "SAFUU"
+    }
+  },
+  {
+    "id": "0xF16EAF2801D9dEd435b7fc5F0ec78048C4142C3e",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xe3CF8dBcBDC9B220ddeaD0bD6342E245DAFF934d",
+      "symbol": "PIGGY"
+    }
+  },
+  {
+    "id": "0x79aBf9233738Cd6Cd8bA52de47c44f73e84d7019",
+    "token0": {
+      "id": "0x388E543a5A491E7B42e3fBcd127DD6812Ea02D0d",
+      "symbol": "$PILL"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xca77753a8F0F91986D3BBDa1e2B53dda04a8021b",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x58895dE44E9e4d61F9d96181363171B1300d141c",
+      "symbol": "deai"
+    }
+  },
+  {
+    "id": "0x124005aDdC9696368841b0Ea2E38Add85f07bCe1",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7A2C5e7788E55Ec0a7ba4aEeC5B3da322718Fb5e",
+      "symbol": "APU"
+    }
+  },
+  {
+    "id": "0x57d84E011CBd93075eF243341A91E9358E2bA2a3",
+    "token0": {
+      "id": "0x1D4731111bd2A50AB3DD5178574E6F3698270FfC",
+      "symbol": "DWA"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xAA6b86Fd7309a08B6Fd93bf6f3A0EE8B39EEbffD",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xd413485AA9Ca4f88419904255a2384F667dddCAB",
+      "symbol": "ELI5A"
+    }
+  },
+  {
+    "id": "0xe2A854784a575FDaCA862C57209fd2aFB4f6d7ac",
+    "token0": {
+      "id": "0x0B7056f5e82B254D93BD9A1C860ff069340f347f",
+      "symbol": "DOB"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xfF3C463326a28e3D7b9B4492cB61d47BAeAaEEf1",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x6Bc40d4099f9057b23aF309C08d935b890d7Adc0",
+      "symbol": "SNAIL"
+    }
+  },
+  {
+    "id": "0xD42D6DAF77A9519567e1E860b57Fcb3DE3B8171c",
+    "token0": {
+      "id": "0x022888411dd5C04F2245B5117d18a51C521f30c5",
+      "symbol": "MIRA"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x7EAe5Ec40a7fA04beB214F1017E207cc577aCe68",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE0f96F025EBB27950718ebd787b69c325CF045c0",
+      "symbol": "BANDIT"
+    }
+  },
+  {
+    "id": "0x92beA867aF23147429A0BE59273C9984641215db",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xcbfEA59fDf52274889AC77E0026C228a9e2B34A3",
+      "symbol": "AIOS"
+    }
+  },
+  {
+    "id": "0x3443040614B39C10F282573fC56552a54B17d093",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xd06a6370c232D3729340fd6953D9c92c400d14F5",
+      "symbol": "OFAC"
+    }
+  },
+  {
+    "id": "0xE4E9053C1288261f7914A46A179C16fce8823FB2",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x77e5d7872E8cB6a251e6D538EF468619172dF658",
+      "symbol": "$APP"
+    }
+  },
+  {
+    "id": "0x5ebEc6d8DEcF0113B6dB90EfC2Fc88d9926e4437",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9c94e82d8751F16953F9C86e13ED9cD0414e6E97",
+      "symbol": "VOLS"
+    }
+  },
+  {
+    "id": "0x66dcb4dFa7aE605F3AfD4dBE0d90f711a6E0d3bC",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xcB32aF13a5A526699B4Ca107551ffceEE0C41C4e",
+      "symbol": "PLATZY"
+    }
+  },
+  {
+    "id": "0x765c63910A8ebdFCeBbdF7b41d2D4aD505751369",
+    "token0": {
+      "id": "0x2dc90Fa3a0f178ba4beE16CAc5D6c9A5a7B4C6cB",
+      "symbol": "DRINK"
+    },
+    "token1": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    }
+  },
+  {
+    "id": "0x529e8F6aF8135956fB534765bEB747ED21dbeEac",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xB30D57aA5d73ac306619Cd8f367A10B46934FfF6",
+      "symbol": "BOTCHI"
+    }
+  },
+  {
+    "id": "0x6407D112Bf20ea15f98a25D4714961bd6D6D0377",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4398c398E5ac747E6D51bf1db1DAc346ca90Fee0",
+      "symbol": "WODS"
+    }
+  },
+  {
+    "id": "0xd9aC8b74596aF7B4BDc0F624Bb2336ec352A79dF",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x73fBD93bFDa83B111DdC092aa3a4ca77fD30d380",
+      "symbol": "SOPH"
+    }
+  },
+  {
+    "id": "0x4fBE3965e014b3F9612C21F7AB58E8733Ff145eB",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xa01b94751c3bbC1E1737d4A23Da2843A3D787b26",
+      "symbol": "LEGEND"
+    }
+  },
+  {
+    "id": "0x5028d3085F9E66F78a9892BA6C5d99506E3Aa474",
+    "token0": {
+      "id": "0x079EC2a32c1497ebaE2C7a19270D49Ed0b102ef4",
+      "symbol": "DUCK"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x78872Db1204f214FFe78b9e20DE2302067833616",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x835e336782A1D04db6eb44C44024650D18a138C2",
+      "symbol": "$BAGEL"
+    }
+  },
+  {
+    "id": "0x71C63371d482DC34900aC3b2fF7ce39fF8fE1585",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xaf95a225061777c49e273099F2D5D400344c64f9",
+      "symbol": "DRV"
+    }
+  },
+  {
+    "id": "0xe3B565E140840b92272537b926899aa3dc231d94",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xB22a712f18486Fe355D920a7EDAcfb02011E7bDc",
+      "symbol": "MXNA"
+    }
+  },
+  {
+    "id": "0xD09de8eD4548dF0E3306a6de8a0f6aaa0B452112",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xDA71AC4304C08635e911E5A7e18A21b366f1a10c",
+      "symbol": "BTF"
+    }
+  },
+  {
+    "id": "0x28E1e9D730ea14d42948a6984E2389DaFCa2c819",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x67CA3444C44dB2c74b5Ca33d810859fbA1993847",
+      "symbol": "BUGZ"
+    }
+  },
+  {
+    "id": "0xCD7A1F6cdc75eA4826D1418046dfC480f202Eb72",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x95017e6f16375e63E5cB4D3a5fbF3C40775B08f4",
+      "symbol": "CATCH"
+    }
+  },
+  {
+    "id": "0x9d164cF86c6B2aBFA6D09b7C6cB70BE972E9587C",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xd9fC113C13e6c1A5b6f37d6877B24Ac5Ba667e74",
+      "symbol": "MXNA"
+    }
+  },
+  {
+    "id": "0x565906045623DE69Eb3Ec2a143FE79f29D81c1f1",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xAC274dE24cF467577006C3fa2267DD7a8376550E",
+      "symbol": "LEGEND"
+    }
+  },
+  {
+    "id": "0x33d61b12969D56595FA9D51ED841Cd9FDd265F3A",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x988A17d9Ef5683DC125DE54ae4CD217C4C26454F",
+      "symbol": "APED"
+    }
+  },
+  {
+    "id": "0x8662eFfcE405e69300ae39957343081a33B8Cc1A",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xcFfF04853b9c79d0d7b368F654ae99a799200adF",
+      "symbol": "MUCH"
+    }
+  },
+  {
+    "id": "0x23f1888C624e3789Ad0C5AAB3a0fbfa7e1AB2C9D",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7B72BF38B06969a0989cb4FF8888484F4fc59883",
+      "symbol": "RSGP"
+    }
+  },
+  {
+    "id": "0x7D782E66ca24D01703E2c4ccc8305Ba155cc5D47",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xcD5D8cAcd9222075a24f6E80ADA93882202fe0f6",
+      "symbol": "AGENT2025"
+    }
+  },
+  {
+    "id": "0xdAAA319101419DCfF275D507ef808a78f9230bc9",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x63Eb9F3a748C7814Bd004bb747E50B1220576Bf8",
+      "symbol": "GIGA"
+    }
+  },
+  {
+    "id": "0x31919c997087E565cB652f644CFf98b013Dae5a6",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x755C4Cc720911C0a7Eb3167C103F2b91f32e6556",
+      "symbol": "INSIGHTFUL"
+    }
+  },
+  {
+    "id": "0xf2f94D4EE41D8F974DD43Ec5d8edF9Cf73358842",
+    "token0": {
+      "id": "0x3942caE8bb9FC8f24Fe627B30b6E7461E5662BA7",
+      "symbol": "BAILEY"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xC4a0ca9bd929000333bf339c26a913c62f0E1439",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x52E0D3c27CC9e3607C1Ca7914b9049bE3d5e9C41",
+      "symbol": "BLU"
+    }
+  },
+  {
+    "id": "0xb46d8710d74B64EFD7d8Ee1886EAf555A1E7745f",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9fD2Ef06A72e4Af4A381Ff007F84557F089fb58A",
+      "symbol": "XAI320K"
+    }
+  },
+  {
+    "id": "0xe15dd03bF821460E22201e21Fcc42632bADD07C7",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9420f5aF067A9cE4AE1704C1a8796945e7074730",
+      "symbol": "CATG"
+    }
+  },
+  {
+    "id": "0xCF21f3c6d26f008Bcdda6b558a394f75af3407E8",
+    "token0": {
+      "id": "0x19b50C63d3d7F7a22308CB0fC8D41B66fF9C318a",
+      "symbol": "GPX"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x87b4D068b254A4323bda58A1021970143Ff5f268",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x637CA2cfa168f97Caf0730D6c6012c10f49839fa",
+      "symbol": "GM"
+    }
+  },
+  {
+    "id": "0x6E40339466E045258e4Bc7AFDc1cb3D8DB66dEE4",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x70C620E55Fb2333078Cc34B711EEB58a99617b6d",
+      "symbol": "Stonks "
+    }
+  },
+  {
+    "id": "0x5Ab4B9E96aeEd4820e4bE267f42411d722985482",
+    "token0": {
+      "id": "0x060cb087a9730E13aa191f31A6d86bFF8DfcdCC0",
+      "symbol": "OHM"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xA39Ba2AB06A447bC7A07F5e140778e0ecdf266E2",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9c6f6112a69109D0869902FAAdEE471d6F93e4E4",
+      "symbol": "Batcat"
+    }
+  },
+  {
+    "id": "0x9B73233b0618b910098DF93F4c37b64D6c5c405F",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x488542C2320F20D65405a1C03DA769Bc124F9A28",
+      "symbol": "DOGA"
+    }
+  },
+  {
+    "id": "0xe26301c513e87fF722f773cFC1abc4aA061B58b5",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xeE8E1bEe0Bd6D5A35f97178fA70587c4Dc4CB2dE",
+      "symbol": "XAI30A"
+    }
+  },
+  {
+    "id": "0x49165F21633cDC791e0F4b19A7f9806A3727E9b5",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x9ef1139e6B420cc929Dd912a5a7Adeced6f12e91",
+      "symbol": "FORCE"
+    }
+  },
+  {
+    "id": "0x54A7895080582968F642FB49515b2C328a0784c6",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE15279d11937733639354ac7f7cdc7BE1b92DFc8",
+      "symbol": "DATAFI"
+    }
+  },
+  {
+    "id": "0xddc4037218FfA8d0B3f569AfeC2fdCEF76b8d381",
+    "token0": {
+      "id": "0x2659631CfBE9B1b6DcBc1384a3864509356E7B4d",
+      "symbol": "RDX"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xa102fbF3e482EA452f9e421403eCdC982B0867C9",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xf5C83eA805e5aeFf5De24C7Da23eF246C2BF8Ec7",
+      "symbol": "MONSTA"
+    }
+  },
+  {
+    "id": "0x92d78CD23278EED792D33405bC47ef5681228B6C",
+    "token0": {
+      "id": "0x057620ccD4a75AAAE9D891156bd2E4a089ED1C0E",
+      "symbol": "BAPE"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x88dAf9cdcF78160eC340E8073C8Fa94CfF9CCa45",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4814bc5Ec9a62cC9dDb755cfb75c86c7916828c0",
+      "symbol": "ZEB"
+    }
+  },
+  {
+    "id": "0x5e8E7FC32Ad6c91F34B370D3415aa08744b02046",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x87a0233a8CB4392Ec3Eb8fA467817fC0b6a326DD",
+      "symbol": "CDS"
+    }
+  },
+  {
+    "id": "0xD958bb6F138aD8c0A1A7BAcA3f18E701fedbEB40",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x80f4d22Aa2437Fa0dd4634b505ac3668835D9B84",
+      "symbol": "TAOLOR"
+    }
+  },
+  {
+    "id": "0xa91BAAb2b37fC01695de05a15101061a213549EC",
+    "token0": {
+      "id": "0x000000000000a59351f61B598E8DA953b9e041Ec",
+      "symbol": "GG"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xF4f66222c8A06b0a1058CE20a31ba499A8C84915",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xB1F4Cb5721651aEFAF0e4eB07b516831c08b6605",
+      "symbol": "RB"
+    }
+  },
+  {
+    "id": "0xb7187a8FB591b08f07173c32c1157F38E2070197",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE0875AB85190cb1482EDC35EA7f2E53b01B809BC",
+      "symbol": "PIN "
+    }
+  },
+  {
+    "id": "0x1A8F47D8Ba1Ebdbc2a6C62D45f667e41Ea642502",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD033d559E816aBf1458B022F10e20bda65697e81",
+      "symbol": "XAI36K"
+    }
+  },
+  {
+    "id": "0xa629D48f0CA1a09E1151c3CA4a5bd85E723Bf83d",
+    "token0": {
+      "id": "0x59D1f22eCaF3b8320b494f0B3D4e1C9c8247945B",
+      "symbol": "KINDS"
+    },
+    "token1": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    }
+  },
+  {
+    "id": "0xB0fdBBfd50F5CFC4320D3FA01C97Da6F4cb8477E",
+    "token0": {
+      "id": "0x2A437eE7eBECabF84D5502Ec87dF97dC6f664345",
+      "symbol": "REAPER"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x785853dd3fcE93925F8474B18b7208F8509185e4",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xfaE89a7966d13195960459E6b483caCB9fE9cFCf",
+      "symbol": "BMONEY"
+    }
+  },
+  {
+    "id": "0x93a4BF659428aE3ca09984a3c3F7DF5a09726a4F",
+    "token0": {
+      "id": "0x051fb509e4A775FABd257611eeA1efaed8F91359",
+      "symbol": "CATE"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xeC44FE009197dFBB575e69FD19c67b5944bFCD9b",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x5CC7e54a3B98973546d8C5e66A33e35545bf2Ff7",
+      "symbol": "CALL"
+    }
+  },
+  {
+    "id": "0xF63A831738176f0Aa836f4B4ac95CcF55E91c4C7",
+    "token0": {
+      "id": "0x24914CB6BD01E6a0CF2a9c0478e33c25926e6a0c",
+      "symbol": "BOTTO"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x602bF848439c74c621856cD030Fc832874183785",
+    "token0": {
+      "id": "0x0a394fF2954e6fD82d508b57015E306F3ED76462",
+      "symbol": "MIZUKI"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x023fF4C2dA615D0C7E02B3C6Ab172eA48e3223cD",
+    "token0": {
+      "id": "0x355F7292b03A6849Bebab7329764F108eb28E66e",
+      "symbol": "DELTA"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x868E8995F4375508F52A3f45856079E049439f5b",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x91792f96D2eF065486E31a3AB06726AB03f8194F",
+      "symbol": "BDAG"
+    }
+  },
+  {
+    "id": "0x3CB11Cd6ff2b3820bAa83488B2a21F3f60432953",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xC2712e902253AC0fDa017F861ca4130c0863fd1E",
+      "symbol": "SAKE"
+    }
+  },
+  {
+    "id": "0xeEaf57FDc362f822C5265Cda31526fb5b67fcb93",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD81cb23A4690f7fdF54E583F221D2c01882604f8",
+      "symbol": "MDOGAI"
+    }
+  },
+  {
+    "id": "0x668c54A7B18DF6e8cf7ECa2C359D529638484366",
+    "token0": {
+      "id": "0x1cE0AB3B2B1a4e48C5D8B43848f639a49Cd025e2",
+      "symbol": "KEYEYES"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x0B5147c0A3D7E94834A982693368D2c588B426Ba",
+    "token0": {
+      "id": "0x3203856eaC03d343f9d5245BA2F39861838A7B36",
+      "symbol": "AVI"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x7863E6227368716435CfB10855D5d07F631678b1",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xC1d5892e28ea1C5eCd9fAc7771b9D06802F321e0",
+      "symbol": "FUNDED"
+    }
+  },
+  {
+    "id": "0xfb556198Bf77c7014bf559745517860c154555B7",
+    "token0": {
+      "id": "0x31ea904A7eca45122890dEb8dA3473A2081bc9d1",
+      "symbol": "BAI"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x4A3965EA752D1a946e5df41241ED9ac14Aa7B020",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4cfd8BEfDcD6bFc146FE214FA4b5Bbe731a9c269",
+      "symbol": "BITZ"
+    }
+  },
+  {
+    "id": "0x4356dd25897d8a804a7C7af024D27229D21d3bef",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE4dA9889Db3d1987856e56da08Ec7e9F484f6434",
+      "symbol": "LAZY"
+    }
+  },
+  {
+    "id": "0x06310C1e2Dd9d0CDcFE0350ec6103d0297e56109",
+    "token0": {
+      "id": "0x03dbcB6240C8C6672dcAe204439f4cf68a782E0F",
+      "symbol": "VARM"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x63276A5cfB2F37a0f32b3878A4270D4eAd5Bcbd3",
+    "token0": {
+      "id": "0x3d5e9F259b751e5dFE9f80375c249336Bf8a9a53",
+      "symbol": "MIKU"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xA07d3843E72a984AaeBB551A1Bee7d0782FCcB23",
+    "token0": {
+      "id": "0x220c6019203AaA7f14b5cD44A323446019609798",
+      "symbol": "SPORT"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x18f7A5CA328604cc80b6701c571A382a9b776992",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x75394E89b51Ba2AC4DaA1681bD4201fE758818E3",
+      "symbol": "CANNABISAI"
+    }
+  },
+  {
+    "id": "0x0530A2F0EB83F67a5323DBc6F63791DCf4E37922",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xA1943558852722c9fCf4EC301a760Fe2F1Cf8DBB",
+      "symbol": "BB"
+    }
+  },
+  {
+    "id": "0x85fB2159BA3382150db9f922b47Df0da560Df3c3",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x480eeA829E2Bf64Edce65CC80A00006a1Eb8EA44",
+      "symbol": "AGE"
+    }
+  },
+  {
+    "id": "0x8b177b39E1b1523B1668500fA39A3440321A0fAC",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x46D8f8Ba030c1D09ae17d2B5107dfef4B331fe0d",
+      "symbol": "BOMI"
+    }
+  },
+  {
+    "id": "0xfa38F2910D3f0736a7fDDC37917aFC24139326eA",
+    "token0": {
+      "id": "0x31C602cEB8B14447bFeC193dE7d3E28596cD1BF1",
+      "symbol": "DRV"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xd841DFA394583Ba67AcFaC7E9468A64584F2C755",
+    "token0": {
+      "id": "0x27F220e66ACa73C7D770880356360eD3DbEF473b",
+      "symbol": "defai"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x2103E9510626F479222D9fCd8cfB265ACf90364E",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x88c3b9D2DbE8eaB571D38f57f7F69C581e3427C6",
+      "symbol": "SMF"
+    }
+  },
+  {
+    "id": "0x3b437Df6976FE99fD8f3327D81715b108EdeD85F",
+    "token0": {
+      "id": "0x35bfE9427d37cEc78ea1EB9fa922f12Ae8A32547",
+      "symbol": "ETHPrinter"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x4FD500963fc5fF74Fe483Ae62ac40F8Fc31e1fD4",
+    "token0": {
+      "id": "0x35C9e8D97F7e24349e56cd048b30D3EaE6Fd7Ff8",
+      "symbol": "$WeeDE"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x25a4967d03F92Abb4d631f221Cb3f300aF0f682B",
+    "token0": {
+      "id": "0x029C58A909fBe3d4BE85a24f414DDa923A3Fde0F",
+      "symbol": "IRA"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xFFd5EF0dCE4cC6b5412a2c84827cC633E70d9d53",
+    "token0": {
+      "id": "0x14778D9bB4B67332BC36C810C85B8b56de03f3Ba",
+      "symbol": "CHEF247"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xDc2E6c6Eb2650CB063d10A5B0ea2a4e4F5Ebe09D",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x88e9822965E39882839098EeF2E972E2Dd9Ce56D",
+      "symbol": "GmmF"
+    }
+  },
+  {
+    "id": "0x3e2cab55bEbF41719148b4e6b63F6644B18AE49c",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xf307e242BfE1EC1fF01a4Cef2fdaa81b10A52418",
+      "symbol": "FAME"
+    }
+  },
+  {
+    "id": "0x552e9B32B3b54f8a2c52f3CFe821Eb7410e4cB23",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xBE58fdA3Bcf03B6bbc821D1f0E6b764C86709227",
+      "symbol": "VFX"
+    }
+  },
+  {
+    "id": "0xe8e42Ee9098da758b79DB591aC500dcfaAd53751",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x663Ca4A6608ba72b07Badc02148E1E55f7Cdb51a",
+      "symbol": "MOON"
+    }
+  },
+  {
+    "id": "0x8b47071d2adB57c6516e09248D2de6CDb33D0125",
+    "token0": {
+      "id": "0x357655df177Fb0229DC8acA977114a420bf81799",
+      "symbol": "RFC"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x6c06049Bcb1366867A1F23c76aB46FFCB8f16cC9",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4BaE74C6a14b653C4b453d7ca6E61f79D09E5c71",
+      "symbol": "HKING"
+    }
+  },
+  {
+    "id": "0xA540259091fa6e58856B8D6ecAf1D22d8Fd69E08",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xfD43544c8e14F8feFA59FaCb71bc4aACD8160289",
+      "symbol": "TRUMP.AI"
+    }
+  },
+  {
+    "id": "0x043bA58ED1AE8ca90eb9f46056B980CB0fde119E",
+    "token0": {
+      "id": "0x16CEC756a0FcbA1d7ce95dF5A46406c469a9128a",
+      "symbol": "AWK"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x1dbAE09BC15bb5A8B9acf0955C8c917e9e7C69B4",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x8bF7ddd6161Fe755EBe4832BE09D4e0425a8D9Cc",
+      "symbol": "TIME"
+    }
+  },
+  {
+    "id": "0x4fE4a5F570B046e3704Acd72fef6c508a310D3aA",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+      "symbol": "cbBTC"
+    }
+  },
+  {
+    "id": "0xD09A1a0Df27fF6Ab06587673474cE69cC1941c89",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4b556f3a476b58be7F35DF77EdD68FbE5076F706",
+      "symbol": "MSS"
+    }
+  },
+  {
+    "id": "0x7Cb49ef2053C77437748cA71aB564f416E8ab3E3",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xF0d336E3A429596c924dd2723c0c4a0100A421Db",
+      "symbol": "LAUNCH"
+    }
+  },
+  {
+    "id": "0x97769014Ed14E0032fFB56c93AeAf239Ade21c53",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x99367d4464Bc5E7E5aCbc6581Da363FbE8a8142D",
+      "symbol": "TBR"
+    }
+  },
+  {
+    "id": "0xA3a8f4cffa93Ac4E88bB0c9263F6CBA58bfF3fb0",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x875Ee70143fca7d78E03EE6b13A2B0D68bE4af0c",
+      "symbol": "PAWTH"
+    }
+  },
+  {
+    "id": "0x97376bC2633518b7b334Cd66F2C9677f76c444B9",
+    "token0": {
+      "id": "0x3421cc14F0e3822Cf3B73C3a4BEC2A1023b8d9Cf",
+      "symbol": "Rebase"
+    },
+    "token1": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    }
+  },
+  {
+    "id": "0x2E1b633541c97cc15E69B8E798E9Ce6060f0Fbc1",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x78Cf8Da67C810999EDB4d79FAd545CA9674826FE",
+      "symbol": "KAPI"
+    }
+  },
+  {
+    "id": "0x7ec893E870981A073BFe871e417ce2745bc110C1",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x85513dEF97727a907cD3C64DBb3531F44B8E3dCA",
+      "symbol": "XAI54K"
+    }
+  },
+  {
+    "id": "0x76eFB4aC8029aAcC2d85F55f8361398935d68FD2",
+    "token0": {
+      "id": "0x36B9B84Bb8b676A756B105d3b32eFe8cF13895E4",
+      "symbol": "RESIST"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x3881d9352f5a99Aa058ECDe2724450C4F79a48D3",
+    "token0": {
+      "id": "0x0B4D676eEBf9bf99a70dA085E1D2381190F7D3bb",
+      "symbol": "Share"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xC2B4092e4Ee1c89975eb35AD799dD1069B5753B5",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xcA5c7a459bECAAC1f2b5eE28bB8A29875B1a37A6",
+      "symbol": "BIRB"
+    }
+  },
+  {
+    "id": "0x23D9A7278e3A339b26ba18f6aA0ed3A5D310d7be",
+    "token0": {
+      "id": "0x2C24Ff76e92aBF45121cA1e5b347f27dBA81e3b1",
+      "symbol": "CHONK"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xe6e75c04bA1BF04ce495A8A99bF39717DFf8b658",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x6Ce4DbA6B54d4995654C94bD48ea3b94836EA144",
+      "symbol": "SPIX"
+    }
+  },
+  {
+    "id": "0xaf6Ae67Cfd51368DB512109d44e938c7DB57bA0b",
+    "token0": {
+      "id": "0x3e176a1EAFC6dE7824301965887185E3408c76b6",
+      "symbol": "AGENT47"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xC37104AC41F480a99B9778c0602A0768bdAD6c24",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xe12019B1b6b63B50e245A3DbF71BCDCAF2F7E3f1",
+      "symbol": "WUKONG"
+    }
+  },
+  {
+    "id": "0x752d6c68c4abF226E6368dDA278af66b88522358",
+    "token0": {
+      "id": "0x0EC992f0E0E55aD23Eb7dB4CA738a48CE59a3079",
+      "symbol": "APE"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x50FEEb3c1188FE03994f43e6670847f1b70c4145",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x455797A9D1203d9ae67F8e99C52B7393eE30b271",
+      "symbol": "SOS"
+    }
+  },
+  {
+    "id": "0xfa1202aB7c77213079f601C919e51889cA897f38",
+    "token0": {
+      "id": "0x75f2231A289Ea35895246b21e9c6E5BbF5ce69ED",
+      "symbol": "ALT"
+    },
+    "token1": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    }
+  },
+  {
+    "id": "0xEB768991b3FD55f2aCD45C2682ac97951364d0Be",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x6a4e0F83D7882BcACFF89aaF6f60D24E13191E9F",
+      "symbol": "DBRO"
+    }
+  },
+  {
+    "id": "0xC4E19801488c771442d9C5f6A839Ce1243Cd7F6b",
+    "token0": {
+      "id": "0x24a2ef4b2adaA6624bfC4ADe4D27fa72F1373869",
+      "symbol": "XAI560K"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xc2564EbBC522769fB8ef8ed034032cB880CAb0c4",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x5BBBbb97bc6cE8f0C29B1e4433DE35cD0A3Ca9Db",
+      "symbol": "SAN"
+    }
+  },
+  {
+    "id": "0x3F2c9B75341832159F3835C85f5916f46E73739e",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xAf2401394BF9c4903b8E9Eb53AEd14817c120d46",
+      "symbol": "MrBased"
+    }
+  },
+  {
+    "id": "0xA86b619006F42dfCDa333d2F68eafeda5e7f6780",
+    "token0": {
+      "id": "0x00EF403ECb9FC75811d6869c6ca676770100da8d",
+      "symbol": "AI69SAKURA"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x9202d9931C6Edd84f8a7f528f114035e3A604d7d",
+    "token0": {
+      "id": "0x1843b798F45d79903555cB83317EA3495Cc3c7c4",
+      "symbol": "CHARLIE"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x40702A2525748bee6177EbbaCc084D8eC482f84A",
+    "token0": {
+      "id": "0x5D83673a4812d3748fCFBe3F8b312b14576f35ac",
+      "symbol": "OTHENTIC"
+    },
+    "token1": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    }
+  },
+  {
+    "id": "0xc4510dcC05C7371a3b91C0269D6b2237642e0F72",
+    "token0": {
+      "id": "0x67009eB16ff64d06b4F782b3c552b924B1D1bb93",
+      "symbol": "DSC"
+    },
+    "token1": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    }
+  },
+  {
+    "id": "0x9A7087AFdD84E6942416B8aD9D4934E8bda45b28",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xC9CDdBef3902f7036BC60e162D0Ab676e6cC6FE7",
+      "symbol": "SCI"
+    }
+  },
+  {
+    "id": "0x885825326B269cF9006Ca6a50f8413A8b6b212f0",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x7040f6027345F9a8c76F34C0eA242110E3C5DaA0",
+      "symbol": "$Bunni"
+    }
+  },
+  {
+    "id": "0x7EFA346C545cE1b20A970626E54F2F6DEE9a81Dd",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x422014D7842D7d93A397354902A5223cD22bbBf0",
+      "symbol": "AIPUMP"
+    }
+  },
+  {
+    "id": "0xf5044d3B4931bB5754f55b37Aec25ecfF1E6c8DE",
+    "token0": {
+      "id": "0x122A3f185655847980639E8EdF0F0f66cd91C5fE",
+      "symbol": "FELLA"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x073f7324d7dF7033b29565CDF50bE2DAA94C8e29",
+    "token0": {
+      "id": "0x48808407d95f691D076C90337d42eE3836656990",
+      "symbol": "OFFICEX"
+    },
+    "token1": {
+      "id": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC"
+    }
+  },
+  {
+    "id": "0xf26802684F6BF22Dbdda67775e41b77De824CD19",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xc383D3319fbE268868DcDA5B0585CBD87d5ad73b",
+      "symbol": "AIBASE"
+    }
+  },
+  {
+    "id": "0xB4154e04E40479a14C01C55973Ba19ad55b1B4a1",
+    "token0": {
+      "id": "0x2345dDb58bD782886c1D88D459fA0229190860d7",
+      "symbol": "5SCAPE"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0xAB10D5A7ac73Db8bEb5fBba03555A86e7E20B2d2",
+    "token0": {
+      "id": "0x2E5ac640bfF6cD88E995d927CbD1252a0796AF44",
+      "symbol": "XAI21S"
+    },
+    "token1": {
+      "id": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+      "symbol": "USDbC"
+    }
+  },
+  {
+    "id": "0x8A57E773d2d1fe2eFD9f6ff085F5116f490B2e77",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xf81d3A3fc6198c7B9d0f69A1fd20E720254c5E3F",
+      "symbol": "$SKY"
+    }
+  },
+  {
+    "id": "0x1943915d76fcB7902736ae6faA7D8CFc34B474C8",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xCBc4828EDE98360148812e30fb936443dFd2445e",
+      "symbol": "ANTIGUA"
+    }
+  },
+  {
+    "id": "0xE3B843E88e8A94d28bB2e69a7fd966caD0315cee",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xfd2BF802569B7f122006E146DCdB1E207dD575D0",
+      "symbol": "SOAK"
+    }
+  },
+  {
+    "id": "0x765A0359bFC8908c4C91C735dA2A63e65d249Fea",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x77c6986a83D5DbB6162Ddf4f1747691005B4388a",
+      "symbol": "SHKK"
+    }
+  },
+  {
+    "id": "0x5B719Ae68D767FA7ceE09f607437C226A77E84F8",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xD6d358C63343E019730F5398D74cdd1accB6c683",
+      "symbol": "XAI41K"
+    }
+  },
+  {
+    "id": "0x9EDc0c33b47750215F0E3a49945dCbfB38828472",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0x4fB4168fda07eF0dA06Ec84cF187646077698A37",
+      "symbol": "ETT"
+    }
+  },
+  {
+    "id": "0xBF46f9FA52c18e5f09165f7970ecf9Ee11812123",
+    "token0": {
+      "id": "0xb665c4Bf620EEe956B3E874d05a41d7ff4D7d72C",
+      "symbol": "XAI36K"
+    },
+    "token1": {
+      "id": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+      "symbol": "USDbC"
+    }
+  },
+  {
+    "id": "0x0AE3b2401c87492B420630de515676B76a197e4d",
+    "token0": {
+      "id": "0x416d739B61D09d668F3849FF5E24e3012dA2Aa9f",
+      "symbol": "XAI515T"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    }
+  },
+  {
+    "id": "0x6A72954ecff56Ee699E38e49ddDb5661E4509632",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xECD8BCC95BE6aEBCae272eE388C9037b24Ab28dA",
+      "symbol": "GLE"
+    }
+  },
+  {
+    "id": "0x5dDD6b8D98539d2C1022aBF78110676F7fEf8d2e",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xC2419AbdaDa1A8FA91a8F076C2035bB046D417Ca",
+      "symbol": "XHS"
+    }
+  },
+  {
+    "id": "0xd253CC558A42685564fC3d01A1C4162a7e64c5a8",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE7cD2D0b81C036c1e643bDe299609B671418a6b0",
+      "symbol": "SHARBI"
+    }
+  },
+  {
+    "id": "0x8361e0FD714DA989874CCbF34175D64673B1B3D4",
+    "token0": {
+      "id": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE58b3AB1fB80304dE37a507A2449Fea64bF0B507",
+      "symbol": "VOY"
+    }
+  },
+  {
+    "id": "0xff5BBda63e87210eDd0aB9Bc424086589d92E0aF",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xcc0adB6C436eB1f65B2f27733Bf926691b94c5f1",
+      "symbol": "GUAN"
+    }
+  },
+  {
+    "id": "0xFCfD32784c1e95e2147c770Ec371f239AE2Ae527",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x7E74E0e4D58B3B5aC68af071BBd411f554e0A516",
+      "symbol": "BALDA"
+    }
+  },
+  {
+    "id": "0xFBabdFB96900A6413455a4603324fA066F7f8a74",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xCE1eAB31756A48915B7E7bb79C589835aAc6242d",
+      "symbol": "BRAIN"
+    }
+  },
+  {
+    "id": "0xfb6A142DC2Fb922130027C135326E165FE1A039c",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xF25B7DD973e30Dcf219fbED7bD336b9ab5A05DD9",
+      "symbol": "BRAINS"
+    }
+  },
+  {
+    "id": "0xfb2be279dCAFE6b5364e4C49A0A39aedf9c38ac7",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x79dacb99A8698052a9898E81Fdf883c29efb93cb",
+      "symbol": "ACOLYT"
+    }
+  },
+  {
+    "id": "0xfa7Cd154E7c16C136f4A35C32525b6fd551ee93b",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1D9550Cf289f950DC6B6Da7BD81E34f70163FF46",
+      "symbol": "ERISS"
+    }
+  },
+  {
+    "id": "0xFa65a76655F3C0641B79e89dE3f51459c3727823",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x511ef9Ad5E645E533D15DF605B4628e3D0d0Ff53",
+      "symbol": "VU"
+    }
+  },
+  {
+    "id": "0xf9E91661C101196146cB2Bf62f803d8eA6880A2E",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xf7b0dd0B642a6ccc2fc4d8FfE2BfFb0caC8C43C8",
+      "symbol": "GEKKO"
+    }
+  },
+  {
+    "id": "0xf79FA65619A65B819611BfDc1030660433d5dAed",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x838bf1B44640665A34035CE954E929C8Fbff594A",
+      "symbol": "AYAZ"
+    }
+  },
+  {
+    "id": "0xf777E9c107F9436c9A1bDA1030Ae078aDD7C6049",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xD4f5fabD1763Bbf52Bd3b17cD445DB6f9f836Bd4",
+      "symbol": "ISTAR"
+    }
+  },
+  {
+    "id": "0xF486Cd4E102bc11701dFAc2E1F6C12B59e4Eb79D",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x91273b316240879Fd902C0C3fCf7C0158777b42F",
+      "symbol": "OLYN"
+    }
+  },
+  {
+    "id": "0xf22521fD2fe43aA2a405fbdC1A02361eCa978eb2",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x4225658360C731a2b4c34555E45fea3b4b0181D5",
+      "symbol": "PORT"
+    }
+  },
+  {
+    "id": "0xF22482a194b7Df297599a8d05c418C4F36CbE560",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x504A26cf29674bC77A9341e73f88CCEcc864034c",
+      "symbol": "SYMP"
+    }
+  },
+  {
+    "id": "0xF21a78f9432901508EBfEFFA56dabb004484afB2",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xa087d75aE34e964B16aD3A059304913eD74945c7",
+      "symbol": "TASI"
+    }
+  },
+  {
+    "id": "0xeecf7F2899470e48d0Bc440Ca2B280900429654A",
+    "token0": {
+      "id": "0x08c81699F9a357a9F0d04A09b353576ca328d60D",
+      "symbol": "NFTXBT"
+    },
+    "token1": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    }
+  },
+  {
+    "id": "0xeE43bBB976A4f28cac5610ee965850d30451538b",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x89CD293538C2390992CDFb3520cFb136748CD9B9",
+      "symbol": "BARON"
+    }
+  },
+  {
+    "id": "0xEc5B59E25BfB7CBf8012Ec886D3c858dfb40B4B3",
+    "token0": {
+      "id": "0x077A32FdEF94dbB0Bdcf917450a9cAcF68ed236f",
+      "symbol": "LUMI"
+    },
+    "token1": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    }
+  },
+  {
+    "id": "0xebf20fc41834CB9f279D6566F937B64cce7a5F1b",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x6112b8714221bBd96AE0A0032A683E38B475d06C",
+      "symbol": "WAI"
+    }
+  },
+  {
+    "id": "0xEb0669D2622b840efF37E155eddd2AB3260C7940",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x80CA9EdCE4583B8043351A1046F18244b24eF869",
+      "symbol": "AVA"
+    }
+  },
+  {
+    "id": "0xEA6bDf7e9D7e840b0142b85ac53c49b3e1b84c7b",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xb58f9704c7a80D2775222F7Cb2eed28BEB9a06be",
+      "symbol": "OMNI"
+    }
+  },
+  {
+    "id": "0xe420fa6938DbedD0337CAeF90DB65D2B490E4b5d",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x40860F3cfb1ebF87079dA9dF6462D6056C5bd361",
+      "symbol": "RORONX"
+    }
+  },
+  {
+    "id": "0xe15653e619B2B7196be1E747d09b52C88683D539",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x5770350AAcf14aC444401Cb23520C26Cdcc818FC",
+      "symbol": "SISAI"
+    }
+  },
+  {
+    "id": "0xdEd72b40970af70720aDBc5127092f3152392273",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x5F6a682A58854C7fBE228712aEEFfcCDe0008Ac0",
+      "symbol": "SHEKEL"
+    }
+  },
+  {
+    "id": "0xDe40586745a4e21efC0e8E0073cDd431aE88876a",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x2676E4e0E2eB58D9Bdb5078358ff8A3a964CEdf5",
+      "symbol": "POLY"
+    }
+  },
+  {
+    "id": "0xdd47ea2268df00424927430a43BdD6d8a5720Ef1",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x6136494DB8A33707b2da36c2608994982EFA04C2",
+      "symbol": "PH"
+    }
+  },
+  {
+    "id": "0xDCf4354Caaf07AB649D4d6BB7727D03039c2eb74",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xC58D1c74d38b9bfdEFcBA851b225894d7AFCE556",
+      "symbol": "RUBYX"
+    }
+  },
+  {
+    "id": "0xdB2796Ea73985269AB9286D5187647D662d52719",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x3E99e0890eFd6c15a295eDBcCE82D63224fd6F60",
+      "symbol": "DXAI"
+    }
+  },
+  {
+    "id": "0xdB1311761c3413c8e38bcc4C9Cf581283eb615eD",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x2eac9B08A4D86F347B9E856fB3EC082e61c76545",
+      "symbol": "AIRENE"
+    }
+  },
+  {
+    "id": "0xd9436bDAaf364181F1a39bB4C5e0a307C7353a01",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x41e0fe1317Bd6E8944B037cd59b22D428c1434c2",
+      "symbol": "VIRTU "
+    }
+  },
+  {
+    "id": "0xd8c97c1202a2Dd1A0174a8F35dbCcb403Ccbb3F3",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xC841b4eaD3F70bE99472FFdB88E5c3C7aF6A481a",
+      "symbol": "TRUST"
+    }
+  },
+  {
+    "id": "0xd839d4a9a45BE3AAb0f2E381bD4C659bE7b9586F",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x0CDA9a9F898b0952e07ff32cBDfE94490FDBBfd3",
+      "symbol": "WWA"
+    }
+  },
+  {
+    "id": "0xD79BBe4DC9866446C0321bAa0A8A440042B3b702",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xBA1CC6E3f1c5F937497e4e196196E7535e6a8E63",
+      "symbol": "YMACH"
+    }
+  },
+  {
+    "id": "0xd77AC3869977890BB4F41243206C2e15645d6b69",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x625Bb9Bb04BdcA51871ed6D07e2DD9034E914631",
+      "symbol": "H4CK"
+    }
+  },
+  {
+    "id": "0xD72a82022134BA0d417c8D733139057e9bB9Ea3F",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xd0174292C4d6dfa7c4Ee20F371f3b6D401782cd5",
+      "symbol": "SAM"
+    }
+  },
+  {
+    "id": "0xD55F48D62CE2d3c98205f625155302C054F3B4CD",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x194DCdF6114ef7cf98409032DFd0efade47a1e48",
+      "symbol": "BEING"
+    }
+  },
+  {
+    "id": "0xd549f81a8Cb75B1783edF0ac6C3fc4b26272BfB4",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x4f81837C2f4A189A0B69370027cc2627d93785B4",
+      "symbol": "SERAPH"
+    }
+  },
+  {
+    "id": "0xD418dfE7670c21F682E041F34250c114DB5D7789",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1C4CcA7C5DB003824208aDDA61Bd749e55F463a3",
+      "symbol": "GAME"
+    }
+  },
+  {
+    "id": "0xd3dF296442DE56F6b3a6565Cd765073C444dCEb6",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xC8dB98437beD9943f11C5b31B645B07c0EfC17E0",
+      "symbol": "LEO"
+    }
+  },
+  {
+    "id": "0xD37A4d1ab7449e9B3148fff17659Ebf8f9Eb3194",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x36A1C2c49981c16464f5BdEb6B07A98307092216",
+      "symbol": "CAT"
+    }
+  },
+  {
+    "id": "0xd2A56E1408D9E923c966F3bF8d4a05deCEcA7572",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x38dF2C0357242FC99c0dd0356fA8Bb004bA0211A",
+      "symbol": "IDLY"
+    }
+  },
+  {
+    "id": "0xd2732189bCDcF500c392e21F916166F06D502D53",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x99298C6bE0e8ec9E56B7A2bE5850aBE1Fc109D94",
+      "symbol": "DEGENC"
+    }
+  },
+  {
+    "id": "0xd21c5375166715BEcDB01Fc1cd9AC1cD5593a27E",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xf404bC113f4fc7C2447CB2556dcF5a56e29fa2dd",
+      "symbol": "SCOOP"
+    }
+  },
+  {
+    "id": "0xd059DCE47dD853e71bd456a93A55FFEFD7AcA251",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xE74731ba9d1Da6Fd3C8c60Ff363732bebAc5273E",
+      "symbol": "MAICRO"
+    }
+  },
+  {
+    "id": "0xCeF84D17513edE0Ab951F7BE9829E638a20BfbA4",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xc655C331d1Aa7f96c252F1f40CE13D80eAc53504",
+      "symbol": "MUSIC"
+    }
+  },
+  {
+    "id": "0xcD6efB9c75c79449f5A0D689c5528154D162762e",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1A3e429D2D22149Cc61e0f539B112a227c844aa3",
+      "symbol": "LOKY"
+    }
+  },
+  {
+    "id": "0xcD6D4DEda5579e81401785387e9a5751b4be52c9",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x4661EB19A95cC62E1683b6a2687a8c5d8f790BE9",
+      "symbol": "KEIVN"
+    }
+  },
+  {
+    "id": "0xCD180F29612332254D646a54408B9f1DFd04a358",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1c8d2d30f8F994c091211b039C29A99DeFcAE522",
+      "symbol": "POC"
+    }
+  },
+  {
+    "id": "0xcc4D1F47E270B5F23Bd4bFa40E3a33A454F7f519",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xD9eA811a51D6fe491d27c2a0442b3F577852874d",
+      "symbol": "BOB"
+    }
+  },
+  {
+    "id": "0xc8ECacb92037e624500e70f30db52cC521763710",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x33c527361aB68b46A6669F82d25b704423CaE568",
+      "symbol": "ZENITH"
+    }
+  },
+  {
+    "id": "0xc8d41177c5a81390E955D06BE99520079B91ac9A",
+    "token0": {
+      "id": "0x06A63c498eF95AD1fA4FfF841955e512b4B2198a",
+      "symbol": "GLUTEU"
+    },
+    "token1": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    }
+  },
+  {
+    "id": "0xc5D0305435B1389EdAe6babd9260b1a5c19f1606",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x815269D17C10f0F3dF7249370E0c1B9efe781aa8",
+      "symbol": "SANTA"
+    }
+  },
+  {
+    "id": "0xc5aB575B4E0c4Da2317Ca2e6C5CF49E995Be3C55",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xb933D4FF5A0e7bFE6AB7Da72b5DCE2259030252f",
+      "symbol": "LEONAI"
+    }
+  },
+  {
+    "id": "0xC4BB445227c34Ceb0A0FF970a3e501BBEee8b68e",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x352b850b733ab8baB50aED1Dab5D22E3186ce984",
+      "symbol": "1000X"
+    }
+  },
+  {
+    "id": "0xc478FE6b9C768a50a007687c03768CbacE6c39D4",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xdaF3c78F165D26F821D3D39D6598a96E962b1508",
+      "symbol": "WEBSIM"
+    }
+  },
+  {
+    "id": "0xC46b07A9044b9c26A59807C0834FcCe8584a2637",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xf5f2a79eECcF6e7F4C570c803F529930e29cc96B",
+      "symbol": "CERTAI"
+    }
+  },
+  {
+    "id": "0xc3cD46c9dC6175327b01E1f709036727910401C5",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xFAC9Dd2e1253D6D574E93A1670aaf86729D8CF63",
+      "symbol": "SHASHA"
+    }
+  },
+  {
+    "id": "0xC3C6364718334e30aB4Bb01E42ae0B9607eCE819",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x776bc714752e33C95045250699c502cD2725615C",
+      "symbol": "MUSSEL"
+    }
+  },
+  {
+    "id": "0xc280E8039678754eedc7F2256098f8c362398ac3",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x39D24405cA717ef841e4a782da97284cf2Dc7628",
+      "symbol": "ZEEK"
+    }
+  },
+  {
+    "id": "0xC21660198521387E00d853c72f421a7E7Ee0b22f",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x356FB935990D6f3aD46651be9569bF6c42B3C14d",
+      "symbol": "DND"
+    }
+  },
+  {
+    "id": "0xc0c5277405A7E212d40749340Ce35E88d9895cFe",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x44E1c6bc3A4d2058Ee3f290Bcb27C4dA8c5B2E3E",
+      "symbol": "PEAGUY"
+    }
+  },
+  {
+    "id": "0xbF9b76085c4De0f39a899b4389bE6f29083525Ac",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xEf02D1558705AdBA6bDE85F7C8acDCBfd37d4bE3",
+      "symbol": "HTH"
+    }
+  },
+  {
+    "id": "0xBC2f889b48301DEA827C2e77AB78f8F1Be8A77fB",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x2D90785E30A9df6ccE329c0171CB8Ba0f4a5c17b",
+      "symbol": "BYTE"
+    }
+  },
+  {
+    "id": "0xbAd0d77D30a1De6546e2f5Eca5ba928fA5B05e7D",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x43c451d8102337CCf399b0f6EbF63837075D9689",
+      "symbol": "VERTEX"
+    }
+  },
+  {
+    "id": "0xba27a8A5dA46832b51F32Ade0A5a4A17737173a5",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x4152e26FE66547415579E6205Aa6DFfacbA920Af",
+      "symbol": "DTSI"
+    }
+  },
+  {
+    "id": "0xb9d782F2cFB755d47E2A5fa1350100c2CE3287eE",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x698B49063C14D2753D23064fF891A876cfFa6fb5",
+      "symbol": "NIKITA"
+    }
+  },
+  {
+    "id": "0xb9a5d1EB95Fd5311f8C6680A879DbEABdE004a45",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xB462ac0e0A7fa3F8D7c129cD8398FC1258cFEFb2",
+      "symbol": "DREAM"
+    }
+  },
+  {
+    "id": "0xB8c614c8b5e18e7Dd3bFd94E0a3279C8D19B2c5e",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x931eF8053E997b1Bab68d1E900a061305c0Ff4FB",
+      "symbol": "DOBI"
+    }
+  },
+  {
+    "id": "0xb6cFfCB74C0867e126CC3d2c1E3bF290AfF705D5",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x8d60dc144657aBD1e1EB6D448bfB8ECdFa7CaE8E",
+      "symbol": "KOLS"
+    }
+  },
+  {
+    "id": "0xb6909EE24358719dBCd47351C45ceA7b550B4f39",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1C5bb6156FDf1cA8d8d894Ecc0f1981619d2cDBa",
+      "symbol": "SAGE"
+    }
+  },
+  {
+    "id": "0xB60dA3B856Ea9D55828e8d08c10dA118856ade2c",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xd9DA0A693ea8057dCd97f02Df6c98951acF92EF7",
+      "symbol": "CPA"
+    }
+  },
+  {
+    "id": "0xB5884bB060bD657E538623bE2aec1F39A8e696ed",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xF79691B3B809053C581Be5D2151A1965451081EF",
+      "symbol": "PIXIE"
+    }
+  },
+  {
+    "id": "0xb51d276418fCF23733877Fb0629617667C78C831",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xB3e3c89B8D9c88B1fe96856E382959eE6291ebbA",
+      "symbol": "REKT"
+    }
+  },
+  {
+    "id": "0xB1DBFe07470C9F5C903FE1D85983942cCd2be65b",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x29531699b0e5b584B6A39b0cD57B3C27A6A09676",
+      "symbol": "JOSEPH"
+    }
+  },
+  {
+    "id": "0xB1c2Cbe4014A8a6353fd4c692D7C84e0C5C5169d",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x9CC8C9C88ba07Ce24D54597E174C4127C7995757",
+      "symbol": "R"
+    }
+  },
+  {
+    "id": "0xb1956bfC47665CAC7F186595b06B971c03A74aa2",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x9e271eC4D66F2b400Ad92De8a10e5c9C1914259C",
+      "symbol": "$UP"
+    }
+  },
+  {
+    "id": "0xb11B1113eFC5CD2F554cf9824304060905699228",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x2941D526E22406c5d6F273E281899Cfc042a7332",
+      "symbol": "KOGIN"
+    }
+  },
+  {
+    "id": "0xB036D38073CE3cAcbd26AB9000d3653dbb296Abe",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x8e3bFf1Abf376f7a5D036cC3D85766394744dd04",
+      "symbol": "POD"
+    }
+  },
+  {
+    "id": "0xAFcDE988536FF2d8B640d010bffb2A1ed62A3709",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xC4372fAE65823886F831EeD714CD9Cb6F77f6228",
+      "symbol": "BUZZD"
+    }
+  },
+  {
+    "id": "0xAe6570a61Df0e5D8C432e183b48242B95BF01813",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xD82eaB40ed2393Eb92974717B9c8683D5D5EAAe5",
+      "symbol": "CMC"
+    }
+  },
+  {
+    "id": "0xaD1b3f484ca3cf16ba88a822A1ACEcE467370441",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x2EfB2110F352fC98Cd39dC041887C41766dBb301",
+      "symbol": "CROW"
+    }
+  },
+  {
+    "id": "0xac6B8c99bcC5072Adc19D80d4d1fFE002Dc8F702",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x4bf3cCf7DA80751C0DB8272eD54E2932900563a2",
+      "symbol": "CITDEL"
+    }
+  },
+  {
+    "id": "0xAc534fc720feC7cd6b008765cd255074e0742152",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x4674F73545F1db4036250ff8C33A39ad1678D864",
+      "symbol": "SQDGN"
+    }
+  },
+  {
+    "id": "0xAB0542C52127eCF33d0624dA6BeF9d486E3621E4",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x2692A0E40CA0ffdA59DB033789FEbd568bE06a8e",
+      "symbol": "BOOBS"
+    }
+  },
+  {
+    "id": "0xa91374Cf610f3bbeC4C309b231599F1311dd4911",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xaB10E517f3138b17108B32129E8C8446AD44a267",
+      "symbol": "BTA"
+    }
+  },
+  {
+    "id": "0xa8e64FB120CE8796594670BAE72279C8aA1e5359",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x55cD6469F597452B5A7536e2CD98fDE4c1247ee4",
+      "symbol": "LUNA"
+    }
+  },
+  {
+    "id": "0xa8488AD91c0581c7C8788f6ea5d4B93d9C3AFC1f",
+    "token0": {
+      "id": "0x0700BC66bD64188ea01B8Cfaf6859b41087541a1",
+      "symbol": "MORAS"
+    },
+    "token1": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    }
+  },
+  {
+    "id": "0xA754F8b0e4b9B8F8e78ea4b1Ca252cC33a6D9606",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xCF67815ccE72E682Eb4429eCa46843bed81Ca739",
+      "symbol": "G3"
+    }
+  },
+  {
+    "id": "0xa5cEBaA747A19c925d34f13aB07158aA7e5B9a71",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x2Ce1340F1d402aE75aFEb55003d7491645dB1857",
+      "symbol": "WAGMI"
+    }
+  },
+  {
+    "id": "0xA4bdEAff5700178CA2e5cF1Fb8f17f7b292f614f",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xB34457736aA191fF423F84f5D669f68B231e6c4e",
+      "symbol": "AIDOGE"
+    }
+  },
+  {
+    "id": "0xa36b1785E620483a661DA098458BB44762638b00",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xe71E3c5c8cB925099DD94cC35943d6eE6b21ee0d",
+      "symbol": "SKICK"
+    }
+  },
+  {
+    "id": "0xa26386286184Ff08162E7013431cce3aCb4912Db",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xB7b4E8406673528E7dc3D787f3A42eb1Ebc01Cf6",
+      "symbol": "LMNL"
+    }
+  },
+  {
+    "id": "0xA1ddDB82501E8fe2d92Ad0E8Ba331313f501de72",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x731814e491571A2e9eE3c5b1F7f3b962eE8f4870",
+      "symbol": "VADER"
+    }
+  },
+  {
+    "id": "0xA0cB3Bc537aD05c1Ba37B31e087457CBd347B540",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xb18c609796848C723eAcaDC0BE5b71Ceb2289a48",
+      "symbol": "ATA"
+    }
+  },
+  {
+    "id": "0xA03952F2Ca09f26FCa521C96d610d2Dee385fbFc",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x27d7959CF26135d8019D0f1E4a2280a8A355c4f5",
+      "symbol": "LESTER"
+    }
+  },
+  {
+    "id": "0x9Fd4FD5a2456472D52eE0f06cdCe876C391D35DB",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x3B0430D8775858D37955c7EA976F42732EA3C240",
+      "symbol": "ELONMUSK"
+    }
+  },
+  {
+    "id": "0x9e046C706F9EA6cE8f9287d30a15438c07F42D64",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1185cB5122Edad199BdBC0cbd7a0457E448f23c7",
+      "symbol": "SEKOIA"
+    }
+  },
+  {
+    "id": "0x9d89c0cB73143927761534143747e26c47a1589F",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x49c86046903807d0a3193a221c1A3e1b1B6C9Ba3",
+      "symbol": "CYI"
+    }
+  },
+  {
+    "id": "0x9Cb669752130C4c66E89c1dAcf2Eb1AF9Ef50F05",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x7C3AF051bfA356b8EaEe35C273a21aD9223EE994",
+      "symbol": "J3FF"
+    }
+  },
+  {
+    "id": "0x96FC64caE162C1Cb288791280c3Eff2255c330a8",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x29e39327b5B1E500B87FC0fcAe3856CD8F96eD2a",
+      "symbol": "PAWSY"
+    }
+  },
+  {
+    "id": "0x9614b1eA284824d61BAd91FAc2cB4165aE28b446",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x0d91EbB16291873A0c67158f578ec249F4321b49",
+      "symbol": "AIV"
+    }
+  },
+  {
+    "id": "0x93D65A935e7C0f1aa153780e0Db3AD08b9448C89",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x7588880d9c78E81FAde7b7e8DC0781E95995a792",
+      "symbol": "SAINT"
+    }
+  },
+  {
+    "id": "0x932a65f4E1F12c969F0e0636097e094d69a89aC3",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xc796E499CC8f599A2a8280825d8BdA92F7a895e0",
+      "symbol": "BRO"
+    }
+  },
+  {
+    "id": "0x9082dD444cC69782E057105e1abBf835aEE9293B",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xabF7347db2caeA398AEB782BeBa624df92913FFD",
+      "symbol": "PRDCT"
+    }
+  },
+  {
+    "id": "0x90303be26C23d5C6f1ad264c193eb8AecFEe5c95",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x83AbFC4bEEC2ecf12995005d751a42df691c09c1",
+      "symbol": "H1DR4"
+    }
+  },
+  {
+    "id": "0x8ffd336d457ADA04a2d5112F8f0C1F1A84577F2f",
+    "token0": {
+      "id": "0x0b3AE50BaBE7FFa4E1A50569ceE6bDEFd4ccAeE0",
+      "symbol": "WIRE"
+    },
+    "token1": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    }
+  },
+  {
+    "id": "0x8fe8145564FB355De820a04d1D5cdd84c360ed14",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x919E43a2CcE006710090E64BDE9E01b38Fd7f32f",
+      "symbol": "AIYP"
+    }
+  },
+  {
+    "id": "0x8E6A3D89fb87Af555E994E609D19D2BdBC555e5c",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1a43287cBfCc5f35082e6E2Aa98e5B474FE7Bd4e",
+      "symbol": "ATHENA"
+    }
+  },
+  {
+    "id": "0x8d20C12E690db6beD5970f1D31872BF387fae743",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xCCdf2cBabFa37878125Ab2d20BFcb9328B7aB3cF",
+      "symbol": "$HOUND"
+    }
+  },
+  {
+    "id": "0x8Bc8ECBb70A39e34b88F78fbEd0b6882B5C6298e",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1371ef6153a681E4D2c8D9E20DeaB629aa06a8Dd",
+      "symbol": "EFI"
+    }
+  },
+  {
+    "id": "0x8B1fAFbB9Bc8D546Cb9C990474EE46eeB61AD1EF",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x84A9AAE8FCc085DBE11524F570716D89b772f430",
+      "symbol": "DTRXBT"
+    }
+  },
+  {
+    "id": "0x886Aa6f7dfEaA821d11746a8aB784697BC3D5A08",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x8adcec50A0595cB91ba5989d9a0844148c234539",
+      "symbol": "TRUMP"
+    }
+  },
+  {
+    "id": "0x863E3A73C604D5038D41e2512272a73585f70017",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x98f4779FcCb177A6D856dd1DfD78cd15B7cd2af5",
+      "symbol": "MISATO"
+    }
+  },
+  {
+    "id": "0x852b488F5291f6FFA4d8977E453244CED10dfb3E",
+    "token0": {
+      "id": "0x0aa9876C9cCf97be7Eed5C4ceE91d556bf7DBaC3",
+      "symbol": "REBELZ"
+    },
+    "token1": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    }
+  },
+  {
+    "id": "0x84e9f1AA69e5D447D2Ed75DA39DdE87EAa37dd3d",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x414562C94223A5C4Df9F278422F03228F35b8f7d",
+      "symbol": "VBEA"
+    }
+  },
+  {
+    "id": "0x849736a0bd70ce72A0802A09FCE8DA9e2718583F",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x76C71F1703Fbf19FFdcF3051E1e684Cb9934510f",
+      "symbol": "AIXCB"
+    }
+  },
+  {
+    "id": "0x8385C34D224Ba4656ccFFb4aafD9b09ABF75afEe",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x9DEA5e19c88243da6a4B17A79E374b78c9F6d7b2",
+      "symbol": "AIQ"
+    }
+  },
+  {
+    "id": "0x834C9F4A421c6bbD00B8853507F620D67856F777",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xe2816b27a5613B0Aaf5D6dafa80584156e2FB1B6",
+      "symbol": "JAIHOZ"
+    }
+  },
+  {
+    "id": "0x82A6999Ca8ab0dd8B12D955d17896B93E65e0EA1",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1Ca42c8C7C36c6A46a8217Ce9602AEcDa241Ef1b",
+      "symbol": "PROXY"
+    }
+  },
+  {
+    "id": "0x80F9c726aa1c7E2be1Da941B4cd62F9Fc5e30429",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x6C7ebB64E258F5712EEeC83CEaf41c3dcbb534B1",
+      "symbol": "VAIN"
+    }
+  },
+  {
+    "id": "0x80B1b642FB04f8402cA97C5dFd76DE9E3524d22d",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x5537A24aD7e8D68Aec165DCff6d2F8C23605417F",
+      "symbol": "EYE"
+    }
+  },
+  {
+    "id": "0x7D170Cb921B47e74C6DE6D2bb8EB463a5C9DF3C5",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x9bDE70Bad05b7D84dAc03024daE15aAce8C9CCa2",
+      "symbol": "lzSEILOR"
+    }
+  },
+  {
+    "id": "0x775A87e5D55043C32020664307D3c80AD9219D2A",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xAc1eb4C2396a4aBd606453E910B373D7e6D7cB5c",
+      "symbol": "$313"
+    }
+  },
+  {
+    "id": "0x7741621582FEef03fC0CAf5633c97F3b8C614265",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x7f2C169E3243dA4e03acD95a45fbaa96Aaeb2803",
+      "symbol": "CV3AI"
+    }
+  },
+  {
+    "id": "0x76C7883F1915Cdd5C789576DA55aef1ACE1A7c3D",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x7Bfa8edafe7109830a876373787FA5A9021C2f86",
+      "symbol": "CHEEKS"
+    }
+  },
+  {
+    "id": "0x76b2a3a7c30Ce87e6D0c9Bd44C1B8f76F4A45d3F",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x5C3d14cae00d4974C326E126ca94A92c21F99076",
+      "symbol": "GUARD"
+    }
+  },
+  {
+    "id": "0x75cf1180CEb1cbEf7508A4a4A0DE940E2dB4f087",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x39fEd555fF57CB1154bFA6B1a2492BB914cE2D9B",
+      "symbol": "ECHO"
+    }
+  },
+  {
+    "id": "0x74Ded84BfE50d55Bc13BC8796A2Ad6b7ae160726",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x2ACd6A246157bf51636D06A83200F8923E7Eb864",
+      "symbol": "NODE"
+    }
+  },
+  {
+    "id": "0x7464850CC1cFb54A2223229b77B1BCA2f888D946",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x4F9Fd6Be4a90f2620860d680c0d4d5Fb53d1A825",
+      "symbol": "AIXBT"
+    }
+  },
+  {
+    "id": "0x733BFcE923cD3E326917B6d52B9012665548beCe",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x3F12D4607f9DF527C3bccBD16a70636a69c8FcF5",
+      "symbol": "VOLTX"
+    }
+  },
+  {
+    "id": "0x725E0aE678E5d9bd97ef8F1B935B7F4420130839",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x8AAf9FA1ee649eADE46201394A9b8E06312F0F17",
+      "symbol": "BOOF"
+    }
+  },
+  {
+    "id": "0x70762cc9Ad8627B50366ba1D96f0581f1F29C462",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x0CBB9E3944cfb0e200ea58d259D2dC191f30115a",
+      "symbol": "ROBIE"
+    }
+  },
+  {
+    "id": "0x7039510F65c43cdb76b29D3451d0955731a1D787",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xf8f259389C1F29769e0388579D458Fb799489185",
+      "symbol": "ASTA"
+    }
+  },
+  {
+    "id": "0x6dB6986E1E7F0926bdD066dc8337Fb1E6463Fd34",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xBFEFd7A0eDa8a0feB06d0F52CF431AFd0F9b2Dd0",
+      "symbol": "WOKIE"
+    }
+  },
+  {
+    "id": "0x6D3d1535A5f5EF9e4607106E5Ea6fAf13d616F7D",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x10Ac13E54218470eED360D13a38c2bbAfACb6167",
+      "symbol": "POLLO"
+    }
+  },
+  {
+    "id": "0x69C1555e894D8E85d71b929687142148e123223B",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x6948de89F535ed4A3b07122Be0fE1Ae65d527c03",
+      "symbol": "ACTUAL"
+    }
+  },
+  {
+    "id": "0x692c41D7885770C2E2bfe5286a3b38dc2f834192",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x54eaf6Bb665565bb8897F9d7aD5B3818dEd143B4",
+      "symbol": "DGENAI"
+    }
+  },
+  {
+    "id": "0x674CEf1b650cAC454eF1c6F24cC2cD40cbA4275A",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xA0C6f5C608baE6D76c5151deEa9ce23bA0670E37",
+      "symbol": "DATE"
+    }
+  },
+  {
+    "id": "0x671fDf03b0998AC67Cd65d4f44CFA6F27B67abD8",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xc95E16f99267D6112eaDAA46140Bea095c8c7bA5",
+      "symbol": "EXMPLR"
+    }
+  },
+  {
+    "id": "0x6328877430D7EF03C854E1c79BE484d2ACbA7D21",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xebf7d4d84372F5DF1b5d0e3ddd889E5bC286B1c3",
+      "symbol": "FX"
+    }
+  },
+  {
+    "id": "0x62D7880efc804c5952375A582A8dfbB9998F2AbD",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x84993768bA82eBc6101a5440ea41be41310eA12f",
+      "symbol": "MXNBC"
+    }
+  },
+  {
+    "id": "0x61DA14220d1f8eA32b4410A16C1B529e0806205a",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1755FA20d78cbAc6Ff8c038a9b83E6fFE14695d8",
+      "symbol": "INTERN"
+    }
+  },
+  {
+    "id": "0x6045f729D4F7fE1957D147F0e40333636DAc59E0",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x17AD461285969fA8224bff519a7CC84461c27104",
+      "symbol": "AIPE"
+    }
+  },
+  {
+    "id": "0x5EDD25BebBD76B41914cE3F48bEBc6c53F0Cdd53",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x8C23e759cA0822BeEfF603BaCACeB16D84e9A1cF",
+      "symbol": "AAAI"
+    }
+  },
+  {
+    "id": "0x5c8b3Ae5c276D93afA04c2E304026B744DA900f8",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x5cf8338E74374EAB368784900D6AeCA460aFa9Aa",
+      "symbol": "GOTCHI"
+    }
+  },
+  {
+    "id": "0x59d794D86d054c2fd7323F0Bc180d5ab4f05e666",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x28A7fBc89616E620A9f58B949d67636244dF34CD",
+      "symbol": "JOKES"
+    }
+  },
+  {
+    "id": "0x53a4dD1eb0e48DC079bF44B4853b18ec5d89A315",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x4d70f1058b73198F12a76C193AEf5Db5dD75BabD",
+      "symbol": "NOMAI"
+    }
+  },
+  {
+    "id": "0x4FC190E4DC19c8fcA5e05534d664C0aC3Fa1AaC5",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x7A5f5CcD46EBd7aC30615836D988ca3BD57412b3",
+      "symbol": "TAOCAT"
+    }
+  },
+  {
+    "id": "0x4b595190691aeD7c0bC360056e7b5e4044DbE2bc",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x50d7A818E5e339ebE13b17E130B5B608fAC354DC",
+      "symbol": "VISION"
+    }
+  },
+  {
+    "id": "0x4a12584234a5Ab0F242265cE6E7e98fC6059744f",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x3058e9b4Bfe397b81e2b91dA79CFF685d662049f",
+      "symbol": "SPLOOT"
+    }
+  },
+  {
+    "id": "0x4a0646eDcb74f8F7B76F2680dEDAdEa969da1A5A",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xF04D220b8136E2d3d4BE08081Dbb565c3c302FfD",
+      "symbol": "FREYA"
+    }
+  },
+  {
+    "id": "0x49C0fB3F2949ebb21dDF8ddf97e1B20e38D1D822",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x47dE59BcEd9A641F1E335B080398D77B86316f90",
+      "symbol": "HER"
+    }
+  },
+  {
+    "id": "0x49B346e9b19320E91Cf67cd48b9abC3300cAB138",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xdCaA5E062b2be18E52eA6ED7ba232538621dDC10",
+      "symbol": "AURA"
+    }
+  },
+  {
+    "id": "0x486DaE9ACd594BD8E98F2b17c9251BCf13cA83a6",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xF1E2eac1d39A1306965e504877E06b601E7EC31d",
+      "symbol": "KEVAI"
+    }
+  },
+  {
+    "id": "0x47748675174dD108b3dCF31DDE256408D979e3c8",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xfD43544c8e14F8feFA59FaCb71bc4aACD8160289",
+      "symbol": "TRUMP.AI"
+    }
+  },
+  {
+    "id": "0x4327f92743575be1d9A921C98B4c238aD50B3F5f",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x3dc0d6dBAe3baD10C8166c87833c052084C5e8B4",
+      "symbol": "RING"
+    }
+  },
+  {
+    "id": "0x4319cDDa5Be02e6eC8AEb503c7A9632415200979",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xAF0aa8De89E3dBdaFe144aBcdDdAFa568a526299",
+      "symbol": "HADES"
+    }
+  },
+  {
+    "id": "0x4263C4c282af1bF4aC52E6Aa2D6297b4943b0374",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xac743B05f5E590D9Db6a4192E02457838e4Af61e",
+      "symbol": "CALLS"
+    }
+  },
+  {
+    "id": "0x4170c14B1207C4409488Be2216e4D308bDB38549",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xCa4C2E10037ac1AF9f501eCB11A710776c87d2d5",
+      "symbol": "SOVRN"
+    }
+  },
+  {
+    "id": "0x408658a695f81d42f8f4ca15B700F939215B8264",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xA720777acB870De5395cD5888b3cD8fB763E74D2",
+      "symbol": "MOLLY"
+    }
+  },
+  {
+    "id": "0x3FE11EE69cc0235fcB1Ad7Aa2AE4460F638d2006",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1ACa6687a9665Fb84DEb7E3801E8e7EcbA6ec6dE",
+      "symbol": "RAIN"
+    }
+  },
+  {
+    "id": "0x3eA7fcbAA5b0C6a9C5c4eFECF0d4b8495A26F91D",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x15FAD085B091c2dbc594F5D2320f35734939Ae6c",
+      "symbol": "DOC"
+    }
+  },
+  {
+    "id": "0x3b9DdaD7459fDFcFDb7117D53301182dD46b7042",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x9a26F5433671751C3276a065f57e5a02D2817973",
+      "symbol": "KEYCAT"
+    }
+  },
+  {
+    "id": "0x3AAF50ED8c9F7Cf5f5E936647e2202D8DB93D6e1",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x784c5e60F13D201542BAd099d4e1f84d53f2B6C0",
+      "symbol": "KASU"
+    }
+  },
+  {
+    "id": "0x368ea6F645DeB6D1a8692fE93C550D2834150865",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xAC1Bd2486aAf3B5C0fc3Fd868558b082a531B2B4",
+      "symbol": "TOSHI"
+    }
+  },
+  {
+    "id": "0x366fa4f64e8Ff46af876191471c4a5Ec2b97f010",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x949e2130A6f9f24B95D023AA8089c8CAA446ea05",
+      "symbol": "ZILL"
+    }
+  },
+  {
+    "id": "0x36545F9123a356Faa3e0F3728F1e0c416814580a",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x1E2093AB84768948C6176DB5aD98C909ce97F368",
+      "symbol": "DORA"
+    }
+  },
+  {
+    "id": "0x35Ea8F549eD11877a724C8c8025FE595Be12625F",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x7D0d1e23bBb6fF6E23F32E601680A1Ed7D537424",
+      "symbol": "HERAC"
+    }
+  },
+  {
+    "id": "0x34d052aB9E7361241ACbbB7307B214d94715Af4F",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x81Da7D43dc6C4DEe37F002eC90013e538fBB75Fd",
+      "symbol": "PIXEL"
+    }
+  },
+  {
+    "id": "0x33c93c0BcAb88270F96Aec7651f6c03d3b7b8A73",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x658C7c48c311CD8A14A8D4b2845AA846391aB402",
+      "symbol": "SYMMA"
+    }
+  },
+  {
+    "id": "0x3268d7eFA254E648Ffe968664E47Ca226E27CD04",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xab964f7b7b6391bd6c4e8512eF00d01f255d9c0D",
+      "symbol": "CONVO"
+    }
+  },
+  {
+    "id": "0x3160040975F3d76B64B77a35197f93f23E62b5C7",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x8feeF9f0fFa554e51220A3391e7bb7560526a72A",
+      "symbol": "SAGE "
+    }
+  },
+  {
+    "id": "0x2DAcA71FD30E50ced479e24409F49378b2a2E597",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0x645C7Aa841087E2e7f741C749aB27422fF5BbA8E",
+      "symbol": "IONA"
+    }
+  },
+  {
+    "id": "0x2D7794534eCBa0f6D4A75eC6eED5e9c794262B6c",
+    "token0": {
+      "id": "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+      "symbol": "VIRTUAL"
+    },
+    "token1": {
+      "id": "0xb85F486B15812cc63e293D0Bf31E0642d2E3F96D",
+      "symbol": "MIRA"
+    }
+  }
+]

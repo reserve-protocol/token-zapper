@@ -3,6 +3,7 @@ import { type Universe } from '../Universe'
 import { makeConfig } from './ChainConfiguration'
 
 import deployments from '../contracts/deployments.json'
+import { GAS_TOKEN_ADDRESS } from '../base/constants'
 
 const baseDeployments = deployments[8453][0]
 
@@ -14,6 +15,7 @@ export const COMMON_TOKENS = {
   USDC: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   USDbC: '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA',
   DAI: '0x50c5725949a6f0c72e6c4a641f24049a917db0cb',
+  ETH: GAS_TOKEN_ADDRESS,
   WETH: '0x4200000000000000000000000000000000000006',
   ERC20GAS: '0x4200000000000000000000000000000000000006',
   cbETH: '0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22',

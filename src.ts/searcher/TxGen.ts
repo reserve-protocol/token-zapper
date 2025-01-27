@@ -81,7 +81,7 @@ const evaluateProgram = async (
   if (universe.config.useNewZapperContract) {
     const p = encodeZapParamsStruct(
       planner,
-      inputs[0],
+      opts.ethereumInput ? inputs[0].into(universe.nativeToken) : inputs[0],
       outputTokenAddress,
       minOutput,
       dustTokens,

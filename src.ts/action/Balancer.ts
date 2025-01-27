@@ -251,6 +251,11 @@ export class BalancerSwap extends BaseAction {
   public get isTrade(): boolean {
     return true
   }
+
+  public async balances(universe: Universe) {
+    const bal = await this.context.getPoolBalance(this.pool)
+    return [bal[this.tokenInIndex], bal[this.tokenOutIndex]]
+  }
   public async liquidity(): Promise<number> {
     return await this.context
       .getPoolLiquidity(this.pool)

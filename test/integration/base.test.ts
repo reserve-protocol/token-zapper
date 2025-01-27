@@ -6,6 +6,7 @@ import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulat
 import {
   Address,
   baseConfig,
+  BaseUniverse,
   setupBaseZapper,
   TokenQuantity,
   Universe,
@@ -22,6 +23,7 @@ import {
 } from '../../src.ts/configuration/ChainConfiguration'
 import { getProvider } from './providerUtils'
 import { ONE } from '../../src.ts/action/Action'
+import { bestPath } from '../../src.ts/exchange-graph/BFS'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -109,9 +111,10 @@ const issueanceCases = [
   // makeTestCase(10000, t.USDC, rTokens.hyUSD),
   // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
   // makeTestCase(10000, t.DAI, rTokens.hyUSD),
-  makeTestCase(5, t.WETH, rTokens.hyUSD),
+  // makeTestCase(5, t.WETH, rTokens.hyUSD),
 
-  // makeTestCase(50, t.WETH, rTokens.BSDX),
+  makeTestCase(10, t.ETH, rTokens.BSDX),
+  // makeTestCase(10, t.WETH, rTokens.BSDX),
 ]
 
 const redeemCases = [
@@ -226,7 +229,7 @@ const zapIntoYieldPositionCases: ReturnType<
   typeof makeZapIntoYieldPositionTestCase
 >[] = []
 
-let universe: Universe
+let universe: BaseUniverse
 const provider = getProvider(
   process.env.BASE_PROVIDER!,
   process.env.THROTTLE ? parseInt(process.env.THROTTLE, 10) : Infinity
@@ -313,6 +316,40 @@ describe('base zapper', () => {
       await provider.getBlockNumber(),
       (await provider.getGasPrice()).toBigInt()
     )
+  })
+
+  describe('path', () => {
+    it('test', async () => {
+      const input = universe.commonTokens.WETH.from(10.0)
+
+      const quote2 = await universe.dexLiquidtyPriceStore.getBestQuotePath(
+        input,
+        universe.commonTokens.Virtuals
+      )
+
+      for (const step of quote2.steps) {
+        console.log(`${step.input}`)
+        for (let i = 0; i < step.splits.length; i++) {
+          const action = step.actions[i]
+          const split = step.splits[i]
+          console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
+        }
+      }
+
+      const quote = await universe.dexLiquidtyPriceStore.getBestQuotePath(
+        input,
+        universe.commonTokens.VaderAI
+      )
+
+      for (const step of quote.steps) {
+        console.log(`${step.input}`)
+        for (let i = 0; i < step.splits.length; i++) {
+          const action = step.actions[i]
+          const split = step.splits[i]
+          console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
+        }
+      }
+    }, 60000)
   })
 
   describe('folio', () => {

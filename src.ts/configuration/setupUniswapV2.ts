@@ -6,6 +6,7 @@ import {
   InteractionConvention,
 } from '../action/Action'
 import { Address } from '../base/Address'
+import fs from 'fs'
 import { Univ2SwapHelper, Univ2SwapHelper__factory } from '../contracts'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
@@ -33,8 +34,8 @@ const configs: Record<ChainId, IUniswapV2Config> = {
     univ2swap: deployments[8453][0].contracts.Univ2SwapHelper.address,
   },
 }
-const pages = 4
-const pageSize = 400
+const pages = 5
+const pageSize = 100
 const fallbackDataPoolLists: Record<number, any> = {
   1: [],
   8453: [],
@@ -47,7 +48,7 @@ const loadPools = `query GetPools(
   pairs(
     first: ${pageSize}
     skip: $skip,
-    where: {reserveUSD_gt:5000, reserveUSD_lt: 100000000000}
+    where: {reserveUSD_gt:50000, txCount_gt: 100, reserveUSD_lt: 100000000000}
     orderBy: volumeUSD
     orderDirection: desc
     block: {number: $block}
@@ -61,6 +62,33 @@ const loadPools = `query GetPools(
     }
   }
 }`
+
+const definePoolsFromData = async (
+  ctx: UniswapV2Context,
+  data: { id: string; token0: { id: string }; token1: { id: string } }[]
+) => {
+  return (
+    await Promise.all(
+      data.map(async (pool) => {
+        try {
+          const poolAddress = Address.from(pool.id)
+          if (ctx.pools.has(poolAddress)) {
+            return ctx.pools.get(poolAddress)
+          }
+          const token0 = await ctx.universe.getToken(
+            Address.from(pool.token0.id)
+          )
+          const token1 = await ctx.universe.getToken(
+            Address.from(pool.token1.id)
+          )
+          return await ctx.definePool(poolAddress, token0, token1)
+        } catch (e) {
+          return null
+        }
+      })
+    )
+  ).filter((p) => p != null)
+}
 
 const loadPoolsFromSubgraph = async (
   ctx: UniswapV2Context,
@@ -88,7 +116,7 @@ const loadPoolsFromSubgraph = async (
       headers: {
         'Content-Type': 'application/json',
       },
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(5000),
     })
     if (!response.ok) {
       console.log(
@@ -118,15 +146,7 @@ const loadPoolsFromSubgraph = async (
   }
 
   console.log(`UniV2: Loaded ${poolData.length} pools from subgraph`)
-  const pools = await Promise.all(
-    poolData.map(async (pool) => {
-      const poolAddress = Address.from(pool.id)
-      const token0 = await ctx.universe.getToken(Address.from(pool.token0.id))
-      const token1 = await ctx.universe.getToken(Address.from(pool.token1.id))
-      return await ctx.definePool(poolAddress, token0, token1)
-    })
-  )
-  return pools.filter((p) => p != null)
+  return await definePoolsFromData(ctx, poolData)
 }
 const loadPoolsFromSubgraphWithRetry = async (
   ctx: UniswapV2Context,
@@ -134,13 +154,13 @@ const loadPoolsFromSubgraphWithRetry = async (
   skip: number,
   block: number
 ) => {
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     try {
       return await loadPoolsFromSubgraph(ctx, subgraphId, skip, block)
     } catch (e) {
       console.log(`UniV2: Failed to load pools from subgraph: ${e}`)
     }
-    await wait(500)
+    await wait(250)
   }
   return []
 }
@@ -308,26 +328,61 @@ export const setupUniswapV2 = async (universe: Universe) => {
     Math.floor(currentBlock / (30 * 60 * 24 * 10)) * 30 * 60 * 24 * 10
 
   const loadUniPools = async (): Promise<UniswapV2Pool[]> => {
-    const pools = []
-    for (let i = 0; i < pages; i++) {
-      pools.push(
-        ...(await loadPoolsFromSubgraphWithRetry(
-          ctx,
-          config.subgraphId,
-          i * pageSize,
-          loadBlock
-        ))
-      )
-      await wait(500)
+    let pools: UniswapV2Pool[] = []
+
+    if (process.env.DEV) {
+      if (fs.existsSync(`src.ts/configuration/data/${chainId}/univ2.json`)) {
+        const data = fs.readFileSync(
+          `src.ts/configuration/data/${chainId}/univ2.json`,
+          'utf-8'
+        )
+        const poolData = JSON.parse(data)
+        pools = await definePoolsFromData(ctx, poolData)
+      }
     }
+    for (let i = Math.floor(pools.length / pageSize); i < pages; i++) {
+      const ps = await loadPoolsFromSubgraphWithRetry(
+        ctx,
+        config.subgraphId,
+        i * pageSize,
+        loadBlock
+      )
+      if (ps.length !== pageSize) {
+        break
+      }
+      pools.push(...ps)
+      await wait(250)
+    }
+
     return pools
   }
-  const allPools = (await Promise.all([loadUniPools()])).flat()
-
+  const allPools = await loadUniPools()
   for (const pool of allPools) {
     universe.addAction(pool.swap01)
     universe.addAction(pool.swap10)
   }
+
+  if (process.env.DEV) {
+    fs.writeFileSync(
+      `src.ts/configuration/data/${chainId}/univ2.json`,
+      JSON.stringify(
+        allPools.map((i) => ({
+          id: i.address.address,
+          token0: {
+            id: i.token0.address.address,
+            symbol: i.token0.symbol,
+          },
+          token1: {
+            id: i.token1.address.address,
+            symbol: i.token1.symbol,
+          },
+        })),
+        null,
+        2
+      )
+    )
+  }
+  console.log(`UniV2 ${allPools.length} pools loaded`)
 
   return ctx
 }

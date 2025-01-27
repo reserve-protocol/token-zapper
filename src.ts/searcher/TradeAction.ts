@@ -391,8 +391,8 @@ export const isWrappedAction = (
 }
 
 export const unwrapAction = (action: BaseAction): BaseAction => {
-  while (isWrappedAction(action)) {
-    action = action.wrapped
+  if (action instanceof WrappedAction) {
+    return action.wrapped
   }
   return action
 }

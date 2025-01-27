@@ -1,6 +1,6 @@
 import { BaseAction, type BaseAction as Action } from '../action/Action'
-import { Address } from '../base/Address'
-import { type Token } from '../entities/Token'
+import { TokenQuantity, type Token } from '../entities/Token'
+import { Queue } from '../searcher/Queue'
 import { SwapPlan } from '../searcher/Swap'
 import { type Universe } from '../Universe'
 import { type Graph } from './Graph'
@@ -152,6 +152,146 @@ export const mintPath = (
     steps.push(stepTokens)
   }
   return steps
+}
+
+type Node = {
+  previous: Node | null
+  token: Token
+  steps: number
+  action: BaseAction
+  legAmount: TokenQuantity[]
+}
+const getPath = (node: Node) => {
+  const path: Token[] = []
+  let current = node
+  while (true) {
+    path.push(current.token)
+    if (current.previous == null) {
+      break
+    }
+    current = current.previous
+  }
+  return path.reverse()
+}
+const getActions = (node: Node) => {
+  const actions: Action[] = []
+  let current = node
+  while (true) {
+    if (current.action != null) {
+      actions.push(current.action)
+    }
+    if (current.previous == null) {
+      break
+    }
+    current = current.previous
+  }
+  return actions.reverse()
+}
+const includes = (node: Node, token: Token) => {
+  let current = node
+  while (true) {
+    if (current.token === token) {
+      return true
+    }
+    if (current.previous == null) {
+      break
+    }
+    current = current.previous
+  }
+  return false
+}
+
+export const bestPath = async (
+  ctx: Universe,
+  start: TokenQuantity,
+  end: Token,
+  maxSteps: number
+) => {
+  const graph = ctx.graph
+  const result = new Map<
+    Token,
+    { path: Token[]; actions: Action[]; legAmount: TokenQuantity[] }
+  >()
+
+  const toVisit = new Queue<Node>()
+  toVisit.push({
+    previous: null,
+    steps: 1,
+    action: null as any,
+    token: start.token,
+    legAmount: [start],
+  })
+
+  while (!toVisit.isEmpty) {
+    const node = toVisit.pop()
+    const lastToken = node.token
+    let previous = result.get(lastToken)
+    if (previous == null) {
+      result.set(lastToken, {
+        path: getPath(node),
+        actions: getActions(node),
+        legAmount: node.legAmount,
+      })
+    } else {
+      if (previous.legAmount[0].amount < node.legAmount[0].amount) {
+        result.set(lastToken, {
+          path: getPath(node),
+          actions: getActions(node),
+          legAmount: node.legAmount,
+        })
+      } else {
+        continue
+      }
+    }
+    if (lastToken === end || node.steps >= maxSteps) {
+      continue
+    }
+    const vertex = graph.vertices.get(node.token)
+    await Promise.all(
+      [...vertex.outgoingEdges]
+        .filter(([nextToken]) => {
+          return !includes(node, nextToken)
+        })
+        .map(async ([nextToken, actions]) => {
+          if (nextToken !== end) {
+            if (graph.vertices.get(nextToken).outgoingEdges.size <= 1) {
+              return
+            }
+          }
+          await Promise.all(
+            actions
+              .filter((action) => action.is1to1)
+              .map(async (action) => {
+                try {
+                  if (action.isTrade) {
+                    const [inBal] = await action.balances(ctx)
+                    if (inBal.amount / 10n < node.legAmount[0].amount) {
+                      return
+                    }
+                  }
+                  const newLegAmount = await action.quote(node.legAmount)
+                  if (newLegAmount[0].token !== nextToken) {
+                    console.log(
+                      `newLegAmount[0].token !== nextToken ${newLegAmount[0].token} !== ${nextToken}`
+                    )
+                    console.log(action.inputToken.join(', '))
+                    console.log(action.outputToken.join(', '))
+                    return
+                  }
+                  toVisit.push({
+                    previous: node,
+                    token: nextToken,
+                    steps: node.steps + 1,
+                    legAmount: newLegAmount,
+                    action: action,
+                  })
+                } catch (e) {}
+              })
+          )
+        })
+    )
+  }
+  return result
 }
 
 export const shortestPath = (

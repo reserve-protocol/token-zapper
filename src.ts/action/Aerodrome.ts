@@ -338,27 +338,18 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
 
     this.quoteCache = this.pool.context.universe.createCache(
       async (amountIn: bigint) => {
-        try {
-          const outQuote =
-            await this.pool.context.mixedRouter.callStatic.quoteExactInputSingleV3(
-              {
-                tokenIn: this.input.address.address,
-                tokenOut: this.output.address.address,
-                amountIn: amountIn,
-                tickSpacing: this.pool.tickSpacing,
-                sqrtPriceLimitX96: 0,
-              }
-            )
-
-          return [this.output.from(outQuote.amountOut)]
-        } catch (e) {
-          console.log(
-            `Failed to quote ${this.inputToken[0].from(amountIn)} -> ${
-              this.pool
-            }  ${this.pool.address}`
+        const outQuote =
+          await this.pool.context.mixedRouter.callStatic.quoteExactInputSingleV3(
+            {
+              tokenIn: this.input.address.address,
+              tokenOut: this.output.address.address,
+              amountIn: amountIn,
+              tickSpacing: this.pool.tickSpacing,
+              sqrtPriceLimitX96: 0,
+            }
           )
-          throw e
-        }
+
+        return [this.output.from(outQuote.amountOut)]
       },
       12000
     )

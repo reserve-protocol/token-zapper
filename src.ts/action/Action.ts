@@ -217,6 +217,14 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
+  public async balances(universe: Universe) {
+    return await Promise.all(
+      [...this.inputToken, ...this.outputToken].map(async (token) => {
+        return universe.approvalsStore.queryBalance(token, this.address)
+      })
+    )
+  }
+
   public async liquidity(): Promise<number> {
     return Infinity
   }

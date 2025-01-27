@@ -1,59 +1,56 @@
 import { DefaultMap } from '../base/DefaultMap'
 import { Universe } from '../Universe'
 import { BaseAction } from '../action/Action'
-import { shortestPath } from '../exchange-graph/BFS'
+import { bestPath } from '../exchange-graph/BFS'
 import { Token, TokenQuantity } from '../entities/Token'
-import { wrapAction } from './TradeAction'
+import { unwrapAction, wrapAction } from './TradeAction'
 import { optimiseTradesInOutQty } from './optimiseTrades'
 
 export class DexLiquidtyPriceStore {
-  private shortestPaths = new DefaultMap<
+  private bestPathCache = new DefaultMap<
     Token,
-    DefaultMap<Token, BaseAction[][]>
-  >(
-    (token) =>
-      new DefaultMap<Token, BaseAction[][]>((target) =>
-        this.computeTradesPath(token, target)
-      )
-  )
+    Map<Token, Promise<BaseAction[][]>>
+  >(() => new Map<Token, Promise<BaseAction[][]>>())
 
-  private computeTradesPath(token: Token, target: Token) {
-    console.log(`Computing trades path from ${token} to ${target}`)
-    let path = shortestPath(
-      this.universe,
-      token,
-      target,
-      (act) => act.is1to1 && act.isTrade
-    )
-    const weth = this.universe.wrappedNativeToken
-    const eth = this.universe.nativeToken
-
-    path = path.map((t) => (t === eth ? weth : t))
-    console.log(`Got token path ${path.join(' -> ')}`)
-    let out: BaseAction[][] = []
-    for (let step = 0; step < path.length - 1; step++) {
-      const from = path[step]
-      const to = path[step + 1]
-      if (from === to) {
-        continue
-      }
-      const tradeActions =
-        this.universe.graph.vertices
-          .get(from)
-          .outgoingEdges.get(to)
-          ?.filter((e) => e.is1to1 && e.isTrade) ?? []
-      if (tradeActions.length === 0) {
-        throw new Error(`No trade actions found for ${from} to ${to}`)
-      }
-      console.log(
-        `Got trade actions ${tradeActions
-          .map((act) => `${act.protocol}.${act.actionName}`)
-          .join(', ')}`
-      )
-      out.push(tradeActions.map((act) => wrapAction(this.universe, act)))
+  private async computeTradesPath(input: TokenQuantity, target: Token) {
+    console.log(`Computing trades path from ${input.token} to ${target}`)
+    let path = this.bestPathCache.get(input.token).get(target)
+    if (path != null) {
+      return path
     }
 
-    return out
+    path = new Promise(async (resolve, reject) => {
+      try {
+        const tokenPath = await bestPath(this.universe, input, target, 3).then(
+          (m) => m.get(target)?.path ?? []
+        )
+
+        let out: BaseAction[][] = []
+
+        for (let step = 0; step < tokenPath.length - 1; step++) {
+          const from = tokenPath[step]
+          const to = tokenPath[step + 1]
+          if (from === to) {
+            continue
+          }
+          const tradeActions =
+            this.universe.graph.vertices
+              .get(from)
+              .outgoingEdges.get(to)
+              ?.filter((e) => e.is1to1 && e.isTrade) ?? []
+          if (tradeActions.length === 0) {
+            throw new Error(`No trade actions found for ${from} to ${to}`)
+          }
+          out.push(tradeActions.map((act) => wrapAction(this.universe, act)))
+          this.bestPathCache.get(input.token).set(to, Promise.resolve([...out]))
+        }
+        resolve(out)
+      } catch (e) {
+        reject(e)
+      }
+    })
+    this.bestPathCache.get(input.token).set(target, path)
+    return path
   }
 
   private async evaluateTradeActions(
@@ -62,20 +59,47 @@ export class DexLiquidtyPriceStore {
   ) {
     const inputNum = input.asNumber()
     let legAmt = input
+    const steps: {
+      input: TokenQuantity
+      actions: BaseAction[]
+      splits: number[]
+      output: TokenQuantity
+    }[] = []
     for (const actions of path) {
       const res = await optimiseTradesInOutQty(legAmt, actions)
-      legAmt = actions[0].outputToken[0].from(res.output)
+
+      const sum = res.inputs.reduce((l, r) => l + r, 0)
+      const splits = res.inputs.map((i) => i / sum)
+
+      const out = (
+        await Promise.all(
+          actions
+            .map((act, index) => [act, splits[index]] as const)
+            .filter(([_, input]) => input !== 0)
+            .map(([act, inp]) =>
+              unwrapAction(act).quote([legAmt.mul(input.token.from(inp))])
+            )
+        )
+      ).reduce((l, r) => [l[0].add(r[0])])
+
+      steps.push({
+        input: legAmt,
+        actions: actions.filter((_, index) => res.inputs[index] !== 0),
+        splits: res.inputs.filter((i) => i !== 0),
+        output: out[0],
+      })
+      legAmt = out[0]
     }
     return {
       output: legAmt,
       price: legAmt.asNumber() / inputNum,
+      steps,
     }
   }
 
-  public async getPrice(input: TokenQuantity, quote: Token) {
-    const path = this.shortestPaths.get(input.token).get(quote)
-    const res = await this.evaluateTradeActions(input, path)
-    return res
+  public async getBestQuotePath(input: TokenQuantity, quote: Token) {
+    const path = await this.computeTradesPath(input, quote)
+    return await this.evaluateTradeActions(input, path)
   }
 
   constructor(private readonly universe: Universe) {}

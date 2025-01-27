@@ -7,6 +7,8 @@ import { Universe } from '../Universe'
 import { TransactionRequest } from '@ethersproject/providers'
 import { ZapParamsStruct } from '../contracts/contracts/Zapper2'
 import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper'
+import { GAS_TOKEN_ADDRESS } from '../base/constants'
+import { constants } from 'ethers'
 
 export type ToTransactionArgs = Partial<{
   recipient?: Address
@@ -23,7 +25,10 @@ export const encodeZapParamsStruct = (
 ): ZapParamsStruct => {
   const plan = planner.plan()
   return {
-    tokenIn: input.token.address.address,
+    tokenIn:
+      input.token.address.address === GAS_TOKEN_ADDRESS
+        ? constants.AddressZero
+        : input.token.address.address,
     amountIn: input.amount,
     commands: plan.commands,
     state: plan.state,

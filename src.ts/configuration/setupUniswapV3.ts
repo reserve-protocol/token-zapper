@@ -21,21 +21,15 @@ import {
 } from '../contracts'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
-
+import fs from 'fs'
 import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { DefaultMap } from '../base/DefaultMap'
 import { bfs } from '../exchange-graph/BFS'
 import { Graph } from '../exchange-graph/Graph'
 import { SwapPlan } from '../searcher/Swap'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
-import baseFallbackPoolList from './data/base/uniswapv3.json'
-import ethereumFallbackPoolList from './data/ethereum/uniswapv3.json'
 import { wait } from '../base/controlflow'
 
-const fallbackDataPoolLists: Record<number, any> = {
-  1: ethereumFallbackPoolList,
-  8453: baseFallbackPoolList,
-}
 const configs: Record<ChainId, IUniswapV3Config> = {
   [ChainIds.Mainnet]: {
     subgraphId: '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV',
@@ -70,7 +64,7 @@ const top100PoolsQuery = `query GetPools(
     first: ${pageSize}
     skip: $skip,
     where:{
-      totalValueLockedUSD_gt: 25000,
+      totalValueLockedUSD_gt: 30000,
       totalValueLockedUSD_lt: 500000000,
     },
     block:{
@@ -576,34 +570,66 @@ export const setupUniswapV3 = async (universe: Universe) => {
   const loadBlock = Math.floor(currentBlock / (30 * 60 * 3)) * 30 * 60 * 3
 
   const loadUniPools = async (): Promise<UniswapV3Pool[]> => {
-    const pools = []
-    for (let i = 0; i < pages; i++) {
-      pools.push(
-        ...(await loadPoolsFromSubgraphWithRetry(
+    let pools: UniswapV3Pool[] = []
+    if (process.env.DEV) {
+      if (fs.existsSync(`src.ts/configuration/data/${chainId}/univ3.json`)) {
+        pools = await definePoolFromPoolDataArray(
           ctx,
-          config.subgraphId,
-          i * pageSize,
-          loadBlock
-        ))
+          JSON.parse(
+            fs.readFileSync(
+              `src.ts/configuration/data/${chainId}/univ3.json`,
+              'utf-8'
+            )
+          )
+        )
+      }
+    }
+
+    for (let i = Math.floor(pools.length / pageSize); i < pages; i++) {
+      const ps = await loadPoolsFromSubgraphWithRetry(
+        ctx,
+        config.subgraphId,
+        i * pageSize,
+        loadBlock
       )
+      pools.push(...ps)
+      if (ps.length !== pageSize) {
+        break
+      }
+      await wait(250)
     }
     return pools
   }
 
   const allPools = (
-    await Promise.all([
-      loadUniPools(),
-      loadPools(ctx, additionalPoolsToLoad),
-      definePoolFromPoolDataArray(
-        ctx,
-        fallbackDataPoolLists[chainId]?.data?.pools as any[]
-      ),
-    ])
+    await Promise.all([loadUniPools(), loadPools(ctx, additionalPoolsToLoad)])
   ).flat()
 
   for (const pool of allPools) {
     universe.addAction(pool.swap01)
     universe.addAction(pool.swap10)
+  }
+
+  if (process.env.DEV) {
+    fs.writeFileSync(
+      `src.ts/configuration/data/${chainId}/univ3.json`,
+      JSON.stringify(
+        allPools.map((i) => ({
+          id: i.address.address,
+          feeTier: Number(i.fee),
+          token0: {
+            id: i.token0.address.address,
+            symbol: i.token0.symbol,
+          },
+          token1: {
+            id: i.token1.address.address,
+            symbol: i.token1.symbol,
+          },
+        })),
+        null,
+        2
+      )
+    )
   }
 
   console.log(`UniV3: Loaded ${allPools.length} pools`)

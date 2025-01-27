@@ -17,6 +17,7 @@ import { setupOdosPricing } from './setupOdosPricing'
 import { setupUniswapV2 } from './setupUniswapV2'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
+  console.log('setupBaseZapper')
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
 
   logger.info('Loading base token list')
@@ -217,6 +218,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     await setupUniswapV2(universe)
   }
   let done = 0
+  console.log('setupBaseZapper')
   const tasks = [
     initCompound(),
     initAave(),

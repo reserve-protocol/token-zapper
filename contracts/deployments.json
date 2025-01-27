@@ -401,6 +401,45 @@
             }
           ]
         },
+        "Univ2SwapHelper": {
+          "address": "0x57F6aE5415bc2855D9e50FC52E13811557FFB1C9",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "pool",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "zeroForOne",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "address",
+                  "name": "tokenIn",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swap",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOut",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
         "Zapper": {
           "address": "0xE988c8C49043C798F118BBCF769b210fD04c0bc3",
           "abi": [

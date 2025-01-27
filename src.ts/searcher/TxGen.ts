@@ -249,8 +249,14 @@ export class DagPlanContext {
           this.universe.provider
         )
       )
+      if (this.universe.zeroBeforeApproval.has(approval.token)) {
+        this.planner.add(
+          tokenLib.approve(spender.address, 0n),
+          `Approve ${spender} to use ${approval.token}`
+        )
+      }
       this.planner.add(
-        tokenLib.approve(spender.address, constants.MaxUint256),
+        tokenLib.approve(spender.address, qty.amount),
         `Approve ${spender} to use ${approval.token}`
       )
     }
@@ -305,9 +311,8 @@ const planNode = async (
 
     await ctx.setupApprovals(
       node.action.approvals.map((approval) => [
-        approval.token.from(
-          constants.MaxInt256.sub(constants.MaxInt256.div(4))
-        ),
+        inputs.find((i) => i[2].token === approval.token)?.[2] ??
+          approval.token.from(constants.MaxUint256.toBigInt() / 2n),
         approval,
       ])
     )

@@ -261,7 +261,10 @@ export const makeCustomRouterSimulator = (
         15_000_000n,
         input.setup.userBalanceAndApprovalRequirements
       )
-    } else if (universe.rTokensInfo.tokens.has(token)) {
+    } else if (
+      universe.rTokensInfo.tokens.has(token) &&
+      whales[token.address.address.toLowerCase()] == null
+    ) {
       const rTokenDeployment = universe.getRTokenDeployment(token)
       addBalance(rTokenDeployment.backingManager)
 
@@ -349,6 +352,21 @@ export const makeCustomRouterSimulator = (
       }
       throw new Error(resultOfZap.error.error)
     }
+    // const transferLogs = resultOfZap.success.logs.filter(
+    //   (i: any) =>
+    //     i.topics[0] ===
+    //     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+    // )
+
+    // for (const log of transferLogs) {
+    //   const addr = Address.from(log.address)
+    //   const token = await universe.getToken(addr)
+    //   const qty = token.from(BigInt(log.data))
+    //   const from = Address.from(log.topics[1].slice(26))
+    //   const to = Address.from(log.topics[2].slice(26))
+    //   console.log(`${from} -> ${to} ${qty}`)
+    // }
+
     return resultOfZap.success.value
   }
 }

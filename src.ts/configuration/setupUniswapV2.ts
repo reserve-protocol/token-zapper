@@ -22,8 +22,8 @@ interface IUniswapV2Config {
 }
 const configs: Record<ChainId, IUniswapV2Config> = {
   [ChainIds.Mainnet]: {
-    subgraphId: '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV',
-    univ2swap: constants.AddressZero,
+    subgraphId: 'EYCKATKGBKLWvSfwvBjzfCBmGwYNdVkduYXVivCsLRFu',
+    univ2swap: deployments[1][0].contracts.Univ2SwapHelper.address,
   },
   [ChainIds.Arbitrum]: {
     subgraphId: 'FQ6JYszEKApsBpAmiHesRsd9Ygc6mzmpNRANeVQFYoVX',
@@ -35,12 +35,7 @@ const configs: Record<ChainId, IUniswapV2Config> = {
   },
 }
 const pages = 5
-const pageSize = 100
-const fallbackDataPoolLists: Record<number, any> = {
-  1: [],
-  8453: [],
-  42161: [],
-}
+const pageSize = 500
 const loadPools = `query GetPools(
   $skip: Int=0
   $block: Int=0
@@ -100,53 +95,44 @@ const loadPoolsFromSubgraph = async (
   if (!SUBGRAPH_API_TOKEN) {
     throw new Error('THEGRAPH_API_KEY is not set')
   }
-  let poolData = (fallbackDataPoolLists[ctx.universe.chainId]?.data?.pools ??
-    []) as any[]
-  try {
-    const url = `https://gateway.thegraph.com/api/${SUBGRAPH_API_TOKEN}/subgraphs/id/${subgraphId}`
-    const response = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({
-        query: loadPools,
-        variables: {
-          skip,
-          block,
-        },
-      }),
-      headers: {
-        'Content-Type': 'application/json',
+  const url = `https://gateway.thegraph.com/api/${SUBGRAPH_API_TOKEN}/subgraphs/id/${subgraphId}`
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({
+      query: loadPools,
+      variables: {
+        skip,
+        block,
       },
-      signal: AbortSignal.timeout(5000),
-    })
-    if (!response.ok) {
-      console.log(
-        `UniV2: Failed to fetch pools from subgraph: ${response.statusText}`
-      )
-      throw new Error(
-        `Failed to fetch pools from subgraph: ${response.statusText}`
-      )
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    signal: AbortSignal.timeout(6000),
+  })
+  if (!response.ok) {
+    console.log(
+      `UniV2: Failed to fetch pools from subgraph: ${response.statusText}`
+    )
+    throw new Error(
+      `Failed to fetch pools from subgraph: ${response.statusText}`
+    )
+  }
+  const data: {
+    data: {
+      pairs: {
+        id: string
+        token0: { id: string }
+        token1: { id: string }
+      }[]
     }
-    const data: {
-      data: {
-        pairs: {
-          id: string
-          token0: { id: string }
-          token1: { id: string }
-        }[]
-      }
-    } = await response.json()
+  } = await response.json()
 
-    if (Array.isArray(data.data.pairs)) {
-      poolData = data.data.pairs
-    } else {
-      ctx.universe.logger.info('Using fallback data')
-    }
-  } catch (e) {
-    throw e
+  if (!Array.isArray(data.data.pairs)) {
+    throw new Error('Invalid data')
   }
 
-  console.log(`UniV2: Loaded ${poolData.length} pools from subgraph`)
-  return await definePoolsFromData(ctx, poolData)
+  return await definePoolsFromData(ctx, data.data.pairs)
 }
 const loadPoolsFromSubgraphWithRetry = async (
   ctx: UniswapV2Context,
@@ -188,7 +174,10 @@ class UniswapV2Pool {
     )
     this.getReserves = context.universe.createCachedProducer(async () => {
       const reserves = await contract.callStatic.getReserves()
-      return [token0.from(reserves[0]), token1.from(reserves[1])]
+      return [
+        token0.from(reserves.reserve0.toBigInt()),
+        token1.from(reserves.reserve1.toBigInt()),
+      ]
     })
 
     this.swap01 = new UniswapV2Swap(
@@ -229,9 +218,10 @@ class UniswapV2Swap extends Action('UniswapV2') {
       reserveIn.amount,
       reserveOut.amount
     )
-    const qtyOut = this.tokenOut.from(amountOut)
+    const qtyOut = this.tokenOut.fromBigInt(
+      (amountOut * this.tokenOut.scale) / this.tokenIn.scale
+    )
 
-    // console.log(`Univ2: ${amountIn} -> ${qtyOut}`)
     return [qtyOut]
   }
   gasEstimate(): bigint {
@@ -240,7 +230,7 @@ class UniswapV2Swap extends Action('UniswapV2') {
   get supportsDynamicInput() {
     return true
   }
-  get requiresDynamicOutput() {
+  get returnsOutput() {
     return true
   }
   get dependsOnRpc() {
@@ -347,10 +337,11 @@ export const setupUniswapV2 = async (universe: Universe) => {
         i * pageSize,
         loadBlock
       )
+
+      pools.push(...ps)
       if (ps.length !== pageSize) {
         break
       }
-      pools.push(...ps)
       await wait(250)
     }
 
@@ -362,7 +353,7 @@ export const setupUniswapV2 = async (universe: Universe) => {
     universe.addAction(pool.swap10)
   }
 
-  if (process.env.DEV) {
+  if (process.env.WRITE_DATA) {
     fs.writeFileSync(
       `src.ts/configuration/data/${chainId}/univ2.json`,
       JSON.stringify(

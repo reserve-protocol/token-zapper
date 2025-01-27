@@ -76,9 +76,14 @@ export class DexLiquidtyPriceStore {
           actions
             .map((act, index) => [act, splits[index]] as const)
             .filter(([_, input]) => input !== 0)
-            .map(([act, inp]) =>
-              unwrapAction(act).quote([legAmt.mul(input.token.from(inp))])
-            )
+            .map(async ([act, inp]) => {
+              const input = legAmt.mul(legAmt.token.from(inp))
+              const out = await unwrapAction(act).quote([input])
+
+              console.log(`${act} ${input} -> ${out}`)
+
+              return out
+            })
         )
       ).reduce((l, r) => [l[0].add(r[0])])
 

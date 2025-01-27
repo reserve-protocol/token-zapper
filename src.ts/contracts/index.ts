@@ -152,6 +152,8 @@ export type { IfrxETHMinter } from "./contracts/IFrxMinter.sol/IfrxETHMinter";
 export { IfrxETHMinter__factory } from "./factories/contracts/IFrxMinter.sol/IfrxETHMinter__factory";
 export type { IMain } from "./contracts/IMain";
 export { IMain__factory } from "./factories/contracts/IMain__factory";
+export type { IMaverickV2Quoter } from "./contracts/IMaverick.sol/IMaverickV2Quoter";
+export { IMaverickV2Quoter__factory } from "./factories/contracts/IMaverick.sol/IMaverickV2Quoter__factory";
 export type { IPermit2 } from "./contracts/IPermit2";
 export { IPermit2__factory } from "./factories/contracts/IPermit2__factory";
 export type { IRETH } from "./contracts/IRETHRouter.sol/IRETH";

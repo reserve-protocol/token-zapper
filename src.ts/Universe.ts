@@ -171,6 +171,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     return token
   })
 
+  public readonly zeroBeforeApproval = new Set<Token>()
+
   public _finishResolving: () => void = () => { }
   public initialized: Promise<void> = new Promise((resolve) => {
     this._finishResolving = resolve

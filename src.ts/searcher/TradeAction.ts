@@ -84,7 +84,7 @@ export class WrappedAction extends BaseAction {
   }
 
   toString(): string {
-    return this.wrapped.toString()
+    return `Wrapped(${this.wrapped})`
   }
   async quote(inputs: TokenQuantity[]): Promise<TokenQuantity[]> {
     return this.quoteWithDust(inputs).then((i) => i.output)
@@ -94,11 +94,6 @@ export class WrappedAction extends BaseAction {
   ): Promise<{ output: TokenQuantity[]; dust: TokenQuantity[] }> {
     try {
       const out = await this.cache.quoteWithDust(inputs)
-      // console.log(
-      //   `quoteWithDust ${inputs.join(', ')} =>${this} => ${out.output.join(
-      //     ', '
-      //   )} ${out.dust.join(', ')}`
-      // )
 
       return out
     } catch (e) {
@@ -392,7 +387,7 @@ export const isWrappedAction = (
 
 export const unwrapAction = (action: BaseAction): BaseAction => {
   if (action instanceof WrappedAction) {
-    return action.wrapped
+    return unwrapAction(action.wrapped)
   }
   return action
 }

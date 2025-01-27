@@ -11,6 +11,7 @@ import { StakeDAODepositAction } from '../action/StakeDAO'
 import { YearnDepositAction, YearnWithdrawAction } from '../action/Yearn'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
+import { wait } from '../base/controlflow'
 import {
   IBeefyVault__factory,
   IGaugeStakeDAO__factory,
@@ -31,6 +32,7 @@ import { setupFrxETH } from './setupFrxETH'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupPXETH } from './setupPXETH'
 import { setupRETH } from './setupRETH'
+import { setupUniswapV2 } from './setupUniswapV2'
 import { setupUniswapV3 } from './setupUniswapV3'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 
@@ -111,7 +113,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea')
   )
 
-  const initUniswap = async () => {
+  const initUniswapV3 = async () => {
     try {
       const router = await setupUniswapV3(universe)
       const venue = await router.venue()
@@ -119,6 +121,15 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       universe.addTradeVenue(uniswap)
     } catch (e) {
       console.log('Failed to load uniswapV3')
+      console.log(e)
+    }
+  }
+
+  const initUniswapV2 = async () => {
+    try {
+      await setupUniswapV2(universe)
+    } catch (e) {
+      console.log('Failed to load uniswapV2')
       console.log(e)
     }
   }
@@ -417,8 +428,9 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     }
   }
 
-  const tasks = [initUniswap, initBalancer, initCurve]
+  const tasks = [initUniswapV3, initBalancer, initCurve, initUniswapV2]
   await Promise.all(tasks.map((task) => task()))
+  universe.zeroBeforeApproval.add(universe.commonTokens.USDT)
   universe.tokenClass.set(
     universe.rTokens.USD3,
     Promise.resolve(universe.commonTokens.USDC)

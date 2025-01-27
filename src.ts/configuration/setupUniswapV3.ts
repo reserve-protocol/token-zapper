@@ -478,7 +478,7 @@ class UniswapV3Swap extends Action('UniswapV3') {
     return this.pool.addresesInUse
   }
   get outputSlippage() {
-    return 1n
+    return 0n
   }
   gasEstimate(): bigint {
     return this._gasEstimate
@@ -610,7 +610,7 @@ export const setupUniswapV3 = async (universe: Universe) => {
     universe.addAction(pool.swap10)
   }
 
-  if (process.env.DEV) {
+  if (process.env.WRITE_DATA) {
     fs.writeFileSync(
       `src.ts/configuration/data/${chainId}/univ3.json`,
       JSON.stringify(

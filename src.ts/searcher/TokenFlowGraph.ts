@@ -4,7 +4,7 @@ import { DefaultMap } from '../base/DefaultMap'
 import { Token, TokenQuantity } from '../entities/Token'
 import { mintPath1To1, shortestPath } from '../exchange-graph/BFS'
 import { Queue } from './Queue'
-import { combineAddreses, unwrapAction, wrapAction } from './TradeAction'
+import { unwrapAction, wrapAction } from './TradeAction'
 import { optimiseTrades } from './optimiseTrades'
 import { Address } from '../base/Address'
 import {
@@ -2453,6 +2453,8 @@ const optimise = async (
     )
   }
 
+  g = removeNodes(g, findNodesWithoutSources(g))
+
   logger.debug(
     `Final graph for ${bestSoFar.result.inputs.join(', ')} -> ${
       bestSoFar.result.output.token
@@ -2678,7 +2680,8 @@ export class TokenFlowGraphSearcher {
         }
       }
       if (sourceBasketTokenGraph == null) {
-        throw new Error('No source basket token graph found')
+        rTokenIssueGraph.addInputTokens([basketToken])
+        continue
       }
       const basketMintGraph = rTokenIssueGraph.addSubgraphNode(
         sourceBasketTokenGraph.graph,

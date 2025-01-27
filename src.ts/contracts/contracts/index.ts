@@ -29,6 +29,8 @@ import type * as iFrxEthFraxOracleSol from "./IFrxEthFraxOracle.sol";
 export type { iFrxEthFraxOracleSol };
 import type * as iFrxMinterSol from "./IFrxMinter.sol";
 export type { iFrxMinterSol };
+import type * as iMaverickSol from "./IMaverick.sol";
+export type { iMaverickSol };
 import type * as irethRouterSol from "./IRETHRouter.sol";
 export type { irethRouterSol };
 import type * as irTokenZapperSol from "./IRTokenZapper.sol";

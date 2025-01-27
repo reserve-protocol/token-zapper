@@ -155,10 +155,11 @@ export class RTokenDeployment {
     const unitBasket = universe.createCachedProducer(async () => {
       const supply = await this.supply()
       if (supply.amount < this.rToken.scale) {
-        const { erc20s, quantities } = await this.contracts.basketHandler.quote(
-          this.rToken.scale,
-          0
-        )
+        const { erc20s, quantities } =
+          await this.contracts.basketHandler.callStatic.quote(
+            this.rToken.scale,
+            0
+          )
         const unit = await Promise.all(
           erc20s.map((addr, index) =>
             this.universe
@@ -508,7 +509,21 @@ export class BurnRTokenAction extends ReserveRTokenBase {
         return output.from(amt)
       })
     }
-    return await this.rTokenDeployment.quoteRedeem([amountIn])
+    const { quantities } =
+      await this.rTokenDeployment.contracts.rTokenLens.callStatic.redeem(
+        this.rTokenDeployment.contracts.assetRegistry.address,
+        this.rTokenDeployment.contracts.basketHandler.address,
+        this.rTokenDeployment.contracts.rToken.address,
+        amountIn.amount
+      )
+    const out = quantities.map((amt, i) => {
+      const output = this.outputToken[i]
+      return output.from(amt)
+    })
+    return out
+  }
+  get dependsOnRpc(): boolean {
+    return true
   }
   get basket() {
     return this.rTokenDeployment.basket

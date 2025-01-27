@@ -18550,5 +18550,65 @@
       "id": "0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8",
       "symbol": "ETH+"
     }
+  },
+  {
+    "id": "0xf649df4372D8bB3E6178e52fCD515519c78dA348",
+    "feeTier": 500,
+    "token0": {
+      "id": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8",
+      "symbol": "ETH+"
+    }
+  },
+  {
+    "id": "0xf649df4372D8bB3E6178e52fCD515519c78dA348",
+    "feeTier": 500,
+    "token0": {
+      "id": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8",
+      "symbol": "ETH+"
+    }
+  },
+  {
+    "id": "0xf649df4372D8bB3E6178e52fCD515519c78dA348",
+    "feeTier": 500,
+    "token0": {
+      "id": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8",
+      "symbol": "ETH+"
+    }
+  },
+  {
+    "id": "0xf649df4372D8bB3E6178e52fCD515519c78dA348",
+    "feeTier": 500,
+    "token0": {
+      "id": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8",
+      "symbol": "ETH+"
+    }
+  },
+  {
+    "id": "0xf649df4372D8bB3E6178e52fCD515519c78dA348",
+    "feeTier": 500,
+    "token0": {
+      "id": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "symbol": "WETH"
+    },
+    "token1": {
+      "id": "0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8",
+      "symbol": "ETH+"
+    }
   }
 ]

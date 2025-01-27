@@ -311,8 +311,7 @@ const planNode = async (
 
     await ctx.setupApprovals(
       node.action.approvals.map((approval) => [
-        inputs.find((i) => i[2].token === approval.token)?.[2] ??
-          approval.token.from(constants.MaxUint256.toBigInt() / 2n),
+        approval.token.from(constants.MaxUint256.toBigInt() / 2n),
         approval,
       ])
     )

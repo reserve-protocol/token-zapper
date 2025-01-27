@@ -99,7 +99,7 @@ export const ethWhales = {
     '0x7cc1bfAB73bE4E02BB53814d1059A98cF7e49644',
   // hyusd
   '0xacdf0dba4b9839b96221a8487e9ca660a48212be':
-    '0x7cc1bfAB73bE4E02BB53814d1059A98cF7e49644',
+    '0xfbd42e965a2db2035636aeb41e1a54dbcc1cf1da',
   // usdc+
   '0xfc0b1eef20e4c68b3dcf36c4537cfa7ce46ca70b':
     '0xf2b25362a03f6eacca8de8d5350a9f37944c1e59',
@@ -197,17 +197,17 @@ const issueanceCases = [
 ]
 
 const redeemCases = [
-  makeTestCase(200000, rTokens.eUSD, t.USDC),
-  // makeMintTestCase(10000, rTokens.eUSD, t.USDC),
-  // makeMintTestCase(10000, rTokens.eUSD, t.DAI),
-  // makeMintTestCase(10000, rTokens.eUSD, t.USDT),
+  // makeTestCase(200000, rTokens.eUSD, t.USDC),
+  // makeTestCase(10000, rTokens.eUSD, t.USDC),
+  // makeTestCase(10000, rTokens.eUSD, t.DAI),
+  // makeTestCase(10000, rTokens.eUSD, t.USDT),
 
-  // makeMintTestCase(10000, rTokens.USD3, t.USDC),
-  // makeMintTestCase(10000, rTokens.USD3, t.DAI),
+  // makeTestCase(10000, rTokens.USD3, t.USDC),
+  // makeTestCase(10000, rTokens.USD3, t.DAI),
 
-  // makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
-  // makeMintTestCase(10000, rTokens.hyUSD, t.USDe),
-  // makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
+  makeTestCase(10000, rTokens.hyUSD, t.USDC),
+  makeTestCase(10000, rTokens.hyUSD, t.USDe),
+  makeTestCase(10000, rTokens.hyUSD, t.DAI),
 
   // makeMintTestCase(5, rTokens['ETH+'], t.WETH),
   // makeMintTestCase(5, rTokens['ETH+'], t.reth),
@@ -301,11 +301,12 @@ beforeAll(async () => {
     )
 
     await universe.initialized
-    // const tokens = [...universe.tokens.values()].map((i) => i.toJson())
-    // fs.writeFileSync(
-    //   'src.ts/configuration/data/ethereum/tokens.json',
-    //   JSON.stringify(tokens, null, 2)
-    // )
+    console.log('Ethereum zapper setup complete')
+    const tokens = [...universe.tokens.values()].map((i) => i.toJson())
+    fs.writeFileSync(
+      'src.ts/configuration/data/ethereum/tokens.json',
+      JSON.stringify(tokens, null, 2)
+    )
     console.log(`requestCount init: ${requestCount}`)
     requestCount = 0
     return universe
@@ -313,7 +314,7 @@ beforeAll(async () => {
     console.error(e)
     process.exit(1)
   }
-}, 30000)
+}, 60000)
 
 describe('ethereum zapper', () => {
   beforeEach(async () => {

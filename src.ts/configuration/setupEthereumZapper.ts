@@ -430,6 +430,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   const tasks = [initUniswapV3, initBalancer, initCurve, initUniswapV2]
   await Promise.all(tasks.map((task) => task()))
+
   universe.zeroBeforeApproval.add(universe.commonTokens.USDT)
   universe.tokenClass.set(
     universe.rTokens.USD3,
@@ -481,4 +482,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     oracleAddress: Address.from('0xfF30586cD0F29eD462364C7e81375FC0C71219b1'),
     priceToken: universe.usd,
   })
+
+  console.log('Ethereum zapper setup complete')
 }

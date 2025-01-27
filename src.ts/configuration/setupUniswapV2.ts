@@ -15,27 +15,33 @@ import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
 import { constants } from 'ethers'
 import { UniswapV2Pair__factory } from '../contracts/factories/contracts/UniswapV2Pair__factory'
 import { wait } from '../base/controlflow'
+import baseUniV2 from './data/8453/univ2.json'
+import mainnetUniV2 from './data/1/univ2.json'
 
 interface IUniswapV2Config {
   subgraphId: string
   univ2swap: string
+  pools: { id: string; token0: { id: string }; token1: { id: string } }[]
 }
 const configs: Record<ChainId, IUniswapV2Config> = {
   [ChainIds.Mainnet]: {
     subgraphId: 'EYCKATKGBKLWvSfwvBjzfCBmGwYNdVkduYXVivCsLRFu',
     univ2swap: deployments[1][0].contracts.Univ2SwapHelper.address,
+    pools: mainnetUniV2,
   },
   [ChainIds.Arbitrum]: {
     subgraphId: 'FQ6JYszEKApsBpAmiHesRsd9Ygc6mzmpNRANeVQFYoVX',
     univ2swap: constants.AddressZero,
+    pools: [],
   },
   [ChainIds.Base]: {
     subgraphId: '4jGhpKjW4prWoyt5Bwk1ZHUwdEmNWveJcjEyjoTZWCY9',
     univ2swap: deployments[8453][0].contracts.Univ2SwapHelper.address,
+    pools: baseUniV2,
   },
 }
 const pages = 5
-const pageSize = 500
+const pageSize = 100
 const loadPools = `query GetPools(
   $skip: Int=0
   $block: Int=0
@@ -320,16 +326,7 @@ export const setupUniswapV2 = async (universe: Universe) => {
   const loadUniPools = async (): Promise<UniswapV2Pool[]> => {
     let pools: UniswapV2Pool[] = []
 
-    if (process.env.DEV) {
-      if (fs.existsSync(`src.ts/configuration/data/${chainId}/univ2.json`)) {
-        const data = fs.readFileSync(
-          `src.ts/configuration/data/${chainId}/univ2.json`,
-          'utf-8'
-        )
-        const poolData = JSON.parse(data)
-        pools = await definePoolsFromData(ctx, poolData)
-      }
-    }
+    pools = await definePoolsFromData(ctx, config.pools)
     for (let i = Math.floor(pools.length / pageSize); i < pages; i++) {
       const ps = await loadPoolsFromSubgraphWithRetry(
         ctx,

@@ -29,7 +29,22 @@ import { Graph } from '../exchange-graph/Graph'
 import { SwapPlan } from '../searcher/Swap'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
 import { wait } from '../base/controlflow'
+import baseUniV3 from './data/8453/univ3.json'
+import mainnetUniV3 from './data/1/univ3.json'
 
+interface IUniswapV3Config {
+  subgraphId: string
+  router: string
+  quoter: string
+  factory: string
+  pools: string[]
+  staticPools: {
+    id: string
+    feeTier: number
+    token0: { id: string }
+    token1: { id: string }
+  }[]
+}
 const configs: Record<ChainId, IUniswapV3Config> = {
   [ChainIds.Mainnet]: {
     subgraphId: '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV',
@@ -37,6 +52,7 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
     factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
     pools: ['0xf649df4372d8bb3e6178e52fcd515519c78da348'],
+    staticPools: mainnetUniV3,
   },
   [ChainIds.Arbitrum]: {
     subgraphId: 'FQ6JYszEKApsBpAmiHesRsd9Ygc6mzmpNRANeVQFYoVX',
@@ -44,6 +60,7 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
     factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
     pools: [],
+    staticPools: baseUniV3,
   },
   [ChainIds.Base]: {
     subgraphId: 'HMuAwufqZ1YCRmzL2SfHTVkzZovC9VL2UAKhjvRqKiR1',
@@ -51,6 +68,7 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     quoter: '0x3d4e44eb1374240ce5f1b871ab261cd16335b76a',
     factory: '0x33128a8fc17869897dce68ed026d694621f6fdfd',
     pools: [],
+    staticPools: baseUniV3,
   },
 }
 
@@ -208,13 +226,6 @@ const loadPoolsFromSubgraph = async (
   }
 
   return await definePoolFromPoolDataArray(ctx, poolData)
-}
-interface IUniswapV3Config {
-  subgraphId: string
-  router: string
-  quoter: string
-  factory: string
-  pools: string[]
 }
 const loadPoolsFromSubgraphWithRetry = async (
   ctx: UniswapV3Context,
@@ -571,19 +582,7 @@ export const setupUniswapV3 = async (universe: Universe) => {
 
   const loadUniPools = async (): Promise<UniswapV3Pool[]> => {
     let pools: UniswapV3Pool[] = []
-    if (process.env.DEV) {
-      if (fs.existsSync(`src.ts/configuration/data/${chainId}/univ3.json`)) {
-        pools = await definePoolFromPoolDataArray(
-          ctx,
-          JSON.parse(
-            fs.readFileSync(
-              `src.ts/configuration/data/${chainId}/univ3.json`,
-              'utf-8'
-            )
-          )
-        )
-      }
-    }
+    pools = await definePoolFromPoolDataArray(ctx, config.staticPools)
 
     for (let i = Math.floor(pools.length / pageSize); i < pages; i++) {
       const ps = await loadPoolsFromSubgraphWithRetry(

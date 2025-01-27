@@ -13,35 +13,35 @@ import type {
   PopulatedTransaction,
   Signer,
   utils,
-} from 'ethers'
-import type { FunctionFragment, Result } from '@ethersproject/abi'
-import type { Listener, Provider } from '@ethersproject/providers'
+} from "ethers";
+import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
   TypedEvent,
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from '../../../common'
+} from "../../../common";
 
 export interface ICurveRouterInterface extends utils.Interface {
   functions: {
-    'exchange(address[11],uint256[5][5],uint256,uint256)': FunctionFragment
-    'exchange_multiple(address[9],uint256[3][4],uint256,uint256,address[4])': FunctionFragment
-    'get_dy(address[11],uint256[5][5],uint256,address[5])': FunctionFragment
-    'get_dy(address[11],uint256[5][5],uint256)': FunctionFragment
-  }
+    "exchange(address[11],uint256[5][5],uint256,uint256)": FunctionFragment;
+    "exchange_multiple(address[9],uint256[3][4],uint256,uint256,address[4])": FunctionFragment;
+    "get_dy(address[11],uint256[5][5],uint256,address[5])": FunctionFragment;
+    "get_dy(address[11],uint256[5][5],uint256)": FunctionFragment;
+  };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | 'exchange'
-      | 'exchange_multiple'
-      | 'get_dy(address[11],uint256[5][5],uint256,address[5])'
-      | 'get_dy(address[11],uint256[5][5],uint256)'
-  ): FunctionFragment
+      | "exchange"
+      | "exchange_multiple"
+      | "get_dy(address[11],uint256[5][5],uint256,address[5])"
+      | "get_dy(address[11],uint256[5][5],uint256)"
+  ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: 'exchange',
+    functionFragment: "exchange",
     values: [
       PromiseOrValue<string>[],
       [
@@ -84,9 +84,9 @@ export interface ICurveRouterInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'exchange_multiple',
+    functionFragment: "exchange_multiple",
     values: [
       PromiseOrValue<string>[],
       [
@@ -120,9 +120,9 @@ export interface ICurveRouterInterface extends utils.Interface {
         PromiseOrValue<string>
       ]
     ]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'get_dy(address[11],uint256[5][5],uint256,address[5])',
+    functionFragment: "get_dy(address[11],uint256[5][5],uint256,address[5])",
     values: [
       PromiseOrValue<string>[],
       [
@@ -171,9 +171,9 @@ export interface ICurveRouterInterface extends utils.Interface {
         PromiseOrValue<string>
       ]
     ]
-  ): string
+  ): string;
   encodeFunctionData(
-    functionFragment: 'get_dy(address[11],uint256[5][5],uint256)',
+    functionFragment: "get_dy(address[11],uint256[5][5],uint256)",
     values: [
       PromiseOrValue<string>[],
       [
@@ -215,50 +215,50 @@ export interface ICurveRouterInterface extends utils.Interface {
       ],
       PromiseOrValue<BigNumberish>
     ]
-  ): string
+  ): string;
 
-  decodeFunctionResult(functionFragment: 'exchange', data: BytesLike): Result
+  decodeFunctionResult(functionFragment: "exchange", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: 'exchange_multiple',
+    functionFragment: "exchange_multiple",
     data: BytesLike
-  ): Result
+  ): Result;
   decodeFunctionResult(
-    functionFragment: 'get_dy(address[11],uint256[5][5],uint256,address[5])',
+    functionFragment: "get_dy(address[11],uint256[5][5],uint256,address[5])",
     data: BytesLike
-  ): Result
+  ): Result;
   decodeFunctionResult(
-    functionFragment: 'get_dy(address[11],uint256[5][5],uint256)',
+    functionFragment: "get_dy(address[11],uint256[5][5],uint256)",
     data: BytesLike
-  ): Result
+  ): Result;
 
-  events: {}
+  events: {};
 }
 
 export interface ICurveRouter extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this
-  attach(addressOrName: string): this
-  deployed(): Promise<this>
+  connect(signerOrProvider: Signer | Provider | string): this;
+  attach(addressOrName: string): this;
+  deployed(): Promise<this>;
 
-  interface: ICurveRouterInterface
+  interface: ICurveRouterInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>
+  ): Promise<Array<TEvent>>;
 
   listeners<TEvent extends TypedEvent>(
     eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>
-  listeners(eventName?: string): Array<Listener>
+  ): Array<TypedListener<TEvent>>;
+  listeners(eventName?: string): Array<Listener>;
   removeAllListeners<TEvent extends TypedEvent>(
     eventFilter: TypedEventFilter<TEvent>
-  ): this
-  removeAllListeners(eventName?: string): this
-  off: OnEvent<this>
-  on: OnEvent<this>
-  once: OnEvent<this>
-  removeListener: OnEvent<this>
+  ): this;
+  removeAllListeners(eventName?: string): this;
+  off: OnEvent<this>;
+  on: OnEvent<this>;
+  once: OnEvent<this>;
+  removeListener: OnEvent<this>;
 
   functions: {
     exchange(
@@ -303,7 +303,7 @@ export interface ICurveRouter extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       expected: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>
+    ): Promise<ContractTransaction>;
 
     exchange_multiple(
       route: PromiseOrValue<string>[],
@@ -338,9 +338,9 @@ export interface ICurveRouter extends BaseContract {
         PromiseOrValue<string>
       ],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>
+    ): Promise<ContractTransaction>;
 
-    'get_dy(address[11],uint256[5][5],uint256,address[5])'(
+    "get_dy(address[11],uint256[5][5],uint256,address[5])"(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -388,9 +388,9 @@ export interface ICurveRouter extends BaseContract {
         PromiseOrValue<string>
       ],
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>
+    ): Promise<[BigNumber]>;
 
-    'get_dy(address[11],uint256[5][5],uint256)'(
+    "get_dy(address[11],uint256[5][5],uint256)"(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -431,8 +431,8 @@ export interface ICurveRouter extends BaseContract {
       ],
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>
-  }
+    ): Promise<[BigNumber]>;
+  };
 
   exchange(
     route: PromiseOrValue<string>[],
@@ -476,7 +476,7 @@ export interface ICurveRouter extends BaseContract {
     amount: PromiseOrValue<BigNumberish>,
     expected: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>
+  ): Promise<ContractTransaction>;
 
   exchange_multiple(
     route: PromiseOrValue<string>[],
@@ -511,9 +511,9 @@ export interface ICurveRouter extends BaseContract {
       PromiseOrValue<string>
     ],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>
+  ): Promise<ContractTransaction>;
 
-  'get_dy(address[11],uint256[5][5],uint256,address[5])'(
+  "get_dy(address[11],uint256[5][5],uint256,address[5])"(
     route: PromiseOrValue<string>[],
     swapParams: [
       [
@@ -561,9 +561,9 @@ export interface ICurveRouter extends BaseContract {
       PromiseOrValue<string>
     ],
     overrides?: CallOverrides
-  ): Promise<BigNumber>
+  ): Promise<BigNumber>;
 
-  'get_dy(address[11],uint256[5][5],uint256)'(
+  "get_dy(address[11],uint256[5][5],uint256)"(
     route: PromiseOrValue<string>[],
     swapParams: [
       [
@@ -604,7 +604,7 @@ export interface ICurveRouter extends BaseContract {
     ],
     amount: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<BigNumber>
+  ): Promise<BigNumber>;
 
   callStatic: {
     exchange(
@@ -649,7 +649,7 @@ export interface ICurveRouter extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       expected: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     exchange_multiple(
       route: PromiseOrValue<string>[],
@@ -684,9 +684,9 @@ export interface ICurveRouter extends BaseContract {
         PromiseOrValue<string>
       ],
       overrides?: CallOverrides
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
-    'get_dy(address[11],uint256[5][5],uint256,address[5])'(
+    "get_dy(address[11],uint256[5][5],uint256,address[5])"(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -734,9 +734,9 @@ export interface ICurveRouter extends BaseContract {
         PromiseOrValue<string>
       ],
       overrides?: CallOverrides
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
-    'get_dy(address[11],uint256[5][5],uint256)'(
+    "get_dy(address[11],uint256[5][5],uint256)"(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -777,10 +777,10 @@ export interface ICurveRouter extends BaseContract {
       ],
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
-  }
+    ): Promise<BigNumber>;
+  };
 
-  filters: {}
+  filters: {};
 
   estimateGas: {
     exchange(
@@ -825,7 +825,7 @@ export interface ICurveRouter extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       expected: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
     exchange_multiple(
       route: PromiseOrValue<string>[],
@@ -860,9 +860,9 @@ export interface ICurveRouter extends BaseContract {
         PromiseOrValue<string>
       ],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
-    'get_dy(address[11],uint256[5][5],uint256,address[5])'(
+    "get_dy(address[11],uint256[5][5],uint256,address[5])"(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -910,9 +910,9 @@ export interface ICurveRouter extends BaseContract {
         PromiseOrValue<string>
       ],
       overrides?: CallOverrides
-    ): Promise<BigNumber>
+    ): Promise<BigNumber>;
 
-    'get_dy(address[11],uint256[5][5],uint256)'(
+    "get_dy(address[11],uint256[5][5],uint256)"(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -953,8 +953,8 @@ export interface ICurveRouter extends BaseContract {
       ],
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>
-  }
+    ): Promise<BigNumber>;
+  };
 
   populateTransaction: {
     exchange(
@@ -999,7 +999,7 @@ export interface ICurveRouter extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       expected: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
     exchange_multiple(
       route: PromiseOrValue<string>[],
@@ -1034,9 +1034,9 @@ export interface ICurveRouter extends BaseContract {
         PromiseOrValue<string>
       ],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
-    'get_dy(address[11],uint256[5][5],uint256,address[5])'(
+    "get_dy(address[11],uint256[5][5],uint256,address[5])"(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -1084,9 +1084,9 @@ export interface ICurveRouter extends BaseContract {
         PromiseOrValue<string>
       ],
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>
+    ): Promise<PopulatedTransaction>;
 
-    'get_dy(address[11],uint256[5][5],uint256)'(
+    "get_dy(address[11],uint256[5][5],uint256)"(
       route: PromiseOrValue<string>[],
       swapParams: [
         [
@@ -1127,6 +1127,6 @@ export interface ICurveRouter extends BaseContract {
       ],
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>
-  }
+    ): Promise<PopulatedTransaction>;
+  };
 }

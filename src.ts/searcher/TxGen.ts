@@ -52,15 +52,22 @@ const simulateAndParse = async (
       dust: parsed.dust.map((d, index) => dustTokens[index].from(d)),
     }
   } catch (e) {
-    const [cmdIndex, target, message] = defaultAbiCoder.decode(
-      ['uint256', 'address', 'string'],
-      hexDataSlice(simulation, 4)
-    )
-    console.log(
-      `ExecutionFailed: cmdIndex=${cmdIndex}, target=${target}, message=${message}`
-    )
+    try {
+      const [cmdIndex, target, message] = defaultAbiCoder.decode(
+        ['uint256', 'address', 'string'],
+        hexDataSlice(simulation, 4)
+      )
+      console.log(
+        `ExecutionFailed: cmdIndex=${cmdIndex}, target=${target}, message=${message}`
+      )
 
-    throw e
+      throw e
+    } catch (e) {
+      console.log(`ExecutionFailed: unknown error`)
+      console.log(simulation)
+
+      throw e
+    }
   }
 }
 

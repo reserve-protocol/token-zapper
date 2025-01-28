@@ -108,12 +108,12 @@ const testUser = Address.from(
 const issueanceCases = [
   // makeTestCase(10000, t.USDC, rTokens.bsd),
   // makeTestCase(100, t.WETH, rTokens.bsd),
-  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
-  // makeTestCase(10000, t.DAI, rTokens.hyUSD),
-  // makeTestCase(5, t.WETH, rTokens.hyUSD),
+  makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  makeTestCase(10000, t.USDbC, rTokens.hyUSD),
+  makeTestCase(10000, t.DAI, rTokens.hyUSD),
+  makeTestCase(5, t.WETH, rTokens.hyUSD),
 
-  makeTestCase(10, t.ETH, rTokens.BSDX),
+  // makeTestCase(10, t.ETH, rTokens.BSDX),
   // makeTestCase(10, t.WETH, rTokens.BSDX),
 ]
 

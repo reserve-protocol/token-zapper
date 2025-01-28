@@ -156,7 +156,9 @@ export const optimiseTrades = async (
             .from(state.action.gasEstimate() * gasPrice)
             .asNumber()
           const outputTokenQty = (
-            await state.action.quote([inputToken.from(newInput)])
+            await state.action
+              .quote([inputToken.from(newInput)])
+              .catch(() => [state.action.outputToken[0].zero])
           )[0].asNumber()
 
           const newEstimate =

@@ -20,7 +20,7 @@ export class BlockCache<Input, Result extends NonNullable<any>, Key = Input> {
         return await out.result
       }
       out.result = this.fetch(key).catch((e) => {
-        console.log(e)
+        // console.log(e)
         this.results.delete(k)
         throw e
       })

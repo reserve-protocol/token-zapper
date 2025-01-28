@@ -13,7 +13,6 @@ export class DexLiquidtyPriceStore {
   >(() => new Map<Token, Promise<BaseAction[][]>>())
 
   private async computeTradesPath(input: TokenQuantity, target: Token) {
-    console.log(`Computing trades path from ${input.token} to ${target}`)
     let path = this.bestPathCache.get(input.token).get(target)
     if (path != null) {
       return path
@@ -21,9 +20,12 @@ export class DexLiquidtyPriceStore {
 
     path = new Promise(async (resolve, reject) => {
       try {
-        const tokenPath = await bestPath(this.universe, input, target, 3).then(
+        const tokenPath = await bestPath(this.universe, input, target, 2).then(
           (m) => m.get(target)?.path ?? []
         )
+        if (tokenPath.length === 0) {
+          throw Error(`No path found from ${input.token} to ${target}`)
+        }
 
         let out: BaseAction[][] = []
 
@@ -46,11 +48,19 @@ export class DexLiquidtyPriceStore {
         }
         resolve(out)
       } catch (e) {
+        console.error(
+          `Error computing trades path from ${input.token} to ${target}: ${e}`
+        )
         reject(e)
       }
     })
     this.bestPathCache.get(input.token).set(target, path)
-    return path
+    try {
+      return await path
+    } catch (e) {
+      this.bestPathCache.get(input.token).delete(target)
+      throw e
+    }
   }
 
   private async evaluateTradeActions(
@@ -78,9 +88,11 @@ export class DexLiquidtyPriceStore {
             .filter(([_, input]) => input !== 0)
             .map(async ([act, inp]) => {
               const input = legAmt.mul(legAmt.token.from(inp))
-              const out = await unwrapAction(act).quote([input])
-
-              console.log(`${act} ${input} -> ${out}`)
+              const out = await unwrapAction(act)
+                .quote([input])
+                .catch(() => {
+                  return [act.outputToken[0].zero]
+                })
 
               return out
             })

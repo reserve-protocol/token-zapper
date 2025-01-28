@@ -216,7 +216,7 @@ export const bestPath = async (
   const toVisit = new Queue<Node>()
   toVisit.push({
     previous: null,
-    steps: 1,
+    steps: 0,
     action: null as any,
     token: start.token,
     legAmount: [start],
@@ -243,7 +243,15 @@ export const bestPath = async (
         continue
       }
     }
-    if (lastToken === end || node.steps >= maxSteps) {
+    if (lastToken === end) {
+      continue
+    }
+    if (node.steps >= maxSteps) {
+      if (result.has(end)) {
+        continue
+      }
+    }
+    if (node.steps >= maxSteps * 2) {
       continue
     }
     const vertex = graph.vertices.get(node.token)
@@ -258,14 +266,21 @@ export const bestPath = async (
               return
             }
           }
+          const minAmount = node.legAmount[0].amount
           await Promise.all(
             actions
               .filter((action) => action.is1to1)
               .map(async (action) => {
                 try {
                   if (action.isTrade) {
-                    const [inBal] = await action.balances(ctx)
-                    if (inBal.amount / 10n < node.legAmount[0].amount) {
+                    const bals = await action.balances(ctx)
+                    const bal = bals.find(
+                      (b) => b.token === node.legAmount[0].token
+                    )
+                    if (bal == null) {
+                      return
+                    }
+                    if (bal.amount / 10n < minAmount) {
                       return
                     }
                   }

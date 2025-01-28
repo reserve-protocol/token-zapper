@@ -888,7 +888,6 @@ const evaluateNode = async (
           }
         }
       } catch (e) {
-        console.log(e)
         const outputs = action.outputToken.map((i) => i.zero)
         return await createResult(
           universe,
@@ -1510,6 +1509,35 @@ export class TokenFlowGraphBuilder {
       ).id
   )
 
+  private tradeNodes = new DefaultMap<Token, DefaultMap<Token, number>>(
+    (token) => new DefaultMap<Token, number>((output) => -1)
+  )
+  public tradeNodeExists(input: Token, output: Token) {
+    return this.tradeNodes.get(input).get(output) !== -1
+  }
+  public addTradeNode(
+    input: Token,
+    output: Token,
+    actions: BaseAction[],
+    name: string
+  ) {
+    if (this.tradeNodeExists(input, output)) {
+      throw new Error(`Trade node already exists for ${input} -> ${output}`)
+    }
+    const graph = TokenFlowGraphBuilder.createSingleStep(
+      this.universe,
+      input.one,
+      actions,
+      name
+    )
+    const inputNode = this.getTokenNode(input)
+    const outputNode = this.getTokenNode(output)
+    const node = this.addSubgraphNode(graph, `${input} -> ${output}`)
+    this.tradeNodes.get(input).set(output, node.id)
+    inputNode.forward(input, 1, node)
+    node.forward(output, 1, outputNode)
+  }
+
   public clone() {
     const out = new TokenFlowGraphBuilder(
       this.universe,
@@ -2080,6 +2108,11 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
         parts[acts[i][1]] = nodeSplits.inputs[i]
       }
 
+      if (parts.every((i) => i === 0)) {
+        console.log('No splits found')
+        return
+      }
+
       splits.setParts(parts)
     } else {
       const nodeSplits = await optimiseTrades(
@@ -2089,6 +2122,10 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
         Infinity,
         10
       )
+      if (nodeSplits.inputs.every((i) => i === 0)) {
+        console.log('No splits found')
+        return
+      }
       splits.setParts(nodeSplits.inputs)
     }
     splits.normalize()
@@ -2237,7 +2274,7 @@ const minimizeDust = async (
       ) {
         node.splits.setParts(before)
       } else {
-        console.log('Minimise dust: ' + newRes.result.outputs.join(', '))
+        // console.log('Minimise dust: ' + newRes.result.outputs.join(', '))
         currentResult = newRes
       }
     }
@@ -2309,7 +2346,6 @@ const optimiseGlobal = async (
       const node = optimisationNodes[optimisationNodeIndex]
       const nodeId = node.id
       if (!bestSoFar.nodeResults.find((r) => r.node.id === nodeId)) {
-        logger.debug(`Node ${node.nodeId} not in bestSoFar`)
         continue
       }
       const edge = g._outgoingEdges[nodeId]!.edges[0]
@@ -2381,6 +2417,7 @@ const optimise = async (
     optimisationSteps?: number
   }
 ) => {
+  console.log(graph.toDot().join('\n'))
   const logger = universe.logger.child({
     prefix: `optimiser ${inputs.join(', ')} -> ${outputs.join(', ')}`,
   })
@@ -2417,6 +2454,8 @@ const optimise = async (
 
   const optimiserEvaluation = evaluationOptimiser(universe, g)
 
+  g = removeNodes(g, findNodesWithoutSources(g))
+
   bestSoFar = await minimizeDust(
     g,
     () => optimiserEvaluation.evaluate(inputs),
@@ -2424,8 +2463,6 @@ const optimise = async (
     [...g.nodes()].filter((n) => n.isDustOptimisable),
     minimiseDustPhase1Steps
   )
-
-  g = removeNodes(g, findNodesWithoutSources(g))
 
   await optimiseGlobal(
     g,
@@ -2466,8 +2503,8 @@ const optimise = async (
   const maxDustFraction = universe.config.zapMaxDustProduced / 100
 
   const valueSlippage =
-    bestSoFar.result.inputValue / bestSoFar.result.totalValue
-  if (1 - valueSlippage > maxValueSlippage) {
+    bestSoFar.result.totalValue / bestSoFar.result.inputValue
+  if (valueSlippage < 1 - maxValueSlippage) {
     logger.info(bestSoFar.result.outputs.join(', '))
     logger.error(
       `Value slippage is too high: ${((1 - valueSlippage) * 100).toFixed(
@@ -2998,6 +3035,31 @@ export class TokenFlowGraphSearcher {
     return out
   }
 
+  private async addTrades(
+    graph: TokenFlowGraphBuilder,
+    inputQty: TokenQuantity,
+    output: Token,
+    name?: string
+  ) {
+    const path = await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
+      inputQty,
+      output
+    )
+
+    for (const step of path.steps) {
+      console.log(`${step.input} -> ${step.output}: ${step.actions.join(', ')}`)
+      if (graph.tradeNodeExists(step.input.token, step.output.token)) {
+        continue
+      }
+      graph.addTradeNode(
+        step.input.token,
+        step.output.token,
+        step.actions,
+        name ?? `${step.input.token} -> ${step.output.token}`
+      )
+    }
+  }
+
   /**
    * Searcher algorithm that constructs a TFG to do a 1 to 1 zap (one input to one output)
    */
@@ -3006,6 +3068,7 @@ export class TokenFlowGraphSearcher {
     output: Token,
     opts: SearcherOptions
   ) {
+    const inputValue = (await input.price()).asNumber()
     let inputToken = input.token
     const prev = this.registry.find(inputToken, output)
     if (prev != null) {
@@ -3040,44 +3103,29 @@ export class TokenFlowGraphSearcher {
         targetToken = output
       }
 
+      const outputQtys = await redemptionGraph.graph.evaluate(this.universe, [
+        input,
+      ])
+
       for (const outputToken of redeemNode.outputs) {
         const outputTokenNode = graph.getTokenNode(outputToken)
         redeemNode.forward(outputToken, 1, outputTokenNode)
 
-        if (
-          outputToken !== targetToken &&
-          outputTokenNode.recipients.length === 0
-        ) {
-          const direct = findAllWaysToGetFromAToB(
-            this.universe,
-            outputToken,
-            targetToken
-          )
-          if (direct.length !== 0) {
-            const directGraph = TokenFlowGraphBuilder.createSingleStep(
-              this.universe,
-              outputToken.one,
-              direct,
-              `${outputToken} -> ${targetToken} (direct)`
-            )
-            const directNode = graph.addSubgraphNode(
-              directGraph.graph,
-              `${outputToken} -> ${targetToken} (direct)`
-            )
-            outputTokenNode.forward(outputToken, 1, directNode)
-            directNode.forward(targetToken, 1, graph.getTokenNode(targetToken))
-          } else {
-            const outputToTokClsNode = graph.addSubgraphNode(
-              (await this.search1To1Graph(outputToken, targetToken, true)).graph
-            )
-            outputTokenNode.forward(outputToken, 1, outputToTokClsNode)
-            outputToTokClsNode.forward(
-              targetToken,
-              1,
-              graph.getTokenNode(targetToken)
-            )
-          }
+        if (outputToken === targetToken) {
+          continue
         }
+
+        const qty =
+          outputQtys.result.outputs.find((i) => i.token === outputToken) ??
+          (await outputToken.fromUSD(inputValue))
+        console.log(`${qty} -> ${targetToken}`)
+
+        await this.addTrades(
+          graph,
+          qty,
+          targetToken,
+          `sell redeem ${input} output ${outputToken} for ${targetToken}`
+        )
       }
 
       if (targetToken === output) {
@@ -3092,19 +3140,16 @@ export class TokenFlowGraphSearcher {
     if (outTokCls !== output && inTokCls !== outTokCls) {
       for (const outToken of inputNode.outputs) {
         if (outToken !== inTokCls) {
-          const g = await this.search1To1Graph(outToken, inTokCls, true)
-          const node = graph.addSubgraphNode(g.graph)
-          inputNode.forward(outToken, 1, node)
-          node.forward(inTokCls, 1, graph.getTokenNode(inTokCls))
+          await this.addTrades(
+            graph,
+            await outToken.fromUSD(inputValue),
+            inTokCls
+          )
         } else {
           inputNode.forward(outToken, 1, graph.getTokenNode(inTokCls))
         }
       }
-      const g = await this.search1To1Graph(inTokCls, outTokCls, true)
-      const node = graph.addSubgraphNode(g.graph)
-      graph.getTokenNode(inTokCls).forward(inTokCls, 1, node)
-
-      node.forward(outTokCls, 1, graph.getTokenNode(outTokCls))
+      await this.addTrades(graph, await inTokCls.fromUSD(inputValue), outTokCls)
       inputNode = graph.getTokenNode(outTokCls)
       inputToken = outTokCls
       graph.addParentInputs(new Set([outTokCls]))
@@ -3118,7 +3163,7 @@ export class TokenFlowGraphSearcher {
       const issueanceGraph = await this.tokenMintingGraph(subgraph, output)
       const issueanceNode = subgraph.addSubgraphNode(
         issueanceGraph.graph,
-        `${input} -> ${output} (issue)`
+        `${inputToken} -> ${output} (issue)`
       )
 
       issueanceNode.forward(output, 1, outputNode)
@@ -3134,18 +3179,11 @@ export class TokenFlowGraphSearcher {
       if (inputToken === inputTokenOfOutputNode) {
         continue
       }
-
-      const g = await this.search1To1Graph(
-        inputToken,
+      await this.addTrades(
+        graph,
+        await inputToken.fromUSD(inputValue),
         inputTokenOfOutputNode,
-        true
-      )
-      const tradeNode = subgraph.addSubgraphNode(g.graph)
-      graph.getTokenNode(inputToken).forward(inputToken, 1, tradeNode)
-      tradeNode.forward(
-        inputTokenOfOutputNode,
-        1,
-        subgraph.getTokenNode(inputTokenOfOutputNode)
+        `sell ${inputToken} for ${inputTokenOfOutputNode}`
       )
     }
 
@@ -3153,6 +3191,7 @@ export class TokenFlowGraphSearcher {
       subgraph.getTokenNode(inputToken).forward(inputToken, 1, outputNode)
     }
     this.registry.define(inputToken, output, graph)
+    console.log(graph.toDot().join('\n'))
     return await optimise(this.universe, graph, [input], [output], opts)
   }
 

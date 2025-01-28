@@ -15,6 +15,7 @@ import { createProtocolWithWrappers } from '../action/RewardableWrapper'
 import { TokenType } from '../entities/TokenClass'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupUniswapV2 } from './setupUniswapV2'
+import { setupMaverick } from './maverick'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   console.log('setupBaseZapper')
@@ -218,7 +219,11 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     await setupUniswapV2(universe)
   }
   let done = 0
+  const initMaverick = async () => {
+    await setupMaverick(universe)
+  }
   console.log('setupBaseZapper')
+
   const tasks = [
     initCompound(),
     initAave(),
@@ -226,6 +231,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     initERC4626(),
     setupStarGate_(),
     setupAero(),
+    initMaverick(),
   ].map((tsk) => {
     return tsk
       .catch((e) => {
@@ -273,10 +279,14 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
   universe.tokenClass.set(
     universe.commonTokens.DAI,
-    Promise.resolve(universe.commonTokens.DAI)
+    Promise.resolve(universe.commonTokens.USDC)
   )
   universe.tokenClass.set(
     universe.commonTokens.meUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.eUSD,
     Promise.resolve(universe.commonTokens.USDC)
   )
   universe.tokenClass.set(

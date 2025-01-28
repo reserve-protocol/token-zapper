@@ -102,6 +102,13 @@ export class Token {
     )
   }
 
+  async fromUSD(usdQty: number | TokenQuantity): Promise<TokenQuantity> {
+    if (typeof usdQty === 'number') {
+      usdQty = this.universe.usd.from(usdQty)
+    }
+    return usdQty.div(await this.price).into(this)
+  }
+
   fromBigInt(decimalStringOrNumber: bigint): TokenQuantity {
     return new TokenQuantity(this, decimalStringOrNumber)
   }

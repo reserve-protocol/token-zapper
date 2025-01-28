@@ -60,7 +60,7 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
     factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
     pools: [],
-    staticPools: baseUniV3,
+    staticPools: [],
   },
   [ChainIds.Base]: {
     subgraphId: 'HMuAwufqZ1YCRmzL2SfHTVkzZovC9VL2UAKhjvRqKiR1',
@@ -68,7 +68,10 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     quoter: '0x3d4e44eb1374240ce5f1b871ab261cd16335b76a',
     factory: '0x33128a8fc17869897dce68ed026d694621f6fdfd',
     pools: [],
-    staticPools: baseUniV3,
+    staticPools: baseUniV3.map((i) => ({
+      ...i,
+      feeTier: Number(i.feeTier),
+    })),
   },
 }
 
@@ -82,8 +85,8 @@ const top100PoolsQuery = `query GetPools(
     first: ${pageSize}
     skip: $skip,
     where:{
-      totalValueLockedUSD_gt: 30000,
-      totalValueLockedUSD_lt: 500000000,
+      totalValueLockedUSD_gt: 25000,
+      totalValueLockedUSD_lt: 10000000000,
     },
     block:{
       number: $block
@@ -236,9 +239,7 @@ const loadPoolsFromSubgraphWithRetry = async (
   for (let i = 0; i < 3; i++) {
     try {
       return await loadPoolsFromSubgraph(ctx, subgraphId, offset, block)
-    } catch (e) {
-      console.error(e)
-    }
+    } catch (e) {}
     await wait(500)
   }
   return []

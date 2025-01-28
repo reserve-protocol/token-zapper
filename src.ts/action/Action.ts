@@ -217,12 +217,27 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
-  public async balances(universe: Universe) {
-    return await Promise.all(
-      [...this.inputToken, ...this.outputToken].map(async (token) => {
-        return universe.approvalsStore.queryBalance(token, this.address)
-      })
-    )
+  private allTokens = new Set<Token>()
+  private allBalances: TokenQuantity[] = []
+  private allBalancesBlock: number = 0
+  public async balances(universe: Universe): Promise<readonly TokenQuantity[]> {
+    if (this.allTokens.size === 0) {
+      for (const tok of [...this.inputToken, ...this.outputToken]) {
+        this.allTokens.add(tok)
+      }
+    }
+    if (this.allBalancesBlock !== universe.currentBlock) {
+      this.allBalances = []
+      for (const tok of this.allTokens) {
+        const b = await universe.approvalsStore.queryBalance(tok, this.address)
+        if (b.amount === 0n) {
+          continue
+        }
+        this.allBalances.push(b)
+      }
+      this.allBalancesBlock = universe.currentBlock
+    }
+    return this.allBalances
   }
 
   public async liquidity(): Promise<number> {
@@ -454,7 +469,6 @@ export abstract class BaseAction {
 
   toString() {
     return (
-      'UnnamedAction.' +
       this.protocol +
       '.' +
       this.constructor.name +

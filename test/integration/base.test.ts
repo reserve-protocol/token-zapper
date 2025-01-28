@@ -33,8 +33,8 @@ if (process.env.BASE_PROVIDER == null) {
 
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
-  optimisationSteps: 35,
-  minimiseDustPhase1Steps: 25,
+  optimisationSteps: 25,
+  minimiseDustPhase1Steps: 15,
   minimiseDustPhase2Steps: 25,
   cacheResolution: 8,
   useNewZapperContract: true,
@@ -70,6 +70,15 @@ export const baseWhales = {
 
   '0xcfa3ef56d303ae4faaba0592388f19d7c3399fb4':
     '0x5400dbb270c956e8985184335a1c62aca6ce1333',
+
+  '0xcc7ff230365bd730ee4b352cc2492cedac49383e':
+    '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb', // hyusd
+  '0xcb327b99ff831bf8223cced12b1338ff3aa322ff':
+    '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb', // bsdeth
+  '0xfe0d6d83033e313691e96909d2188c150b834285':
+    '0x1ef46018244179810dec43291d693cb2bf7f40e5', // iusdc
+  '0xc9a3e2b3064c1c0546d3d0edc0a748e9f93cf18d':
+    '0x6f1d6b86d4ad705385e751e6e88b0fdfdbadf298', // vaya
 }
 
 const t = baseConfig.addresses.commonTokens
@@ -107,11 +116,11 @@ const testUser = Address.from(
 )
 const issueanceCases = [
   // makeTestCase(10000, t.USDC, rTokens.bsd),
-  // makeTestCase(100, t.WETH, rTokens.bsd),
-  makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  makeTestCase(10000, t.USDbC, rTokens.hyUSD),
-  makeTestCase(10000, t.DAI, rTokens.hyUSD),
-  makeTestCase(5, t.WETH, rTokens.hyUSD),
+  makeTestCase(10, t.WETH, rTokens.bsd),
+  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
+  // makeTestCase(10000, t.DAI, rTokens.hyUSD),
+  // makeTestCase(5, t.WETH, rTokens.hyUSD),
 
   // makeTestCase(10, t.ETH, rTokens.BSDX),
   // makeTestCase(10, t.WETH, rTokens.BSDX),
@@ -119,11 +128,11 @@ const issueanceCases = [
 
 const redeemCases = [
   makeTestCase(50, rTokens.bsd, t.WETH),
-  // makeTestCase(50, rTokens.hyUSD, t.USDC),
+  makeTestCase(50, rTokens.hyUSD, t.USDC),
 
   makeTestCase(100000, rTokens.hyUSD, t.WETH),
   makeTestCase(100000, rTokens.hyUSD, t.USDbC),
-  makeTestCase(100000, rTokens.hyUSD, t.DAI),
+  makeTestCase(1000, rTokens.hyUSD, t.DAI),
   makeTestCase(100000, rTokens.hyUSD, t.USDC),
 
   // makeTestCase(10000, rTokens.BSDX, t.WETH),

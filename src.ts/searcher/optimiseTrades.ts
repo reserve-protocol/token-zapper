@@ -25,7 +25,7 @@ export const optimiseTradesInOutQty = async (
   const evaluteAction = async (action: BaseAction, inputQty: number) => {
     const input = inputToken.from(inputQty)
     const output = await action.quote([input]).catch(() => {
-      return action.outputToken.map((i) => i.zero)
+      return [action.outputToken[0].zero]
     })
     const outputQty = output[0].asNumber()
     const price = outputQty / inputQty
@@ -103,7 +103,7 @@ export const optimiseTrades = async (
   ]).then((prices) => prices.map((i) => i.asNumber()))
   await Promise.all(
     tradeActions.map(async (action, index) => {
-      const liq = (await action.liquidity()) / 20 / inputTokenPrice
+      const liq = (await action.liquidity()) / 2 / inputTokenPrice
       maxInputs[index] = liq
     })
   )
@@ -133,8 +133,10 @@ export const optimiseTrades = async (
   let currentInputQty = 0
   let currentTxFeeValue = 0
   let currentOutputQty = 0
+  let changed = false
 
   const step = async () => {
+    changed = false
     for (const s of state) {
       if (s.input * inputTokenPrice < 0.001) {
         s.input = 0
@@ -160,6 +162,22 @@ export const optimiseTrades = async (
               .quote([inputToken.from(newInput)])
               .catch(() => [state.action.outputToken[0].zero])
           )[0].asNumber()
+
+          if (outputTokenQty === 0) {
+            return {
+              result: {
+                newInputQty: 0,
+                newInputValue: 0,
+                newOutputQty: 0,
+                newOutputValue: 0,
+                newTxFeeValue: 0,
+                price: 0,
+              },
+              newInput: 0,
+              newOutput: 0,
+              state,
+            }
+          }
 
           const newEstimate =
             universe.nativeToken
@@ -194,7 +212,12 @@ export const optimiseTrades = async (
         })
     )
     // Pick the best one in terms of output pr inputput - gas
-    results.sort((l, r) => r.result.price - l.result.price)
+    results
+      .filter((i) => i.result.price == 0)
+      .sort((l, r) => r.result.price - l.result.price)
+    if (results.length === 0) {
+      return
+    }
     const best = results[0]
 
     best.state.input = best.newInput
@@ -203,9 +226,13 @@ export const optimiseTrades = async (
     currentInputQty = best.result.newInputQty
     currentOutputQty = best.result.newOutputQty
     currentTxFeeValue = best.result.newTxFeeValue
+    changed = true
   }
   for (let i = 0; i < parts; i++) {
     await step()
+    if (!changed) {
+      break
+    }
   }
   for (const s of state) {
     if (s.input * inputTokenPrice < 0.01) {

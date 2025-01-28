@@ -260,6 +260,9 @@ class MaverickSwap extends Action('Maverick') {
   gasEstimate(): bigint {
     return this.gasUnits
   }
+  get addressesInUse(): Set<Address> {
+    return new Set([this.pool.address])
+  }
   async plan(
     planner: Planner,
     inputs: Value[],

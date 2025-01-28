@@ -255,7 +255,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
   universe.tokenClass.set(
     universe.commonTokens.USDbC,
-    Promise.resolve(universe.commonTokens.USDbC)
+    Promise.resolve(universe.commonTokens.USDC)
   )
   universe.tokenClass.set(
     universe.commonTokens.DEGEN,

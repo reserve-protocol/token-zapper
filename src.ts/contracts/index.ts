@@ -192,8 +192,6 @@ export type { IMaverickV2Quoter } from "./contracts/Maverick.sol/IMaverickV2Quot
 export { IMaverickV2Quoter__factory } from "./factories/contracts/Maverick.sol/IMaverickV2Quoter__factory";
 export type { IMaverickV2Router } from "./contracts/Maverick.sol/IMaverickV2Router";
 export { IMaverickV2Router__factory } from "./factories/contracts/Maverick.sol/IMaverickV2Router__factory";
-export type { IPushOperations } from "./contracts/Maverick.sol/IPushOperations";
-export { IPushOperations__factory } from "./factories/contracts/Maverick.sol/IPushOperations__factory";
 export type { IRouterErrors } from "./contracts/Maverick.sol/IRouterErrors";
 export { IRouterErrors__factory } from "./factories/contracts/Maverick.sol/IRouterErrors__factory";
 export type { SelfDestruct } from "./contracts/PreventTampering.sol/SelfDestruct";

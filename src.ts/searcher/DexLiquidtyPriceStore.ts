@@ -20,7 +20,7 @@ export class DexLiquidtyPriceStore {
 
     path = new Promise(async (resolve, reject) => {
       try {
-        const tokenPath = await bestPath(this.universe, input, target, 2).then(
+        const tokenPath = await bestPath(this.universe, input, target, 1).then(
           (m) => m.get(target)?.path ?? []
         )
         if (tokenPath.length === 0) {
@@ -76,7 +76,7 @@ export class DexLiquidtyPriceStore {
       output: TokenQuantity
     }[] = []
     for (const actions of path) {
-      const res = await optimiseTradesInOutQty(legAmt, actions)
+      const res = await optimiseTradesInOutQty(legAmt, actions, 4)
 
       const sum = res.inputs.reduce((l, r) => l + r, 0)
       const splits = res.inputs.map((i) => i / sum)

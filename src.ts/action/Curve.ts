@@ -1250,9 +1250,11 @@ export const loadCurve = async (universe: Universe) => {
         //   return
         // }
         try {
-          if (allowedPoolTypes.includes(pool.poolType)) {
-            await addLpToken(universe, pool)
-            getPoolByLPMap.set(pool.lpToken, pool)
+          if (!universe.lpTokens.has(pool.lpToken)) {
+            if (allowedPoolTypes.includes(pool.poolType)) {
+              await addLpToken(universe, pool)
+              getPoolByLPMap.set(pool.lpToken, pool)
+            }
           }
         } catch (e) {
           console.log(pool.address.toString())

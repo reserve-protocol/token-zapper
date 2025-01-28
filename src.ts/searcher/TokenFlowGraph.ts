@@ -52,7 +52,7 @@ export class NodeProxy {
     )
   }
 
-  public *dependents(): Iterable<NodeProxy> {
+  public *decendents(): Iterable<NodeProxy> {
     this.checkVersion()
     const visited = new Set<number>()
     visited.add(this.id)
@@ -79,11 +79,19 @@ export class NodeProxy {
   }
 
   public get recipients() {
-    return [
-      ...new Set(
-        this.graph._outgoingEdges[this.id]!.edges.flatMap((e) => e.recipient)
-      ),
-    ].map((id) => this.graph.getNode(id))
+    this.checkVersion()
+    const seen = new Set<number>()
+    const out: NodeProxy[] = []
+    for (const edge of this.graph._outgoingEdges[this.id]?.edges ?? []) {
+      for (const recipient of edge.recipient) {
+        if (seen.has(recipient)) {
+          continue
+        }
+        seen.add(recipient)
+        out.push(this.graph.getNode(recipient))
+      }
+    }
+    return out
   }
 
   public get isOptimisable() {
@@ -107,6 +115,7 @@ export class NodeProxy {
       this.isStartNode ||
       this.isEndNode ||
       this.isOptimisable ||
+      this.isDustOptimisable ||
       this.isFanout
     ) {
       return false
@@ -339,7 +348,8 @@ class TokenFlowSplits {
     public sum: number,
     public readonly parts: number[],
     public readonly recipient: number[],
-    public min?: number
+    public min?: number,
+    public readonly dustEdge: Map<number, Token> = new Map()
   ) {
     this.calculateProportionsAsBigInt()
     this.updateIndicesMap()
@@ -492,7 +502,8 @@ class TokenFlowSplits {
       this.sum,
       [...this.parts],
       [...this.recipient],
-      this.min ?? min
+      this.min ?? min,
+      this.dustEdge
     )
   }
 }
@@ -551,7 +562,7 @@ class OutgoingTokens {
     return this.edges[idx]
   }
 
-  private addEdge(edge: TokenFlowSplits) {
+  public addEdge(edge: TokenFlowSplits) {
     this.version += 1
     for (const recipient of edge.recipient) {
       this.recipientMap.get(recipient).add(edge.token)
@@ -1010,7 +1021,9 @@ export class TokenFlowGraph {
 
   public *nodes() {
     for (let i = 0; i < this._nodes.length; i++) {
-      yield this.getNode(i)
+      if (this._nodes[i] != null) {
+        yield this.getNode(i)
+      }
     }
   }
 
@@ -1469,6 +1482,7 @@ export class TokenFlowGraph {
             token,
             parts,
             weight: splits.innerWeight(i),
+            dustToken: splits.dustEdge.get(i),
           }
         }
       }
@@ -1861,6 +1875,7 @@ const inlineTFGs = (
       continue
     }
     const node = graph.data[nodeId]
+    let newNodeId: number
 
     if (node.action instanceof TokenFlowGraph) {
       const subgraph = inlineTFGs(node.action)
@@ -1886,7 +1901,13 @@ const inlineTFGs = (
           throw new Error('PANIC: Invalid subgraph')
         }
         out.forward(nodeFrom, nodeTo, edge.token, edge.parts)
+
+        if (edge.dustToken) {
+          const splits = out._outgoingEdges[nodeFrom]!.getEdge(edge.token)
+          splits.dustEdge.set(splits.getRecipientIndex(nodeTo), edge.dustToken)
+        }
       }
+
       remappedNodesOut[nodeId] = {
         start: remappedSubgraphNodes[subgraph._startIndex],
         end: remappedSubgraphNodes[subgraph._endIndex],
@@ -1900,10 +1921,11 @@ const inlineTFGs = (
         node.outputs,
         graph._outgoingEdges[nodeId]!.min,
         node.inlinedGraph
-      ).id
+      )
+      newNodeId = newNode.id
       remappedNodesOut[nodeId] = {
-        start: newNode,
-        end: newNode,
+        start: newNodeId,
+        end: newNodeId,
       }
     }
   }
@@ -1914,6 +1936,10 @@ const inlineTFGs = (
       throw new Error('PANIC: Invalid subgraph')
     }
     out.forward(from.end, to.start, edge.token, edge.parts)
+    if (edge.dustToken) {
+      const splits = out._outgoingEdges[from.end]!.getEdge(edge.token)
+      splits.dustEdge.set(splits.getRecipientIndex(to.start), edge.dustToken)
+    }
   }
   return out
 }
@@ -1964,6 +1990,15 @@ const removeUselessNodes = (graph: TokenFlowGraph): TokenFlowGraph => {
           edge.token,
           edge.parts
         )
+        if (edge.dustToken) {
+          const splits = out._outgoingEdges[remappedNodes[edge.from]]!.getEdge(
+            edge.token
+          )
+          splits.dustEdge.set(
+            splits.getRecipientIndex(remappedNodes[edge.to]),
+            edge.dustToken
+          )
+        }
       } else if (remappedNodes[edge.from] === -1) {
         remappedNodes[edge.from] = remappedNodes[edge.to]
         newEdges.push(edge)
@@ -2014,6 +2049,15 @@ const removeNodes = (graph: TokenFlowGraph, unusedNodes: NodeProxy[]) => {
         edge.token,
         edge.parts
       )
+      if (edge.dustToken) {
+        const splits = out._outgoingEdges[remappedNodes[edge.from]]!.getEdge(
+          edge.token
+        )
+        splits.dustEdge.set(
+          splits.getRecipientIndex(remappedNodes[edge.to]),
+          edge.dustToken
+        )
+      }
       continue
     }
   }
@@ -2157,46 +2201,42 @@ const minimizeDust = async (
   evaluate: () => Promise<TFGResult>,
   currentResult: TFGResult,
   nodesToOptimise: NodeProxy[],
+  qtyOutMatters: boolean = true,
   steps: number = 20
 ) => {
-  const dustTokens = currentResult.result.dust
-    .map((d) => d.token)
-    .filter((i) => i !== currentResult.result.inputs[0].token)
+  const nodesToProcess = nodesToOptimise.filter((n) => n.recipients.length > 1)
 
-  const nodesToProcess = nodesToOptimise.filter((node) => {
-    return [...node.outgoingEdges()].length > 1
-  })
-
+  const dustTokens: Token[] = []
   if (nodesToProcess.length === 0) {
+    console.log(g.toDot().join('\n'))
+    for (const node of g.nodes()) {
+      console.log(node.nodeId, node.nodeType)
+    }
     console.log('Minimise dust: No nodes to process')
     return currentResult
   }
 
-  const nodes = nodesToProcess.map((node) => {
-    const splits = g._outgoingEdges[node.id]!.edges[0]
-    splits.min = 0
-    const tokenToSplitMap = new Map<Token, number>()
-    for (let i = 0; i < splits.recipient.length; i++) {
-      const recipient = g.getNode(splits.recipient[i])
-      const deps = [...recipient.dependents()].filter(
-        (i) => i.inputs.length === 1
-      )
-      for (const dep of deps) {
-        for (const token of dustTokens) {
-          if (dep.outputs.includes(token)) {
-            tokenToSplitMap.set(token, i)
-            // console.log(`${token}: ${node.nodeId} -> ${recipient.nodeId}`)
-            break
+  const nodes = nodesToProcess
+    .map((node) => {
+      const splits = g._outgoingEdges[node.id]!.edges[0]
+      splits.min = 0
+      const tokenToSplitMap = new Map<Token, number>()
+      for (let i = 0; i < splits.recipient.length; i++) {
+        const token = splits.dustEdge.get(i)
+        if (token != null) {
+          if (!dustTokens.includes(token)) {
+            dustTokens.push(token)
           }
+          tokenToSplitMap.set(token, i)
         }
       }
-    }
-    return {
-      node,
-      tokenToSplitMap,
-      splits,
-    }
-  })
+      return {
+        node,
+        tokenToSplitMap,
+        splits,
+      }
+    })
+    .filter((node) => node.tokenToSplitMap.size > 1)
 
   if (nodes.length === 0) {
     console.log('Minimise dust: No nodes to process')
@@ -2227,7 +2267,6 @@ const minimizeDust = async (
       }
       const node = nodes[i]
       if (!dustTokens.find((d) => node.tokenToSplitMap.has(d))) {
-        console.log('Minimise dust: No dust tokens')
         continue
       }
       const before = [...node.splits.parts]
@@ -2269,7 +2308,8 @@ const minimizeDust = async (
 
       const newRes = await evaluate()
       if (
-        newRes.result.outputQuantity < currentResult.result.outputQuantity ||
+        (qtyOutMatters &&
+          newRes.result.outputQuantity < currentResult.result.outputQuantity) ||
         newRes.result.dustValue > currentResult.result.dustValue
       ) {
         node.splits.setParts(before)
@@ -2307,7 +2347,7 @@ const optimiseGlobal = async (
   }
   if (optimisationNodes.length === 0) {
     console.log('Optimise global: No optimisation nodes')
-    return
+    return bestSoFar
   }
 
   const optimialValueOut =
@@ -2320,7 +2360,7 @@ const optimiseGlobal = async (
     const node = optimisationNodes[nodeIndex]
     const edge = g._outgoingEdges[node.id]!.edges[0]
     if (edge.min !== 0) {
-      edge.min = 1 / edge.parts.length / 2
+      edge.min = 1 / 10
     }
     edge.normalize()
   }
@@ -2404,6 +2444,7 @@ const optimiseGlobal = async (
       ]!.edges[0].setParts(tmp[bestNodeToChange])
     }
   }
+  return bestSoFar
 }
 
 const optimise = async (
@@ -2426,8 +2467,22 @@ const optimise = async (
   const optimisationSteps = opts?.optimisationSteps ?? 15
   const minimiseDustPhase1Steps = opts?.optsDustPhase1Steps ?? 15
   const minimiseDustPhase2Steps = opts?.optsDustPhase2Steps ?? 5
+
   const inlined = inlineTFGs(graph.graph)
+  for (const node of inlined.nodes()) {
+    for (const edge of inlined._outgoingEdges[node.id]!.edges) {
+      if (edge.dustEdge.size > 0) {
+        console.log(
+          node.nodeId,
+          [...edge.dustEdge.entries()]
+            .map((i) => `${i[0]} -> ${i[1]}`)
+            .join(', ')
+        )
+      }
+    }
+  }
   let g = removeUselessNodes(inlined)
+  // let g = inlined
   const findNodesWithoutSources = (g: TokenFlowGraph) => {
     const out = new Set<number>()
     for (const node of g.nodes()) {
@@ -2438,7 +2493,7 @@ const optimise = async (
         continue
       }
       out.add(node.id)
-      for (const dep of node.dependents()) {
+      for (const dep of node.decendents()) {
         out.add(dep.id)
       }
     }
@@ -2454,19 +2509,20 @@ const optimise = async (
     throw new Error('Bad graph')
   }
 
-  const optimiserEvaluation = evaluationOptimiser(universe, g)
-
-  g = removeNodes(g, findNodesWithoutSources(g))
+  let optimiserEvaluation = evaluationOptimiser(universe, g)
 
   bestSoFar = await minimizeDust(
     g,
     () => optimiserEvaluation.evaluate(inputs),
     bestSoFar,
     [...g.nodes()].filter((n) => n.isDustOptimisable),
+    false,
     minimiseDustPhase1Steps
   )
 
-  await optimiseGlobal(
+  g = removeNodes(g, findNodesWithoutSources(g))
+
+  bestSoFar = await optimiseGlobal(
     g,
     universe,
     inputs,
@@ -2482,12 +2538,14 @@ const optimise = async (
   )
 
   if (bestSoFar.result.dustValue > 10) {
+    optimiserEvaluation = evaluationOptimiser(universe, g)
     console.log('minimise dust phase 2')
     bestSoFar = await minimizeDust(
       g,
       () => optimiserEvaluation.evaluate(inputs),
       bestSoFar,
       [...g.nodes()].filter((n) => n.isDustOptimisable),
+      true,
       minimiseDustPhase2Steps
     )
   }
@@ -2693,9 +2751,15 @@ export class TokenFlowGraphSearcher {
 
         const node = rTokenIssueGraph.getTokenNode(token)
         node.nodeType = NodeType.SplitWithDust
-        rTokenIssueGraph.graph._outgoingEdges[node.id]!.min = 0
+        const edges = rTokenIssueGraph.graph._outgoingEdges[node.id]!
+        edges.min = 0
 
         node.forward(token, proportion, basketProportionNode)
+        const splits = edges.getEdge(token)
+        const idx = splits.getRecipientIndex(basketProportionNode.id)
+        splits.dustEdge.set(idx, basketToken)
+        console.log(`${node.nodeId} ${idx} => ${basketToken}`)
+
         return basketProportionNode
       })
 
@@ -2732,6 +2796,11 @@ export class TokenFlowGraphSearcher {
       for (const inputToken of basketMintGraph.inputs) {
         let inputTokenNode = parentInputNodes.get(inputToken)
         inputTokenNode.forward(inputToken, 1, basketMintGraph)
+        const edges = rTokenIssueGraph.graph._outgoingEdges[inputTokenNode.id]!
+        const splits = edges.getEdge(inputToken)
+        const idx = splits.getRecipientIndex(basketMintGraph.id)
+        splits.dustEdge.set(idx, basketToken)
+        console.log(`${inputTokenNode.nodeId} ${idx} => ${basketToken}`)
 
         if (inputTokenNode.inputsSatisfied()) {
           continue
@@ -3193,7 +3262,6 @@ export class TokenFlowGraphSearcher {
       subgraph.getTokenNode(inputToken).forward(inputToken, 1, outputNode)
     }
     this.registry.define(inputToken, output, graph)
-    console.log(graph.toDot().join('\n'))
     return await optimise(this.universe, graph, [input], [output], opts)
   }
 
@@ -3286,11 +3354,21 @@ export class TokenFlowGraphSearcher {
         )
         inputTokenNode.forward(input, proportion, tradeNode)
         inputTokenNode.nodeType = NodeType.Both
-        out.graph._outgoingEdges[inputTokenNode.id]!.min = 0
-        out.graph._outgoingEdges[inputTokenNode.id]!.edges[0].min = 0
+        const outgoing = out.graph._outgoingEdges[inputTokenNode.id]!
+        outgoing.min = 0
+
         allSplitNodes.add(out.graph._outgoingEdges[inputTokenNode.id]!.edges[0])
         for (const outputToken of tradeNode.outputs) {
           tradeNode.forward(outputToken, 1, out.getTokenNode(outputToken))
+        }
+
+        if (i === 0) {
+          const splits = outgoing.getEdge(input)
+          splits.min = 0
+          splits.dustEdge.set(
+            splits.getRecipientIndex(tradeNode.id),
+            precursorToken
+          )
         }
       }
     }
@@ -3301,7 +3379,7 @@ export class TokenFlowGraphSearcher {
       }
       dustTokenNode.forward(dustToken, 1, out.graph.end)
     }
-    inputTokenNode.nodeType = NodeType.Both
+    inputTokenNode.nodeType = NodeType.SplitWithDust
     out.graph._outgoingEdges[inputTokenNode.id]!.min = 0
     out.graph._outgoingEdges[inputTokenNode.id]!.edges[0].min = 0
 

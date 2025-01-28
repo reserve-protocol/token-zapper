@@ -217,27 +217,27 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
-  private allTokens = new Set<Token>()
-  private allBalances: TokenQuantity[] = []
-  private allBalancesBlock: number = 0
+  public allTokens_ = new Set<Token>()
+  public allBalances_: TokenQuantity[] = []
+  public allBalancesBlock_: number = 0
   public async balances(universe: Universe): Promise<readonly TokenQuantity[]> {
-    if (this.allTokens.size === 0) {
+    if (this.allTokens_.size === 0) {
       for (const tok of [...this.inputToken, ...this.outputToken]) {
-        this.allTokens.add(tok)
+        this.allTokens_.add(tok)
       }
     }
-    if (this.allBalancesBlock !== universe.currentBlock) {
-      this.allBalances = []
-      for (const tok of this.allTokens) {
+    if (this.allBalancesBlock_ !== universe.currentBlock) {
+      this.allBalances_ = []
+      for (const tok of this.allTokens_) {
         const b = await universe.approvalsStore.queryBalance(tok, this.address)
         if (b.amount === 0n) {
           continue
         }
-        this.allBalances.push(b)
+        this.allBalances_.push(b)
       }
-      this.allBalancesBlock = universe.currentBlock
+      this.allBalancesBlock_ = universe.currentBlock
     }
-    return this.allBalances
+    return this.allBalances_
   }
 
   public async liquidity(): Promise<number> {

@@ -6,5 +6,4 @@ export { IMaverickV2Pool__factory } from "./IMaverickV2Pool__factory";
 export { IMaverickV2PoolLens__factory } from "./IMaverickV2PoolLens__factory";
 export { IMaverickV2Quoter__factory } from "./IMaverickV2Quoter__factory";
 export { IMaverickV2Router__factory } from "./IMaverickV2Router__factory";
-export { IPushOperations__factory } from "./IPushOperations__factory";
 export { IRouterErrors__factory } from "./IRouterErrors__factory";

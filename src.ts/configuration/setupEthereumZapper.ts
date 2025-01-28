@@ -20,6 +20,7 @@ import {
 import { TokenType } from '../entities/TokenClass'
 import { wrapGasToken } from '../searcher/TradeAction'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
+import { setupMaverick } from './maverick'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupChainlinkRegistry } from './setupChainLink'
@@ -428,7 +429,22 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     }
   }
 
-  const tasks = [initUniswapV3, initBalancer, initCurve, initUniswapV2]
+  const initMaverick = async () => {
+    try {
+      await setupMaverick(universe)
+    } catch (e) {
+      console.log(e)
+      console.log('Failed to load mango')
+    }
+  }
+
+  const tasks = [
+    initUniswapV3,
+    initBalancer,
+    initCurve,
+    initUniswapV2,
+    initMaverick,
+  ]
   await Promise.all(tasks.map((task) => task()))
 
   universe.zeroBeforeApproval.add(universe.commonTokens.USDT)

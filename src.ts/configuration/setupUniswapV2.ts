@@ -165,7 +165,7 @@ class UniswapV2Pool {
     })`
   }
 
-  public readonly getReserves: () => Promise<[TokenQuantity, TokenQuantity]>
+  public readonly getReserves: () => Promise<[bigint, bigint]>
   public readonly swap01: BaseAction
   public readonly swap10: BaseAction
   public constructor(
@@ -180,10 +180,7 @@ class UniswapV2Pool {
     )
     this.getReserves = context.universe.createCachedProducer(async () => {
       const reserves = await contract.callStatic.getReserves()
-      return [
-        token0.from(reserves.reserve0.toBigInt()),
-        token1.from(reserves.reserve1.toBigInt()),
-      ]
+      return [reserves.reserve0.toBigInt(), reserves.reserve1.toBigInt()]
     })
 
     this.swap01 = new UniswapV2Swap(
@@ -218,15 +215,9 @@ class UniswapV2Swap extends Action('UniswapV2') {
     return `swap`
   }
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const [reserveIn, reserveOut] = await this.pool.getReserves()
-    const amountOut = getAmountOut(
-      amountIn.amount,
-      reserveIn.amount,
-      reserveOut.amount
-    )
-    const qtyOut = this.tokenOut.fromBigInt(
-      (amountOut * this.tokenOut.scale) / this.tokenIn.scale
-    )
+    const [reserveIn, reserveOut] = await this.getReserves()
+    const amountOut = getAmountOut(amountIn.amount, reserveIn, reserveOut)
+    const qtyOut = this.tokenOut.fromBigInt(amountOut)
 
     return [qtyOut]
   }
@@ -264,7 +255,7 @@ class UniswapV2Swap extends Action('UniswapV2') {
     public readonly pool: UniswapV2Pool,
     public readonly tokenIn: Token,
     public readonly tokenOut: Token,
-    public readonly getReserves: () => Promise<[TokenQuantity, TokenQuantity]>
+    public readonly getReserves: () => Promise<[bigint, bigint]>
   ) {
     super(
       pool.address,

@@ -2,7 +2,10 @@ import * as dotenv from 'dotenv'
 import fs from 'fs'
 
 import { WebSocketProvider } from '@ethersproject/providers'
-import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
+import {
+  makeCustomRouterSimulator,
+  makeCallManySimulator,
+} from '../../src.ts/configuration/ZapSimulation'
 import {
   Address,
   baseConfig,
@@ -21,7 +24,7 @@ import {
   getDefaultSearcherOptions,
   SearcherOptions,
 } from '../../src.ts/configuration/ChainConfiguration'
-import { getProvider } from './providerUtils'
+import { getProvider, getSimulator } from './providerUtils'
 import { ONE } from '../../src.ts/action/Action'
 import { bestPath } from '../../src.ts/exchange-graph/BFS'
 dotenv.config()
@@ -80,6 +83,12 @@ export const baseWhales = {
   '0xc9a3e2b3064c1c0546d3d0edc0a748e9f93cf18d':
     '0x6f1d6b86d4ad705385e751e6e88b0fdfdbadf298', // vaya
 }
+
+const simulateFn = getSimulator(
+  process.env.SIMULATE_URL_BASE!,
+  process.env.SIMULATE_TYPE === 'callmany' ? 'callmany' : 'simulator',
+  baseWhales
+)
 
 const t = baseConfig.addresses.commonTokens
 const rTokens = baseConfig.addresses.rTokens
@@ -279,6 +288,7 @@ const emitReqCount = (msg?: string, dups?: boolean) => {
   }
   dupRequestCounter.clear()
 }
+
 beforeAll(async () => {
   try {
     global.console = require('console')
@@ -292,10 +302,7 @@ beforeAll(async () => {
         await setupBaseZapper(uni)
       },
       {
-        simulateZapFn: makeCustomRouterSimulator(
-          process.env.SIMULATE_URL_BASE!,
-          baseWhales
-        ),
+        simulateZapFn: simulateFn,
       }
     )
 

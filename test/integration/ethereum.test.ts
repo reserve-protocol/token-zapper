@@ -5,7 +5,6 @@ import { WebSocketProvider } from '@ethersproject/providers'
 import {
   convertAddressObject,
   getDefaultSearcherOptions,
-  makeCustomRouterSimulator,
   SearcherOptions,
 } from '../../src.ts/configuration/ChainConfiguration'
 import {
@@ -21,7 +20,7 @@ import {
   makeIntegrationtestCase,
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
-import { getProvider } from './providerUtils'
+import { getProvider, getSimulator } from './providerUtils'
 import { EthereumUniverse } from '../../src.ts/configuration/ethereum'
 dotenv.config()
 
@@ -142,6 +141,12 @@ const makeTestCase = (input: number, inputToken: Address, output: Address) => {
     output: output,
   }
 }
+
+const simulateFn = getSimulator(
+  process.env.SIMULATE_URL_ETHEREUM!,
+  process.env.SIMULATE_TYPE === 'callmany' ? 'callmany' : 'simulator',
+  ethWhales
+)
 
 const makeZapIntoYieldPositionTestCase = (
   input: number,
@@ -293,10 +298,7 @@ beforeAll(async () => {
         await setupEthereumZapper(uni)
       },
       {
-        simulateZapFn: makeCustomRouterSimulator(
-          process.env.SIMULATE_URL_MAINNET!,
-          ethWhales
-        ),
+        simulateZapFn: simulateFn,
       }
     )
 

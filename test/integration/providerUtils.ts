@@ -1,4 +1,6 @@
 import { ethers } from 'ethers'
+import { makeCustomRouterSimulator } from '../../src.ts'
+import { makeCallManySimulator } from '../../src.ts/configuration/ChainConfiguration'
 
 class OurProvider extends ethers.providers.WebSocketProvider {
   private NextId = 0
@@ -83,4 +85,19 @@ export const getProvider = (url: string, throttle: number = Infinity) => {
     return new OurProvider(url)
   }
   return new ethers.providers.JsonRpcProvider(url)
+}
+
+export const getSimulator = (
+  url: string,
+  type: string,
+  whales: Record<string, string>
+) => {
+  console.log(`Using ${type} simulator. Url=${url}`)
+  if (type === 'simulator') {
+    return makeCustomRouterSimulator(url, whales)
+  }
+  if (type === 'callmany') {
+    return makeCallManySimulator(url, whales)
+  }
+  throw new Error(`Unknown simulator type: ${type}`)
 }

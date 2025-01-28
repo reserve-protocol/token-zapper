@@ -36,7 +36,11 @@ const simulateAndParse = async (
   simulationPayload: SimulateParams,
   dustTokens: Token[]
 ) => {
+  const timer = universe.perf.begin('simulateZap')
+  const start = Date.now()
   const simulation = await universe.simulateZapFn(simulationPayload, universe)
+  timer()
+  universe.logger.debug(`Simulation took ${Date.now() - start}ms`)
   try {
     const parsed = iface.decodeFunctionResult(
       'zapERC20',

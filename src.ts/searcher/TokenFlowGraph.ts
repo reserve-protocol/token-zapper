@@ -2417,10 +2417,12 @@ const optimise = async (
     optimisationSteps?: number
   }
 ) => {
-  console.log(graph.toDot().join('\n'))
   const logger = universe.logger.child({
     prefix: `optimiser ${inputs.join(', ')} -> ${outputs.join(', ')}`,
   })
+  logger.debug('Abstract graph:')
+  logger.debug(graph.toDot().join('\n'))
+
   const optimisationSteps = opts?.optimisationSteps ?? 15
   const minimiseDustPhase1Steps = opts?.optsDustPhase1Steps ?? 15
   const minimiseDustPhase2Steps = opts?.optsDustPhase2Steps ?? 5

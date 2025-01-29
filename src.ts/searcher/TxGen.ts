@@ -470,15 +470,6 @@ export class TxGen {
           console.log(inputs.length)
           console.log(inputs)
         }
-
-        // if (inputs.length === 2) {
-        //   return [token, ctx.add(inputs[0], inputs[1], `${qty}`), qty] as [
-        //     Token,
-        //     Value,
-        //     TokenQuantity
-        //   ]
-        // }
-
         const summed = ctx.readBalance(token, true)
         return [token, summed, qty] as [Token, Value, TokenQuantity]
       })

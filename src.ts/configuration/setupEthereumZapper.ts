@@ -438,14 +438,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.rTokens.hyUSD,
     Promise.resolve(universe.commonTokens.USDC)
   )
-  universe.preferredToken.set(
-    universe.rTokens['ETH+'],
-    universe.commonTokens.WETH
-  )
-  universe.preferredToken.set(
-    universe.rTokens.dgnETH,
-    universe.commonTokens.WETH
-  )
   universe.tokenClass.set(
     universe.rTokens['ETH+'],
     Promise.resolve(universe.commonTokens.WETH)

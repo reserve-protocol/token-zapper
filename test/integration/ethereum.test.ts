@@ -181,6 +181,8 @@ const issueanceCases = [
   makeTestCase(10000, t.USDT, rTokens.hyUSD),
   makeTestCase(50, t.WETH, rTokens.dgnETH),
   makeTestCase(10000, t.USDC, rTokens.dgnETH),
+
+  // makeTestCase(350, t.pxETH, t['stkcvxETH+ETH-f']),
 ]
 
 const redeemCases = [

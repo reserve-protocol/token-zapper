@@ -2309,10 +2309,13 @@ const minimizeDust = async (
   }
 
   const optimialValueOut =
-    currentResult.result.inputValue - currentResult.result.inputValue * 0.01
+    currentResult.result.inputValue - currentResult.result.inputValue * 0.005
 
   for (let iter = 0; iter < steps; ) {
-    if (currentResult.result.outputValue > currentResult.result.inputValue) {
+    if (
+      currentResult.result.outputValue > currentResult.result.inputValue &&
+      currentResult.result.dustValue < 10
+    ) {
       iter += 3
     } else if (currentResult.result.outputValue > optimialValueOut) {
       iter += 2
@@ -2423,7 +2426,7 @@ const optimiseGlobal = async (
   }
 
   const optimialValueOut =
-    bestSoFar.result.inputValue - bestSoFar.result.inputValue * 0.01
+    bestSoFar.result.inputValue - bestSoFar.result.inputValue * 0.05
 
   const tmp = optimisationNodes.map((node) =>
     g._outgoingEdges[node.id]!.edges[0].parts.map(() => 0)
@@ -2437,7 +2440,10 @@ const optimiseGlobal = async (
   for (let i = 0; i < optimisationSteps; ) {
     const size = (MAX_SCALE / (i + 1)) * 1 - i / optimisationSteps
 
-    if (bestSoFar.result.outputValue > bestSoFar.result.inputValue) {
+    if (
+      bestSoFar.result.outputValue > bestSoFar.result.inputValue &&
+      bestSoFar.result.dustValue < 10
+    ) {
       i += 3
     } else if (bestSoFar.result.outputValue > optimialValueOut) {
       i += 2
@@ -2753,7 +2759,7 @@ const optimise = async (
     () => g.evaluate(universe, inputs),
     bestSoFar,
     [...g.nodes()].filter((n) => n.isDustOptimisable),
-    false,
+    true,
     minimiseDustPhase1Steps
   )
   bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
@@ -2785,9 +2791,14 @@ const optimise = async (
       minimiseDustPhase2Steps
     )
   }
-  bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
-  g = removeNodes(g, findNodesWithoutSources(g))
-  bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
+  if (
+    !outputs
+      .map((i) => i.address)
+      .includes(Address.from('0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7'))
+  ) {
+    g = removeNodes(g, findNodesWithoutSources(g))
+    bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
+  }
 
   logger.debug(
     `Final graph for ${bestSoFar.result.inputs.join(', ')} -> ${
@@ -3218,11 +3229,7 @@ export class TokenFlowGraphSearcher {
       )
       inputNode.forward(inputToken, 1, redeemNode)
 
-      let targetToken = inTokCls
-
-      if (inTokCls === inputToken) {
-        targetToken = outTokCls
-      }
+      let targetToken = outTokCls
 
       for (const outputToken of redeemNode.outputs) {
         const outputTokenNode = graph.getTokenNode(outputToken)

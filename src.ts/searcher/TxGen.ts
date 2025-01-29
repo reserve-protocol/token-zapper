@@ -322,7 +322,7 @@ const planNode = async (
 
     await ctx.setupApprovals(
       node.action.approvals.map((approval) => [
-        approval.token.from(constants.MaxUint256.toBigInt() / 2n),
+        approval.token.from(constants.MaxUint256.toBigInt()),
         approval,
       ])
     )
@@ -467,13 +467,13 @@ export class TxGen {
         if (inputs.length === 1) {
           return [token, inputs[0], qty] as [Token, Value, TokenQuantity]
         }
-        if (inputs.length === 2) {
-          return [token, ctx.add(inputs[0], inputs[1], `${qty}`), qty] as [
-            Token,
-            Value,
-            TokenQuantity
-          ]
-        }
+        // if (inputs.length === 2) {
+        //   return [token, ctx.add(inputs[0], inputs[1], `${qty}`), qty] as [
+        //     Token,
+        //     Value,
+        //     TokenQuantity
+        //   ]
+        // }
         const summed = ctx.readBalance(token, true)
         return [token, summed, qty] as [Token, Value, TokenQuantity]
       })

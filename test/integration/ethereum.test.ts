@@ -187,13 +187,15 @@ const redeemCases = [
   makeTestCase(200000, rTokens.eUSD, t.USDC),
   makeTestCase(10000, rTokens.eUSD, t.USDC),
   makeTestCase(10000, rTokens.eUSD, t.DAI),
+  makeTestCase(10000, rTokens.eUSD, t.WETH),
   makeTestCase(10000, rTokens.eUSD, t.USDT),
 
   makeTestCase(10000, rTokens.USD3, t.USDC),
+  makeTestCase(10000, rTokens.USD3, t.WETH),
   makeTestCase(10000, rTokens.USD3, t.DAI),
 
   makeTestCase(10000, rTokens.hyUSD, t.USDC),
-  // makeTestCase(10000, rTokens.hyUSD, t.USDe),
+  makeTestCase(10000, rTokens.hyUSD, t.WETH),
   makeTestCase(10000, rTokens.hyUSD, t.DAI),
 
   makeTestCase(5, rTokens['ETH+'], t.WETH),
@@ -203,6 +205,7 @@ const redeemCases = [
 
   makeTestCase(5, rTokens.dgnETH, t.WETH),
   makeTestCase(5, rTokens.dgnETH, t.USDC),
+  makeTestCase(5, rTokens.dgnETH, t.USDT),
 ]
 
 const individualIntegrations = [

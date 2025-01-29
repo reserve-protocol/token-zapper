@@ -293,6 +293,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     universe.rTokens.bsd,
     Promise.resolve(universe.wrappedNativeToken)
   )
+  universe.preferredToken.set(universe.rTokens.BSDX, universe.commonTokens.WETH)
   // universe.tokenClass.set(
   //   universe.rTokens.BSDX,
   //   Promise.resolve(universe.wrappedNativeToken)

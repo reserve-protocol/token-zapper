@@ -3248,6 +3248,19 @@ export class TokenFlowGraphSearcher {
       inputToken = targetToken
     }
 
+    const preferredInputToken = this.universe.preferredToken.get(output)
+    if (preferredInputToken != null && preferredInputToken !== inputToken) {
+      await this.addTrades(
+        graph,
+        await inputToken.fromUSD(inputValue),
+        preferredInputToken,
+        true,
+        `trade into preferred input token ${preferredInputToken}`
+      )
+      inputNode = graph.getTokenNode(preferredInputToken)
+      inputToken = preferredInputToken
+    }
+
     if (this.universe.isTokenMintable(output)) {
       await this.tokenSourceGraph(
         graph,

@@ -157,7 +157,11 @@ export class ZapTxStats {
 
   toString() {
     if (this.isThereDust)
-      return `${this.input} -> ${this.output} (+ $${this.dust.valueUSD} D.) @ fee: ${this.txFee.txFee.price}`
+      return `${this.input} -> ${this.output} (+ $${
+        this.dust.valueUSD
+      } D. [${this.dust.dust.map((i) => i.quantity).join(', ')}]) @ fee: ${
+        this.txFee.txFee.price
+      }`
     return `${this.input} -> ${this.output} @ fee: ${this.txFee.txFee.price}`
   }
 }

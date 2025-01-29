@@ -205,7 +205,8 @@ export const bestPath = async (
   ctx: Universe,
   start: TokenQuantity,
   end: Token,
-  maxSteps: number
+  maxSteps: number,
+  preferedTokens?: Set<Token>
 ) => {
   const graph = ctx.graph
   const result = new Map<
@@ -251,13 +252,16 @@ export const bestPath = async (
         continue
       }
     }
-    if (node.steps >= (maxSteps + 2) * 2) {
+    if (node.steps >= (maxSteps + 1) * 2) {
       continue
     }
     const vertex = graph.vertices.get(node.token)
     await Promise.all(
       [...vertex.outgoingEdges]
         .filter(([nextToken]) => {
+          if (preferedTokens != null && !preferedTokens.has(nextToken)) {
+            return false
+          }
           return !includes(node, nextToken)
         })
         .map(async ([nextToken, actions]) => {
@@ -266,7 +270,7 @@ export const bestPath = async (
               return
             }
           }
-          const minAmount = node.legAmount[0].amount
+          const minAmount = node.legAmount[0].amount * 4n
           await Promise.all(
             actions
               .filter((action) => action.is1to1)
@@ -280,11 +284,17 @@ export const bestPath = async (
                     if (bal == null) {
                       return
                     }
-                    if (bal.amount / 10n < minAmount) {
+                    if (bal.amount < minAmount) {
                       return
                     }
                   }
                   const newLegAmount = await action.quote(node.legAmount)
+                  if (
+                    result.get(nextToken)?.legAmount[0].amount ??
+                    0n > newLegAmount[0].amount
+                  ) {
+                    return
+                  }
                   if (newLegAmount[0].token !== nextToken) {
                     console.log(
                       `newLegAmount[0].token !== nextToken ${newLegAmount[0].token} !== ${nextToken}`

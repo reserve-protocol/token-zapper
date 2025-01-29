@@ -467,6 +467,13 @@ export class TxGen {
         if (inputs.length === 1) {
           return [token, inputs[0], qty] as [Token, Value, TokenQuantity]
         }
+        if (inputs.length === 2) {
+          return [token, ctx.add(inputs[0], inputs[1], `${qty}`), qty] as [
+            Token,
+            Value,
+            TokenQuantity
+          ]
+        }
         const summed = ctx.readBalance(token, true)
         return [token, summed, qty] as [Token, Value, TokenQuantity]
       })
@@ -551,8 +558,7 @@ export class TxGen {
       output: outputToken.from(program.res.amountOut),
       dust: dustQtys,
     })
-
-    return ZapTransaction.create(
+    const zapTx = await ZapTransaction.create(
       result,
       planner,
       {
@@ -561,5 +567,31 @@ export class TxGen {
       },
       stats
     )
+
+    // const valueSlippage = stats.netValueUSD.div(stats.input.price).asNumber()
+    // const maxValueSlippage = this.universe.config.zapMaxValueLoss / 100
+    // for (const res of this.result.nodeResults) {
+    //   if (res.node.action instanceof BaseAction) {
+    //     console.log(
+    //       `${res.result.inputs.join(', ')}  ${
+    //         res.node.action
+    //       } -> ${res.result.outputs.join(', ')}`
+    //     )
+    //   }
+    // }
+    // logger.error(
+    //   `Value slippage is too high: ${((1 - valueSlippage) * 100).toFixed(
+    //     2
+    //   )}% for ${this.result.result.inputs.join(', ')} -> ${
+    //     this.result.result.output.token
+    //   } - Max allowed value slippage ${this.universe.config.zapMaxValueLoss}%`
+    // )
+
+    // console.log(zapTx.toString())
+
+    // console.log(printPlan(zapTx.planner, this.universe).join('\n'))
+
+    return zapTx
+    // return zapTx
   }
 }

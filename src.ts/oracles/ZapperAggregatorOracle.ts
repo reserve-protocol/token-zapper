@@ -133,11 +133,9 @@ export class ZapperTokenQuantityPrice extends Cached<
     const usdc = await universe.getToken(universe.config.addresses.usdc)
     const [priceInWeth, priceInUsdc] = await Promise.all([
       universe.dexLiquidtyPriceStore
-        .getBestQuotePath(qty, universe.wrappedNativeToken)
+        .getBestQuote(qty, universe.wrappedNativeToken)
         .catch(() => null),
-      universe.dexLiquidtyPriceStore
-        .getBestQuotePath(qty, usdc)
-        .catch(() => null),
+      universe.dexLiquidtyPriceStore.getBestQuote(qty, usdc).catch(() => null),
     ])
     console.log(`Got prices ${priceInWeth?.output} and ${priceInUsdc?.output}`)
     const valueInWeth = priceInWeth

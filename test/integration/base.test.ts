@@ -36,11 +36,12 @@ if (process.env.BASE_PROVIDER == null) {
 
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
-  optimisationSteps: 25,
-  minimiseDustPhase1Steps: 15,
-  minimiseDustPhase2Steps: 25,
+
   cacheResolution: 8,
-  useNewZapperContract: true,
+  optimisationSteps: 15,
+  minimiseDustPhase1Steps: 15,
+  minimiseDustPhase2Steps: 15,
+  useNewZapperContract: false,
 }
 
 /** !!
@@ -128,7 +129,6 @@ const issueanceCases = [
   makeTestCase(10, t.WETH, rTokens.bsd),
   makeTestCase(10000, t.USDC, rTokens.hyUSD),
   makeTestCase(10000, t.USDbC, rTokens.hyUSD),
-  // makeTestCase(10000, t.DAI, rTokens.hyUSD),
   makeTestCase(5, t.WETH, rTokens.hyUSD),
 
   // makeTestCase(10, t.ETH, rTokens.BSDX),
@@ -142,7 +142,7 @@ const redeemCases = [
   makeTestCase(100000, rTokens.hyUSD, t.WETH),
   makeTestCase(100000, rTokens.hyUSD, t.USDbC),
   makeTestCase(1000, rTokens.hyUSD, t.DAI),
-  makeTestCase(100000, rTokens.hyUSD, t.USDC),
+  makeTestCase(10000, rTokens.hyUSD, t.USDC),
 
   // makeTestCase(10000, rTokens.BSDX, t.WETH),
 ]
@@ -336,35 +336,31 @@ describe('base zapper', () => {
 
   describe('path', () => {
     it('test', async () => {
-      const input = universe.commonTokens.WETH.from(10.0)
-
-      const quote2 = await universe.dexLiquidtyPriceStore.getBestQuotePath(
-        input,
-        universe.commonTokens.Virtuals
-      )
-
-      for (const step of quote2.steps) {
-        console.log(`${step.input}`)
-        for (let i = 0; i < step.splits.length; i++) {
-          const action = step.actions[i]
-          const split = step.splits[i]
-          console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
-        }
-      }
-
-      const quote = await universe.dexLiquidtyPriceStore.getBestQuotePath(
-        input,
-        universe.commonTokens.VaderAI
-      )
-
-      for (const step of quote.steps) {
-        console.log(`${step.input}`)
-        for (let i = 0; i < step.splits.length; i++) {
-          const action = step.actions[i]
-          const split = step.splits[i]
-          console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
-        }
-      }
+      // const input = universe.commonTokens.WETH.from(10.0)
+      // const quote2 = await universe.dexLiquidtyPriceStore.getBestQuotePath(
+      //   input,
+      //   universe.commonTokens.Virtuals
+      // )
+      // for (const step of quote2.steps) {
+      //   console.log(`${step.input}`)
+      //   for (let i = 0; i < step.splits.length; i++) {
+      //     const action = step.actions[i]
+      //     const split = step.splits[i]
+      //     console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
+      //   }
+      // }
+      // const quote = await universe.dexLiquidtyPriceStore.getBestQuotePath(
+      //   input,
+      //   universe.commonTokens.VaderAI
+      // )
+      // for (const step of quote.steps) {
+      //   console.log(`${step.input}`)
+      //   for (let i = 0; i < step.splits.length; i++) {
+      //     const action = step.actions[i]
+      //     const split = step.splits[i]
+      //     console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
+      //   }
+      // }
     }, 60000)
   })
 

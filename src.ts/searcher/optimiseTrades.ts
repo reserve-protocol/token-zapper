@@ -66,10 +66,10 @@ export const optimiseTradesInOutQty = async (
         })
     )
     // Pick the best one in terms of output pr inputput - gas
-    results.sort((l, r) => r.result.price - l.result.price)
+    results
+      .filter((i) => i.result.price == 0)
+      .sort((l, r) => l.result.price - r.result.price)
     const best = results[0]
-    // console.log(`${best.state.action}: Best`)
-    // console.log(state.map((i) => i.input).join(', '))
     best.state.input = Math.min(best.newInput, best.state.maxInput)
     best.state.output = best.result.outputQty
   }
@@ -95,18 +95,29 @@ export const optimiseTrades = async (
 ) => {
   const inputToken = input.token
   const outputToken = tradeActions[0].outputToken[0]
+
   const maxInputs = tradeActions.map((i) => Infinity)
   const [gasTokenPrice, inputTokenPrice, outputTokenPrice] = await Promise.all([
     universe.nativeToken.price,
     inputToken.price,
     outputToken.price,
   ]).then((prices) => prices.map((i) => i.asNumber()))
-  await Promise.all(
-    tradeActions.map(async (action, index) => {
-      const liq = (await action.liquidity()) / 2 / inputTokenPrice
-      maxInputs[index] = liq
-    })
-  )
+  if (isFinite(floorPrice)) {
+    await Promise.all(
+      tradeActions.map(async (action, index) => {
+        const maxSize = await universe.getMaxTradeSize(action, floorPrice)
+        const liq = (await action.liquidity()) / 2 / inputTokenPrice
+        maxInputs[index] = Math.min(maxSize.asNumber(), liq)
+      })
+    )
+  } else if (tradeActions.length > 1) {
+    await Promise.all(
+      tradeActions.map(async (action, index) => {
+        const liq = (await action.liquidity()) / 2 / inputTokenPrice
+        maxInputs[index] = liq
+      })
+    )
+  }
   if (maxInputs.every((i) => i === 0)) {
     return {
       inputs: tradeActions.map(() => 0),
@@ -121,6 +132,40 @@ export const optimiseTrades = async (
   const gasPrice = universe.gasPrice
   const gasToken = universe.nativeToken
 
+  const evaluteAction = async (
+    state: {
+      input: number
+      output: number
+      index: number
+      maxInput: number
+      action: BaseAction
+    },
+    inputQty: number,
+    totalInputValue: number,
+    totalOutput: number,
+    totalGasBefore: bigint
+  ) => {
+    const input = inputToken.from(inputQty)
+
+    const output = await state.action.quote([input]).catch((e) => {
+      return state.action.outputToken.map((i) => i.zero)
+    })
+
+    const gas =
+      totalGasBefore + (state.input === 0 ? state.action.gasEstimate() : 0n)
+    const txFee = gasPrice * gas
+    const gasFeeUSD = gasToken.from(txFee).asNumber() * gasTokenPrice
+    const outputQty = output[0].asNumber()
+    const additionalOutput = outputQty - state.output
+    const outputValue = (additionalOutput + totalOutput) * outputTokenPrice
+    const price = outputValue / (totalInputValue + gasFeeUSD)
+    return {
+      price,
+      inputQty,
+      outputQty,
+      gas,
+    }
+  }
   const inputQty = input.asNumber()
   const onePart = inputQty / parts
   const state = tradeActions.map((action, index) => ({
@@ -130,13 +175,7 @@ export const optimiseTrades = async (
     maxInput: maxInputs[index],
     action,
   }))
-  let currentInputQty = 0
-  let currentTxFeeValue = 0
-  let currentOutputQty = 0
-  let changed = false
-
   const step = async () => {
-    changed = false
     for (const s of state) {
       if (s.input * inputTokenPrice < 0.001) {
         s.input = 0
@@ -148,91 +187,43 @@ export const optimiseTrades = async (
       return
     }
 
+    const currentTotalInput = state.reduce((l, r) => l + r.input, 0)
+    const currentTotalOutput = state.reduce((l, r) => l + r.output, 0)
+
+    const currentTotalGas = state.reduce(
+      (l, r) => l + (r.input !== 0 ? r.action.gasEstimate() : 0n),
+      0n
+    )
     const results = await Promise.all(
       state
         .filter((i) => i.input < i.maxInput)
         .map(async (state) => {
-          const newInput = Math.min(state.maxInput, state.input + onePart)
-          const spent = newInput - state.input
-          const previousEstimate = universe.nativeToken
-            .from(state.action.gasEstimate() * gasPrice)
-            .asNumber()
-          const outputTokenQty = (
-            await state.action
-              .quote([inputToken.from(newInput)])
-              .catch(() => [state.action.outputToken[0].zero])
-          )[0].asNumber()
+          const additionalInput =
+            Math.min(state.maxInput, state.input + onePart) - state.input
 
-          if (outputTokenQty === 0) {
-            return {
-              result: {
-                newInputQty: 0,
-                newInputValue: 0,
-                newOutputQty: 0,
-                newOutputValue: 0,
-                newTxFeeValue: 0,
-                price: 0,
-              },
-              newInput: 0,
-              newOutput: 0,
-              state,
-            }
-          }
-
-          const newEstimate =
-            universe.nativeToken
-              .from(state.action.gasEstimate() * gasPrice)
-              .asNumber() * gasTokenPrice
-
-          const curOutput = currentOutputQty - state.output
-
-          const newTxFeeValue =
-            state.input === 0
-              ? currentTxFeeValue + newEstimate
-              : currentTxFeeValue - previousEstimate + newEstimate
-
-          const newInputQty = currentInputQty + spent
-          const newInputValue = newInputQty * inputTokenPrice
-          const newOutputQty = curOutput + outputTokenQty
-          const newOutputValue = newOutputQty * outputTokenPrice
-          const price = newOutputValue / (newInputValue + newTxFeeValue)
+          const actionInput = state.input + additionalInput
+          const res = await evaluteAction(
+            state,
+            actionInput,
+            (currentTotalInput + additionalInput) * inputTokenPrice,
+            currentTotalOutput,
+            currentTotalGas
+          )
           return {
-            result: {
-              newInputQty,
-              newInputValue,
-              newOutputQty,
-              newOutputValue,
-              newTxFeeValue,
-              price,
-            },
-            newInput,
-            newOutput: newOutputQty,
+            result: res,
+            newInput: actionInput,
             state,
           }
         })
     )
     // Pick the best one in terms of output pr inputput - gas
-    results
-      .filter((i) => i.result.price == 0)
-      .sort((l, r) => r.result.price - l.result.price)
-    if (results.length === 0) {
-      return
-    }
+    results.sort((l, r) => r.result.price - l.result.price)
     const best = results[0]
-
-    best.state.input = best.newInput
-    best.state.output = best.newOutput
-
-    currentInputQty = best.result.newInputQty
-    currentOutputQty = best.result.newOutputQty
-    currentTxFeeValue = best.result.newTxFeeValue
-    changed = true
+    best.state.input = Math.min(best.newInput, best.state.maxInput)
+    best.state.output = best.result.outputQty
   }
   for (let i = 0; i < parts; i++) {
     await step()
-    if (!changed) {
-      break
-    }
   }
   for (const s of state) {
     if (s.input * inputTokenPrice < 0.01) {
@@ -268,5 +259,4 @@ export const optimiseTrades = async (
       (totalOutput * outputTokenPrice),
   }
 }
-
 export type OptimisedTrade = Awaited<ReturnType<typeof optimiseTrades>>

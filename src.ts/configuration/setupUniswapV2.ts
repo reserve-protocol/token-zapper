@@ -243,7 +243,7 @@ class UniswapV2Swap extends Action('UniswapV2') {
       planner.add(
         this.context.swapHelperWeiroll.swap(
           this.pool.address.address,
-          this.tokenIn === this.pool.token1,
+          this.tokenIn === this.pool.token0,
           this.tokenIn.address.address,
           inputs[0]
         )

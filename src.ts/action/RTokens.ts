@@ -27,6 +27,8 @@ import {
 } from '../contracts'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import { MultiInputUnit } from './MultiInputAction'
+import { BlockCache } from '../base/BlockBasedCache'
+import { DefaultMap } from '../base/DefaultMap'
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction
@@ -205,6 +207,15 @@ export class RTokenDeployment {
     }
 
     const ONE = 10n ** 18n
+
+    const quoteRedeem = async ([input]: TokenQuantity[]) => {
+      const unit = await unitBasket()
+      const out = unit.map((qty) =>
+        qty.token.from((qty.amount * input.amount) / ONE)
+      )
+      return out
+    }
+
     const quoteMint = async (input: TokenQuantity[]) => {
       if (input.some((i) => i.amount === 0n)) {
         return [this.rToken.zero, ...input]
@@ -227,13 +238,27 @@ export class RTokenDeployment {
       return [this.rToken.from(baskets), ...dust]
     }
 
-    const quoteRedeem = async ([input]: TokenQuantity[]) => {
-      const unit = await unitBasket()
-      const out = unit.map((qty) =>
-        qty.token.from((qty.amount * input.amount) / ONE)
-      )
-      return out
-    }
+    // const quoteMint = async (input: TokenQuantity[]) => {
+    //   const out = await this.contracts.facade.callStatic.maxIssuableByAmounts(
+    //     this.rToken.address.address,
+    //     input.map((i) => i.amount)
+    //   )
+
+    //   const unitsMinted = [this.rToken.from(out)]
+    //   const inputConsumed = await this.burn.quote(unitsMinted)
+    //   const outputs = [
+    //     this.rToken.from(out),
+    //     ...input.map((i, index) => {
+    //       const remaining = i.sub(inputConsumed[index])
+    //       if (remaining.amount <= 0n) {
+    //         return this.universe.usd.zero
+    //       }
+    //       return remaining
+    //     }),
+    //   ]
+    //   console.log(`${input.join(', ')} -> ${outputs.join(', ')}`)
+    //   return outputs
+    // }
 
     this.supply = getSupply
 
@@ -417,8 +442,21 @@ export class MintRTokenAction extends ReserveRTokenBase {
   gasEstimate() {
     return this.rTokenDeployment.mintEstimate
   }
+  private lastBlock = 0
+  private cache = new Map<string, Promise<TokenQuantity[]>>()
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [(await this.rTokenDeployment.quoteMint(amountsIn))[0]]
+    if (this.lastBlock !== this.universe.currentBlock) {
+      this.lastBlock = this.universe.currentBlock
+      this.cache.clear()
+    }
+    const key = amountsIn.map((i) => i.amount).join(',')
+    let out = this.cache.get(key)
+    if (out == null) {
+      out = this.rTokenDeployment.quoteMint(amountsIn)
+      this.cache.set(key, out)
+    }
+
+    return await out
   }
   async quoteWithDust(amountsIn: TokenQuantity[]) {
     const [rTokenQty, ...dust] = await this.rTokenDeployment.quoteMint(

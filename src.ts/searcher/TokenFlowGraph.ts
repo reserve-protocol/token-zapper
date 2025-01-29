@@ -12,6 +12,7 @@ import {
   SearcherOptions,
 } from '../configuration/ChainConfiguration'
 import { DeployFolioConfig } from '../action/DeployFolioConfig'
+import { ChainIds } from '../configuration/ReserveAddresses'
 
 export class NodeProxy {
   private version: number
@@ -37,9 +38,17 @@ export class NodeProxy {
   }
 
   public get isDustOptimisable() {
+    this.checkVersion()
+    if (
+      this.graph._outgoingEdges[this.id] == null ||
+      this.graph._outgoingEdges[this.id]!.edges.length === 0
+    ) {
+      return false
+    }
     return (
-      this.nodeType === NodeType.Both ||
-      this.nodeType === NodeType.SplitWithDust
+      (this.nodeType === NodeType.Both ||
+        this.nodeType === NodeType.SplitWithDust) &&
+      this.recipients.length > 1
     )
   }
 
@@ -98,8 +107,7 @@ export class NodeProxy {
     this.checkVersion()
     if (
       this.nodeType === NodeType.Action ||
-      this.nodeType === NodeType.Fanout ||
-      this.nodeType === NodeType.SplitWithDust
+      this.nodeType === NodeType.Fanout
     ) {
       return false
     }
@@ -349,7 +357,7 @@ class TokenFlowSplits {
     public readonly parts: number[],
     public readonly recipient: number[],
     public min?: number,
-    public readonly dustEdge: Map<number, Token> = new Map()
+    public readonly dustEdge = new DefaultMap<number, Token[]>(() => [])
   ) {
     this.calculateProportionsAsBigInt()
     this.updateIndicesMap()
@@ -753,6 +761,10 @@ class EdgeProxy {
     }
   }
 
+  get dustTokens() {
+    return this.outgoingEdge.dustEdge.get(this.edgeRecipientIndex)
+  }
+
   public constructor(
     public readonly graph: TokenFlowGraph,
     private readonly edge: Edge
@@ -798,7 +810,7 @@ const createResult = async (
     }
     inputQuantity = inputs[0].asNumber()
 
-    const price = (inputSum + gasPrice.asNumber()) / outputTokenValue
+    const price = outputTokenValue / (inputSum + gasPrice.asNumber())
 
     return {
       inputs,
@@ -935,7 +947,7 @@ const evaluateNode = async (
   const edges = graph._outgoingEdges[nodeId]
   if (edges == null || edges.edges.length === 0) {
     if (!node.isEndNode) {
-      console.log(node.nodeId + ' has no edges')
+      // console.log(node.nodeId + ' has no edges')
     }
     return await createResult(
       universe,
@@ -1264,11 +1276,15 @@ export class TokenFlowGraph {
         }
         end(lines[lines.length - 1])
 
-        emit(`${node.nodeId} [label = "${node.nodeId}: ${node.name}"]`)
+        emit(
+          `${node.nodeId} [label = "${node.nodeId}: ${node.name} (${node.nodeType})"]`
+        )
         const label = node.action.end.outputs.join(', ')
         emit(`${node.action.end.nodeId} -> ${node.nodeId} [label = "${label}"]`)
       } else {
-        emit(`${node.nodeId} [label = "${node.nodeId}: ${node.name}"]`)
+        emit(
+          `${node.nodeId} [label = "${node.nodeId}: ${node.name} (${node.nodeType})"]`
+        )
       }
     }
 
@@ -1523,33 +1539,52 @@ export class TokenFlowGraphBuilder {
       ).id
   )
 
-  private tradeNodes = new DefaultMap<Token, DefaultMap<Token, number>>(
+  public tradeNodes = new DefaultMap<Token, DefaultMap<Token, number>>(
     (token) => new DefaultMap<Token, number>((output) => -1)
   )
   public tradeNodeExists(input: Token, output: Token) {
+    if (input === output) {
+      return true
+    }
     return this.tradeNodes.get(input).get(output) !== -1
   }
+
   public addTradeNode(
     input: Token,
     output: Token,
     actions: BaseAction[],
-    name: string
+    name: string,
+    inputNode?: NodeProxy,
+    outputNode?: NodeProxy
   ) {
     if (this.tradeNodeExists(input, output)) {
-      throw new Error(`Trade node already exists for ${input} -> ${output}`)
+      return
     }
+
     const graph = TokenFlowGraphBuilder.createSingleStep(
       this.universe,
       input.one,
       actions,
       name
     )
-    const inputNode = this.getTokenNode(input)
-    const outputNode = this.getTokenNode(output)
-    const node = this.addSubgraphNode(graph, `${input} -> ${output}`)
-    this.tradeNodes.get(input).set(output, node.id)
-    inputNode.forward(input, 1, node)
+    inputNode = inputNode ?? this.getTokenNode(input)
+    const extraNode = this.graph.newNode(
+      null,
+      NodeType.Split,
+      name,
+      [input],
+      [input]
+    )
+    inputNode.forward(input, 1, extraNode)
+    outputNode = outputNode ?? this.getTokenNode(output)
+    const node = this.addSubgraphNode(graph, name)
+    this.tradeNodes.get(input).set(output, extraNode.id)
+
+    extraNode.forward(input, 1, node)
     node.forward(output, 1, outputNode)
+    this.addParentInputs(new Set([output]))
+
+    return extraNode
   }
 
   public clone() {
@@ -1620,6 +1655,15 @@ export class TokenFlowGraphBuilder {
     }
   }
 
+  public readonly inputProportion = new DefaultMap<Token, number>(() => 0)
+  public readonly inputCausesDust = new DefaultMap<Token, Token[]>(() => [])
+  public addInputProportion(token: Token, proportion: number) {
+    this.inputProportion.set(
+      token,
+      this.inputProportion.get(token) + proportion
+    )
+  }
+
   public constructor(
     private readonly universe: Universe,
     inputs: Token[],
@@ -1629,6 +1673,17 @@ export class TokenFlowGraphBuilder {
     this.graph = new TokenFlowGraph(name)
     this.addInputTokens(inputs)
     this.addOutputTokens(outputs)
+  }
+
+  public addSplittingNode(
+    token: Token,
+    parent: NodeProxy = this.getTokenNode(token),
+    nodeType: NodeType = NodeType.Optimisation,
+    name: string = `${token} -> ${token}`
+  ) {
+    const node = this.graph.newNode(null, nodeType, name, [token], [token])
+    parent.forward(token, 1, node)
+    return node
   }
 
   public addAction(action: BaseAction, outputs: Token[] = action.outputToken) {
@@ -1651,6 +1706,13 @@ export class TokenFlowGraphBuilder {
     nodeName: string = graph.name
   ) {
     if (graph instanceof TokenFlowGraphBuilder) {
+      for (const [tokenFrom, toMap] of graph.tradeNodes.entries()) {
+        for (const [tokenTo, id] of toMap.entries()) {
+          if (id !== -1) {
+            this.tradeNodes.get(tokenFrom).set(tokenTo, 100)
+          }
+        }
+      }
       graph = graph.graph
     }
     return this.graph.newNode(
@@ -1695,7 +1757,7 @@ export class TokenFlowGraphBuilder {
     const inputNode = builder.getTokenNode(input.token)
     inputNode.nodeType = NodeType.Fanout
     const edge = builder.graph._outgoingEdges[inputNode.id]!
-    edge.min = 1 / 10
+    edge.min = 1 / Math.max(10, actions.length + 1)
 
     for (const action of actions) {
       const actionNode = builder.addAction(action)
@@ -1786,10 +1848,6 @@ const concatGraphs = (
       const out = builder.getTokenNode(output)
       node.forward(output, 1, out)
     }
-  }
-  for (const output of parts[parts.length - 1].graph.end.outputs) {
-    const out = builder.getTokenNode(output)
-    out.forward(output, 1, builder.graph.end)
   }
 
   return builder
@@ -1902,9 +1960,11 @@ const inlineTFGs = (
         }
         out.forward(nodeFrom, nodeTo, edge.token, edge.parts)
 
-        if (edge.dustToken) {
+        if (edge.dustToken.length !== 0) {
           const splits = out._outgoingEdges[nodeFrom]!.getEdge(edge.token)
-          splits.dustEdge.set(splits.getRecipientIndex(nodeTo), edge.dustToken)
+          splits.dustEdge
+            .get(splits.getRecipientIndex(nodeTo))
+            .push(...edge.dustToken)
         }
       }
 
@@ -1936,9 +1996,11 @@ const inlineTFGs = (
       throw new Error('PANIC: Invalid subgraph')
     }
     out.forward(from.end, to.start, edge.token, edge.parts)
-    if (edge.dustToken) {
+    if (edge.dustToken.length !== 0) {
       const splits = out._outgoingEdges[from.end]!.getEdge(edge.token)
-      splits.dustEdge.set(splits.getRecipientIndex(to.start), edge.dustToken)
+      splits.dustEdge
+        .get(splits.getRecipientIndex(to.start))
+        .push(...edge.dustToken)
     }
   }
   return out
@@ -1990,14 +2052,13 @@ const removeUselessNodes = (graph: TokenFlowGraph): TokenFlowGraph => {
           edge.token,
           edge.parts
         )
-        if (edge.dustToken) {
+        if (edge.dustToken.length !== 0) {
           const splits = out._outgoingEdges[remappedNodes[edge.from]]!.getEdge(
             edge.token
           )
-          splits.dustEdge.set(
-            splits.getRecipientIndex(remappedNodes[edge.to]),
-            edge.dustToken
-          )
+          splits.dustEdge
+            .get(splits.getRecipientIndex(remappedNodes[edge.to]))
+            .push(...edge.dustToken)
         }
       } else if (remappedNodes[edge.from] === -1) {
         remappedNodes[edge.from] = remappedNodes[edge.to]
@@ -2049,14 +2110,13 @@ const removeNodes = (graph: TokenFlowGraph, unusedNodes: NodeProxy[]) => {
         edge.token,
         edge.parts
       )
-      if (edge.dustToken) {
+      if (edge.dustToken.length !== 0) {
         const splits = out._outgoingEdges[remappedNodes[edge.from]]!.getEdge(
           edge.token
         )
-        splits.dustEdge.set(
-          splits.getRecipientIndex(remappedNodes[edge.to]),
-          edge.dustToken
-        )
+        splits.dustEdge
+          .get(splits.getRecipientIndex(remappedNodes[edge.to]))
+          .push(...edge.dustToken)
       }
       continue
     }
@@ -2137,9 +2197,13 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
     }
 
     const splits = outEdges.getEdge(actions[0].inputToken[0])
-    splits.min = 1 / 10
+    splits.min = 1 / 11
 
-    if (acts.length !== actions.length && acts.length > 1) {
+    if (
+      acts.length !== 0 &&
+      acts.length !== actions.length &&
+      acts.length > 1
+    ) {
       const nodeSplits = await optimiseTrades(
         universe,
         inputs[0],
@@ -2204,29 +2268,27 @@ const minimizeDust = async (
   qtyOutMatters: boolean = true,
   steps: number = 20
 ) => {
-  const nodesToProcess = nodesToOptimise.filter((n) => n.recipients.length > 1)
+  const nodesToProcess = nodesToOptimise
 
   const dustTokens: Token[] = []
   if (nodesToProcess.length === 0) {
-    console.log(g.toDot().join('\n'))
-    for (const node of g.nodes()) {
-      console.log(node.nodeId, node.nodeType)
-    }
-    console.log('Minimise dust: No nodes to process')
     return currentResult
   }
 
   const nodes = nodesToProcess
     .map((node) => {
       const splits = g._outgoingEdges[node.id]!.edges[0]
-      splits.min = 0
       const tokenToSplitMap = new Map<Token, number>()
       for (let i = 0; i < splits.recipient.length; i++) {
-        const token = splits.dustEdge.get(i)
-        if (token != null) {
+        const tokens = splits.dustEdge.get(i)
+        if (tokens.length === 0) {
+          continue
+        }
+        for (const token of tokens) {
           if (!dustTokens.includes(token)) {
             dustTokens.push(token)
           }
+          console.log(`${token} ${node.nodeId}[${i}]`)
           tokenToSplitMap.set(token, i)
         }
       }
@@ -2236,7 +2298,7 @@ const minimizeDust = async (
         splits,
       }
     })
-    .filter((node) => node.tokenToSplitMap.size > 1)
+    .filter((node) => node.splits.parts.length > 1)
 
   if (nodes.length === 0) {
     console.log('Minimise dust: No nodes to process')
@@ -2262,7 +2324,6 @@ const minimizeDust = async (
         currentResult.result.dustValue / currentResult.result.totalValue <
           0.00001
       ) {
-        console.log('Minimise dust: Dust value is too low')
         return currentResult
       }
       const node = nodes[i]
@@ -2272,7 +2333,16 @@ const minimizeDust = async (
       const before = [...node.splits.parts]
       const dustValues = (
         await Promise.all(
-          currentResult.result.dust.map(async (qty) => {
+          dustTokens.map(async (token) => {
+            const qty = currentResult.result.dust.find((d) => d.token === token)
+            if (qty == null) {
+              return {
+                splitIndex: null,
+                value: 0,
+                asFraction: 0,
+                token: token,
+              }
+            }
             const value = (await qty.price()).asNumber()
             const asFraction = value / currentResult.result.totalValue
             const split = node.tokenToSplitMap.get(qty.token)
@@ -2287,16 +2357,12 @@ const minimizeDust = async (
         )
       ).filter((d) => d.splitIndex != null)
       if (dustValues.length === 0) {
-        console.log('Minimise dust: No dust values')
         continue
       }
 
       dustValues.sort((a, b) => a.value - b.value)
       const higestDustQty = dustValues[dustValues.length - 1]
       const lowestDustQty = dustValues[0]
-      // console.log(
-      //   `highest:${higestDustQty.token}.${higestDustQty.splitIndex}, lowest: ${lowestDustQty.token}.${lowestDustQty.splitIndex}`
-      // )
       const fraction = 1 - higestDustQty.asFraction * scale
       const prev = node.splits.parts[higestDustQty.splitIndex]
       node.splits.parts[higestDustQty.splitIndex] *= fraction
@@ -2306,6 +2372,8 @@ const minimizeDust = async (
         node.splits.parts[lowestDustQty.splitIndex] += removed * 0.5
       }
 
+      node.splits.calculateProportionsAsBigInt()
+
       const newRes = await evaluate()
       if (
         (qtyOutMatters &&
@@ -2314,7 +2382,7 @@ const minimizeDust = async (
       ) {
         node.splits.setParts(before)
       } else {
-        // console.log('Minimise dust: ' + newRes.result.outputs.join(', '))
+        console.log(currentResult.result.outputs.join(', '))
         currentResult = newRes
       }
     }
@@ -2336,15 +2404,16 @@ const optimiseGlobal = async (
   logger: ILoggerType
 ) => {
   const isResultBetter = (previous: TFGResult, newResult: TFGResult) => {
-    return newResult.result.price < previous.result.price
+    return newResult.result.price > previous.result.price
   }
-  let optimisationNodes = [...g.nodes()].filter((n) => n.isOptimisable)
+  let optimisationNodes = [...g.nodes()].filter(
+    (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
+  )
+  if (optimisationNodes.length > 7) {
+    optimisationNodes = [...g.nodes()].filter((n) => n.isOptimisable)
+  }
+  console.log(`optimization nodes: ${optimisationNodes.length}`)
 
-  if (optimisationNodes.length === 0) {
-    optimisationNodes = [...g.nodes()].filter(
-      (n) => n.isDustOptimisable || n.isOptimisable
-    )
-  }
   if (optimisationNodes.length === 0) {
     console.log('Optimise global: No optimisation nodes')
     return bestSoFar
@@ -2359,14 +2428,11 @@ const optimiseGlobal = async (
   for (let nodeIndex = 0; nodeIndex < optimisationNodes.length; nodeIndex++) {
     const node = optimisationNodes[nodeIndex]
     const edge = g._outgoingEdges[node.id]!.edges[0]
-    if (edge.min !== 0) {
-      edge.min = 1 / 10
-    }
     edge.normalize()
   }
   const MAX_SCALE = 3
   for (let i = 0; i < optimisationSteps; ) {
-    const size = (MAX_SCALE / (1 + i)) * (1 - i / optimisationSteps)
+    const size = (MAX_SCALE / (i + 1)) * 1 - i / optimisationSteps
 
     if (bestSoFar.result.outputValue > bestSoFar.result.inputValue) {
       i += 3
@@ -2401,11 +2467,7 @@ const optimiseGlobal = async (
       }
 
       for (let paramIndex = 0; paramIndex < edge.parts.length; paramIndex++) {
-        // if (edge.parts[paramIndex] === edge.sum) {
-        //   continue
-        // }
-
-        const prev = edge.parts[paramIndex]
+        const prev = edge.inner[paramIndex]
 
         let change = size
 
@@ -2426,7 +2488,7 @@ const optimiseGlobal = async (
           bestThisIteration = res
           bestNodeToChange = optimisationNodeIndex
           for (let i = 0; i < edge.parts.length; i++) {
-            tmpNode[i] = edge.parts[i]
+            tmpNode[i] = edge.inner[i]
           }
         }
         edge.setParts(before)
@@ -2446,7 +2508,190 @@ const optimiseGlobal = async (
   }
   return bestSoFar
 }
+const removeRedundantSplits = (g: TokenFlowGraph) => {
+  const nodes = [...g.nodes()]
+  const potentiallyMergableNodes = new DefaultMap<string, number[]>(() => [])
+  const weights = new DefaultMap<string, number>(() => 0)
 
+  const mergedDustTokens = new DefaultMap<number, DefaultMap<number, Token[]>>(
+    () => new DefaultMap<number, Token[]>(() => [])
+  )
+  const dustTokens = new DefaultMap<number, DefaultMap<number, Token[]>>(
+    () => new DefaultMap<number, Token[]>(() => [])
+  )
+  for (const node of nodes) {
+    for (const edge01 of node.outgoingEdges()) {
+      const numberOfOutgoingEdges = edge01.recipient.recipients.length
+      const numberOfIncomingEdges = edge01.recipient.incomingEdges().length
+      if (numberOfOutgoingEdges !== 1 || numberOfIncomingEdges !== 1) {
+        continue
+      }
+      const parent = edge01.source
+      const child = edge01.recipient
+      const grandChild = [...edge01.recipient.outgoingEdges()][0].recipient
+      const key = `${parent.id}-${grandChild.id}`
+      weights.mut(key, (v) => v + edge01.proportion)
+      mergedDustTokens
+        .get(parent.id)
+        .get(child.id)
+        .push(...edge01.dustTokens)
+      potentiallyMergableNodes.get(key).push(child.id)
+    }
+  }
+
+  const graph = g
+  const outGraph = new TokenFlowGraph(graph.name, graph.inputs, graph.outputs)
+  const remappedNodes: number[] = graph.data.map(() => -1)
+  remappedNodes[graph._startIndex] = outGraph._startIndex
+  remappedNodes[graph._endIndex] = outGraph._endIndex
+
+  const edgeWeights = new DefaultMap<number, DefaultMap<number, number>>(
+    () => new DefaultMap<number, number>(() => 0)
+  )
+  let nodesRemoved = 0
+  const mergeableNodes = [...potentiallyMergableNodes.entries()]
+    .filter(([_, l]) => l.length >= 2)
+    .map(([k, l]) => {
+      const [a, b] = k.split('-')
+      const parentId = parseInt(a, 10)
+      const grandChildId = parseInt(b, 10)
+      const prevNode = g.getNode(l[0])
+      remappedNodes[l[0]] = outGraph.newNode(
+        prevNode.action,
+        prevNode.nodeType,
+        prevNode.name,
+        [...prevNode.inputs],
+        [...prevNode.outputs],
+        0,
+        prevNode.inlinedGraph
+      ).id
+      nodesRemoved += l.length - 1
+      const toks = mergedDustTokens.get(parentId).get(grandChildId)
+      dustTokens.get(parentId).set(l[0], toks)
+      edgeWeights.get(parentId).set(l[0], weights.get(k))
+      for (let i = 1; i < l.length; i++) {
+        remappedNodes[l[i]] = remappedNodes[l[0]]
+      }
+    })
+
+  if (mergeableNodes.length == 0) {
+    return g
+  }
+
+  for (const node of graph.nodes()) {
+    if (remappedNodes[node.id] !== -1) {
+      continue
+    }
+    const newNode = outGraph.newNode(
+      node.action,
+      node.nodeType,
+      node.name,
+      [...node.inputs],
+      [...node.outputs],
+      graph._outgoingEdges[node.id]?.min,
+      node.inlinedGraph
+    )
+    remappedNodes[node.id] = newNode.id
+  }
+  for (const edge of graph.edges()) {
+    if (remappedNodes[edge.from] !== -1 && remappedNodes[edge.to] !== -1) {
+      if (remappedNodes[edge.from] === remappedNodes[edge.to]) {
+        continue
+      }
+      const mergedWeight = edgeWeights.get(edge.from).get(edge.to)
+      const mergedDustTokens = dustTokens.get(edge.from).get(edge.to)
+
+      outGraph.forward(
+        remappedNodes[edge.from],
+        remappedNodes[edge.to],
+        edge.token,
+        mergedWeight === 0 ? edge.parts : mergedWeight
+      )
+      const allDustTokens = [
+        ...new Set([...mergedDustTokens, ...edge.dustToken]),
+      ]
+      if (allDustTokens.length !== 0) {
+        const splits = outGraph._outgoingEdges[
+          remappedNodes[edge.from]
+        ]!.getEdge(edge.token)
+        splits.dustEdge
+          .get(splits.getRecipientIndex(remappedNodes[edge.to]))
+          .push(...allDustTokens)
+      }
+      continue
+    }
+  }
+
+  console.log(`Removed ${nodesRemoved} nodes. New TFG:`)
+  console.log(outGraph.toDot().join('\n'))
+
+  return outGraph
+}
+
+function* iterDecendents(node: NodeProxy): IterableIterator<NodeProxy> {
+  for (const edge of node.outgoingEdges()) {
+    yield edge.recipient
+    for (const decendent of iterDecendents(edge.recipient)) {
+      yield decendent
+    }
+  }
+}
+
+const inferDustProducingNodes = (g: TokenFlowGraph) => {
+  const nodes = [...g.nodes()]
+
+  for (const node of nodes) {
+    const outgoing = g._outgoingEdges[node.id]!
+    if (outgoing?.edges.length !== 1) {
+      continue
+    }
+    const mainSplits = outgoing.edges[0]
+    if (mainSplits.recipient.length <= 1) {
+      continue
+    }
+    if (mainSplits.dustEdge.size !== 0) {
+      continue
+    }
+
+    for (const edge of node.outgoingEdges()) {
+      const tokensProduced = new Set<Token>()
+      const splitIndex = mainSplits.getRecipientIndex(edge.recipient.id)
+      const dustProduced = new Set<Token>()
+      const onDecendent = (decendent: NodeProxy) => {
+        if (!(decendent.action instanceof BaseAction)) {
+          return
+        }
+        if (decendent.action.dustTokens.length === 0) {
+          for (const output of decendent.action.outputToken) {
+            tokensProduced.add(output)
+          }
+        } else {
+          for (const potentialDustTokenProducedByNode of decendent.action
+            .dustTokens) {
+            if (tokensProduced.has(potentialDustTokenProducedByNode)) {
+              dustProduced.add(potentialDustTokenProducedByNode)
+            }
+          }
+        }
+      }
+
+      onDecendent(edge.recipient)
+
+      for (const decendent of iterDecendents(edge.recipient)) {
+        onDecendent(decendent)
+      }
+      if (dustProduced.size !== 0) {
+        console.log(
+          `found dust produced by ${node.nodeId}[${splitIndex}] => ${[
+            ...dustProduced,
+          ].join(', ')}`
+        )
+        mainSplits.dustEdge.set(splitIndex, [...dustProduced])
+        node.nodeType = NodeType.SplitWithDust
+      }
+    }
+  }
+}
 const optimise = async (
   universe: Universe,
   graph: TokenFlowGraphBuilder,
@@ -2461,7 +2706,6 @@ const optimise = async (
   const logger = universe.logger.child({
     prefix: `optimiser ${inputs.join(', ')} -> ${outputs.join(', ')}`,
   })
-  logger.debug('Abstract graph:')
   logger.debug(graph.toDot().join('\n'))
 
   const optimisationSteps = opts?.optimisationSteps ?? 15
@@ -2469,18 +2713,7 @@ const optimise = async (
   const minimiseDustPhase2Steps = opts?.optsDustPhase2Steps ?? 5
 
   const inlined = inlineTFGs(graph.graph)
-  for (const node of inlined.nodes()) {
-    for (const edge of inlined._outgoingEdges[node.id]!.edges) {
-      if (edge.dustEdge.size > 0) {
-        console.log(
-          node.nodeId,
-          [...edge.dustEdge.entries()]
-            .map((i) => `${i[0]} -> ${i[1]}`)
-            .join(', ')
-        )
-      }
-    }
-  }
+
   let g = removeUselessNodes(inlined)
   // let g = inlined
   const findNodesWithoutSources = (g: TokenFlowGraph) => {
@@ -2501,26 +2734,26 @@ const optimise = async (
   }
 
   let bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
+
   if (bestSoFar.result.outputValue === 0) {
-    console.log(bestSoFar.result.outputs.join(', '))
     throw new Error('No output value')
   }
   if (!isFinite(bestSoFar.result.price)) {
     throw new Error('Bad graph')
   }
 
-  let optimiserEvaluation = evaluationOptimiser(universe, g)
-
+  g = removeNodes(g, findNodesWithoutSources(g))
+  g = removeUselessNodes(removeRedundantSplits(g))
+  inferDustProducingNodes(g)
   bestSoFar = await minimizeDust(
     g,
-    () => optimiserEvaluation.evaluate(inputs),
+    () => g.evaluate(universe, inputs),
     bestSoFar,
     [...g.nodes()].filter((n) => n.isDustOptimisable),
     false,
     minimiseDustPhase1Steps
   )
-
-  g = removeNodes(g, findNodesWithoutSources(g))
+  bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 
   bestSoFar = await optimiseGlobal(
     g,
@@ -2538,11 +2771,11 @@ const optimise = async (
   )
 
   if (bestSoFar.result.dustValue > 10) {
-    optimiserEvaluation = evaluationOptimiser(universe, g)
     console.log('minimise dust phase 2')
+    const evalGraph = evaluationOptimiser(universe, g)
     bestSoFar = await minimizeDust(
       g,
-      () => optimiserEvaluation.evaluate(inputs),
+      () => evalGraph.evaluate(inputs),
       bestSoFar,
       [...g.nodes()].filter((n) => n.isDustOptimisable),
       true,
@@ -2550,13 +2783,12 @@ const optimise = async (
     )
   }
 
-  g = removeNodes(g, findNodesWithoutSources(g))
-
   logger.debug(
     `Final graph for ${bestSoFar.result.inputs.join(', ')} -> ${
       bestSoFar.result.output.token
     }`
   )
+
   logger.debug(g.toDot().join('\n'))
 
   const maxValueSlippage = universe.config.zapMaxValueLoss / 100
@@ -2578,7 +2810,6 @@ const optimise = async (
   }
 
   const dustFraction = bestSoFar.result.dustValue / bestSoFar.result.totalValue
-  console.log('dustFraction', dustFraction)
   if (dustFraction > maxDustFraction) {
     console.log(bestSoFar.result.outputs.join(', '))
     console.log(bestSoFar.result.dustValue)
@@ -2597,257 +2828,29 @@ const optimise = async (
   return g
 }
 
+const findAllAncesters = (node: NodeProxy) => {
+  const aAncesters: NodeProxy[] = []
+  for (const edge of node.incomingEdges()) {
+    aAncesters.push(edge.source)
+  }
+  return aAncesters
+}
+const findCommonAncestor = (a: NodeProxy, b: NodeProxy) => {
+  const aAncesters = findAllAncesters(a)
+  const bAncesters = new Set(findAllAncesters(b).map((i) => i.id))
+  for (const aAncestor of aAncesters) {
+    if (bAncesters.has(aAncestor.id)) {
+      return aAncestor
+    }
+  }
+  return null
+}
+
 export class TokenFlowGraphSearcher {
   public constructor(
     public readonly universe: Universe,
     private readonly registry: TokenFlowGraphRegistry
   ) {}
-
-  private async search1To1Graph(
-    a: Token,
-    b: Token,
-    allowTradesOnlyPath: boolean = false
-  ) {
-    if (a === this.universe.nativeToken) {
-      a = this.universe.wrappedNativeToken
-    }
-    if (b === this.universe.nativeToken) {
-      b = this.universe.wrappedNativeToken
-    }
-    if (a === b) {
-      return TokenFlowGraphBuilder.nullGraph(this.universe, [a])
-    }
-    const tokenClsB = await this.universe.tokenClass.get(b)
-
-    let prefixPath: Token[] = []
-    if (tokenClsB !== a && tokenClsB !== b) {
-      prefixPath = shortestPath(
-        this.universe,
-        a,
-        tokenClsB,
-        (act) => act.is1to1
-      )
-      if (prefixPath.length !== 0) {
-        a = tokenClsB
-      }
-    }
-
-    let path = [
-      ...prefixPath,
-      ...(allowTradesOnlyPath
-        ? shortestPath(this.universe, a, b, (act) => act.is1to1)
-        : mintPath1To1(this.universe, a, b)),
-    ]
-
-    const steps: TokenFlowGraphBuilder[] = []
-    const tokenPath: Token[] = []
-    for (let step = 0; step < path.length - 1; step++) {
-      let input = path[step]
-      let output = path[step + 1]
-      if (input === this.universe.nativeToken) {
-        input = this.universe.wrappedNativeToken
-      }
-      if (output === this.universe.nativeToken) {
-        output = this.universe.wrappedNativeToken
-      }
-      if (input === output) {
-        continue
-      }
-      tokenPath.push(output)
-      const stepGraph =
-        this.registry.find(input, output) ??
-        TokenFlowGraphBuilder.createSingleStep(
-          this.universe,
-          input.from(1.0),
-          findAllWaysToGetFromAToB(this.universe, input, output),
-          `${input} -> ${output}`
-        )
-      this.registry.define(input, output, stepGraph)
-      steps.push(stepGraph)
-    }
-    if (steps.length === 0) {
-      const tradePaths = findAllWaysToGetFromAToB(this.universe, a, b)
-      if (tradePaths.length === 0) {
-        throw new Error(`No trade paths found for ${a} -> ${b}`)
-      }
-      return TokenFlowGraphBuilder.createSingleStep(
-        this.universe,
-        a.from(1.0),
-        tradePaths,
-        `${a} -> ${b} (trades)`
-      )
-    }
-    if (path.length <= 2) {
-      return concatGraphs(this.universe, steps, `${a} -> ${b}`)
-    }
-    const name = `${a} -> ${b} (via ${tokenPath.slice(0, -1).join(', ')})`
-    const mintPath = concatGraphs(this.universe, steps, name)
-    if (tokenPath.length === 1) {
-      return mintPath
-    }
-
-    const tradePaths = findAllWaysToGetFromAToB(this.universe, a, b)
-    if (tradePaths.length === 0) {
-      return mintPath
-    }
-    const tradeGraph = TokenFlowGraphBuilder.createSingleStep(
-      this.universe,
-      a.from(1.0),
-      tradePaths,
-      `${a} -> ${b} (trades)`
-    )
-
-    return fanOutGraphs(this.universe, [mintPath, tradeGraph], `${a} -> ${b}`)
-  }
-
-  private async rTokenIssueGraph(parent: TokenFlowGraphBuilder, rToken: Token) {
-    const a = this.universe.getRTokenDeployment(rToken)
-
-    const inputTokens: Token[] = []
-    for (const tok of parent.parentInputs) {
-      inputTokens.push(tok)
-    }
-    for (const token of a.mint.inputToken) {
-      if (parent.isTokenDerived(token)) {
-        inputTokens.push(token)
-      }
-    }
-
-    const rTokenIssueGraph = new TokenFlowGraphBuilder(
-      this.universe,
-      inputTokens,
-      [a.rToken],
-      `rTokenIssueGraph: ${a.rToken} issue`
-    )
-    rTokenIssueGraph.addParentInputs(parent.parentInputs)
-
-    const issueanceNode = rTokenIssueGraph.addAction(a.mint, [
-      a.rToken,
-      ...a.basket,
-    ])
-
-    const endNode = rTokenIssueGraph.graph.end
-
-    const proportions: TokenQuantity[] = await a.mint.inputProportions()
-    for (const qty of proportions) {
-      const basketToken = qty.token
-      if (parent.isTokenDerived(basketToken)) {
-        continue
-      }
-      let proportion = qty.asNumber() * 100
-
-      const parentInputNodes = new DefaultMap<Token, NodeProxy>((token) => {
-        if (!rTokenIssueGraph.inputs.includes(token)) {
-          return rTokenIssueGraph.getTokenNode(token)
-        }
-        const basketProportionNode = rTokenIssueGraph.graph.newNode(
-          null,
-          NodeType.Optimisation,
-          `basketProportionNode: source ${basketToken}`,
-          [token],
-          [token]
-        )
-        rTokenIssueGraph.graph._outgoingEdges[basketProportionNode.id]!.min = 0
-
-        const node = rTokenIssueGraph.getTokenNode(token)
-        node.nodeType = NodeType.SplitWithDust
-        const edges = rTokenIssueGraph.graph._outgoingEdges[node.id]!
-        edges.min = 0
-
-        node.forward(token, proportion, basketProportionNode)
-        const splits = edges.getEdge(token)
-        const idx = splits.getRecipientIndex(basketProportionNode.id)
-        splits.dustEdge.set(idx, basketToken)
-        console.log(`${node.nodeId} ${idx} => ${basketToken}`)
-
-        return basketProportionNode
-      })
-
-      let sourceBasketTokenGraph = this.universe.isTokenMintable(basketToken)
-        ? await this.tokenMintingGraph(rTokenIssueGraph, basketToken)
-        : null
-      if (sourceBasketTokenGraph == null) {
-        for (const tradeToken of parent.parentInputs) {
-          try {
-            const g = TokenFlowGraphBuilder.createSingleStep(
-              this.universe,
-              tradeToken.from(1.0),
-              findAllWaysToGetFromAToB(this.universe, tradeToken, basketToken),
-              `source ${basketToken} -> ${parent.inputs[0]}`
-            )
-            sourceBasketTokenGraph = g
-            break
-          } catch (e) {
-            continue
-          }
-        }
-      }
-      if (sourceBasketTokenGraph == null) {
-        rTokenIssueGraph.addInputTokens([basketToken])
-        continue
-      }
-      const basketMintGraph = rTokenIssueGraph.addSubgraphNode(
-        sourceBasketTokenGraph.graph,
-        `basketMintGraph: source ${sourceBasketTokenGraph.graph.outputs.join(
-          ', '
-        )}`
-      )
-
-      for (const inputToken of basketMintGraph.inputs) {
-        let inputTokenNode = parentInputNodes.get(inputToken)
-        inputTokenNode.forward(inputToken, 1, basketMintGraph)
-        const edges = rTokenIssueGraph.graph._outgoingEdges[inputTokenNode.id]!
-        const splits = edges.getEdge(inputToken)
-        const idx = splits.getRecipientIndex(basketMintGraph.id)
-        splits.dustEdge.set(idx, basketToken)
-        console.log(`${inputTokenNode.nodeId} ${idx} => ${basketToken}`)
-
-        if (inputTokenNode.inputsSatisfied()) {
-          continue
-        }
-
-        for (const tradeToken of parent.parentInputs) {
-          if (inputToken === tradeToken) {
-            continue
-          }
-          try {
-            const inputTokenSourceNode = rTokenIssueGraph.addSubgraphNode(
-              await this.search1To1Graph(tradeToken, inputToken, true),
-              `inputTokenSourceNode: source ${tradeToken} -> ${inputToken}`
-            )
-
-            const tradeTokenNode = parentInputNodes.get(tradeToken)
-            tradeTokenNode.forward(tradeToken, 1, inputTokenSourceNode)
-            inputTokenSourceNode.forward(inputToken, 1, inputTokenNode)
-
-            break
-          } catch (e) {}
-        }
-      }
-      const basketTokenNode = rTokenIssueGraph.getTokenNode(basketToken)
-      basketMintGraph.forward(basketToken, 1, basketTokenNode)
-
-      for (const dustToken of sourceBasketTokenGraph.graph.outputs) {
-        if (dustToken === basketToken) {
-        } else {
-          basketMintGraph.forward(dustToken, 1, endNode)
-        }
-      }
-    }
-    rTokenIssueGraph.addInputTokens([...new Set(inputTokens)])
-
-    for (const basketToken of a.mint.inputToken) {
-      const basketTokenNode = rTokenIssueGraph.getTokenNode(basketToken)
-      basketTokenNode.forward(basketToken, 1, issueanceNode)
-      issueanceNode.forward(basketToken, 1, endNode)
-    }
-
-    const rTokenNode = rTokenIssueGraph.getTokenNode(a.rToken)
-    issueanceNode.forward(a.rToken, 1, rTokenNode)
-    rTokenNode.forward(a.rToken, 1, endNode)
-
-    return rTokenIssueGraph
-  }
 
   private async rTokenRedeemGraph(
     parent: TokenFlowGraphBuilder,
@@ -2910,115 +2913,128 @@ export class TokenFlowGraphSearcher {
     return rTokenRedeemGraph
   }
 
-  private async tokenMintingGraph(
-    parent: TokenFlowGraphBuilder,
-    outToken: Token
+  private async tokenSourceGraph(
+    graph: TokenFlowGraphBuilder,
+    inputQty: TokenQuantity,
+    output: Token,
+    inputNode: NodeProxy
   ) {
-    let mintAction: BaseAction | undefined
-    let out: TokenFlowGraphBuilder
-    if (this.universe.rTokensInfo.tokens.has(outToken)) {
-      out = await this.rTokenIssueGraph(parent, outToken)
+    const inputValueSize = (await inputQty.price()).asNumber()
+    const tradePathExists = await this.doesTradePathExist(
+      inputQty.scalarDiv(2n),
+      output
+    )
+    if (!tradePathExists) {
+      await this.tokenMintingGraph(graph, inputValueSize, output, inputNode)
     } else {
-      mintAction = this.universe.getMintAction(outToken)
-
-      const inputs = new Set<Token>()
-
-      const mintGraphs: { token: Token; graph: TokenFlowGraphBuilder }[] = []
-
-      for (const input of mintAction.inputToken) {
-        if (
-          !this.universe.isTokenMintable(input) ||
-          parent.isTokenDerived(input)
-        ) {
-          inputs.add(input)
-          continue
-        }
-
-        const mintGraph = await this.tokenMintingGraph(parent, input)
-        mintGraphs.push({
-          token: input,
-          graph: mintGraph,
-        })
-
-        for (const input of mintGraph.graph.inputs) {
-          inputs.add(input)
-        }
-      }
-      out = new TokenFlowGraphBuilder(
-        this.universe,
-        [...inputs],
-        [outToken],
-        `issue ${outToken}`
+      const splitNode = graph.addSplittingNode(
+        inputQty.token,
+        inputNode,
+        NodeType.Optimisation,
+        `Source ${output} either mint or trade`
       )
-      out.addParentInputs(parent.parentInputs)
-
-      const mintNode = out.addAction(mintAction)
-      for (const inputToken of mintAction.inputToken) {
-        out.getTokenNode(inputToken).forward(inputToken, 1, mintNode)
-      }
-
-      for (const { token, graph } of mintGraphs) {
-        const mintGraphNode = out.addSubgraphNode(graph.graph)
-        for (const input of graph.graph.inputs) {
-          out.getTokenNode(input).forward(input, 1, mintGraphNode)
-        }
-        mintGraphNode.forward(token, 1, out.getTokenNode(token))
-
-        for (const output of graph.graph.outputs) {
-          if (token === output) {
-            continue
-          }
-          mintGraphNode.forward(output, 1, out.graph.end)
-        }
-      }
-
-      mintNode.forward(outToken, 1, out.getTokenNode(outToken))
-      for (const input of mintAction.dustTokens) {
-        if (input === outToken) {
-          continue
-        }
-        mintNode.forward(input, 1, out.graph.end)
-      }
+      await this.tokenMintingGraph(graph, inputValueSize, output, splitNode)
+      await this.addTrades(
+        graph,
+        inputQty.scalarDiv(2n),
+        output,
+        false,
+        `${output} (trade path)`,
+        splitNode
+      )
     }
+  }
 
-    for (const tradeToken of out.inputs) {
-      const directTrades = findAllWaysToGetFromAToB(
-        this.universe,
-        tradeToken,
-        outToken
-      ).filter((i) => i.isTrade && i.is1to1)
+  private async tokenMintingGraph(
+    graph: TokenFlowGraphBuilder,
+    inputValueSize: number,
+    outToken: Token,
+    inputNode: NodeProxy
+  ) {
+    const mintAction = this.universe.getMintAction(outToken)
 
-      if (directTrades.length === 0) {
+    const inputToken = inputNode.inputs[0]
+    const mintSubgraphInputNode = graph.addSplittingNode(
+      inputToken,
+      inputNode,
+      mintAction.dustTokens.length > 0
+        ? NodeType.SplitWithDust
+        : mintAction.inputToken.length === 1
+        ? NodeType.Split
+        : NodeType.Optimisation,
+      `mint ${outToken} (main)`
+    )
+
+    const edges = graph.graph._outgoingEdges[mintSubgraphInputNode.id]!
+    edges.min = 0
+
+    const props = await mintAction.inputProportions()
+
+    const inputQty = await inputToken.fromUSD(inputValueSize)
+    const tasks: Promise<any>[] = []
+    for (let i = 0; i < props.length; i++) {
+      const prop = props[i]
+      if (prop.token === inputToken) {
         continue
       }
-      if (
-        mintAction != null &&
-        mintAction.is1to1 &&
-        mintAction.inputToken[0] === tradeToken
-      ) {
-        return TokenFlowGraphBuilder.createSingleStep(
-          this.universe,
-          tradeToken.one,
-          [mintAction, ...directTrades],
-          `${tradeToken} -> ${outToken}`
+
+      const subInputNode = graph.addSplittingNode(
+        inputToken,
+        mintSubgraphInputNode,
+        NodeType.Split,
+        `mint ${outToken} (source ${props[i].token}))`
+      )
+      mintSubgraphInputNode.forward(inputToken, prop.asNumber(), subInputNode)
+
+      if (!this.universe.isTokenMintable(prop.token)) {
+        const tradeExisted = graph.tradeNodeExists(inputQty.token, prop.token)
+        const tradeStart = await this.addTrades(
+          graph,
+          inputQty,
+          prop.token,
+          false,
+          undefined,
+          subInputNode
         )
+
+        if (tradeStart && tradeExisted) {
+          subInputNode.forward(
+            inputToken,
+            1,
+            [...tradeStart.incomingEdges()][0].source
+          )
+        }
+      } else {
+        await this.tokenSourceGraph(graph, inputQty, prop.token, subInputNode)
       }
-      const directTradesGraph = TokenFlowGraphBuilder.createSingleStep(
-        this.universe,
-        tradeToken.one,
-        directTrades,
-        `${tradeToken} -> ${outToken} (direct trade)`
-      )
-
-      out = fanOutGraphs(
-        this.universe,
-        [out, directTradesGraph],
-        `${tradeToken} -> ${outToken}`
-      )
-      break
+      if (mintAction.dustTokens.includes(prop.token)) {
+        const splits =
+          graph.graph._outgoingEdges[mintSubgraphInputNode.id]!.getEdge(
+            inputToken
+          )
+        const index = splits.getRecipientIndex(subInputNode.id)
+        splits.dustEdge.get(index).push(prop.token)
+      }
     }
-
-    return out
+    await Promise.all(tasks)
+    const mintActionNode = graph.addAction(mintAction)
+    for (const prop of props) {
+      if (prop.token === inputToken) {
+        mintSubgraphInputNode.forward(
+          inputToken,
+          prop.asNumber(),
+          mintActionNode
+        )
+      } else {
+        graph.getTokenNode(prop.token).forward(prop.token, 1, mintActionNode)
+      }
+    }
+    for (const outputToken of mintAction.outputToken) {
+      mintActionNode.forward(outputToken, 1, graph.getTokenNode(outputToken))
+    }
+    for (const dustToken of mintAction.dustTokens) {
+      mintActionNode.forward(dustToken, 1, graph.graph.end)
+    }
   }
 
   private async tokenRedemptionGraph(
@@ -3028,26 +3044,6 @@ export class TokenFlowGraphSearcher {
     let out: TokenFlowGraphBuilder
     if (this.universe.rTokensInfo.tokens.has(token)) {
       out = await this.rTokenRedeemGraph(parent, token)
-      if (parent.outputs.length === 1) {
-        const directTrades = findAllWaysToGetFromAToB(
-          this.universe,
-          token,
-          parent.outputs[0]
-        ).filter((i) => i.isTrade && i.is1to1)
-        if (directTrades.length !== 0) {
-          const directGraph = TokenFlowGraphBuilder.createSingleStep(
-            this.universe,
-            token.one,
-            directTrades,
-            `${token} -> ${parent.outputs[0]} (direct)`
-          )
-          out = fanOutGraphs(
-            this.universe,
-            [out, directGraph],
-            `${token} -> ${parent.outputs[0]}`
-          )
-        }
-      }
     } else {
       const burnAction = this.universe.getBurnAction(token)
 
@@ -3073,32 +3069,12 @@ export class TokenFlowGraphSearcher {
           subgraph.graph,
           `${token} -> ${underlying}`
         )
+        out.addOutputTokens([...subgraphNode.outputs])
+
         underlyingNode.forward(underlying, 1, subgraphNode)
         for (const outputToken of subgraphNode.outputs) {
           const outputTokenNode = out.getTokenNode(outputToken)
           subgraphNode.forward(outputToken, 1, outputTokenNode)
-        }
-        out.addOutputTokens([...subgraphNode.outputs])
-      }
-
-      if (burnAction.outputToken.length === 1) {
-        const directTrades = findAllWaysToGetFromAToB(
-          this.universe,
-          token,
-          burnAction.outputToken[0]
-        ).filter((i) => i.isTrade && i.is1to1)
-        if (directTrades.length !== 0) {
-          const directGraph = TokenFlowGraphBuilder.createSingleStep(
-            this.universe,
-            token.one,
-            directTrades,
-            `${token} -> ${burnAction.outputToken[0]} (direct)`
-          )
-          out = fanOutGraphs(
-            this.universe,
-            [out, directGraph],
-            `${token} -> ${burnAction.outputToken[0]}`
-          )
         }
       }
     }
@@ -3106,29 +3082,98 @@ export class TokenFlowGraphSearcher {
     return out
   }
 
+  private doesTradePathExistCache = new Map<string, Promise<boolean>>()
+  private async doesTradePathExist(inputQty: TokenQuantity, output: Token) {
+    const key = `${inputQty.token}.${output}`
+    let prev = this.doesTradePathExistCache.get(key)
+    if (prev == null) {
+      const p = (async () => {
+        try {
+          const path =
+            await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
+              inputQty,
+              output,
+              false
+            )
+          return (
+            path.steps.length !== 0 &&
+            path.steps[path.steps.length - 1].outputToken === output
+          )
+        } catch (e) {
+          return false
+        }
+      })()
+      this.doesTradePathExistCache.set(key, p)
+      prev = p
+    }
+    return await prev
+  }
+
+  private addTradesWithpath(
+    graph: TokenFlowGraphBuilder,
+    inputQty: TokenQuantity,
+    output: Token,
+    path: {
+      steps: {
+        actions: BaseAction[]
+        outputToken: Token
+        inputToken: Token
+      }[]
+    },
+    name?: string,
+    inputNode?: NodeProxy,
+    outputNode?: NodeProxy
+  ) {
+    let tradeNode: NodeProxy | undefined
+    for (const step of path.steps) {
+      if (step.inputToken === step.outputToken || step.actions.length === 0) {
+        continue
+      }
+      if (graph.tradeNodeExists(step.inputToken, step.outputToken)) {
+        tradeNode =
+          tradeNode ??
+          graph.graph.getNode(
+            graph.tradeNodes.get(step.inputToken).get(step.outputToken)!
+          )
+        continue
+      }
+      const node = graph.addTradeNode(
+        step.inputToken,
+        step.outputToken,
+        step.actions,
+        name ?? `${step.inputToken} -> ${step.outputToken}`,
+        step.inputToken === inputQty.token ? inputNode : undefined,
+        step.outputToken === output ? outputNode : undefined
+      )
+      if (tradeNode == null) {
+        tradeNode = node
+      }
+    }
+    return tradeNode
+  }
   private async addTrades(
     graph: TokenFlowGraphBuilder,
     inputQty: TokenQuantity,
     output: Token,
-    name?: string
+    allowMints: boolean,
+    name?: string,
+    inputNode?: NodeProxy,
+    outputNode?: NodeProxy
   ) {
     const path = await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
       inputQty,
-      output
+      output,
+      allowMints
     )
-
-    for (const step of path.steps) {
-      console.log(`${step.input} -> ${step.output}: ${step.actions.join(', ')}`)
-      if (graph.tradeNodeExists(step.input.token, step.output.token)) {
-        continue
-      }
-      graph.addTradeNode(
-        step.input.token,
-        step.output.token,
-        step.actions,
-        name ?? `${step.input.token} -> ${step.output.token}`
-      )
-    }
+    return this.addTradesWithpath(
+      graph,
+      inputQty,
+      output,
+      path,
+      name,
+      inputNode,
+      outputNode
+    )
   }
 
   /**
@@ -3157,7 +3202,6 @@ export class TokenFlowGraphSearcher {
     const outTokCls = await this.universe.tokenClass.get(output)
 
     let inputNode = graph.getTokenNode(inputToken)
-    let outputNode = graph.getTokenNode(output)
 
     if (this.universe.isTokenBurnable(inputToken)) {
       const redemptionGraph = await this.tokenRedemptionGraph(graph, inputToken)
@@ -3171,31 +3215,28 @@ export class TokenFlowGraphSearcher {
       let targetToken = inTokCls
 
       if (inTokCls === inputToken) {
-        targetToken = output
+        targetToken = outTokCls
       }
-
-      const outputQtys = await redemptionGraph.graph.evaluate(this.universe, [
-        input,
-      ])
 
       for (const outputToken of redeemNode.outputs) {
         const outputTokenNode = graph.getTokenNode(outputToken)
         redeemNode.forward(outputToken, 1, outputTokenNode)
-
-        if (outputToken === targetToken) {
+        if (outputToken === output || outputToken === targetToken) {
           continue
         }
 
-        const qty =
-          outputQtys.result.outputs.find((i) => i.token === outputToken) ??
-          (await outputToken.fromUSD(inputValue))
-        console.log(`${qty} -> ${targetToken}`)
+        if (graph.tradeNodeExists(outputToken, targetToken)) {
+          continue
+        }
+
+        const qty = await outputToken.fromUSD(inputValue)
 
         await this.addTrades(
           graph,
           qty,
           targetToken,
-          `sell redeem ${input} output ${outputToken} for ${targetToken}`
+          false,
+          `sell output of redeem(${input}) = ${outputToken} for ${targetToken}`
         )
       }
 
@@ -3205,62 +3246,26 @@ export class TokenFlowGraphSearcher {
 
       inputNode = graph.getTokenNode(targetToken)
       inputToken = targetToken
-      graph.addParentInputs(new Set([targetToken]))
     }
-
-    if (outTokCls !== output && inTokCls !== outTokCls) {
-      for (const outToken of inputNode.outputs) {
-        if (outToken !== inTokCls) {
-          await this.addTrades(
-            graph,
-            await outToken.fromUSD(inputValue),
-            inTokCls
-          )
-        } else {
-          inputNode.forward(outToken, 1, graph.getTokenNode(inTokCls))
-        }
-      }
-      await this.addTrades(graph, await inTokCls.fromUSD(inputValue), outTokCls)
-      inputNode = graph.getTokenNode(outTokCls)
-      inputToken = outTokCls
-      graph.addParentInputs(new Set([outTokCls]))
-    } else {
-      graph.addParentInputs(new Set([inputToken]))
-    }
-
-    const subgraph = graph
 
     if (this.universe.isTokenMintable(output)) {
-      const issueanceGraph = await this.tokenMintingGraph(subgraph, output)
-      const issueanceNode = subgraph.addSubgraphNode(
-        issueanceGraph.graph,
-        `${inputToken} -> ${output} (issue)`
-      )
-
-      issueanceNode.forward(output, 1, outputNode)
-      for (const o of issueanceGraph.graph.outputs) {
-        if (o !== output) {
-          issueanceNode.forward(o, 1, subgraph.graph.end)
-        }
-      }
-      outputNode = issueanceNode
-    }
-
-    for (const inputTokenOfOutputNode of outputNode.inputs) {
-      if (inputToken === inputTokenOfOutputNode) {
-        continue
-      }
-      await this.addTrades(
+      await this.tokenSourceGraph(
         graph,
         await inputToken.fromUSD(inputValue),
-        inputTokenOfOutputNode,
-        `sell ${inputToken} for ${inputTokenOfOutputNode}`
+        output,
+        inputNode
       )
+    } else {
+      if (inputToken !== output) {
+        await this.addTrades(
+          graph,
+          await inputToken.fromUSD(inputValue),
+          output,
+          false
+        )
+      }
     }
 
-    for (const inputToken of outputNode.inputs) {
-      subgraph.getTokenNode(inputToken).forward(inputToken, 1, outputNode)
-    }
     this.registry.define(inputToken, output, graph)
     return await optimise(this.universe, graph, [input], [output], opts)
   }
@@ -3272,6 +3277,7 @@ export class TokenFlowGraphSearcher {
     input: TokenQuantity,
     outputs: TokenQuantity[]
   ) {
+    const inputValueSize = (await input.price()).asNumber()
     // const { token: basketRepresentationToken, mint } =
     //   this.universe.folioContext.getSentinelToken(outputs)
 
@@ -3297,22 +3303,13 @@ export class TokenFlowGraphSearcher {
       const output = outputs[i]
       const proportion = proportions[i]
       if (this.universe.isTokenMintable(output.token)) {
-        const mintGraph = await this.tokenMintingGraph(out, output.token)
+        await this.tokenMintingGraph(
+          out,
+          inputValueSize,
 
-        const mintGraphNode = out.addSubgraphNode(mintGraph.graph)
-
-        for (const inputToken of mintGraph.graph.inputs) {
-          const inputTokenNode = out.getTokenNode(inputToken)
-          inputTokenNode.forward(inputToken, proportion, mintGraphNode)
-          tokensToSource.mut(output.token, (v) => v + proportion)
-        }
-        for (const outputToken of mintGraph.graph.outputs) {
-          if (outputToken !== output.token) {
-            dustProduced.add(outputToken)
-          }
-          const outputTokenNode = out.getTokenNode(outputToken)
-          mintGraphNode.forward(outputToken, 1, outputTokenNode)
-        }
+          output.token,
+          out.getTokenNode(input.token)
+        )
       } else {
         tokensToSource.set(output.token, proportion)
       }
@@ -3349,26 +3346,30 @@ export class TokenFlowGraphSearcher {
           continue
         }
 
-        const tradeNode = out.addSubgraphNode(
-          await this.search1To1Graph(input, output, true)
+        const tradeNode = await this.addTrades(
+          out,
+          await input.fromUSD(10000.0),
+          output,
+          false
         )
-        inputTokenNode.forward(input, proportion, tradeNode)
+        if (tradeNode == null) {
+          throw new Error(`Failed to find trade for ${input} -> ${output}`)
+        }
+        const edge = out.graph._outgoingEdges[inputTokenNode.id]!.getEdge(input)
+        const index = edge.getRecipientIndex(tradeNode.id)
+        edge.parts[index] += proportion
         inputTokenNode.nodeType = NodeType.Both
         const outgoing = out.graph._outgoingEdges[inputTokenNode.id]!
         outgoing.min = 0
 
         allSplitNodes.add(out.graph._outgoingEdges[inputTokenNode.id]!.edges[0])
-        for (const outputToken of tradeNode.outputs) {
-          tradeNode.forward(outputToken, 1, out.getTokenNode(outputToken))
-        }
 
         if (i === 0) {
           const splits = outgoing.getEdge(input)
           splits.min = 0
-          splits.dustEdge.set(
-            splits.getRecipientIndex(tradeNode.id),
-            precursorToken
-          )
+          splits.dustEdge
+            .get(splits.getRecipientIndex(tradeNode.id))
+            .push(precursorToken)
         }
       }
     }
@@ -3446,7 +3447,6 @@ export class TokenFlowGraphSearcher {
     }
     mintNode.forward(output, 1, out.getTokenNode(output))
 
-    console.log(out.toDot().join('\n'))
     return optimise(this.universe, out, [input], [output], opts)
   }
 }

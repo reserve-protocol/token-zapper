@@ -97,7 +97,6 @@ export class WrappedAction extends BaseAction {
 
       return out
     } catch (e) {
-      console.log(e)
       throw e
     }
   }
@@ -212,7 +211,7 @@ export class NativeInputWrapper extends BaseAction {
     destination: Address,
     predictedInputs: TokenQuantity[]
   ): Promise<null | Value[]> {
-    const wrappedToken = this.universe.wrappedTokens.get(
+    const wethActions = this.universe.wrappedTokens.get(
       this.universe.wrappedNativeToken
     )!
 
@@ -222,23 +221,18 @@ export class NativeInputWrapper extends BaseAction {
     const weth = this.universe.wrappedNativeToken
 
     const unwrappedInputs = await Promise.all(
-      this.inputToken.map(async (token, index) => {
-        const wrappedActionInputToken = this.wrapped.inputToken[index]
-        if (token === weth && wrappedActionInputToken === eth) {
-          const out = await wrappedToken.burn.plan(
+      this.inputToken.map(async (wrapperInputToken, index) => {
+        const wrappedInputToken = this.wrapped.inputToken[index]
+        const outValue = inputs[index]
+        if (wrapperInputToken === weth && wrappedInputToken === eth) {
+          await wethActions.burn.plan(
             planner,
-            [inputs[index]],
+            [outValue],
             this.universe.execAddress,
             [predictedInputs[index]]
           )
-          if (out == null) {
-            throw new Error(
-              `Panic! Unexpected result from weth withdrawal action`
-            )
-          }
-          return out[0]
         }
-        return inputs[index]
+        return outValue
       })
     )
     const unwrappedPredictedInputs = predictedInputs.map((i, index) => {
@@ -258,13 +252,21 @@ export class NativeInputWrapper extends BaseAction {
 
     if (out != null) {
       const vals = out
-      this.wrapped.outputToken.map((i, index) => {
-        const value = vals[index]
-        if (i === this.universe.nativeToken) {
-          wrappedToken.mint.plan(planner, [value], destination, [])
-        }
-        return value
-      })
+      return await Promise.all(
+        this.wrapped.outputToken.map(
+          async (wrappedActionOutputToken, index) => {
+            const value = vals[index]
+            const wrapperActionOutputToken = this.wrapped.outputToken[index]
+            if (
+              wrappedActionOutputToken === eth &&
+              wrapperActionOutputToken === weth
+            ) {
+              await wethActions.mint.plan(planner, [value], destination, [])
+            }
+            return value
+          }
+        )
+      )
     }
 
     return out

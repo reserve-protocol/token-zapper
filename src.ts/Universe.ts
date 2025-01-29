@@ -897,13 +897,13 @@ export class Universe<const UniverseConf extends Config = Config> {
 
     this.weirollZapperExec = Contract.createLibrary(
       ZapperExecutor__factory.connect(
-        this.config.addresses.executorAddress.address,
+        this.execAddress.address,
         this.provider
       )
     )
     this.weirollZapperExecContract = Contract.createContract(
       ZapperExecutor__factory.connect(
-        this.config.addresses.executorAddress.address,
+        this.execAddress.address,
         this.provider
       )
     )

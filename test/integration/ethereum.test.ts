@@ -28,9 +28,10 @@ const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
   useNewZapperContract: false,
   cacheResolution: 8,
-  optimisationSteps: 15,
-  minimiseDustPhase1Steps: 25,
-  minimiseDustPhase2Steps: 15,
+  zapMaxDustProduced: 8,
+  optimisationSteps: 35,
+  minimiseDustPhase1Steps: 35,
+  minimiseDustPhase2Steps: 35,
 }
 
 if (process.env.MAINNET_PROVIDER == null) {
@@ -165,46 +166,43 @@ export const testUser = process.env.TEST_USER
   : Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 
 const issueanceCases = [
+  makeTestCase(500, t.WETH, rTokens.eUSD),
   makeTestCase(1000000, t.USDC, rTokens.eUSD),
-  makeTestCase(1000000, t.DAI, rTokens.eUSD),
+  makeTestCase(100000, t.DAI, rTokens.eUSD),
   makeTestCase(1000000, t.USDT, rTokens.eUSD),
-
-  makeTestCase(10000, t.USDC, rTokens.USD3),
-  makeTestCase(10000, t.USDT, rTokens.USD3),
-  makeTestCase(10000, t.DAI, rTokens.USD3),
-
-  makeTestCase(100, t.WETH, rTokens['ETH+']),
+  makeTestCase(1000000, t.USDC, rTokens.USD3),
+  makeTestCase(1000000, t.USDT, rTokens.USD3),
+  makeTestCase(1000000, t.DAI, rTokens.USD3),
   makeTestCase(1000, t.WETH, rTokens['ETH+']),
-
+  makeTestCase(100, t.WETH, rTokens['ETH+']),
   makeTestCase(10, t.WETH, rTokens.hyUSD),
   makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  makeTestCase(10000, t.USDe, rTokens.hyUSD),
   makeTestCase(10000, t.DAI, rTokens.hyUSD),
-
-  makeTestCase(5, t.WETH, rTokens.dgnETH),
+  makeTestCase(10000, t.USDT, rTokens.hyUSD),
+  makeTestCase(50, t.WETH, rTokens.dgnETH),
   makeTestCase(10000, t.USDC, rTokens.dgnETH),
 ]
 
 const redeemCases = [
-  // makeTestCase(200000, rTokens.eUSD, t.USDC),
-  // makeTestCase(10000, rTokens.eUSD, t.USDC),
-  // makeTestCase(10000, rTokens.eUSD, t.DAI),
-  // makeTestCase(10000, rTokens.eUSD, t.USDT),
+  makeTestCase(200000, rTokens.eUSD, t.USDC),
+  makeTestCase(10000, rTokens.eUSD, t.USDC),
+  makeTestCase(10000, rTokens.eUSD, t.DAI),
+  makeTestCase(10000, rTokens.eUSD, t.USDT),
 
-  // makeTestCase(10000, rTokens.USD3, t.USDC),
-  // makeTestCase(10000, rTokens.USD3, t.DAI),
+  makeTestCase(10000, rTokens.USD3, t.USDC),
+  makeTestCase(10000, rTokens.USD3, t.DAI),
 
   makeTestCase(10000, rTokens.hyUSD, t.USDC),
-  makeTestCase(10000, rTokens.hyUSD, t.USDe),
+  // makeTestCase(10000, rTokens.hyUSD, t.USDe),
   makeTestCase(10000, rTokens.hyUSD, t.DAI),
 
-  // makeMintTestCase(5, rTokens['ETH+'], t.WETH),
-  // makeMintTestCase(5, rTokens['ETH+'], t.reth),
-  // makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
-  // makeMintTestCase(5, rTokens['ETH+'], t.USDC),
+  makeTestCase(5, rTokens['ETH+'], t.WETH),
+  // makeTestCase(5, rTokens['ETH+'], t.reth),
+  // makeTestCase(5, rTokens['ETH+'], t.frxeth),
+  makeTestCase(5, rTokens['ETH+'], t.USDC),
 
-  // makeMintTestCase(5, rTokens.dgnETH, t.WETH),
-  // makeMintTestCase(5, rTokens.dgnETH, t.USDC),
+  makeTestCase(5, rTokens.dgnETH, t.WETH),
+  makeTestCase(5, rTokens.dgnETH, t.USDC),
 ]
 
 const individualIntegrations = [
@@ -310,26 +308,26 @@ describe('ethereum zapper', () => {
     )
   })
 
-  describe('path', () => {
-    it('test', async () => {
-      const input = universe.commonTokens.USDT.from(66666)
+  // describe('path', () => {
+  //   it('test', async () => {
+  //     const input = universe.commonTokens.USDT.from(66666)
 
-      const quote = await universe.dexLiquidtyPriceStore.getBestQuotePath(
-        input,
-        universe.commonTokens.USDC
-      )
+  //     const quote = await universe.dexLiquidtyPriceStore.getBestQuotePath(
+  //       input,
+  //       universe.commonTokens.USDC
+  //     )
 
-      for (const step of quote.steps) {
-        console.log(`${step.input}`)
-        for (let i = 0; i < step.splits.length; i++) {
-          const action = step.actions[i]
-          const split = step.splits[i]
-          console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
-        }
-      }
-      console.log(quote.output.toString())
-    }, 60000)
-  })
+  //     for (const step of quote.steps) {
+  //       console.log(`${step.input}`)
+  //       for (let i = 0; i < step.splits.length; i++) {
+  //         const action = step.actions[i]
+  //         const split = step.splits[i]
+  //         console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
+  //       }
+  //     }
+  //     console.log(quote.output.toString())
+  //   }, 60000)
+  // })
 
   describe('actions', () => {
     for (const testCase of individualIntegrations) {

@@ -215,12 +215,12 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     }
   }
   const setupUnis = async () => {
-    await setupUniswapV3(universe)
-    await setupUniswapV2(universe)
+    await initUni3()
+    await initUni2()
   }
   let done = 0
   const initMaverick = async () => {
-    await setupMaverick(universe)
+    // await setupMaverick(universe)
   }
   console.log('setupBaseZapper')
 

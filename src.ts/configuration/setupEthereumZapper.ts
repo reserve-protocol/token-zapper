@@ -430,12 +430,12 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   }
 
   const initMaverick = async () => {
-    try {
-      await setupMaverick(universe)
-    } catch (e) {
-      console.log(e)
-      console.log('Failed to load mango')
-    }
+    // try {
+    //   await setupMaverick(universe)
+    // } catch (e) {
+    //   console.log(e)
+    //   console.log('Failed to load mango')
+    // }
   }
 
   const tasks = [
@@ -474,6 +474,14 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.tokenClass.set(
     universe.commonTokens.USDC,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.USDT,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.DAI,
     Promise.resolve(universe.commonTokens.USDC)
   )
   universe.tokenClass.set(

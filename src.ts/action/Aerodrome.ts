@@ -205,6 +205,16 @@ class AeropoolAddLiquidity extends BaseV2AerodromeAction {
   public constructor(public readonly pool: AerodromeStablePool) {
     super(pool, [pool.token0, pool.token1], [pool.lpToken])
   }
+
+  public async inputProportions(): Promise<TokenQuantity[]> {
+    const prices = await Promise.all(
+      (
+        await this.pool.quoteRemoveLiquidity(this.pool.lpToken.one)
+      ).map((i) => i.price().then((i) => i.asNumber()))
+    )
+    const sum = prices.reduce((a, b) => a + b, 0)
+    return prices.map((i, index) => this.inputToken[index].from(i / sum))
+  }
 }
 
 class AeropoolRemoveLiquidity extends BaseV2AerodromeAction {

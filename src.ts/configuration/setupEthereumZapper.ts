@@ -158,27 +158,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     })
   )
 
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens['ETH+'],
-    commonTokens.WETH
-  )
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens['dgnETH'],
-    commonTokens.WETH
-  )
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens.eUSD,
-    commonTokens.USDC
-  )
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens.USD3,
-    commonTokens.USDC
-  )
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens.hyUSD,
-    commonTokens.USDC
-  )
-
   const daiMint = new DssLitePsm(
     universe,
     Address.from('0xf6e72db5454dd049d0788e411b06cfaf16853042'),
@@ -187,7 +166,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     async (input) => input * 1000000000000n
   )
 
-  universe.mintableTokens.set(universe.commonTokens.DAI, daiMint)
   universe.addAction(daiMint)
 
   universe.mintRateProviders.set(universe.commonTokens.DAI, () =>

@@ -15,7 +15,7 @@ export class DssLitePsm extends BaseAction {
     return 'DssLitePsm'
   }
   public get isTrade() {
-    return false
+    return true
   }
   public get oneInput() {
     return false

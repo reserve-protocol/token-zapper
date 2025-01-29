@@ -123,10 +123,13 @@ export class NodeProxy {
       this.isStartNode ||
       this.isEndNode ||
       this.isOptimisable ||
-      this.isDustOptimisable ||
-      this.isFanout
+      this.isDustOptimisable
     ) {
       return false
+    }
+
+    if (this.isFanout && this.recipients.length === 1) {
+      return true
     }
 
     const outgoing = [...this.outgoingEdges()]
@@ -2782,6 +2785,9 @@ const optimise = async (
       minimiseDustPhase2Steps
     )
   }
+  bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
+  g = removeNodes(g, findNodesWithoutSources(g))
+  bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 
   logger.debug(
     `Final graph for ${bestSoFar.result.inputs.join(', ')} -> ${
@@ -2988,7 +2994,7 @@ export class TokenFlowGraphSearcher {
 
       if (!this.universe.isTokenMintable(prop.token)) {
         const tradeExisted = graph.tradeNodeExists(inputQty.token, prop.token)
-        const tradeStart = await this.addTrades(
+        let tradeStart = await this.addTrades(
           graph,
           inputQty,
           prop.token,

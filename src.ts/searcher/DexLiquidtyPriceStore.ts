@@ -54,47 +54,52 @@ export class DexLiquidtyPriceStore {
       return path
     }
 
-    path = new Promise(async (resolve, reject) => {
-      try {
-        const tokenPath = await bestPath(
-          this.universe,
-          input,
-          target,
-          1,
-          interestingTokens
-        ).then((m) => {
-          this.recordAllSingleStepBestPaths(input.token, m)
-          return m.get(target)?.path ?? []
-        })
-        if (tokenPath.length === 0) {
-          throw Error(`No path found from ${input.token} to ${target}`)
-        }
-
-        let out: BaseAction[][] = []
-
-        for (let step = 0; step < tokenPath.length - 1; step++) {
-          const from = tokenPath[step]
-          const to = tokenPath[step + 1]
-          if (from === to) {
-            continue
+    const search = (tokenSet?: Set<Token>) =>
+      new Promise<BaseAction[][]>(async (resolve, reject) => {
+        try {
+          const tokenPath = await bestPath(
+            this.universe,
+            input,
+            target,
+            1,
+            tokenSet
+          ).then((m) => {
+            this.recordAllSingleStepBestPaths(input.token, m)
+            return m.get(target)?.path ?? []
+          })
+          if (tokenPath.length === 0) {
+            throw Error(`No path found from ${input.token} to ${target}`)
           }
-          let tradeActions =
-            this.universe.graph.vertices
-              .get(from)
-              .outgoingEdges.get(to)
-              ?.filter((e) => e.is1to1) ?? []
 
-          if (tradeActions.length === 0) {
-            throw new Error(`No trade actions found for ${from} to ${to}`)
+          let out: BaseAction[][] = []
+
+          for (let step = 0; step < tokenPath.length - 1; step++) {
+            const from = tokenPath[step]
+            const to = tokenPath[step + 1]
+            if (from === to) {
+              continue
+            }
+            let tradeActions =
+              this.universe.graph.vertices
+                .get(from)
+                .outgoingEdges.get(to)
+                ?.filter((e) => e.is1to1) ?? []
+
+            if (tradeActions.length === 0) {
+              throw new Error(`No trade actions found for ${from} to ${to}`)
+            }
+            out.push(tradeActions.map((act) => wrapAction(this.universe, act)))
+            this.bestPathCache
+              .get(input.token)
+              .set(to, Promise.resolve([...out]))
           }
-          out.push(tradeActions.map((act) => wrapAction(this.universe, act)))
-          this.bestPathCache.get(input.token).set(to, Promise.resolve([...out]))
+          resolve(out)
+        } catch (e) {
+          reject(e)
         }
-        resolve(out)
-      } catch (e) {
-        reject(e)
-      }
-    })
+      })
+
+    path = search(interestingTokens).catch(() => search())
     this.bestPathCache.get(input.token).set(target, path)
     try {
       return await path

@@ -83,6 +83,8 @@ export const baseWhales = {
     '0x1ef46018244179810dec43291d693cb2bf7f40e5', // iusdc
   '0xc9a3e2b3064c1c0546d3d0edc0a748e9f93cf18d':
     '0x6f1d6b86d4ad705385e751e6e88b0fdfdbadf298', // vaya
+  '0x8f0987ddb485219c767770e2080e5cc01ddc772a':
+    '0x46271115F374E02b5afe357C8E8Dad474c8DE1cF', // BSDX
 }
 
 const simulateFn = getSimulator(

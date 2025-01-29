@@ -22,6 +22,7 @@ import {
 import { createZapTestCase } from '../createZapTestCase'
 import { getProvider, getSimulator } from './providerUtils'
 import { EthereumUniverse } from '../../src.ts/configuration/ethereum'
+import { bestPath } from '../../src.ts/exchange-graph/BFS'
 dotenv.config()
 
 const searcherOptions: SearcherOptions = {
@@ -118,6 +119,9 @@ export const ethWhales = {
   // pxeth
   '0x04c154b66cb340f3ae24111cc767e0184ed00cc6':
     '0x40e93a52f6af9fcd3b476aedadd7feabd9f7aba8',
+
+  '0x9d39a5de30e57443bff2a8307a4256c8797a3497':
+    '0xd288755556c235afffb6316702719c32bd8706e8',
 }
 
 const t = {
@@ -196,13 +200,13 @@ const redeemCases = [
   // makeTestCase(10000, rTokens.hyUSD, t.USDe),
   makeTestCase(10000, rTokens.hyUSD, t.DAI),
 
-  makeTestCase(5, rTokens['ETH+'], t.WETH),
+  makeTestCase(100, rTokens['ETH+'], t.WETH),
   // makeTestCase(5, rTokens['ETH+'], t.reth),
   // makeTestCase(5, rTokens['ETH+'], t.frxeth),
-  makeTestCase(5, rTokens['ETH+'], t.USDC),
+  makeTestCase(10, rTokens['ETH+'], t.USDC),
 
-  makeTestCase(5, rTokens.dgnETH, t.WETH),
-  makeTestCase(5, rTokens.dgnETH, t.USDC),
+  makeTestCase(100, rTokens.dgnETH, t.WETH),
+  makeTestCase(10, rTokens.dgnETH, t.USDC),
 ]
 
 const individualIntegrations = [
@@ -312,20 +316,12 @@ describe('ethereum zapper', () => {
   //   it('test', async () => {
   //     const input = universe.commonTokens.USDT.from(66666)
 
-  //     const quote = await universe.dexLiquidtyPriceStore.getBestQuotePath(
-  //       input,
-  //       universe.commonTokens.USDC
+  //     const quote = await bestPath(
+  //       universe,
+  //       universe.commonTokens.ETHx.from(100),
+  //       universe.commonTokens.WETH,
+  //       2
   //     )
-
-  //     for (const step of quote.steps) {
-  //       console.log(`${step.input}`)
-  //       for (let i = 0; i < step.splits.length; i++) {
-  //         const action = step.actions[i]
-  //         const split = step.splits[i]
-  //         console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
-  //       }
-  //     }
-  //     console.log(quote.output.toString())
   //   }, 60000)
   // })
 

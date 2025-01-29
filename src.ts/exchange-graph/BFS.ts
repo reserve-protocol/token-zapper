@@ -256,8 +256,23 @@ export const bestPath = async (
       continue
     }
     const vertex = graph.vertices.get(node.token)
+    let outEdges = [...vertex.outgoingEdges].filter(
+      ([nextToken]) => !includes(node, nextToken)
+    )
+
+    let toExplore = outEdges.filter(([nextToken]) => {
+      if (preferedTokens != null && !preferedTokens.has(nextToken)) {
+        return false
+      }
+      return true
+    })
+
+    if (toExplore.length == 0) {
+      toExplore = outEdges
+    }
+
     await Promise.all(
-      [...vertex.outgoingEdges]
+      toExplore
         .filter(([nextToken]) => {
           if (preferedTokens != null && !preferedTokens.has(nextToken)) {
             return false
@@ -270,7 +285,7 @@ export const bestPath = async (
               return
             }
           }
-          const minAmount = node.legAmount[0].amount * 4n
+          const minAmount = node.legAmount[0].amount
           await Promise.all(
             actions
               .filter((action) => action.is1to1)

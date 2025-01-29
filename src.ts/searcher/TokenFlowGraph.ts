@@ -2852,67 +2852,6 @@ export class TokenFlowGraphSearcher {
     private readonly registry: TokenFlowGraphRegistry
   ) {}
 
-  private async rTokenRedeemGraph(
-    parent: TokenFlowGraphBuilder,
-    rToken: Token
-  ) {
-    const a = this.universe.getRTokenDeployment(rToken)
-    const redeemGraphs: TokenFlowGraphBuilder[] = []
-    const proportions: TokenQuantity[] = await a.mint.inputProportions()
-
-    const outputSet = new Set<Token>()
-    for (const qty of proportions) {
-      const basketToken = qty.token
-      if (!this.universe.isTokenBurnable(basketToken)) {
-        outputSet.add(basketToken)
-        continue
-      }
-      const g = await this.tokenRedemptionGraph(parent, basketToken)
-      for (const tok of g.graph.outputs) {
-        outputSet.add(tok)
-      }
-      redeemGraphs.push(g)
-    }
-    outputSet.delete(a.rToken)
-    const rTokenRedeemGraph = new TokenFlowGraphBuilder(
-      this.universe,
-      [a.rToken],
-      [...outputSet],
-      `${a.rToken} redeem`
-    )
-
-    const redeemNode = rTokenRedeemGraph.addAction(a.burn)
-    const rTokenNode = rTokenRedeemGraph.getTokenNode(a.rToken)
-    rTokenNode.forward(a.rToken, 1, redeemNode)
-
-    for (const tok of a.basket) {
-      const node = rTokenRedeemGraph.getTokenNode(tok)
-      redeemNode.forward(tok, 1, node)
-    }
-
-    for (let i = 0; i < redeemGraphs.length; i++) {
-      const graph = redeemGraphs[i].graph
-      const inputToken = graph.inputs[0]
-      const inputNode = rTokenRedeemGraph.getTokenNode(inputToken)
-
-      const redeemBasketTokenGraphNode = rTokenRedeemGraph.addSubgraphNode(
-        graph,
-        `unwrap ${graph.inputs.join(', ')}`
-      )
-      inputNode.forward(inputToken, 1, redeemBasketTokenGraphNode)
-
-      for (const outputToken of graph.outputs) {
-        redeemBasketTokenGraphNode.forward(
-          outputToken,
-          1,
-          rTokenRedeemGraph.getTokenNode(outputToken)
-        )
-      }
-    }
-
-    return rTokenRedeemGraph
-  }
-
   private async tokenSourceGraph(
     graph: TokenFlowGraphBuilder,
     inputQty: TokenQuantity,
@@ -3038,48 +2977,26 @@ export class TokenFlowGraphSearcher {
   }
 
   private async tokenRedemptionGraph(
-    parent: TokenFlowGraphBuilder,
-    token: Token
-  ): Promise<TokenFlowGraphBuilder> {
-    let out: TokenFlowGraphBuilder
-    if (this.universe.rTokensInfo.tokens.has(token)) {
-      out = await this.rTokenRedeemGraph(parent, token)
-    } else {
-      const burnAction = this.universe.getBurnAction(token)
-
-      out = new TokenFlowGraphBuilder(
-        this.universe,
-        [token],
-        [],
-        `Redeem ${token}`
-      )
-      out.addParentInputs(parent.parentInputs)
-      const redeemNode = out.addAction(burnAction)
-      out.getTokenNode(token).forward(token, 1, redeemNode)
-
-      for (const underlying of burnAction.outputToken) {
-        const underlyingNode = out.getTokenNode(underlying)
-        redeemNode.forward(underlying, 1, underlyingNode)
-        if (!this.universe.isTokenBurnable(underlying)) {
-          out.addOutputTokens([underlying])
-          continue
-        }
-        const subgraph = await this.tokenRedemptionGraph(out, underlying)
-        const subgraphNode = out.addSubgraphNode(
-          subgraph.graph,
-          `${token} -> ${underlying}`
+    graph: TokenFlowGraphBuilder,
+    token: Token,
+    inputNode: NodeProxy
+  ): Promise<Token[]> {
+    const burnAction = this.universe.getBurnAction(token)
+    const node = graph.addAction(burnAction)
+    inputNode.forward(token, 1, node)
+    const outputs: Token[] = []
+    for (const outputToken of burnAction.outputToken) {
+      const outputNode = graph.getTokenNode(outputToken)
+      node.forward(outputToken, 1, outputNode)
+      if (this.universe.isTokenBurnable(outputToken)) {
+        outputs.push(
+          ...(await this.tokenRedemptionGraph(graph, outputToken, outputNode))
         )
-        out.addOutputTokens([...subgraphNode.outputs])
-
-        underlyingNode.forward(underlying, 1, subgraphNode)
-        for (const outputToken of subgraphNode.outputs) {
-          const outputTokenNode = out.getTokenNode(outputToken)
-          subgraphNode.forward(outputToken, 1, outputTokenNode)
-        }
+      } else {
+        outputs.push(outputToken)
       }
     }
-
-    return out
+    return outputs
   }
 
   private doesTradePathExistCache = new Map<string, Promise<boolean>>()
@@ -3160,6 +3077,9 @@ export class TokenFlowGraphSearcher {
     inputNode?: NodeProxy,
     outputNode?: NodeProxy
   ) {
+    if (graph.outputs.includes(inputQty.token)) {
+      return
+    }
     const path = await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
       inputQty,
       output,
@@ -3198,52 +3118,30 @@ export class TokenFlowGraphSearcher {
       `${input} -> ${output}`
     )
 
-    const inTokCls = await this.universe.tokenClass.get(inputToken)
-    const outTokCls = await this.universe.tokenClass.get(output)
+    const targetToken = this.universe.isTokenMintable(output)
+      ? await this.universe.tokenClass.get(output)
+      : output
 
     let inputNode = graph.getTokenNode(inputToken)
 
     if (this.universe.isTokenBurnable(inputToken)) {
-      const redemptionGraph = await this.tokenRedemptionGraph(graph, inputToken)
-
-      const redeemNode = graph.addSubgraphNode(
-        redemptionGraph.graph,
-        `${input} (redeem)`
+      const tokens = await this.tokenRedemptionGraph(
+        graph,
+        inputToken,
+        inputNode
       )
-      inputNode.forward(inputToken, 1, redeemNode)
-
-      let targetToken = inTokCls
-
-      if (inTokCls === inputToken) {
-        targetToken = outTokCls
-      }
-
-      for (const outputToken of redeemNode.outputs) {
-        const outputTokenNode = graph.getTokenNode(outputToken)
-        redeemNode.forward(outputToken, 1, outputTokenNode)
-        if (outputToken === output || outputToken === targetToken) {
+      for (const tok of tokens) {
+        if (tok === targetToken) {
           continue
         }
-
-        if (graph.tradeNodeExists(outputToken, targetToken)) {
-          continue
-        }
-
-        const qty = await outputToken.fromUSD(inputValue)
-
         await this.addTrades(
           graph,
-          qty,
+          await tok.fromUSD(inputValue / tokens.length),
           targetToken,
           false,
-          `sell output of redeem(${input}) = ${outputToken} for ${targetToken}`
+          `sell ${input} redemption output token ${tok} for ${targetToken}`
         )
       }
-
-      if (targetToken === output) {
-        return optimise(this.universe, graph, [input], [output], opts)
-      }
-
       inputNode = graph.getTokenNode(targetToken)
       inputToken = targetToken
     }

@@ -136,6 +136,8 @@ const evaluateProgram = async (
       },
     ],
     setup: {
+      sender: signer.address,
+      approvalAddress: to.address,
       inputTokenAddress: inputs[0].token.address.address,
       userBalanceAndApprovalRequirements: inputs[0].amount,
     },

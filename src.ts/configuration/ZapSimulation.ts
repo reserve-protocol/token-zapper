@@ -41,6 +41,8 @@ export interface SimulateParams {
     // approval is setup for the zapper contract to spend the token the '.to' field above
   }[]
   setup?: {
+    sender: string
+    approvalAddress: string
     // The quantity of the tokens the user wants to zap
     userBalanceAndApprovalRequirements: bigint
 
@@ -182,27 +184,27 @@ export const makeCallManySimulator = (
       )
       if (token === universe.nativeToken) {
         setETHBalance(
-          input.setup.inputTokenAddress,
+          input.setup.sender,
           input.setup.userBalanceAndApprovalRequirements +
             0x56bc75e2d6310000000n
         )
       } else {
         addApproval(
           token,
-          input.setup.inputTokenAddress,
-          input.setup.inputTokenAddress,
+          input.setup.sender,
+          input.setup.approvalAddress,
           input.setup.userBalanceAndApprovalRequirements
         )
       }
 
       if (token === universe.wrappedNativeToken) {
         setETHBalance(
-          input.setup.inputTokenAddress,
+          input.setup.sender,
           input.setup.userBalanceAndApprovalRequirements +
             0x56bc75e2d6310000000n
         )
         addTransaction(
-          input.setup.inputTokenAddress,
+          input.setup.sender,
           token,
           wethInterface.encodeFunctionData('deposit'),
           input.setup.userBalanceAndApprovalRequirements,
@@ -211,12 +213,6 @@ export const makeCallManySimulator = (
       } else {
         const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
 
-        if (whale) {
-          stateOverride[whale] = {
-            balance: ETH_256,
-          }
-        }
-
         if (whale == null) {
           universe.logger.warn(
             'No whale for token ' +
@@ -224,11 +220,14 @@ export const makeCallManySimulator = (
               ', so will not fund the sender with funds'
           )
         } else {
+          stateOverride[whale] = {
+            balance: ETH_256,
+          }
           addTransaction(
             whale,
             input.setup.inputTokenAddress,
             erc20Interface.encodeFunctionData('transfer', [
-              input.setup.inputTokenAddress,
+              input.setup.sender,
               input.setup.userBalanceAndApprovalRequirements,
             ])
           )
@@ -343,91 +342,55 @@ export const makeCustomRouterSimulator = (
       const token = await universe.getToken(
         Address.from(input.setup.inputTokenAddress.toLowerCase())
       )
-      addBalance(input.setup.inputTokenAddress)
 
       if (token === universe.nativeToken) {
         addBalance(
-          input.setup.inputTokenAddress,
+          input.setup.sender,
           input.setup.userBalanceAndApprovalRequirements +
             0x56bc75e2d6310000000n
         )
       } else {
         addApproval(
           token,
-          input.setup.inputTokenAddress,
-          input.setup.inputTokenAddress,
+          input.setup.sender,
+          input.setup.approvalAddress,
           input.setup.userBalanceAndApprovalRequirements
         )
       }
-
       if (token === universe.wrappedNativeToken) {
         addBalance(
-          input.setup.inputTokenAddress,
+          input.setup.sender,
           input.setup.userBalanceAndApprovalRequirements +
             0x56bc75e2d6310000000n
         )
         addTransaction(
-          input.setup.inputTokenAddress,
+          input.setup.sender,
           token,
           wethInterface.encodeFunctionData('deposit'),
           15_000_000n,
           input.setup.userBalanceAndApprovalRequirements
         )
-      } else if (
-        universe.rTokensInfo.tokens.has(token) &&
-        whales[token.address.address.toLowerCase()] == null
-      ) {
-        const rTokenDeployment = universe.getRTokenDeployment(token)
-        addBalance(rTokenDeployment.backingManager)
-
-        const extra = input.setup.userBalanceAndApprovalRequirements / 10n
-        const mintQty = input.setup.userBalanceAndApprovalRequirements + extra
-
-        addTransaction(
-          rTokenDeployment.backingManager,
-          token,
-          rTokenInterface.encodeFunctionData('mint', [mintQty])
-        )
-        addTransaction(
-          rTokenDeployment.backingManager,
-          token,
-          rTokenInterface.encodeFunctionData('setBasketsNeeded', [
-            (
-              await rTokenDeployment.contracts.rToken.callStatic.basketsNeeded()
-            ).toBigInt() - mintQty,
-          ])
-        )
-        addTransaction(
-          rTokenDeployment.backingManager,
-          token,
-          erc20Interface.encodeFunctionData('transfer', [
-            input.setup.inputTokenAddress,
-            input.setup.userBalanceAndApprovalRequirements,
-          ])
-        )
       } else {
         const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
-
-        if (whale) {
-          stateOverride[whale] = {
-            balance: ETH_256,
-          }
-        }
-
         if (whale == null) {
           universe.logger.warn(
             'No whale for token ' +
               input.setup.inputTokenAddress +
               ', so will not fund the sender with funds'
           )
+        } else {
+          stateOverride[whale] = {
+            balance: ETH_256,
+          }
+          moveFunds.push({
+            owner: whale,
+            token: input.setup.inputTokenAddress,
+            spender: input.setup.sender,
+            quantity:
+              '0x' +
+              input.setup.userBalanceAndApprovalRequirements.toString(16),
+          })
         }
-        moveFunds.push({
-          owner: whale,
-          token: input.setup.inputTokenAddress,
-          spender: input.setup.inputTokenAddress,
-          quantity:
-            '0x' + input.setup.userBalanceAndApprovalRequirements.toString(16),
-        })
       }
     }
     for (const tx of input.transactions) {
@@ -440,6 +403,7 @@ export const makeCustomRouterSimulator = (
       transactions: transactions,
       stateOverride: stateOverride,
     }
+    console.log(body)
 
     // if (addreses) {
     //   body.stateOverride[addreses.executorAddress.address] = {

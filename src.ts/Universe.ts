@@ -1142,10 +1142,15 @@ export class Universe<const UniverseConf extends Config = Config> {
       )
       const res = await tfg.evaluate(this, [userInput])
       console.log(`Expected output: ${res.result.inputs.join(', ')} -> ${res.result.outputs.filter(i => i.amount >10n).join(', ')}`)
-      return await new TxGen(this, res).generate({
-        ...options,
-        ethereumInput: isNative,
-      })
+      try {
+        return await new TxGen(this, res).generate({
+          ...options,
+          ethereumInput: isNative,
+        })
+      } catch (e) {
+        this.tfgReg.purgeResult(userInput, outputToken)
+        throw e
+      }
     } catch (e) {
       console.log(`Error zapping: ${e}`)
       throw e

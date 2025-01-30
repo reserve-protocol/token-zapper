@@ -403,7 +403,6 @@ export const makeCustomRouterSimulator = (
       transactions: transactions,
       stateOverride: stateOverride,
     }
-    console.log(body)
 
     // if (addreses) {
     //   body.stateOverride[addreses.executorAddress.address] = {

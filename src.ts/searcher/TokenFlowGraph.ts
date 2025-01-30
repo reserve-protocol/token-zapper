@@ -1809,6 +1809,12 @@ export class TokenFlowGraphRegistry {
     >
   >(() => new Map())
 
+  public purgeResult(input: TokenQuantity, output: Token) {
+    console.log(`Purging result for key=${getKey(input)}`)
+    const key = getKey(input)
+    this.db.get(key).delete(output)
+  }
+
   constructor(private readonly universe: Universe) {}
 
   public define(input: TokenQuantity, output: Token, graph: TokenFlowGraph) {
@@ -2296,7 +2302,6 @@ const minimizeDust = async (
           if (!dustTokens.includes(token)) {
             dustTokens.push(token)
           }
-          console.log(`${token} ${node.nodeId}[${i}]`)
           tokenToSplitMap.set(token, i)
         }
       }
@@ -2403,7 +2408,6 @@ const minimizeDust = async (
       ) {
         node.splits.setParts(before)
       } else {
-        console.log(currentResult.result.outputs.join(', '))
         currentResult = newRes
       }
     }
@@ -2526,11 +2530,6 @@ const optimiseGlobal = async (
     }
     if (bestNodeToChange !== -1) {
       bestSoFar = bestThisIteration
-      console.log(
-        `global optimiser ${i}: ${bestSoFar.result.outputs
-          .filter((i) => i.amount > 10n)
-          .join(', ')}`
-      )
       g._outgoingEdges[
         optimisationNodes[bestNodeToChange].id
       ]!.edges[0].setParts(tmp[bestNodeToChange])

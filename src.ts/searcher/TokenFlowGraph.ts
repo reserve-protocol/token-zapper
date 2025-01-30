@@ -3374,102 +3374,58 @@ export class TokenFlowGraphSearcher {
 
     out.addParentInputs(new Set([input.token]))
 
-    const dustProduced = new Set<Token>()
-
     let proportions = await Promise.all(
       outputs.map((i) => i.price().then((i) => i.asNumber()))
     )
     const sum = proportions.reduce((a, b) => a + b, 0)
     proportions = proportions.map((i) => i / sum)
 
-    const tokensToSource = new DefaultMap<Token, number>(() => 0)
+    const inputNode = out.getTokenNode(input.token)
+    const splitNode = out.addSplittingNode(
+      input.token,
+      inputNode,
+      NodeType.SplitWithDust,
+      'split'
+    )
+    out.graph._outgoingEdges[splitNode.id]!.min = 0
     for (let i = 0; i < outputs.length; i++) {
-      const output = outputs[i]
-      const proportion = proportions[i]
-      if (this.universe.isTokenMintable(output.token)) {
-        await this.tokenMintingGraph(
+      const prop = proportions[i]
+
+      if (out.tradeNodeExists(input.token, outputs[i].token)) {
+        await this.addTrades(
           out,
-          inputValueSize,
-
-          output.token,
-          out.getTokenNode(input.token)
+          await input.token.fromUSD(inputValueSize * prop),
+          outputs[i].token,
+          true,
+          `trade ${input} -> ${outputs[i].token} with prop ${prop}`
         )
-      } else {
-        tokensToSource.set(output.token, proportion)
-      }
-    }
 
-    const inputTokenNode = out.getTokenNode(input.token)
-
-    const allSplitNodes = new Set<TokenFlowSplits>()
-
-    for (const [precursorToken, proportion] of tokensToSource) {
-      const path = shortestPath(
-        this.universe,
-        input.token,
-        precursorToken,
-        (act) => act.is1to1
-      )
-
-      console.log(`Path: ${path.map((i) => i.toString()).join(' -> ')}`)
-
-      if (path.length < 2) {
-        throw new Error(`Failed to find path for ${input} -> ${precursorToken}`)
-      }
-
-      for (let i = 0; i < path.length - 1; i++) {
-        const input = path[i]
-        const output = path[i + 1]
-        const inputTokenNode = out.getTokenNode(input)
-        const outputTokenNode = out.getTokenNode(output)
-
-        if (outputTokenNode.receivesInput) {
-          console.log(
-            `Skipping ${input} -> ${output} because it already receives input`
-          )
-          continue
-        }
-
-        const tradeNode = await this.addTrades(
-          out,
-          await input.fromUSD(10000.0),
-          output,
-          false
-        )
-        if (tradeNode == null) {
-          throw new Error(`Failed to find trade for ${input} -> ${output}`)
-        }
-        const edge = out.graph._outgoingEdges[inputTokenNode.id]!.getEdge(input)
-        const index = edge.getRecipientIndex(tradeNode.id)
-        edge.parts[index] += proportion
-        inputTokenNode.nodeType = NodeType.Both
-        const outgoing = out.graph._outgoingEdges[inputTokenNode.id]!
-        outgoing.min = 0
-
-        allSplitNodes.add(out.graph._outgoingEdges[inputTokenNode.id]!.edges[0])
-
-        if (i === 0) {
-          const splits = outgoing.getEdge(input)
-          splits.min = 0
-          splits.dustEdge
-            .get(splits.getRecipientIndex(tradeNode.id))
-            .push(precursorToken)
-        }
-      }
-    }
-    for (const dustToken of dustProduced) {
-      const dustTokenNode = out.getTokenNode(dustToken)
-      if (dustTokenNode.hasOutflows()) {
         continue
       }
-      dustTokenNode.forward(dustToken, 1, out.graph.end)
-    }
-    inputTokenNode.nodeType = NodeType.SplitWithDust
-    out.graph._outgoingEdges[inputTokenNode.id]!.min = 0
-    out.graph._outgoingEdges[inputTokenNode.id]!.edges[0].min = 0
+      const inner = out.addSplittingNode(
+        input.token,
+        splitNode,
+        NodeType.Optimisation,
+        `trade ${input} -> ${outputs[i].token} with prop ${prop}`
+      )
+      const splits = out.graph._outgoingEdges[splitNode.id]!.getEdge(
+        input.token
+      )
+      splits.min = 0
+      splits.parts[splits.getRecipientIndex(inner.id)] = prop
 
-    for (const splitNode of allSplitNodes) {
-      splitNode.normalize()
+      const tradeStart = await this.addTrades(
+        out,
+        await input.token.fromUSD(inputValueSize * prop),
+        outputs[i].token,
+        true,
+        `trade ${input} -> ${outputs[i].token} with prop ${prop}`,
+        inner
+      )
+
+      if (tradeStart) {
+        inner.forward(input.token, 1, tradeStart)
+      }
     }
 
     return out
@@ -3534,8 +3490,10 @@ export class TokenFlowGraphSearcher {
       mintNode.forward(dustToken, 1, out.graph.end)
     }
     mintNode.forward(output, 1, out.getTokenNode(output))
+    console.log(out.toDot().join('\n'))
     const res = await optimise(this.universe, out, [input], [output], opts)
     this.registry.define(input, output, res)
+
     return res
   }
 }

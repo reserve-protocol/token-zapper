@@ -184,7 +184,14 @@ const makeFolioTestCase = (
 
 const folioTests = [
   makeFolioTestCase(
-    0.4,
+    1,
+    t.WETH,
+    basket(
+      '0.6067 Virtuals, 0.1258 aiXBT, 0.1004 Freysa, 0.0383 GAME, 0.0329 Cookie, 0.0246 Rei, 0.0218 Toshi, 0.0199 VaderAI, 0.0295 Luna'
+    )
+  ),
+  makeFolioTestCase(
+    1,
     t.WETH,
     basket(
       '0.6067 Virtuals, 0.1258 aiXBT, 0.1004 Freysa, 0.0383 GAME, 0.0329 Cookie, 0.0246 Rei, 0.0218 Toshi, 0.0199 VaderAI, 0.0295 Luna'

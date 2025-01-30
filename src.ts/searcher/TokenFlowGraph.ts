@@ -1599,6 +1599,7 @@ export class TokenFlowGraphBuilder {
     )
     out.addParentInputs(this.parentInputs)
     out.graph = this.graph.clone()
+
     for (const [token, id] of this.tokenBalanceNodes.entries()) {
       out.tokenBalanceNodes.set(token, id)
     }
@@ -1791,20 +1792,40 @@ export class TokenFlowGraphBuilder {
   }
 }
 
+const getKey = (input: TokenQuantity) => {
+  const k = input.asNumber()
+  const rounded = Math.round(k * 10) / 10
+  return input.token.from(rounded).toString()
+}
 export class TokenFlowGraphRegistry {
   private readonly db = new DefaultMap<
-    Token,
-    Map<Token, TokenFlowGraphBuilder>
-  >((token) => new Map())
+    string,
+    Map<
+      Token,
+      {
+        graph: TokenFlowGraph
+        timestamp: number
+      }
+    >
+  >(() => new Map())
 
-  public define(input: Token, output: Token, graph: TokenFlowGraphBuilder) {
-    this.db.get(input).set(output, graph)
+  constructor(private readonly universe: Universe) {}
+
+  public define(input: TokenQuantity, output: Token, graph: TokenFlowGraph) {
+    const key = getKey(input)
+    console.log(`Saving graph for later: key=${key}`)
+    this.db.get(key).set(output, { graph, timestamp: Date.now() })
   }
 
-  public find(input: Token, output: Token) {
-    const out = this.db.get(input).get(output)
+  public find(input: TokenQuantity, output: Token) {
+    const key = getKey(input)
+    const out = this.db.get(key).get(output)
     if (out != null) {
-      // return out.clone()
+      if (Date.now() - out.timestamp > this.universe.config.tfgCacheTTL) {
+        this.db.get(key).delete(output)
+      }
+      console.log(`Found previous result for key=${key}, reusing it as a base`)
+      return out.graph.clone()
     }
     return null
   }
@@ -2703,7 +2724,7 @@ const inferDustProducingNodes = (g: TokenFlowGraph) => {
 }
 const optimise = async (
   universe: Universe,
-  graph: TokenFlowGraphBuilder,
+  graph: TokenFlowGraphBuilder | TokenFlowGraph,
   inputs: TokenQuantity[],
   outputs: Token[],
   opts?: {
@@ -2715,15 +2736,19 @@ const optimise = async (
   const logger = universe.logger.child({
     prefix: `optimiser ${inputs.join(', ')} -> ${outputs.join(', ')}`,
   })
-  logger.debug(graph.toDot().join('\n'))
 
   const optimisationSteps = opts?.optimisationSteps ?? 15
   const minimiseDustPhase1Steps = opts?.optsDustPhase1Steps ?? 15
   const minimiseDustPhase2Steps = opts?.optsDustPhase2Steps ?? 5
 
-  const inlined = inlineTFGs(graph.graph)
+  let g: TokenFlowGraph
+  if (graph instanceof TokenFlowGraphBuilder) {
+    const inlined = inlineTFGs(graph.graph)
+    g = removeUselessNodes(inlined)
+  } else {
+    g = graph
+  }
 
-  let g = removeUselessNodes(inlined)
   // let g = inlined
   const findNodesWithoutSources = (g: TokenFlowGraph) => {
     const out = new Set<number>()
@@ -3236,7 +3261,7 @@ export class TokenFlowGraphSearcher {
   ) {
     const inputValue = (await input.price()).asNumber()
     let inputToken = input.token
-    const prev = this.registry.find(inputToken, output)
+    const prev = this.registry.find(input, output)
     if (prev != null) {
       return await optimise(this.universe, prev, [input], [output], opts)
     }
@@ -3325,8 +3350,9 @@ export class TokenFlowGraphSearcher {
       }
     }
 
-    this.registry.define(inputToken, output, graph)
-    return await optimise(this.universe, graph, [input], [output], opts)
+    const res = await optimise(this.universe, graph, [input], [output], opts)
+    this.registry.define(input, output, res.clone())
+    return res
   }
 
   /**
@@ -3480,6 +3506,10 @@ export class TokenFlowGraphSearcher {
       [output],
       `${input} -> ${output}`
     )
+    const prev = this.registry.find(input, output)
+    if (prev != null) {
+      return await optimise(this.universe, prev, [input], [output], opts)
+    }
 
     const mint = this.universe.getMintAction(output)
 
@@ -3505,7 +3535,8 @@ export class TokenFlowGraphSearcher {
       mintNode.forward(dustToken, 1, out.graph.end)
     }
     mintNode.forward(output, 1, out.getTokenNode(output))
-
-    return optimise(this.universe, out, [input], [output], opts)
+    const res = await optimise(this.universe, out, [input], [output], opts)
+    this.registry.define(input, output, res)
+    return res
   }
 }

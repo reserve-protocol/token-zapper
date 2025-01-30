@@ -1010,7 +1010,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     }> = {}
   ) {
 
-    const network = await provider.getNetwork()
     let simulateZapFunction = opts.simulateZapFn
 
     if (simulateZapFunction == null) {
@@ -1062,7 +1061,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
   }
 
-  private readonly tfgReg = new TokenFlowGraphRegistry()
+  private readonly tfgReg = new TokenFlowGraphRegistry(this)
   public readonly tfgSearcher = new TokenFlowGraphSearcher(this, this.tfgReg)
 
 

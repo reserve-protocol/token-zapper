@@ -34,6 +34,7 @@ const defaultSearcherOptions = {
   minimiseDustPhase2Steps: 5,
 
   cacheResolution: 4,
+  tfgCacheTTL: 5 * 60 * 1000, // 5 minutes
 
   // Use new contract for all zaps
   useNewZapperContract: false,

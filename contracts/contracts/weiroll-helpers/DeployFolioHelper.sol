@@ -13,8 +13,10 @@ contract DeployFolioHelper {
   ) external returns (uint256) {
     (bool success, bytes memory result) = address(deployer).call(encodedFolioDeployerCall);
     if (!success) {
-      assembly {
-        revert(add(result, 32), mload(result))
+      assembly{
+        let revertStringLength := mload(result)
+        let revertStringPtr := add(result, 0x20)
+        revert(revertStringPtr, revertStringLength)
       }
     }
     if (isGoverned) {

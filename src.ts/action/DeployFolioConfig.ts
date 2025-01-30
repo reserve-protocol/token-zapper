@@ -184,7 +184,7 @@ export class DeployFolioConfig {
     public readonly existingTradeProposers: Address[],
     public readonly tradeLaunchers: Address[],
     public readonly vibesOfficers: Address[],
-    public readonly slippage = 0.001
+    public readonly slippage = 0.01
   ) {}
 
   public static async create(universe: Universe, json: DeployFolioConfigJson) {

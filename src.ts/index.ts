@@ -35,6 +35,7 @@ export { createParaswap } from './aggregators/Paraswap'
 export { type Config } from './configuration/ChainConfiguration'
 export {
   makeCustomRouterSimulator,
+  makeCallManySimulator,
   createSimulateZapTransactionUsingProvider,
   SimulateParams,
 } from './configuration/ZapSimulation'

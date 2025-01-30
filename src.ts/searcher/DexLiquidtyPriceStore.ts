@@ -49,6 +49,9 @@ export class DexLiquidtyPriceStore {
       ...Object.values(this.universe.commonTokens),
       ...Object.values(this.universe.rTokens),
     ])
+    if (!interestingTokens.has(input.token) && !interestingTokens.has(target)) {
+      interestingTokens.clear()
+    }
     let path = this.bestPathCache.get(input.token).get(target)
     if (path != null) {
       return path

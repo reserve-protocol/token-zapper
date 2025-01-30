@@ -403,7 +403,59 @@ describe('base zapper', () => {
               )
             )
 
-            const out = await universe.deployZap(inputQty, testUser, config)
+            const out = await universe.deployZap(inputQty, testUser, {
+              type: 'governed',
+              stToken: '0x18846441bee474529444c10f119e0b4a7c60acbb',
+              basicDetails: {
+                name: 'adasd',
+                symbol: 'aasd',
+                assets: [
+                  '0x76c71f1703fbf19ffdcf3051e1e684cb9934510f',
+                  '0xf8f259389c1f29769e0388579d458fb799489185',
+                  '0xac1bd2486aaf3b5c0fc3fd868558b082a531b2b4',
+                  '0x1aca6687a9665fb84deb7e3801e8e7ecba6ec6de',
+                  '0x54eaf6bb665565bb8897f9d7ad5b3818ded143b4',
+                ],
+                amounts: [
+                  '7449135420764272000',
+                  '2352482110343950000000',
+                  '162349304443181520000',
+                  '1164367928808123000000',
+                  '318479072868309700000',
+                ],
+              },
+              additionalDetails: {
+                tradeDelay: '900',
+                auctionLength: '900',
+                feeRecipients: [
+                  {
+                    recipient: '0x18846441bee474529444c10f119e0b4a7c60acbb',
+                    portion: '1000000000000000000',
+                  },
+                ],
+                folioFee: '0',
+                mintingFee: '500000000000000',
+              },
+              ownerGovParams: {
+                votingDelay: '1200',
+                votingPeriod: '1200',
+                proposalThreshold: '10000000000000000',
+                quorumPercent: '20',
+                timelockDelay: '1200',
+                guardian: '0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4',
+              },
+              tradingGovParams: {
+                votingDelay: '1200',
+                votingPeriod: '1200',
+                proposalThreshold: '10000000000000000',
+                quorumPercent: '20',
+                timelockDelay: '1200',
+                guardian: '0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4',
+              },
+              existingTradeProposers: [],
+              tradeLaunchers: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
+              vibesOfficers: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
+            })
             console.log(out.toString())
             expect(true).toBe(true)
           } catch (e) {

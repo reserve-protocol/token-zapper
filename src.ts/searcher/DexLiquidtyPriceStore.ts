@@ -45,11 +45,12 @@ export class DexLiquidtyPriceStore {
     }
   }
   private async computeTradesPath(input: TokenQuantity, target: Token) {
-    const interestingTokens = new Set<Token>([
+    let interestingTokens = new Set<Token>([
       ...Object.values(this.universe.commonTokens),
       ...Object.values(this.universe.rTokens),
     ])
-    if (!interestingTokens.has(input.token) && !interestingTokens.has(target)) {
+    if (!interestingTokens.has(target) || !interestingTokens.has(input.token)) {
+      console.log(`Disabling interesting paths for ${input.token} -> ${target}`)
       interestingTokens.clear()
     }
     let path = this.bestPathCache.get(input.token).get(target)
@@ -64,7 +65,7 @@ export class DexLiquidtyPriceStore {
           input,
           target,
           1,
-          interestingTokens
+          interestingTokens.size > 0 ? interestingTokens : undefined
         ).then((m) => {
           this.recordAllSingleStepBestPaths(input.token, m)
           return m.get(target)?.path ?? []

@@ -1,4 +1,5 @@
 import { BaseAction, type BaseAction as Action } from '../action/Action'
+import { UniswapV2Swap } from '../configuration/setupUniswapV2'
 import { TokenQuantity, type Token } from '../entities/Token'
 import { Queue } from '../searcher/Queue'
 import { SwapPlan } from '../searcher/Swap'
@@ -288,7 +289,14 @@ export const bestPath = async (
                       return
                     }
                   }
-                  const newLegAmount = await action.quote(node.legAmount)
+                  let newLegAmount
+                  if (action instanceof UniswapV2Swap) {
+                    newLegAmount = await action.quoteWithoutFeeCheck(
+                      node.legAmount
+                    )
+                  } else {
+                    newLegAmount = await action.quote(node.legAmount)
+                  }
                   if (
                     result.get(nextToken)?.legAmount[0].amount ??
                     0n > newLegAmount[0].amount

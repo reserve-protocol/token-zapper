@@ -342,7 +342,7 @@ function getAmountOut(amountIn: bigint, reserveIn: bigint, reserveOut: bigint) {
   return numerator / denominator
 }
 
-class UniswapV2Swap extends Action('UniswapV2') {
+export class UniswapV2Swap extends Action('UniswapV2') {
   toString() {
     return `UniswapV2Swap(${this.pool}, ${this.tokenIn} -> ${this.tokenOut})`
   }
@@ -368,6 +368,13 @@ class UniswapV2Swap extends Action('UniswapV2') {
     }
   }
 
+  public async quoteWithoutFeeCheck([amountIn]: TokenQuantity[]): Promise<
+    TokenQuantity[]
+  > {
+    const [reserveIn, reserveOut] = await this.getReserves()
+    const amountOut = getAmountOut(amountIn.amount, reserveIn, reserveOut)
+    return [this.tokenOut.fromBigInt(amountOut)]
+  }
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const fees = await this.getFees()
     const amountInFee = (amountIn.amount * fees.inFee) / (FEE_SCALE * FEE_SCALE)

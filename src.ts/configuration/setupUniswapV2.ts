@@ -7,12 +7,16 @@ import {
 } from '../action/Action'
 import { Address } from '../base/Address'
 import fs from 'fs'
-import { Univ2SwapHelper, Univ2SwapHelper__factory } from '../contracts'
+import {
+  IERC20__factory,
+  Univ2SwapHelper,
+  Univ2SwapHelper__factory,
+} from '../contracts'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import deployments from '../contracts/deployments.json'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
-import { constants } from 'ethers'
+import { constants, Wallet } from 'ethers'
 import { UniswapV2Pair__factory } from '../contracts/factories/contracts/UniswapV2Pair__factory'
 import { wait } from '../base/controlflow'
 import baseUniV2 from './data/8453/univ2.json'
@@ -157,12 +161,146 @@ const loadPoolsFromSubgraphWithRetry = async (
   return []
 }
 export type Direction = '0->1' | '1->0'
-
+const FEE_SCALE = 1000n
+const IERC20_INTERFACE = IERC20__factory.createInterface()
 class UniswapV2Pool {
   public toString() {
     return `UniswapV2Pool(${this.address.toShortString()}:${this.token0}.${
       this.token1
     })`
+  }
+  private fees: Promise<{
+    token0: {
+      buy: bigint
+      sell: bigint
+    }
+    token1: {
+      buy: bigint
+      sell: bigint
+    }
+  }> | null = null
+
+  private async calculateFeesForToken(token: Token): Promise<{
+    buy: bigint
+    sell: bigint
+  }> {
+    if (
+      token === this.context.universe.wrappedNativeToken ||
+      token.address === this.context.universe.config.addresses.usdc
+    ) {
+      return {
+        buy: 0n,
+        sell: 0n,
+      }
+    }
+    const thisBalance = (
+      await this.context.universe.balanceOf(token, this.address)
+    ).amount
+    const randomAddr = Wallet.createRandom().address
+    const sentAmount = thisBalance / 2n
+    const poolOutSent = BigInt(
+      (
+        await this.context.universe.simulateZapFn(
+          {
+            transactions: [
+              {
+                to: token.address.address,
+                from: this.address.address,
+                data: IERC20_INTERFACE.encodeFunctionData('transfer', [
+                  randomAddr,
+                  sentAmount,
+                ]),
+                value: 0n,
+              },
+              {
+                to: token.address.address,
+                from: this.context.universe.execAddress.address,
+                data: IERC20_INTERFACE.encodeFunctionData('balanceOf', [
+                  randomAddr,
+                ]),
+                value: 0n,
+              },
+            ],
+          },
+          this.context.universe
+        )
+      ).at(-1)!
+    )
+    const balAfterSent = thisBalance - sentAmount
+    const poolInReceived =
+      BigInt(
+        (
+          await this.context.universe.simulateZapFn(
+            {
+              transactions: [
+                {
+                  to: token.address.address,
+                  from: this.address.address,
+                  data: IERC20_INTERFACE.encodeFunctionData('transfer', [
+                    randomAddr,
+                    sentAmount,
+                  ]),
+                  value: 0n,
+                },
+                {
+                  to: token.address.address,
+                  from: randomAddr,
+                  data: IERC20_INTERFACE.encodeFunctionData('transfer', [
+                    this.address.address,
+                    poolOutSent,
+                  ]),
+                  value: 0n,
+                },
+                {
+                  to: token.address.address,
+                  from: this.context.universe.execAddress.address,
+                  data: IERC20_INTERFACE.encodeFunctionData('balanceOf', [
+                    this.address.address,
+                  ]),
+                  value: 0n,
+                },
+              ],
+            },
+            this.context.universe
+          )
+        ).at(-1)!
+      ) - balAfterSent
+
+    const buyFee = ((sentAmount - poolOutSent) * FEE_SCALE) / sentAmount
+    const sellFee = ((poolOutSent - poolInReceived) * FEE_SCALE) / poolOutSent
+
+    if (buyFee === 0n && sellFee === 0n) {
+      return {
+        buy: 0n,
+        sell: 0n,
+      }
+    }
+
+    this.context.universe.logger.debug(
+      `${this} detect fees on ${token}: sellFee=${sellFee} buyFee=${buyFee}`
+    )
+
+    return {
+      buy: buyFee,
+      sell: sellFee,
+    }
+  }
+  private async calculateFees() {
+    try {
+      return {
+        token0: await this.calculateFeesForToken(this.token0),
+        token1: await this.calculateFeesForToken(this.token1),
+      }
+    } catch (e) {
+      console.log(e)
+      throw e
+    }
+  }
+  public async getFees() {
+    if (this.fees == null) {
+      this.fees = this.calculateFees()
+    }
+    return await this.fees
   }
 
   public readonly getReserves: () => Promise<[bigint, bigint]>
@@ -214,10 +352,33 @@ class UniswapV2Swap extends Action('UniswapV2') {
   get actionName(): string {
     return `swap`
   }
+
+  public async getFees() {
+    const fees = await this.pool.getFees()
+    if (this.tokenIn === this.pool.token0) {
+      return {
+        inFee: fees.token0.sell,
+        outFee: fees.token1.buy,
+      }
+    } else {
+      return {
+        inFee: fees.token1.sell,
+        outFee: fees.token0.buy,
+      }
+    }
+  }
+
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const fees = await this.getFees()
+    const amountInFee = (amountIn.amount * fees.inFee) / (FEE_SCALE * FEE_SCALE)
     const [reserveIn, reserveOut] = await this.getReserves()
-    const amountOut = getAmountOut(amountIn.amount, reserveIn, reserveOut)
-    const qtyOut = this.tokenOut.fromBigInt(amountOut)
+    const amountOut = getAmountOut(
+      amountIn.amount - amountInFee,
+      reserveIn,
+      reserveOut
+    )
+    const amountOutFee = (amountOut * fees.outFee) / (FEE_SCALE * FEE_SCALE)
+    const qtyOut = this.tokenOut.fromBigInt(amountOut - amountOutFee)
 
     return [qtyOut]
   }
@@ -230,25 +391,37 @@ class UniswapV2Swap extends Action('UniswapV2') {
   get returnsOutput() {
     return true
   }
-  get dependsOnRpc() {
-    return false
-  }
+
   async plan(
     planner: Planner,
     inputs: Value[],
     _: Address,
     __: TokenQuantity[]
   ) {
-    return [
-      planner.add(
-        this.context.swapHelperWeiroll.swap(
-          this.pool.address.address,
-          this.tokenIn === this.pool.token0,
-          this.tokenIn.address.address,
-          inputs[0]
-        )
-      )!,
-    ]
+    const fees = await this.getFees()
+    if (fees.inFee === 0n && fees.outFee === 0n) {
+      return [
+        planner.add(
+          this.context.swapHelperWeiroll.swap(
+            this.pool.address.address,
+            this.tokenIn === this.pool.token0,
+            this.tokenIn.address.address,
+            inputs[0]
+          )
+        )!,
+      ]
+    } else {
+      return [
+        planner.add(
+          this.context.swapHelperWeiroll.swapOnPoolWithFeeTokens(
+            this.pool.address.address,
+            this.tokenIn.address.address,
+            this.tokenOut.address.address,
+            inputs[0]
+          )
+        )!,
+      ]
+    }
   }
   public constructor(
     public readonly context: UniswapV2Context,

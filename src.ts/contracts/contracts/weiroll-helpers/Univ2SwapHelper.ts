@@ -26,9 +26,12 @@ import type {
 export interface Univ2SwapHelperInterface extends utils.Interface {
   functions: {
     "swap(address,bool,address,uint256)": FunctionFragment;
+    "swapOnPoolWithFeeTokens(address,address,address,uint256)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "swap"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic: "swap" | "swapOnPoolWithFeeTokens"
+  ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "swap",
@@ -39,8 +42,21 @@ export interface Univ2SwapHelperInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "swapOnPoolWithFeeTokens",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
 
   decodeFunctionResult(functionFragment: "swap", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "swapOnPoolWithFeeTokens",
+    data: BytesLike
+  ): Result;
 
   events: {};
 }
@@ -79,6 +95,14 @@ export interface Univ2SwapHelper extends BaseContract {
       amountIn: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    swapOnPoolWithFeeTokens(
+      pair: PromiseOrValue<string>,
+      tokenIn: PromiseOrValue<string>,
+      tokenOut: PromiseOrValue<string>,
+      amountIn: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   swap(
@@ -89,11 +113,27 @@ export interface Univ2SwapHelper extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  swapOnPoolWithFeeTokens(
+    pair: PromiseOrValue<string>,
+    tokenIn: PromiseOrValue<string>,
+    tokenOut: PromiseOrValue<string>,
+    amountIn: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     swap(
       pool: PromiseOrValue<string>,
       zeroForOne: PromiseOrValue<boolean>,
       tokenIn: PromiseOrValue<string>,
+      amountIn: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    swapOnPoolWithFeeTokens(
+      pair: PromiseOrValue<string>,
+      tokenIn: PromiseOrValue<string>,
+      tokenOut: PromiseOrValue<string>,
       amountIn: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -109,6 +149,14 @@ export interface Univ2SwapHelper extends BaseContract {
       amountIn: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    swapOnPoolWithFeeTokens(
+      pair: PromiseOrValue<string>,
+      tokenIn: PromiseOrValue<string>,
+      tokenOut: PromiseOrValue<string>,
+      amountIn: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -116,6 +164,14 @@ export interface Univ2SwapHelper extends BaseContract {
       pool: PromiseOrValue<string>,
       zeroForOne: PromiseOrValue<boolean>,
       tokenIn: PromiseOrValue<string>,
+      amountIn: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    swapOnPoolWithFeeTokens(
+      pair: PromiseOrValue<string>,
+      tokenIn: PromiseOrValue<string>,
+      tokenOut: PromiseOrValue<string>,
       amountIn: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

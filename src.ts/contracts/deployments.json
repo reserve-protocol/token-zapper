@@ -1542,7 +1542,7 @@
           ]
         },
         "Univ2SwapHelper": {
-          "address": "0xaA6C516B2c5D995531a99527C4c1B23069254110",
+          "address": "0x14492D05b19C73C145D89e20ea9c1b4d53460bA9",
           "abi": [
             {
               "inputs": [
@@ -1572,6 +1572,40 @@
                 {
                   "internalType": "uint256",
                   "name": "amountOut",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IUniswapV2Pair",
+                  "name": "pair",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "tokenIn",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "tokenOut",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swapOnPoolWithFeeTokens",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountOutput",
                   "type": "uint256"
                 }
               ],

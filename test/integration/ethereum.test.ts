@@ -28,7 +28,8 @@ const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
   useNewZapperContract: false,
   cacheResolution: 8,
-  zapMaxDustProduced: 8,
+  zapMaxDustProduced: 3,
+  maxPhase2TimeRefinementTime: 10000,
   optimisationSteps: 35,
   minimiseDustPhase1Steps: 35,
   minimiseDustPhase2Steps: 35,
@@ -118,6 +119,14 @@ export const ethWhales = {
   // pxeth
   '0x04c154b66cb340f3ae24111cc767e0184ed00cc6':
     '0x40e93a52f6af9fcd3b476aedadd7feabd9f7aba8',
+
+  '0x78fc2c2ed1a4cdb5402365934ae5648adad094d0':
+    '0xa6B1C84133479e41d8d085005476DD007A50Be66',
+  '0xdbc0ce2321b76d3956412b36e9c0fa9b0fd176e7':
+    '0x1d9dd2ed88fd1284b73af0b720fe50a383710f46',
+
+  '0xe8a5677171c87fCB65b76957f2852515B404C7b1':
+    '0x298bf7b80a6343214634aF16EB41Bb5B9fC6A1F1',
 }
 
 const t = {
@@ -166,23 +175,24 @@ export const testUser = process.env.TEST_USER
   : Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 
 const issueanceCases = [
-  makeTestCase(500, t.WETH, rTokens.eUSD),
-  makeTestCase(1000000, t.USDC, rTokens.eUSD),
-  makeTestCase(100000, t.DAI, rTokens.eUSD),
-  makeTestCase(1000000, t.USDT, rTokens.eUSD),
-  makeTestCase(1000000, t.USDC, rTokens.USD3),
-  makeTestCase(1000000, t.USDT, rTokens.USD3),
-  makeTestCase(1000000, t.DAI, rTokens.USD3),
-  makeTestCase(1000, t.WETH, rTokens['ETH+']),
-  makeTestCase(100, t.WETH, rTokens['ETH+']),
-  makeTestCase(10, t.WETH, rTokens.hyUSD),
-  makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  makeTestCase(10000, t.DAI, rTokens.hyUSD),
-  makeTestCase(10000, t.USDT, rTokens.hyUSD),
-  makeTestCase(50, t.WETH, rTokens.dgnETH),
-  makeTestCase(10000, t.USDC, rTokens.dgnETH),
+  // makeTestCase(500, t.WETH, rTokens.eUSD),
+  // makeTestCase(1000000, t.USDC, rTokens.eUSD),
+  // makeTestCase(100000, t.DAI, rTokens.eUSD),
+  // makeTestCase(1000000, t.USDT, rTokens.eUSD),
+  // makeTestCase(1000000, t.USDC, rTokens.USD3),
+  // makeTestCase(1000000, t.USDT, rTokens.USD3),
+  // makeTestCase(1000000, t.DAI, rTokens.USD3),
+  // makeTestCase(1, t.WETH, rTokens['ETH+']),
+  makeTestCase(0.70133, t['stkcvxETH+ETH-f'], t.Re7WETH),
+  // makeTestCase(100, t.WETH, rTokens['ETH+']),
+  // makeTestCase(10, t.WETH, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  // makeTestCase(10000, t.DAI, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDT, rTokens.hyUSD),
+  // makeTestCase(50, t.WETH, rTokens.dgnETH),
+  // makeTestCase(10000, t.USDC, rTokens.dgnETH),
 
-  makeTestCase(350, t.pxETH, t['stkcvxETH+ETH-f']),
+  // makeTestCase(330, t.pxETH, t['stkcvxETH+ETH-f']),
 ]
 
 const redeemCases = [

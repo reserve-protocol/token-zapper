@@ -38,7 +38,11 @@ const simulateAndParse = async (
 ) => {
   const timer = universe.perf.begin('simulateZap')
   const start = Date.now()
-  const simulation = await universe.simulateZapFn(simulationPayload, universe)
+  const simulationResults = await universe.simulateZapFn(
+    simulationPayload,
+    universe
+  )
+  const simulation = simulationResults[simulationResults.length - 1]
   timer()
   universe.logger.debug(`Simulation took ${Date.now() - start}ms`)
   try {
@@ -123,15 +127,32 @@ const evaluateProgram = async (
     value = inputs[0].amount
   }
   const simulationPayload = {
-    to: to.address,
-    from: signer.address,
-    data,
-    value,
+    transactions: [
+      {
+        to: to.address,
+        from: signer.address,
+        data,
+        value,
+      },
+    ],
     setup: {
       inputTokenAddress: inputs[0].token.address.address,
       userBalanceAndApprovalRequirements: inputs[0].amount,
     },
   }
+
+  console.log(
+    JSON.stringify(
+      {
+        to: simulationPayload.transactions[0].to,
+        from: simulationPayload.transactions[0].from,
+        data: simulationPayload.transactions[0].data,
+        block: universe.currentBlock,
+      },
+      null,
+      2
+    )
+  )
 
   try {
     return {
@@ -166,6 +187,13 @@ export class DagPlanContext {
   )
 
   public balanceOf(token: Token | Address) {
+    const addr = token instanceof Token ? token.address : token
+    if (this.universe.folioContext.tokens.has(addr)) {
+      return new LiteralValue(
+        ParamType.fromString('uint256'),
+        defaultAbiCoder.encode(['uint256'], [0n])
+      )
+    }
     return plannerUtils.erc20.balanceOf(
       this.universe,
       this.planner,
@@ -220,12 +248,6 @@ export class DagPlanContext {
 
   public get thisAddress() {
     return this.universe.execAddress
-  }
-
-  public takeBalance(token: Token) {
-    const out = this.executionContractBalance.get(token)
-    this.executionContractBalance.delete(token)
-    return out
   }
 
   public readBalance(token: Token, fresh: boolean = false) {
@@ -358,6 +380,9 @@ const planNode = async (
     if (outEdge.proportion === 1) {
       out.push([outEdge.token, outEdge.recipient, producedValue])
     } else {
+      if (outEdge.proportionBn === 0n) {
+        continue
+      }
       const valueMulProp = ctx.bnFraction(
         outEdge.proportionBn,
         producedValue,
@@ -494,7 +519,7 @@ export class TxGen {
 
     const dustTokens = this.graph
       .getDustTokens()
-      .filter((t) => t.address !== outputTokenAddress)
+      .filter((t) => t.address !== outputTokenAddress && t !== outputToken)
 
     ctx.transfer(
       outputTokenAddress,

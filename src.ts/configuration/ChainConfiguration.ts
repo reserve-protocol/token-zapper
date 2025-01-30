@@ -36,7 +36,9 @@ const defaultSearcherOptions = {
   cacheResolution: 4,
 
   // Use new contract for all zaps
-  useNewZapperContract: false
+  useNewZapperContract: false,
+
+  maxPhase2TimeRefinementTime: 5000,
 }
 export const getDefaultSearcherOptions = () => {
   return defaultSearcherOptions

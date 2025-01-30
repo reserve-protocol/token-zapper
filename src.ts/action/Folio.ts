@@ -35,7 +35,24 @@ const folioDeployerAddress: Record<
 export class FolioContext {
   private sentinelTokens: Map<string, { token: Token; mint: BaseAction }> =
     new Map()
+  public readonly tokens = new Map<Address, Token>()
 
+  public get provider() {
+    return this.universe.provider
+  }
+  public get usd() {
+    return this.universe.usd
+  }
+  public get fairPrice() {
+    return this.universe.fairPrice
+  }
+  public get singleTokenPriceOracles() {
+    return this.universe.singleTokenPriceOracles
+  }
+
+  public isSentinel(token: Token) {
+    return this.tokens.has(token.address)
+  }
   public getSentinelToken(config: DeployFolioConfig) {
     const basket = config.basicDetails.basket
     const key = `folio(${basket.join(', ')})`
@@ -43,7 +60,7 @@ export class FolioContext {
     if (!out) {
       const addr = Address.from(ethers.Wallet.createRandom().address)
       const tok = Token.createToken(
-        this.universe,
+        this,
         addr,
         config.basicDetails.name,
         config.basicDetails.symbol,

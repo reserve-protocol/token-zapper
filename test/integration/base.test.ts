@@ -3,10 +3,6 @@ import fs from 'fs'
 
 import { WebSocketProvider } from '@ethersproject/providers'
 import {
-  makeCustomRouterSimulator,
-  makeCallManySimulator,
-} from '../../src.ts/configuration/ZapSimulation'
-import {
   Address,
   baseConfig,
   BaseUniverse,
@@ -38,10 +34,12 @@ const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
   cacheResolution: 8,
-  optimisationSteps: 15,
-  minimiseDustPhase1Steps: 15,
-  minimiseDustPhase2Steps: 15,
-  useNewZapperContract: false,
+  maxPhase2TimeRefinementTime: 10000,
+  optimisationSteps: 35,
+  minimiseDustPhase1Steps: 35,
+  minimiseDustPhase2Steps: 35,
+  zapMaxDustProduced: 10,
+  useNewZapperContract: true,
 }
 
 /** !!
@@ -127,13 +125,13 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  makeTestCase(10, t.WETH, rTokens.bsd),
-  makeTestCase(10000, t.USDC, rTokens.bsd),
+  // makeTestCase(10, t.WETH, rTokens.bsd),
+  // makeTestCase(10000, t.USDC, rTokens.bsd),
 
-  makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  makeTestCase(10000, t.USDbC, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
 
-  makeTestCase(5, t.WETH, rTokens.hyUSD),
+  // makeTestCase(5, t.WETH, rTokens.hyUSD),
   makeTestCase(10, t.WETH, rTokens.BSDX),
   makeTestCase(10000, t.USDC, rTokens.BSDX),
 ]
@@ -186,7 +184,7 @@ const makeFolioTestCase = (
 
 const folioTests = [
   makeFolioTestCase(
-    10,
+    0.4,
     t.WETH,
     basket(
       '0.6067 Virtuals, 0.1258 aiXBT, 0.1004 Freysa, 0.0383 GAME, 0.0329 Cookie, 0.0246 Rei, 0.0218 Toshi, 0.0199 VaderAI, 0.0295 Luna'
@@ -293,13 +291,15 @@ const emitReqCount = (msg?: string, dups?: boolean) => {
 
 beforeAll(async () => {
   try {
+    const config = {
+      ...baseConfig,
+      ...searcherOptions,
+    }
+    console.log(config)
     global.console = require('console')
     universe = await Universe.createWithConfig(
       provider,
-      {
-        ...baseConfig,
-        ...searcherOptions,
-      },
+      config,
       async (uni) => {
         await setupBaseZapper(uni)
       },

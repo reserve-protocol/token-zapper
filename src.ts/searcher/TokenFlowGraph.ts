@@ -379,7 +379,7 @@ class TokenFlowSplits {
     if (this.recipient.length === 0) {
       return 1
     }
-    return this.min ?? Math.min(1 / 10, 1 / this.parts.length / 2)
+    return this.min ?? Math.min(1 / 30, 1 / this.parts.length / 2)
   }
 
   public calculateProportionsAsBigInt() {
@@ -1760,7 +1760,7 @@ export class TokenFlowGraphBuilder {
     const inputNode = builder.getTokenNode(input.token)
     inputNode.nodeType = NodeType.Fanout
     const edge = builder.graph._outgoingEdges[inputNode.id]!
-    edge.min = 1 / Math.max(10, actions.length + 1)
+    edge.min = 1 / 10
 
     for (const action of actions) {
       const actionNode = builder.addAction(action)
@@ -1808,22 +1808,6 @@ export class TokenFlowGraphRegistry {
     }
     return null
   }
-}
-
-const findAllWaysToGetFromAToB = (universe: Universe, a: Token, b: Token) => {
-  const weth = universe.wrappedNativeToken
-  const eth = universe.nativeToken
-  return [...universe.graph.vertices.get(b).incomingEdges.values()]
-    .flat()
-    .filter(
-      (act) =>
-        act.is1to1 &&
-        ((weth === a &&
-          (act.inputToken[0] === weth || act.inputToken[0] === eth)) ||
-          act.inputToken[0] === a) &&
-        act.outputToken[0] === b
-    )
-    .map((i) => wrapAction(universe, i))
 }
 
 const concatGraphs = (
@@ -2200,7 +2184,6 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
     }
 
     const splits = outEdges.getEdge(actions[0].inputToken[0])
-    splits.min = 1 / 11
 
     if (
       acts.length !== 0 &&
@@ -2212,7 +2195,7 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
         inputs[0],
         acts.map((a) => a[0]),
         Infinity,
-        10
+        20
       )
       const parts = splits.parts.map(() => 0)
       for (let i = 0; i < nodeSplits.inputs.length; i++) {
@@ -2231,7 +2214,7 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
         inputs[0],
         actions,
         Infinity,
-        10
+        20
       )
       if (nodeSplits.inputs.every((i) => i === 0)) {
         console.log('No splits found')
@@ -2269,7 +2252,8 @@ const minimizeDust = async (
   currentResult: TFGResult,
   nodesToOptimise: NodeProxy[],
   qtyOutMatters: boolean = true,
-  steps: number = 20
+  steps: number = 20,
+  initialScale: number = 1
 ) => {
   const nodesToProcess = nodesToOptimise
 
@@ -2323,7 +2307,7 @@ const minimizeDust = async (
       iter += 1
     }
     const progression = iter / steps
-    const scale = 1 - progression
+    const scale = (1 - progression) * initialScale
     for (let i = 0; i < nodes.length; i++) {
       if (
         currentResult.result.dustValue < 10 &&
@@ -2352,6 +2336,14 @@ const minimizeDust = async (
             const value = (await qty.price()).asNumber()
             const asFraction = value / currentResult.result.totalValue
             const split = node.tokenToSplitMap.get(qty.token)
+            if (node.splits.parts[split!] === node.splits.sum) {
+              return {
+                splitIndex: null,
+                value: 0,
+                asFraction: 0,
+                token: qty.token,
+              }
+            }
 
             return {
               splitIndex: split!,
@@ -2368,13 +2360,15 @@ const minimizeDust = async (
 
       dustValues.sort((a, b) => a.value - b.value)
       const higestDustQty = dustValues[dustValues.length - 1]
-      const lowestDustQty = dustValues[0]
+      const lowestDustQty = dustValues.find(
+        (d) => d.splitIndex !== higestDustQty.splitIndex
+      )
       const fraction = 1 - higestDustQty.asFraction * scale
       const prev = node.splits.parts[higestDustQty.splitIndex]
       node.splits.parts[higestDustQty.splitIndex] *= fraction
       const removed = prev - node.splits.parts[higestDustQty.splitIndex]
 
-      if (lowestDustQty !== higestDustQty) {
+      if (lowestDustQty) {
         node.splits.parts[lowestDustQty.splitIndex] += removed * 0.5
       }
 
@@ -2407,16 +2401,22 @@ const optimiseGlobal = async (
   inputs: TokenQuantity[],
   optimisationSteps: number = 15,
   bestSoFar: TFGResult,
-  logger: ILoggerType
+  logger: ILoggerType,
+  startSize: number = 1
 ) => {
-  const isResultBetter = (previous: TFGResult, newResult: TFGResult) => {
+  const isResultBetter = (
+    previous: TFGResult,
+    newResult: TFGResult,
+    i: number
+  ) => {
     return newResult.result.price > previous.result.price
   }
-  let optimisationNodes = [...g.nodes()].filter(
+  const nodesSorted = g.sort().reverse()
+  let optimisationNodes = nodesSorted.filter(
     (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
   )
   if (optimisationNodes.length > 7) {
-    optimisationNodes = [...g.nodes()].filter((n) => n.isOptimisable)
+    optimisationNodes = nodesSorted.filter((n) => n.isOptimisable)
   }
   console.log(`optimization nodes: ${optimisationNodes.length}`)
 
@@ -2436,9 +2436,9 @@ const optimiseGlobal = async (
     const edge = g._outgoingEdges[node.id]!.edges[0]
     edge.normalize()
   }
-  const MAX_SCALE = 3
+  const MAX_SCALE = startSize
   for (let i = 0; i < optimisationSteps; ) {
-    const size = (MAX_SCALE / (i + 1)) * 1 - i / optimisationSteps
+    const size = MAX_SCALE * (1 - i ** 1.1 / optimisationSteps)
 
     if (
       bestSoFar.result.outputValue > bestSoFar.result.inputValue &&
@@ -2492,7 +2492,7 @@ const optimiseGlobal = async (
 
         if (
           isFinite(res.result.price) &&
-          isResultBetter(bestThisIteration, res)
+          isResultBetter(bestThisIteration, res, size)
         ) {
           bestThisIteration = res
           bestNodeToChange = optimisationNodeIndex
@@ -2754,11 +2754,15 @@ const optimise = async (
   g = removeNodes(g, findNodesWithoutSources(g))
   g = removeUselessNodes(removeRedundantSplits(g))
   inferDustProducingNodes(g)
+
   bestSoFar = await minimizeDust(
     g,
     () => g.evaluate(universe, inputs),
     bestSoFar,
-    [...g.nodes()].filter((n) => n.isDustOptimisable),
+    g
+      .sort()
+      .reverse()
+      .filter((n) => n.isDustOptimisable),
     true,
     minimiseDustPhase1Steps
   )
@@ -2770,26 +2774,80 @@ const optimise = async (
     inputs,
     optimisationSteps,
     bestSoFar,
-    logger
+    logger,
+    1
   )
+  bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 
-  logger.debug(
+  logger.info(
     `Result after global optimisation: ${bestSoFar.result.outputs
       .filter((i) => i.amount > 10n)
       .join(', ')}`
   )
 
-  if (bestSoFar.result.dustValue > 10) {
-    console.log('minimise dust phase 2')
-    const evalGraph = evaluationOptimiser(universe, g)
+  const start = Date.now()
+
+  const maxPhase2TimeRefinementTime =
+    universe.config.maxPhase2TimeRefinementTime
+  const maxValueSlippage = universe.config.zapMaxValueLoss / 100
+  const maxDustFraction = universe.config.zapMaxDustProduced / 100
+
+  // Iteratively try and improve result until it would pass checks or we run out of time
+  let scaleMultiplier = 1
+  let refinementSteps = 0
+  while (
+    bestSoFar.result.dustValue / bestSoFar.result.totalValue >
+      maxDustFraction ||
+    bestSoFar.result.totalValue / bestSoFar.result.inputValue <
+      1 - maxValueSlippage
+  ) {
+    logger.info(
+      `Running refinement. Current result ${bestSoFar.result.outputs.join(
+        ', '
+      )}`,
+      {
+        step: refinementSteps,
+        scale: scaleMultiplier,
+      }
+    )
+
     bestSoFar = await minimizeDust(
       g,
-      () => evalGraph.evaluate(inputs),
+      () => g.evaluate(universe, inputs),
       bestSoFar,
-      [...g.nodes()].filter((n) => n.isDustOptimisable),
+      g
+        .sort()
+        .reverse()
+        .filter((n) => n.isDustOptimisable),
       true,
-      minimiseDustPhase2Steps
+      minimiseDustPhase2Steps,
+      0.5 * scaleMultiplier
     )
+    bestSoFar = await optimiseGlobal(
+      g,
+      universe,
+      inputs,
+      optimisationSteps,
+      bestSoFar,
+      logger,
+      0.1 * scaleMultiplier
+    )
+    bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
+
+    logger.info(
+      `Finished refinement step. New result: ${bestSoFar.result.outputs.join(
+        ', '
+      )}`,
+      {
+        step: refinementSteps,
+        scale: scaleMultiplier,
+      }
+    )
+
+    if (Date.now() - start > maxPhase2TimeRefinementTime) {
+      break
+    }
+    scaleMultiplier *= 0.5
   }
   if (
     !outputs
@@ -2808,9 +2866,6 @@ const optimise = async (
 
   logger.debug(g.toDot().join('\n'))
 
-  const maxValueSlippage = universe.config.zapMaxValueLoss / 100
-  const maxDustFraction = universe.config.zapMaxDustProduced / 100
-
   const valueSlippage =
     bestSoFar.result.totalValue / bestSoFar.result.inputValue
   if (valueSlippage < 1 - maxValueSlippage) {
@@ -2828,39 +2883,21 @@ const optimise = async (
 
   const dustFraction = bestSoFar.result.dustValue / bestSoFar.result.totalValue
   if (dustFraction > maxDustFraction) {
-    console.log(bestSoFar.result.outputs.join(', '))
-    console.log(bestSoFar.result.dustValue)
-    console.log(bestSoFar.result.totalValue)
-    console.log(bestSoFar.result.outputQuantity)
+    logger.debug(bestSoFar.result.outputs.join(', '))
+    logger.debug(bestSoFar.result.dustValue)
+    logger.debug(bestSoFar.result.totalValue)
+    logger.debug(bestSoFar.result.outputQuantity)
     logger.error(
-      `Dust fraction is too high: ${((1 - dustFraction) * 100).toFixed(
+      `Dust fraction is too high: ${(dustFraction * 100).toFixed(
         2
       )}% for ${bestSoFar.result.inputs.join(', ')} -> ${
         bestSoFar.result.output.token
-      } - Max allowed dust ${universe.config.zapMaxDustProduced}%`
+      } - Max allowed dust ${(maxDustFraction * 100).toFixed(2)}%`
     )
     throw new Error('Dust fraction is too high')
   }
 
   return g
-}
-
-const findAllAncesters = (node: NodeProxy) => {
-  const aAncesters: NodeProxy[] = []
-  for (const edge of node.incomingEdges()) {
-    aAncesters.push(edge.source)
-  }
-  return aAncesters
-}
-const findCommonAncestor = (a: NodeProxy, b: NodeProxy) => {
-  const aAncesters = findAllAncesters(a)
-  const bAncesters = new Set(findAllAncesters(b).map((i) => i.id))
-  for (const aAncestor of aAncesters) {
-    if (bAncesters.has(aAncestor.id)) {
-      return aAncestor
-    }
-  }
-  return null
 }
 
 export class TokenFlowGraphSearcher {
@@ -2974,11 +3011,7 @@ export class TokenFlowGraphSearcher {
     const mintSubgraphInputNode = graph.addSplittingNode(
       inputToken,
       inputNode,
-      mintAction.dustTokens.length > 0
-        ? NodeType.SplitWithDust
-        : mintAction.inputToken.length === 1
-        ? NodeType.Split
-        : NodeType.Optimisation,
+      mintAction.dustTokens.length > 0 ? NodeType.Both : NodeType.Optimisation,
       `mint ${outToken} (main)`
     )
 

@@ -1,7 +1,6 @@
 import { ethers } from 'ethers'
 
 import {
-  BaseAction,
   findTradeSize,
   type BaseAction as Action,
 } from './action/Action'
@@ -11,7 +10,6 @@ import { DefaultMap } from './base/DefaultMap'
 import {
   SimulateZapTransactionFunction,
   createSimulateZapTransactionUsingProvider,
-  createSimulatorThatUsesOneOfReservesCallManyProxies,
   type Config,
 } from './configuration/ChainConfiguration'
 import {
@@ -919,33 +917,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       60000,
       i => i.toString()
     )
-    const pending = new Map<string, Promise<string>>()
-    this.simulateZapFn = async (params) => {
-      const keyObj = {
-        data: params.data?.toString(),
-        value: params.value?.toString(),
-        block: this.currentBlock,
-        setup: {
-          inputTokenAddress: params.setup.inputTokenAddress,
-          amount: params.setup.userBalanceAndApprovalRequirements.toString(),
-        },
-      }
-      const k = JSON.stringify(keyObj)
-      const prev = pending.get(k)
-      if (prev != null) {
-        return prev
-      }
-      const p = this.simulateZapFn_(params, this)
-
-      pending.set(k, p)
-
-      p.then(() => {
-        if (pending.get(k) === p) {
-          pending.delete(k)
-        }
-      })
-      return p
-    }
+    this.simulateZapFn = this.simulateZapFn_
 
     const native = this.nativeToken
     const wrappedNative = this.wrappedNativeToken
@@ -1043,9 +1015,7 @@ export class Universe<const UniverseConf extends Config = Config> {
 
     if (simulateZapFunction == null) {
       simulateZapFunction =
-        opts.simulateZapFn ?? simulationUrls[network.chainId]
-          ? createSimulatorThatUsesOneOfReservesCallManyProxies(network.chainId)
-          : createSimulateZapTransactionUsingProvider(provider)
+        opts.simulateZapFn ?? createSimulateZapTransactionUsingProvider(provider)
     }
 
     const universe = new Universe<C>(
@@ -1053,7 +1023,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       config,
       opts.approvalsStore ?? new ApprovalsStore(provider),
       opts.tokenLoader ?? makeTokenLoader(provider),
-      simulateZapFunction,
+      simulateZapFunction!,
       opts.logger
     )
     // universe.oracles.push(new LPTokenPriceOracle(universe))

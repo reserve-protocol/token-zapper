@@ -23,30 +23,30 @@ import {
 } from '../contracts'
 import { Token } from '../entities/Token'
 export interface SimulateParams {
-  // Zapper address on the chain
-  to: string
+  transactions: {
+    // Zapper address on the chain
+    to: string
 
-  // Usually the signer address
-  from: string
+    // Usually the signer address
+    from: string
 
-  // The encoded full zap transaction to the zapper
-  data: string
+    // The encoded full zap transaction to the zapper
+    data: string
 
-  // If doing a zapETH, this is the value to send
-  value: bigint
+    // If doing a zapETH, this is the value to send
+    value: bigint
 
-  // The setup contains what the user needs in order to use the zapper successfully for
-  // generated zap transaction. If zapping non-eth, the simulator needs to ensure that an
-  // approval is setup for the zapper contract to spend the token the '.to' field above
-  setup: {
+    // The setup contains what the user needs in order to use the zapper successfully for
+    // generated zap transaction. If zapping non-eth, the simulator needs to ensure that an
+    // approval is setup for the zapper contract to spend the token the '.to' field above
+  }[]
+  setup?: {
     // The quantity of the tokens the user wants to zap
     userBalanceAndApprovalRequirements: bigint
 
     // The ERC20 token address, or 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE for ETH
     inputTokenAddress: string
   }
-
-  addresesToPreload?: string[]
 }
 
 // For convinience, here is the output type, and a decode function
@@ -70,7 +70,7 @@ export const decodeSimulationFunctionOutput = (data: string) => {
 export type SimulateZapTransactionFunction = (
   params: SimulateParams,
   universe: Universe
-) => Promise<string>
+) => Promise<string[]>
 
 /**
  *
@@ -83,75 +83,24 @@ export type SimulateZapTransactionFunction = (
  *         to correctly preview the result.
  * @note It will obviously revert if approvals or balances are not setup correctly
  */
-export const createSimulateZapTransactionUsingProvider =
-  (provider: providers.JsonRpcProvider): SimulateZapTransactionFunction =>
-  async (input: SimulateParams): Promise<string> => {
+export const createSimulateZapTransactionUsingProvider = (
+  provider: providers.JsonRpcProvider
+): SimulateZapTransactionFunction => {
+  console.warn(
+    `USING DEFAULT SIMULATION FUNCTION - USERS MUST HAVE FUNDS AND APPROVALS SETUP CORRECTLY FOR CORRECT PREDICTIONS TO WORK`
+  )
+  console.warn(
+    `WILL NOT BE ABLE TO INFER FEE ON SALE/BUY TOKENS CORRECTLY, UNISWAPV2 ROUTING WILL BE DEGRADED`
+  )
+  return async (p: SimulateParams): Promise<string[]> => {
+    const input = p.transactions.at(-1)!
     const data = await provider.call({
       to: input.to,
       from: input.from,
       data: input.data,
       value: input.value,
     })
-    return data
-  }
-
-// Default implementation of the simulation function, using the provider
-// It works well for zaps that zaps using ETH as the input
-export const simulateZapTransactionUsingProviderDecodeResult = async (
-  provider: providers.JsonRpcProvider,
-  input: SimulateParams
-): Promise<SimulateZapOutput> => {
-  const data = await provider.send('eth_call', [
-    {
-      to: input.to,
-      from: input.from,
-      data: input.data,
-      value: input.value,
-    },
-    'latest',
-    {
-      [input.from]: {
-        balance: '0x56bc75e2d6310000000',
-      },
-    },
-  ])
-  return decodeSimulationFunctionOutput(data)
-}
-
-export const createSimulatorThatUsesOneOfReservesCallManyProxies = (
-  chainId: number
-): SimulateZapTransactionFunction => {
-  const url = simulationUrls[chainId]
-  if (url == null) {
-    throw new Error('No proxies for this chain yet')
-  }
-
-  return async (input: SimulateParams) => {
-    const body = JSON.stringify({
-      from: input.from,
-      to: input.to,
-      data: input.data,
-      gasLimit: 20_000_000,
-      value: '0x' + input.value.toString(16),
-
-      quantity:
-        '0x' + input.setup.userBalanceAndApprovalRequirements.toString(16),
-      token: input.setup.inputTokenAddress,
-    })
-
-    const a: { data: string; error?: string } = await (
-      await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body,
-      })
-    ).json()
-    if (a.error != null) {
-      throw new Error(a.error)
-    }
-    return a.data
+    return [data]
   }
 }
 
@@ -187,10 +136,6 @@ export const makeCallManySimulator = (
   )
 
   return async (input: SimulateParams, universe: Universe) => {
-    const token = await universe.getToken(
-      Address.from(input.setup.inputTokenAddress.toLowerCase())
-    )
-
     const stateOverride: any = {}
     const transactions: any[] = []
 
@@ -231,95 +176,69 @@ export const makeCallManySimulator = (
         ])
       )
     }
-
-    setETHBalance(input.from)
-
-    if (token === universe.nativeToken) {
-      setETHBalance(
-        input.from,
-        input.setup.userBalanceAndApprovalRequirements + 0x56bc75e2d6310000000n
+    if (input.setup != null) {
+      const token = await universe.getToken(
+        Address.from(input.setup.inputTokenAddress.toLowerCase())
       )
-    } else {
-      addApproval(
-        token,
-        input.from,
-        input.to,
-        input.setup.userBalanceAndApprovalRequirements
-      )
-    }
-
-    if (token === universe.wrappedNativeToken) {
-      setETHBalance(
-        input.from,
-        input.setup.userBalanceAndApprovalRequirements + 0x56bc75e2d6310000000n
-      )
-      addTransaction(
-        input.from,
-        token,
-        wethInterface.encodeFunctionData('deposit'),
-        input.setup.userBalanceAndApprovalRequirements,
-        15_000_000n
-      )
-    } else if (
-      universe.rTokensInfo.tokens.has(token) &&
-      whales[token.address.address.toLowerCase()] == null
-    ) {
-      const rTokenDeployment = universe.getRTokenDeployment(token)
-      setETHBalance(rTokenDeployment.backingManager)
-
-      const extra = input.setup.userBalanceAndApprovalRequirements / 10n
-      const mintQty = input.setup.userBalanceAndApprovalRequirements + extra
-
-      addTransaction(
-        rTokenDeployment.backingManager,
-        token,
-        rTokenInterface.encodeFunctionData('mint', [mintQty])
-      )
-      addTransaction(
-        rTokenDeployment.backingManager,
-        token,
-        rTokenInterface.encodeFunctionData('setBasketsNeeded', [
-          (
-            await rTokenDeployment.contracts.rToken.callStatic.basketsNeeded()
-          ).toBigInt() - mintQty,
-        ])
-      )
-      addTransaction(
-        rTokenDeployment.backingManager,
-        token,
-        erc20Interface.encodeFunctionData('transfer', [
-          input.from,
-          input.setup.userBalanceAndApprovalRequirements,
-        ])
-      )
-    } else {
-      const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
-
-      if (whale) {
-        stateOverride[whale] = {
-          balance: ETH_256,
-        }
-      }
-
-      if (whale == null) {
-        universe.logger.warn(
-          'No whale for token ' +
-            input.setup.inputTokenAddress +
-            ', so will not fund the sender with funds'
+      if (token === universe.nativeToken) {
+        setETHBalance(
+          input.setup.inputTokenAddress,
+          input.setup.userBalanceAndApprovalRequirements +
+            0x56bc75e2d6310000000n
         )
       } else {
-        addTransaction(
-          whale,
+        addApproval(
+          token,
           input.setup.inputTokenAddress,
-          erc20Interface.encodeFunctionData('transfer', [
-            input.from,
-            input.setup.userBalanceAndApprovalRequirements,
-          ])
+          input.setup.inputTokenAddress,
+          input.setup.userBalanceAndApprovalRequirements
         )
       }
-    }
 
-    addTransaction(input.from, input.to, input.data, input.value, 20_000_000n)
+      if (token === universe.wrappedNativeToken) {
+        setETHBalance(
+          input.setup.inputTokenAddress,
+          input.setup.userBalanceAndApprovalRequirements +
+            0x56bc75e2d6310000000n
+        )
+        addTransaction(
+          input.setup.inputTokenAddress,
+          token,
+          wethInterface.encodeFunctionData('deposit'),
+          input.setup.userBalanceAndApprovalRequirements,
+          15_000_000n
+        )
+      } else {
+        const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
+
+        if (whale) {
+          stateOverride[whale] = {
+            balance: ETH_256,
+          }
+        }
+
+        if (whale == null) {
+          universe.logger.warn(
+            'No whale for token ' +
+              input.setup.inputTokenAddress +
+              ', so will not fund the sender with funds'
+          )
+        } else {
+          addTransaction(
+            whale,
+            input.setup.inputTokenAddress,
+            erc20Interface.encodeFunctionData('transfer', [
+              input.setup.inputTokenAddress,
+              input.setup.userBalanceAndApprovalRequirements,
+            ])
+          )
+        }
+      }
+    }
+    for (const tx of input.transactions) {
+      setETHBalance(tx.from)
+      addTransaction(tx.from, tx.to, tx.data, tx.value, 20_000_000n)
+    }
 
     const body = {
       jsonrpc: '2.0',
@@ -358,11 +277,10 @@ export const makeCallManySimulator = (
     } = await resp.json()
     const resultOfZap = results.result[results.result.length - 1]
     if (resultOfZap.error) {
-      console.log(resultOfZap.error)
       throw new Error(resultOfZap.error)
     }
 
-    return resultOfZap.value
+    return results.result.map((i) => i.value)
   }
 }
 
@@ -375,11 +293,10 @@ export const makeCustomRouterSimulator = (
     Object.entries(whales).map(([k, v]) => [k.toLowerCase(), v.toLowerCase()])
   )
 
-  return async (input: SimulateParams, universe: Universe) => {
-    const token = await universe.getToken(
-      Address.from(input.setup.inputTokenAddress.toLowerCase())
-    )
-
+  return async (
+    input: SimulateParams,
+    universe: Universe
+  ): Promise<string[]> => {
     const moveFunds: any[] = []
     const stateOverride: any = {}
     const transactions: any[] = []
@@ -422,92 +339,100 @@ export const makeCustomRouterSimulator = (
       })
     }
 
-    addBalance(input.from)
+    if (input.setup != null) {
+      const token = await universe.getToken(
+        Address.from(input.setup.inputTokenAddress.toLowerCase())
+      )
+      addBalance(input.setup.inputTokenAddress)
 
-    if (token === universe.nativeToken) {
-      addBalance(
-        input.from,
-        input.setup.userBalanceAndApprovalRequirements + 0x56bc75e2d6310000000n
-      )
-    } else {
-      addApproval(
-        token,
-        input.from,
-        input.to,
-        input.setup.userBalanceAndApprovalRequirements
-      )
-    }
-
-    if (token === universe.wrappedNativeToken) {
-      addBalance(
-        input.from,
-        input.setup.userBalanceAndApprovalRequirements + 0x56bc75e2d6310000000n
-      )
-      addTransaction(
-        input.from,
-        token,
-        wethInterface.encodeFunctionData('deposit'),
-        15_000_000n,
-        input.setup.userBalanceAndApprovalRequirements
-      )
-    } else if (
-      universe.rTokensInfo.tokens.has(token) &&
-      whales[token.address.address.toLowerCase()] == null
-    ) {
-      const rTokenDeployment = universe.getRTokenDeployment(token)
-      addBalance(rTokenDeployment.backingManager)
-
-      const extra = input.setup.userBalanceAndApprovalRequirements / 10n
-      const mintQty = input.setup.userBalanceAndApprovalRequirements + extra
-
-      addTransaction(
-        rTokenDeployment.backingManager,
-        token,
-        rTokenInterface.encodeFunctionData('mint', [mintQty])
-      )
-      addTransaction(
-        rTokenDeployment.backingManager,
-        token,
-        rTokenInterface.encodeFunctionData('setBasketsNeeded', [
-          (
-            await rTokenDeployment.contracts.rToken.callStatic.basketsNeeded()
-          ).toBigInt() - mintQty,
-        ])
-      )
-      addTransaction(
-        rTokenDeployment.backingManager,
-        token,
-        erc20Interface.encodeFunctionData('transfer', [
-          input.from,
-          input.setup.userBalanceAndApprovalRequirements,
-        ])
-      )
-    } else {
-      const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
-
-      if (whale) {
-        stateOverride[whale] = {
-          balance: ETH_256,
-        }
-      }
-
-      if (whale == null) {
-        universe.logger.warn(
-          'No whale for token ' +
-            input.setup.inputTokenAddress +
-            ', so will not fund the sender with funds'
+      if (token === universe.nativeToken) {
+        addBalance(
+          input.setup.inputTokenAddress,
+          input.setup.userBalanceAndApprovalRequirements +
+            0x56bc75e2d6310000000n
+        )
+      } else {
+        addApproval(
+          token,
+          input.setup.inputTokenAddress,
+          input.setup.inputTokenAddress,
+          input.setup.userBalanceAndApprovalRequirements
         )
       }
-      moveFunds.push({
-        owner: whale,
-        token: input.setup.inputTokenAddress,
-        spender: input.from,
-        quantity:
-          '0x' + input.setup.userBalanceAndApprovalRequirements.toString(16),
-      })
-    }
 
-    addTransaction(input.from, input.to, input.data, 20_000_000n, input.value)
+      if (token === universe.wrappedNativeToken) {
+        addBalance(
+          input.setup.inputTokenAddress,
+          input.setup.userBalanceAndApprovalRequirements +
+            0x56bc75e2d6310000000n
+        )
+        addTransaction(
+          input.setup.inputTokenAddress,
+          token,
+          wethInterface.encodeFunctionData('deposit'),
+          15_000_000n,
+          input.setup.userBalanceAndApprovalRequirements
+        )
+      } else if (
+        universe.rTokensInfo.tokens.has(token) &&
+        whales[token.address.address.toLowerCase()] == null
+      ) {
+        const rTokenDeployment = universe.getRTokenDeployment(token)
+        addBalance(rTokenDeployment.backingManager)
+
+        const extra = input.setup.userBalanceAndApprovalRequirements / 10n
+        const mintQty = input.setup.userBalanceAndApprovalRequirements + extra
+
+        addTransaction(
+          rTokenDeployment.backingManager,
+          token,
+          rTokenInterface.encodeFunctionData('mint', [mintQty])
+        )
+        addTransaction(
+          rTokenDeployment.backingManager,
+          token,
+          rTokenInterface.encodeFunctionData('setBasketsNeeded', [
+            (
+              await rTokenDeployment.contracts.rToken.callStatic.basketsNeeded()
+            ).toBigInt() - mintQty,
+          ])
+        )
+        addTransaction(
+          rTokenDeployment.backingManager,
+          token,
+          erc20Interface.encodeFunctionData('transfer', [
+            input.setup.inputTokenAddress,
+            input.setup.userBalanceAndApprovalRequirements,
+          ])
+        )
+      } else {
+        const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
+
+        if (whale) {
+          stateOverride[whale] = {
+            balance: ETH_256,
+          }
+        }
+
+        if (whale == null) {
+          universe.logger.warn(
+            'No whale for token ' +
+              input.setup.inputTokenAddress +
+              ', so will not fund the sender with funds'
+          )
+        }
+        moveFunds.push({
+          owner: whale,
+          token: input.setup.inputTokenAddress,
+          spender: input.setup.inputTokenAddress,
+          quantity:
+            '0x' + input.setup.userBalanceAndApprovalRequirements.toString(16),
+        })
+      }
+    }
+    for (const tx of input.transactions) {
+      addTransaction(tx.from, tx.to, tx.data, 20_000_000n, tx.value)
+    }
 
     const body = {
       setupApprovals: approvals,
@@ -537,10 +462,11 @@ export const makeCustomRouterSimulator = (
     const resultOfZap = results[results.length - 1]
     if (resultOfZap.error) {
       if (resultOfZap.error.value != null) {
-        return resultOfZap.error.value
+        return [resultOfZap.error.value]
       }
       throw new Error(resultOfZap.error.error)
     }
+
     // const transferLogs = resultOfZap.success.logs.filter(
     //   (i: any) =>
     //     i.topics[0] ===
@@ -556,7 +482,10 @@ export const makeCustomRouterSimulator = (
     //   console.log(`${from} -> ${to} ${qty}`)
     // }
 
-    return resultOfZap.success.value
+    const out = results.map(
+      (i: any) => i?.success?.value ?? i?.error?.error ?? '0x'
+    )
+    return out
   }
 }
 

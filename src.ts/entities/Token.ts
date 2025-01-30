@@ -2,10 +2,19 @@ import { type Address } from '../base/Address'
 
 import { parseUnits, formatUnits } from '@ethersproject/units'
 import { BigNumber } from '@ethersproject/bignumber'
-import { type BaseUniverse } from '../configuration/base'
 import { BigNumberish } from 'ethers'
 import { USD_ADDRESS } from '../base/constants'
-import { Universe } from '../Universe'
+import { Provider } from '@ethersproject/providers'
+import { type BaseUniverse } from '../configuration/base'
+import { PriceOracle } from '../oracles/PriceOracle'
+import { DefaultMap } from '../base/DefaultMap'
+type Universe = {
+  tokens: Map<Address, Token>
+  usd: Token
+  fairPrice: (qty: TokenQuantity) => Promise<TokenQuantity | null>
+  provider: Provider
+  singleTokenPriceOracles: DefaultMap<Token, PriceOracle[]>
+}
 /**
  * A class representing a token.
  * @property {Address} address - The address of the token.
@@ -382,7 +391,7 @@ export class PricedTokenQuantity {
     return this.innerPrice != null
   }
 
-  public static async make(universe: BaseUniverse, quantity: TokenQuantity) {
+  public static async make(universe: Universe, quantity: TokenQuantity) {
     const valueUSD = (await universe.fairPrice(quantity)) ?? universe.usd.zero
     return new PricedTokenQuantity(quantity, valueUSD)
   }

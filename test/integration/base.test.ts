@@ -23,6 +23,7 @@ import {
 import { getProvider, getSimulator } from './providerUtils'
 import { ONE } from '../../src.ts/action/Action'
 import { bestPath } from '../../src.ts/exchange-graph/BFS'
+import { DeployFolioConfigJson } from '../../src.ts/action/DeployFolioConfig'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -183,13 +184,6 @@ const makeFolioTestCase = (
 }
 
 const folioTests = [
-  // makeFolioTestCase(
-  //   1,
-  //   t.WETH,
-  //   basket(
-  //     '0.6067 Virtuals, 0.1258 aiXBT, 0.1004 Freysa, 0.0383 GAME, 0.0329 Cookie, 0.0246 Rei, 0.0218 Toshi, 0.0199 VaderAI, 0.0295 Luna'
-  //   )
-  // ),
   makeFolioTestCase(
     0.25,
     t.WETH,
@@ -203,7 +197,7 @@ const governedDeployConfig = (
   name: string,
   symbol: string,
   outputs: TokenQuantity[]
-) => ({
+): DeployFolioConfigJson => ({
   type: 'governed' as const,
   stToken: '0x18846441bEE474529444C10F119e0B4a7C60aCbb',
   basicDetails: {
@@ -227,15 +221,16 @@ const governedDeployConfig = (
       },
     ],
     folioFee: 0n,
+    mandate: 'Foobar',
     mintingFee: 500000000000000n,
   },
   ownerGovParams: {
-    votingDelay: 20n * 60n,
+    votingDelay: 21n * 60n,
     votingPeriod: 20n * 60n,
     proposalThreshold: ONE / 100n,
     quorumPercent: 20n,
     timelockDelay: 20n * 60n,
-    guardian: '0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4',
+    guardians: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
   },
   tradingGovParams: {
     votingDelay: 20n * 60n,
@@ -243,7 +238,7 @@ const governedDeployConfig = (
     proposalThreshold: ONE / 100n,
     quorumPercent: 20n,
     timelockDelay: 20n * 60n,
-    guardian: '0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4',
+    guardians: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
   },
   tradeLaunchers: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
   vibesOfficers: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],

@@ -7,38 +7,22 @@ import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 interface IFolio {
     // === Events ===
 
-    event TradeApproved(
-        uint256 indexed tradeId,
-        address indexed from,
-        address indexed to,
-        uint256 startPrice,
-        uint256 endPrice,
-        uint256 sellLimitSpot,
-        uint256 sellLimitLow,
-        uint256 sellLimitHigh,
-        uint256 buyLimitSpot,
-        uint256 buyLimitLow,
-        uint256 buyLimitHigh
-    );
-    event TradeOpened(
-        uint256 indexed tradeId,
-        uint256 startPrice,
-        uint256 endPrice,
-        uint256 sellLimit,
-        uint256 buyLimit,
-        uint256 start,
-        uint256 end
-    );
-    event Bid(uint256 indexed tradeId, uint256 sellAmount, uint256 buyAmount);
-    event TradeKilled(uint256 indexed tradeId);
+    event AuctionApproved(uint256 indexed auctionId, address indexed from, address indexed to, Auction auction);
+    event AuctionOpened(uint256 indexed auctionId, Auction auction);
+    event AuctionBid(uint256 indexed auctionId, uint256 sellAmount, uint256 buyAmount);
+    event AuctionClosed(uint256 indexed auctionId);
+
+    event FolioFeePaid(address indexed recipient, uint256 amount);
+    event ProtocolFeePaid(address indexed recipient, uint256 amount);
 
     event BasketTokenAdded(address indexed token);
     event BasketTokenRemoved(address indexed token);
-    event FolioFeeSet(uint256 newFee, uint256 feeAnnually);
-    event MintingFeeSet(uint256 newFee);
+    event TVLFeeSet(uint256 newFee, uint256 feeAnnually);
+    event MintFeeSet(uint256 newFee);
     event FeeRecipientSet(address indexed recipient, uint96 portion);
-    event TradeDelaySet(uint256 newTradeDelay);
+    event AuctionDelaySet(uint256 newAuctionDelay);
     event AuctionLengthSet(uint256 newAuctionLength);
+    event MandateSet(string newMandate);
     event FolioKilled();
 
     // === Errors ===
@@ -52,30 +36,30 @@ interface IFolio {
     error Folio__FeeRecipientInvalidAddress();
     error Folio__FeeRecipientInvalidFeeShare();
     error Folio__BadFeeTotal();
-    error Folio__FolioFeeTooHigh();
-    error Folio__FolioFeeTooLow();
-    error Folio__MintingFeeTooHigh();
+    error Folio__TVLFeeTooHigh();
+    error Folio__TVLFeeTooLow();
+    error Folio__MintFeeTooHigh();
+    error Folio__ZeroInitialShares();
 
     error Folio__InvalidAsset();
     error Folio__InvalidAssetAmount(address asset);
 
     error Folio__InvalidAuctionLength();
-    error Folio__InvalidTradeId();
     error Folio__InvalidSellLimit();
     error Folio__InvalidBuyLimit();
-    error Folio__TradeCannotBeOpened();
-    error Folio__TradeCannotBeOpenedPermissionlesslyYet();
-    error Folio__TradeNotOngoing();
-    error Folio__TradeCollision();
+    error Folio__AuctionCannotBeOpened();
+    error Folio__AuctionCannotBeOpenedPermissionlesslyYet();
+    error Folio__AuctionNotOngoing();
+    error Folio__AuctionCollision();
     error Folio__InvalidPrices();
-    error Folio__TradeTimeout();
+    error Folio__AuctionTimeout();
     error Folio__SlippageExceeded();
     error Folio__InsufficientBalance();
     error Folio__InsufficientBid();
     error Folio__ExcessiveBid();
-    error Folio__InvalidTradeTokens();
-    error Folio__InvalidTradeDelay();
-    error Folio__InvalidTradeTTL();
+    error Folio__InvalidAuctionTokens();
+    error Folio__InvalidAuctionDelay();
+    error Folio__InvalidAuctionTTL();
     error Folio__TooManyFeeRecipients();
     error Folio__InvalidArrayLengths();
 
@@ -90,11 +74,12 @@ interface IFolio {
     }
 
     struct FolioAdditionalDetails {
-        uint256 tradeDelay; // {s}
+        uint256 auctionDelay; // {s}
         uint256 auctionLength; // {s}
         FeeRecipient[] feeRecipients;
-        uint256 folioFee; // D18{1/s}
-        uint256 mintingFee; // D18{1}
+        uint256 tvlFee; // D18{1/s}
+        uint256 mintFee; // D18{1}
+        string mandate;
     }
 
     struct FeeRecipient {
@@ -102,24 +87,28 @@ interface IFolio {
         uint96 portion; // D18{1}
     }
 
-    struct Range {
+    struct BasketRange {
         uint256 spot; // D27{buyTok/share}
         uint256 low; // D27{buyTok/share} inclusive
         uint256 high; // D27{buyTok/share} inclusive
     }
 
-    /// Trade states:
+    struct Prices {
+        uint256 start; // D27{buyTok/sellTok}
+        uint256 end; // D27{buyTok/sellTok}
+    }
+
+    /// Auction states:
     ///   - APPROVED: start == 0 && end == 0
     ///   - OPEN: block.timestamp >= start && block.timestamp <= end
     ///   - CLOSED: block.timestamp > end
-    struct Trade {
+    struct Auction {
         uint256 id;
         IERC20 sell;
         IERC20 buy;
-        Range sellLimit; // D27{sellTok/share} min ratio of sell token to shares allowed, inclusive
-        Range buyLimit; // D27{buyTok/share} min ratio of sell token to shares allowed, exclusive
-        uint256 startPrice; // D27{buyTok/sellTok}
-        uint256 endPrice; // D27{buyTok/sellTok}
+        BasketRange sellLimit; // D27{sellTok/share} min ratio of sell token in the basket, inclusive
+        BasketRange buyLimit; // D27{buyTok/share} max ratio of buy token in the basket, exclusive
+        Prices prices; // D27{buyTok/sellTok}
         uint256 availableAt; // {s} inclusive
         uint256 launchTimeout; // {s} inclusive
         uint256 start; // {s} inclusive
@@ -141,7 +130,7 @@ interface IGovernanceDeployer {
         uint256 quorumPercent; // in percent, e.g 4 for 4%
         uint256 timelockDelay; // {s}
         // Roles
-        address guardian; // Canceller Role
+        address[] guardians; // Canceller Role
     }
 
     function deployGovernanceWithTimelock(
@@ -151,9 +140,9 @@ interface IGovernanceDeployer {
 }
 
 struct GovRoles {
-    address[] existingTradeProposers;
-    address[] tradeLaunchers;
-    address[] vibesOfficers;
+  address[] existingTradeProposers;
+  address[] tradeLaunchers;
+  address[] vibesOfficers;
 }
 
 
@@ -173,14 +162,16 @@ interface IFolioDeployer {
 
   function folioImplementation() external view returns (address);
 
+
   function deployFolio(
     IFolio.FolioBasicDetails calldata basicDetails,
     IFolio.FolioAdditionalDetails calldata additionalDetails,
     address owner,
-    address[] memory tradeProposers,
-    address[] memory tradeLaunchers,
-    address[] memory vibesOfficers
-) external returns (address folio_, address folioAdmin_);
+    address[] memory auctionApprovers,
+    address[] memory auctionLaunchers,
+    address[] memory brandManagers
+  ) external returns (address folio, address proxyAdmin);
+
   function deployGovernedFolio(
     IVotes stToken,
     IFolio.FolioBasicDetails calldata basicDetails,
@@ -188,7 +179,7 @@ interface IFolioDeployer {
     IGovernanceDeployer.GovParams calldata ownerGovParams,
     IGovernanceDeployer.GovParams calldata tradingGovParams,
     GovRoles calldata govRoles
-)
+  )
     external
     returns (
         address folio,

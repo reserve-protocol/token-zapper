@@ -21,7 +21,7 @@ import type {
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from "../../common";
+} from "../../../common";
 
 export type GovRolesStruct = {
   existingTradeProposers: PromiseOrValue<string>[];
@@ -33,6 +33,43 @@ export type GovRolesStructOutput = [string[], string[], string[]] & {
   existingTradeProposers: string[];
   tradeLaunchers: string[];
   vibesOfficers: string[];
+};
+
+export type DeployFolioConfigStruct = {
+  deployer: PromiseOrValue<string>;
+  expectedTokenAddress: PromiseOrValue<string>;
+  basicDetails: IFolio.FolioBasicDetailsStruct;
+  additionalDetails: IFolio.FolioAdditionalDetailsStruct;
+  govRoles: GovRolesStruct;
+  isGoverned: PromiseOrValue<boolean>;
+  stToken: PromiseOrValue<string>;
+  owner: PromiseOrValue<string>;
+  ownerGovParams: IGovernanceDeployer.GovParamsStruct;
+  tradingGovParams: IGovernanceDeployer.GovParamsStruct;
+};
+
+export type DeployFolioConfigStructOutput = [
+  string,
+  string,
+  IFolio.FolioBasicDetailsStructOutput,
+  IFolio.FolioAdditionalDetailsStructOutput,
+  GovRolesStructOutput,
+  boolean,
+  string,
+  string,
+  IGovernanceDeployer.GovParamsStructOutput,
+  IGovernanceDeployer.GovParamsStructOutput
+] & {
+  deployer: string;
+  expectedTokenAddress: string;
+  basicDetails: IFolio.FolioBasicDetailsStructOutput;
+  additionalDetails: IFolio.FolioAdditionalDetailsStructOutput;
+  govRoles: GovRolesStructOutput;
+  isGoverned: boolean;
+  stToken: string;
+  owner: string;
+  ownerGovParams: IGovernanceDeployer.GovParamsStructOutput;
+  tradingGovParams: IGovernanceDeployer.GovParamsStructOutput;
 };
 
 export declare namespace IFolio {
@@ -94,46 +131,43 @@ export declare namespace IFolio {
   };
 }
 
-export declare namespace DeployFolioHelper {
-  export type DeployFolioConfigStruct = {
-    deployer: PromiseOrValue<string>;
-    expectedTokenAddress: PromiseOrValue<string>;
-    basicDetails: IFolio.FolioBasicDetailsStruct;
-    additionalDetails: IFolio.FolioAdditionalDetailsStruct;
-    govRoles: GovRolesStruct;
-    isGoverned: PromiseOrValue<boolean>;
-    specificData: PromiseOrValue<BytesLike>;
+export declare namespace IGovernanceDeployer {
+  export type GovParamsStruct = {
+    votingDelay: PromiseOrValue<BigNumberish>;
+    votingPeriod: PromiseOrValue<BigNumberish>;
+    proposalThreshold: PromiseOrValue<BigNumberish>;
+    quorumPercent: PromiseOrValue<BigNumberish>;
+    timelockDelay: PromiseOrValue<BigNumberish>;
+    guardians: PromiseOrValue<string>[];
   };
 
-  export type DeployFolioConfigStructOutput = [
-    string,
-    string,
-    IFolio.FolioBasicDetailsStructOutput,
-    IFolio.FolioAdditionalDetailsStructOutput,
-    GovRolesStructOutput,
-    boolean,
-    string
+  export type GovParamsStructOutput = [
+    number,
+    number,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    string[]
   ] & {
-    deployer: string;
-    expectedTokenAddress: string;
-    basicDetails: IFolio.FolioBasicDetailsStructOutput;
-    additionalDetails: IFolio.FolioAdditionalDetailsStructOutput;
-    govRoles: GovRolesStructOutput;
-    isGoverned: boolean;
-    specificData: string;
+    votingDelay: number;
+    votingPeriod: number;
+    proposalThreshold: BigNumber;
+    quorumPercent: BigNumber;
+    timelockDelay: BigNumber;
+    guardians: string[];
   };
 }
 
-export interface DeployFolioHelperInterface extends utils.Interface {
+export interface IDeployFolioHelperInterface extends utils.Interface {
   functions: {
-    "deployFolio((address,address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(address[],address[],address[]),bool,bytes))": FunctionFragment;
+    "deployFolio((address,address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(address[],address[],address[]),bool,address,address,(uint48,uint32,uint256,uint256,uint256,address[]),(uint48,uint32,uint256,uint256,uint256,address[])))": FunctionFragment;
   };
 
   getFunction(nameOrSignatureOrTopic: "deployFolio"): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "deployFolio",
-    values: [DeployFolioHelper.DeployFolioConfigStruct]
+    values: [DeployFolioConfigStruct]
   ): string;
 
   decodeFunctionResult(
@@ -144,12 +178,12 @@ export interface DeployFolioHelperInterface extends utils.Interface {
   events: {};
 }
 
-export interface DeployFolioHelper extends BaseContract {
+export interface IDeployFolioHelper extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: DeployFolioHelperInterface;
+  interface: IDeployFolioHelperInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -172,19 +206,19 @@ export interface DeployFolioHelper extends BaseContract {
 
   functions: {
     deployFolio(
-      config: DeployFolioHelper.DeployFolioConfigStruct,
+      config: DeployFolioConfigStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
   deployFolio(
-    config: DeployFolioHelper.DeployFolioConfigStruct,
+    config: DeployFolioConfigStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
     deployFolio(
-      config: DeployFolioHelper.DeployFolioConfigStruct,
+      config: DeployFolioConfigStruct,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
@@ -193,14 +227,14 @@ export interface DeployFolioHelper extends BaseContract {
 
   estimateGas: {
     deployFolio(
-      config: DeployFolioHelper.DeployFolioConfigStruct,
+      config: DeployFolioConfigStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     deployFolio(
-      config: DeployFolioHelper.DeployFolioConfigStruct,
+      config: DeployFolioConfigStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

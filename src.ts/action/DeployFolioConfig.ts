@@ -9,15 +9,19 @@ class BasicDetails {
     public readonly basket: TokenQuantity[],
     public readonly name: string,
     public readonly symbol: string
-  ) {}
+  ) {
+    if (basket.some((i) => i.isZero)) {
+      throw new Error('ZERO QUANTITY IN BASKET')
+    }
+  }
 
-  public serialize(initialShares: bigint) {
+  public serialize() {
     return {
       assets: this.basket.map((i) => i.token.address.address),
-      amounts: this.basket.map((i) => (i.amount * initialShares) / ONE),
+      amounts: this.basket.map((i) => i.amount),
       name: this.name,
       symbol: this.symbol,
-      initialShares: initialShares,
+      initialShares: 0n,
     }
   }
 
@@ -27,32 +31,35 @@ class BasicDetails {
       .join(', ')})`
   }
 }
+
 class AdditionalDetails {
   public constructor(
-    public readonly tradeDelay: bigint,
+    public readonly auctionDelay: bigint,
     public readonly auctionLength: bigint,
     public readonly feeRecipients: FeeRecipient[],
-    public readonly folioFee: bigint,
-    public readonly mintingFee: bigint
+    public readonly tvlFee: bigint,
+    public readonly mintFee: bigint,
+    public readonly mandate: string
   ) {}
 
   public toString() {
-    return `AdditionalDetails(tradeDelay=${this.tradeDelay}s, auctionLength=${
-      this.auctionLength
-    }s, feeRecipients=${this.feeRecipients
+    return `AdditionalDetails(auctionDelay=${
+      this.auctionDelay
+    }s, auctionLength=${this.auctionLength}s, feeRecipients=${this.feeRecipients
       .map((i) => i.toString())
-      .join(', ')}, folioFee=${formatEther(
-      this.folioFee
-    )}, mintingFee=${formatEther(this.mintingFee)})`
+      .join(', ')}, tvlFee=${formatEther(this.tvlFee)}, mintFee=${formatEther(
+      this.mintFee
+    )})`
   }
 
   public serialize() {
     return {
-      tradeDelay: this.tradeDelay,
+      auctionDelay: this.auctionDelay,
       auctionLength: this.auctionLength,
       feeRecipients: this.feeRecipients.map((i) => i.serialize()),
-      folioFee: this.folioFee,
-      mintingFee: this.mintingFee,
+      tvlFee: this.tvlFee,
+      mintFee: this.mintFee,
+      mandate: this.mandate,
     }
   }
 }
@@ -81,7 +88,7 @@ class GovParams {
       this.proposalThreshold
     )}, quorumPercent=${this.quorumPercent}%, timelockDelay=${
       this.timelockDelay
-    }s, guardian=${this.guardian.address})`
+    }s, guardians=${this.guardians.join(', ')})`
   }
   public constructor(
     public readonly votingDelay: bigint,
@@ -89,9 +96,10 @@ class GovParams {
     public readonly proposalThreshold: bigint,
     public readonly quorumPercent: bigint,
     public readonly timelockDelay: bigint,
-    public readonly guardian: Address
+    public readonly guardians: Address[]
   ) {}
 
+  // (uint48,uint32,uint256,uint256,uint256,address[])
   public serialize() {
     return {
       votingDelay: this.votingDelay,
@@ -99,7 +107,7 @@ class GovParams {
       proposalThreshold: this.proposalThreshold,
       quorumPercent: this.quorumPercent,
       timelockDelay: this.timelockDelay,
-      guardian: this.guardian.address,
+      guardians: this.guardians.map((i) => i.address),
     }
   }
 }
@@ -111,7 +119,7 @@ export type GovParamsJson = {
   proposalThreshold: StringEncodedHexOrIntegerOrBigInt
   quorumPercent: StringEncodedHexOrIntegerOrBigInt
   timelockDelay: StringEncodedHexOrIntegerOrBigInt
-  guardian: string
+  guardians: string[]
 }
 type BaseConfigJSON = {
   basicDetails: {
@@ -129,6 +137,7 @@ type BaseConfigJSON = {
     }[]
     folioFee: StringEncodedHexOrIntegerOrBigInt
     mintingFee: StringEncodedHexOrIntegerOrBigInt
+    mandate: string
   }
   existingTradeProposers: string[]
   tradeLaunchers: string[]
@@ -209,7 +218,8 @@ export class DeployFolioConfig {
           (i) => new FeeRecipient(Address.from(i.recipient), BigInt(i.portion))
         ),
         BigInt(json.additionalDetails.folioFee),
-        BigInt(json.additionalDetails.mintingFee)
+        BigInt(json.additionalDetails.mintingFee),
+        json.additionalDetails.mandate
       ),
       json.type === 'governed'
         ? {
@@ -221,7 +231,7 @@ export class DeployFolioConfig {
               BigInt(json.ownerGovParams.proposalThreshold),
               BigInt(json.ownerGovParams.quorumPercent),
               BigInt(json.ownerGovParams.timelockDelay),
-              Address.from(json.ownerGovParams.guardian)
+              json.ownerGovParams.guardians.map(Address.from)
             ),
             tradingGovParams: new GovParams(
               BigInt(json.tradingGovParams.votingDelay),
@@ -229,7 +239,7 @@ export class DeployFolioConfig {
               BigInt(json.tradingGovParams.proposalThreshold),
               BigInt(json.tradingGovParams.quorumPercent),
               BigInt(json.tradingGovParams.timelockDelay),
-              Address.from(json.tradingGovParams.guardian)
+              json.tradingGovParams.guardians.map(Address.from)
             ),
           }
         : {
@@ -242,14 +252,14 @@ export class DeployFolioConfig {
     )
   }
 
-  public serializeGoverned(initialShares: bigint) {
+  public serializeGoverned() {
     const governance = this.governance
     if (governance.type === 'ungoverned') {
       throw new Error('Governance is not set')
     }
     const out = [
       governance.stToken.address.address,
-      this.basicDetails.serialize(initialShares),
+      this.basicDetails.serialize(),
       this.additionalDetails.serialize(),
       governance.ownerGovParams.serialize(),
       governance.tradingGovParams.serialize(),
@@ -265,12 +275,12 @@ export class DeployFolioConfig {
     return out
   }
 
-  public serializeUnGoverned(initialShares: bigint) {
+  public serializeUnGoverned() {
     if (this.governance.type !== 'ungoverned') {
       throw new Error('Governance is set')
     }
     const out = [
-      this.basicDetails.serialize(initialShares),
+      this.basicDetails.serialize(),
       this.additionalDetails.serialize(),
       this.governance.owner.address,
       this.existingTradeProposers.map((i) => i.address),

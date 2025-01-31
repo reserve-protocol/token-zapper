@@ -40,9 +40,9 @@ const _abi = [
             type: "uint256",
           },
           {
-            internalType: "address",
-            name: "guardian",
-            type: "address",
+            internalType: "address[]",
+            name: "guardians",
+            type: "address[]",
           },
         ],
         internalType: "struct IGovernanceDeployer.GovParams",

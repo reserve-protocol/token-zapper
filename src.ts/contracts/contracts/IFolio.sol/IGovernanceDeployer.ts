@@ -30,7 +30,7 @@ export declare namespace IGovernanceDeployer {
     proposalThreshold: PromiseOrValue<BigNumberish>;
     quorumPercent: PromiseOrValue<BigNumberish>;
     timelockDelay: PromiseOrValue<BigNumberish>;
-    guardian: PromiseOrValue<string>;
+    guardians: PromiseOrValue<string>[];
   };
 
   export type GovParamsStructOutput = [
@@ -39,20 +39,20 @@ export declare namespace IGovernanceDeployer {
     BigNumber,
     BigNumber,
     BigNumber,
-    string
+    string[]
   ] & {
     votingDelay: number;
     votingPeriod: number;
     proposalThreshold: BigNumber;
     quorumPercent: BigNumber;
     timelockDelay: BigNumber;
-    guardian: string;
+    guardians: string[];
   };
 }
 
 export interface IGovernanceDeployerInterface extends utils.Interface {
   functions: {
-    "deployGovernanceWithTimelock((uint48,uint32,uint256,uint256,uint256,address),address)": FunctionFragment;
+    "deployGovernanceWithTimelock((uint48,uint32,uint256,uint256,uint256,address[]),address)": FunctionFragment;
   };
 
   getFunction(

@@ -1110,6 +1110,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     return await new TxGen(this, expectedOutput).generate({
       ...userOption,
       ethereumInput: false,
+      slippage: opts?.slippage ?? 0.001,
       deployFolio: config,
     })
   }
@@ -1146,6 +1147,7 @@ export class Universe<const UniverseConf extends Config = Config> {
         return await new TxGen(this, res).generate({
           ...options,
           ethereumInput: isNative,
+          slippage: opts?.slippage ?? 0.001
         })
       } catch (e) {
         this.tfgReg.purgeResult(userInput, outputToken)

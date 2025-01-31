@@ -12,7 +12,8 @@ import { VM } from "./weiroll/VM.sol";
 import { PreventTampering } from "./PreventTampering.sol";
 
 import { ZapParams, ZapERC20Params } from "./IRTokenZapper.sol";
-import { ZapperExecutor } from "./ZapperExecutor.sol";
+import { ZapperExecutor, DeployFolioConfig, ExecuteDeployOutput } from "./ZapperExecutor.sol";
+
 struct ZapperOutput {
     uint256[] dust;
     uint256 amountOut;
@@ -37,13 +38,27 @@ contract Zapper2 is ReentrancyGuard {
         uint256 startGas = gasleft();
         return zapInner(params, balanceOf(params.tokenOut, params.recipient), startGas);
     }
-    function zapDeploy(ZapParams calldata params) external payable nonReentrant returns (ZapperOutput memory) {
+    function zapDeploy(
+        ZapParams calldata params,
+        DeployFolioConfig calldata config
+    ) external payable nonReentrant returns (ZapperOutput memory out) {
         uint256 startGas = gasleft();
+        pullFundsFromSender(params.tokenIn, params.amountIn, address(zapperExecutor));
+        // STEP 1: Execute
+        ExecuteDeployOutput memory deployOutput = zapperExecutor.executeDeploy(
+            params.commands,
+            params.state,
+            params.tokens,
+            config,
+            params.recipient
+        );
+        out.amountOut = deployOutput.amountOut;
+        out.dust = deployOutput.dust;
 
-        // Validate that the address is free
-        validateTokenOut(params.tokenOut);
+        require(out.amountOut > params.amountOut, "INSUFFICIENT_OUT");
 
-        return zapInner(params, 0, startGas);
+
+        out.gasUsed = startGas - gasleft();
     }
     function validateTokenOut(address tokenOut) private {
         uint256 codeSizeTokenOut = 0;

@@ -1142,28 +1142,13 @@
           ]
         },
         "DeployFolioHelper": {
-          "address": "0xD03CA77E300429564588687746577B52Ed67554B",
+          "address": "0x4365fAf4F47f73b28B5cB50B4D91294A564c4a79",
           "abi": [
             {
               "inputs": [
                 {
-                  "internalType": "address",
-                  "name": "deployer",
-                  "type": "address"
-                },
-                {
-                  "internalType": "address",
-                  "name": "expectedTokenAddress",
-                  "type": "address"
-                },
-                {
-                  "internalType": "bool",
-                  "name": "isGoverned",
-                  "type": "bool"
-                },
-                {
                   "internalType": "bytes",
-                  "name": "encodedFolioDeployerCall",
+                  "name": "deployFolioConfig",
                   "type": "bytes"
                 }
               ],
@@ -1976,7 +1961,7 @@
           ]
         },
         "Zapper2": {
-          "address": "0xCe7cb4178B1EF36Cc5ecb72750E8d475568516c1",
+          "address": "0x75327a429459a9b182f6063784118a08b2269e5c",
           "abi": [
             {
               "inputs": [
@@ -2120,6 +2105,210 @@
                   "internalType": "struct ZapParams",
                   "name": "params",
                   "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "address",
+                      "name": "deployer",
+                      "type": "address"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "string",
+                          "name": "name",
+                          "type": "string"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "symbol",
+                          "type": "string"
+                        },
+                        {
+                          "internalType": "address[]",
+                          "name": "assets",
+                          "type": "address[]"
+                        },
+                        {
+                          "internalType": "uint256[]",
+                          "name": "amounts",
+                          "type": "uint256[]"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "initialShares",
+                          "type": "uint256"
+                        }
+                      ],
+                      "internalType": "struct IFolio.FolioBasicDetails",
+                      "name": "basicDetails",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint256",
+                          "name": "auctionDelay",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "auctionLength",
+                          "type": "uint256"
+                        },
+                        {
+                          "components": [
+                            {
+                              "internalType": "address",
+                              "name": "recipient",
+                              "type": "address"
+                            },
+                            {
+                              "internalType": "uint96",
+                              "name": "portion",
+                              "type": "uint96"
+                            }
+                          ],
+                          "internalType": "struct IFolio.FeeRecipient[]",
+                          "name": "feeRecipients",
+                          "type": "tuple[]"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "tvlFee",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "mintFee",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "mandate",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct IFolio.FolioAdditionalDetails",
+                      "name": "additionalDetails",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "address[]",
+                          "name": "existingTradeProposers",
+                          "type": "address[]"
+                        },
+                        {
+                          "internalType": "address[]",
+                          "name": "tradeLaunchers",
+                          "type": "address[]"
+                        },
+                        {
+                          "internalType": "address[]",
+                          "name": "vibesOfficers",
+                          "type": "address[]"
+                        }
+                      ],
+                      "internalType": "struct GovRoles",
+                      "name": "govRoles",
+                      "type": "tuple"
+                    },
+                    {
+                      "internalType": "bool",
+                      "name": "isGoverned",
+                      "type": "bool"
+                    },
+                    {
+                      "internalType": "contract IVotes",
+                      "name": "stToken",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "owner",
+                      "type": "address"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint48",
+                          "name": "votingDelay",
+                          "type": "uint48"
+                        },
+                        {
+                          "internalType": "uint32",
+                          "name": "votingPeriod",
+                          "type": "uint32"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "proposalThreshold",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "quorumPercent",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "timelockDelay",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "address[]",
+                          "name": "guardians",
+                          "type": "address[]"
+                        }
+                      ],
+                      "internalType": "struct IGovernanceDeployer.GovParams",
+                      "name": "ownerGovParams",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint48",
+                          "name": "votingDelay",
+                          "type": "uint48"
+                        },
+                        {
+                          "internalType": "uint32",
+                          "name": "votingPeriod",
+                          "type": "uint32"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "proposalThreshold",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "quorumPercent",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "timelockDelay",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "address[]",
+                          "name": "guardians",
+                          "type": "address[]"
+                        }
+                      ],
+                      "internalType": "struct IGovernanceDeployer.GovParams",
+                      "name": "tradingGovParams",
+                      "type": "tuple"
+                    }
+                  ],
+                  "internalType": "struct DeployFolioConfig",
+                  "name": "config",
+                  "type": "tuple"
                 }
               ],
               "name": "zapDeploy",
@@ -2143,7 +2332,7 @@
                     }
                   ],
                   "internalType": "struct ZapperOutput",
-                  "name": "",
+                  "name": "out",
                   "type": "tuple"
                 }
               ],
@@ -2376,7 +2565,7 @@
           ]
         },
         "ZapperExecutor": {
-          "address": "0x9702a1934929557ee94a0BF446F29106a71b52F3",
+          "address": "0x6a4697f3fd07c9E7D58dB76eFfa80Ff3dd5e7C20",
           "abi": [
             {
               "inputs": [
@@ -2500,6 +2689,256 @@
                     }
                   ],
                   "internalType": "struct ExecuteOutput",
+                  "name": "out",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "bytes32[]",
+                  "name": "commands",
+                  "type": "bytes32[]"
+                },
+                {
+                  "internalType": "bytes[]",
+                  "name": "state",
+                  "type": "bytes[]"
+                },
+                {
+                  "internalType": "contract IERC20[]",
+                  "name": "tokens",
+                  "type": "address[]"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "address",
+                      "name": "deployer",
+                      "type": "address"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "string",
+                          "name": "name",
+                          "type": "string"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "symbol",
+                          "type": "string"
+                        },
+                        {
+                          "internalType": "address[]",
+                          "name": "assets",
+                          "type": "address[]"
+                        },
+                        {
+                          "internalType": "uint256[]",
+                          "name": "amounts",
+                          "type": "uint256[]"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "initialShares",
+                          "type": "uint256"
+                        }
+                      ],
+                      "internalType": "struct IFolio.FolioBasicDetails",
+                      "name": "basicDetails",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint256",
+                          "name": "auctionDelay",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "auctionLength",
+                          "type": "uint256"
+                        },
+                        {
+                          "components": [
+                            {
+                              "internalType": "address",
+                              "name": "recipient",
+                              "type": "address"
+                            },
+                            {
+                              "internalType": "uint96",
+                              "name": "portion",
+                              "type": "uint96"
+                            }
+                          ],
+                          "internalType": "struct IFolio.FeeRecipient[]",
+                          "name": "feeRecipients",
+                          "type": "tuple[]"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "tvlFee",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "mintFee",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "mandate",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct IFolio.FolioAdditionalDetails",
+                      "name": "additionalDetails",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "address[]",
+                          "name": "existingTradeProposers",
+                          "type": "address[]"
+                        },
+                        {
+                          "internalType": "address[]",
+                          "name": "tradeLaunchers",
+                          "type": "address[]"
+                        },
+                        {
+                          "internalType": "address[]",
+                          "name": "vibesOfficers",
+                          "type": "address[]"
+                        }
+                      ],
+                      "internalType": "struct GovRoles",
+                      "name": "govRoles",
+                      "type": "tuple"
+                    },
+                    {
+                      "internalType": "bool",
+                      "name": "isGoverned",
+                      "type": "bool"
+                    },
+                    {
+                      "internalType": "contract IVotes",
+                      "name": "stToken",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "owner",
+                      "type": "address"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint48",
+                          "name": "votingDelay",
+                          "type": "uint48"
+                        },
+                        {
+                          "internalType": "uint32",
+                          "name": "votingPeriod",
+                          "type": "uint32"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "proposalThreshold",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "quorumPercent",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "timelockDelay",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "address[]",
+                          "name": "guardians",
+                          "type": "address[]"
+                        }
+                      ],
+                      "internalType": "struct IGovernanceDeployer.GovParams",
+                      "name": "ownerGovParams",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint48",
+                          "name": "votingDelay",
+                          "type": "uint48"
+                        },
+                        {
+                          "internalType": "uint32",
+                          "name": "votingPeriod",
+                          "type": "uint32"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "proposalThreshold",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "quorumPercent",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "timelockDelay",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "address[]",
+                          "name": "guardians",
+                          "type": "address[]"
+                        }
+                      ],
+                      "internalType": "struct IGovernanceDeployer.GovParams",
+                      "name": "tradingGovParams",
+                      "type": "tuple"
+                    }
+                  ],
+                  "internalType": "struct DeployFolioConfig",
+                  "name": "config",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                }
+              ],
+              "name": "executeDeploy",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ExecuteDeployOutput",
                   "name": "out",
                   "type": "tuple"
                 }

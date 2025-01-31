@@ -73,11 +73,12 @@ export declare namespace IFolio {
   };
 
   export type FolioAdditionalDetailsStruct = {
-    tradeDelay: PromiseOrValue<BigNumberish>;
+    auctionDelay: PromiseOrValue<BigNumberish>;
     auctionLength: PromiseOrValue<BigNumberish>;
     feeRecipients: IFolio.FeeRecipientStruct[];
-    folioFee: PromiseOrValue<BigNumberish>;
-    mintingFee: PromiseOrValue<BigNumberish>;
+    tvlFee: PromiseOrValue<BigNumberish>;
+    mintFee: PromiseOrValue<BigNumberish>;
+    mandate: PromiseOrValue<string>;
   };
 
   export type FolioAdditionalDetailsStructOutput = [
@@ -85,13 +86,15 @@ export declare namespace IFolio {
     BigNumber,
     IFolio.FeeRecipientStructOutput[],
     BigNumber,
-    BigNumber
+    BigNumber,
+    string
   ] & {
-    tradeDelay: BigNumber;
+    auctionDelay: BigNumber;
     auctionLength: BigNumber;
     feeRecipients: IFolio.FeeRecipientStructOutput[];
-    folioFee: BigNumber;
-    mintingFee: BigNumber;
+    tvlFee: BigNumber;
+    mintFee: BigNumber;
+    mandate: string;
   };
 }
 
@@ -102,7 +105,7 @@ export declare namespace IGovernanceDeployer {
     proposalThreshold: PromiseOrValue<BigNumberish>;
     quorumPercent: PromiseOrValue<BigNumberish>;
     timelockDelay: PromiseOrValue<BigNumberish>;
-    guardian: PromiseOrValue<string>;
+    guardians: PromiseOrValue<string>[];
   };
 
   export type GovParamsStructOutput = [
@@ -111,21 +114,21 @@ export declare namespace IGovernanceDeployer {
     BigNumber,
     BigNumber,
     BigNumber,
-    string
+    string[]
   ] & {
     votingDelay: number;
     votingPeriod: number;
     proposalThreshold: BigNumber;
     quorumPercent: BigNumber;
     timelockDelay: BigNumber;
-    guardian: string;
+    guardians: string[];
   };
 }
 
 export interface IFolioDeployerInterface extends utils.Interface {
   functions: {
-    "deployFolio((string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256),address,address[],address[],address[])": FunctionFragment;
-    "deployGovernedFolio(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256),(uint48,uint32,uint256,uint256,uint256,address),(uint48,uint32,uint256,uint256,uint256,address),(address[],address[],address[]))": FunctionFragment;
+    "deployFolio((string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),address,address[],address[],address[])": FunctionFragment;
+    "deployGovernedFolio(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(uint48,uint32,uint256,uint256,uint256,address[]),(uint48,uint32,uint256,uint256,uint256,address[]),(address[],address[],address[]))": FunctionFragment;
     "folioImplementation()": FunctionFragment;
   };
 
@@ -244,9 +247,9 @@ export interface IFolioDeployer extends BaseContract {
       basicDetails: IFolio.FolioBasicDetailsStruct,
       additionalDetails: IFolio.FolioAdditionalDetailsStruct,
       owner: PromiseOrValue<string>,
-      tradeProposers: PromiseOrValue<string>[],
-      tradeLaunchers: PromiseOrValue<string>[],
-      vibesOfficers: PromiseOrValue<string>[],
+      auctionApprovers: PromiseOrValue<string>[],
+      auctionLaunchers: PromiseOrValue<string>[],
+      brandManagers: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -267,9 +270,9 @@ export interface IFolioDeployer extends BaseContract {
     basicDetails: IFolio.FolioBasicDetailsStruct,
     additionalDetails: IFolio.FolioAdditionalDetailsStruct,
     owner: PromiseOrValue<string>,
-    tradeProposers: PromiseOrValue<string>[],
-    tradeLaunchers: PromiseOrValue<string>[],
-    vibesOfficers: PromiseOrValue<string>[],
+    auctionApprovers: PromiseOrValue<string>[],
+    auctionLaunchers: PromiseOrValue<string>[],
+    brandManagers: PromiseOrValue<string>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -290,11 +293,11 @@ export interface IFolioDeployer extends BaseContract {
       basicDetails: IFolio.FolioBasicDetailsStruct,
       additionalDetails: IFolio.FolioAdditionalDetailsStruct,
       owner: PromiseOrValue<string>,
-      tradeProposers: PromiseOrValue<string>[],
-      tradeLaunchers: PromiseOrValue<string>[],
-      vibesOfficers: PromiseOrValue<string>[],
+      auctionApprovers: PromiseOrValue<string>[],
+      auctionLaunchers: PromiseOrValue<string>[],
+      brandManagers: PromiseOrValue<string>[],
       overrides?: CallOverrides
-    ): Promise<[string, string] & { folio_: string; folioAdmin_: string }>;
+    ): Promise<[string, string] & { folio: string; proxyAdmin: string }>;
 
     deployGovernedFolio(
       stToken: PromiseOrValue<string>,
@@ -353,9 +356,9 @@ export interface IFolioDeployer extends BaseContract {
       basicDetails: IFolio.FolioBasicDetailsStruct,
       additionalDetails: IFolio.FolioAdditionalDetailsStruct,
       owner: PromiseOrValue<string>,
-      tradeProposers: PromiseOrValue<string>[],
-      tradeLaunchers: PromiseOrValue<string>[],
-      vibesOfficers: PromiseOrValue<string>[],
+      auctionApprovers: PromiseOrValue<string>[],
+      auctionLaunchers: PromiseOrValue<string>[],
+      brandManagers: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -377,9 +380,9 @@ export interface IFolioDeployer extends BaseContract {
       basicDetails: IFolio.FolioBasicDetailsStruct,
       additionalDetails: IFolio.FolioAdditionalDetailsStruct,
       owner: PromiseOrValue<string>,
-      tradeProposers: PromiseOrValue<string>[],
-      tradeLaunchers: PromiseOrValue<string>[],
-      vibesOfficers: PromiseOrValue<string>[],
+      auctionApprovers: PromiseOrValue<string>[],
+      auctionLaunchers: PromiseOrValue<string>[],
+      brandManagers: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

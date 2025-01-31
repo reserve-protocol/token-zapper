@@ -67,6 +67,52 @@ export type ZapperOutputStructOutput = [BigNumber[], BigNumber, BigNumber] & {
   gasUsed: BigNumber;
 };
 
+export type GovRolesStruct = {
+  existingTradeProposers: PromiseOrValue<string>[];
+  tradeLaunchers: PromiseOrValue<string>[];
+  vibesOfficers: PromiseOrValue<string>[];
+};
+
+export type GovRolesStructOutput = [string[], string[], string[]] & {
+  existingTradeProposers: string[];
+  tradeLaunchers: string[];
+  vibesOfficers: string[];
+};
+
+export type DeployFolioConfigStruct = {
+  deployer: PromiseOrValue<string>;
+  basicDetails: IFolio.FolioBasicDetailsStruct;
+  additionalDetails: IFolio.FolioAdditionalDetailsStruct;
+  govRoles: GovRolesStruct;
+  isGoverned: PromiseOrValue<boolean>;
+  stToken: PromiseOrValue<string>;
+  owner: PromiseOrValue<string>;
+  ownerGovParams: IGovernanceDeployer.GovParamsStruct;
+  tradingGovParams: IGovernanceDeployer.GovParamsStruct;
+};
+
+export type DeployFolioConfigStructOutput = [
+  string,
+  IFolio.FolioBasicDetailsStructOutput,
+  IFolio.FolioAdditionalDetailsStructOutput,
+  GovRolesStructOutput,
+  boolean,
+  string,
+  string,
+  IGovernanceDeployer.GovParamsStructOutput,
+  IGovernanceDeployer.GovParamsStructOutput
+] & {
+  deployer: string;
+  basicDetails: IFolio.FolioBasicDetailsStructOutput;
+  additionalDetails: IFolio.FolioAdditionalDetailsStructOutput;
+  govRoles: GovRolesStructOutput;
+  isGoverned: boolean;
+  stToken: string;
+  owner: string;
+  ownerGovParams: IGovernanceDeployer.GovParamsStructOutput;
+  tradingGovParams: IGovernanceDeployer.GovParamsStructOutput;
+};
+
 export type ZapERC20ParamsStruct = {
   tokenIn: PromiseOrValue<string>;
   amountIn: PromiseOrValue<BigNumberish>;
@@ -95,10 +141,96 @@ export type ZapERC20ParamsStructOutput = [
   tokenOut: string;
 };
 
+export declare namespace IFolio {
+  export type FolioBasicDetailsStruct = {
+    name: PromiseOrValue<string>;
+    symbol: PromiseOrValue<string>;
+    assets: PromiseOrValue<string>[];
+    amounts: PromiseOrValue<BigNumberish>[];
+    initialShares: PromiseOrValue<BigNumberish>;
+  };
+
+  export type FolioBasicDetailsStructOutput = [
+    string,
+    string,
+    string[],
+    BigNumber[],
+    BigNumber
+  ] & {
+    name: string;
+    symbol: string;
+    assets: string[];
+    amounts: BigNumber[];
+    initialShares: BigNumber;
+  };
+
+  export type FeeRecipientStruct = {
+    recipient: PromiseOrValue<string>;
+    portion: PromiseOrValue<BigNumberish>;
+  };
+
+  export type FeeRecipientStructOutput = [string, BigNumber] & {
+    recipient: string;
+    portion: BigNumber;
+  };
+
+  export type FolioAdditionalDetailsStruct = {
+    auctionDelay: PromiseOrValue<BigNumberish>;
+    auctionLength: PromiseOrValue<BigNumberish>;
+    feeRecipients: IFolio.FeeRecipientStruct[];
+    tvlFee: PromiseOrValue<BigNumberish>;
+    mintFee: PromiseOrValue<BigNumberish>;
+    mandate: PromiseOrValue<string>;
+  };
+
+  export type FolioAdditionalDetailsStructOutput = [
+    BigNumber,
+    BigNumber,
+    IFolio.FeeRecipientStructOutput[],
+    BigNumber,
+    BigNumber,
+    string
+  ] & {
+    auctionDelay: BigNumber;
+    auctionLength: BigNumber;
+    feeRecipients: IFolio.FeeRecipientStructOutput[];
+    tvlFee: BigNumber;
+    mintFee: BigNumber;
+    mandate: string;
+  };
+}
+
+export declare namespace IGovernanceDeployer {
+  export type GovParamsStruct = {
+    votingDelay: PromiseOrValue<BigNumberish>;
+    votingPeriod: PromiseOrValue<BigNumberish>;
+    proposalThreshold: PromiseOrValue<BigNumberish>;
+    quorumPercent: PromiseOrValue<BigNumberish>;
+    timelockDelay: PromiseOrValue<BigNumberish>;
+    guardians: PromiseOrValue<string>[];
+  };
+
+  export type GovParamsStructOutput = [
+    number,
+    number,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    string[]
+  ] & {
+    votingDelay: number;
+    votingPeriod: number;
+    proposalThreshold: BigNumber;
+    quorumPercent: BigNumber;
+    timelockDelay: BigNumber;
+    guardians: string[];
+  };
+}
+
 export interface Zapper2Interface extends utils.Interface {
   functions: {
     "zap((address,uint256,bytes32[],bytes[],address[],uint256,address,address))": FunctionFragment;
-    "zapDeploy((address,uint256,bytes32[],bytes[],address[],uint256,address,address))": FunctionFragment;
+    "zapDeploy((address,uint256,bytes32[],bytes[],address[],uint256,address,address),(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(address[],address[],address[]),bool,address,address,(uint48,uint32,uint256,uint256,uint256,address[]),(uint48,uint32,uint256,uint256,uint256,address[])))": FunctionFragment;
     "zapERC20((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
     "zapETH((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
     "zapToETH((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
@@ -119,7 +251,7 @@ export interface Zapper2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "zapDeploy",
-    values: [ZapParamsStruct]
+    values: [ZapParamsStruct, DeployFolioConfigStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "zapERC20",
@@ -177,6 +309,7 @@ export interface Zapper2 extends BaseContract {
 
     zapDeploy(
       params: ZapParamsStruct,
+      config: DeployFolioConfigStruct,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -203,6 +336,7 @@ export interface Zapper2 extends BaseContract {
 
   zapDeploy(
     params: ZapParamsStruct,
+    config: DeployFolioConfigStruct,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -229,6 +363,7 @@ export interface Zapper2 extends BaseContract {
 
     zapDeploy(
       params: ZapParamsStruct,
+      config: DeployFolioConfigStruct,
       overrides?: CallOverrides
     ): Promise<ZapperOutputStructOutput>;
 
@@ -258,6 +393,7 @@ export interface Zapper2 extends BaseContract {
 
     zapDeploy(
       params: ZapParamsStruct,
+      config: DeployFolioConfigStruct,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -285,6 +421,7 @@ export interface Zapper2 extends BaseContract {
 
     zapDeploy(
       params: ZapParamsStruct,
+      config: DeployFolioConfigStruct,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

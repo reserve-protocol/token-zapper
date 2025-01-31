@@ -6,8 +6,28 @@ import { FacadeRead, RToken } from "./IRTokenZapper.sol";
 import { VM } from "./weiroll/VM.sol";
 import { PreventTampering } from "./PreventTampering.sol";
 
+import { IFolio, IVotes, GovRoles, IFolioDeployer, IGovernanceDeployer } from "./IFolio.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+struct DeployFolioConfig {
+  address deployer;
+  IFolio.FolioBasicDetails basicDetails;
+  IFolio.FolioAdditionalDetails additionalDetails;
+  GovRoles govRoles;
+
+  bool isGoverned;
+  IVotes stToken;
+  address owner;
+  IGovernanceDeployer.GovParams ownerGovParams;
+  IGovernanceDeployer.GovParams tradingGovParams;
+}
+
 struct ExecuteOutput {
   uint256[] dust;
+}
+struct ExecuteDeployOutput {
+  uint256[] dust;
+  uint256 amountOut;
 }
 contract ZapperExecutor is VM, PreventTampering {
   receive() external payable {}
@@ -66,6 +86,69 @@ contract ZapperExecutor is VM, PreventTampering {
       out.dust = new uint256[](tokens.length);
       for(uint256 i; i < tokens.length; i++) {
           out.dust[i] = tokens[i].balanceOf(address(this));
+      }
+  }
+
+  function executeDeploy(
+      bytes32[] calldata commands,
+      bytes[] memory state,
+      IERC20[] memory tokens,
+      DeployFolioConfig memory config,
+      address recipient
+  ) revertOnCodeHashChange public payable returns (ExecuteDeployOutput memory out) {
+    _execute(commands, state);
+    // DSTEP 2: Deploy folio
+    uint256 initialShares = type(uint256).max;
+    for (uint256 i = 0; i < config.basicDetails.assets.length; i++) {
+        uint256 balance = IERC20(config.basicDetails.assets[i]).balanceOf(address(this));
+        if (balance == 0) {
+            revert('ZERO BALANCE');
+        }
+        uint256 quantityPrShare = config.basicDetails.amounts[i];
+        if (quantityPrShare == 0) {
+            revert('ZERO QUANTITY');
+        }
+        uint256 shares = balance * 1e18 / quantityPrShare;
+        
+        if (shares < initialShares) {
+            initialShares = shares;
+        }
+        SafeERC20.safeApprove(IERC20(config.basicDetails.assets[i]), address(config.deployer), 0);
+        SafeERC20.safeApprove(IERC20(config.basicDetails.assets[i]), address(config.deployer), type(uint256).max);
+    }
+    if (initialShares == type(uint256).max) {
+        revert('NO SHARES');
+    }
+
+    config.basicDetails.initialShares = initialShares;
+
+    if (config.isGoverned) {
+        (address folio, , , , ,) = IFolioDeployer(config.deployer).deployGovernedFolio(
+            config.stToken,
+            config.basicDetails,
+            config.additionalDetails,
+            config.ownerGovParams,
+            config.tradingGovParams,
+            config.govRoles
+        );
+        out.amountOut = IERC20(folio).balanceOf(address(this));
+        IERC20(folio).transfer(recipient, out.amountOut);
+    } else {
+        (address folio, ) = IFolioDeployer(config.deployer).deployFolio(
+            config.basicDetails,
+            config.additionalDetails,
+            config.owner,
+            config.govRoles.existingTradeProposers,
+            config.govRoles.tradeLaunchers,
+            config.govRoles.vibesOfficers
+        );
+        out.amountOut = IERC20(folio).balanceOf(address(this));
+        IERC20(folio).transfer(recipient, out.amountOut);
+    }
+    out.dust = new uint256[](tokens.length);
+      for(uint256 i; i < tokens.length; i++) {
+          out.dust[i] = tokens[i].balanceOf(address(this));
+          tokens[i].transfer(recipient, out.dust[i]);
       }
   }
 

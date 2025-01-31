@@ -27,6 +27,70 @@ import type {
   PromiseOrValue,
 } from "../../common";
 
+export declare namespace IFolio {
+  export type BasketRangeStruct = {
+    spot: PromiseOrValue<BigNumberish>;
+    low: PromiseOrValue<BigNumberish>;
+    high: PromiseOrValue<BigNumberish>;
+  };
+
+  export type BasketRangeStructOutput = [BigNumber, BigNumber, BigNumber] & {
+    spot: BigNumber;
+    low: BigNumber;
+    high: BigNumber;
+  };
+
+  export type PricesStruct = {
+    start: PromiseOrValue<BigNumberish>;
+    end: PromiseOrValue<BigNumberish>;
+  };
+
+  export type PricesStructOutput = [BigNumber, BigNumber] & {
+    start: BigNumber;
+    end: BigNumber;
+  };
+
+  export type AuctionStruct = {
+    id: PromiseOrValue<BigNumberish>;
+    sell: PromiseOrValue<string>;
+    buy: PromiseOrValue<string>;
+    sellLimit: IFolio.BasketRangeStruct;
+    buyLimit: IFolio.BasketRangeStruct;
+    prices: IFolio.PricesStruct;
+    availableAt: PromiseOrValue<BigNumberish>;
+    launchTimeout: PromiseOrValue<BigNumberish>;
+    start: PromiseOrValue<BigNumberish>;
+    end: PromiseOrValue<BigNumberish>;
+    k: PromiseOrValue<BigNumberish>;
+  };
+
+  export type AuctionStructOutput = [
+    BigNumber,
+    string,
+    string,
+    IFolio.BasketRangeStructOutput,
+    IFolio.BasketRangeStructOutput,
+    IFolio.PricesStructOutput,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber
+  ] & {
+    id: BigNumber;
+    sell: string;
+    buy: string;
+    sellLimit: IFolio.BasketRangeStructOutput;
+    buyLimit: IFolio.BasketRangeStructOutput;
+    prices: IFolio.PricesStructOutput;
+    availableAt: BigNumber;
+    launchTimeout: BigNumber;
+    start: BigNumber;
+    end: BigNumber;
+    k: BigNumber;
+  };
+}
+
 export interface IFolioInterface extends utils.Interface {
   functions: {
     "distributeFees()": FunctionFragment;
@@ -45,33 +109,84 @@ export interface IFolioInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "AuctionApproved(uint256,address,address,tuple)": EventFragment;
+    "AuctionBid(uint256,uint256,uint256)": EventFragment;
+    "AuctionClosed(uint256)": EventFragment;
+    "AuctionDelaySet(uint256)": EventFragment;
     "AuctionLengthSet(uint256)": EventFragment;
+    "AuctionOpened(uint256,tuple)": EventFragment;
     "BasketTokenAdded(address)": EventFragment;
     "BasketTokenRemoved(address)": EventFragment;
-    "Bid(uint256,uint256,uint256)": EventFragment;
     "FeeRecipientSet(address,uint96)": EventFragment;
-    "FolioFeeSet(uint256,uint256)": EventFragment;
+    "FolioFeePaid(address,uint256)": EventFragment;
     "FolioKilled()": EventFragment;
-    "MintingFeeSet(uint256)": EventFragment;
-    "TradeApproved(uint256,address,address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)": EventFragment;
-    "TradeDelaySet(uint256)": EventFragment;
-    "TradeKilled(uint256)": EventFragment;
-    "TradeOpened(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": EventFragment;
+    "MandateSet(string)": EventFragment;
+    "MintFeeSet(uint256)": EventFragment;
+    "ProtocolFeePaid(address,uint256)": EventFragment;
+    "TVLFeeSet(uint256,uint256)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "AuctionApproved"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "AuctionBid"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "AuctionClosed"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "AuctionDelaySet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AuctionLengthSet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "AuctionOpened"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "BasketTokenAdded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "BasketTokenRemoved"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Bid"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "FeeRecipientSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "FolioFeeSet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "FolioFeePaid"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "FolioKilled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "MintingFeeSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TradeApproved"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TradeDelaySet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TradeKilled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TradeOpened"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "MandateSet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "MintFeeSet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ProtocolFeePaid"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "TVLFeeSet"): EventFragment;
 }
+
+export interface AuctionApprovedEventObject {
+  auctionId: BigNumber;
+  from: string;
+  to: string;
+  auction: IFolio.AuctionStructOutput;
+}
+export type AuctionApprovedEvent = TypedEvent<
+  [BigNumber, string, string, IFolio.AuctionStructOutput],
+  AuctionApprovedEventObject
+>;
+
+export type AuctionApprovedEventFilter = TypedEventFilter<AuctionApprovedEvent>;
+
+export interface AuctionBidEventObject {
+  auctionId: BigNumber;
+  sellAmount: BigNumber;
+  buyAmount: BigNumber;
+}
+export type AuctionBidEvent = TypedEvent<
+  [BigNumber, BigNumber, BigNumber],
+  AuctionBidEventObject
+>;
+
+export type AuctionBidEventFilter = TypedEventFilter<AuctionBidEvent>;
+
+export interface AuctionClosedEventObject {
+  auctionId: BigNumber;
+}
+export type AuctionClosedEvent = TypedEvent<
+  [BigNumber],
+  AuctionClosedEventObject
+>;
+
+export type AuctionClosedEventFilter = TypedEventFilter<AuctionClosedEvent>;
+
+export interface AuctionDelaySetEventObject {
+  newAuctionDelay: BigNumber;
+}
+export type AuctionDelaySetEvent = TypedEvent<
+  [BigNumber],
+  AuctionDelaySetEventObject
+>;
+
+export type AuctionDelaySetEventFilter = TypedEventFilter<AuctionDelaySetEvent>;
 
 export interface AuctionLengthSetEventObject {
   newAuctionLength: BigNumber;
@@ -83,6 +198,17 @@ export type AuctionLengthSetEvent = TypedEvent<
 
 export type AuctionLengthSetEventFilter =
   TypedEventFilter<AuctionLengthSetEvent>;
+
+export interface AuctionOpenedEventObject {
+  auctionId: BigNumber;
+  auction: IFolio.AuctionStructOutput;
+}
+export type AuctionOpenedEvent = TypedEvent<
+  [BigNumber, IFolio.AuctionStructOutput],
+  AuctionOpenedEventObject
+>;
+
+export type AuctionOpenedEventFilter = TypedEventFilter<AuctionOpenedEvent>;
 
 export interface BasketTokenAddedEventObject {
   token: string;
@@ -106,18 +232,6 @@ export type BasketTokenRemovedEvent = TypedEvent<
 export type BasketTokenRemovedEventFilter =
   TypedEventFilter<BasketTokenRemovedEvent>;
 
-export interface BidEventObject {
-  tradeId: BigNumber;
-  sellAmount: BigNumber;
-  buyAmount: BigNumber;
-}
-export type BidEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber],
-  BidEventObject
->;
-
-export type BidEventFilter = TypedEventFilter<BidEvent>;
-
 export interface FeeRecipientSetEventObject {
   recipient: string;
   portion: BigNumber;
@@ -129,96 +243,57 @@ export type FeeRecipientSetEvent = TypedEvent<
 
 export type FeeRecipientSetEventFilter = TypedEventFilter<FeeRecipientSetEvent>;
 
-export interface FolioFeeSetEventObject {
-  newFee: BigNumber;
-  feeAnnually: BigNumber;
+export interface FolioFeePaidEventObject {
+  recipient: string;
+  amount: BigNumber;
 }
-export type FolioFeeSetEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  FolioFeeSetEventObject
+export type FolioFeePaidEvent = TypedEvent<
+  [string, BigNumber],
+  FolioFeePaidEventObject
 >;
 
-export type FolioFeeSetEventFilter = TypedEventFilter<FolioFeeSetEvent>;
+export type FolioFeePaidEventFilter = TypedEventFilter<FolioFeePaidEvent>;
 
 export interface FolioKilledEventObject {}
 export type FolioKilledEvent = TypedEvent<[], FolioKilledEventObject>;
 
 export type FolioKilledEventFilter = TypedEventFilter<FolioKilledEvent>;
 
-export interface MintingFeeSetEventObject {
+export interface MandateSetEventObject {
+  newMandate: string;
+}
+export type MandateSetEvent = TypedEvent<[string], MandateSetEventObject>;
+
+export type MandateSetEventFilter = TypedEventFilter<MandateSetEvent>;
+
+export interface MintFeeSetEventObject {
   newFee: BigNumber;
 }
-export type MintingFeeSetEvent = TypedEvent<
-  [BigNumber],
-  MintingFeeSetEventObject
+export type MintFeeSetEvent = TypedEvent<[BigNumber], MintFeeSetEventObject>;
+
+export type MintFeeSetEventFilter = TypedEventFilter<MintFeeSetEvent>;
+
+export interface ProtocolFeePaidEventObject {
+  recipient: string;
+  amount: BigNumber;
+}
+export type ProtocolFeePaidEvent = TypedEvent<
+  [string, BigNumber],
+  ProtocolFeePaidEventObject
 >;
 
-export type MintingFeeSetEventFilter = TypedEventFilter<MintingFeeSetEvent>;
+export type ProtocolFeePaidEventFilter = TypedEventFilter<ProtocolFeePaidEvent>;
 
-export interface TradeApprovedEventObject {
-  tradeId: BigNumber;
-  from: string;
-  to: string;
-  startPrice: BigNumber;
-  endPrice: BigNumber;
-  sellLimitSpot: BigNumber;
-  sellLimitLow: BigNumber;
-  sellLimitHigh: BigNumber;
-  buyLimitSpot: BigNumber;
-  buyLimitLow: BigNumber;
-  buyLimitHigh: BigNumber;
+export interface TVLFeeSetEventObject {
+  newFee: BigNumber;
+  feeAnnually: BigNumber;
 }
-export type TradeApprovedEvent = TypedEvent<
-  [
-    BigNumber,
-    string,
-    string,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber
-  ],
-  TradeApprovedEventObject
+export type TVLFeeSetEvent = TypedEvent<
+  [BigNumber, BigNumber],
+  TVLFeeSetEventObject
 >;
 
-export type TradeApprovedEventFilter = TypedEventFilter<TradeApprovedEvent>;
-
-export interface TradeDelaySetEventObject {
-  newTradeDelay: BigNumber;
-}
-export type TradeDelaySetEvent = TypedEvent<
-  [BigNumber],
-  TradeDelaySetEventObject
->;
-
-export type TradeDelaySetEventFilter = TypedEventFilter<TradeDelaySetEvent>;
-
-export interface TradeKilledEventObject {
-  tradeId: BigNumber;
-}
-export type TradeKilledEvent = TypedEvent<[BigNumber], TradeKilledEventObject>;
-
-export type TradeKilledEventFilter = TypedEventFilter<TradeKilledEvent>;
-
-export interface TradeOpenedEventObject {
-  tradeId: BigNumber;
-  startPrice: BigNumber;
-  endPrice: BigNumber;
-  sellLimit: BigNumber;
-  buyLimit: BigNumber;
-  start: BigNumber;
-  end: BigNumber;
-}
-export type TradeOpenedEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
-  TradeOpenedEventObject
->;
-
-export type TradeOpenedEventFilter = TypedEventFilter<TradeOpenedEvent>;
+export type TVLFeeSetEventFilter = TypedEventFilter<TVLFeeSetEvent>;
 
 export interface IFolio extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -261,10 +336,55 @@ export interface IFolio extends BaseContract {
   };
 
   filters: {
+    "AuctionApproved(uint256,address,address,tuple)"(
+      auctionId?: PromiseOrValue<BigNumberish> | null,
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null,
+      auction?: null
+    ): AuctionApprovedEventFilter;
+    AuctionApproved(
+      auctionId?: PromiseOrValue<BigNumberish> | null,
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null,
+      auction?: null
+    ): AuctionApprovedEventFilter;
+
+    "AuctionBid(uint256,uint256,uint256)"(
+      auctionId?: PromiseOrValue<BigNumberish> | null,
+      sellAmount?: null,
+      buyAmount?: null
+    ): AuctionBidEventFilter;
+    AuctionBid(
+      auctionId?: PromiseOrValue<BigNumberish> | null,
+      sellAmount?: null,
+      buyAmount?: null
+    ): AuctionBidEventFilter;
+
+    "AuctionClosed(uint256)"(
+      auctionId?: PromiseOrValue<BigNumberish> | null
+    ): AuctionClosedEventFilter;
+    AuctionClosed(
+      auctionId?: PromiseOrValue<BigNumberish> | null
+    ): AuctionClosedEventFilter;
+
+    "AuctionDelaySet(uint256)"(
+      newAuctionDelay?: null
+    ): AuctionDelaySetEventFilter;
+    AuctionDelaySet(newAuctionDelay?: null): AuctionDelaySetEventFilter;
+
     "AuctionLengthSet(uint256)"(
       newAuctionLength?: null
     ): AuctionLengthSetEventFilter;
     AuctionLengthSet(newAuctionLength?: null): AuctionLengthSetEventFilter;
+
+    "AuctionOpened(uint256,tuple)"(
+      auctionId?: PromiseOrValue<BigNumberish> | null,
+      auction?: null
+    ): AuctionOpenedEventFilter;
+    AuctionOpened(
+      auctionId?: PromiseOrValue<BigNumberish> | null,
+      auction?: null
+    ): AuctionOpenedEventFilter;
 
     "BasketTokenAdded(address)"(
       token?: PromiseOrValue<string> | null
@@ -280,17 +400,6 @@ export interface IFolio extends BaseContract {
       token?: PromiseOrValue<string> | null
     ): BasketTokenRemovedEventFilter;
 
-    "Bid(uint256,uint256,uint256)"(
-      tradeId?: PromiseOrValue<BigNumberish> | null,
-      sellAmount?: null,
-      buyAmount?: null
-    ): BidEventFilter;
-    Bid(
-      tradeId?: PromiseOrValue<BigNumberish> | null,
-      sellAmount?: null,
-      buyAmount?: null
-    ): BidEventFilter;
-
     "FeeRecipientSet(address,uint96)"(
       recipient?: PromiseOrValue<string> | null,
       portion?: null
@@ -300,73 +409,38 @@ export interface IFolio extends BaseContract {
       portion?: null
     ): FeeRecipientSetEventFilter;
 
-    "FolioFeeSet(uint256,uint256)"(
-      newFee?: null,
-      feeAnnually?: null
-    ): FolioFeeSetEventFilter;
-    FolioFeeSet(newFee?: null, feeAnnually?: null): FolioFeeSetEventFilter;
+    "FolioFeePaid(address,uint256)"(
+      recipient?: PromiseOrValue<string> | null,
+      amount?: null
+    ): FolioFeePaidEventFilter;
+    FolioFeePaid(
+      recipient?: PromiseOrValue<string> | null,
+      amount?: null
+    ): FolioFeePaidEventFilter;
 
     "FolioKilled()"(): FolioKilledEventFilter;
     FolioKilled(): FolioKilledEventFilter;
 
-    "MintingFeeSet(uint256)"(newFee?: null): MintingFeeSetEventFilter;
-    MintingFeeSet(newFee?: null): MintingFeeSetEventFilter;
+    "MandateSet(string)"(newMandate?: null): MandateSetEventFilter;
+    MandateSet(newMandate?: null): MandateSetEventFilter;
 
-    "TradeApproved(uint256,address,address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)"(
-      tradeId?: PromiseOrValue<BigNumberish> | null,
-      from?: PromiseOrValue<string> | null,
-      to?: PromiseOrValue<string> | null,
-      startPrice?: null,
-      endPrice?: null,
-      sellLimitSpot?: null,
-      sellLimitLow?: null,
-      sellLimitHigh?: null,
-      buyLimitSpot?: null,
-      buyLimitLow?: null,
-      buyLimitHigh?: null
-    ): TradeApprovedEventFilter;
-    TradeApproved(
-      tradeId?: PromiseOrValue<BigNumberish> | null,
-      from?: PromiseOrValue<string> | null,
-      to?: PromiseOrValue<string> | null,
-      startPrice?: null,
-      endPrice?: null,
-      sellLimitSpot?: null,
-      sellLimitLow?: null,
-      sellLimitHigh?: null,
-      buyLimitSpot?: null,
-      buyLimitLow?: null,
-      buyLimitHigh?: null
-    ): TradeApprovedEventFilter;
+    "MintFeeSet(uint256)"(newFee?: null): MintFeeSetEventFilter;
+    MintFeeSet(newFee?: null): MintFeeSetEventFilter;
 
-    "TradeDelaySet(uint256)"(newTradeDelay?: null): TradeDelaySetEventFilter;
-    TradeDelaySet(newTradeDelay?: null): TradeDelaySetEventFilter;
+    "ProtocolFeePaid(address,uint256)"(
+      recipient?: PromiseOrValue<string> | null,
+      amount?: null
+    ): ProtocolFeePaidEventFilter;
+    ProtocolFeePaid(
+      recipient?: PromiseOrValue<string> | null,
+      amount?: null
+    ): ProtocolFeePaidEventFilter;
 
-    "TradeKilled(uint256)"(
-      tradeId?: PromiseOrValue<BigNumberish> | null
-    ): TradeKilledEventFilter;
-    TradeKilled(
-      tradeId?: PromiseOrValue<BigNumberish> | null
-    ): TradeKilledEventFilter;
-
-    "TradeOpened(uint256,uint256,uint256,uint256,uint256,uint256,uint256)"(
-      tradeId?: PromiseOrValue<BigNumberish> | null,
-      startPrice?: null,
-      endPrice?: null,
-      sellLimit?: null,
-      buyLimit?: null,
-      start?: null,
-      end?: null
-    ): TradeOpenedEventFilter;
-    TradeOpened(
-      tradeId?: PromiseOrValue<BigNumberish> | null,
-      startPrice?: null,
-      endPrice?: null,
-      sellLimit?: null,
-      buyLimit?: null,
-      start?: null,
-      end?: null
-    ): TradeOpenedEventFilter;
+    "TVLFeeSet(uint256,uint256)"(
+      newFee?: null,
+      feeAnnually?: null
+    ): TVLFeeSetEventFilter;
+    TVLFeeSet(newFee?: null, feeAnnually?: null): TVLFeeSetEventFilter;
   };
 
   estimateGas: {

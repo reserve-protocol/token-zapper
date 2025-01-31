@@ -121,7 +121,7 @@ const _abi = [
         components: [
           {
             internalType: "uint256",
-            name: "tradeDelay",
+            name: "auctionDelay",
             type: "uint256",
           },
           {
@@ -148,13 +148,18 @@ const _abi = [
           },
           {
             internalType: "uint256",
-            name: "folioFee",
+            name: "tvlFee",
             type: "uint256",
           },
           {
             internalType: "uint256",
-            name: "mintingFee",
+            name: "mintFee",
             type: "uint256",
+          },
+          {
+            internalType: "string",
+            name: "mandate",
+            type: "string",
           },
         ],
         internalType: "struct IFolio.FolioAdditionalDetails",
@@ -168,17 +173,17 @@ const _abi = [
       },
       {
         internalType: "address[]",
-        name: "tradeProposers",
+        name: "auctionApprovers",
         type: "address[]",
       },
       {
         internalType: "address[]",
-        name: "tradeLaunchers",
+        name: "auctionLaunchers",
         type: "address[]",
       },
       {
         internalType: "address[]",
-        name: "vibesOfficers",
+        name: "brandManagers",
         type: "address[]",
       },
     ],
@@ -186,12 +191,12 @@ const _abi = [
     outputs: [
       {
         internalType: "address",
-        name: "folio_",
+        name: "folio",
         type: "address",
       },
       {
         internalType: "address",
-        name: "folioAdmin_",
+        name: "proxyAdmin",
         type: "address",
       },
     ],
@@ -241,7 +246,7 @@ const _abi = [
         components: [
           {
             internalType: "uint256",
-            name: "tradeDelay",
+            name: "auctionDelay",
             type: "uint256",
           },
           {
@@ -268,13 +273,18 @@ const _abi = [
           },
           {
             internalType: "uint256",
-            name: "folioFee",
+            name: "tvlFee",
             type: "uint256",
           },
           {
             internalType: "uint256",
-            name: "mintingFee",
+            name: "mintFee",
             type: "uint256",
+          },
+          {
+            internalType: "string",
+            name: "mandate",
+            type: "string",
           },
         ],
         internalType: "struct IFolio.FolioAdditionalDetails",
@@ -309,9 +319,9 @@ const _abi = [
             type: "uint256",
           },
           {
-            internalType: "address",
-            name: "guardian",
-            type: "address",
+            internalType: "address[]",
+            name: "guardians",
+            type: "address[]",
           },
         ],
         internalType: "struct IGovernanceDeployer.GovParams",
@@ -346,9 +356,9 @@ const _abi = [
             type: "uint256",
           },
           {
-            internalType: "address",
-            name: "guardian",
-            type: "address",
+            internalType: "address[]",
+            name: "guardians",
+            type: "address[]",
           },
         ],
         internalType: "struct IGovernanceDeployer.GovParams",

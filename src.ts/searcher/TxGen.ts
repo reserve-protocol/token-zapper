@@ -29,6 +29,7 @@ import { constants } from 'ethers/lib/ethers'
 import { DeployFolioConfig } from '../action/DeployFolioConfig'
 import { ZapParamsStruct } from '../contracts/contracts/Zapper2'
 import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper'
+import { DeployMintFolioAction } from '../action/Folio'
 
 const iface = Zapper__factory.createInterface()
 const simulateAndParse = async (
@@ -103,8 +104,8 @@ const evaluateProgram = async (
       opts.recipient
     )
     params = p
-    data = encodeZapper2Calldata(p, {
-      isDeployZap: opts.deployFolio != null,
+    data = encodeZapper2Calldata(universe, p, {
+      deployFolio: opts.deployFolio,
     })
   } else {
     const p = encodeZapERC20ParamsStruct(
@@ -143,18 +144,18 @@ const evaluateProgram = async (
     },
   }
 
-  console.log(
-    JSON.stringify(
-      {
-        to: simulationPayload.transactions[0].to,
-        from: simulationPayload.transactions[0].from,
-        data: simulationPayload.transactions[0].data,
-        block: universe.currentBlock,
-      },
-      null,
-      2
-    )
-  )
+  // console.log(
+  //   JSON.stringify(
+  //     {
+  //       to: simulationPayload.transactions[0].to,
+  //       from: simulationPayload.transactions[0].from,
+  //       data: simulationPayload.transactions[0].data,
+  //       block: universe.currentBlock,
+  //     },
+  //     null,
+  //     2
+  //   )
+  // )
 
   try {
     return {
@@ -179,6 +180,7 @@ interface TxGenOptions {
   recipient: Address
   dustRecipient: Address
   ethereumInput: boolean
+  slippage: number
 
   deployFolio?: DeployFolioConfig
 }
@@ -333,6 +335,10 @@ const planNode = async (
   }
   const dust = new Set<Token>()
   if (node.action instanceof BaseAction) {
+    if (node.action instanceof DeployMintFolioAction) {
+      return []
+    }
+
     for (const input of node.action.dustTokens) {
       dust.add(input)
     }
@@ -412,11 +418,6 @@ export class TxGen {
   }
 
   public async generate(opts: TxGenOptions) {
-    const logger = this.universe.logger.child({
-      prefix: `TxGen`,
-      zapId: this.zapIdStr,
-      blockNumber: this.blockNumber,
-    })
     const emitIdContract = Contract.createLibrary(
       EmitId__factory.connect(
         this.universe.config.addresses.emitId.address,
@@ -455,6 +456,9 @@ export class TxGen {
 
     const tokensToTransferBackToUser = new Set<Token>()
     for (const node of nodes) {
+      if (node.node.action instanceof DeployMintFolioAction) {
+        break
+      }
       for (const input of node.node.inputs) {
         tokensToTransferBackToUser.add(input)
       }
@@ -508,26 +512,17 @@ export class TxGen {
     }
 
     let outputTokenAddress = outputToken.address
-    if (opts.deployFolio) {
-      outputTokenAddress =
-        await this.universe.folioContext.computeNextFolioTokenAddress(
-          opts.deployFolio
-        )
-
-      logger.info(
-        `Generating deployZap, expected token addr should be '${outputTokenAddress}' based on config`
+    if (!opts.deployFolio) {
+      ctx.transfer(
+        outputTokenAddress,
+        ctx.balanceOf(outputTokenAddress),
+        ctx.recipient
       )
     }
 
     const dustTokens = this.graph
       .getDustTokens()
       .filter((t) => t.address !== outputTokenAddress && t !== outputToken)
-
-    ctx.transfer(
-      outputTokenAddress,
-      ctx.balanceOf(outputTokenAddress),
-      ctx.recipient
-    )
 
     const { res: testSimulation } = await evaluateProgram(
       this.universe,
@@ -539,20 +534,22 @@ export class TxGen {
       outputToken.wei.amount,
       opts
     )
-    for (const token of dustTokens) {
-      let recipient =
-        ctx.dag.result.output.token === token
-          ? ctx.recipient
-          : ctx.dustRecipient
+    if (!opts.deployFolio) {
+      for (const token of dustTokens) {
+        let recipient =
+          ctx.dag.result.output.token === token
+            ? ctx.recipient
+            : ctx.dustRecipient
 
-      const val = ctx.balanceOf(token)
+        const val = ctx.balanceOf(token)
 
-      ctx.transfer(token, val, recipient)
+        ctx.transfer(token, val, recipient)
+      }
     }
 
-    const minOutputWithSlippage = outputToken.from(
-      testSimulation.amountOut - testSimulation.amountOut / 10000n
-    )
+    const minOutputWithSlippage = outputToken
+      .from(testSimulation.amountOut)
+      .mul(outputToken.from(opts.deployFolio?.slippage ?? opts.slippage))
 
     const program = await evaluateProgram(
       this.universe,

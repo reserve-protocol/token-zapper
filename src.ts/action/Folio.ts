@@ -2,17 +2,10 @@ import { constants, ethers } from 'ethers'
 import { Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Token, TokenQuantity } from '../entities/Token'
-import { Contract, Planner, Value } from '../tx-gen/Planner'
+import { Planner, Value } from '../tx-gen/Planner'
 import { BaseAction, DestinationOptions, InteractionConvention } from './Action'
 import { ChainId, ChainIds } from '../configuration/ReserveAddresses'
-import {
-  DeployFolioHelper,
-  DeployFolioHelper__factory,
-  IFolioDeployer,
-  IFolioDeployer__factory,
-} from '../contracts'
-import { getContractAddress } from 'ethers/lib/utils'
-import { Approval } from '../base/Approval'
+import { IFolioDeployer, IFolioDeployer__factory } from '../contracts'
 import { DeployFolioConfig } from './DeployFolioConfig'
 import deployments from '../contracts/deployments.json'
 
@@ -20,13 +13,13 @@ const config = (folioDeployerAddress: string, helperAddress: string) => ({
   deployer: Address.from(folioDeployerAddress),
   helper: Address.from(helperAddress),
 })
-const folioDeployerAddress: Record<
+export const folioDeployerAddress: Record<
   ChainId,
   { deployer: Address; helper: Address }
 > = {
   [ChainIds.Mainnet]: config(constants.AddressZero, constants.AddressZero),
   [ChainIds.Base]: config(
-    '0xa38A23f85Bae3f9aCeB7b07de665619016db1a06',
+    '0x37bb29213ed9bd0cd08508bf3ff09c19891c82e9',
     deployments[8453][0].contracts.DeployFolioHelper.address
   ),
   [ChainIds.Arbitrum]: config(constants.AddressZero, constants.AddressZero),
@@ -89,24 +82,6 @@ export class FolioContext {
     return out
   }
 
-  public async computeNextFolioTokenAddress(
-    config: DeployFolioConfig
-  ): Promise<Address> {
-    const deployer = this.folioDeployerAddress.address
-    let nonce = (await this.universe.provider.getTransactionCount(deployer)) + 1
-
-    if (config.existingTradeProposers.length > 0) {
-      nonce += 1
-    }
-
-    return Address.from(
-      getContractAddress({
-        from: deployer,
-        nonce: nonce,
-      })
-    )
-  }
-
   public get folioDeployerAddress(): Address {
     return folioDeployerAddress[this.universe.chainId as ChainId].deployer
   }
@@ -115,19 +90,10 @@ export class FolioContext {
   }
 
   public readonly deployerContract: IFolioDeployer
-  public readonly deployerHelperContract: DeployFolioHelper
-  public readonly deployerHelperWeiroll: Contract
   public constructor(public readonly universe: Universe) {
     this.deployerContract = IFolioDeployer__factory.connect(
       this.folioDeployerAddress.address,
       universe.provider
-    )
-    this.deployerHelperContract = DeployFolioHelper__factory.connect(
-      this.helperAddress.address,
-      universe.provider
-    )
-    this.deployerHelperWeiroll = Contract.createLibrary(
-      this.deployerHelperContract
     )
   }
 }
@@ -210,56 +176,9 @@ export class DeployMintFolioAction extends BaseAction {
     planner: Planner,
     _: Value[],
     __: Address,
-    predictedInputs: TokenQuantity[]
+    predicted: TokenQuantity[]
   ) {
-    const quote = await this.quote(predictedInputs)
-
-    const slippage = this.config.slippage
-
-    const slippageAmount = quote[0].mul(quote[0].token.from(slippage))
-    const expectedOutput = quote[0].amount - slippageAmount.amount
-
-    let encoded: string
-    if (this.config.governance.type === 'governed') {
-      const serialized = this.config.serializeGoverned(expectedOutput)
-      encoded = this.context.deployerContract.interface.encodeFunctionData(
-        'deployGovernedFolio',
-        [
-          serialized[0],
-          serialized[1],
-          serialized[2],
-          serialized[3],
-          serialized[4],
-          serialized[5],
-        ]
-      )
-    } else {
-      const serialized = this.config.serializeUnGoverned(expectedOutput)
-      encoded = this.context.deployerContract.interface.encodeFunctionData(
-        'deployFolio',
-        [
-          serialized[0],
-          serialized[1],
-          serialized[2],
-          serialized[3],
-          serialized[4],
-          serialized[5],
-        ]
-      )
-    }
-
-    const expectedTokenAddress =
-      await this.context.computeNextFolioTokenAddress(this.config)
-    return [
-      planner.add(
-        this.context.deployerHelperWeiroll.deployFolio(
-          this.context.folioDeployerAddress.address,
-          expectedTokenAddress.address,
-          this.config.governance.type === 'governed',
-          encoded
-        )
-      )!,
-    ]
+    return null
   }
 
   public constructor(
@@ -271,11 +190,9 @@ export class DeployMintFolioAction extends BaseAction {
       expectedToken.address,
       config.basicDetails.basket.map((i) => i.token),
       [expectedToken],
-      InteractionConvention.ApprovalRequired,
+      InteractionConvention.None,
       DestinationOptions.Callee,
-      config.basicDetails.basket.map(
-        (i) => new Approval(i.token, context.folioDeployerAddress)
-      )
+      []
     )
     if (
       config.basicDetails.basket.find(

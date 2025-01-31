@@ -20,6 +20,7 @@ struct ZapperOutput {
     uint256 gasUsed;
 }
 
+
 contract Zapper is ReentrancyGuard {
     IWrappedNative internal immutable wrappedNative;
     IPermit2 internal immutable permit2;

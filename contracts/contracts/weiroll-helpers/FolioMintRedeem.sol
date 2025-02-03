@@ -14,7 +14,7 @@ contract FolioMintRedeem {
       uint256 assetBal = IERC20(assets[i]).balanceOf(address(this));
       uint256 qtyPrShare = amounts[i];
       // {share} = {tok} / {tok/share}
-      total = Math.max(total, assetBal / qtyPrShare);
+      total = Math.max(total, assetBal / qtyPrShare * 1e18);
     }
     return total;
   }

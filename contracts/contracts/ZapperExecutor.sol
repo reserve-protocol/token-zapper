@@ -120,6 +120,9 @@ contract ZapperExecutor is VM, PreventTampering {
     if (initialShares == type(uint256).max) {
         revert('NO SHARES');
     }
+    for (uint256 i = 0; i < config.basicDetails.assets.length; i++) {
+        config.basicDetails.amounts[i] = initialShares * config.basicDetails.amounts[i] / 1e18;
+    }
 
     config.basicDetails.initialShares = initialShares;
 

@@ -115,10 +115,14 @@ export class FolioContext {
   }
 
   public async getFolioDeployment(token: Token) {
-    if (!this.isFolio(token)) {
+    if (!(await this.isFolio(token))) {
       throw new Error('Not a folio')
     }
-    return this.folios.get(token.address)!!
+    const out = this.folios.get(token.address)
+    if (!out) {
+      throw new Error('Folio deployment not found')
+    }
+    return out
   }
 
   public async isFolio(token: Token) {

@@ -2003,7 +2003,7 @@
           ]
         },
         "Zapper2": {
-          "address": "0xB41541fB285Cd2B4DF22Fe85788c4e43DF0EB4D4",
+          "address": "0xE7AB64BE5ea6A4ABd7C6cdeEf78D59A82C149cFf",
           "abi": [
             {
               "inputs": [
@@ -2612,7 +2612,7 @@
           ]
         },
         "ZapperExecutor": {
-          "address": "0x522Ae7F0aE430c3AC1993E27a555024C1cB72FA3",
+          "address": "0x0437Bd1C0C1EF94A142d67CC03c36d2fCFD387dd",
           "abi": [
             {
               "inputs": [

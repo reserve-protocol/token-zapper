@@ -403,6 +403,30 @@ describe('base zapper', () => {
       })
     }
   })
+  //
+
+  describe('folio-zaps', () => {
+    for (const testCase of folioTests) {
+      describe(testCase.name, () => {
+        it('produces the basket graph', async () => {
+          expect.assertions(1)
+          try {
+            const inputQty = universe.commonTokens.WETH.from(0.1)
+            const folioToken = await universe.getToken(
+              '0x9da3f8cb99361c8899485e4cac2031914ca92262'
+            )
+            const zap = await universe.zap(inputQty, folioToken, testUser)
+            console.log(zap.toString())
+          } catch (e) {
+            console.error(e)
+            expect(true).toBe(false)
+
+            throw e
+          }
+        }, 60000)
+      })
+    }
+  })
 
   describe('actions', () => {
     for (const testCase of individualIntegrations) {

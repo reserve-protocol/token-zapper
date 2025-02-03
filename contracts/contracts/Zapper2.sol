@@ -40,7 +40,8 @@ contract Zapper2 is ReentrancyGuard {
     }
     function zapDeploy(
         ZapParams calldata params,
-        DeployFolioConfig calldata config
+        DeployFolioConfig calldata config,
+        bytes32 nonce
     ) external payable nonReentrant returns (ZapperOutput memory out) {
         uint256 startGas = gasleft();
         pullFundsFromSender(params.tokenIn, params.amountIn, address(zapperExecutor));
@@ -50,7 +51,8 @@ contract Zapper2 is ReentrancyGuard {
             params.state,
             params.tokens,
             config,
-            params.recipient
+            params.recipient,
+            nonce
         );
         out.amountOut = deployOutput.amountOut;
         out.dust = deployOutput.dust;

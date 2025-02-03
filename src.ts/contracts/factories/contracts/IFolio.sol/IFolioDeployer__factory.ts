@@ -186,6 +186,11 @@ const _abi = [
         name: "brandManagers",
         type: "address[]",
       },
+      {
+        internalType: "bytes32",
+        name: "deploymentNonce",
+        type: "bytes32",
+      },
     ],
     name: "deployFolio",
     outputs: [
@@ -386,6 +391,11 @@ const _abi = [
         internalType: "struct GovRoles",
         name: "govRoles",
         type: "tuple",
+      },
+      {
+        internalType: "bytes32",
+        name: "deploymentNonce",
+        type: "bytes32",
       },
     ],
     name: "deployGovernedFolio",

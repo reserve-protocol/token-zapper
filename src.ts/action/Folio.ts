@@ -19,7 +19,7 @@ export const folioDeployerAddress: Record<
 > = {
   [ChainIds.Mainnet]: config(constants.AddressZero, constants.AddressZero),
   [ChainIds.Base]: config(
-    '0x37bb29213ed9bd0cd08508bf3ff09c19891c82e9',
+    '0x4c175E9499d08b0ca8206BbfA035f8228A74AC6F',
     deployments[8453][0].contracts.DeployFolioHelper.address
   ),
   [ChainIds.Arbitrum]: config(constants.AddressZero, constants.AddressZero),

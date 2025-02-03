@@ -1961,7 +1961,7 @@
           ]
         },
         "Zapper2": {
-          "address": "0x75327a429459a9b182f6063784118a08b2269e5c",
+          "address": "0xB41541fB285Cd2B4DF22Fe85788c4e43DF0EB4D4",
           "abi": [
             {
               "inputs": [
@@ -2309,6 +2309,11 @@
                   "internalType": "struct DeployFolioConfig",
                   "name": "config",
                   "type": "tuple"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "nonce",
+                  "type": "bytes32"
                 }
               ],
               "name": "zapDeploy",
@@ -2565,7 +2570,7 @@
           ]
         },
         "ZapperExecutor": {
-          "address": "0x6a4697f3fd07c9E7D58dB76eFfa80Ff3dd5e7C20",
+          "address": "0x522Ae7F0aE430c3AC1993E27a555024C1cB72FA3",
           "abi": [
             {
               "inputs": [
@@ -2921,6 +2926,11 @@
                   "internalType": "address",
                   "name": "recipient",
                   "type": "address"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "nonce",
+                  "type": "bytes32"
                 }
               ],
               "name": "executeDeploy",

@@ -230,7 +230,7 @@ export declare namespace IGovernanceDeployer {
 export interface Zapper2Interface extends utils.Interface {
   functions: {
     "zap((address,uint256,bytes32[],bytes[],address[],uint256,address,address))": FunctionFragment;
-    "zapDeploy((address,uint256,bytes32[],bytes[],address[],uint256,address,address),(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(address[],address[],address[]),bool,address,address,(uint48,uint32,uint256,uint256,uint256,address[]),(uint48,uint32,uint256,uint256,uint256,address[])))": FunctionFragment;
+    "zapDeploy((address,uint256,bytes32[],bytes[],address[],uint256,address,address),(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(address[],address[],address[]),bool,address,address,(uint48,uint32,uint256,uint256,uint256,address[]),(uint48,uint32,uint256,uint256,uint256,address[])),bytes32)": FunctionFragment;
     "zapERC20((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
     "zapETH((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
     "zapToETH((address,uint256,bytes32[],bytes[],address[],uint256,address))": FunctionFragment;
@@ -251,7 +251,11 @@ export interface Zapper2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "zapDeploy",
-    values: [ZapParamsStruct, DeployFolioConfigStruct]
+    values: [
+      ZapParamsStruct,
+      DeployFolioConfigStruct,
+      PromiseOrValue<BytesLike>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "zapERC20",
@@ -310,6 +314,7 @@ export interface Zapper2 extends BaseContract {
     zapDeploy(
       params: ZapParamsStruct,
       config: DeployFolioConfigStruct,
+      nonce: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -337,6 +342,7 @@ export interface Zapper2 extends BaseContract {
   zapDeploy(
     params: ZapParamsStruct,
     config: DeployFolioConfigStruct,
+    nonce: PromiseOrValue<BytesLike>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -364,6 +370,7 @@ export interface Zapper2 extends BaseContract {
     zapDeploy(
       params: ZapParamsStruct,
       config: DeployFolioConfigStruct,
+      nonce: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<ZapperOutputStructOutput>;
 
@@ -394,6 +401,7 @@ export interface Zapper2 extends BaseContract {
     zapDeploy(
       params: ZapParamsStruct,
       config: DeployFolioConfigStruct,
+      nonce: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -422,6 +430,7 @@ export interface Zapper2 extends BaseContract {
     zapDeploy(
       params: ZapParamsStruct,
       config: DeployFolioConfigStruct,
+      nonce: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

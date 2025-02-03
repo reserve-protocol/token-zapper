@@ -176,7 +176,7 @@ export interface ZapperExecutorInterface extends utils.Interface {
     "assertEqual(uint256,uint256)": FunctionFragment;
     "assertLarger(uint256,uint256)": FunctionFragment;
     "execute(bytes32[],bytes[],address[])": FunctionFragment;
-    "executeDeploy(bytes32[],bytes[],address[],(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(address[],address[],address[]),bool,address,address,(uint48,uint32,uint256,uint256,uint256,address[]),(uint48,uint32,uint256,uint256,uint256,address[])),address)": FunctionFragment;
+    "executeDeploy(bytes32[],bytes[],address[],(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(address[],address[],address[]),bool,address,address,(uint48,uint32,uint256,uint256,uint256,address[]),(uint48,uint32,uint256,uint256,uint256,address[])),address,bytes32)": FunctionFragment;
     "fpMul(uint256,uint256,uint256)": FunctionFragment;
     "mintMaxRToken(address,address,address)": FunctionFragment;
     "rawCall(address,uint256,bytes)": FunctionFragment;
@@ -223,7 +223,8 @@ export interface ZapperExecutorInterface extends utils.Interface {
       PromiseOrValue<BytesLike>[],
       PromiseOrValue<string>[],
       DeployFolioConfigStruct,
-      PromiseOrValue<string>
+      PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>
     ]
   ): string;
   encodeFunctionData(
@@ -338,6 +339,7 @@ export interface ZapperExecutor extends BaseContract {
       tokens: PromiseOrValue<string>[],
       config: DeployFolioConfigStruct,
       recipient: PromiseOrValue<string>,
+      nonce: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -400,6 +402,7 @@ export interface ZapperExecutor extends BaseContract {
     tokens: PromiseOrValue<string>[],
     config: DeployFolioConfigStruct,
     recipient: PromiseOrValue<string>,
+    nonce: PromiseOrValue<BytesLike>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -462,6 +465,7 @@ export interface ZapperExecutor extends BaseContract {
       tokens: PromiseOrValue<string>[],
       config: DeployFolioConfigStruct,
       recipient: PromiseOrValue<string>,
+      nonce: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<ExecuteDeployOutputStructOutput>;
 
@@ -527,6 +531,7 @@ export interface ZapperExecutor extends BaseContract {
       tokens: PromiseOrValue<string>[],
       config: DeployFolioConfigStruct,
       recipient: PromiseOrValue<string>,
+      nonce: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -590,6 +595,7 @@ export interface ZapperExecutor extends BaseContract {
       tokens: PromiseOrValue<string>[],
       config: DeployFolioConfigStruct,
       recipient: PromiseOrValue<string>,
+      nonce: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

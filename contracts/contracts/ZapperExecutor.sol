@@ -94,7 +94,8 @@ contract ZapperExecutor is VM, PreventTampering {
       bytes[] memory state,
       IERC20[] memory tokens,
       DeployFolioConfig memory config,
-      address recipient
+      address recipient,
+      bytes32 nonce
   ) revertOnCodeHashChange public payable returns (ExecuteDeployOutput memory out) {
     _execute(commands, state);
     // DSTEP 2: Deploy folio
@@ -129,7 +130,8 @@ contract ZapperExecutor is VM, PreventTampering {
             config.additionalDetails,
             config.ownerGovParams,
             config.tradingGovParams,
-            config.govRoles
+            config.govRoles,
+            nonce
         );
         out.amountOut = IERC20(folio).balanceOf(address(this));
         IERC20(folio).transfer(recipient, out.amountOut);
@@ -140,7 +142,8 @@ contract ZapperExecutor is VM, PreventTampering {
             config.owner,
             config.govRoles.existingTradeProposers,
             config.govRoles.tradeLaunchers,
-            config.govRoles.vibesOfficers
+            config.govRoles.vibesOfficers,
+            nonce
         );
         out.amountOut = IERC20(folio).balanceOf(address(this));
         IERC20(folio).transfer(recipient, out.amountOut);

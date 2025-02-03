@@ -127,8 +127,8 @@ export declare namespace IGovernanceDeployer {
 
 export interface IFolioDeployerInterface extends utils.Interface {
   functions: {
-    "deployFolio((string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),address,address[],address[],address[])": FunctionFragment;
-    "deployGovernedFolio(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(uint48,uint32,uint256,uint256,uint256,address[]),(uint48,uint32,uint256,uint256,uint256,address[]),(address[],address[],address[]))": FunctionFragment;
+    "deployFolio((string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),address,address[],address[],address[],bytes32)": FunctionFragment;
+    "deployGovernedFolio(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(uint48,uint32,uint256,uint256,uint256,address[]),(uint48,uint32,uint256,uint256,uint256,address[]),(address[],address[],address[]),bytes32)": FunctionFragment;
     "folioImplementation()": FunctionFragment;
   };
 
@@ -147,7 +147,8 @@ export interface IFolioDeployerInterface extends utils.Interface {
       PromiseOrValue<string>,
       PromiseOrValue<string>[],
       PromiseOrValue<string>[],
-      PromiseOrValue<string>[]
+      PromiseOrValue<string>[],
+      PromiseOrValue<BytesLike>
     ]
   ): string;
   encodeFunctionData(
@@ -158,7 +159,8 @@ export interface IFolioDeployerInterface extends utils.Interface {
       IFolio.FolioAdditionalDetailsStruct,
       IGovernanceDeployer.GovParamsStruct,
       IGovernanceDeployer.GovParamsStruct,
-      GovRolesStruct
+      GovRolesStruct,
+      PromiseOrValue<BytesLike>
     ]
   ): string;
   encodeFunctionData(
@@ -250,6 +252,7 @@ export interface IFolioDeployer extends BaseContract {
       auctionApprovers: PromiseOrValue<string>[],
       auctionLaunchers: PromiseOrValue<string>[],
       brandManagers: PromiseOrValue<string>[],
+      deploymentNonce: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -260,6 +263,7 @@ export interface IFolioDeployer extends BaseContract {
       ownerGovParams: IGovernanceDeployer.GovParamsStruct,
       tradingGovParams: IGovernanceDeployer.GovParamsStruct,
       govRoles: GovRolesStruct,
+      deploymentNonce: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -273,6 +277,7 @@ export interface IFolioDeployer extends BaseContract {
     auctionApprovers: PromiseOrValue<string>[],
     auctionLaunchers: PromiseOrValue<string>[],
     brandManagers: PromiseOrValue<string>[],
+    deploymentNonce: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -283,6 +288,7 @@ export interface IFolioDeployer extends BaseContract {
     ownerGovParams: IGovernanceDeployer.GovParamsStruct,
     tradingGovParams: IGovernanceDeployer.GovParamsStruct,
     govRoles: GovRolesStruct,
+    deploymentNonce: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -296,6 +302,7 @@ export interface IFolioDeployer extends BaseContract {
       auctionApprovers: PromiseOrValue<string>[],
       auctionLaunchers: PromiseOrValue<string>[],
       brandManagers: PromiseOrValue<string>[],
+      deploymentNonce: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[string, string] & { folio: string; proxyAdmin: string }>;
 
@@ -306,6 +313,7 @@ export interface IFolioDeployer extends BaseContract {
       ownerGovParams: IGovernanceDeployer.GovParamsStruct,
       tradingGovParams: IGovernanceDeployer.GovParamsStruct,
       govRoles: GovRolesStruct,
+      deploymentNonce: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<
       [string, string, string, string, string, string] & {
@@ -359,6 +367,7 @@ export interface IFolioDeployer extends BaseContract {
       auctionApprovers: PromiseOrValue<string>[],
       auctionLaunchers: PromiseOrValue<string>[],
       brandManagers: PromiseOrValue<string>[],
+      deploymentNonce: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -369,6 +378,7 @@ export interface IFolioDeployer extends BaseContract {
       ownerGovParams: IGovernanceDeployer.GovParamsStruct,
       tradingGovParams: IGovernanceDeployer.GovParamsStruct,
       govRoles: GovRolesStruct,
+      deploymentNonce: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -383,6 +393,7 @@ export interface IFolioDeployer extends BaseContract {
       auctionApprovers: PromiseOrValue<string>[],
       auctionLaunchers: PromiseOrValue<string>[],
       brandManagers: PromiseOrValue<string>[],
+      deploymentNonce: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -393,6 +404,7 @@ export interface IFolioDeployer extends BaseContract {
       ownerGovParams: IGovernanceDeployer.GovParamsStruct,
       tradingGovParams: IGovernanceDeployer.GovParamsStruct,
       govRoles: GovRolesStruct,
+      deploymentNonce: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

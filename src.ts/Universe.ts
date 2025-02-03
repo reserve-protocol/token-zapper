@@ -983,6 +983,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
 
+
   public async updateBlockState(block: number, gasPrice: bigint) {
     if (block <= this.blockState.currentBlock) {
       return

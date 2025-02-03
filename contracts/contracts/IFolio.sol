@@ -169,7 +169,8 @@ interface IFolioDeployer {
     address owner,
     address[] memory auctionApprovers,
     address[] memory auctionLaunchers,
-    address[] memory brandManagers
+    address[] memory brandManagers,
+    bytes32 deploymentNonce
   ) external returns (address folio, address proxyAdmin);
 
   function deployGovernedFolio(
@@ -178,7 +179,8 @@ interface IFolioDeployer {
     IFolio.FolioAdditionalDetails calldata additionalDetails,
     IGovernanceDeployer.GovParams calldata ownerGovParams,
     IGovernanceDeployer.GovParams calldata tradingGovParams,
-    GovRoles calldata govRoles
+    GovRoles calldata govRoles,
+    bytes32 deploymentNonce
   )
     external
     returns (

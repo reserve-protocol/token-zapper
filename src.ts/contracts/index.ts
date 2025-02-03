@@ -224,6 +224,8 @@ export type { EmitId } from "./contracts/weiroll-helpers/EmitId";
 export { EmitId__factory } from "./factories/contracts/weiroll-helpers/EmitId__factory";
 export type { EthBalance } from "./contracts/weiroll-helpers/EthBalance";
 export { EthBalance__factory } from "./factories/contracts/weiroll-helpers/EthBalance__factory";
+export type { FolioMintRedeem } from "./contracts/weiroll-helpers/FolioMintRedeem";
+export { FolioMintRedeem__factory } from "./factories/contracts/weiroll-helpers/FolioMintRedeem__factory";
 export type { Univ2SwapHelper } from "./contracts/weiroll-helpers/Univ2SwapHelper";
 export { Univ2SwapHelper__factory } from "./factories/contracts/weiroll-helpers/Univ2SwapHelper__factory";
 export type { IUniV3Factory } from "./contracts/weiroll-helpers/UniV3RouterCall.sol/IUniV3Factory";

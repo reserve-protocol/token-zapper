@@ -93,22 +93,131 @@ export declare namespace IFolio {
 
 export interface IFolioInterface extends utils.Interface {
   functions: {
+    "AUCTION_APPROVER()": FunctionFragment;
+    "AUCTION_LAUNCHER()": FunctionFragment;
+    "BRAND_MANAGER()": FunctionFragment;
+    "allowance(address,address)": FunctionFragment;
+    "approve(address,uint256)": FunctionFragment;
+    "balanceOf(address)": FunctionFragment;
     "distributeFees()": FunctionFragment;
+    "folio()": FunctionFragment;
+    "mint(uint256,address)": FunctionFragment;
+    "redeem(uint256,address,address[],uint256[])": FunctionFragment;
+    "totalSupply()": FunctionFragment;
+    "transfer(address,uint256)": FunctionFragment;
+    "transferFrom(address,address,uint256)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "distributeFees"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic:
+      | "AUCTION_APPROVER"
+      | "AUCTION_LAUNCHER"
+      | "BRAND_MANAGER"
+      | "allowance"
+      | "approve"
+      | "balanceOf"
+      | "distributeFees"
+      | "folio"
+      | "mint"
+      | "redeem"
+      | "totalSupply"
+      | "transfer"
+      | "transferFrom"
+  ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "AUCTION_APPROVER",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "AUCTION_LAUNCHER",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "BRAND_MANAGER",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "allowance",
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "approve",
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "balanceOf",
+    values: [PromiseOrValue<string>]
+  ): string;
   encodeFunctionData(
     functionFragment: "distributeFees",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "folio", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "mint",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "redeem",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>[],
+      PromiseOrValue<BigNumberish>[]
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "totalSupply",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transfer",
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transferFrom",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "AUCTION_APPROVER",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "AUCTION_LAUNCHER",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "BRAND_MANAGER",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "distributeFees",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "folio", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "totalSupply",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "transferFrom",
+    data: BytesLike
+  ): Result;
 
   events: {
+    "Approval(address,address,uint256)": EventFragment;
     "AuctionApproved(uint256,address,address,tuple)": EventFragment;
     "AuctionBid(uint256,uint256,uint256)": EventFragment;
     "AuctionClosed(uint256)": EventFragment;
@@ -124,8 +233,10 @@ export interface IFolioInterface extends utils.Interface {
     "MintFeeSet(uint256)": EventFragment;
     "ProtocolFeePaid(address,uint256)": EventFragment;
     "TVLFeeSet(uint256,uint256)": EventFragment;
+    "Transfer(address,address,uint256)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AuctionApproved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AuctionBid"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AuctionClosed"): EventFragment;
@@ -141,7 +252,20 @@ export interface IFolioInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "MintFeeSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ProtocolFeePaid"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "TVLFeeSet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
 }
+
+export interface ApprovalEventObject {
+  owner: string;
+  spender: string;
+  value: BigNumber;
+}
+export type ApprovalEvent = TypedEvent<
+  [string, string, BigNumber],
+  ApprovalEventObject
+>;
+
+export type ApprovalEventFilter = TypedEventFilter<ApprovalEvent>;
 
 export interface AuctionApprovedEventObject {
   auctionId: BigNumber;
@@ -295,6 +419,18 @@ export type TVLFeeSetEvent = TypedEvent<
 
 export type TVLFeeSetEventFilter = TypedEventFilter<TVLFeeSetEvent>;
 
+export interface TransferEventObject {
+  from: string;
+  to: string;
+  value: BigNumber;
+}
+export type TransferEvent = TypedEvent<
+  [string, string, BigNumber],
+  TransferEventObject
+>;
+
+export type TransferEventFilter = TypedEventFilter<TransferEvent>;
+
 export interface IFolio extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
@@ -322,20 +458,207 @@ export interface IFolio extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    AUCTION_APPROVER(overrides?: CallOverrides): Promise<[string]>;
+
+    AUCTION_LAUNCHER(overrides?: CallOverrides): Promise<[string]>;
+
+    BRAND_MANAGER(overrides?: CallOverrides): Promise<[string]>;
+
+    allowance(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    approve(
+      spender: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    balanceOf(
+      account: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     distributeFees(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    folio(
+      overrides?: CallOverrides
+    ): Promise<
+      [string[], BigNumber[]] & { _assets: string[]; _amounts: BigNumber[] }
+    >;
+
+    mint(
+      shares: PromiseOrValue<BigNumberish>,
+      receiver: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    redeem(
+      shares: PromiseOrValue<BigNumberish>,
+      receiver: PromiseOrValue<string>,
+      assets: PromiseOrValue<string>[],
+      minAmountsOut: PromiseOrValue<BigNumberish>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    transfer(
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    transferFrom(
+      from: PromiseOrValue<string>,
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
+
+  AUCTION_APPROVER(overrides?: CallOverrides): Promise<string>;
+
+  AUCTION_LAUNCHER(overrides?: CallOverrides): Promise<string>;
+
+  BRAND_MANAGER(overrides?: CallOverrides): Promise<string>;
+
+  allowance(
+    owner: PromiseOrValue<string>,
+    spender: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  approve(
+    spender: PromiseOrValue<string>,
+    amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  balanceOf(
+    account: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   distributeFees(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  folio(
+    overrides?: CallOverrides
+  ): Promise<
+    [string[], BigNumber[]] & { _assets: string[]; _amounts: BigNumber[] }
+  >;
+
+  mint(
+    shares: PromiseOrValue<BigNumberish>,
+    receiver: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  redeem(
+    shares: PromiseOrValue<BigNumberish>,
+    receiver: PromiseOrValue<string>,
+    assets: PromiseOrValue<string>[],
+    minAmountsOut: PromiseOrValue<BigNumberish>[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
+
+  transfer(
+    to: PromiseOrValue<string>,
+    amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  transferFrom(
+    from: PromiseOrValue<string>,
+    to: PromiseOrValue<string>,
+    amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
+    AUCTION_APPROVER(overrides?: CallOverrides): Promise<string>;
+
+    AUCTION_LAUNCHER(overrides?: CallOverrides): Promise<string>;
+
+    BRAND_MANAGER(overrides?: CallOverrides): Promise<string>;
+
+    allowance(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    approve(
+      spender: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    balanceOf(
+      account: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     distributeFees(overrides?: CallOverrides): Promise<void>;
+
+    folio(
+      overrides?: CallOverrides
+    ): Promise<
+      [string[], BigNumber[]] & { _assets: string[]; _amounts: BigNumber[] }
+    >;
+
+    mint(
+      shares: PromiseOrValue<BigNumberish>,
+      receiver: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<
+      [string[], BigNumber[]] & { _assets: string[]; _amounts: BigNumber[] }
+    >;
+
+    redeem(
+      shares: PromiseOrValue<BigNumberish>,
+      receiver: PromiseOrValue<string>,
+      assets: PromiseOrValue<string>[],
+      minAmountsOut: PromiseOrValue<BigNumberish>[],
+      overrides?: CallOverrides
+    ): Promise<BigNumber[]>;
+
+    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
+
+    transfer(
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    transferFrom(
+      from: PromiseOrValue<string>,
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
   };
 
   filters: {
+    "Approval(address,address,uint256)"(
+      owner?: PromiseOrValue<string> | null,
+      spender?: PromiseOrValue<string> | null,
+      value?: null
+    ): ApprovalEventFilter;
+    Approval(
+      owner?: PromiseOrValue<string> | null,
+      spender?: PromiseOrValue<string> | null,
+      value?: null
+    ): ApprovalEventFilter;
+
     "AuctionApproved(uint256,address,address,tuple)"(
       auctionId?: PromiseOrValue<BigNumberish> | null,
       from?: PromiseOrValue<string> | null,
@@ -441,16 +764,135 @@ export interface IFolio extends BaseContract {
       feeAnnually?: null
     ): TVLFeeSetEventFilter;
     TVLFeeSet(newFee?: null, feeAnnually?: null): TVLFeeSetEventFilter;
+
+    "Transfer(address,address,uint256)"(
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null,
+      value?: null
+    ): TransferEventFilter;
+    Transfer(
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null,
+      value?: null
+    ): TransferEventFilter;
   };
 
   estimateGas: {
+    AUCTION_APPROVER(overrides?: CallOverrides): Promise<BigNumber>;
+
+    AUCTION_LAUNCHER(overrides?: CallOverrides): Promise<BigNumber>;
+
+    BRAND_MANAGER(overrides?: CallOverrides): Promise<BigNumber>;
+
+    allowance(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    approve(
+      spender: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    balanceOf(
+      account: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     distributeFees(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    folio(overrides?: CallOverrides): Promise<BigNumber>;
+
+    mint(
+      shares: PromiseOrValue<BigNumberish>,
+      receiver: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    redeem(
+      shares: PromiseOrValue<BigNumberish>,
+      receiver: PromiseOrValue<string>,
+      assets: PromiseOrValue<string>[],
+      minAmountsOut: PromiseOrValue<BigNumberish>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
+
+    transfer(
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    transferFrom(
+      from: PromiseOrValue<string>,
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    AUCTION_APPROVER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    AUCTION_LAUNCHER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    BRAND_MANAGER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    allowance(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    approve(
+      spender: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    balanceOf(
+      account: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     distributeFees(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    folio(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    mint(
+      shares: PromiseOrValue<BigNumberish>,
+      receiver: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    redeem(
+      shares: PromiseOrValue<BigNumberish>,
+      receiver: PromiseOrValue<string>,
+      assets: PromiseOrValue<string>[],
+      minAmountsOut: PromiseOrValue<BigNumberish>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    transfer(
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    transferFrom(
+      from: PromiseOrValue<string>,
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

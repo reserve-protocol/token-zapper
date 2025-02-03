@@ -659,7 +659,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this.blockState.gasPrice
   }
 
-  public async getToken(address: Address): Promise<Token> {
+  public async getToken(address: Address|string): Promise<Token> {
+    if (typeof address === 'string') {
+      address = Address.from(address)
+    }
     let previous = this.tokens.get(address)
     if (previous == null) {
       const data = await this.loadToken(address)
@@ -1133,6 +1136,9 @@ export class Universe<const UniverseConf extends Config = Config> {
     if (typeof outputToken === 'string') {
       outputToken = await this.getToken(Address.from(outputToken))
     }
+    await this.folioContext.isFolio(userInput.token)
+    await this.folioContext.isFolio(outputToken)
+
     try {
       const isNative = userInput.token === this.nativeToken
       userInput = isNative ? userInput.into(this.wrappedNativeToken) : userInput

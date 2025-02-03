@@ -340,7 +340,7 @@ export class MintFolioAction extends BaseAction {
     return [
       planner.add(
         this.context.mintRedeemContractWeiroll.mint(
-          this.context.mintRedeemContract.address
+          this.deployment.fToken.address.address
         )
       )!,
     ]

@@ -547,9 +547,14 @@ export class TxGen {
       }
     }
 
-    const minOutputWithSlippage = outputToken
-      .from(testSimulation.amountOut)
-      .mul(outputToken.from(opts.deployFolio?.slippage ?? opts.slippage))
+    const amountOut = outputToken.from(testSimulation.amountOut)
+    const minOutputWithSlippage = amountOut.sub(
+      amountOut.mul(
+        outputToken.from(opts.deployFolio?.slippage ?? opts.slippage)
+      )
+    )
+
+    console.log('amountout', minOutputWithSlippage.toString())
 
     const program = await evaluateProgram(
       this.universe,

@@ -123,6 +123,8 @@ export const encodeZapper2Calldata = (
     const deployerContractAddress =
       folioDeployerAddress[universe.chainId as ChainId].deployer.address
 
+    const nonce = ethers.utils.randomBytes(32)
+
     return zapper2Interface.encodeFunctionData('zapDeploy', [
       payload,
       {
@@ -143,6 +145,7 @@ export const encodeZapper2Calldata = (
         ownerGovParams: ownerGovParams,
         tradingGovParams: tradingGovParams,
       },
+      nonce,
     ])
   }
   return zapper2Interface.encodeFunctionData('zap', [payload])

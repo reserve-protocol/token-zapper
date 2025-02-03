@@ -554,8 +554,6 @@ export class TxGen {
       )
     )
 
-    console.log('amountout', minOutputWithSlippage.toString())
-
     const program = await evaluateProgram(
       this.universe,
       planner,

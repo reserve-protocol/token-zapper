@@ -298,7 +298,7 @@ export class NodeProxy {
     const incoming = this.graph._incomingEdges[this.id]!
 
     return incoming.map((edge) =>
-      this.graph.getEdge(edge.source, edge.token, edge.recipient)
+      this.graph.getEdge(edge.source, edge.token, this.id)
     )
   }
 }
@@ -734,11 +734,19 @@ class EdgeProxy {
   private get edgeRecipientIndex(): number {
     return this.outgoingEdge.getRecipientIndex(this.edge.recipient)
   }
+
   public readonly token: Token
 
   public get proportion() {
     this.checkEdgeExists()
     return this.outgoingEdge.innerWeight(this.edgeRecipientIndex)
+  }
+  public get parts() {
+    return this.outgoingEdge.parts[this.edgeRecipientIndex]
+  }
+  public set parts(proportion: number) {
+    this.checkEdgeExists()
+    this.outgoingEdge.parts[this.edgeRecipientIndex] = proportion
   }
   public get proportionBn() {
     this.checkEdgeExists()
@@ -2722,7 +2730,31 @@ const inferDustProducingNodes = (g: TokenFlowGraph) => {
         )
         mainSplits.dustEdge.set(splitIndex, [...dustProduced])
         node.nodeType = NodeType.SplitWithDust
+        g._outgoingEdges[node.id]!.getEdge(edge.token).min = 0
       }
+    }
+  }
+}
+const backPropagateInputProportions = async (g: TokenFlowGraph) => {
+  const tokenProportions = new Map<Token, number>()
+  for (const node of g.nodes()) {
+    if (node.action instanceof BaseAction && !node.action.is1to1) {
+      const inputProportions = await node.action.inputProportions()
+      for (const inputProportion of inputProportions) {
+        tokenProportions.set(inputProportion.token, inputProportion.asNumber())
+      }
+    }
+  }
+  for (const node of g.nodes()) {
+    for (const edge of node.outgoingEdges()) {
+      let sum = 0
+      for (const token of edge.dustTokens) {
+        sum += tokenProportions.get(token) ?? 0
+      }
+      if (sum === 0) {
+        continue
+      }
+      edge.parts = sum
     }
   }
 }
@@ -2783,6 +2815,7 @@ const optimise = async (
   g = removeNodes(g, findNodesWithoutSources(g))
   g = removeUselessNodes(removeRedundantSplits(g))
   inferDustProducingNodes(g)
+  await backPropagateInputProportions(g)
 
   bestSoFar = await minimizeDust(
     g,

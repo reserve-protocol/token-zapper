@@ -67,7 +67,7 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     router: '0x2626664c2603336e57b271c5c0b26f421741e481',
     quoter: '0x3d4e44eb1374240ce5f1b871ab261cd16335b76a',
     factory: '0x33128a8fc17869897dce68ed026d694621f6fdfd',
-    pools: [],
+    pools: ['0x5ffb17d686f6c7fb5105633734e76e632c4a5979'],
     staticPools: baseUniV3.map((i) => ({
       ...i,
       feeTier: Number(i.feeTier),
@@ -614,18 +614,20 @@ export const setupUniswapV3 = async (universe: Universe) => {
     fs.writeFileSync(
       `src.ts/configuration/data/${chainId}/univ3.json`,
       JSON.stringify(
-        allPools.map((i) => ({
-          id: i.address.address,
-          feeTier: Number(i.fee),
-          token0: {
-            id: i.token0.address.address,
-            symbol: i.token0.symbol,
-          },
-          token1: {
-            id: i.token1.address.address,
-            symbol: i.token1.symbol,
-          },
-        })),
+        allPools
+          .map((i) => ({
+            id: i.address.address,
+            feeTier: Number(i.fee),
+            token0: {
+              id: i.token0.address.address,
+              symbol: i.token0.symbol,
+            },
+            token1: {
+              id: i.token1.address.address,
+              symbol: i.token1.symbol,
+            },
+          }))
+          .sort((l, r) => l.id.localeCompare(r.id)),
         null,
         2
       )

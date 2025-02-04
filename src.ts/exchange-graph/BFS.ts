@@ -253,7 +253,7 @@ export const bestPath = async (
         continue
       }
     }
-    if (node.steps >= (maxSteps + 1) * 2) {
+    if (node.steps >= maxSteps * 2) {
       continue
     }
     const vertex = graph.vertices.get(node.token)
@@ -278,7 +278,10 @@ export const bestPath = async (
               .map(async (action) => {
                 try {
                   if (action.isTrade) {
-                    const bals = await action.balances(ctx)
+                    const bals = await action.balances(
+                      ctx,
+                      node.legAmount[0].token
+                    )
                     const bal = bals.find(
                       (b) => b.token === node.legAmount[0].token
                     )

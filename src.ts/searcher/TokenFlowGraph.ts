@@ -3393,6 +3393,22 @@ export class TokenFlowGraphSearcher {
       'split'
     )
     out.graph._outgoingEdges[splitNode.id]!.min = 0
+    try {
+      await Promise.all(
+        outputs.map(async (token, i) =>
+          this.universe.dexLiquidtyPriceStore
+            .getBestQuotePath(
+              await input.token.fromUSD(inputValueSize * proportions[i]),
+              token.token
+            )
+            .catch((e) => {
+              console.log(`failed to get path for ${token.token}`)
+            })
+        )
+      )
+    } catch (e) {
+      console.log(`Not all tokens soucable`)
+    }
     for (let i = 0; i < outputs.length; i++) {
       const prop = proportions[i]
 

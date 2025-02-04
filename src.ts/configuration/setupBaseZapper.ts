@@ -14,8 +14,8 @@ import { setupERC4626 } from './setupERC4626'
 import { createProtocolWithWrappers } from '../action/RewardableWrapper'
 import { TokenType } from '../entities/TokenClass'
 import { setupOdosPricing } from './setupOdosPricing'
+import { setupReservePricing } from './setupReservePricing'
 import { setupUniswapV2 } from './setupUniswapV2'
-import { setupMaverick } from './maverick'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   console.log('setupBaseZapper')
@@ -25,6 +25,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   await loadBaseTokenList(universe)
   console.log(`setupBaseZapper`)
   const priceViaOdos = setupOdosPricing(universe)
+  const priceViaReserve = setupReservePricing(universe)
 
   logger.info('Setting up wrapped gas token')
   await setupWrappedGasToken(universe)

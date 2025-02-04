@@ -193,6 +193,100 @@ const folioTests = [
   ),
 ]
 
+const folioTests2 = [
+  {
+    tokenIn: '0x4200000000000000000000000000000000000006',
+    amountIn: '10000000000000000',
+    signer: '0xF2d98377d80DADf725bFb97E91357F1d81384De2',
+    slippage: 100,
+    stToken: '0x6f91c0eD0e5a761Df28b79c096119F64480221F3',
+    basicDetails: {
+      name: 'asdsad',
+      symbol: 'sadsad',
+      assets: [
+        '0x06abb84958029468574b28b6e7792a770ccaa2f6',
+        '0x8feef9f0ffa554e51220a3391e7bb7560526a72a',
+        '0x352b850b733ab8bab50aed1dab5d22e3186ce984',
+        '0x135fa55546758cf398da675a064f39d215ab1ff6',
+        '0xd727e37dccd5720d1e3849606d3ab669cb68c368',
+        '0x0b3ae50babe7ffa4e1a50569cee6bdefd4ccaee0',
+        '0x8c23e759ca0822beeff603bacaceb16d84e9a1cf',
+        '0x09579452bc3872727a5d105f342645792bb8a82b',
+        '0x79dacb99a8698052a9898e81fdf883c29efb93cb',
+        '0x8888888888f004100c0353d657be6300587a6ccd',
+        '0x6948de89f535ed4a3b07122be0fe1ae65d527c03',
+        '0x99fd6b95bef16079398426f94f9faca4d7570c61',
+        '0xfad8cb754230dbfd249db0e8eccb5142dd675a0d',
+        '0xf3708859c178709d5319ad5405bc81511b72b9e9',
+        '0xb34457736aa191ff423f84f5d669f68b231e6c4e',
+        '0x919e43a2cce006710090e64bde9e01b38fd7f32f',
+        '0x39d24405ca717ef841e4a782da97284cf2dc7628',
+        '0x92dc4ab92eb16e781559e612f349916988013d5a',
+        '0xcd5d8cacd9222075a24f6e80ada93882202fe0f6',
+        '0xd98832e8a59156acbee4744b9a94a9989a728f36',
+      ],
+      amounts: [
+        '30875885540157860000',
+        '30483329386260397000',
+        '14185313663157686000',
+        '105825451069238570000',
+        '2343163952728260500000',
+        '38703262995238450000',
+        '1056898221441104200000',
+        '86392314567',
+        '1828472008442278000',
+        '102646364518689390',
+        '31272924108832964000',
+        '273736424452633900000',
+        '2644597636905765000',
+        '422055777304598900000',
+        '231381409022079450000',
+        '16127648875166212000',
+        '389446568152834000000',
+        '2022176509704421000',
+        '11493777128953242000',
+        '303491377458842000',
+      ],
+    },
+    additionalDetails: {
+      tradeDelay: '86400',
+      auctionLength: '1800',
+      feeRecipients: [
+        {
+          recipient: '0x18846441bEE474529444C10F119e0B4a7C60aCbb',
+          portion: 125000000000000100n,
+        },
+        {
+          recipient: '0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4',
+          portion: 874999999999999900n,
+        },
+      ],
+      folioFee: '20000000000000000',
+      mintingFee: '5000000000000000',
+      mandate: 'qweqwe',
+    },
+    ownerGovParams: {
+      votingDelay: '172800',
+      votingPeriod: '172800',
+      proposalThreshold: '10000000000000000',
+      quorumPercent: '10',
+      timelockDelay: '172800',
+      guardians: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
+    },
+    tradingGovParams: {
+      votingDelay: '172800',
+      votingPeriod: '172800',
+      proposalThreshold: '10000000000000000',
+      quorumPercent: '10',
+      timelockDelay: '172800',
+      guardians: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
+    },
+    existingTradeProposers: [],
+    tradeLaunchers: [],
+    vibesOfficers: ['0x8e0507C16435Caca6CB71a7Fb0e0636fd3891df4'],
+  },
+]
+
 const governedDeployConfig = (
   name: string,
   symbol: string,
@@ -341,36 +435,6 @@ describe('base zapper', () => {
     )
   })
 
-  describe('path', () => {
-    it('test', async () => {
-      // const input = universe.commonTokens.WETH.from(10.0)
-      // const quote2 = await universe.dexLiquidtyPriceStore.getBestQuotePath(
-      //   input,
-      //   universe.commonTokens.Virtuals
-      // )
-      // for (const step of quote2.steps) {
-      //   console.log(`${step.input}`)
-      //   for (let i = 0; i < step.splits.length; i++) {
-      //     const action = step.actions[i]
-      //     const split = step.splits[i]
-      //     console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
-      //   }
-      // }
-      // const quote = await universe.dexLiquidtyPriceStore.getBestQuotePath(
-      //   input,
-      //   universe.commonTokens.VaderAI
-      // )
-      // for (const step of quote.steps) {
-      //   console.log(`${step.input}`)
-      //   for (let i = 0; i < step.splits.length; i++) {
-      //     const action = step.actions[i]
-      //     const split = step.splits[i]
-      //     console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
-      //   }
-      // }
-    }, 60000)
-  })
-
   describe('folio', () => {
     for (const testCase of folioTests) {
       describe(testCase.name, () => {
@@ -401,6 +465,45 @@ describe('base zapper', () => {
             console.error(e)
             expect(true).toBe(false)
 
+            throw e
+          }
+        }, 60000)
+      })
+    }
+  })
+
+  describe('folioconfigs', () => {
+    for (const config of folioTests2) {
+      describe(`config ${config.basicDetails.name}`, () => {
+        it('produces the basket graph', async () => {
+          expect.assertions(1)
+          try {
+            const token = await universe.getToken(config.tokenIn)
+            const inputQty = token.from(BigInt(config.amountIn))
+
+            const out = await universe.deployZap(inputQty, testUser, {
+              type: 'governed',
+              stToken: config.stToken,
+              basicDetails: config.basicDetails,
+              additionalDetails: {
+                auctionLength: config.additionalDetails.auctionLength,
+                tradeDelay: config.additionalDetails.tradeDelay,
+                feeRecipients: config.additionalDetails.feeRecipients,
+                folioFee: config.additionalDetails.folioFee,
+                mintingFee: config.additionalDetails.mintingFee,
+                mandate: config.additionalDetails.mandate,
+              },
+              ownerGovParams: config.ownerGovParams,
+              tradingGovParams: config.tradingGovParams,
+              tradeLaunchers: config.tradeLaunchers,
+              vibesOfficers: config.vibesOfficers,
+              existingTradeProposers: config.existingTradeProposers,
+            })
+            console.log(out.toString())
+            expect(true).toBe(true)
+          } catch (e) {
+            console.error(e)
+            expect(true).toBe(false)
             throw e
           }
         }, 60000)

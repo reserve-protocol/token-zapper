@@ -220,9 +220,19 @@ export abstract class BaseAction {
   public allTokens_ = new Set<Token>()
   public allBalances_: TokenQuantity[] = []
   public allBalancesBlock_: number = 0
-  public async balances(universe: Universe): Promise<readonly TokenQuantity[]> {
+  public async balances(
+    universe: Universe,
+    token?: Token
+  ): Promise<readonly TokenQuantity[]> {
     if (this.allTokens_.size === 0) {
-      for (const tok of [...this.inputToken, ...this.outputToken]) {
+      for (const tok of [...this.inputToken, ...this.outputToken].filter(
+        (i) => {
+          if (token == null) {
+            return true
+          }
+          return i === token
+        }
+      )) {
         this.allTokens_.add(tok)
       }
     }

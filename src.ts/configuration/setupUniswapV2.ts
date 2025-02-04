@@ -39,7 +39,7 @@ const configs: Record<ChainId, IUniswapV2Config> = {
     pools: [],
   },
   [ChainIds.Base]: {
-    subgraphId: '4jGhpKjW4prWoyt5Bwk1ZHUwdEmNWveJcjEyjoTZWCY9',
+    subgraphId: 'D7kA6uviHcQfxXRJncheSuCmrhk4KBc3eyJnvRrRKoeH',
     univ2swap: deployments[8453][0].contracts.Univ2SwapHelper.address,
     pools: baseUniV2,
   },
@@ -492,7 +492,7 @@ export const setupUniswapV2 = async (universe: Universe) => {
 
   // Go back 10 days
   const loadBlock =
-    Math.floor(currentBlock / (30 * 60 * 24 * 10)) * 30 * 60 * 24 * 10
+    Math.floor(currentBlock / (30 * 60 * 24 * 5)) * 30 * 60 * 24 * 5
 
   const loadUniPools = async (): Promise<UniswapV2Pool[]> => {
     let pools: UniswapV2Pool[] = []
@@ -525,17 +525,19 @@ export const setupUniswapV2 = async (universe: Universe) => {
     fs.writeFileSync(
       `src.ts/configuration/data/${chainId}/univ2.json`,
       JSON.stringify(
-        allPools.map((i) => ({
-          id: i.address.address,
-          token0: {
-            id: i.token0.address.address,
-            symbol: i.token0.symbol,
-          },
-          token1: {
-            id: i.token1.address.address,
-            symbol: i.token1.symbol,
-          },
-        })),
+        allPools
+          .map((i) => ({
+            id: i.address.address,
+            token0: {
+              id: i.token0.address.address,
+              symbol: i.token0.symbol,
+            },
+            token1: {
+              id: i.token1.address.address,
+              symbol: i.token1.symbol,
+            },
+          }))
+          .sort((l, r) => l.id.localeCompare(r.id)),
         null,
         2
       )

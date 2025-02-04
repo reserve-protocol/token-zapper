@@ -779,11 +779,10 @@ export class AerodromeStablePool {
             }
           },
         })
+        universe.addAction(inst.actions.t0for1)
+        universe.addAction(inst.actions.t1for0)
 
         if (interestingPools.has(inst.address)) {
-          universe.addAction(inst.actions.t0for1)
-          universe.addAction(inst.actions.t1for0)
-
           universe.addAction(inst.actions.addLiquidity!)
           universe.addAction(inst.actions.removeLiquidity!)
 
@@ -815,9 +814,6 @@ export class AerodromeStablePool {
           supply.amount >= inst.lpToken.scale ||
           interestingPools.has(inst.address)
         ) {
-          universe.addAction(inst.actions.t0for1)
-          universe.addAction(inst.actions.t1for0)
-
           try {
             await inst.actions.removeLiquidity!.quote([inst.lpToken.one])
 

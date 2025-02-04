@@ -2293,6 +2293,7 @@ const minimizeDust = async (
     .map((node) => {
       const splits = g._outgoingEdges[node.id]!.edges[0]
       const tokenToSplitMap = new Map<Token, number>()
+      const splitsToTokens = new DefaultMap<number, Token[]>(() => [])
       for (let i = 0; i < splits.recipient.length; i++) {
         const tokens = splits.dustEdge.get(i)
         if (tokens.length === 0) {
@@ -2303,6 +2304,10 @@ const minimizeDust = async (
             dustTokens.push(token)
           }
           tokenToSplitMap.set(token, i)
+          splitsToTokens.get(i).push(token)
+          if (splitsToTokens.get(i).length > 1) {
+            tokenToSplitMap.delete(token)
+          }
         }
       }
       return {

@@ -311,14 +311,18 @@ beforeAll(async () => {
 
     await universe.initialized
 
-    // fs.writeFileSync(
-    //   'src.ts/configuration/data/base/tokens.json',
-    //   JSON.stringify(
-    //     [...universe.tokens.values()].map((t) => t.toJson()),
-    //     null,
-    //     2
-    //   )
-    // )
+    fs.writeFileSync(
+      'src.ts/configuration/data/base/tokens.json',
+      JSON.stringify(
+        [...universe.tokens.values()]
+          .sort((l, r) =>
+            l.address === r.address ? 0 : r.address.gt(l.address) ? -1 : 1
+          )
+          .map((t) => t.toJson()),
+        null,
+        2
+      )
+    )
 
     emitReqCount('Initialized')
     initialized = true

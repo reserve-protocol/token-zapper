@@ -2,4 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export { ISwapRouter__factory } from "./ISwapRouter__factory";
+export { IUniV3Factory__factory } from "./IUniV3Factory__factory";
+export { IUniV3Pool__factory } from "./IUniV3Pool__factory";
+export { IUniV3QuoterV2__factory } from "./IUniV3QuoterV2__factory";
 export { UniV3RouterCall__factory } from "./UniV3RouterCall__factory";

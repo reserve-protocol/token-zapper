@@ -1,28 +1,16 @@
-import { ParamType } from '@ethersproject/abi'
 import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
-import { BlockCache } from '../base/BlockBasedCache'
 
-import {
-  IStETH,
-  IStETH__factory,
-  IWrappedNative__factory,
-  ZapperExecutor__factory,
-} from '../contracts'
+import { IStETH, IStETH__factory, IWrappedNative__factory } from '../contracts'
 import { type IWStETH } from '../contracts/contracts/IWStETH'
 import { IWStETH__factory } from '../contracts/factories/contracts/IWStETH__factory'
 
+import { constants } from 'ethers'
 import { type Token, type TokenQuantity } from '../entities/Token'
 import * as gen from '../tx-gen/Planner'
-import {
-  Action,
-  BaseAction,
-  DestinationOptions,
-  InteractionConvention,
-} from './Action'
-import { constants } from 'ethers'
-import { DepositAction, WithdrawAction } from './WrappedNative'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
+import { wrapGasToken } from '../searcher/TradeAction'
 
 export class LidoDeployment {
   public readonly contracts: {
@@ -34,7 +22,7 @@ export class LidoDeployment {
     stethInstance: gen.Contract
     weth: gen.Contract
   }
-  private rateCache: BlockCache<TokenQuantity, TokenQuantity>
+  private rateFn: (qty: TokenQuantity) => Promise<TokenQuantity>
 
   public readonly actions: {
     stake: {
@@ -75,24 +63,22 @@ export class LidoDeployment {
         )
       ),
     }
-    this.rateCache = universe.createCache(async (qty) => {
+    this.rateFn = async (qty) => {
       if (qty.token === wsteth) {
-        return await this.quoteBurn_(qty)
+        return this.quoteBurn_(qty)
       } else {
-        return await this.quoteMint_(qty)
+        return this.quoteMint_(qty)
       }
-    })
+    }
 
     const wrap = new STETHToWSTETH(this)
     const unwrap = new WSTETHToSTETH(this)
-    const stake = new ETHToSTETH(this)
-    // const unwrapWeth = new WithdrawAction(universe, universe.wrappedNativeToken)
-
-    // const stakeFromWETH = new (unwrapWeth.combine(stake))(universe)
-
-    universe.defineMintable(wrap, unwrap, true)
-    universe.addAction(stake, steth.address)
-    // universe.addAction(stakeFromWETH, steth.address)
+    const stake = wrapGasToken(this.universe, new ETHToSTETH(this))
+    universe.defineMintable(wrap, unwrap)
+    universe.addAction(stake)
+    universe.addAction(unwrap)
+    universe.addAction(wrap)
+    universe.mintableTokens.set(steth, stake)
 
     this.actions = {
       stake: {
@@ -109,10 +95,10 @@ export class LidoDeployment {
   }
 
   public async quoteWrap(amountsIn: TokenQuantity): Promise<TokenQuantity> {
-    return await this.rateCache.get(amountsIn)
+    return await this.rateFn(amountsIn)
   }
   public async quoteUnwrap(amountsIn: TokenQuantity): Promise<TokenQuantity> {
-    return await this.rateCache.get(amountsIn)
+    return await this.rateFn(amountsIn)
   }
 
   private async quoteMint_(amountsIn: TokenQuantity): Promise<TokenQuantity> {
@@ -146,7 +132,7 @@ export class LidoDeployment {
   }
 }
 
-abstract class BaseLidoAction extends Action('Lido.Base') {
+abstract class BaseLidoAction extends Action('Lido') {
   abstract get actionName(): string
   get oneUsePrZap() {
     return false
@@ -155,7 +141,7 @@ abstract class BaseLidoAction extends Action('Lido.Base') {
     return true
   }
   get returnsOutput() {
-    return false
+    return true
   }
   async plan(
     planner: gen.Planner,
@@ -164,18 +150,18 @@ abstract class BaseLidoAction extends Action('Lido.Base') {
     __: TokenQuantity[]
   ) {
     const input = inputs[0]
-    const out = planner.add(this.planAction(input))
+    const out = this.planAction(planner, input)
     if (out == null) {
       throw new Error('Failed to plan action')
     }
-    return null
+    return [out]
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [await this.quoteAction(amountsIn)]
   }
 
-  abstract planAction(inputs: gen.Value): gen.FunctionCall
+  abstract planAction(planner: gen.Planner, inputs: gen.Value): gen.Value
   abstract quoteAction(inputs: TokenQuantity): Promise<TokenQuantity>
 
   toString(): string {
@@ -225,10 +211,19 @@ class ETHToSTETH extends BaseStETHAction {
   get oneUsePrZap() {
     return false
   }
-  planAction(input: gen.Value) {
-    return this.lido.weiroll.stethInstance
-      .submit(constants.AddressZero)
-      .withValue(input)
+  planAction(planner: gen.Planner, input: gen.Value) {
+    planner.add(
+      this.lido.weiroll.stethInstance
+        .submit(constants.AddressZero)
+        .withValue(input)
+    )
+    return this.genUtils.sub(
+      this.lido.universe,
+      planner,
+      input,
+      1n,
+      'ETHToSTETH'
+    )
   }
   constructor(readonly lido: LidoDeployment) {
     super(lido, lido.universe.nativeToken, lido.steth)
@@ -252,7 +247,6 @@ abstract class BaseWSTETHAction extends BaseLidoAction {
     return BigInt(175000n)
   }
 
-  abstract planAction(inputs: gen.Value): gen.FunctionCall
   abstract quoteAction(inputs: TokenQuantity): Promise<TokenQuantity>
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
@@ -280,8 +274,11 @@ class STETHToWSTETH extends BaseWSTETHAction {
   get actionName() {
     return 'wrap'
   }
-  planAction(input: gen.Value) {
-    return this.lido.weiroll.wstethInstance.wrap(input)
+  planAction(planner: gen.Planner, input: gen.Value) {
+    return planner.add(this.lido.weiroll.wstethInstance.wrap(input))!
+  }
+  get dependsOnRpc() {
+    return true
   }
   async quoteAction(amountsIn: TokenQuantity): Promise<TokenQuantity> {
     return await this.lido.quoteWrap(amountsIn)
@@ -295,8 +292,12 @@ class WSTETHToSTETH extends BaseWSTETHAction {
   get actionName() {
     return 'unwrap'
   }
-  planAction(input: gen.Value) {
-    return this.lido.weiroll.wstethInstance.unwrap(input)
+
+  get dependsOnRpc() {
+    return true
+  }
+  planAction(planner: gen.Planner, input: gen.Value) {
+    return planner.add(this.lido.weiroll.wstethInstance.unwrap(input))!
   }
   async quoteAction(amountsIn: TokenQuantity): Promise<TokenQuantity> {
     return await this.lido.quoteUnwrap(amountsIn)

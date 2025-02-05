@@ -95,7 +95,7 @@ class Curve {
   multicallProvider: MulticallProvider
   signerAddress: string
   chainId: IChainId
-  whitelist: Set<string> = new Set()
+  whitelist?: Set<string>
   get options() {
     return this.feeData()
   }
@@ -159,11 +159,11 @@ class Curve {
       maxFeePerGas?: bigint
       maxPriorityFeePerGas?: bigint
     },
-    extraOptions: {
+    extraOptions?: {
       whitelist: Set<string>
     }
   ): Promise<void> {
-    this.whitelist = extraOptions.whitelist
+    this.whitelist = extraOptions?.whitelist
     // @ts-ignore
     this.provider = null
     // @ts-ignore
@@ -218,6 +218,7 @@ class Curve {
 
     for (const pool of Object.values(this.constants.POOLS_DATA)) {
       if (
+        this.whitelist &&
         this.whitelist.size != 0 &&
         !this.whitelist.has(pool.swap_address.toLowerCase())
       ) {

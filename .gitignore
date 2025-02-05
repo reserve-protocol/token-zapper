@@ -9,3 +9,8 @@ src.ts/testRunArbi.ts
 lib.commonjs/
 lib.esm/
 types/
+src.ts/configuration/data/8453/all-v2-pairs.json
+src.ts/configuration/data/8453/all-v3-pairs.json
+src.ts/configuration/data/8453/ui-tokens.json
+src.ts/loadV2AllBasePairs.ts
+src.ts/loadV3BasePairs.ts

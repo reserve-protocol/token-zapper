@@ -14,6 +14,6 @@ contract RTokenLens {
     ) external returns (address[] memory erc20s, uint256[] memory quantities) {
         assetRegistry.refresh();
         uint256 amtBaskets = uint256(rToken.basketsNeeded()) * amtRToken / rToken.totalSupply(); // FLOOR
-        (erc20s, quantities) = basketHandler.quote(uint192(amtBaskets), RoundingMode.FLOOR);
+        (erc20s, quantities) = basketHandler.quote(uint192(amtBaskets), RoundingMode.CEIL);
     }
 }

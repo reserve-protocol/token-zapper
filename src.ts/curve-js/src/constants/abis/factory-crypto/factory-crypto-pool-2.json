@@ -572,6 +572,10 @@
       {
         "name": "use_eth",
         "type": "bool"
+      },
+      {
+        "name": "recipient",
+        "type": "address"
       }
     ],
     "outputs": []

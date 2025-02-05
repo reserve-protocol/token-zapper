@@ -1,11 +1,23 @@
 import { type TransactionRequest } from '@ethersproject/providers'
 import { BigNumber } from 'ethers'
 import { hexlify, hexZeroPad, resolveProperties } from 'ethers/lib/utils'
-import { type ZapERC20ParamsStruct } from '../contracts/contracts/Zapper.sol/Zapper'
-import { PricedTokenQuantity, type TokenQuantity } from '../entities/Token'
+import {
+  PricedTokenQuantity,
+  Token,
+  type TokenQuantity,
+} from '../entities/Token'
 import { Planner, printPlan } from '../tx-gen/Planner'
-import { type BaseSearcherResult } from './SearcherResult'
+import { Universe } from '../Universe'
+import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper'
 
+interface BaseSearcherResult {
+  universe: Universe
+  zapId: string
+  startTime: number
+  blockNumber: number
+
+  tokenPrices: Map<Token, PricedTokenQuantity>
+}
 class DustStats {
   private constructor(
     public readonly dust: PricedTokenQuantity[],
@@ -101,9 +113,17 @@ export class ZapTxStats {
       dust: TokenQuantity[]
     }
   ) {
-    const [inputValue, outputValue, ...dustValue] = await Promise.all(
-      [input.input, input.output, ...input.dust].map((i) => result.priceQty(i))
-    )
+    const [inputValue, outputValue, ...dustValue] = (
+      await Promise.all(
+        [input.input, input.output, ...input.dust].map(async (i) => {
+          const price = await result.universe.fairPrice(i)
+          if (price == null) {
+            return null
+          }
+          return new PricedTokenQuantity(i, price)
+        })
+      )
+    ).filter((i) => i != null)
 
     const totalValueUSD = dustValue.reduce(
       (a, b) => a.add(b.price),
@@ -137,7 +157,11 @@ export class ZapTxStats {
 
   toString() {
     if (this.isThereDust)
-      return `${this.input} -> ${this.output} (+ $${this.dust.valueUSD} D.) @ fee: ${this.txFee.txFee.price}`
+      return `${this.input} -> ${this.output} (+ $${
+        this.dust.valueUSD
+      } D. [${this.dust.dust.map((i) => i.quantity).join(', ')}]) @ fee: ${
+        this.txFee.txFee.price
+      }`
     return `${this.input} -> ${this.output} @ fee: ${this.txFee.txFee.price}`
   }
 }
@@ -272,7 +296,7 @@ export class ZapTransaction {
       state: {
         prices: {
           searcherPrices: Array.from(
-            this.searchResult.searcher.tokenPrices.entries()
+            this.searchResult.tokenPrices.entries()
           ).map(([k, v]) => ({
             token: k.serialize(),
             price: v.serialize(),

@@ -18,6 +18,7 @@ import * as gen from '../tx-gen/Planner'
 
 import { ParamType } from '@ethersproject/abi'
 import { Approval } from '../base/Approval'
+import { wrapAction, wrapGasToken } from '../searcher/TradeAction'
 
 abstract class BaseFrxETH extends Action('FrxETH') {
   public get supportsDynamicInput() {
@@ -54,7 +55,7 @@ interface IFrxETHConfig {
 
 class FrxETHMint extends BaseFrxETH {
   gasEstimate(): bigint {
-    return 100000n
+    return 50000n
   }
   constructor(
     private readonly universe: UniverseWithERC20GasTokenDefined,
@@ -100,6 +101,8 @@ class FrxETHMint extends BaseFrxETH {
 }
 
 class SFrxETHMint extends BaseFrxETH {
+  private mintRate: () => Promise<TokenQuantity>
+
   gasEstimate(): bigint {
     return 100000n
   }
@@ -117,6 +120,12 @@ class SFrxETHMint extends BaseFrxETH {
       DestinationOptions.Callee,
       [new Approval(frxeth, Address.from(vault.address))]
     )
+    this.mintRate = universe.createCachedProducer(async () => {
+      const rate = frxeth.from(
+        await vault.callStatic.previewDeposit(frxeth.one.amount)
+      )
+      return rate
+    }, 12000)
   }
   get actionName() {
     return 'SFrxETH.mint'
@@ -145,16 +154,15 @@ class SFrxETHMint extends BaseFrxETH {
     return null
   }
 
-  async quote(amountsIn: TokenQuantity[]) {
-    return [
-      this.outputToken[0].from(
-        await this.vault.previewDeposit(amountsIn[0].amount)
-      ),
-    ]
+  async quote([amountsIn]: TokenQuantity[]) {
+    const r = await this.mintRate()
+
+    return [r.mul(amountsIn).into(this.sfrxeth)]
   }
 }
 
 class SFrxETHburn extends BaseFrxETH {
+  private burnRate: () => Promise<TokenQuantity>
   gasEstimate(): bigint {
     return 100000n
   }
@@ -172,9 +180,14 @@ class SFrxETHburn extends BaseFrxETH {
       DestinationOptions.Callee,
       []
     )
+    this.burnRate = universe.createCachedProducer(async () => {
+      return frxeth.from(
+        await vault.callStatic.previewRedeem(sfrxeth.one.amount)
+      )
+    }, 12000)
   }
   get actionName() {
-    return 'FrxETH.burn'
+    return 'SFrxETH.burn'
   }
 
   public get returnsOutput(): boolean {
@@ -205,12 +218,9 @@ class SFrxETHburn extends BaseFrxETH {
     return null
   }
 
-  async quote(amountsIn: TokenQuantity[]) {
-    return [
-      this.outputToken[0].from(
-        await this.vault.previewRedeem(amountsIn[0].amount)
-      ),
-    ]
+  async quote([amountIn]: TokenQuantity[]) {
+    const r = await this.burnRate()
+    return [r.mul(amountIn).into(this.frxeth)]
   }
 }
 
@@ -227,7 +237,10 @@ export const setupFrxETH = async (
   const frxETH = await universe.getToken(Address.from(config.frxeth))
   const sfrxETH = await universe.getToken(Address.from(config.sfrxeth))
 
-  const mintFrxETH = new FrxETHMint(universe, frxETH, poolInst)
+  const mintFrxETH = wrapGasToken(
+    universe,
+    new FrxETHMint(universe, frxETH, poolInst)
+  )
 
   const burnSfrxETH = new SFrxETHburn(universe, frxETH, sfrxETH, vaultInst)
   const mintSfrxETH = new SFrxETHMint(universe, frxETH, sfrxETH, vaultInst)
@@ -235,6 +248,7 @@ export const setupFrxETH = async (
   universe.defineMintable(mintSfrxETH, burnSfrxETH, true)
 
   universe.addAction(mintFrxETH)
+  universe.mintableTokens.set(frxETH, mintFrxETH)
 
   const oracle = IFrxEthFraxOracle__factory.connect(
     config.frxethOracle,

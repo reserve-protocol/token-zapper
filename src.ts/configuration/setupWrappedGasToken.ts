@@ -1,9 +1,7 @@
 import { type Universe } from '../Universe'
-import { type Address } from '../base/Address'
-import { type TokenQuantity } from '../entities/Token'
-import { SwapPlan } from '../searcher/Swap'
 import { DepositAction, WithdrawAction } from '../action/WrappedNative'
 import { Config } from './ChainConfiguration'
+import { TokenType } from '../entities/TokenClass'
 
 export const setupWrappedGasToken = async (universe: Universe<Config>) => {
   const k = universe.config.addresses.commonTokens.ERC20GAS
@@ -13,29 +11,14 @@ export const setupWrappedGasToken = async (universe: Universe<Config>) => {
     burn: new DepositAction(universe, wrappedToken),
     mint: new WithdrawAction(universe, wrappedToken),
   }
-  universe.addAction(wrappedGasTokenActions.burn)
-  universe.addAction(wrappedGasTokenActions.mint)
-  universe.tokenTradeSpecialCases.set(
-    universe.nativeToken,
-    async (input: TokenQuantity, dest: Address) => {
-      if (input.token === wrappedToken) {
-        return await new SwapPlan(universe, [
-          wrappedGasTokenActions.burn,
-        ]).quote([input], dest)
-      }
-      return null
-    }
+  universe.defineMintable(
+    wrappedGasTokenActions.burn,
+    wrappedGasTokenActions.mint,
+    true
   )
 
-  universe.tokenTradeSpecialCases.set(
-    wrappedToken,
-    async (input: TokenQuantity, dest: Address) => {
-      if (input.token === universe.nativeToken) {
-        return await new SwapPlan(universe, [
-          wrappedGasTokenActions.mint,
-        ]).quote([input], dest)
-      }
-      return null
-    }
-  )
+  universe.tokenClass.set(wrappedToken, Promise.resolve(universe.wrappedNativeToken))
+  universe.tokenType.set(wrappedToken, Promise.resolve(TokenType.Asset))
+  universe.tokenClass.set(universe.nativeToken, Promise.resolve(universe.wrappedNativeToken))
+  universe.tokenType.set(universe.nativeToken, Promise.resolve(TokenType.Asset))
 }

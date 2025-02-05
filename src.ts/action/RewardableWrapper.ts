@@ -1,14 +1,15 @@
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
-import { InteractionConvention, DestinationOptions, Action } from './Action'
+import { Action, DestinationOptions, InteractionConvention } from './Action'
 
-import * as gen from '../tx-gen/Planner'
 import { Address } from '..'
 import { Approval } from '../base/Approval'
 import {
   IRewardableERC20Wrapper,
   IRewardableERC20Wrapper__factory,
 } from '../contracts'
+import * as gen from '../tx-gen/Planner'
+import { wrapGasToken } from '../searcher/TradeAction'
 
 export const createProtocolWithWrappers = (
   universe: Universe,
@@ -171,6 +172,7 @@ export const createProtocolWithWrappers = (
       )
 
       const deposit = new RewardableERC20WrapperDeposit(rewardable, wrapper)
+      universe.mintableTokens.set(wrapper, deposit)
       const withdraw = new RewardableERC20WrapperWithdraw(rewardable, wrapper)
 
       universe.addSingleTokenPriceSource({
@@ -183,8 +185,13 @@ export const createProtocolWithWrappers = (
           return out
         },
       })
-      universe.addAction(deposit)
-      universe.addAction(withdraw)
+      universe.addAction(wrapGasToken(universe, deposit))
+      universe.addAction(wrapGasToken(universe, withdraw))
+      universe.wrappedTokens.set(wrapper, {
+        mint: deposit,
+        burn: withdraw,
+        allowAggregatorSearcher: true,
+      })
       return {
         deposit,
         withdraw,

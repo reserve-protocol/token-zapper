@@ -28,10 +28,6 @@ abstract class NGSwapBase extends Action('CurveStableSwapNG') {
   ): Promise<Value[] | null> {
     throw new Error('Method not implemented.')
   }
-
-  public get addToGraph(): boolean {
-    return false
-  }
 }
 
 class NGSwapMint extends NGSwapBase {

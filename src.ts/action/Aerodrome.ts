@@ -1,33 +1,20 @@
-import {
-  defaultAbiCoder,
-  ParamType,
-  parseEther,
-  parseUnits,
-  solidityPack,
-} from 'ethers/lib/utils'
+import { defaultAbiCoder } from 'ethers/lib/utils'
 import { type Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Approval } from '../base/Approval'
 import { DefaultMap } from '../base/DefaultMap'
 import { GAS_TOKEN_ADDRESS, ZERO } from '../base/constants'
 
+import { BigNumber, utils } from 'ethers'
 import {
   IAerodromeRouter,
   IERC20__factory,
   IMixedRouteQuoterV1,
   SlipstreamRouterCall,
-  UniV3RouterCall,
 } from '../contracts'
-import { SwapLpStructOutput } from '../contracts/contracts/Aerodrome.sol/IAerodromeSugar'
+import { SwapLpStructOutput as SwapLpStructOutputDef } from '../contracts/contracts/Aerodrome.sol/IAerodromeSugar'
 import { Token, TokenQuantity } from '../entities/Token'
-import { MultiChoicePath } from '../searcher/MultiChoicePath'
-import {
-  CommandFlags,
-  Contract,
-  encodeArg,
-  Planner,
-  Value,
-} from '../tx-gen/Planner'
+import { CommandFlags, Contract, Planner, Value } from '../tx-gen/Planner'
 import {
   Action,
   BaseAction,
@@ -35,14 +22,27 @@ import {
   InteractionConvention,
   ONE,
 } from './Action'
-import { utils } from 'ethers'
-import { SwapPath } from '../searcher/Swap'
+import { TokenType } from '../entities/TokenClass'
+import { BlockCache } from '../base/BlockBasedCache'
+
+const interestingPools = new Set([
+  Address.from('0x2C4909355b0C036840819484c3A882A95659aBf3'),
+  Address.from('0x89D0F320ac73dd7d9513FFC5bc58D1161452a657'),
+  Address.from('0x2578365B3dfA7FfE60108e181EFb79FeDdec2319'),
+  Address.from('0x4A311ac4563abc30E71D0631C88A6232C1309ac5'),
+  Address.from('0x7f670f78B17dEC44d5Ef68a48740b6f8849cc2e6'),
+])
 
 export enum AerodromePoolType {
   STABLE = 'STABLE',
   VOLATILE = 'VOLATILE',
   CL = 'CL',
 }
+
+type SwapLpStructOutput = Pick<
+  SwapLpStructOutputDef,
+  'poolType' | 'token0' | 'token1' | 'factory' | 'lp' | 'poolFee'
+>
 
 export const getPoolType = (poolType: number) => {
   if (poolType === 0) {
@@ -53,9 +53,29 @@ export const getPoolType = (poolType: number) => {
     return AerodromePoolType.CL
   }
 }
+
+export const poolTypeToNumber = (poolType: AerodromePoolType) => {
+  if (poolType === AerodromePoolType.STABLE) {
+    return 0
+  } else if (poolType === AerodromePoolType.VOLATILE) {
+    return -1
+  } else {
+    return 1
+  }
+}
 abstract class BaseV2AerodromeAction extends Action('BaseAerodromeStablePool') {
   public get outputSlippage(): bigint {
-    return 5n
+    return 1n
+  }
+
+  public async liquidity(): Promise<number> {
+    const out = await this.pool.context.getReserves(this.pool)
+    const prices = await Promise.all(
+      out.map((t) => t.price().then((i) => i.asNumber()))
+    )
+
+    const sum = prices.reduce((a, b) => a + b, 0)
+    return sum
   }
 
   abstract get actionName(): string
@@ -66,6 +86,14 @@ abstract class BaseV2AerodromeAction extends Action('BaseAerodromeStablePool') {
   public get returnsOutput(): boolean {
     return false
   }
+
+  public get oneUsePrZap(): boolean {
+    return true
+  }
+  public get addressesInUse(): Set<Address> {
+    return new Set([this.pool.address])
+  }
+
   public constructor(
     public readonly pool: AerodromeStablePool,
     inputs: Token[],
@@ -95,11 +123,37 @@ class AeropoolAddLiquidity extends BaseV2AerodromeAction {
   get actionName(): string {
     return 'addLiquidity'
   }
-  async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [(await this.pool.quoteAddLiquidity(amountIn)).liquidity]
+
+  public get returnsOutput() {
+    return true
+  }
+
+  get dustTokens(): Token[] {
+    return [this.pool.token0, this.pool.token1]
+  }
+  async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const q = await this.pool.quoteAdd2Liquidity(amountsIn)
+    return [q.liquidity]
+  }
+
+  async quoteWithDust(amountsIn: TokenQuantity[]) {
+    const q = await this.pool.quoteAdd2Liquidity(amountsIn).catch((e) => {
+      console.log(`${amountsIn.join(', ')} -> ${this}: failed`)
+      console.log(e)
+      throw e
+    })
+    return {
+      output: [q.liquidity],
+      dust: q.remaining,
+    }
   }
   gasEstimate(): bigint {
     return 500000n
+  }
+
+  async inputAmounts(): Promise<TokenQuantity[]> {
+    const q = await this.pool.quoteAddLiquidity(this.pool.token0.one)
+    return [q.amount0, q.amount1]
   }
 
   // function addLiquidityV2(
@@ -119,36 +173,47 @@ class AeropoolAddLiquidity extends BaseV2AerodromeAction {
     inputs: Value[],
     destination: Address,
     minAmounts: TokenQuantity[]
-  ): Promise<null | Value[]> {
-    planner.add(
-      this.pool.context.weirollAerodromeRouterCaller.addLiquidityV2(
-        inputs[0],
-        inputs[1],
-        minAmounts[0].amount - minAmounts[0].amount / 5n,
-        minAmounts[1].amount - minAmounts[1].amount / 5n,
-        defaultAbiCoder.encode(
-          ['address', 'address', 'bool', 'address', 'address'],
-          [
-            this.pool.token0.address.address,
-            this.pool.token1.address.address,
-            this.pool.isStable,
-            destination.address,
-            this.pool.context.router.address,
-          ]
-        )
-      ),
-      `${this.protocol}:${this.actionName}(${minAmounts.join(
-        ', '
-      )}) => ${minAmounts.join(', ')}`,
-      `${this.protocol}_mint_${this.outputToken.join(
-        ', '
-      )}_using_${this.inputToken.join('_')}`
-    )
-    return null
+  ) {
+    return [
+      planner.add(
+        this.pool.context.weirollAerodromeRouterCaller.addLiquidityV2(
+          inputs[0],
+          inputs[1],
+          minAmounts[0].amount - minAmounts[0].amount / 5n,
+          minAmounts[1].amount - minAmounts[1].amount / 5n,
+          defaultAbiCoder.encode(
+            ['address', 'address', 'bool', 'address', 'address'],
+            [
+              this.pool.token0.address.address,
+              this.pool.token1.address.address,
+              this.pool.isStable,
+              destination.address,
+              this.pool.context.router.address,
+            ]
+          )
+        ),
+        `${this.protocol}:${this.actionName}(${minAmounts.join(
+          ', '
+        )}) => ${minAmounts.join(', ')}`,
+        `${this.protocol}_mint_${this.outputToken.join(
+          ', '
+        )}_using_${this.inputToken.join('_')}`
+      )!,
+    ]
   }
 
   public constructor(public readonly pool: AerodromeStablePool) {
     super(pool, [pool.token0, pool.token1], [pool.lpToken])
+  }
+
+  public async inputProportions(): Promise<TokenQuantity[]> {
+    const prices = await Promise.all(
+      (
+        await this.pool.quoteRemoveLiquidity(this.pool.lpToken.one)
+      ).map((i) => i.price().then((i) => i.asNumber()))
+    )
+    const sum = prices.reduce((a, b) => a + b, 0)
+    return prices.map((i, index) => this.inputToken[index].from(i / sum))
   }
 }
 
@@ -187,16 +252,24 @@ class AeropoolRemoveLiquidity extends BaseV2AerodromeAction {
     destination: Address,
     predictedInputs: TokenQuantity[]
   ): Promise<null | Value[]> {
+    const [amount0, amount1] = await this.quote(predictedInputs)
     planner.add(
-      this.pool.context.weirollV2Router.removeLiquidity(
-        this.pool.token0.address.address,
-        this.pool.token1.address.address,
-        this.pool.isStable,
+      this.pool.context.weirollAerodromeRouterCaller.removeLiquidity(
         input,
-        predictedInputs[0].amount,
-        predictedInputs[1].amount,
-        destination.address,
-        2n ** 64n - 1n
+        amount0.amount - amount0.amount / 20n,
+        amount1.amount - amount1.amount / 20n,
+        defaultAbiCoder.encode(
+          // (address, address, bool, address, address, uint256)
+          ['address', 'address', 'bool', 'address', 'address', 'uint256'],
+          [
+            this.pool.token0.address.address,
+            this.pool.token1.address.address,
+            this.pool.isStable,
+            destination.address,
+            this.pool.context.router.address,
+            Math.floor(Date.now() / 1000) + 20 * 60,
+          ]
+        )
       ),
       `${this.protocol}:${this.actionName}(${predictedInputs.join(
         ', '
@@ -225,6 +298,28 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
   public get oneUsePrZap() {
     return true
   }
+  public get addressesInUse(): Set<Address> {
+    return new Set([this.pool.address])
+  }
+
+  public async liquidity(): Promise<number> {
+    const out = await this.pool.context.getReserves(this.pool)
+    const prices = await Promise.all(
+      out.map((t) => t.price().then((i) => i.asNumber()))
+    )
+
+    const sum = prices.reduce((a, b) => a + b, 0)
+    return sum
+  }
+
+  get isTrade() {
+    return true
+  }
+
+  get dependsOnRpc() {
+    return true
+  }
+
   public get returnsOutput() {
     return true
   }
@@ -234,6 +329,8 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
   get outputSlippage() {
     return 0n
   }
+
+  private readonly quoteCache: BlockCache<bigint, TokenQuantity[]>
 
   public constructor(
     public readonly pool: AerodromeStablePool,
@@ -248,6 +345,24 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
       DestinationOptions.Callee,
       [new Approval(input, pool.context.aerodromeSwapRouterAddr)]
     )
+
+    this.quoteCache = this.pool.context.universe.createCache(
+      async (amountIn: bigint) => {
+        const outQuote =
+          await this.pool.context.mixedRouter.callStatic.quoteExactInputSingleV3(
+            {
+              tokenIn: this.input.address.address,
+              tokenOut: this.output.address.address,
+              amountIn: amountIn,
+              tickSpacing: this.pool.tickSpacing,
+              sqrtPriceLimitX96: 0,
+            }
+          )
+
+        return [this.output.from(outQuote.amountOut)]
+      },
+      12000
+    )
   }
 
   public toString(): string {
@@ -255,22 +370,7 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
   }
 
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const result =
-      await this.pool.context.mixedRouter.callStatic.quoteExactInputSingleV3(
-        {
-          tokenIn: this.input.address.address,
-          tokenOut: this.output.address.address,
-          amountIn: amountIn.amount,
-          tickSpacing: this.pool.tickSpacing,
-          sqrtPriceLimitX96: 0,
-        },
-        {
-          from: '0xF2d98377d80DADf725bFb97E91357F1d81384De2',
-          gasLimit: 5_000_000,
-        }
-      )
-
-    return [this.output.from(result.amountOut.toBigInt())]
+    return await this.quoteCache.get(amountIn.amount)
   }
 
   gasEstimate(): bigint {
@@ -346,6 +446,18 @@ class AeropoolSwap extends BaseV2AerodromeAction {
     return 'swap'
   }
 
+  get isTrade() {
+    return true
+  }
+
+  get dependsOnRpc() {
+    return false
+  }
+
+  public get returnsOutput() {
+    return true
+  }
+
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     return [this.outputToken[0].from(await this.pool.getAmountOut(amountIn))]
   }
@@ -370,306 +482,57 @@ class AeropoolSwap extends BaseV2AerodromeAction {
     [input]: Value[],
     destination: Address,
     predictedInputs: TokenQuantity[]
-  ): Promise<null | Value[]> {
+  ) {
     const [minAmount] = await this.quoteWithSlippage(predictedInputs)
 
-    planner.add(
-      this.pool.context.weirollAerodromeRouterCaller.exactInputSingleV2(
-        input,
-        minAmount.amount - minAmount.amount / 20n,
-        this.pool.context.router.address,
-        destination.address,
-        defaultAbiCoder.encode(
-          ['address', 'address', 'bool', 'address'],
-          [
-            this.inputToken[0].address.address,
-            this.outputToken[0].address.address,
-            this.pool.isStable,
-            this.pool.factory.address,
-          ]
-        )
-      ),
-      `${this.protocol}:${this.actionName}(${predictedInputs.join(
-        ', '
-      )}) => ${minAmount}`,
-      `${this.protocol}_swap_${predictedInputs.join(
-        '_'
-      )}_for_${this.outputToken.join('_')}`
-    )
-
-    return null
-  }
-}
-
-class WrappedLpAdd extends BaseV2AerodromeAction {
-  async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const q = await this._quoteInner(amountsIn)
-    return [q.output.liquidity]
-  }
-  get actionName(): string {
-    return this.pool.actions.addLiquidity!.actionName
-  }
-
-  gasEstimate(): bigint {
-    return 500000n * 2n
-  }
-  async plan(
-    planner: Planner,
-    [input]: Value[],
-    destination: Address,
-    predictedInputs: TokenQuantity[]
-  ): Promise<null | Value[]> {
-    const { quote, amounts } = await this._quoteInner(predictedInputs)
-
-    let tradeInput: Value[] = [
-      this.genUtils.fraction(
-        this.pool.universe,
-        planner,
-        input,
-        parseUnits('0.520', 18).toBigInt(),
-        `trade ${quote.inputs.join(', ')} -> ${quote.outputs.join(', ')}`,
-        'trade_input'
-      ),
+    return [
+      planner.add(
+        this.pool.context.weirollAerodromeRouterCaller.exactInputSingleV2(
+          input,
+          minAmount.amount - minAmount.amount / 20n,
+          this.pool.context.router.address,
+          destination.address,
+          defaultAbiCoder.encode(
+            ['address', 'address', 'bool', 'address'],
+            [
+              this.inputToken[0].address.address,
+              this.outputToken[0].address.address,
+              this.pool.isStable,
+              this.pool.factory.address,
+            ]
+          )
+        ),
+        `${this.protocol}:${this.actionName}(${predictedInputs.join(
+          ', '
+        )}) => ${minAmount}`,
+        `${this.protocol}_swap_${predictedInputs.join(
+          '_'
+        )}_for_${this.outputToken.join('_')}`
+      )!,
     ]
-    const rest = this.genUtils.sub(
-      this.pool.universe,
-      planner,
-      input,
-      tradeInput[0],
-      `remaining into pool`,
-      `remainder`
-    )
-
-    for (const step of quote.steps) {
-      for (const inputToken of step.action.inputToken) {
-        await this.genUtils.approve(
-          this.pool.universe,
-          planner,
-          inputToken.one,
-          step.action.approvals[0].spender
-        )
-      }
-      tradeInput = await step.action.planWithOutput(
-        this.pool.universe,
-        planner,
-        tradeInput,
-        this.pool.universe.execAddress,
-        step.inputs
-      )
-    }
-
-    const valueInputs =
-      this.tokenIn === this.pool.token0
-        ? [rest, tradeInput[0]]
-        : [tradeInput[0], rest]
-
-    // for (const tok of amounts) {
-    //   await this.genUtils.approve(
-    //     this.pool.universe,
-    //     planner,
-    //     tok,
-    //     Address.from(this.pool.context.router.address)
-    //   )
-    // }
-    await this.pool.actions.addLiquidity!.plan(
-      planner,
-      valueInputs,
-      destination,
-      amounts
-    )
-
-    return null
-  }
-
-  private _quoteInner: (amountIn: TokenQuantity[]) => Promise<{
-    quote: SwapPath
-    amounts: [TokenQuantity, TokenQuantity]
-    output: {
-      amount0: TokenQuantity
-      amount1: TokenQuantity
-      liquidity: TokenQuantity
-    }
-  }>
-
-  constructor(
-    public readonly pool: AerodromeStablePool,
-    public readonly tokenIn: Token,
-    public readonly tradeFor: Token
-  ) {
-    super(
-      pool,
-      [tokenIn],
-      [pool.lpToken],
-      [
-        new Approval(pool.token0, Address.from(pool.context.router.address)),
-        new Approval(pool.token1, Address.from(pool.context.router.address)),
-      ]
-    )
-
-    if (tokenIn === tradeFor) {
-      throw new Error(`Same tokenIn and tradeFor: ${this}`)
-    }
-
-    const cache = this.pool.universe.createCache(
-      async ([amountIn]: TokenQuantity[]) => {
-        const abort = AbortSignal.timeout(
-          this.pool.universe.config.routerDeadline
-        )
-        const multiQuote =
-          await this.pool.universe.searcher.findSingleInputTokenSwap(
-            true,
-            amountIn.scalarDiv(2n),
-            this.tradeFor,
-            this.pool.universe.execAddress,
-            this.pool.universe.config.defaultInternalTradeSlippage,
-            abort,
-            3
-          )
-
-        let quote: SwapPath | undefined = undefined
-        for (let i = 0; i < multiQuote.paths.length; i++) {
-          const path = multiQuote.paths[i]
-          let valid = true
-          for (const step of path.steps) {
-            if (step.address === this.pool.address) {
-              valid = false
-              break
-            }
-          }
-          if (!valid) {
-            continue
-          }
-
-          quote = path
-          break
-        }
-
-        if (!quote) {
-          throw new Error('No quote found')
-        }
-
-        const q0 = await this.pool.quoteAddLiquidity(amountIn.scalarDiv(2n))
-        const q1 = await this.pool.quoteAddLiquidity(quote.outputs[0])
-
-        const liquidity = q0.liquidity.amount < q1.liquidity.amount ? q1 : q0
-
-        return {
-          quote,
-          amounts: (tokenIn === pool.token0
-            ? [amountIn.scalarDiv(2n), quote.outputs[0]]
-            : [quote.outputs[0], amountIn.scalarDiv(2n)]) as [
-            TokenQuantity,
-            TokenQuantity
-          ],
-          output: liquidity,
-        }
-      },
-      12000,
-      (inp) => `${inp.join(', ')}`
-    )
-    this._quoteInner = async (amountIn: TokenQuantity[]) =>
-      await cache.get(amountIn)
-  }
-}
-
-class WrappedLpRemove extends BaseV2AerodromeAction {
-  async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    return [(await this._quoteInner(amountsIn)).output]
-  }
-  get actionName(): string {
-    return this.pool.actions.removeLiquidity!.actionName
-  }
-
-  gasEstimate(): bigint {
-    throw new Error('Method not implemented.')
-  }
-  async plan(
-    planner: Planner,
-    inputs: Value[],
-    destination: Address,
-    predictedInputs: TokenQuantity[]
-  ): Promise<null | Value[]> {
-    const quote = await this._quoteInner(predictedInputs)
-
-    let tradeInput = await this.pool.actions.removeLiquidity!.planWithOutput(
-      this.pool.universe,
-      planner,
-      inputs,
-      this.pool.universe.execAddress,
-      predictedInputs
-    )
-
-    for (const step of quote.quote.steps) {
-      tradeInput = await step.action.planWithOutput(
-        this.pool.universe,
-        planner,
-        tradeInput,
-        this.pool.universe.execAddress,
-        step.inputs
-      )
-    }
-    this.genUtils.planForwardERC20(
-      this.pool.universe,
-      planner,
-      this.out,
-      tradeInput[0],
-      destination
-    )
-    return null
-  }
-
-  private _quoteInner: (amountIn: TokenQuantity[]) => Promise<{
-    quote: MultiChoicePath
-    output: TokenQuantity
-  }>
-
-  constructor(
-    public readonly pool: AerodromeStablePool,
-    public readonly out: Token
-  ) {
-    super(pool, [pool.lpToken], [out])
-
-    const cache = this.pool.universe.createCache(
-      async ([amountIn]: TokenQuantity[]) => {
-        const burnQ = await this.pool.quoteRemoveLiquidity(amountIn)
-
-        const abort = AbortSignal.timeout(
-          this.pool.universe.config.routerDeadline
-        )
-        const quote =
-          await this.pool.universe.searcher.findSingleInputTokenSwap(
-            true,
-            out === this.pool.token0 ? burnQ[1] : burnQ[0],
-            out === this.pool.token0 ? this.pool.token0 : this.pool.token1,
-            this.pool.universe.execAddress,
-            this.pool.universe.config.defaultInternalTradeSlippage,
-            abort,
-            1
-          )
-
-        const output =
-          out == this.pool.token0
-            ? burnQ[0].add(quote.outputs[0])
-            : burnQ[1].add(quote.outputs[0])
-
-        return {
-          quote,
-          output,
-        }
-      },
-      12000,
-      (inp) => `${inp.join(', ')}`
-    )
-    this._quoteInner = async (amountIn: TokenQuantity[]) =>
-      await cache.get(amountIn)
   }
 }
 
 const FEE_DIVISOR = 10000n
-class AerodromeStablePool {
-  private reserves: () => Promise<TokenQuantity[]>
+const MAX_NUM = 2n ** 256n - 1n
+export class AerodromeStablePool {
   private totalSupply: () => Promise<TokenQuantity>
 
+  public toString() {
+    return `Aerodrome(${this.poolAddress}.${this.token0}:${this.token1})`
+  }
+
+  public toJSON() {
+    return {
+      poolType: poolTypeToNumber(this.poolType),
+      poolAddress: this.poolAddress.address,
+      lpToken: this.lpToken.address.address,
+      token0: this.token0.address.address,
+      token1: this.token1.address.address,
+      factory: this.factory.address,
+      poolFee: this.poolFee.toString(),
+    }
+  }
   public readonly actions: {
     addLiquidity?: AeropoolAddLiquidity
     removeLiquidity?: AeropoolRemoveLiquidity
@@ -685,23 +548,12 @@ class AerodromeStablePool {
     public readonly lpToken: Token,
     public readonly token0: Token,
     public readonly token1: Token,
-    private readonly data: SwapLpStructOutput
+    public readonly data: SwapLpStructOutput,
+    private readonly reserves: (
+      pool: AerodromeStablePool
+    ) => Promise<TokenQuantity[]>
   ) {
     this.factory = Address.from(data.factory)
-    this.reserves = this.universe.createCachedProducer(async () => {
-      if (this.poolType === AerodromePoolType.CL) {
-        throw new Error('Not used')
-      }
-      const { reserveA, reserveB } =
-        await context.router.callStatic.getReserves(
-          this.token0.address.address,
-          this.token1.address.address,
-          this.data.poolType === 0,
-          this.data.factory
-        )
-
-      return [this.token0.from(reserveA), this.token1.from(reserveB)]
-    })
 
     this.actions =
       this.poolType === AerodromePoolType.CL
@@ -725,18 +577,8 @@ class AerodromeStablePool {
       this.totalSupply = async () => this.lpToken.zero
       return
     }
-    const erc20Inst = IERC20__factory.connect(
-      this.lpToken.address.address,
-      this.universe.provider
-    )
-    this.totalSupply = this.universe.createCachedProducer(async () => {
-      try {
-        const totalSupply = await erc20Inst.callStatic.totalSupply()
-        return this.lpToken.from(totalSupply)
-      } catch (e) {
-        return this.lpToken.from(0)
-      }
-    })
+    this.totalSupply = () =>
+      this.universe.approvalsStore.totalSupply(this.lpToken)
   }
 
   public get poolFee() {
@@ -765,7 +607,7 @@ class AerodromeStablePool {
       amountIn.token.from((amountIn.amount * this.poolFee) / FEE_DIVISOR)
     )
 
-    const reserves = await this.reserves()
+    const reserves = await this.reserves(this)
 
     let [_reserve0, _reserve1] = reserves.map((i) => i.amount)
 
@@ -795,7 +637,7 @@ class AerodromeStablePool {
 
   private async direction(amountIn: TokenQuantity) {
     const D0FOR1 = amountIn.token == this.token0
-    const reserves = await this.reserves()
+    const reserves = await this.reserves(this)
     const [reserveA, reserveB] = D0FOR1
       ? [reserves[0], reserves[1]]
       : [reserves[1], reserves[0]]
@@ -804,10 +646,31 @@ class AerodromeStablePool {
 
   public async quoteRemoveLiquidity(lpTokens: TokenQuantity) {
     const supply = await this.totalSupply()
-    const [reserveA, reserveB] = await this.reserves()
+    const [reserveA, reserveB] = await this.reserves(this)
     const amountA = (lpTokens.amount * reserveA.amount) / supply.amount
     const amountB = (lpTokens.amount * reserveB.amount) / supply.amount
     return [this.token0.from(amountA), this.token1.from(amountB)]
+  }
+  public async quoteAdd2Liquidity([amount0, amount1]: TokenQuantity[]) {
+    const MAX_RES = {
+      amount0: this.token0.from(MAX_NUM),
+      amount1: this.token1.from(MAX_NUM),
+      liquidity: this.lpToken.from(0),
+    }
+    const q0 = amount0.isZero ? MAX_RES : await this.quoteAddLiquidity(amount0)
+    const q1 = amount1.isZero ? MAX_RES : await this.quoteAddLiquidity(amount1)
+    const q = q0.liquidity.amount < q1.liquidity.amount ? q0 : q1
+    const rem0 = amount0.gt(q.amount0)
+      ? amount0.sub(q.amount0)
+      : this.token0.zero
+    const rem1 = amount1.gt(q.amount1)
+      ? amount1.sub(q.amount1)
+      : this.token1.zero
+    return {
+      liquidity: q.liquidity,
+      amounts: [q.amount0, q.amount1],
+      remaining: [rem0, rem1],
+    }
   }
   public async quoteAddLiquidity(desiredInput: TokenQuantity) {
     const [D0FOR1, reserveA, reserveB, [res0, res1]] = await this.direction(
@@ -843,69 +706,152 @@ class AerodromeStablePool {
     address: Address,
     pool: SwapLpStructOutput
   ) {
-    const universe = context.universe
-    const [lpToken, token0, token1] = await Promise.all([
-      getPoolType(pool.poolType) === AerodromePoolType.CL
-        ? universe.nativeToken
-        : universe.getToken(Address.from(pool.lp)),
-      universe.getToken(Address.from(pool.token0)),
-      universe.getToken(Address.from(pool.token1)),
-    ])
+    let loaded = false
+    const timeout = AbortSignal.timeout(5000)
+    timeout.onabort = () => {
+      if (loaded) {
+        return
+      }
+      console.log(
+        `${address} timed out ${pool.factory} ${pool.poolType} ${pool.token0} ${
+          pool.token1
+        } ${pool.poolFee.toString()} ${pool.poolType.toString()}`
+      )
+    }
+    try {
+      const universe = context.universe
+      const [lpToken, token0, token1] = await Promise.all([
+        getPoolType(pool.poolType) === AerodromePoolType.CL
+          ? universe.nativeToken
+          : universe.getToken(Address.from(pool.lp)),
+        universe.getToken(Address.from(pool.token0)),
+        universe.getToken(Address.from(pool.token1)),
+      ])
 
-    const inst = new AerodromeStablePool(
-      context,
-      address,
-      lpToken,
-      token0,
-      token1,
-      pool
-    )
+      const inst = new AerodromeStablePool(
+        context,
+        address,
+        lpToken,
+        token0,
+        token1,
+        pool,
+        context.getReserves
+      )
+      const weth = universe.wrappedNativeToken
+      if (inst.token0 === weth || inst.token1 === weth) {
+        const approxPoolValue =
+          (
+            await (await universe.balanceOf(weth, inst.poolAddress)).price()
+          ).asNumber() * 2
+        if (approxPoolValue < 100000) {
+          throw new Error('Pool is too small')
+        }
+      }
 
-    if (inst.poolType === AerodromePoolType.CL) {
-      universe.addAction(inst.actions.t0for1)
-      universe.addAction(inst.actions.t1for0)
-    } else {
-      const supply = await inst.totalSupply()
-      if (supply.amount >= inst.lpToken.scale) {
+      if (inst.poolType === AerodromePoolType.CL) {
+        universe.addAction(inst.actions.t0for1)
+        universe.addAction(inst.actions.t1for0)
+      } else {
+        universe.tokenType.set(inst.lpToken, Promise.resolve(TokenType.LPToken))
+        universe.addSingleTokenPriceSource({
+          token: inst.lpToken,
+          priceFn: async () => {
+            try {
+              const [[balance0, balance1], totalSupply] = await Promise.all([
+                inst.reserves(inst),
+                inst.totalSupply(),
+              ])
+              const [price0, price1] = await Promise.all([
+                await balance0.price(),
+                await balance1.price(),
+              ])
+
+              const out =
+                (price0.asNumber() + price1.asNumber()) / totalSupply.asNumber()
+              const v = universe.usd.from(out)
+              return v
+            } catch (e) {
+              console.log(
+                `LpTokenPrice provider: Failed to get price for ${inst.lpToken}`,
+                e
+              )
+              throw e
+            }
+          },
+        })
         universe.addAction(inst.actions.t0for1)
         universe.addAction(inst.actions.t1for0)
 
-        try {
-          await inst.actions.removeLiquidity!.quote([inst.lpToken.one])
+        if (interestingPools.has(inst.address)) {
+          universe.addAction(inst.actions.addLiquidity!)
+          universe.addAction(inst.actions.removeLiquidity!)
 
-          universe.addAction(new WrappedLpAdd(inst, inst.token0, inst.token1))
-          universe.addAction(new WrappedLpAdd(inst, inst.token1, inst.token0))
-          universe.addAction(new WrappedLpRemove(inst, inst.token0))
-          universe.addAction(new WrappedLpRemove(inst, inst.token1))
-
-          universe.addSingleTokenPriceSource({
-            token: inst.lpToken,
-            priceFn: async () => {
-              const underlying = await inst.actions.removeLiquidity!.quote([
-                inst.lpToken.one,
-              ])
-              const prices = await Promise.all(
-                underlying.map((i) => universe.fairPrice(i))
-              )
-              let out = universe.usd.zero
-              for (let i = 0; i < prices.length; i++) {
-                const qty = underlying[i]
-                const price = prices[i]
-                if (price == null) {
-                  throw new Error(
-                    `Failed to price ${inst.lpToken}: Missing price provider for ${qty.token}`
-                  )
-                }
-                out = out.add(price)
-              }
-              return out
-            },
+          universe.wrappedTokens.set(inst.lpToken, {
+            mint: inst.actions.addLiquidity!,
+            burn: inst.actions.removeLiquidity!,
+            allowAggregatorSearcher: true,
           })
-        } catch (e) {}
-      }
-    }
+          universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
+          await universe.defineLPToken(
+            inst.lpToken,
+            async (amt) => await inst.quoteRemoveLiquidity(amt),
+            async (amts) => {
+              const q0 = await inst.quoteAddLiquidity(amts[0])
+              const q1 = await inst.quoteAddLiquidity(amts[1])
+              if (q0.liquidity.amount < q1.liquidity.amount) {
+                return q0.liquidity
+              }
+              return q1.liquidity
+            }
+          )
 
-    return inst
+          return inst
+        }
+
+        const supply = await inst.totalSupply()
+
+        if (
+          supply.amount >= inst.lpToken.scale ||
+          interestingPools.has(inst.address)
+        ) {
+          try {
+            await inst.actions.removeLiquidity!.quote([inst.lpToken.one])
+
+            universe.addAction(inst.actions.addLiquidity!)
+            universe.addAction(inst.actions.removeLiquidity!)
+
+            universe.wrappedTokens.set(inst.lpToken, {
+              mint: inst.actions.addLiquidity!,
+              burn: inst.actions.removeLiquidity!,
+              allowAggregatorSearcher: true,
+            })
+
+            universe.mintableTokens.set(
+              inst.lpToken,
+              inst.actions.addLiquidity!
+            )
+            await universe.defineLPToken(
+              inst.lpToken,
+              async (amt) => await inst.quoteRemoveLiquidity(amt),
+              async (amts) => {
+                const q0 = await inst.quoteAddLiquidity(amts[0])
+                const q1 = await inst.quoteAddLiquidity(amts[1])
+                if (q0.liquidity.amount < q1.liquidity.amount) {
+                  return q0.liquidity
+                }
+                return q1.liquidity
+              }
+            )
+          } catch (e) {}
+        }
+      }
+
+      return inst
+    } catch (e) {
+      throw e
+    } finally {
+      loaded = true
+    }
   }
 }
 const f = (x0: bigint, y: bigint) => {
@@ -985,6 +931,9 @@ const quoteLiquidity = (
 }
 
 export class AerodromeContext {
+  public readonly getReserves: (
+    pool: AerodromeStablePool
+  ) => Promise<TokenQuantity[]>
   public readonly weirollV2Router: Contract
   public readonly weirollAerodromeRouterCaller: Contract
 
@@ -1002,6 +951,32 @@ export class AerodromeContext {
   ) {
     this.weirollV2Router = Contract.createContract(router, CommandFlags.CALL)
     this.weirollAerodromeRouterCaller = Contract.createLibrary(callslip)
+
+    const reservesCache = this.universe.createCache(
+      async (pool: AerodromeStablePool) => {
+        if (pool.poolType === AerodromePoolType.CL) {
+          const balance0 = await this.universe.balanceOf(
+            pool.token0,
+            pool.poolAddress
+          )
+          const balance1 = await this.universe.balanceOf(
+            pool.token1,
+            pool.poolAddress
+          )
+          return [balance0, balance1]
+        }
+        const { reserveA, reserveB } = await this.router.callStatic.getReserves(
+          pool.token0.address.address,
+          pool.token1.address.address,
+          pool.data.poolType === 0,
+          pool.data.factory
+        )
+
+        return [pool.token0.from(reserveA), pool.token1.from(reserveB)]
+      },
+      12000
+    )
+    this.getReserves = (pool: AerodromeStablePool) => reservesCache.get(pool)
   }
 
   public async definePool(address: Address, pool: SwapLpStructOutput) {

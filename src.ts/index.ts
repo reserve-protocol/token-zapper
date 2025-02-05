@@ -20,7 +20,7 @@ import { EthereumUniverse, ethereumConfig } from './configuration/ethereum'
 import { setupEthereumZapper } from './configuration/setupEthereumZapper'
 
 import { loadTokens } from './configuration/loadTokens'
-import { makeConfig, convertAddressObject } from './configuration/ChainConfiguration'
+import { makeConfig } from './configuration/ChainConfiguration'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import {
   ChainId,
@@ -35,6 +35,7 @@ export { createParaswap } from './aggregators/Paraswap'
 export { type Config } from './configuration/ChainConfiguration'
 export {
   makeCustomRouterSimulator,
+  makeCallManySimulator,
   createSimulateZapTransactionUsingProvider,
   SimulateParams,
 } from './configuration/ZapSimulation'
@@ -46,7 +47,6 @@ export const configuration = {
   makeConfig,
 }
 
-export { Searcher } from './searcher/Searcher'
 export { Universe } from './Universe'
 
 export { createKyberswap } from './aggregators/Kyberswap'

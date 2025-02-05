@@ -1,16 +1,15 @@
 import * as dotenv from 'dotenv'
-import { ethers } from 'ethers'
+import fs from 'fs'
 
 import { WebSocketProvider } from '@ethersproject/providers'
 import {
   convertAddressObject,
-  makeCustomRouterSimulator,
+  getDefaultSearcherOptions,
+  SearcherOptions,
 } from '../../src.ts/configuration/ChainConfiguration'
+import { EthereumUniverse } from '../../src.ts/configuration/ethereum'
 import {
   Address,
-  createEnso,
-  createKyberswap,
-  createParaswap,
   ethereumConfig,
   ethereumProtocolConfigs,
   setupEthereumZapper,
@@ -21,7 +20,19 @@ import {
   makeIntegrationtestCase,
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
+import { getProvider, getSimulator } from './providerUtils'
 dotenv.config()
+
+const searcherOptions: SearcherOptions = {
+  ...getDefaultSearcherOptions(),
+  useNewZapperContract: false,
+  cacheResolution: 8,
+  zapMaxDustProduced: 3,
+  maxPhase2TimeRefinementTime: 10000,
+  optimisationSteps: 35,
+  minimiseDustPhase1Steps: 35,
+  minimiseDustPhase2Steps: 35,
+}
 
 if (process.env.MAINNET_PROVIDER == null) {
   console.log('MAINNET_PROVIDER not set, skipping tests')
@@ -32,8 +43,8 @@ if (process.env.MAINNET_PROVIDER == null) {
  *
  * You can do this by cloning the revm-router-simulater [repo](https://github.com/jankjr/revm-router-simulator)
  */
-if (process.env.SIMULATE_URL == null) {
-  console.log('SIMULATE_URL not set, skipping simulation tests')
+if (process.env.SIMULATE_URL_MAINNET == null) {
+  console.log('SIMULATE_URL_MAINNET not set, skipping simulation tests')
   process.exit(0)
 }
 const TEST_TIMEOUT = 60000
@@ -72,7 +83,7 @@ export const ethWhales = {
     '0xf977814e90da44bfa03b6295a0616a897441acec',
   // usdc
   '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48':
-    '0xd6153f5af5679a75cc85d8974463545181f48772',
+    '0x28c6c06298d514db089934071355e5743bf21d60',
   // mim
   '0x99d8a9c45b2eca8864373a26d1459e3dff1e17f3':
     '0x25431341a5800759268a6ac1d3cd91c029d7d9ca',
@@ -87,7 +98,7 @@ export const ethWhales = {
     '0x7cc1bfAB73bE4E02BB53814d1059A98cF7e49644',
   // hyusd
   '0xacdf0dba4b9839b96221a8487e9ca660a48212be':
-    '0x7cc1bfAB73bE4E02BB53814d1059A98cF7e49644',
+    '0xfbd42e965a2db2035636aeb41e1a54dbcc1cf1da',
   // usdc+
   '0xfc0b1eef20e4c68b3dcf36c4537cfa7ce46ca70b':
     '0xf2b25362a03f6eacca8de8d5350a9f37944c1e59',
@@ -108,16 +119,13 @@ export const ethWhales = {
   '0x04c154b66cb340f3ae24111cc767e0184ed00cc6':
     '0x40e93a52f6af9fcd3b476aedadd7feabd9f7aba8',
 
-  // usds
-  '0xdC035D45d973E3EC169d2276DDab16f1e407384F':
-    '0x0650CAF159C5A49f711e8169D4336ECB9b950275',
-}
+  '0x78fc2c2ed1a4cdb5402365934ae5648adad094d0':
+    '0xa6B1C84133479e41d8d085005476DD007A50Be66',
+  '0xdbc0ce2321b76d3956412b36e9c0fa9b0fd176e7':
+    '0x1d9dd2ed88fd1284b73af0b720fe50a383710f46',
 
-const getProvider = (url: string) => {
-  if (url.startsWith('ws')) {
-    return new ethers.providers.WebSocketProvider(url)
-  }
-  return new ethers.providers.JsonRpcProvider(url)
+  '0xe8a5677171c87fCB65b76957f2852515B404C7b1':
+    '0x298bf7b80a6343214634aF16EB41Bb5B9fC6A1F1',
 }
 
 const t = {
@@ -134,17 +142,19 @@ export const getSymbol = new Map(
 )
 getSymbol.set(Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'), 'ETH')
 
-const makeMintTestCase = (
-  input: number,
-  inputToken: Address,
-  output: Address
-) => {
+const makeTestCase = (input: number, inputToken: Address, output: Address) => {
   return {
     input,
     inputToken,
     output: output,
   }
 }
+
+const simulateFn = getSimulator(
+  process.env.SIMULATE_URL_MAINNET!,
+  process.env.SIMULATE_TYPE === 'callmany' ? 'callmany' : 'simulator',
+  ethWhales
+)
 
 const makeZapIntoYieldPositionTestCase = (
   input: number,
@@ -159,58 +169,54 @@ const makeZapIntoYieldPositionTestCase = (
     output: output,
   }
 }
-export const testUser = Address.from(
-  '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
-)
+export const testUser = process.env.TEST_USER
+  ? Address.from(process.env.TEST_USER)
+  : Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
+
 const issueanceCases = [
-  makeMintTestCase(10000, t.USDC, rTokens.eUSD),
-  makeMintTestCase(10000, t.DAI, rTokens.eUSD),
-  makeMintTestCase(10000, t.USDT, rTokens.eUSD),
+  // makeTestCase(500, t.WETH, rTokens.eUSD),
+  // makeTestCase(1000000, t.USDC, rTokens.eUSD),
+  // makeTestCase(100000, t.DAI, rTokens.eUSD),
+  // makeTestCase(1000000, t.USDT, rTokens.eUSD),
+  // makeTestCase(1000000, t.USDC, rTokens.USD3),
+  // makeTestCase(1000000, t.USDT, rTokens.USD3),
+  // makeTestCase(1000000, t.DAI, rTokens.USD3),
+  // makeTestCase(1, t.WETH, rTokens['ETH+']),
+  makeTestCase(0.70133, t['stkcvxETH+ETH-f'], t.Re7WETH),
+  // makeTestCase(100, t.WETH, rTokens['ETH+']),
+  // makeTestCase(10, t.WETH, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  // makeTestCase(10000, t.DAI, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDT, rTokens.hyUSD),
+  // makeTestCase(50, t.WETH, rTokens.dgnETH),
+  // makeTestCase(10000, t.USDC, rTokens.dgnETH),
 
-  makeMintTestCase(10000, t.USDC, rTokens.USD3),
-  makeMintTestCase(10000, t.DAI, rTokens.USD3),
-
-  makeMintTestCase(
-    5,
-    Address.from('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
-    rTokens['ETH+']
-  ),
-  makeMintTestCase(5, t.WETH, rTokens['ETH+']),
-  makeMintTestCase(5, t.steth, rTokens['ETH+']),
-  makeMintTestCase(5, t.reth, rTokens['ETH+']),
-  makeMintTestCase(5, t.frxeth, rTokens['ETH+']),
-  makeMintTestCase(5, t.sfrxeth, rTokens['ETH+']),
-  makeMintTestCase(10000, t.USDC, rTokens['ETH+']),
-
-  makeMintTestCase(10000, t.USDC, rTokens.hyUSD),
-  makeMintTestCase(10000, t.USDe, rTokens.hyUSD),
-  makeMintTestCase(10000, t.DAI, rTokens.hyUSD),
-
-  makeMintTestCase(5, t.WETH, rTokens.dgnETH),
-  makeMintTestCase(5, t.pxETH, rTokens.dgnETH),
-  makeMintTestCase(10000, t.USDC, rTokens.dgnETH),
-  makeMintTestCase(10000, t.USDT, rTokens.dgnETH),
+  // makeTestCase(330, t.pxETH, t['stkcvxETH+ETH-f']),
 ]
 
 const redeemCases = [
-  makeMintTestCase(10000, rTokens.eUSD, t.USDC),
-  makeMintTestCase(10000, rTokens.eUSD, t.DAI),
-  makeMintTestCase(10000, rTokens.eUSD, t.USDT),
+  makeTestCase(200000, rTokens.eUSD, t.USDC),
+  makeTestCase(10000, rTokens.eUSD, t.USDC),
+  makeTestCase(10000, rTokens.eUSD, t.DAI),
+  makeTestCase(10000, rTokens.eUSD, t.WETH),
+  makeTestCase(10000, rTokens.eUSD, t.USDT),
 
-  makeMintTestCase(10000, rTokens.USD3, t.USDC),
-  makeMintTestCase(10000, rTokens.USD3, t.DAI),
+  makeTestCase(10000, rTokens.USD3, t.USDC),
+  makeTestCase(10000, rTokens.USD3, t.WETH),
+  makeTestCase(10000, rTokens.USD3, t.DAI),
 
-  makeMintTestCase(5, rTokens['ETH+'], t.WETH),
-  makeMintTestCase(5, rTokens['ETH+'], t.reth),
-  makeMintTestCase(5, rTokens['ETH+'], t.frxeth),
-  makeMintTestCase(5, rTokens['ETH+'], t.USDC),
+  makeTestCase(10000, rTokens.hyUSD, t.USDC),
+  makeTestCase(10000, rTokens.hyUSD, t.WETH),
+  makeTestCase(10000, rTokens.hyUSD, t.DAI),
 
-  makeMintTestCase(10000, rTokens.hyUSD, t.USDC),
-  makeMintTestCase(10000, rTokens.hyUSD, t.USDe),
-  makeMintTestCase(10000, rTokens.hyUSD, t.DAI),
+  makeTestCase(5, rTokens['ETH+'], t.WETH),
+  // makeTestCase(5, rTokens['ETH+'], t.reth),
+  // makeTestCase(5, rTokens['ETH+'], t.frxeth),
+  makeTestCase(5, rTokens['ETH+'], t.USDC),
 
-  makeMintTestCase(5, rTokens.dgnETH, t.WETH),
-  makeMintTestCase(5, rTokens.dgnETH, t.USDC),
+  makeTestCase(5, rTokens.dgnETH, t.WETH),
+  makeTestCase(5, rTokens.dgnETH, t.USDC),
+  makeTestCase(5, rTokens.dgnETH, t.USDT),
 ]
 
 const individualIntegrations = [
@@ -220,9 +226,9 @@ const individualIntegrations = [
 
   makeIntegrationtestCase('CompoundV3', 1000, t.USDC, t.CUSDCV3, 2),
   makeIntegrationtestCase('CompoundV3', 1000, t.USDT, t.CUSDTV3, 2),
-  makeIntegrationtestCase('Lido', 10, t.WETH, t.wsteth, 3),
+  // makeIntegrationtestCase('Lido', 10, t.WETH, t.wsteth, 3),
   makeIntegrationtestCase('Lido', 10, t.WETH, t.steth, 2),
-  makeIntegrationtestCase('Lido', 10, t.wsteth, t.steth, 1),
+  // makeIntegrationtestCase('Lido', 10, t.wsteth, t.steth, 1),
 
   makeIntegrationtestCase('Reth', 10, t.WETH, t.reth, 2),
   makeIntegrationtestCase('ETHx', 10, t.WETH, t.ETHx, 2),
@@ -282,34 +288,56 @@ const INPUT_MUL = process.env.INPUT_MULTIPLIER
 if (isNaN(INPUT_MUL)) {
   throw new Error('INPUT_MUL must be a number')
 }
-export let universe: Universe
+let universe: EthereumUniverse
+let requestCount = 0
+
 const provider = getProvider(process.env.MAINNET_PROVIDER!)
+provider.on('debug', (log) => {
+  if (
+    log?.action !== 'request' ||
+    log?.request?.method !== 'eth_call' ||
+    log?.request?.params[0].to == null ||
+    log?.request?.params[0].data == null
+  ) {
+    return
+  }
+  requestCount += 1
+  // console.log(
+  //   log.request.params[0].to + ':' + log.request.params[0].data?.slice(0, 10)
+  // )
+})
 beforeAll(async () => {
-  universe = await Universe.createWithConfig(
-    provider,
-    {
-      ...ethereumConfig,
-      searcherMinRoutesToProduce: 1,
-      maxSearchTimeMs: 60000,
-    },
-    async (uni) => {
-      uni.addTradeVenue(createKyberswap('Kyber', uni))
-      uni.addTradeVenue(createParaswap('paraswap', uni))
-      uni.addTradeVenue(createEnso('enso', uni, 1))
+  global.console = require('console')
+  try {
+    universe = (await Universe.createWithConfig(
+      provider,
+      {
+        ...ethereumConfig,
+        ...searcherOptions,
+      },
+      async (uni) => {
+        await setupEthereumZapper(uni as any)
+      },
+      {
+        simulateZapFn: simulateFn,
+      }
+    )) as any
 
-      await setupEthereumZapper(uni)
-    },
-    {
-      simulateZapFn: makeCustomRouterSimulator(
-        process.env.SIMULATE_URL!,
-        ethWhales
-      ),
-    }
-  )
-
-  await universe.initialized
-  return universe
-}, 30000)
+    await universe.initialized
+    console.log('Ethereum zapper setup complete')
+    const tokens = [...universe.tokens.values()].map((i) => i.toJson())
+    fs.writeFileSync(
+      'src.ts/configuration/data/ethereum/tokens.json',
+      JSON.stringify(tokens, null, 2)
+    )
+    console.log(`requestCount init: ${requestCount}`)
+    requestCount = 0
+    return universe
+  } catch (e) {
+    console.error(e)
+    process.exit(1)
+  }
+}, 60000)
 
 describe('ethereum zapper', () => {
   beforeEach(async () => {
@@ -318,6 +346,27 @@ describe('ethereum zapper', () => {
       (await provider.getGasPrice()).toBigInt()
     )
   })
+
+  // describe('path', () => {
+  //   it('test', async () => {
+  //     const input = universe.commonTokens.USDT.from(66666)
+
+  //     const quote = await universe.dexLiquidtyPriceStore.getBestQuotePath(
+  //       input,
+  //       universe.commonTokens.USDC
+  //     )
+
+  //     for (const step of quote.steps) {
+  //       console.log(`${step.input}`)
+  //       for (let i = 0; i < step.splits.length; i++) {
+  //         const action = step.actions[i]
+  //         const split = step.splits[i]
+  //         console.log(`  ${split} ${action.inputToken[0]} -> ${action}`)
+  //       }
+  //     }
+  //     console.log(quote.output.toString())
+  //   }, 60000)
+  // })
 
   describe('actions', () => {
     for (const testCase of individualIntegrations) {
@@ -344,6 +393,8 @@ describe('ethereum zapper', () => {
             },
             issueance.output
           )
+          console.log(`requestCount: ${requestCount}`)
+          requestCount = 0
         },
         TEST_TIMEOUT
       )
@@ -395,17 +446,11 @@ describe('ethereum zapper', () => {
           const input = universe.tokens
             .get(zapIntoYieldPosition.inputToken)
             ?.from(zapIntoYieldPosition.input * INPUT_MUL)
-          const rToken = universe.tokens.get(zapIntoYieldPosition.rToken)
           const output = universe.tokens.get(zapIntoYieldPosition.output)
           let result = 'failed'
 
           try {
-            const zap = await universe.searcher.zapIntoRTokenYieldPosition(
-              input!,
-              rToken!,
-              output!,
-              testUser
-            )
+            const zap = await universe.zap(input!, output!, testUser)
             console.info(`Yield position zap: ${zap}`)
             result = 'success'
           } catch (e) {
@@ -419,6 +464,8 @@ describe('ethereum zapper', () => {
   }
 })
 
-afterAll(() => {
-  ;(provider as WebSocketProvider).websocket.close()
+afterAll(async () => {
+  if ('destroy' in provider) {
+    await (provider as WebSocketProvider).destroy()
+  }
 })

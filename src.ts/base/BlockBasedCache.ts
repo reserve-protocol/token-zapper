@@ -1,35 +1,41 @@
-export class BlockCache<Input, Result extends NonNullable<any>, Key=Input> {
+export class BlockCache<Input, Result extends NonNullable<any>, Key = Input> {
+  private results = new Map<Key, { result: Promise<Result>; time: number }>()
+
   constructor(
     private readonly fetch: (key: Input) => Promise<Result>,
-    private readonly blocksToLive: number,
-    private currentBlock: number,
-    private keyFn: (key: Input) => Key = x => x as any as Key
+    private block: number,
+    private readonly TTL: number,
+    private keyFn: (key: Input) => Key = (x) => x as any as Key
   ) {}
 
-  private cache = new Map<Key, { result: Promise<Result>; time: number }>()
+  public async get(key: Input) {
+    const k = this.keyFn(key)
+    let out = this.results.get(k) ?? null
 
-  public get(key: Input): Promise<Result> {
-    const k = this.keyFn(key);
-    let out = this.cache.get(k)
     if (out == null) {
-      const res = this.fetch(key)
-      out = { result: res, time: this.currentBlock }
-      this.cache.set(k, out)
+      out = { result: this.fetch(key), time: Date.now() + this.TTL }
+      this.results.set(k, out)
+    } else {
+      if (out.time > Date.now()) {
+        return await out.result
+      }
+      out.result = this.fetch(key).catch((e) => {
+        // console.log(e)
+        this.results.delete(k)
+        throw e
+      })
+      out.time = Date.now() + this.TTL
+      this.results.set(k, out)
     }
-    return out.result
+    return await out.result
+  }
+
+  public clear() {
+    this.results.clear()
   }
 
   public has(key: Input) {
-    const a = this.cache.get(this.keyFn(key))
+    const a = this.results.get(this.keyFn(key))
     return a != null
-  }
-
-  public onBlock(block: number) {
-    this.currentBlock = block
-    for (const [key, { time }] of [...this.cache.entries()]) {
-      if (block - time > this.blocksToLive) {
-        this.cache.delete(key)
-      }
-    }
   }
 }

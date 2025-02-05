@@ -13,28 +13,62 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "address[11]",
+        name: "route",
+        type: "address[11]",
+      },
+      {
+        internalType: "uint256[5][5]",
+        name: "swapParams",
+        type: "uint256[5][5]",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "expected",
+        type: "uint256",
+      },
+    ],
+    name: "exchange",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address[9]",
-        name: "_route",
+        name: "route",
         type: "address[9]",
       },
       {
         internalType: "uint256[3][4]",
-        name: "_swap_params",
+        name: "swapParams",
         type: "uint256[3][4]",
       },
       {
         internalType: "uint256",
-        name: "_amount",
+        name: "amount",
         type: "uint256",
       },
       {
         internalType: "uint256",
-        name: "_expected",
+        name: "expected",
         type: "uint256",
       },
       {
         internalType: "address[4]",
-        name: "_pools",
+        name: "pools",
         type: "address[4]",
       },
     ],
@@ -47,6 +81,69 @@ const _abi = [
       },
     ],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address[11]",
+        name: "route",
+        type: "address[11]",
+      },
+      {
+        internalType: "uint256[5][5]",
+        name: "swapParams",
+        type: "uint256[5][5]",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        internalType: "address[5]",
+        name: "pools",
+        type: "address[5]",
+      },
+    ],
+    name: "get_dy",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address[11]",
+        name: "route",
+        type: "address[11]",
+      },
+      {
+        internalType: "uint256[5][5]",
+        name: "swapParams",
+        type: "uint256[5][5]",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "get_dy",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
 ] as const;

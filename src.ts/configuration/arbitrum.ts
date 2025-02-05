@@ -3,9 +3,16 @@ import { type Universe } from '../Universe'
 import { BTC_TOKEN_ADDRESS, GAS_TOKEN_ADDRESS } from '../base/constants'
 import { makeConfig } from './ChainConfiguration'
 import { ChainIds, getAddressesForChain } from './ReserveAddresses'
+import deployments from '../contracts/deployments.json'
 
 const chainId = ChainIds.Arbitrum
 const reserveAddresses = getAddressesForChain(chainId)
+
+const arbitrumDeployments = deployments[42161][0]
+
+const contractAddress = (name: keyof typeof arbitrumDeployments.contracts) => {
+  return arbitrumDeployments.contracts[name].address
+}
 
 export const COMMON_TOKENS = {
   RSR: reserveAddresses.RSR_ADDRESS,
@@ -50,20 +57,22 @@ export const arbiConfig = makeConfig(
   RTOKENS,
   NEEDS_ZEROED_OUT_FIRST,
   {
-    emitId: '0x66BC6029408a5dEB3ffacA6835119af963bB408a',
+    emitId: contractAddress('EmitId'),
     facadeAddress: reserveAddresses.FACADE_ADDRESS,
     oldFacadeAddress: reserveAddresses.FACADE_ADDRESS,
     wrappedNative: COMMON_TOKENS.WETH,
 
-    zapperAddress: '0x4F923E78dfD0A6F7308eE06Fc2739d0Be6314592',
-    executorAddress: '0xbD2F0B5e3a64Ef22e0b695180EE53247670AE904',
-    rtokenLens: '0xe49aA049DA204E6dFF4A5AcdbD3935ec782F541f',
-    balanceOf: '0xe18a821ea1f1796A0797CEa01A3f86ebEab0f9B6',
-    curveRouterCall: '0x8cE5ee761fF619c889F007CB4D708178E87C11D8',
-    ethBalanceOf: '0x0326bF8E7efEBAe81898d366c1491D196d143a4C',
-    uniV3Router: '0x922eDac4D5c6702192473ec77a294edD834Fb2af',
-    curveStableSwapNGHelper: '0x323EB0B5e2a59d5565E59CBEb965f00298d3A2a1',
+    zapperAddress: contractAddress('Zapper'),
+    executorAddress: contractAddress('ZapperExecutor'),
+    rtokenLens: contractAddress('RTokenLens'),
+    balanceOf: contractAddress('BalanceOf'),
+    curveRouterCall: contractAddress('CurveRouterCall'),
+    ethBalanceOf: contractAddress('EthBalance'),
+    uniV3Router: contractAddress('UniV3RouterCall'),
+    curveStableSwapNGHelper: ethers.constants.AddressZero,
     curveCryptoFactoryHelper: ethers.constants.AddressZero,
+
+    usdc: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
   } as const,
   {
     blocktime: 250,

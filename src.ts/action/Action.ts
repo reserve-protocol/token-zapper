@@ -1,5 +1,5 @@
 import { Address } from '../base/Address'
-import { type Token, type TokenQuantity } from '../entities/Token'
+import { TokenQuantity, type Token } from '../entities/Token'
 import { TokenAmounts } from '../entities/TokenAmounts'
 import { type Approval } from '../base/Approval'
 import * as gen from '../tx-gen/Planner'
@@ -16,21 +16,29 @@ import { formatEther } from 'ethers/lib/utils'
 import { constants } from 'ethers'
 
 export enum InteractionConvention {
+  // The action requires callee to send tokens to the contract before calling it
+  // UniswapV2 Pool's for example
   PayBeforeCall,
+
+  // The action requires the callee to call the contract
+  // UniswapV3 Pool's do this
   CallbackBased,
+
+  // The action requires the caller to approve the contract
+  // Most contracts taking ERC20 token inputs work like this
   ApprovalRequired,
+
+  // The action does not require any interaction with the contract
+  // Burning tokens or contracts using ETH as input do this
   None,
 }
 
 export enum DestinationOptions {
+  // The contract supports a destination address
   Recipient,
-  Callee,
-}
 
-export enum EdgeType {
-  MINT,
-  BURN,
-  SWAP,
+  // The contract sends funds back to the caller
+  Callee,
 }
 
 const useSpecialCaseBalanceOf = new Set<Address>([
@@ -53,7 +61,7 @@ export const plannerUtils = {
     amount: gen.Value,
     destination: Address
   ) {
-    if (destination == universe.config.addresses.executorAddress) {
+    if (destination == universe.execAddress) {
       return
     }
     plannerUtils.erc20.transfer(universe, planner, amount, token, destination)
@@ -120,28 +128,50 @@ export const plannerUtils = {
     }
     return planner.add(uni.weirollZapperExec.sub(a, b), comment, name)!
   },
+  add: (
+    uni: Universe,
+    planner: gen.Planner,
+    a: gen.Value | bigint,
+    b: gen.Value | bigint,
+    comment: string,
+    name?: string
+  ) => {
+    if (a instanceof gen.LiteralValue && b instanceof gen.LiteralValue) {
+      return gen.encodeArg(
+        BigInt(a.value) + BigInt(b.value),
+        ParamType.from('uint256')
+      )
+    }
+    return planner.add(uni.weirollZapperExec.add(a, b), comment, name)!
+  },
   erc20: {
     transfer(
       universe: Universe,
       planner: gen.Planner,
       amount: gen.Value,
-      token: Token,
+      token: Token | Address,
       destination: Address
     ) {
+      const tokenAddress = token instanceof Address ? token : token.address
       const erc20 = gen.Contract.createContract(
-        IERC20__factory.connect(token.address.address, universe.provider)
+        IERC20__factory.connect(tokenAddress.address, universe.provider)
       )
       planner.add(erc20.transfer(destination.address, amount))
     },
     balanceOf(
       universe: Universe,
       planner: gen.Planner,
-      token: Token,
+      token: Token | Address,
       owner: Address,
       comment?: string,
       varName?: string
     ): gen.Value {
-      if (token == universe.nativeToken) {
+      const tokenAddress = token instanceof Address ? token : token.address
+
+      if (
+        token == universe.nativeToken ||
+        token === universe.nativeToken.address
+      ) {
         const lib = gen.Contract.createContract(
           EthBalance__factory.connect(
             universe.config.addresses.ethBalanceOf.address,
@@ -151,10 +181,10 @@ export const plannerUtils = {
         return planner.add(
           lib.ethBalance(owner.address),
           comment,
-          varName ?? `bal_${token.symbol}`
+          varName ?? `bal_${token}`
         )!
       }
-      if (useSpecialCaseBalanceOf.has(token.address)) {
+      if (useSpecialCaseBalanceOf.has(tokenAddress)) {
         const lib = gen.Contract.createContract(
           BalanceOf__factory.connect(
             universe.config.addresses.balanceOf.address,
@@ -162,18 +192,18 @@ export const plannerUtils = {
           )
         )
         return planner.add(
-          lib.balanceOf(token.address.address, owner.address),
+          lib.balanceOf(tokenAddress.address, owner.address),
           comment,
-          varName ?? `bal_${token.symbol}`
+          varName ?? `bal_${token}`
         )!
       }
       const erc20 = gen.Contract.createContract(
-        IERC20__factory.connect(token.address.address, universe.provider)
+        IERC20__factory.connect(tokenAddress.address, universe.provider)
       )
       return planner.add(
         erc20.balanceOf(owner.address),
         comment,
-        varName ?? `bal_${token.symbol}`
+        varName ?? `bal_${token}`
       )!
     },
   },
@@ -183,17 +213,120 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
+  public allTokens_ = new Set<Token>()
+  public allBalances_: TokenQuantity[] = []
+  public allBalancesBlock_: number = 0
+  public async balances(
+    universe: Universe,
+    token?: Token
+  ): Promise<readonly TokenQuantity[]> {
+    if (this.allTokens_.size === 0) {
+      for (const tok of [...this.inputToken, ...this.outputToken].filter(
+        (i) => {
+          if (token == null) {
+            return true
+          }
+          return i === token
+        }
+      )) {
+        this.allTokens_.add(tok)
+      }
+    }
+    if (this.allBalancesBlock_ !== universe.currentBlock) {
+      this.allBalances_ = []
+      for (const tok of this.allTokens_) {
+        const b = await universe.approvalsStore.queryBalance(tok, this.address)
+        if (b.amount === 0n) {
+          continue
+        }
+        this.allBalances_.push(b)
+      }
+      this.allBalancesBlock_ = universe.currentBlock
+    }
+    return this.allBalances_
+  }
+
+  public async liquidity(): Promise<number> {
+    return Infinity
+  }
+
+  get isTrade() {
+    return false
+  }
+  get dependsOnRpc() {
+    return false
+  }
+
+  get isMultiInput() {
+    return this.inputToken.length !== 1
+  }
+  get isMultiOutput() {
+    return this.outputToken.length !== 1
+  }
+
+  /**
+   * Signals to the transaction generator wether or the input of this action
+   * gets statically baked into the transaction. This is only really relevant if
+   * the planner does a .rawCall(...)
+   */
   public get supportsDynamicInput() {
     return true
   }
+
+  /**
+   * Signals that the action is only used once per zap. This is relevant for
+   * Trades and other actions where interacting with a contract changes the 'price'
+   *
+   * Uses the 'addressesInUse' to determine if conflicts occur
+   */
   public get oneUsePrZap() {
     return false
   }
+
+  /**
+   * See @oneUsePrZap
+   */
+  public get addressesInUse(): Set<Address> {
+    return new Set([])
+  }
+
+  /**
+   * Signals that the action returns the result of the operation.
+   * Some contracts do not return anything, or return a value that we can not use
+   * in this case return a null in the planner and return false in this method.
+   */
   public get returnsOutput() {
     return true
   }
-  public get addressesInUse(): Set<Address> {
-    return new Set([])
+
+  /**
+   * Returns the proportion of the input tokens that is used in this action.
+   * This is used by token basket type tokens or LP tokens.
+   *
+   * If the action takes a single input this should not be ovewritten.
+   */
+  public async inputProportions() {
+    if (this.inputToken.length !== this.inputToken.length) {
+      throw new Error(
+        `${this}: Unimplemented output token proportions, for multi-input action`
+      )
+    }
+    return [this.inputToken[0].one]
+  }
+
+  /**
+   * Returns the proportion of the output tokens that is used in this action.
+   * This is used by token basket type tokens or LP tokens.
+   *
+   * If the action produces a single output this should not be ovewritten.
+   */
+  public async outputProportions(): Promise<TokenQuantity[]> {
+    if (this.outputToken.length !== 1) {
+      throw new Error(
+        `${this}: Unimplemented output token proportions, for multi-output action`
+      )
+    }
+    return [this.outputToken[0].one]
   }
 
   outputBalanceOf(universe: Universe, planner: gen.Planner) {
@@ -213,6 +346,17 @@ export abstract class BaseAction {
     return 'Unknown'
   }
 
+  get actionName(): string {
+    return this.constructor.name
+  }
+
+  get dustTokens(): Token[] {
+    return []
+  }
+  /**
+   * The interaction convention of the action.
+   * See @InteractionConvention for more information
+   */
   get interactionConvention(): InteractionConvention {
     return this._interactionConvention
   }
@@ -225,6 +369,11 @@ export abstract class BaseAction {
   get address(): Address {
     return this._address
   }
+
+  public get is1to1() {
+    return this.inputToken.length === 1 && this.outputToken.length === 1
+  }
+
   constructor(
     public _address: Address,
     public readonly inputToken: Token[],
@@ -235,12 +384,21 @@ export abstract class BaseAction {
   ) {}
 
   public async intoSwapPath(universe: Universe, qty: TokenQuantity) {
-    return await new SwapPlan(universe, [this]).quote(
-      [qty],
-      universe.execAddress
-    )
+    return await new SwapPlan(universe, [this]).quote([qty])
   }
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
+  public async quoteWithDust(amountsIn: TokenQuantity[]): Promise<{
+    output: TokenQuantity[]
+    dust: TokenQuantity[]
+  }> {
+    if (this.dustTokens.length === 0) {
+      return {
+        output: await this.quote(amountsIn),
+        dust: [],
+      }
+    }
+    throw new Error('Unimplemented')
+  }
   public async quoteWithSlippage(
     amountsIn: TokenQuantity[]
   ): Promise<TokenQuantity[]> {
@@ -254,6 +412,29 @@ export abstract class BaseAction {
           (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
       )
     })
+  }
+
+  public async quoteWithSlippageAndDust(
+    amountsIn: TokenQuantity[]
+  ): Promise<{ output: TokenQuantity[]; dust: TokenQuantity[] }> {
+    const outputs = await this.quoteWithDust(amountsIn)
+    if (this.outputSlippage === 0n) {
+      return outputs
+    }
+    return {
+      output: outputs.output.map((output) => {
+        return output.token.from(
+          output.amount -
+            (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
+        )
+      }),
+      dust: outputs.dust.map((output) => {
+        return output.token.from(
+          output.amount -
+            (output.amount * this.outputSlippage) / TRADE_SLIPPAGE_DENOMINATOR
+        )
+      }),
+    }
   }
   abstract gasEstimate(): bigint
   public async exchange(amountsIn: TokenQuantity[], balances: TokenAmounts) {
@@ -283,7 +464,9 @@ export abstract class BaseAction {
 
     if (out == null) {
       if (this.returnsOutput) {
-        throw new Error('Action did not return output as expected')
+        throw new Error(
+          this.protocol + ': Action did not return output as expected'
+        )
       }
       return this.outputBalanceOf(universe, planner)
     }
@@ -292,7 +475,6 @@ export abstract class BaseAction {
 
   toString() {
     return (
-      'UnnamedAction.' +
       this.protocol +
       '.' +
       this.constructor.name +
@@ -303,94 +485,8 @@ export abstract class BaseAction {
     )
   }
 
-  // TODO: This is sort of a hack for stETH as it's a mintable but not burnable token.
-  // But we need the burn Action to calculate the baskets correctly, but we don't want
-  // to have the token actually appear in paths.
-  public get addToGraph() {
-    return true
-  }
-
   public get outputSlippage() {
     return 0n
-  }
-
-  public combine(other: BaseAction) {
-    const self = this
-
-    if (
-      !self.outputToken.every(
-        (token, index) => other.inputToken[index] === token
-      )
-    ) {
-      throw new Error('Cannot combine actions with mismatched tokens')
-    }
-    class CombinedAction extends BaseAction {
-      public get protocol(): string {
-        return `${self.protocol}.${other.protocol}`
-      }
-      toString(): string {
-        return `${self.toString()}  -> ${other.toString()}`
-      }
-
-      public async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-        const out = await self.quote(amountsIn)
-        return await other.quote(out)
-      }
-
-      get supportsDynamicInput() {
-        return self.supportsDynamicInput && other.supportsDynamicInput
-      }
-
-      get oneUsePrZap() {
-        return self.oneUsePrZap && other.oneUsePrZap
-      }
-
-      get addressesInUse() {
-        return new Set([...self.addressesInUse, ...other.addressesInUse])
-      }
-
-      get returnsOutput() {
-        return other.returnsOutput
-      }
-
-      get outputSlippage() {
-        return self.outputSlippage + other.outputSlippage
-      }
-
-      public gasEstimate(): bigint {
-        return self.gasEstimate() + other.gasEstimate() + 10000n
-      }
-
-      public async plan(
-        planner: gen.Planner,
-        inputs: gen.Value[],
-        destination: Address,
-        predicted: TokenQuantity[]
-      ): Promise<null | gen.Value[]> {
-        const out = await self.planWithOutput(
-          this.universe,
-          planner,
-          inputs,
-          destination,
-          predicted
-        )
-
-        return other.plan(planner, out, destination, predicted)
-      }
-
-      constructor(public readonly universe: Universe) {
-        super(
-          self.address,
-          self.inputToken,
-          other.outputToken,
-          self.interactionConvention,
-          other.proceedsOptions,
-          [...self.approvals, ...other.approvals]
-        )
-      }
-    }
-
-    return CombinedAction
   }
 }
 
@@ -446,9 +542,6 @@ class TradeEdgeAction extends BaseAction {
   get addressesInUse() {
     return this.current.addressesInUse
   }
-  get addToGraph() {
-    return this.current.addToGraph
-  }
 
   constructor(
     public readonly universe: Universe,
@@ -471,33 +564,6 @@ export const isMultiChoiceEdge = (
   return edge instanceof TradeEdgeAction
 }
 
-export const createMultiChoiceAction = (
-  universe: Universe,
-  choices: BaseAction[]
-) => {
-  if (choices.length === 0) {
-    throw new Error('Cannot create a TradeEdgeAction with no choices')
-  }
-  if (choices.length === 1) {
-    return choices[0]
-  }
-  if (
-    !choices.every(
-      (choice) =>
-        choice.inputToken.length === 1 &&
-        choice.outputToken.length === 1 &&
-        choice.inputToken[0] === choice.inputToken[0] &&
-        choice.outputToken[0] === choice.outputToken[0]
-    )
-  ) {
-    throw new Error(
-      'Add choices in a trade edge must produce the same input and output token'
-    )
-  }
-
-  return new TradeEdgeAction(universe, choices)
-}
-
 export const Action = (proto: string) => {
   abstract class ProtocolAction extends BaseAction {
     public get protocol() {
@@ -506,4 +572,50 @@ export const Action = (proto: string) => {
   }
 
   return ProtocolAction
+}
+
+export const findTradeSize = async (
+  action: BaseAction,
+  maxInput: TokenQuantity,
+  limitPrice: number,
+  eps: number = 1e-4,
+  iterations: number = 32
+) => {
+  try {
+    if (!action.is1to1) {
+      throw new Error(`${action}: Unimplemented for non-1to1 trades`)
+    }
+    const liquidity = await action.liquidity()
+    if (!isFinite(liquidity)) {
+      return Infinity
+    }
+
+    const inputTokenPrice = (await action.inputToken[0].price).asNumber()
+    let searchSpan = maxInput.scalarDiv(2n)
+    let input = maxInput
+    for (let i = 0; i < iterations; i++) {
+      if (input.asNumber() * inputTokenPrice < 1000) {
+        return 0
+      }
+      const [outputAmount] = await action.quote([input])
+      const price = outputAmount.asNumber() / input.asNumber()
+
+      const diff = Math.abs(limitPrice - price)
+
+      if (diff < eps && price > limitPrice) {
+        break
+      }
+
+      if (price < limitPrice) {
+        input = input.sub(searchSpan)
+      } else {
+        input = input.add(searchSpan)
+      }
+      searchSpan = searchSpan.scalarDiv(2n)
+    }
+    return input.asNumber()
+  } catch (e) {
+    console.log(`Error finding trade size for ${action}: ${e}`)
+    throw e
+  }
 }

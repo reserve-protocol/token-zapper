@@ -210,14 +210,9 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "address",
-        name: "recipient",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
+        internalType: "uint192",
         name: "amount",
-        type: "uint256",
+        type: "uint192",
       },
     ],
     name: "mint",
@@ -265,6 +260,19 @@ const _abi = [
       },
     ],
     name: "redeemTo",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint192",
+        name: "basketsNeeded_",
+        type: "uint192",
+      },
+    ],
+    name: "setBasketsNeeded",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

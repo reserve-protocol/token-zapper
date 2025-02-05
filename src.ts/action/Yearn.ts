@@ -20,17 +20,16 @@ export class YearnDepositAction extends Action('Yearn') {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await IVaultYearn__factory.connect(
-      this.yvToken.address.address,
-      this.universe.provider
-    ).callStatic.pricePerShare()
-    return [
-      this.yvToken.from((amountsIn.amount * rate.toBigInt()) / 10n ** 18n),
-    ]
+    const rate = await this.getRate()
+    return [this.yvToken.from((amountsIn.amount * rate) / 10n ** 18n)]
   }
 
   gasEstimate() {
     return BigInt(200000n)
+  }
+
+  get returnsOutput(): boolean {
+    return false
   }
 
   get outputSlippage() {
@@ -40,7 +39,8 @@ export class YearnDepositAction extends Action('Yearn') {
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    public readonly yvToken: Token
+    public readonly yvToken: Token,
+    private readonly getRate: () => Promise<bigint>
   ) {
     super(
       yvToken.address,
@@ -74,21 +74,21 @@ export class YearnWithdrawAction extends Action('Yearn') {
     return BigInt(200000n)
   }
 
-  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await IVaultYearn__factory.connect(
-      this.yvToken.address.address,
-      this.universe.provider
-    ).callStatic.pricePerShare()
+  get returnsOutput(): boolean {
+    return false
+  }
 
-    return [
-      this.underlying.from((amountsIn.amount * 10n ** 18n) / rate.toBigInt()),
-    ]
+  async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
+    const rate = await this.getRate()
+
+    return [this.underlying.from((amountsIn.amount * 10n ** 18n) / rate)]
   }
 
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    readonly yvToken: Token
+    readonly yvToken: Token,
+    private readonly getRate: () => Promise<bigint>
   ) {
     super(
       yvToken.address,

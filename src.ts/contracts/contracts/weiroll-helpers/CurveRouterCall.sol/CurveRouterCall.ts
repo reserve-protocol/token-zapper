@@ -26,9 +26,12 @@ import type {
 export interface CurveRouterCallInterface extends utils.Interface {
   functions: {
     "exchange(uint256,uint256,address,bytes)": FunctionFragment;
+    "exchangeNew(uint256,bytes)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "exchange"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic: "exchange" | "exchangeNew"
+  ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "exchange",
@@ -39,8 +42,16 @@ export interface CurveRouterCallInterface extends utils.Interface {
       PromiseOrValue<BytesLike>
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "exchangeNew",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
+  ): string;
 
   decodeFunctionResult(functionFragment: "exchange", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "exchangeNew",
+    data: BytesLike
+  ): Result;
 
   events: {};
 }
@@ -74,8 +85,14 @@ export interface CurveRouterCall extends BaseContract {
   functions: {
     exchange(
       amountIn: PromiseOrValue<BigNumberish>,
-      _expected: PromiseOrValue<BigNumberish>,
+      expected: PromiseOrValue<BigNumberish>,
       router: PromiseOrValue<string>,
+      encodedRouterCall: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    exchangeNew(
+      amountIn: PromiseOrValue<BigNumberish>,
       encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -83,8 +100,14 @@ export interface CurveRouterCall extends BaseContract {
 
   exchange(
     amountIn: PromiseOrValue<BigNumberish>,
-    _expected: PromiseOrValue<BigNumberish>,
+    expected: PromiseOrValue<BigNumberish>,
     router: PromiseOrValue<string>,
+    encodedRouterCall: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  exchangeNew(
+    amountIn: PromiseOrValue<BigNumberish>,
     encodedRouterCall: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -92,8 +115,14 @@ export interface CurveRouterCall extends BaseContract {
   callStatic: {
     exchange(
       amountIn: PromiseOrValue<BigNumberish>,
-      _expected: PromiseOrValue<BigNumberish>,
+      expected: PromiseOrValue<BigNumberish>,
       router: PromiseOrValue<string>,
+      encodedRouterCall: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    exchangeNew(
+      amountIn: PromiseOrValue<BigNumberish>,
       encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -104,8 +133,14 @@ export interface CurveRouterCall extends BaseContract {
   estimateGas: {
     exchange(
       amountIn: PromiseOrValue<BigNumberish>,
-      _expected: PromiseOrValue<BigNumberish>,
+      expected: PromiseOrValue<BigNumberish>,
       router: PromiseOrValue<string>,
+      encodedRouterCall: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    exchangeNew(
+      amountIn: PromiseOrValue<BigNumberish>,
       encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -114,8 +149,14 @@ export interface CurveRouterCall extends BaseContract {
   populateTransaction: {
     exchange(
       amountIn: PromiseOrValue<BigNumberish>,
-      _expected: PromiseOrValue<BigNumberish>,
+      expected: PromiseOrValue<BigNumberish>,
       router: PromiseOrValue<string>,
+      encodedRouterCall: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    exchangeNew(
+      amountIn: PromiseOrValue<BigNumberish>,
       encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

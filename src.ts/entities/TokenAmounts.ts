@@ -18,6 +18,15 @@ export class TokenAmounts {
     tok.fromBigInt(0n)
   )
 
+  public isEmpty() {
+    for (const qty of this.tokenBalances.values()) {
+      if (!qty.isZero) {
+        return false
+      }
+    }
+    return true
+  }
+
   static fromQuantities(qtys: TokenQuantity[]) {
     const out = new TokenAmounts()
     qtys.forEach((qty) => out.add(qty))
@@ -42,7 +51,15 @@ export class TokenAmounts {
   }
 
   hasBalance(inputs: TokenQuantity[]) {
-    return inputs.every((i) => this.tokenBalances.has(i.token) ? this.get(i.token).gte(i) : i.token.zero.gte(i))
+    return inputs.every((i) =>
+      this.tokenBalances.has(i.token)
+        ? this.get(i.token).gte(i)
+        : i.token.zero.gte(i)
+    )
+  }
+
+  replace(qty: TokenQuantity) {
+    this.tokenBalances.set(qty.token, qty)
   }
 
   exchange(

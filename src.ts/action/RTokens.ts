@@ -1,10 +1,16 @@
-import { type Universe } from '../Universe'
+import { Universe } from '../Universe'
 import { Address } from '../base/Address'
-import { Token, type TokenQuantity } from '../entities/Token'
+import {
+  PricedTokenQuantity,
+  Token,
+  type TokenQuantity,
+} from '../entities/Token'
 import { Action, DestinationOptions, InteractionConvention } from './Action'
 
+import { ethers } from 'ethers'
 import { Approval } from '../base/Approval'
 import {
+  IAsset,
   IAsset__factory,
   IAssetRegistry,
   IAssetRegistry__factory,
@@ -20,54 +26,74 @@ import {
   RTokenLens__factory,
 } from '../contracts'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
+import { MultiInputUnit } from './MultiInputAction'
+import { BlockCache } from '../base/BlockBasedCache'
+import { DefaultMap } from '../base/DefaultMap'
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction
   public readonly mint: MintRTokenAction
+  public readonly addressesInUse: Set<Address>
 
   toString() {
     return `RToken[${this.rToken}](basket=${this.basket.join(', ')})`
   }
 
-  private block: number
-
-  public async supply() {
-    return (await this.contracts.rToken.totalSupply()).toBigInt()
-  }
-  public async unitBasket() {
-    if (
-      Math.abs(this.block - this.universe.currentBlock) >
-      this.universe.config.requoteTolerance
-    ) {
-      this.unitBasket_ = await this.contracts.basketHandler
-        .quote(this.rToken.scale, 0)
-        .then(
-          async ([basketTokens, amts]) =>
-            await Promise.all(
-              basketTokens.map(
-                async (addr, index) =>
-                  await this.universe
-                    .getToken(Address.from(addr))
-                    .then((basketToken) => basketToken.from(amts[index]))
-              )
-            )
+  public readonly supply: () => Promise<TokenQuantity>
+  public async exchangeRate() {
+    const underlyingTokens = new Set([
+      ...(await Promise.all(
+        this.basket.map(
+          async (token) => await this.universe.underlyingToken.get(token)
         )
-      this.block = this.universe.currentBlock
-    }
-    return this.unitBasket_
-  }
-
-  async maxIssueable() {
-    return this.rToken.from(
-      await this.contracts.rToken.callStatic.issuanceAvailable()
+      )),
+    ]).size
+    const supply = await this.supply()
+    const baskets = this.rToken.from(
+      (await this.contracts.rToken.callStatic.basketsNeeded()).toBigInt()
     )
+    const tokenClass = await this.universe.tokenClass.get(this.rToken)
+    const amount = supply.amount
+
+    if (amount === 0n) {
+      const classPrice = await tokenClass.price
+      const ourPrice = await this.contracts.facade.callStatic.price(
+        this.rToken.address.address
+      )
+      const ourPriceUSD = this.universe.usd.from(
+        (((ourPrice.low.toBigInt() + ourPrice.high.toBigInt()) / 2n) *
+          this.universe.usd.scale) /
+          10n ** 18n
+      )
+
+      const out = ourPriceUSD.div(classPrice).into(tokenClass)
+
+      return out
+    }
+    const out = (baskets.amount * tokenClass.scale) / amount
+    let res = tokenClass.from(out).invert()
+
+    return res
   }
+  public readonly unitBasket: () => Promise<PricedTokenQuantity[]>
+  public readonly maxIssueable: () => Promise<TokenQuantity>
+  public readonly quoteMint: (
+    input: TokenQuantity[]
+  ) => Promise<TokenQuantity[]>
+  public readonly quoteRedeem: (
+    input: TokenQuantity[]
+  ) => Promise<TokenQuantity[]>
+
+  public readonly calculateMultiInputUnit: () => Promise<MultiInputUnit>
 
   public readonly basket: Token[]
+
   private constructor(
     public readonly universe: Universe,
     public readonly rToken: Token,
     private unitBasket_: TokenQuantity[],
+    private assets: [Token, IAsset][],
+    public readonly backingManager: Address,
     public readonly contracts: {
       facade: IFacade
       basketHandler: IBasketHandler
@@ -77,12 +103,172 @@ export class RTokenDeployment {
       assetRegistry: IAssetRegistry
     },
     public readonly mintEstimate: bigint,
-    public readonly burnEstimate: bigint
+    public readonly burnEstimate: bigint,
+    public readonly resolution: TokenQuantity
   ) {
-    this.block = universe.currentBlock
     this.basket = this.unitBasket_.map((i) => i.token)
     this.burn = new BurnRTokenAction(this)
     this.mint = new MintRTokenAction(this)
+    this.addressesInUse = new Set([Address.from(this.contracts.main.address)])
+    const getIssueanceAvailable = universe.createCachedProducer(
+      async () =>
+        rToken.from(
+          (
+            await this.contracts.rToken.callStatic.issuanceAvailable()
+          ).toBigInt()
+        ),
+      12000
+    )
+
+    const getSupply = () => this.universe.approvalsStore.totalSupply(rToken)
+
+    const getIssueanceUnit = universe.createCachedProducer(async () => {
+      const unit = await this.contracts.facade.callStatic
+        .issue(this.rToken.address.address, this.rToken.scale)
+        .then(
+          async ([basketTokens, amts, uoaAmts]) =>
+            await Promise.all(
+              basketTokens.map(
+                async (addr, index) =>
+                  await this.universe
+                    .getToken(Address.from(addr))
+                    .then((basketToken) =>
+                      basketToken
+                        .from(amts[index])
+                        .withPrice(rToken.from(uoaAmts[index]))
+                    )
+              )
+            )
+        )
+
+      let totalPrice: TokenQuantity = this.rToken.zero
+
+      const inputs = unit.map((priced) => {
+        totalPrice = totalPrice.add(priced.price)
+        return priced.quantity.withPrice(priced.price.into(this.universe.usd))
+      })
+
+      return new MultiInputUnit(
+        this.rToken.one.withPrice(totalPrice.into(this.universe.usd)),
+        inputs
+      )
+    })
+
+    const unitBasket = universe.createCachedProducer(async () => {
+      const supply = await this.supply()
+      if (supply.amount < this.rToken.scale) {
+        const { erc20s, quantities } =
+          await this.contracts.basketHandler.callStatic.quote(
+            this.rToken.scale,
+            0
+          )
+        const unit = await Promise.all(
+          erc20s.map((addr, index) =>
+            this.universe
+              .getToken(Address.from(addr))
+              .then((token) => token.from(quantities[index]))
+          )
+        )
+
+        return unit
+      }
+      const { erc20s, quantities } =
+        await this.contracts.rTokenLens.callStatic.redeem(
+          this.contracts.assetRegistry.address,
+          this.contracts.basketHandler.address,
+          this.contracts.rToken.address,
+          this.rToken.scale
+        )
+
+      const unit = await Promise.all(
+        erc20s.map((addr, index) =>
+          this.universe
+            .getToken(Address.from(addr))
+            .then((token) => token.from(quantities[index]))
+        )
+      )
+
+      return unit
+    }, 12000)
+
+    for (const [token, asset] of assets) {
+      this.universe.addSingleTokenPriceSource({
+        token,
+        priceFn: async () => {
+          const price = await asset.callStatic.price()
+          const out = this.universe.usd.from(
+            (((price.low.toBigInt() + price.high.toBigInt()) / 2n) *
+              this.universe.usd.scale) /
+              ONE
+          )
+          return out
+        },
+      })
+    }
+
+    const ONE = 10n ** 18n
+
+    const quoteRedeem = async ([input]: TokenQuantity[]) => {
+      const unit = await unitBasket()
+      const out = unit.map((qty) =>
+        qty.token.from((qty.amount * input.amount) / ONE)
+      )
+      return out
+    }
+
+    const quoteMint = async (input: TokenQuantity[]) => {
+      if (input.some((i) => i.amount === 0n)) {
+        return [this.rToken.zero, ...input]
+      }
+      let unit = await unitBasket()
+      if (unit.length !== input.length) {
+        throw new Error('Invalid input length')
+      }
+      let baskets = ethers.constants.MaxUint256.toBigInt()
+      for (let i = 0; i < input.length; i++) {
+        const basketsUsingQtys = (input[i].amount * ONE) / unit[i].amount
+        baskets = basketsUsingQtys < baskets ? basketsUsingQtys : baskets
+      }
+
+      const inputSpent = unit.map((i) =>
+        i.token.from((i.amount * baskets) / ONE)
+      )
+      const dust = input.map((i, index) => i.sub(inputSpent[index]))
+
+      return [this.rToken.from(baskets), ...dust]
+    }
+
+    // const quoteMint = async (input: TokenQuantity[]) => {
+    //   const out = await this.contracts.facade.callStatic.maxIssuableByAmounts(
+    //     this.rToken.address.address,
+    //     input.map((i) => i.amount)
+    //   )
+
+    //   const unitsMinted = [this.rToken.from(out)]
+    //   const inputConsumed = await this.burn.quote(unitsMinted)
+    //   const outputs = [
+    //     this.rToken.from(out),
+    //     ...input.map((i, index) => {
+    //       const remaining = i.sub(inputConsumed[index])
+    //       if (remaining.amount <= 0n) {
+    //         return this.universe.usd.zero
+    //       }
+    //       return remaining
+    //     }),
+    //   ]
+    //   console.log(`${input.join(', ')} -> ${outputs.join(', ')}`)
+    //   return outputs
+    // }
+
+    this.supply = getSupply
+
+    this.maxIssueable = getIssueanceAvailable
+    this.quoteMint = quoteMint
+    this.quoteRedeem = quoteRedeem
+
+    this.calculateMultiInputUnit = getIssueanceUnit
+
+    this.unitBasket = () => this.calculateMultiInputUnit().then((i) => i.basket)
 
     universe.defineMintable(this.mint, this.burn, true)
   }
@@ -90,9 +276,7 @@ export class RTokenDeployment {
   public static async load(
     uni: Universe,
     facadeAddress: Address,
-    rToken: Token,
-    mintEstimate = 1000000n,
-    burnEstimate = 1000000n
+    rToken: Token
   ) {
     // console.log('loading ' + rToken)
     const rTokenInst = IRToken__factory.connect(
@@ -112,53 +296,66 @@ export class RTokenDeployment {
       basketHandlerAddr.address,
       uni.provider
     )
+    const assetReg = IAssetRegistry__factory.connect(
+      assetRegAddr.address,
+      uni.provider
+    )
 
-    const uniBasket = await basketHandlerInst
+    const [uniBasket, assets] = await basketHandlerInst
       .quote(rToken.scale, 0)
       .then(
         async ([basketTokens, amts]) =>
-          await Promise.all(
-            basketTokens.map(
-              async (addr, index) =>
-                await uni
+          await Promise.all([
+            Promise.all(
+              basketTokens.map((addr, index) =>
+                uni
                   .getToken(Address.from(addr))
                   .then((basketToken) => basketToken.from(amts[index]))
-            )
-          )
+              )
+            ),
+            Promise.all(
+              basketTokens.map((addr) =>
+                assetReg
+                  .toAsset(addr)
+                  .then((assetAddress) =>
+                    IAsset__factory.connect(assetAddress, uni.provider)
+                  )
+                  .then(async (assetAddr) =>
+                    Promise.all([
+                      uni.getToken(Address.from(addr)),
+                      assetAddr,
+                    ] as const)
+                  )
+              )
+            ),
+          ])
       )
+
+    const rTokenPricer = uni.createCachedProducer(async () => {
+      const [low, high] = (await facade.price(rToken.address.address)).map(
+        (i) => i.toBigInt()
+      )
+      const mid = (low + high) / 2n
+      return uni.usd.from(mid / 10n ** 10n)
+    }, 60000)
 
     uni.addSingleTokenPriceSource({
       token: rToken,
       priceFn: async () => {
-        const { low, high } = await facade.callStatic.price(
-          rToken.address.address
-        )
-        const out = uni.usd.fromScale18BN(
-          (low.toBigInt() + high.toBigInt()) / 2n
-        )
-        return out
+        return await rTokenPricer()
       },
     })
-    for (const token of uniBasket) {
-      const assetInst = IAsset__factory.connect(
-        token.token.address.address,
-        uni.provider
-      )
-      uni.addSingleTokenPriceSource({
-        token: token.token,
-        priceFn: async () => {
-          const { low, high } = await assetInst.callStatic.price()
-          const out = uni.usd.fromScale18BN(
-            (low.toBigInt() + high.toBigInt()) / 2n
-          )
-          return out
-        },
-      })
-    }
+    const backingManager = Address.from(
+      await mainInst.callStatic.backingManager()
+    )
+    const rTokenPrice = await rToken.price
+
     return new RTokenDeployment(
       uni,
       rToken,
       uniBasket,
+      assets,
+      backingManager,
       {
         facade,
         basketHandler: basketHandlerInst,
@@ -168,22 +365,17 @@ export class RTokenDeployment {
           uni.config.addresses.rtokenLens.address,
           uni.provider
         ),
-        assetRegistry: IAssetRegistry__factory.connect(
-          assetRegAddr.address,
-          uni.provider
-        ),
+        assetRegistry: assetReg,
       },
-      mintEstimate,
-      burnEstimate
+      200000n + 100000n * BigInt(uniBasket.length),
+      200000n + 100000n * BigInt(uniBasket.length),
+      rTokenPrice.into(rToken).invert()
     )
   }
 }
 
 abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
   abstract action: string
-  get supportsDynamicInput() {
-    return true
-  }
   get oneUsePrZap() {
     return false
   }
@@ -193,12 +385,15 @@ abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
   toString(): string {
     return `RToken(action=${this.action}, ${this.inputToken.join(
       ', '
-    )} -> ${this.outputToken.join(', ')}`
+    )} -> ${this.outputToken.join(', ')})`
   }
 }
 
 export class MintRTokenAction extends ReserveRTokenBase {
   action = 'issue'
+  get supportsDynamicInput() {
+    return false
+  }
   async plan(
     planner: Planner,
     _: Value[],
@@ -226,33 +421,50 @@ export class MintRTokenAction extends ReserveRTokenBase {
     }
     return null
   }
+
+  public async inputProportions() {
+    const proportions = (await this.rTokenDeployment.calculateMultiInputUnit())
+      .proportions
+
+    return proportions
+  }
+
   get universe() {
     return this.rTokenDeployment.universe
+  }
+
+  get oneUsePrZap() {
+    return true
+  }
+  get addressesInUse() {
+    return this.rTokenDeployment.addressesInUse
   }
   gasEstimate() {
     return this.rTokenDeployment.mintEstimate
   }
+  private lastBlock = 0
+  private cache = new Map<string, Promise<TokenQuantity[]>>()
   async quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]> {
-    if (this.universe.config.addresses.facadeAddress !== Address.ZERO) {
-      const out = await this.rTokenDeployment.contracts.facade.callStatic
-        .maxIssuableByAmounts(
-          this.outputToken[0].address.address,
-          amountsIn.map((i) => i.amount)
-        )
-        .then((amt) => this.rTokenDeployment.rToken.from(amt))
+    if (this.lastBlock !== this.universe.currentBlock) {
+      this.lastBlock = this.universe.currentBlock
+      this.cache.clear()
+    }
+    const key = amountsIn.map((i) => i.amount).join(',')
+    let out = this.cache.get(key)
+    if (out == null) {
+      out = this.rTokenDeployment.quoteMint(amountsIn)
+      this.cache.set(key, out)
+    }
 
-      return [out]
-    } else {
-      const unit = await this.rTokenDeployment.unitBasket()
-      let out = this.outputToken[0].zero
-      unit.map((unit, index) => {
-        const thisOut = amountsIn[index].div(unit).into(this.outputToken[0])
-        if (thisOut.gt(out)) {
-          out = thisOut
-        }
-      })
-
-      return [out]
+    return await out
+  }
+  async quoteWithDust(amountsIn: TokenQuantity[]) {
+    const [rTokenQty, ...dust] = await this.rTokenDeployment.quoteMint(
+      amountsIn
+    )
+    return {
+      output: [rTokenQty],
+      dust,
     }
   }
 
@@ -260,6 +472,9 @@ export class MintRTokenAction extends ReserveRTokenBase {
     return 0n
   }
   get basket() {
+    return this.rTokenDeployment.basket
+  }
+  get dustTokens() {
     return this.rTokenDeployment.basket
   }
   constructor(public readonly rTokenDeployment: RTokenDeployment) {
@@ -278,6 +493,9 @@ export class MintRTokenAction extends ReserveRTokenBase {
 
 export class BurnRTokenAction extends ReserveRTokenBase {
   action = 'redeem'
+  get supportsDynamicInput() {
+    return true
+  }
   async plan(
     planner: Planner,
     [input]: Value[],
@@ -289,6 +507,13 @@ export class BurnRTokenAction extends ReserveRTokenBase {
     )
     planner.add(rtokenContract.redeem(input ?? predictedInput.amount))
     return null
+  }
+
+  get oneUsePrZap() {
+    return true
+  }
+  get addressesInUse() {
+    return this.rTokenDeployment.addressesInUse
   }
   get universe() {
     return this.rTokenDeployment.universe
@@ -306,7 +531,7 @@ export class BurnRTokenAction extends ReserveRTokenBase {
   async quote_([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const supply = await this.rTokenDeployment.supply()
 
-    if (supply === 0n) {
+    if (supply.isZero) {
       const [erc20s, amts] =
         await this.rTokenDeployment.contracts.basketHandler.callStatic.quote(
           amountIn.amount,
@@ -322,37 +547,26 @@ export class BurnRTokenAction extends ReserveRTokenBase {
         return output.from(amt)
       })
     }
-    const basket = this.rTokenDeployment.basket
-    const out = await this.rTokenDeployment.contracts.rTokenLens.callStatic
-      .redeem(
+    const { quantities } =
+      await this.rTokenDeployment.contracts.rTokenLens.callStatic.redeem(
         this.rTokenDeployment.contracts.assetRegistry.address,
         this.rTokenDeployment.contracts.basketHandler.address,
-        this.rTokenDeployment.rToken.address.address,
+        this.rTokenDeployment.contracts.rToken.address,
         amountIn.amount
       )
-      .then(
-        async ([ercs, amts]) =>
-          await Promise.all(
-            amts.map(async (amt, index) => {
-              const erc = await this.universe.getToken(
-                Address.from(ercs[index])
-              )
-              if (erc !== basket[index]) {
-                throw new Error(
-                  'rTokenLens.redeem produced different output tokens'
-                )
-              }
-              return basket[index].from(amt)
-            })
-          )
-      )
-
+    const out = quantities.map((amt, i) => {
+      const output = this.outputToken[i]
+      return output.from(amt)
+    })
     return out
+  }
+  get dependsOnRpc(): boolean {
+    return true
   }
   get basket() {
     return this.rTokenDeployment.basket
   }
-  // private quoteCache: BlockCache<TokenQuantity, TokenQuantity[]>
+
   constructor(public readonly rTokenDeployment: RTokenDeployment) {
     super(
       rTokenDeployment.rToken.address,
@@ -362,8 +576,5 @@ export class BurnRTokenAction extends ReserveRTokenBase {
       DestinationOptions.Callee,
       []
     )
-    // this.quoteCache = this.universe.createCache<TokenQuantity, TokenQuantity[]>(
-    //   async (amountsIn) => await this.quote_([amountsIn])
-    // )
   }
 }

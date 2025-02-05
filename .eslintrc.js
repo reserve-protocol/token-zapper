@@ -6,7 +6,7 @@ module.exports = {
     project: "./tsconfig.json",
     tsconfigRootDir: __dirname
   },
-  plugins: ["@typescript-eslint"],
+  plugins: ["@typescript-eslint", "prettier"],
   rules: {
     'prettier/prettier': 'error',
     '@typescript-eslint/explicit-function-return-type': 'off',

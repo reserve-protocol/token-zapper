@@ -1,6 +1,11 @@
 import { type Token, type TokenQuantity } from '../entities/Token'
 import { type Universe } from '../Universe'
-import { Action, DestinationOptions, InteractionConvention } from './Action'
+import {
+  Action,
+  DestinationOptions,
+  InteractionConvention,
+  ONE,
+} from './Action'
 
 import { Approval } from '../base/Approval'
 import { IBeefyVault__factory } from '../contracts'
@@ -36,13 +41,8 @@ export class BeefyDepositAction extends BeefyBase {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await IBeefyVault__factory.connect(
-      this.mooToken.address.address,
-      this.universe.provider
-    ).callStatic.getPricePerFullShare()
-    return [
-      this.mooToken.from((amountsIn.amount * rate.toBigInt()) / 10n ** 18n),
-    ]
+    const rate = await this.getRate()
+    return [this.mooToken.from((amountsIn.amount * rate) / 10n ** 18n)]
   }
 
   gasEstimate() {
@@ -56,7 +56,8 @@ export class BeefyDepositAction extends BeefyBase {
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    public readonly mooToken: Token
+    public readonly mooToken: Token,
+    private readonly getRate: () => Promise<bigint>
   ) {
     super(
       mooToken.address,
@@ -94,20 +95,18 @@ export class BeefyWithdrawAction extends BeefyBase {
   }
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await IBeefyVault__factory.connect(
-      this.mooToken.address.address,
-      this.universe.provider
-    ).callStatic.getPricePerFullShare()
+    const rate = await this.getRate()
 
-    return [
-      this.underlying.from((amountsIn.amount * 10n ** 18n) / rate.toBigInt()),
-    ]
+    console.log(rate.toString())
+
+    return [this.underlying.from((amountsIn.amount * ONE) / rate)]
   }
 
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,
-    readonly mooToken: Token
+    readonly mooToken: Token,
+    private readonly getRate: () => Promise<bigint>
   ) {
     super(
       mooToken.address,
@@ -116,6 +115,11 @@ export class BeefyWithdrawAction extends BeefyBase {
       InteractionConvention.None,
       DestinationOptions.Callee,
       []
+    )
+
+    const contract = IBeefyVault__factory.connect(
+      this.mooToken.address.address,
+      this.universe.provider
     )
   }
 }

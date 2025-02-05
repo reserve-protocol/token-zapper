@@ -2,8 +2,19 @@ import { type Address } from '../base/Address'
 
 import { parseUnits, formatUnits } from '@ethersproject/units'
 import { BigNumber } from '@ethersproject/bignumber'
-import { type BaseUniverse } from '../configuration/base'
 import { BigNumberish } from 'ethers'
+import { USD_ADDRESS } from '../base/constants'
+import { Provider } from '@ethersproject/providers'
+import { type BaseUniverse } from '../configuration/base'
+import { PriceOracle } from '../oracles/PriceOracle'
+import { DefaultMap } from '../base/DefaultMap'
+type Universe = {
+  tokens: Map<Address, Token>
+  usd: Token
+  fairPrice: (qty: TokenQuantity) => Promise<TokenQuantity | null>
+  provider: Provider
+  singleTokenPriceOracles: DefaultMap<Token, PriceOracle[]>
+}
 /**
  * A class representing a token.
  * @property {Address} address - The address of the token.
@@ -31,6 +42,7 @@ export class Token {
   public readonly wei: TokenQuantity
 
   private constructor(
+    public readonly universe: Universe,
     public readonly address: Address,
     public readonly symbol: string,
     public readonly name: string,
@@ -44,16 +56,17 @@ export class Token {
   }
 
   static createToken(
-    tokensRegister: Map<Address, Token>,
+    universe: Universe,
     address: Address,
     symbol: string,
     name: string,
     decimals: number,
     resetApproval = false
   ): Token {
-    let current = tokensRegister.get(address)
+    let current = universe.tokens.get(address)
     if (current == null) {
       current = new Token(
+        universe,
         address,
         symbol,
         name,
@@ -61,7 +74,7 @@ export class Token {
         10n ** BigInt(decimals),
         resetApproval
       )
-      tokensRegister.set(address, current)
+      universe.tokens.set(address, current)
     }
     return current
   }
@@ -69,6 +82,15 @@ export class Token {
 
   toString() {
     return `${this.symbol}`
+  }
+
+  get price() {
+    return this.universe.fairPrice(this.one).then((i) => {
+      if (i == null) {
+        throw new Error(`Failed to price ${this}`)
+      }
+      return i
+    })
   }
 
   serialize() {
@@ -90,6 +112,13 @@ export class Token {
       this,
       parseUnits(decimalStringOrNumber, this.decimals).toBigInt()
     )
+  }
+
+  async fromUSD(usdQty: number | TokenQuantity): Promise<TokenQuantity> {
+    if (typeof usdQty === 'number') {
+      usdQty = this.universe.usd.from(usdQty)
+    }
+    return usdQty.div(await this.price).into(this)
   }
 
   fromBigInt(decimalStringOrNumber: bigint): TokenQuantity {
@@ -132,7 +161,7 @@ export class Token {
 
   toJson() {
     return {
-      address: this.address.toString(),
+      address: this.address.toString().toLowerCase(),
       symbol: this.symbol,
       name: this.name,
       decimals: this.decimals,
@@ -173,6 +202,18 @@ export class TokenQuantity {
     }
   }
 
+  public get isZero() {
+    return this.amount === 0n
+  }
+
+  public get isOne() {
+    return this.amount === this.token.scale
+  }
+
+  public get isPositive() {
+    return this.amount > 0n
+  }
+
   public gte(other: TokenQuantity) {
     return this.amount >= other.amount
   }
@@ -189,8 +230,19 @@ export class TokenQuantity {
       : 1
   }
 
+  private _number?: number
   public asNumber() {
-    return parseFloat(this.format())
+    if (this._number == null) {
+      this._number = parseFloat(this.format())
+    }
+    return this._number
+  }
+
+  public invert() {
+    return new TokenQuantity(
+      this.token,
+      (this.token.scale * this.token.scale) / this.amount
+    )
   }
 
   public sub(other: TokenQuantity) {
@@ -235,9 +287,21 @@ export class TokenQuantity {
   }
 
   public formatWithSymbol(): string {
+    if (this.token.address.address === USD_ADDRESS) {
+      if (this.amount > 1000000n) {
+        return `$ ${formatUnits((this.amount * 100n) / this.token.scale, 2)}`
+      }
+
+      return `$ ${formatUnits(this.amount, this.token.decimals)}`
+    }
+
     return (
       formatUnits(this.amount, this.token.decimals) + ' ' + this.token.symbol
     )
+  }
+
+  public withPrice(price: TokenQuantity) {
+    return new PricedTokenQuantity(this, price)
   }
 
   public toScaled(scale: bigint) {
@@ -249,6 +313,26 @@ export class TokenQuantity {
    */
   public convertTo(other: Token) {
     return this.into(other)
+  }
+
+  public async price() {
+    if (this.token.universe.singleTokenPriceOracles.has(this.token)) {
+      const tokenprice = (
+        await this.token.universe.singleTokenPriceOracles
+          .get(this.token)[0]
+          .quote(this.token)
+      )?.asNumber()
+      if (tokenprice != null) {
+        return this.token.universe.usd
+          .from(tokenprice * this.asNumber())
+          .into(this.token)
+      }
+    }
+    const out = await this.token.universe.fairPrice(this.token.one)
+    if (out == null) {
+      throw new Error(`Failed to price ${this.token}`)
+    }
+    return out.into(this.token).mul(this)
   }
 
   /**
@@ -310,7 +394,7 @@ export class PricedTokenQuantity {
     return this.innerPrice != null
   }
 
-  public static async make(universe: BaseUniverse, quantity: TokenQuantity) {
+  public static async make(universe: Universe, quantity: TokenQuantity) {
     const valueUSD = (await universe.fairPrice(quantity)) ?? universe.usd.zero
     return new PricedTokenQuantity(quantity, valueUSD)
   }
@@ -324,4 +408,14 @@ export class PricedTokenQuantity {
   toString() {
     return `${this.quantity} (${this.price})`
   }
+}
+
+export const computeProportions = async (qtys: TokenQuantity[]) => {
+  if (qtys.length === 0) {
+    return []
+  }
+  const prices = await Promise.all(qtys.map((i) => i.token.price))
+  const universe = qtys[0].token.universe
+  const sum = prices.reduce((l, r) => l.add(r), universe.usd.zero)
+  return prices.map((i, index) => i.div(sum).into(qtys[index].token))
 }

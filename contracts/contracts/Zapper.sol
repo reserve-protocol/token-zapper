@@ -12,104 +12,14 @@ import { FacadeRead, RToken, Call, ZapERC20Params } from "./IRTokenZapper.sol";
 import { IPermit2, SignatureTransferDetails, PermitTransferFrom } from "./IPermit2.sol";
 import { VM } from "./weiroll/VM.sol";
 import { PreventTampering } from "./PreventTampering.sol";
-struct ExecuteOutput {
-    uint256[] dust;
-}
-contract ZapperExecutor is VM, PreventTampering {
-    receive() external payable {}
-
-    function add(
-        uint256 a,
-        uint256 b
-    ) external pure returns (uint256) {
-        return a + b;
-    }
-    function sub(
-        uint256 a,
-        uint256 b
-    ) external pure returns (uint256) {
-        return a - b;
-    }
-    function fpMul(
-        uint256 a,
-        uint256 b,
-        uint256 scale
-    ) external pure returns (uint256) {
-        return (a * b) / scale;
-    }
-    function assertLarger(
-        uint256 a,
-        uint256 b
-    ) external pure returns (bool) {
-        require(a > b, "!ASSERT_GT");
-        return true;
-    }
-    function assertEqual(
-        uint256 a,
-        uint256 b
-    ) external pure returns (bool) {
-        require(a == b, "!ASSERT_EQ");
-        return true;
-    }
-
-
-    /** @dev Main endpoint to call
-     * @param commands - Weiroll code to execute
-     * @param state - Intiaial Weiroll state to use
-     * @param tokens - All tokens used by the Zap in order to calculate dust
-     */
-    function execute(
-        bytes32[] calldata commands,
-        bytes[] memory state,
-        IERC20[] memory tokens
-    )
-        revertOnCodeHashChange
-        public
-        payable
-        returns (ExecuteOutput memory out)
-    {
-        _execute(commands, state);
-        out.dust = new uint256[](tokens.length);
-        for(uint256 i; i < tokens.length; i++) {
-            out.dust[i] = tokens[i].balanceOf(address(this));
-        }
-    }
-
-    /** @dev Workaround for weiroll not supporting a way to make untyped calls.
-      * @param to - Address to call
-      * @param value - Amount of ETH to send
-      * @param data - Data to send
-     */
-    function rawCall(
-        address to,
-        uint256 value,
-        bytes calldata data
-    ) external returns (bool success, bytes memory out) {
-        require(msg.sender == address(this), "ZapperExecutor: Only callable by Zapper");
-        (success, out) = to.call{value: value}(data);
-    }
-
-    /**   @dev Utility for minting max amount of rToken.
-               Should only be used off-chain to calculate the exact
-               amount of an rToken that can be minted
-        * @param token - rToken to mint
-        * @param recipient - Recipient of the rToken
-     */
-    function mintMaxRToken(
-        FacadeRead facade,
-        RToken token,
-        address recipient
-    ) external {
-        uint256 maxIssueableAmount = facade.maxIssuable(token, address(this));
-        token.issueTo(recipient, maxIssueableAmount);
-    }
-}
+import { ZapperExecutor } from "./ZapperExecutor.sol";
 
 struct ZapperOutput {
     uint256[] dust;
     uint256 amountOut;
     uint256 gasUsed;
 }
+
 
 contract Zapper is ReentrancyGuard {
     IWrappedNative internal immutable wrappedNative;
@@ -199,22 +109,6 @@ contract Zapper is ReentrancyGuard {
             IERC20(address(wrappedNative)),
             address(zapperExecutor),
             wrappedNative.balanceOf(address(this))
-        );
-        out = zapInner(params);
-        out.gasUsed = startGas - gasleft();
-    }
-
-    function zapToETH(
-        ZapERC20Params calldata params
-    ) external payable nonReentrant returns (ZapperOutput memory out) {
-        uint256 startGas = gasleft();
-        require(params.amountIn != 0, "INVALID_INPUT_AMOUNT");
-        require(params.amountOut != 0, "INVALID_OUTPUT_AMOUNT");
-        SafeERC20.safeTransferFrom(
-            params.tokenIn,
-            msg.sender,
-            address(zapperExecutor),
-            params.amountIn
         );
         out = zapInner(params);
         out.gasUsed = startGas - gasleft();

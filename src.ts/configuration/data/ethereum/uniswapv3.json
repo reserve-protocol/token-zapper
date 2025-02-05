@@ -1,0 +1,2506 @@
+{
+  "data": {
+    "pools": [
+      {
+        "feeTier": "500",
+        "id": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x11b815efb8f581194ae79006d24e0d814b7697f6",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x3416cf6c708da44db2624d63ea0aaef7113527c6",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x4585fe77225b41b697c938b018e2ac67ac5a20c0",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x4e68ccd3e89f51c3074ca5072bbac773960dfa36",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0xc7bbec68d12a0d1830360f8ec58fa599ba1b0e9b",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x60594a405d53811d3bc4766596efd80fd545a270",
+        "token0": {
+          "id": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa",
+        "token0": {
+          "id": "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x5777d92f208679db4b9778590fa3cab3ac9e2168",
+        "token0": {
+          "id": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0xe0554a476a092703abdb3ef35c80e0d76d32939f",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x7858e59e0c01ea06df3af3d20ac7b0003275d4bf",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xc2e9f25be6257c210d7adf0d4cd6e3e881ba25f8",
+        "token0": {
+          "id": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x435664008f38b0650fbc1c9fc971d0a3bc2f1e47",
+        "token0": {
+          "id": "0x4c9edd5852cd905f086c759e8383e09bff1e68b3"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8",
+        "token0": {
+          "id": "0x514910771af9ca656af840dff83e8264ecf986ca"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x1d42064fc4beb5f8aaf85f4617ae8b3b5b8bd801",
+        "token0": {
+          "id": "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x6c6bc977e13df9b0de53b251522280bb72383700",
+        "token0": {
+          "id": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xac4b3dacb91461209ae9d41ec517c2b9cb1b7daf",
+        "token0": {
+          "id": "0x4d224452801aced8b2f0aebe155379bb5d594381"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x4b5ab61593a2401b1075b90c04cbcdd3f87ce011",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf4d2888d29d722226fafa5d9b24f9164c092421e"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x8c54aa2a32a779e6f6fbea568ad85a19e0109c26",
+        "token0": {
+          "id": "0x956f47f50a910163d8bf957cf5846d573e7f87ca"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x9a772018fbd77fcd2d25657e5c547baff3fd7d16",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x11950d141ecb863f01007add7d1a342041227b58",
+        "token0": {
+          "id": "0x6982508145454ce325ddbe47a25d4ec3d2311933"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x9db9e0e53058c89e5b94e29621a205198648425b",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x69d91b94f0aaf8e8a2586909fa77a5c2c89818d5",
+        "token0": {
+          "id": "0x2b591e99afe9f32eaa6214f7b7629768c40eeb39"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x290a6a7460b308ee3f19023d2d00de604bcf5b42",
+        "token0": {
+          "id": "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x18d96b617a3e5c42a2ada4bc5d1b48e223f17d0d",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xa47c8bf37f92abed4a126bda807a7b7498661acd"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x202a6012894ae5c288ea824cbc8a9bfb26a49b93",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x48da0965ab2d2cbf1c17c09cfb5cbe67ad5b1406",
+        "token0": {
+          "id": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0xbe80225f09645f172b079394312220637c440a63",
+        "token0": {
+          "id": "0xbf5495efe5db9ce00f80364c8b423567e58d2110"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xa3f558aebaecaf0e11ca4b2199cc5ed341edfd74",
+        "token0": {
+          "id": "0x5a98fcbea516cf06857215779fd812ca3bef1b32"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0xe8f7c89c5efa061e340f2d2f206ec78fd8f7e124",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xe8c6c9227491c0a8156a0106a0204d881bb7e531",
+        "token0": {
+          "id": "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xc63b0708e2f7e69cb8a1df0e1389a98c35a76d52",
+        "token0": {
+          "id": "0x853d955acef822db058eb8505911ed77f175b99e"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x7a415b19932c0105c82fdb6b720bb01b0cc2cae3",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x553e9c493678d8606d6a5ba284643db2110df823",
+        "token0": {
+          "id": "0xae78736cd615f374d3085123a210448e74fc6393"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x92560c178ce069cc014138ed3c2f5221ba71f58a",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xc18360217d8f7ab5e7c516566761ea12ce7f9d72"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x151ccb92bc1ed5c6d0f9adb5cec4763ceb66ac7f",
+        "token0": {
+          "id": "0xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x2f62f2b4c5fcd7570a709dec05d68ea19c82a9ec",
+        "token0": {
+          "id": "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x92995d179a5528334356cb4dc5c6cbb1c068696c",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xa47c8bf37f92abed4a126bda807a7b7498661acd"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x840deeef2f115cf50da625f7368c24af6fe74410",
+        "token0": {
+          "id": "0xbe9895146f7af43049ca1c1ae358b0541ea49704"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x6f48eca74b38d2936b02ab603ff4e36a6c0e3a77",
+        "token0": {
+          "id": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x9e0905249ceefffb9605e034b534544684a58be6",
+        "token0": {
+          "id": "0x2b591e99afe9f32eaa6214f7b7629768c40eeb39"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x3019d4e366576a88d28b623afaf3ecb9ec9d9580",
+        "token0": {
+          "id": "0xbb0e17ef65f82ab018d8edd776e8dd940327b28b"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0xe6ff8b9a37b0fab776134636d9981aa778c4e718",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x1c98562a2fab5af19d8fb3291a36ac3c618835d9",
+        "token0": {
+          "id": "0x9e32b13ce7f2e80a01932b42553652e053d6ed8e"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x7b1e5d984a43ee732de195628d20d05cfabc3cc7",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xfaba6f8e4a5e8ab82f62fe7c39859fa577269be3"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x4e0924d3a751be199c426d52fb1f2337fa96f736",
+        "token0": {
+          "id": "0x5f98805a4e8be255a32880fdec7f6728c6568ba0"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x9a834b70c07c81a9fcd6f22e842bf002fbffbe4d",
+        "token0": {
+          "id": "0x853d955acef822db058eb8505911ed77f175b99e"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x5764a6f2212d502bc5970f9f129ffcd61e5d7563",
+        "token0": {
+          "id": "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xd8de6af55f618a7bc69835d55ddc6582220c36c0",
+        "token0": {
+          "id": "0x92d6c1e31e14520e676a687f0a93788b716beff5"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xc3db44adc1fcdfd5671f555236eae49f4a8eea18",
+        "token0": {
+          "id": "0x57e114b691db790c35207b2e685d4a43181e6061"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xbb2e5c2ff298fd96e166f90c8abacaf714df14f8",
+        "token0": {
+          "id": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        },
+        "token1": {
+          "id": "0x956f47f50a910163d8bf957cf5846d573e7f87ca"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x56534741cd8b152df6d48adf7ac51f75169a83b2",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x5ab53ee1d50eef2c1dd3d5402789cd27bb52c1bb",
+        "token0": {
+          "id": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xf8a95b2409c27678a6d18d950c5d913d5c38ab03",
+        "token0": {
+          "id": "0x15d4c048f83bd7e37d49ea4c83a07267ec4203da"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x3b685307c8611afb2a9e83ebc8743dc20480716e",
+        "token0": {
+          "id": "0x4e15361fd6b4bb609fa63c81a2be19d873717870"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x510100d5143e011db24e2aa38abe85d73d5b2177",
+        "token0": {
+          "id": "0x046eee2cc3188071c02bfc1745a6b17c656e3f3d"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x127452f3f9cdc0389b0bf59ce6131aa3bd763598",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xd31a59c85ae9d8edefec411d448f90841571b89c"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xa4e0faa58465a2d369aa21b3e42d43374c6f9613",
+        "token0": {
+          "id": "0xae78736cd615f374d3085123a210448e74fc6393"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x735a26a57a0a0069dfabd41595a970faf5e1ee8b",
+        "token0": {
+          "id": "0x1a7e4e63778b4f12a199c062f3efdd288afcbce8"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x824a30f2984f9013f2c8d0a29c0a3cc5fd5c0673",
+        "token0": {
+          "id": "0x5283d291dbcf85356a21ba090e6db59121208b44"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0xdf50fbde8180c8785842c8e316ebe06f542d3443",
+        "token0": {
+          "id": "0x956f47f50a910163d8bf957cf5846d573e7f87ca"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x24ee2c6b9597f035088cda8575e9d5e15a84b9df",
+        "token0": {
+          "id": "0x4a220e6096b25eadb88358cb44068a3248254675"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x298b7c5e0770d151e4c5cf6cca4dae3a3ffc8e27",
+        "token0": {
+          "id": "0x99d8a9c45b2eca8864373a26d1459e3dff1e17f3"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x94981f69f7483af3ae218cbfe65233cc3c60d93a",
+        "token0": {
+          "id": "0x6123b0049f904d730db3c36a31167d9d4121fa6b"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x5d752f322befb038991579972e912b02f61a3dda",
+        "token0": {
+          "id": "0x32353a6c91143bfd6c7d363b546e62a9a2489a20"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xd34e4855146ac0c6d0e4a652bd5fb54830f91ba8",
+        "token0": {
+          "id": "0x990f341946a3fdb507ae7e52d17851b87168017c"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x2982d3295a0e1a99e6e88ece0e93ffdfc5c761ae",
+        "token0": {
+          "id": "0x77e06c9eccf2e797fd462a92b6d7642ef85b0a44"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x07f3d316630719f4fc69c152f397c150f0831071",
+        "token0": {
+          "id": "0xc581b735a1688071a1746c968e0798d642ede491"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xe42318ea3b998e8355a3da364eb9d48ec725eb45",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xd33526068d116ce69f19a9ee46f0bd304f21a51f"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xcb0c5d9d92f4f2f80cce7aa271a1e148c226e19d",
+        "token0": {
+          "id": "0x03ab458634910aad20ef5f1c8ee96f1d6ac54919"
+        },
+        "token1": {
+          "id": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x3730ecd0aa7eb9b35a4e89b032bef80a1a41aa7f",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xfebf38b1d34818d4827034f97b7d6d77c79d4997",
+        "token0": {
+          "id": "0x090185f2135308bad17527004364ebcc2d37e5f6"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x1df4c6e36d61416813b42fe32724ef11e363eddc",
+        "token0": {
+          "id": "0x9e9fbde7c7a83c43913bddc8779158f1368f0413"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xf79fc43494ce8a4613cb0b2a67a1b1207fd05d27",
+        "token0": {
+          "id": "0x4d224452801aced8b2f0aebe155379bb5d594381"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x97e7d56a0408570ba1a7852de36350f7713906ec",
+        "token0": {
+          "id": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        },
+        "token1": {
+          "id": "0x853d955acef822db058eb8505911ed77f175b99e"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x4c54ff7f1c424ff5487a32aad0b48b19cbaf087f",
+        "token0": {
+          "id": "0xb62132e35a6c13ee1ee0f84dc5d40bad8d815206"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xbd5fdda17bc27bb90e37df7a838b1bfc0dc997f5",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xdb25f211ab05b1c97d595516f45794528a807ad8"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xc2a856c3aff2110c1171b8f942256d40e980c726",
+        "token0": {
+          "id": "0x853d955acef822db058eb8505911ed77f175b99e"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x844eb5c280f38c7462316aad3f338ef9bda62668",
+        "token0": {
+          "id": "0x38e382f74dfb84608f3c1f10187f6bef5951de93"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x5180545835bd68810fb7e11c7160bb7ea4ae8744",
+        "token0": {
+          "id": "0x956f47f50a910163d8bf957cf5846d573e7f87ca"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xdf9ab3c649005ebfdf682d2302ca1f673e0d37a2",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xfe0df74636bc25c7f2400f22fe7dae32d39443d2",
+        "token0": {
+          "id": "0x6123b0049f904d730db3c36a31167d9d4121fa6b"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x16588709ca8f7b84829b43cc1c5cb7e84a321b16",
+        "token0": {
+          "id": "0xb23d80f5fefcddaa212212f028021b41ded428cf"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x7bea39867e4169dbe237d55c8242a8f2fcdcc387",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x06729eb2424da47898f935267bd4a62940de5105",
+        "token0": {
+          "id": "0xaaaebe6fe48e54f431b0c390cfaf0b017d09d42d"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xcd83055557536eff25fd0eafbc56e74a1b4260b3",
+        "token0": {
+          "id": "0xbc396689893d065f41bc2c6ecbee5e0085233447"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x0cfbed8f2248d2735203f602be0cae5a3131ec68",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xcc8fa225d80b9c7d42f96e9570156c65d6caaa25"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xc39e83fe4e412a885c0577c08eb53bdb6548004a",
+        "token0": {
+          "id": "0x57b96d4af698605563a4653d882635da59bf11af"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xd83d78108dd0d1dffff11ea3f99871671a52488b",
+        "token0": {
+          "id": "0x8e870d67f660d95d5be530380d0ec0bd388289e1"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x331399c614ca67dee86733e5a2fba40dbb16827c",
+        "token0": {
+          "id": "0xb9f599ce614feb2e1bbe58f180f370d05b39344e"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x868b7bbbfe148516e5397f23982923686182c2d2",
+        "token0": {
+          "id": "0xa47c8bf37f92abed4a126bda807a7b7498661acd"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xea4ba4ce14fdd287f380b55419b1c5b6c3f22ab6",
+        "token0": {
+          "id": "0xc00e94cb662c3520282e6f5717214004a7f26888"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x4c83a7f819a5c37d64b4c5a2f8238ea082fa1f4e",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xd533a949740bb3306d119cc777fa900ba034cd52"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xd1d5a4c0ea98971894772dcd6d2f1dc71083c44e",
+        "token0": {
+          "id": "0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x83abecf7204d5afc1bea5df734f085f2535a9976",
+        "token0": {
+          "id": "0x7a58c0be72be218b41c608b7fe7c5bb630736c71"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x919fa96e88d67499339577fa202345436bcdaf79",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xd533a949740bb3306d119cc777fa900ba034cd52"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x7baece5d47f1bc5e1953fbe0e9931d54dab6d810",
+        "token0": {
+          "id": "0xa35923162c49cf95e6bf26623385eb431ad920d3"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x5b97b125cf8af96834f2d08c8f1291bd47724939",
+        "token0": {
+          "id": "0x3845badade8e6dff049820680d1f14bd3903a5d0"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x8f8ef111b67c04eb1641f5ff19ee54cda062f163",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0x8e870d67f660d95d5be530380d0ec0bd388289e1"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xc2c390c6cd3c4e6c2b70727d35a45e8a072f18ca",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xec53bf9167f50cdeb3ae105f56099aaab9061f83"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x6c063a6e8cd45869b5eb75291e65a3de298f3aa8",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xe28b3b32b6c345a34ff64674606124dd5aceca30"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x7685cd3ddd862b8745b1082a6acb19e14eaa74f3",
+        "token0": {
+          "id": "0xba5bde662c17e2adff1075610382b9b691296350"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xd35efae4097d005720608eaf37e42a5936c94b44",
+        "token0": {
+          "id": "0x111111111117dc0aa78b770fa6a738034120c302"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xe15e6583425700993bd08f51bf6e7b73cd5da91b",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0x3472a5a71965499acd81997a54bba8d852c6e53d"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xe936f0073549ad8b1fa53583600d629ba9375161",
+        "token0": {
+          "id": "0x6de037ef9ad2725eb40118bb1702ebb27e4aeb24"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x16980c16811bde2b3358c1ce4341541a4c772ec9",
+        "token0": {
+          "id": "0x5f98805a4e8be255a32880fdec7f6728c6568ba0"
+        },
+        "token1": {
+          "id": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xf4ad61db72f114be877e87d62dc5e7bd52df4d9b",
+        "token0": {
+          "id": "0x5a98fcbea516cf06857215779fd812ca3bef1b32"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x465e56cd21ad47d4d4790f17de5e0458f20c3719",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xd1d2eb1b1e90b638588728b4130137d262c87cae"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xf1b63cd9d80f922514c04b0fd0a30373316dd75b",
+        "token0": {
+          "id": "0x383518188c0c6d7730d91b2c03a03c837814a899"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xb07fe2f407f971125d4eb1977f8acee8846c7324",
+        "token0": {
+          "id": "0x4d224452801aced8b2f0aebe155379bb5d594381"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x6c4ab1907805adcb0b7ae911a5d1b0b99d608b3c",
+        "token0": {
+          "id": "0x92d6c1e31e14520e676a687f0a93788b716beff5"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x98409d8ca9629fbe01ab1b914ebf304175e384c8",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf411903cbc70a74d22900a5de66a2dda66507255"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xb011e4eb4111ef00b620a5ed195836dcd69db1ff",
+        "token0": {
+          "id": "0x9813037ee2218799597d83d4a5b6f3b6778218d9"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xe0cfa17aa9b8f930fd936633c0252d5cb745c2c3",
+        "token0": {
+          "id": "0x92d6c1e31e14520e676a687f0a93788b716beff5"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x16b70f44719b227278a2dc1122e8106cc929ecd1",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xd2877702675e6ceb975b4a1dff9fb7baf4c91ea9"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x80ed1b41476b95fb47830825b65fd3bf59f6a348",
+        "token0": {
+          "id": "0x069d89974f4edabde69450f9cf5cf7d8cbd2568d"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x19fe9857bb3652e9007f2347a1f877ffa9215f7f",
+        "token0": {
+          "id": "0x102c776ddb30c754ded4fdcc77a19230a60d4e4f"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x6231e794773e4dc0b1ad79105d850a05d5fc0fcb",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf4d2888d29d722226fafa5d9b24f9164c092421e"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x36bcf57291a291a6e0e0bff7b12b69b556bcd9ed",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf16e81dce15b08f326220742020379b855b87df9"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xfd76be67fff3bac84e3d5444167bbc018f5968b6",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf57e7e7c23978c3caec3c3548e3d615c346e79ff"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x82c427adfdf2d245ec51d8046b41c4ee87f0d29c",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf1b99e3e573a1a9c5e6b2ce818b617f0e664e86b"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xcd8286b48936cdac20518247dbd310ab681a9fbf",
+        "token0": {
+          "id": "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xdce93ed9ae7c53143e19cf799d156b72d1cc2777",
+        "token0": {
+          "id": "0x9bf1d7d63dd7a4ce167cf4866388226eeefa702e"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x1385fc1fe0418ea0b4fcf7adc61fc7535ab7f80d",
+        "token0": {
+          "id": "0x1495bc9e44af1f8bcb62278d2bec4540cf0c05ea"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xad9ef19e289dcbc9ab27b83d2df53cdeff60f02d",
+        "token0": {
+          "id": "0x15e6e0d4ebeac120f9a97e71faa6a0235b85ed12"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x00cef0386ed94d738c8f8a74e8bfd0376926d24c",
+        "token0": {
+          "id": "0x4fabb145d64652a948d72533023f6e7a623c7c53"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x73a38006d23517a1d383c88929b2014f8835b38b",
+        "token0": {
+          "id": "0x18084fba666a33d37592fa2633fd49a74dd93a88"
+        },
+        "token1": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x9febc984504356225405e26833608b17719c82ae",
+        "token0": {
+          "id": "0x111111111117dc0aa78b770fa6a738034120c302"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x6279653c28f138c8b31b8a0f6f8cd2c58e8c1705",
+        "token0": {
+          "id": "0x70e8de73ce538da2beed35d14187f6959a8eca96"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x5aaa28ca43c6646fd1403e508f0fca1d92357dde",
+        "token0": {
+          "id": "0x037a54aab062628c9bbae1fdb1583c195585fe41"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x80c7770b4399ae22149db17e97f9fc8a10ca5100",
+        "token0": {
+          "id": "0xa8b919680258d369114910511cc87595aec0be6d"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xe05e653453f733786f2dabae0ffa1e96cfcc4b25",
+        "token0": {
+          "id": "0x2b591e99afe9f32eaa6214f7b7629768c40eeb39"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x4622df6fb2d9bee0dcdacf545acdb6a2b2f4f863",
+        "token0": {
+          "id": "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x0c30062368eefb96bf3ade1218e685306b8e89fa",
+        "token0": {
+          "id": "0x72e4f9f808c49a2a61de9c5896298920dc4eeea9"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xc45a81bc23a64ea556ab4cdf08a86b61cdceea8b",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf19308f923582a6f7c465e5ce7a9dc1bec6665b1"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x8661ae7918c0115af9e3691662f605e9c550ddc9",
+        "token0": {
+          "id": "0x0f5d2fb29fb7d3cfee444a200298f468908cc942"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x7a5ae802895d5f90b6edbafc870fd348fba2a3d2",
+        "token0": {
+          "id": "0xa693b19d2931d498c5b318df961919bb4aee87a5"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xf56d08221b5942c428acc5de8f78489a97fc5599",
+        "token0": {
+          "id": "0x6810e776880c02933d47db1b9fc05908e5386b96"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xd340b57aacdd10f96fc1cf10e15921936f41e29c",
+        "token0": {
+          "id": "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x8db1b906d47dfc1d84a87fc49bd0522e285b98b9",
+        "token0": {
+          "id": "0x1a7e4e63778b4f12a199c062f3efdd288afcbce8"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xb82d251b7e92832dccb7f3c6f03ae20f2d7ee597",
+        "token0": {
+          "id": "0x3b484b82567a09e2588a13d54d032153f0c0aee0"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xe331de28cd81b768c19a366b0e4e4675c45ec2da",
+        "token0": {
+          "id": "0x55296f69f40ea6d20e478533c15a6b08b654e758"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x059615ebf32c946aaab3d44491f78e4f8e97e1d3",
+        "token0": {
+          "id": "0xa1290d69c65a6fe4df752f95823fae25cb99e5a7"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x86e69d1ae728c9cd229f07bbf34e01bf27258354",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf65b5c5104c4fafd4b709d9d60a185eae063276c"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x99132b53ab44694eeb372e87bced3929e4ab8456",
+        "token0": {
+          "id": "0x5b7533812759b45c2b44c19e320ba2cd2681b542"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x84383fb05f610222430f69727aa638f8fdbf5cc1",
+        "token0": {
+          "id": "0x6b4c7a5e3f0b99fcd83e9c089bddd6c7fce5c611"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x30ea22c879628514f1494d4bbfef79d21a6b49a2",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf951e335afb289353dc249e82926178eac7ded78"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x0da6253560822973185297d5f32ff8fa38243afe",
+        "token0": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        },
+        "token1": {
+          "id": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x6c4c7f46d9d4ef6bc5c9e155f011ad19fc4ef321",
+        "token0": {
+          "id": "0x955d5c14c8d4944da1ea7836bd44d54a8ec35ba1"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xfa45c879fd120d6cc493113ae212a853531f3d91",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xee2a03aa6dacf51c18679c516ad5283d8e7c2637"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xeb5c52e8af57334fab0b5f3d888990c108545527",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xd5d86fc8d5c0ea1ac1ac5dfab6e529c9967a45e9"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xb9c4a5522a2f8ba9e2ff7063df8c02ed443337a3",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xc18360217d8f7ab5e7c516566761ea12ce7f9d72"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xae2a25cbdb19d0dc0dddd1d2f6b08a6e48c4a9a9",
+        "token0": {
+          "id": "0x467719ad09025fcc6cf6f8311755809d45a5e5f3"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xd0fc8ba7e267f2bc56044a7715a489d851dc6d78",
+        "token0": {
+          "id": "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xdd005650ac6805457f4fa6ee1816813ce815e914",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xdb5c3c46e28b53a39c255aa39a411dd64e5fed9c"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x57af956d3e2cca3b86f3d8c6772c03ddca3eaacb",
+        "token0": {
+          "id": "0x808507121b80c02388fad14726482e061b8da827"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x7ed3f364668cd2b9449a8660974a26a092c64849",
+        "token0": {
+          "id": "0x1a7e4e63778b4f12a199c062f3efdd288afcbce8"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x3afdc5e6dfc0b0a507a8e023c9dce2cafc310316",
+        "token0": {
+          "id": "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x2e4784446a0a06df3d1a040b03e1680ee266c35a",
+        "token0": {
+          "id": "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x177622e79acece98c39f6e12fa78ac7fc8a8bf62",
+        "token0": {
+          "id": "0xbe9895146f7af43049ca1c1ae358b0541ea49704"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x632e675672f2657f227da8d9bb3fe9177838e726",
+        "token0": {
+          "id": "0xb4efd85c19999d84251304bda99e90b92300bd93"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x4bec87cb126de6c1f8b410e32d1f4ae472fdd83b",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xc581b735a1688071a1746c968e0798d642ede491"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x43e7ade137b86798654d8e78c36d5a556a647224",
+        "token0": {
+          "id": "0x8143182a775c54578c8b7b3ef77982498866945d"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x3139bbba7f4b9125595cb4ebeefdac1fce7ab5f1",
+        "token0": {
+          "id": "0x3155ba85d5f96b2d030a4966af206230e46849cb"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x0e2c4be9f3408e5b1ff631576d946eb8c224b5ed",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xc944e90c64b2c07662a292be6244bdf05cda44a7"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x433a00819c771b33fa7223a5b3499b24fbcd1bbc",
+        "token0": {
+          "id": "0x77e06c9eccf2e797fd462a92b6d7642ef85b0a44"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x7379e81228514a1d2a6cf7559203998e20598346",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xfe2e637202056d30016725477c5da089ab0a043a"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x5c128d25a21f681e678cb050e551a895c9309945",
+        "token0": {
+          "id": "0x1a4b46696b2bb4794eb3d4c26f1c55f9170fa4c5"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xf4c5e0f4590b6679b3030d29a84857f226087fef",
+        "token0": {
+          "id": "0x3c3a81e81dc49a522a592e7622a7e711c06bf354"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xede8dd046586d22625ae7ff2708f879ef7bdb8cf",
+        "token0": {
+          "id": "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xcd423f3ab39a11ff1d9208b7d37df56e902c932b",
+        "token0": {
+          "id": "0xb23d80f5fefcddaa212212f028021b41ded428cf"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x757d8d585ee1488097305bcb0fcec1ac4a55e9d6",
+        "token0": {
+          "id": "0x382ea807a61a418479318efd96f1efbc5c1f2c21"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xe859041c9c6d70177f83de991b9d757e13cea26e",
+        "token0": {
+          "id": "0x3819f64f282bf135d62168c1e513280daf905e06"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xdbac78be00503d10ae0074e5e5873a61fc56647c",
+        "token0": {
+          "id": "0x18084fba666a33d37592fa2633fd49a74dd93a88"
+        },
+        "token1": {
+          "id": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x8107fca5494375fc743a9fc4d4844353a1af3d94",
+        "token0": {
+          "id": "0xa35923162c49cf95e6bf26623385eb431ad920d3"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x961ec3bb28c9e98a040c4bded38917aa96b791be",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xd29da236dd4aac627346e1bba06a619e8c22d7c5"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x6ac6b053a2858bea8ad758db680198c16e523184",
+        "token0": {
+          "id": "0x2dff88a56767223a5529ea5960da7a3f5f766406"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xc64350c0eab6faed8f17cc2cdff0761c53fb4152",
+        "token0": {
+          "id": "0x423f4e6138e475d85cf7ea071ac92097ed631eea"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x7c706586679af2ba6d1a9fc2da9c6af59883fdd3",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xe0f63a424a4439cbe457d80e4f4b51ad25b2c56c"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x2cad29e9640b9bcfb1d8d25cf3e4bd05f55cce70",
+        "token0": {
+          "id": "0x78a0a62fba6fb21a83fe8a3433d44c73a4017a6f"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xe16be1798f860bc1eb0feb64cd67ca00ae9b6e58",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x92ab871abb9d567aa276b2ce58d0203d84e0181e",
+        "token0": {
+          "id": "0x5283d291dbcf85356a21ba090e6db59121208b44"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x948b54a93f5ad1df6b8bff6dc249d99ca2eca052",
+        "token0": {
+          "id": "0xaea46a60368a7bd060eec7df8cba43b7ef41ad85"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xf87bb87fd9ea1c260ddf77b9c707ad9437ff8364",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xc7283b66eb1eb5fb86327f08e1b5816b0720212b"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xb03f87e577c4fe4685cf2c88a8473414bb1d04f1",
+        "token0": {
+          "id": "0x8c15ef5b4b21951d50e53e4fbda8298ffad25057"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xc29271e3a68a7647fd1399298ef18feca3879f59",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xc4a11aaf6ea915ed7ac194161d2fc9384f15bff2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x64a078926ad9f9e88016c199017aea196e3899e1",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xc669928185dbce49d2230cc9b0979be6dc797957"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x12d6867fa648d269835cf69b49f125147754b54d",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xa693b19d2931d498c5b318df961919bb4aee87a5"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xcbbc981bd5b358d09a9346726115d3ac8822d00b",
+        "token0": {
+          "id": "0x7d29a64504629172a429e64183d6673b9dacbfce"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x4b62fa30fea125e43780dc425c2be5acb4ba743b",
+        "token0": {
+          "id": "0x582d872a1b094fc48f5de31d3b73f2d9be47def1"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x094a28b22e1b4218d590ea6fa916b3c5e670ba55",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xd13c7342e1ef687c5ad21b27c2b65d772cab5c8c"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x5b7e3e37a1aa6369386e5939053779abd3597508",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xf21661d0d1d76d3ecb8e1b9f1c923dbfffae4097"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xf239009a101b6b930a527deaab6961b6e7dec8a6",
+        "token0": {
+          "id": "0x6982508145454ce325ddbe47a25d4ec3d2311933"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x95dbb3c7546f22bce375900abfdd64a4e5bd73d6",
+        "token0": {
+          "id": "0x1abaea1f7c830bd89acc67ec4af516284b1bc33c"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x4628a0a564debfc8798eb55db5c91f2200486c24",
+        "token0": {
+          "id": "0x6de037ef9ad2725eb40118bb1702ebb27e4aeb24"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x744159757cac173a7a3ecf5e97adb10d1a725377",
+        "token0": {
+          "id": "0xaea46a60368a7bd060eec7df8cba43b7ef41ad85"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x2322e5517a3cbc75a3f02d74c96f82dda120d841",
+        "token0": {
+          "id": "0x046eee2cc3188071c02bfc1745a6b17c656e3f3d"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xe21876afd4c632b22870df250e5df1754c1875e8",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xda31d0d1bc934fc34f7189e38a413ca0a5e8b44f"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xfad57d2039c21811c8f2b5d5b65308aa99d31559",
+        "token0": {
+          "id": "0x514910771af9ca656af840dff83e8264ecf986ca"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x2a9d2ba41aba912316d16742f259412b681898db",
+        "token0": {
+          "id": "0x06450dee7fd2fb8e39061434babcfc05599a6fb8"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xe931b03260b2854e77e8da8378a1bc017b13cb97",
+        "token0": {
+          "id": "0x111111111117dc0aa78b770fa6a738034120c302"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x9b3423373e6e786c9ac367120533abe4ee398373",
+        "token0": {
+          "id": "0xbaac2b4491727d78d2b78815144570b9f2fe8899"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x9359c87b38dd25192c5f2b07b351ac91c90e6ca7",
+        "token0": {
+          "id": "0x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x6a888fb73f13104473a4bdfb1beb220ac1eafda3",
+        "token0": {
+          "id": "0x24fcfc492c1393274b6bcd568ac9e225bec93584"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x04916039b1f59d9745bf6e0a21f191d1e0a84287",
+        "token0": {
+          "id": "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x59c38b6775ded821f010dbd30ecabdcf84e04756",
+        "token0": {
+          "id": "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"
+        },
+        "token1": {
+          "id": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xf935f557e06a7d040dea4691f90c9a755301818b",
+        "token0": {
+          "id": "0x25722cd432d02895d9be45f5deb60fc479c8781e"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x7b12d855445073987d45ea97b1af3554f05e4ef4",
+        "token0": {
+          "id": "0x8355dbe8b0e275abad27eb843f3eaf3fc855e525"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x198063c23ac1317ff3cc57d9f54faac6b675d89f",
+        "token0": {
+          "id": "0xb131f4a55907b10d1f0a50d8ab8fa09ec342cd74"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x33676385160f9d8f03a0db2821029882f7c79e93",
+        "token0": {
+          "id": "0x046eee2cc3188071c02bfc1745a6b17c656e3f3d"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x7f7ff8f22a902bb9b0aef07c6cb41d91a47e18e1",
+        "token0": {
+          "id": "0x826180541412d574cf1336d22c0c0a287822678a"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x14036bbda496e39dc3db6025fe858431c1ddadb1",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xaaef88cea01475125522e117bfe45cf32044e238"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xe9e12db15d8a0ec338f148ffd9dc9606312a6b28",
+        "token0": {
+          "id": "0x949d48eca67b17269629c7194f4b727d4ef9e5d6"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x59354356ec5d56306791873f567d61ebf11dfbd5",
+        "token0": {
+          "id": "0xb50721bcf8d664c30412cfbc6cf7a15145234ad1"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x70bb8e6844dfb681810fd557dd741bcaf027bf94",
+        "token0": {
+          "id": "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xa87b2ff0759f5b82c7ec86444a70f25c6bffccbf",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xa693b19d2931d498c5b318df961919bb4aee87a5"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xf763bb342eb3d23c02ccb86312422fe0c1c17e94",
+        "token0": {
+          "id": "0x77e06c9eccf2e797fd462a92b6d7642ef85b0a44"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xae614a7a56cb79c04df2aeba6f5dab80a39ca78e",
+        "token0": {
+          "id": "0x0d8775f648430679a709e98d2b0cb6250d2887ef"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x15153da0e9e13cfc167b3d417d3721bf545479bb",
+        "token0": {
+          "id": "0x812ba41e071c7b7fa4ebcfb62df5f45f6fa853ee"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x3782a3425cd093d5cd0c5b684be72641e199029c",
+        "token0": {
+          "id": "0x7d647b1a0dcd5525e9c6b3d14be58f27674f8c95"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xc5af84701f98fa483ece78af83f11b6c38aca71d",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x1754b94a3e63be72efe44a1828cd81c4782a46c4",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xc581b735a1688071a1746c968e0798d642ede491"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x06b1655b9d560de112759b4f0bf57d6f005e72fe",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xde30da39c46104798bb5aa3fe8b9e0e1f348163f"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x058d79a4c6eb5b11d0248993ffa1faa168ddd3c0",
+        "token0": {
+          "id": "0x0d438f3b5175bebc262bf23753c1e53d03432bde"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xe3fe800b0de664bf0bca8ad58ecbc73b259047b0",
+        "token0": {
+          "id": "0x595832f8fc6bf59c85c527fec3740a1b7a361269"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xa06591252908576a0f64a8560ec0c8051782377c",
+        "token0": {
+          "id": "0x423f4e6138e475d85cf7ea071ac92097ed631eea"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x5d7b4563f794f52423181c8320cdd3bf8fdf55d7",
+        "token0": {
+          "id": "0x7a58c0be72be218b41c608b7fe7c5bb630736c71"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x7981877bd447de8ff0507ba2bcf9ae6ae510ade3",
+        "token0": {
+          "id": "0x9d71ce49ab8a0e6d2a1e7bfb89374c9392fd6804"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xc4ce8e63921b8b6cbdb8fcb6bd64cc701fb926f2",
+        "token0": {
+          "id": "0x0000000000c5dc95539589fbd24be07c6c14eca4"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x867b321132b18b5bf3775c0d9040d1872979422e",
+        "token0": {
+          "id": "0x9d39a5de30e57443bff2a8307a4256c8797a3497"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x4b3d09151ad295623ac9e50967739fd437b0d892",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xdb5c3c46e28b53a39c255aa39a411dd64e5fed9c"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x4109ab7966c5461439bdb0beda92c92fec767966",
+        "token0": {
+          "id": "0x614da3b37b6f66f7ce69b4bbbcf9a55ce6168707"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xd6a309f49cf79542cea91df7b334eb4bd29aa0d7",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xaf5191b0de278c7286d6c7cc6ab6bb8a73ba2cd6"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xae790e2a4785298cb18150f3dc4a60bd81fcd274",
+        "token0": {
+          "id": "0x508e00d5cef397b02d260d035e5ee80775e4c821"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x7ec0b75a98997c927ace6d87958147a105147ea0",
+        "token0": {
+          "id": "0x25f8087ead173b73d6e8b84329989a8eea16cf73"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x319f4366b2ec8b0120d09522c88f919bedbb18ff",
+        "token0": {
+          "id": "0x25f8087ead173b73d6e8b84329989a8eea16cf73"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "100",
+        "id": "0x1a349a3397a8431eed8d94a05f88f9001117fcaa",
+        "token0": {
+          "id": "0x419d0d8bdd9af5e606ae2232ed285aff190e711b"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0x04708077eca6bb527a5bbbd6358ffb043a9c1c14",
+        "token0": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        },
+        "token1": {
+          "id": "0xd5f7838f5c461feff7fe49ea5ebaf7728bb0adfa"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xb0f4a77bde7fee134265307c5cc19abff0ba409b",
+        "token0": {
+          "id": "0x3506424f91fd33084466f402d5d97f05f8e3b4af"
+        },
+        "token1": {
+          "id": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x42d403ab9b0603442ac991c0cfe124105dde0811",
+        "token0": {
+          "id": "0x3007083eaa95497cd6b2b809fb97b6a30bdf53d3"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "500",
+        "id": "0xfa7d7a0858a45c1b3b7238522a0c0d123900c118",
+        "token0": {
+          "id": "0x03ab458634910aad20ef5f1c8ee96f1d6ac54919"
+        },
+        "token1": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0xe3170d65018882a336743a9c396c52ea4b9c5563",
+        "token0": {
+          "id": "0x0b7f0e51cd1739d6c96982d55ad8fa634dd43a9c"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x2a0330c7e979a4d18e5b0c987b877da24dd37d04",
+        "token0": {
+          "id": "0x626e8036deb333b408be468f951bdb42433cbf18"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0xcf7e21b96a7dae8e1663b5a266fd812cbe973e70",
+        "token0": {
+          "id": "0x0ab87046fbb341d058f17cbc4c1133f25a20a52f"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x7270233ccae676e776a659affc35219e6fcfbb10",
+        "token0": {
+          "id": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        },
+        "token1": {
+          "id": "0xc221b7e65ffc80de234bbb6667abdd46593d34f0"
+        }
+      },
+      {
+        "feeTier": "10000",
+        "id": "0x4d1eff861316396dd1915f69b49f4c2d7b11590d",
+        "token0": {
+          "id": "0x7420b4b9a0110cdc71fb720908340c03f9bc03ec"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      },
+      {
+        "feeTier": "3000",
+        "id": "0x959c7d5706ac0b5a29f506a1019ba7f2a1c70c70",
+        "token0": {
+          "id": "0x243cacb4d5ff6814ad668c3e225246efa886ad5a"
+        },
+        "token1": {
+          "id": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        }
+      }
+    ]
+  }
+}

@@ -983,7 +983,7 @@ const formatAddress = (address: string, universe: Universe): string => {
   if (universe.tokens.has(addr)) {
     return universe.tokens.get(addr)!.symbol
   }
-  if (universe.config.addresses.executorAddress === addr) {
+  if (universe.execAddress === addr) {
     return 'this'
   }
   const addrObj = Address.from(
@@ -1090,7 +1090,7 @@ export const printPlan = (plan: Planner, universe: Universe): string[] => {
 
     for (let i = 0; i < step.call.inArgs.length; i++) {
       const value = step.call.inArgs[i]
-      const paramName = step.call.fragment.inputs[i].name
+      const paramName = step.call.fragment.inputs[i]?.name ?? `arg_${i}`
       // const paramType = step.call.fragment.inputs[i].type
       formattedArgs.push(paramName + ' = ' + formatValue(value, universe))
     }

@@ -1,12 +1,17 @@
 import { Universe } from '../Universe'
-import { MintCometWrapperAction, BurnCometWrapperAction, MintCometAction, BurnCometAction } from '../action/CompoundV3'
+import {
+  MintCometWrapperAction,
+  BurnCometWrapperAction,
+  MintCometAction,
+  BurnCometAction,
+} from '../action/CompoundV3'
 import { Address } from '../base/Address'
 import {
   IComet__factory,
   ICusdcV3Wrapper,
   ICusdcV3Wrapper__factory,
 } from '../contracts'
-import { type Token } from '../entities/Token'
+import { TokenQuantity, type Token } from '../entities/Token'
 import { Contract } from '../tx-gen/Planner'
 
 class CometAssetInfo {
@@ -63,13 +68,36 @@ export class CometWrapper {
   get cometToken() {
     return this.comet.comet
   }
+
+  async quoteMint(amountsIn: TokenQuantity): Promise<TokenQuantity[]> {
+    const out = this.wrapperToken.from(
+      await this.cometWrapperInst.convertDynamicToStatic(amountsIn.amount)
+    )
+    return [out]
+  }
+
+  async quoteBurn(amountsIn: TokenQuantity): Promise<TokenQuantity[]> {
+    const out = this.cometToken.from(
+      await this.cometWrapperInst.convertStaticToDynamic(amountsIn.amount)
+    )
+    return [out]
+  }
   public constructor(
     public readonly cometWrapperInst: ICusdcV3Wrapper,
     public readonly comet: Comet,
     public readonly wrapperToken: Token
   ) {
-    this.mintAction = new MintCometWrapperAction(this)
-    this.burnAction = new BurnCometWrapperAction(this)
+    const mintInputSize = comet.comet.from(1000000.0)
+    const burnInputSize = mintInputSize.into(this.wrapperToken)
+    const mintRate = comet.universe.createCachedProducer(async () => {
+      return (await this.quoteMint(mintInputSize))[0].div(burnInputSize)
+    }, 12000)
+    const burnRate = comet.universe.createCachedProducer(async () => {
+      return (await this.quoteBurn(burnInputSize))[0].div(mintInputSize)
+    }, 12000)
+
+    this.mintAction = new MintCometWrapperAction(this, mintRate)
+    this.burnAction = new BurnCometWrapperAction(this, burnRate)
     this.cometWrapperLibrary = Contract.createContract(
       ICusdcV3Wrapper__factory.connect(
         this.wrapperToken.address.address,
@@ -94,6 +122,7 @@ export class CometWrapper {
       Address.from(await cometWrapperInst.underlyingComet())
     )
     const comet = await compound.getComet(cometToken)
+
     return new CometWrapper(cometWrapperInst, comet, wrapperToken)
   }
 }
@@ -212,7 +241,7 @@ export class CompoundV3Deployment {
   }
 }
 interface CompV3Config {
-  comets: Record<string, string>,
+  comets: Record<string, string>
   wrappers: string[]
 }
 export const setupCompoundV3 = async (
@@ -221,7 +250,11 @@ export const setupCompoundV3 = async (
   config: CompV3Config
 ) => {
   const [comets, wrappers] = await Promise.all([
-    Promise.all(Object.values(config.comets).map((i) => universe.getToken(Address.from(i)))),
+    Promise.all(
+      Object.values(config.comets).map((i) =>
+        universe.getToken(Address.from(i))
+      )
+    ),
     Promise.all(config.wrappers.map((i) => universe.getToken(Address.from(i)))),
   ])
   return await CompoundV3Deployment.load(protocolName, universe, {

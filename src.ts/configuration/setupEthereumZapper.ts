@@ -1,15 +1,26 @@
-import { setupConvex } from '../action/Convex'
+import { setupBalancer } from '../action/Balancer'
+import { BeefyDepositAction, BeefyWithdrawAction } from '../action/Beefy'
 import { loadCompV2Deployment } from '../action/CTokens'
+import { DssLitePsm } from '../action/DssLitePsm'
 import {
   ERC4626DepositAction,
   ETHTokenVaultDepositAction,
 } from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
+import { StakeDAODepositAction } from '../action/StakeDAO'
+import { YearnDepositAction, YearnWithdrawAction } from '../action/Yearn'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
-import { TokenQuantity } from '../entities/Token'
-import { SwapPlan } from '../searcher/Swap'
+import { wait } from '../base/controlflow'
+import {
+  IBeefyVault__factory,
+  IGaugeStakeDAO__factory,
+  IVaultYearn__factory,
+} from '../contracts'
+import { TokenType } from '../entities/TokenClass'
+import { wrapGasToken } from '../searcher/TradeAction'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
+import { setupMaverick } from './maverick'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupBeefy } from './setupBeefy'
@@ -21,9 +32,11 @@ import { CurveIntegration } from './setupCurve'
 import { setupERC4626 } from './setupERC4626'
 import { loadEthereumTokenList } from './setupEthereumTokenList'
 import { setupFrxETH } from './setupFrxETH'
+import { setupOdosPricing } from './setupOdosPricing'
+import { setupPXETH } from './setupPXETH'
 import { setupRETH } from './setupRETH'
-import { setupStakeDAO } from './setupStakeDAO'
-import { setupUniswapRouter } from './setupUniswapRouter'
+import { setupUniswapV2 } from './setupUniswapV2'
+import { setupUniswapV3 } from './setupUniswapV3'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { setupYearn } from './setupYearn'
 
@@ -32,6 +45,8 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await loadEthereumTokenList(universe)
   const eth = universe.nativeToken
   const commonTokens = universe.commonTokens
+  setupOdosPricing(universe)
+
   // Searcher depends on a way to price tokens
   // Below we set up the chainlink registry to price tokens
 
@@ -85,34 +100,43 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     'aaveV2',
     await setupAaveV2(universe, PROTOCOL_CONFIGS.aavev2)
   )
-  // console.log(aaveV2.describe().join('\n'))
-  const curve = await CurveIntegration.load(universe, PROTOCOL_CONFIGS.curve)
-  universe.integrations.curve = curve
-  universe.addTradeVenue(curve.venue)
 
-  universe.addIntegration(
-    'convex',
-    await setupConvexStakingWrappers(universe, curve, PROTOCOL_CONFIGS.convex)
-  )
+  // console.log(aaveV2.describe().join('\n'))
 
   universe.addIntegration(
     'aaveV3',
     await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
   )
+
   // console.log(aaveV3.describe().join('\n'))
 
-  const uniswap = universe.addIntegration(
-    'uniswapV3',
-    await setupUniswapRouter(universe)
+  await setupPXETH(
+    universe,
+    commonTokens.pxETH,
+    commonTokens.apxETH,
+    Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea')
   )
 
-  await universe.addSingleTokenPriceOracle({
-    token: commonTokens.apxETH,
-    oracleAddress: Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea'),
-    priceToken: eth,
-  })
+  const initUniswapV3 = async () => {
+    try {
+      const router = await setupUniswapV3(universe)
+      const venue = await router.venue()
+      const uniswap = universe.addIntegration('uniswapV3', venue)
+      universe.addTradeVenue(uniswap)
+    } catch (e) {
+      console.log('Failed to load uniswapV3')
+      console.log(e)
+    }
+  }
 
-  universe.addTradeVenue(uniswap)
+  const initUniswapV2 = async () => {
+    try {
+      await setupUniswapV2(universe)
+    } catch (e) {
+      console.log('Failed to load uniswapV2')
+      console.log(e)
+    }
+  }
 
   // Set up RETH
   await setupRETH(universe, PROTOCOL_CONFIGS.rocketPool)
@@ -137,58 +161,97 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     })
   )
 
-  // Set up Concentrator
-  setupConcentrator(universe, PROTOCOL_CONFIGS.concentrator)
-
-  // Set up Convex
-  await setupConvex(universe, PROTOCOL_CONFIGS.convex)
-
-  // Set up Beefy
-  await setupBeefy(universe, PROTOCOL_CONFIGS.beefy)
-
-  // Set up StakeDAO
-  await setupStakeDAO(universe, PROTOCOL_CONFIGS.stakeDAO)
-
-  // Set up Yearn
-  await setupYearn(universe, PROTOCOL_CONFIGS.yearn)
-
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens['ETH+'],
-    commonTokens.WETH
-  )
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens['dgnETH'],
-    commonTokens.WETH
-  )
-
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens['ETH+'],
-    universe.nativeToken
-  )
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens['dgnETH'],
-    universe.nativeToken
-  )
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens.eUSD,
-    commonTokens.USDC
-  )
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens.USD3,
-    commonTokens.USDC
-  )
-  universe.addPreferredRTokenInputToken(
-    universe.rTokens.hyUSD,
-    commonTokens.USDC
-  )
-
-  const depositToETHX = new (ETHTokenVaultDepositAction('ETHX'))(
+  const daiMint = new DssLitePsm(
     universe,
-    universe.commonTokens.ETHx,
-    Address.from('0xcf5EA1b38380f6aF39068375516Daf40Ed70D299'),
-    1n
+    Address.from('0xf6e72db5454dd049d0788e411b06cfaf16853042'),
+    universe.commonTokens.USDC,
+    universe.commonTokens.DAI,
+    async (input) => input * 1000000000000n
+  )
+
+  universe.addAction(daiMint)
+
+  universe.mintRateProviders.set(universe.commonTokens.DAI, () =>
+    Promise.resolve(universe.commonTokens.USDC.one)
+  )
+
+  const depositToETHX = wrapGasToken(
+    universe,
+    new ETHTokenVaultDepositAction(
+      universe,
+      universe.commonTokens.ETHx,
+      Address.from('0xcf5EA1b38380f6aF39068375516Daf40Ed70D299'),
+      1n,
+      'ETHX'
+    )
   )
   universe.addAction(depositToETHX)
+  universe.mintableTokens.set(universe.commonTokens.ETHx, depositToETHX)
+
+  const contract = IBeefyVault__factory.connect(
+    commonTokens['mooConvexETH+'].address.address,
+    universe.provider
+  )
+  const getRate = universe.createCachedProducer(async () => {
+    const rate = await contract.callStatic.getPricePerFullShare()
+    return rate.toBigInt()
+  })
+  const depositToBeefy = new BeefyDepositAction(
+    universe,
+    commonTokens['ETH+ETH-f'],
+    commonTokens['mooConvexETH+'],
+    getRate
+  )
+
+  const beefyWithdraw = new BeefyWithdrawAction(
+    universe,
+    commonTokens['ETH+ETH-f'],
+    commonTokens['mooConvexETH+'],
+    getRate
+  )
+
+  universe.addAction(depositToBeefy)
+  universe.addAction(beefyWithdraw)
+  universe.mintableTokens.set(commonTokens['mooConvexETH+'], depositToBeefy)
+  // universe.defineMintable(depositToBeefy, beefyWithdraw, true)
+
+  const stakeDAOVault = await IGaugeStakeDAO__factory.connect(
+    commonTokens['sdETH+ETH-f'].address.address,
+    universe.provider
+  ).callStatic.vault()
+
+  const depositToStakeDAO = new StakeDAODepositAction(
+    universe,
+    commonTokens['ETH+ETH-f'],
+    commonTokens['sdETH+ETH-f'],
+    Address.from(stakeDAOVault)
+  )
+  universe.addAction(depositToStakeDAO)
+  universe.mintableTokens.set(commonTokens['sdETH+ETH-f'], depositToStakeDAO)
+
+  const yearnContract = IVaultYearn__factory.connect(
+    commonTokens['yvCurve-ETH+-f'].address.address,
+    universe.provider
+  )
+  const getYearnRate = universe.createCachedProducer(async () => {
+    const rate = await yearnContract.callStatic.pricePerShare()
+    return rate.toBigInt()
+  })
+  const depositToYearn = new YearnDepositAction(
+    universe,
+    commonTokens['ETH+ETH-f'],
+    commonTokens['yvCurve-ETH+-f'],
+    getYearnRate
+  )
+  const withdrawFromYearn = new YearnWithdrawAction(
+    universe,
+    commonTokens['ETH+ETH-f'],
+    commonTokens['yvCurve-ETH+-f'],
+    getYearnRate
+  )
+  universe.addAction(depositToYearn)
+  universe.addAction(withdrawFromYearn)
+  universe.mintableTokens.set(commonTokens['yvCurve-ETH+-f'], depositToYearn)
 
   const depositTosUSDe = new (ERC4626DepositAction('USDe'))(
     universe,
@@ -197,20 +260,68 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     1n
   )
 
-  universe.addAction(depositTosUSDe)
+  universe.tokenType.set(
+    universe.commonTokens.USDe,
+    Promise.resolve(TokenType.OtherMintable)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.sUSDe,
+    Promise.resolve(universe.commonTokens.USDe)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.USDe,
+    Promise.resolve(universe.commonTokens.USDT)
+  )
 
-  universe.tokenTradeSpecialCases.set(
-    universe.commonTokens.ETHx,
-    async (input: TokenQuantity, dest: Address) => {
-      if (input.token === universe.wrappedNativeToken) {
-        return await new SwapPlan(universe, [depositToETHX]).quote(
-          [input],
-          dest
+  universe.addAction(depositTosUSDe)
+  universe.mintableTokens.set(universe.commonTokens.sUSDe, depositTosUSDe)
+
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens['mooConvexETH+'],
+    priceFn: async () => {
+      const [output] = await beefyWithdraw.quote([
+        universe.commonTokens['mooConvexETH+'].one,
+      ])
+
+      const burn = universe.getBurnAction(output.token)
+      const out = await burn.quote([output])
+
+      const prices = await Promise.all([out[0].price(), out[1].price()])
+
+      const outUSD = prices[0].add(prices[1]).into(universe.usd)
+
+      return outUSD
+    },
+  })
+
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens['sdETH+ETH-f'],
+    priceFn: async () => {
+      const lpPrice = await universe.fairPrice(
+        universe.commonTokens['ETH+ETH-f'].one
+      )
+      if (lpPrice == null) {
+        throw Error(
+          `Failed to price ${universe.commonTokens['sdETH+ETH-f']}: Missing price for ETH+ETH-f`
         )
       }
-      return null
-    }
-  )
+      return lpPrice
+    },
+  })
+
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens['yvCurve-ETH+-f'],
+    priceFn: async () => {
+      const [output] = await withdrawFromYearn.quote([
+        universe.commonTokens['yvCurve-ETH+-f'].one,
+      ])
+      const burn = universe.getBurnAction(output.token)
+      const out = await burn.quote([output])
+      const prices = await Promise.all([out[0].price(), out[1].price()])
+      const outUSD = prices[0].add(prices[1]).into(universe.usd)
+      return outUSD
+    },
+  })
 
   universe.addSingleTokenPriceOracle({
     token: universe.commonTokens.ETHx,
@@ -235,25 +346,139 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.rTokens['ETH+']
   )
 
-  // universe.tokenFromTradeSpecialCases.set(
-  //   commonTokens.pxETH,
-  //   async (input: TokenQuantity, output: Token) => {
-  //     if (output !== commonTokens.WETH) {
-  //       return null
-  //     }
+  universe.addSingleTokenPriceSource({
+    token: universe.commonTokens.cbeth,
+    priceFn: async () => {
+      return (await universe.fairPrice(universe.commonTokens.WETH.one))!
+    },
+  })
 
-  //     try {
-  //       const out = await uniswap.router.swap(
-  //         AbortSignal.timeout(5000),
-  //         input,
-  //         output,
-  //         universe.config.defaultInternalTradeSlippage
-  //       )
-  //       return out
-  //     } catch (e) {
-  //       console.log(e)
-  //       return null
-  //     }
-  //   }
-  // )
+  universe.tokenType.set(
+    universe.commonTokens.ETHx,
+    Promise.resolve(TokenType.ETHLST)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.reth,
+    Promise.resolve(TokenType.ETHLST)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.steth,
+    Promise.resolve(TokenType.ETHLST)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.wsteth,
+    Promise.resolve(TokenType.OtherMintable)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.frxeth,
+    Promise.resolve(TokenType.ETHLST)
+  )
+  universe.tokenType.set(
+    universe.commonTokens.sfrxeth,
+    Promise.resolve(TokenType.OtherMintable)
+  )
+  const initCurve = async () => {
+    console.log('Loading curve')
+
+    try {
+      const curve = await CurveIntegration.load(
+        universe,
+        PROTOCOL_CONFIGS.curve
+      )
+      universe.integrations.curve = curve
+      universe.addIntegration(
+        'convex',
+        await setupConvexStakingWrappers(
+          universe,
+          curve,
+          PROTOCOL_CONFIGS.convex
+        )
+      )
+    } catch (e) {
+      console.log(e)
+      console.log('Failed to load curve')
+    }
+  }
+  const initBalancer = async () => {
+    console.log('Loading balancer')
+
+    try {
+      await setupBalancer(universe)
+    } catch (e) {
+      console.log(e)
+      console.log('Failed to load balancer')
+    }
+  }
+
+  const initMaverick = async () => {
+    // try {
+    //   await setupMaverick(universe)
+    // } catch (e) {
+    //   console.log(e)
+    //   console.log('Failed to load mango')
+    // }
+  }
+
+  const tasks = [
+    initUniswapV3,
+    initBalancer,
+    initCurve,
+    initUniswapV2,
+    initMaverick,
+  ]
+  await Promise.all(tasks.map((task) => task()))
+
+  universe.zeroBeforeApproval.add(universe.commonTokens.USDT)
+  universe.tokenClass.set(
+    universe.rTokens.USD3,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.eUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.hyUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens['ETH+'],
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.USDC,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.USDT,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.DAI,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.dgnETH,
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.eUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.hyUSD,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+  universe.tokenClass.set(
+    universe.rTokens.USD3,
+    Promise.resolve(universe.commonTokens.USDC)
+  )
+
+  universe.addSingleTokenPriceOracle({
+    token: universe.commonTokens.sUSD,
+    oracleAddress: Address.from('0xfF30586cD0F29eD462364C7e81375FC0C71219b1'),
+    priceToken: universe.usd,
+  })
+
+  console.log('Ethereum zapper setup complete')
 }

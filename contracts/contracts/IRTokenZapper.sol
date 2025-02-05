@@ -26,6 +26,26 @@ struct ZapERC20Params {
     IERC20 tokenOut;
 }
 
+
+struct ZapParams {
+    // Token to zap
+    address tokenIn;
+    // Total amount to zap / pull from user
+    uint256 amountIn;
+    
+    // Weiroll code to execute to produce 'amountOut' of 'tokenOut'
+    bytes32[] commands;
+    bytes[] state;
+    IERC20[] tokens;
+
+    // RTokens the user requested
+    uint256 amountOut;
+    // RToken to issue
+    address tokenOut;
+
+    address recipient;
+}
+
 interface FacadeRead {
     function maxIssuable(RToken rToken, address account) external returns (uint256);
 }

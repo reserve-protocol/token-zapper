@@ -25,6 +25,10 @@ export class Cached<Key, Result extends NonNullable<any>> {
   }
   private loadResource(key: Key): { result: Promise<Result>; time: number } {
     const task = this.fetch(key)
+    task.catch((e) => {
+      console.log(e)
+      this.cache.delete(key)
+    })
     const value = {
       result: task.then((result) => {
         if (result == null) {
@@ -36,7 +40,8 @@ export class Cached<Key, Result extends NonNullable<any>> {
     }
     this.cache.set(key, value)
 
-    task.catch(() => {
+    task.catch((e) => {
+      console.log(e)
       if (value === this.cache.get(key)) {
         this.cache.delete(key)
       }

@@ -1,24 +1,21 @@
-import ethereumPools from '../configuration/data/ethereum/curvePoolList.json'
-import { UniverseWithCommonBaseTokens } from '../searcher/UniverseWithERC20GasTokenDefined'
-import { Address } from '../base/Address'
-import { Token, TokenQuantity } from '../entities/Token'
-import { DefaultMap } from '../base/DefaultMap'
 import {
   CurveStableSwapNGPool,
   setupCurveStableSwapNGPool,
 } from '../action/CurveStableSwapNG'
+import { Address } from '../base/Address'
+import { DefaultMap } from '../base/DefaultMap'
+import ethereumPools from '../configuration/data/ethereum/curvePoolList.json'
+import { Token } from '../entities/Token'
+import { UniverseWithCommonBaseTokens } from '../searcher/UniverseWithERC20GasTokenDefined'
 
+import { Universe } from '..'
+import { loadCurve } from '../action/Curve'
 import {
   CurveFactoryCryptoPool,
   setupCurveFactoryCryptoPool,
 } from '../action/CurveFactoryCryptoPool'
-import { loadCurve } from '../action/Curve'
-import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
-import { Universe } from '..'
-import { RouterAction } from '../action/RouterAction'
-import { LPToken } from '../action/LPToken'
 
-type JSONPoolDataGeneric = (typeof ethereumPools.data.poolData)[number]
+type JSONPoolDataGeneric = typeof ethereumPools.data.poolData[number]
 type JSONCoin = Omit<
   JSONPoolDataGeneric['coins'][number],
   'ethLsdApy' | 'usdPrice' | 'poolBalance'
@@ -28,7 +25,7 @@ class CurveCoin {
   constructor(
     public readonly token: Token,
     public readonly isBasePoolLpToken: boolean
-  ) { }
+  ) {}
 
   public static async fromJson(
     universe: UniverseWithCommonBaseTokens,
@@ -223,7 +220,7 @@ const convertPoolListIntoMaps = async <
       }
       lpTokenToPoolAddress.set(pool.lpToken, pool.address)
     })
-  } catch (e) { }
+  } catch (e) {}
   return {
     poolInst,
     poolByPoolAddress,
@@ -269,13 +266,8 @@ export const loadPoolList = async (universe: UniverseWithCommonBaseTokens) => {
   // }
   throw new Error(`Unknown chain ${universe.chainId}`)
 }
-type TokenOut = string
-type Restriction = {
-  [tokenIn: string]: TokenOut
-}
+
 interface ICurveConfig {
-  allowedTradeInputs: Restriction
-  allowedTradeOutput: Restriction
   specialCases: {
     pool: string
     type: 'factory-crypto' | 'ngPool'
@@ -283,11 +275,9 @@ interface ICurveConfig {
 }
 
 export class CurveIntegration {
-  public readonly venue: TradingVenue
   private constructor(
     public readonly universe: UniverseWithCommonBaseTokens,
     public readonly curveApi: Awaited<ReturnType<typeof loadCurve>>,
-    public readonly dex: DexRouter,
     public readonly curvePools: Awaited<
       ReturnType<typeof convertPoolListIntoMaps<CurvePool>>
     >,
@@ -298,24 +288,12 @@ export class CurveIntegration {
         >
       >
     >
-  ) {
-    this.venue = new TradingVenue(universe, dex, async (a, b) => {
-      return new RouterAction(
-        dex,
-        universe,
-        curveApi.routerAddress,
-        a,
-        b,
-        this.universe.config.defaultInternalTradeSlippage
-      )
-    })
-  }
+  ) {}
 
   public static async load(
     universe: UniverseWithCommonBaseTokens,
     config: ICurveConfig
   ) {
-    const curveApi = await loadCurve(universe)
     const normalCurvePoolList = await loadPoolList(universe)
     const ngPoolList = await Promise.all(
       config.specialCases.map(async ({ pool, type }) => {
@@ -332,60 +310,13 @@ export class CurveIntegration {
       })
     )
 
-    const lpTokens = normalCurvePoolList.poolInst.map((i) => i.lpToken).flat()
-
-    for (const lpToken of lpTokens) {
-      if (universe.lpTokens.has(lpToken)) {
-        continue
-      }
-      const pool = normalCurvePoolList.poolByLPToken.get(lpToken)
-
-      const inst = new LPToken(
-        lpToken,
-        pool?.poolTokens.map((i) => i.token) ?? [],
-        async () => {
-          throw new Error('Unimplemented')
-        },
-        async () => {
-          throw new Error('Unimplemented')
-        }
-      )
-      universe.defineLPToken(inst)
-    }
-
-    const inputTradeRestrictions = await Promise.all(
-      Object.entries(config.allowedTradeInputs).map(async ([_, addr]) => {
-        return await universe.getToken(Address.from(addr))
-      })
-    )
-    inputTradeRestrictions.push(...lpTokens)
-
-    const outputTradeRestrictions = await Promise.all(
-      Object.entries(config.allowedTradeOutput).map(async ([_, addr]) => {
-        return await universe.getToken(Address.from(addr))
-      })
-    )
-    outputTradeRestrictions.push(...lpTokens)
-
-    const dex = new DexRouter(
-      universe,
-      'curveRouter',
-      async (_, input, output, slippage) => {
-        return (
-          await curveApi.createRouterEdge(input, output, slippage)
-        ).intoSwapPath(universe, input)
-      },
-      true,
-      new Set(inputTradeRestrictions),
-      new Set(outputTradeRestrictions)
-    )
+    const curveApi = await loadCurve(universe)
 
     const specialCasePools = await convertPoolListIntoMaps(ngPoolList)
 
     const out = new CurveIntegration(
       universe,
       curveApi,
-      dex,
       normalCurvePoolList,
       specialCasePools
     )
@@ -413,60 +344,7 @@ export class CurveIntegration {
       const p = this.specialCasePools.poolByLPToken.get(lpToken)!
       return Object.values(p.actions).map(({ remove }) => remove)
     }
-    if (this.curvePools.poolByLPToken.has(lpToken)) {
-      const out = this.curveApi.getPoolByLPMap.get(lpToken)
-      if (out != null) {
-        const actions = await Promise.all(
-          out.underlyingTokens.map(async (outToken) => {
-            if (outToken == lpToken) {
-              return null
-            }
-            return await this.curveApi
-              .createRouterEdge(
-                lpToken.one,
-                outToken,
-                this.universe.config.defaultInternalTradeSlippage
-              )
-              .catch((e) => {
-                return null!
-              })
-          })
-        ).then((out) => out.filter((e) => e != null))
-        if (actions.length !== 0) {
-          return actions
-        }
-      }
-    }
     return []
-  }
-
-  async findDepositAction(input: TokenQuantity, lpToken: Token) {
-    if (this.specialCasePools.poolByLPToken.has(lpToken)) {
-      const out = this.specialCasePools.poolByLPToken
-        .get(lpToken)!
-        .actions.find((action) => action.add.inputToken[0] === input.token)
-      if (out != null) {
-        return out.add
-      }
-      throw new Error(`Could not find add liquidity action for ${input}`)
-    }
-    if (this.curvePools.poolByLPToken.has(lpToken)) {
-      const out = await this.curveApi
-        .createRouterEdge(
-          input,
-          lpToken,
-          this.universe.config.defaultInternalTradeSlippage
-        )
-        .catch((e) => {
-          console.log(e)
-          return null
-        })
-      if (out != null) {
-        return out
-      }
-    }
-
-    throw new Error(`No pool found for ${lpToken}`)
   }
 
   toString() {

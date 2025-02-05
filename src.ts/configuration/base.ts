@@ -1,11 +1,21 @@
 import { ethers } from 'ethers'
 import { type Universe } from '../Universe'
-import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { makeConfig } from './ChainConfiguration'
+
+import deployments from '../contracts/deployments.json'
+import { GAS_TOKEN_ADDRESS } from '../base/constants'
+
+const baseDeployments = deployments[8453][0]
+
+const contractAddress = (name: keyof typeof baseDeployments.contracts) => {
+  return baseDeployments.contracts[name].address
+}
+
 export const COMMON_TOKENS = {
   USDC: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   USDbC: '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA',
   DAI: '0x50c5725949a6f0c72e6c4a641f24049a917db0cb',
+  ETH: GAS_TOKEN_ADDRESS,
   WETH: '0x4200000000000000000000000000000000000006',
   ERC20GAS: '0x4200000000000000000000000000000000000006',
   cbETH: '0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22',
@@ -13,24 +23,33 @@ export const COMMON_TOKENS = {
 
   meUSD: '0xbb819D845b573B5D7C538F5b85057160cfb5f313',
   eUSD: '0xCfA3Ef56d303AE4fAabA0592388F19d7C3399FB4',
-  AERO: '0x940181a94A35A4569E4529A3CDfB74e38FD98631',
-  DEGEN: '0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed',
+  'wsAMM-eUSD/USDC': '0xDB5b8cead52f77De0f6B5255f73F348AAf2CBb8D',
+
+  MOG: '0x2da56acb9ea78330f947bd57c54119debda7af71',
+  DEGEN: '0x4ed4e862860bed51a9570b96d89af5e1b0efefed',
+  AERO: '0x940181a94a35a4569e4529a3cdfb74e38fd98631',
   WELL: '0xA88594D404727625A9437C3f886C7643872296AE',
   cbBTC: '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf',
-  MOG: '0x2Da56AcB9Ea78330f947bD57C54119Debda7AF71',
 
-  USDz: '0x04D5ddf5f3a8939889F11E97f8c4BB48317F1938',
-
-  'vAMM-hyUSD/eUSD': '0xb5E331615FdbA7DF49e05CdEACEb14Acdd5091c3',
-  'dyson-hyUSDeUSD': '0xbfDb6140a85d669B136579E95e7673f27Ef41BB0', // Dyson
+  RSR: '0xab36452dbac151be02b16ca17d8919826072f64a',
+  Virtuals: '0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b',
+  aiXBT: '0x4F9Fd6Be4a90f2620860d680c0d4d5Fb53d1A825',
+  aixCB: '0x76c71f1703fbf19ffdcf3051e1e684cb9934510f',
+  Freysa: '0xb33Ff54b9F7242EF1593d2C9Bcd8f9df46c77935',
+  GAME: '0x1C4CcA7C5DB003824208aDDA61Bd749e55F463a3',
+  Cookie: '0xC0041EF357B183448B235a8Ea73Ce4E4eC8c265F',
+  Rei: '0x6B2504A03ca4D43d0D73776F6aD46dAb2F2a4cFD',
+  Toshi: '0xAC1Bd2486aAf3B5C0fc3Fd868558b082a531B2B4',
+  VaderAI: '0x731814e491571A2e9eE3c5b1F7f3b962eE8f4870',
+  Luna: '0x55cD6469F597452B5A7536e2CD98fDE4c1247ee4',
+  Henlo: '0x23A96680Ccde03Bd4Bdd9a3e9a0Cb56A5D27F7c9',
 } as const
 
 export const RTOKENS = {
   hyUSD: '0xCc7FF230365bD730eE4B352cC2492CEdAC49383e',
   bsd: '0xcb327b99ff831bf8223cced12b1338ff3aa322ff',
-  iUSD: '0xfE0D6D83033e313691E96909d2188C150b834285',
-  MATT: '0x641b0453487c9d14c5df96d45a481ef1dc84e31f',
   RIVOTKN: '0xd7a1c6d60d3c152aaae4f685f419f364153afe4e',
+  BSDX: '0x8f0987ddb485219c767770e2080e5cc01ddc772a',
 } as const
 
 const NEEDS_ZEROED_OUT_FIRST: Record<string, string> = {}
@@ -46,20 +65,24 @@ export const baseConfig = makeConfig(
   RTOKENS,
   NEEDS_ZEROED_OUT_FIRST,
   {
-    emitId: '0xC7a942301d92024321995f7f748C2B0687a1Cb60',
+    emitId: contractAddress('EmitId'),
     facadeAddress: '0xEb2071e9B542555E90E6e4E1F83fa17423583991',
     oldFacadeAddress: '0xe1aa15DA8b993c6312BAeD91E0b470AE405F91BF',
-    zapperAddress: '0xaA560D5C2Fade67CF6836Ab793e56A79F09d4282',
-    executorAddress: '0x560740052F380669c90811f711f80B21306d4713',
+    zapperAddress: '0xaa560d5c2fade67cf6836ab793e56a79f09d4282',
+    zapper2Address: contractAddress('Zapper2'),
+    executorAddress: '0x560740052f380669c90811f711f80b21306d4713',
+    executorAddress2: contractAddress('ZapperExecutor'),
     wrappedNative: '0x4200000000000000000000000000000000000006',
-    rtokenLens: '0x5cF5eD1715b6416710f106A3257E5C55B65EF418',
+    rtokenLens: contractAddress('RTokenLens'),
 
-    balanceOf: '0x9554DBb835886FC1f37835A1C83CeA3c20e5950A',
-    curveRouterCall: '0x1A7F7C1b870ad69D19a899B2A3BA6EBEea77033f',
-    ethBalanceOf: '0x858b62D160788864c65222d7a3777a19B370Abd8',
-    uniV3Router: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
-    curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
+    balanceOf: contractAddress('BalanceOf'),
+    curveRouterCall: contractAddress('CurveRouterCall'),
+    ethBalanceOf: contractAddress('EthBalance'),
+    uniV3Router: contractAddress('UniV3RouterCall'),
+    curveStableSwapNGHelper: ethers.constants.AddressZero,
     curveCryptoFactoryHelper: ethers.constants.AddressZero,
+
+    usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   },
   {
     blocktime: 2000,
@@ -79,21 +102,22 @@ export const PROTOCOL_CONFIGS = {
       '0x7e860098f58bbfc8648a4311b374b1d669a2bc6b', // USDbC/USD
     '0x50c5725949a6f0c72e6c4a641f24049a917db0cb':
       '0x591e79239a7d679378ec8c847e5038150364c78f', // DAI/USD
-    // "": "0xf19d560eb8d2adf07bd6d13ed03e1d11215721f9", // USDT/USD
-    [GAS_TOKEN_ADDRESS]: '0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70', // ETH/USD
+    '0x2da56acb9ea78330f947bd57c54119debda7af71':
+      '0x4aeb6D15769EaD32D0c5Be2940F40c7CFf53801d', // MOG/USD
+    '0x4ed4e862860bed51a9570b96d89af5e1b0efefed':
+      '0xE62BcE5D7CB9d16AB8b4D622538bc0A50A5799c2', // DEGEN/USD
+    '0x940181a94a35a4569e4529a3cdfb74e38fd98631':
+      '0x4EC5970fC728C5f65ba413992CD5fF6FD70fcfF0', // AERO/USD
+    '0xA88594D404727625A9437C3f886C7643872296AE':
+      '0xc15d9944dAefE2dB03e53bef8DDA25a56832C5fe', // WELL/USD
+    '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf':
+      '0x07DA0E54543a844a80ABE69c8A12F22B3aA59f9D', // cbBTC/USD
     '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22':
       '0xd7818272b9e248357d13057aab0b417af31e817d', // cbETH/USD
-    // '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452':
-    //   '0xf586d0728a47229e747d824a939000Cf21dEF5A0', // wsteth/USD
-    // "": "0xccadc697c55bbb68dc5bcdf8d3cbe83cdd4e071e", // WBTC / USD
+    '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452':
+      '0xf586d0728a47229e747d824a939000Cf21dEF5A0', // wsteth/USD
   },
   erc4626: [['0xbb819D845b573B5D7C538F5b85057160cfb5f313', 'morpho']],
-  ethPriceOracles: {
-    '0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22':
-      '0x806b4ac04501c29769051e42783cf04dce41440b', // cbETH / ETH
-    '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452':
-      '0xB88BAc61a4Ca37C43a3725912B1f472c9A5bc061', // wsteth / ETH
-  },
   aaveV3: {
     pool: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5',
     wrappers: [
@@ -124,31 +148,15 @@ export const PROTOCOL_CONFIGS = {
   aerodrome: {
     lpPoolWrappers: {
       'wsAMM-eUSD/USDC': '0xDB5b8cead52f77De0f6B5255f73F348AAf2CBb8D',
-      'wvAMM-WETH/AERO': '0x3712DDCF9aE516dD01042948B76A76901a84CD36',
-      'wvAMM-Mog/WETH': '0xCcC18B21be01a37ebFa5C932eD09574752F88C15',
+      'wvAMM-WETH/AERO2': '0x3712DDCF9aE516dD01042948B76A76901a84CD36',
+      'wvAMM-Mog/WETH2': '0xCcC18B21be01a37ebFa5C932eD09574752F88C15',
       'wsAMM-USDz/USDC': '0x246Df11B856E9fD6120494F168475e1b41321c61',
       'wvAMM-WETH/DEGEN': '0xA762F790a31654D9AeF7DE550A473A0F5621E4F1',
+      'wvAMM-WETH/WELL': '0x1F599F8657CAA38Ee825e4E2d64F695749E2a161',
+      'wvAMM-WETH/cbBTC': '0x4BD08a771CdAbA5333CAc6F20322eD7d72b6cBfA',
+      'wvAMM-Mog/WETH': '0xfaAC26b279338dF8cF56B11A572617f674A2F69C',
+      'wvAMM-WETH/AERO': '0x65f2c1b253a3E45670aDD259C9688Edf1A3b814d',
     },
-  },
-
-  beefy: {
-    vaults: [
-      '0x22a0B976b3c2f1f695e25A15b8449a785F17f8Ae',
-      '0xB62F13126fCD0dD49dE8fF811406554197Bd0E11',
-      '0x8bd6dF821513aECDbbaa29C1d5212b43fdCe7819',
-      '0xB614A6E6c21202De79DceB95AE2dd4817DD7e14b',
-      '0x79c92ad4455866524dACFC4085253CE97aACEcF0',
-      '0x4b65212E81d9040537aDd569702a8FEB8f209B7c',
-    ],
-  },
-  yearn: {
-    vaults: ['0x4d3ceBA4349ADB06d2De8EBD2F9320A61303aD81'],
-  },
-  dyson: {
-    vaults: [
-      '0xbfDb6140a85d669B136579E95e7673f27Ef41BB0',
-      '0x0DEd65F164b50249496903873e950814e439DFf7',
-    ],
   },
 }
 

@@ -8,12 +8,11 @@ const defaultSearcherOptions = {
 
   // How long any individual trade may use
   routerDeadline: 2500,
+  routerMinResults: 1,
   searcherMinRoutesToProduce: 2,
   searcherMaxRoutesToProduce: 8,
 
   searchConcurrency: 32,
-
-  routerMinResults: 1,
 
   defaultInternalTradeSlippage: 50n,
 
@@ -24,10 +23,29 @@ const defaultSearcherOptions = {
   zapMaxValueLoss: 4, // 0.04 or 3%
 
   // total output value = output token value + dust value
-  zapMaxDustProduced: 2, // 0.02 or 2% of total output value
+  zapMaxDustProduced: 3, // 0.02 or 2% of total output value
 
   largeZapThreshold: 300000,
   largeZapSearchTime: 6000,
+
+  // New options
+  optimisationSteps: 10,
+  refinementOptimisationSteps: 5,
+  minimiseDustPhase1Steps: 10,
+  minimiseDustPhase2Steps: 5,
+
+  cacheResolution: 4,
+  tfgCacheTTL: 5 * 60 * 1000, // 5 minutes
+
+  // Use new contract for all zaps
+  useNewZapperContract: false,
+
+  rejectHighDust: true,
+
+  maxPhase2TimeRefinementTime: 5000,
+}
+export const getDefaultSearcherOptions = () => {
+  return defaultSearcherOptions
 }
 
 export type SearcherOptions = typeof defaultSearcherOptions & {
@@ -70,8 +88,10 @@ export const makeConfig = <
     facadeAddress: string
     oldFacadeAddress: string
     executorAddress: string
+    executorAddress2?: string
     emitId: string
     zapperAddress: string
+    zapper2Address?: string
     wrappedNative: string
     rtokenLens: string
 
@@ -82,6 +102,9 @@ export const makeConfig = <
     uniV3Router: string
     curveStableSwapNGHelper: string
     curveCryptoFactoryHelper: string
+
+
+    usdc: string
   },
   options: {
     blocktime: Blocktime

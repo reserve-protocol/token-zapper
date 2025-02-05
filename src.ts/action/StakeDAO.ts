@@ -53,6 +53,10 @@ export class StakeDAODepositAction extends StakeDAOBase {
     return 0n
   }
 
+  get dependsOnRpc() {
+    return true
+  }
+
   constructor(
     readonly universe: Universe,
     readonly underlying: Token,

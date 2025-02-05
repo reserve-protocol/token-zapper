@@ -3,6 +3,14 @@ import { makeConfig } from './ChainConfiguration'
 
 import { ChainIds } from './ReserveAddresses'
 
+import deployments from '../contracts/deployments.json'
+
+const mainnetDeployments = deployments[1][0]
+
+const contractAddress = (name: keyof typeof mainnetDeployments.contracts) => {
+  return mainnetDeployments.contracts[name].address
+}
+
 const chainId = ChainIds.Mainnet
 export const COMMON_TOKENS = {
   USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
@@ -11,6 +19,9 @@ export const COMMON_TOKENS = {
   WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
   ERC20GAS: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
   WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+  Re7WETH: '0x78Fc2c2eD1A4cDb5402365934aE5648aDAd094d0',
+
+  RSR: '0x320623b8e4ff03373931769a31fc52a4e78b5d70',
 
   MIM: '0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3',
   FRAX: '0x853d955acef822db058eb8505911ed77f175b99e',
@@ -49,6 +60,7 @@ export const COMMON_TOKENS = {
   apxETH: '0x9Ba021B0a9b958B5E75cE9f6dff97C7eE52cb3E6',
   pxETH: '0x04C154b66CB340F3Ae24111CC767e0184Ed00Cc6',
   sUSDe: '0x9D39A5DE30e57443BfF2A8307A4256c8797A3497',
+  sUSD: '0x57ab1ec28d129707052df4df418d58a2d46d5f51',
   USDe: '0x4c9EDD5852cd905f086C759E8383e09bff1E68B3',
   sUSDS: '0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD',
   USDS: '0xdC035D45d973E3EC169d2276DDab16f1e407384F',
@@ -71,22 +83,56 @@ export const COMMON_TOKENS = {
   'mooConvexETH+': '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0', // Beefy
   'sdETH+ETH-f': '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C', // StakeDAO
   'yvCurve-ETH+-f': '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581', // Yearn
-  'consETHETH-f': '0x70528C2Bc8328837969c033b658D8207c64D8E02', // Concentrator
-  'cvxETH+ETH-f': '0xA6A97C02885b08ABb4bf6D742796081eC54540fe', // Convex deposit
-  'crvETH+ETH-f': '0x90D5B65Af52654A2B230244a61DD4Ce3CFa4835f', // Convex stake
+
+  UNI: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
+  LINK: '0x514910771af9ca656af840dff83e8264ecf986ca',
+  PEPE: '0x6982508145454ce325ddbe47a25d4ec3d2311933',
+  AAVE: '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
 } as const
 
 export const RTOKENS = {
   eUSD: '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F',
   'ETH+': '0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8',
   hyUSD: '0xaCdf0DBA4B9839b96221a8487e9ca660a48212be',
-  RSD: '0xF2098092a5b9D25A3cC7ddc76A0553c9922eEA9E',
-  iUSD: '0x9b451BEB49a03586e6995E5A93b9c745D068581e',
   'USDC+': '0xFc0B1EEf20e4c68B3DCF36c4537Cfa7Ce46CA70b',
   USD3: '0x0d86883faf4ffd7aeb116390af37746f45b6f378',
   rgUSD: '0x78da5799cf427fee11e9996982f4150ece7a99a7',
   dgnETH: '0x005f893ecd7bf9667195642f7649da8163e23658',
 } as const
+
+export const ethereumConfig = makeConfig(
+  chainId,
+  {
+    symbol: 'ETH',
+    decimals: 18,
+    name: 'Ether',
+  },
+  COMMON_TOKENS,
+  RTOKENS,
+  {
+    emitId: contractAddress('EmitId'),
+    facadeAddress: '0x2C7ca56342177343A2954C250702Fd464f4d0613',
+    oldFacadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
+    zapperAddress: contractAddress('Zapper'),
+    executorAddress: contractAddress('ZapperExecutor'),
+    wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    rtokenLens: contractAddress('RTokenLens'),
+
+    balanceOf: contractAddress('BalanceOf'),
+    curveRouterCall: contractAddress('CurveRouterCall'),
+    ethBalanceOf: contractAddress('EthBalance'),
+    uniV3Router: contractAddress('UniV3RouterCall'),
+    curveStableSwapNGHelper: contractAddress('CurveStableSwapNGHelper'),
+    curveCryptoFactoryHelper: contractAddress('CurveCryptoFactoryHelper'),
+
+    usdc: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  },
+  {
+    blocktime: 12000,
+    blockGasLimit: 30000000n,
+    requoteTolerance: 2,
+  }
+)
 
 export const PROTOCOL_CONFIGS = {
   chainLinkRegistry: '0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf',
@@ -98,41 +144,6 @@ export const PROTOCOL_CONFIGS = {
     frxethOracle: '0xc58f3385fbc1c8ad2c0c9a061d7c13b141d7a5df',
   },
   curve: {
-    allowedTradeInputs: {
-      USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-      USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-      DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
-      WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
-      WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-
-      MIM: '0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3',
-      FRAX: '0x853d955acef822db058eb8505911ed77f175b99e',
-      crvUSD: '0xf939e0a03fb07f59a73314e73794be0e57ac1b4e',
-      pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
-
-      reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
-      steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
-      wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
-      cbeth: '0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
-      frxeth: '0x5E8422345238F34275888049021821E8E08CAa1f',
-      sfrxeth: '0xac3E018457B222d93114458476f3E3416Abbe38F',
-    },
-    allowedTradeOutput: {
-      USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-      USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-      DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
-      WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
-      WETH: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-
-      pyUSD: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
-
-      reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
-      steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
-      wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
-      cbeth: '0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
-      frxeth: '0x5E8422345238F34275888049021821E8E08CAa1f',
-      sfrxeth: '0xac3E018457B222d93114458476f3E3416Abbe38F',
-    },
     // Tells setupCurve.ts to not use the generic curve implementation, but use our own
     specialCases: [
       {
@@ -269,29 +280,6 @@ export const PROTOCOL_CONFIGS = {
       // wrapped cUSDTV3
       '0xbeD348315d7327Cd81d26338c11976674825bb14',
       '0xEB74EC1d4C1DAB412D5d6674F6833FD19d3118Ce',
-    ],
-  },
-  concentrator: {
-    vault: '0x59866ec5650e9ba00c51f6d681762b48b0ada3de',
-    pid: 14,
-  },
-  beefy: {
-    vaults: [
-      '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0',
-      '0x1817CFfc44c78d5aED61420bF48Cc273E504B7BE',
-    ],
-  },
-  stakeDAO: {
-    gauges: [
-      '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C',
-      '0x41639ABcA04c22e80326A96C8fE2882C97BaEb6e',
-    ],
-  },
-  yearn: {
-    vaults: [
-      '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581',
-      '0xBfBC4acAE2ceC91A5bC80eCA1C9290F92959f7c3',
-      '0x961Ad224fedDFa468c81acB3A9Cc2cC4731809f4',
     ],
   },
 }

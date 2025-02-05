@@ -38,10 +38,11 @@ export interface IRTokenInterface extends utils.Interface {
     "issue(uint256)": FunctionFragment;
     "issueTo(address,uint256)": FunctionFragment;
     "main()": FunctionFragment;
-    "mint(address,uint256)": FunctionFragment;
+    "mint(uint192)": FunctionFragment;
     "name()": FunctionFragment;
     "redeem(uint256)": FunctionFragment;
     "redeemTo(address,uint256)": FunctionFragment;
+    "setBasketsNeeded(uint192)": FunctionFragment;
     "symbol()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
@@ -64,6 +65,7 @@ export interface IRTokenInterface extends utils.Interface {
       | "name"
       | "redeem"
       | "redeemTo"
+      | "setBasketsNeeded"
       | "symbol"
       | "totalSupply"
       | "transfer"
@@ -103,7 +105,7 @@ export interface IRTokenInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "main", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "mint",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
@@ -113,6 +115,10 @@ export interface IRTokenInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "redeemTo",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setBasketsNeeded",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
@@ -152,6 +158,10 @@ export interface IRTokenInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "redeemTo", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setBasketsNeeded",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -261,7 +271,6 @@ export interface IRToken extends BaseContract {
     main(overrides?: CallOverrides): Promise<[string]>;
 
     mint(
-      recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -276,6 +285,11 @@ export interface IRToken extends BaseContract {
     redeemTo(
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setBasketsNeeded(
+      basketsNeeded_: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -336,7 +350,6 @@ export interface IRToken extends BaseContract {
   main(overrides?: CallOverrides): Promise<string>;
 
   mint(
-    recipient: PromiseOrValue<string>,
     amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -351,6 +364,11 @@ export interface IRToken extends BaseContract {
   redeemTo(
     recipient: PromiseOrValue<string>,
     amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setBasketsNeeded(
+    basketsNeeded_: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -411,7 +429,6 @@ export interface IRToken extends BaseContract {
     main(overrides?: CallOverrides): Promise<string>;
 
     mint(
-      recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -426,6 +443,11 @@ export interface IRToken extends BaseContract {
     redeemTo(
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setBasketsNeeded(
+      basketsNeeded_: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -511,7 +533,6 @@ export interface IRToken extends BaseContract {
     main(overrides?: CallOverrides): Promise<BigNumber>;
 
     mint(
-      recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -526,6 +547,11 @@ export interface IRToken extends BaseContract {
     redeemTo(
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setBasketsNeeded(
+      basketsNeeded_: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -587,7 +613,6 @@ export interface IRToken extends BaseContract {
     main(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     mint(
-      recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -602,6 +627,11 @@ export interface IRToken extends BaseContract {
     redeemTo(
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setBasketsNeeded(
+      basketsNeeded_: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

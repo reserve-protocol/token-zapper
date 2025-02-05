@@ -4,10 +4,9 @@
     "access": "public",
     "tag": "latest"
   },
-  "version": "3.15.0",
+  "version": "4.0.0-rc48",
   "description": "A library to help convert tokens into RTokens and back",
   "keywords": [],
-  "module": "./lib.esm/index.js",
   "sideEffects": false,
   "files": [
     ".eslintrc.js",
@@ -20,92 +19,19 @@
     "README.md",
     "tsconfig.commonjs.json",
     "tsconfig.eslint.json",
-    "tsconfig.esm.json",
     "tsconfig.json",
     "tsconfig.test.json",
     "tsconfig.types.json",
     "./src.ts/**/*",
     "./test/**/*",
     "./lib.commonjs/**/*",
-    "./lib.esm/**/*",
     "./types/**/*"
   ],
   "types": "./types/index.d.ts",
   "author": "jan.demidov@reserve.org",
   "main": "./lib.commonjs/index.js",
   "exports": {
-    "./protocols/chainlink": {
-      "import": "./lib.esm/configuration/setupChainLink.js",
-      "types": "./types/configuration/setupChainLink.d.ts",
-      "require": "./lib.commonjs/configuration/setupChainLink.js"
-    },
-    "./protocols/compoundV2": {
-      "import": "./lib.esm/configuration/setupCompound.js",
-      "types": "./types/configuration/setupCompound.d.ts",
-      "require": "./lib.commonjs/configuration/setupCompound.js"
-    },
-    "./protocols/lido": {
-      "import": "./lib.esm/configuration/setupLido.js",
-      "types": "./types/configuration/setupLido.d.ts",
-      "require": "./lib.commonjs/configuration/setupLido.js"
-    },
-    "./protocols/rocketpool": {
-      "import": "./lib.esm/configuration/setupRETH.js",
-      "types": "./types/configuration/setupRETH.d.ts",
-      "require": "./lib.commonjs/configuration/setupRETH.js"
-    },
-    "./protocols/reserve": {
-      "import": "./lib.esm/configuration/setupRTokens.js",
-      "types": "./types/configuration/setupRTokens.d.ts",
-      "require": "./lib.commonjs/configuration/setupRTokens.js"
-    },
-    "./protocols/aaveV2": {
-      "import": "./lib.esm/configuration/setupSAToken.js",
-      "types": "./types/configuration/setupSAToken.d.ts",
-      "require": "./lib.commonjs/configuration/setupSAToken.js"
-    },
-    "./protocols/compoundv3": {
-      "import": "./lib.esm/configuration/setupCompoundV3.js",
-      "types": "./types/configuration/setupCompoundV3.d.ts",
-      "require": "./lib.commonjs/configuration/setupCompoundV3.js"
-    },
-    "./protocols/erc4626": {
-      "import": "./lib.esm/configuration/setupERC4626.js",
-      "types": "./types/configuration/setupERC4626.d.ts",
-      "require": "./lib.commonjs/configuration/setupERC4626.js"
-    },
-    "./protocols/erc20gas": {
-      "import": "./lib.esm/configuration/setupWrappedGasToken.js",
-      "types": "./types/configuration/setupWrappedGasToken.d.ts",
-      "require": "./lib.commonjs/configuration/setupWrappedGasToken.js"
-    },
-    "./protocols/curve/mainnet": {
-      "import": "./lib.esm/configuration/setupCurveOnEthereum.js",
-      "types": "./types/configuration/setupCurveOnEthereum.d.ts",
-      "require": "./lib.commonjs/configuration/setupCurveOnEthereum.js"
-    },
-    "./configuration/ethereum": {
-      "import": "./lib.esm/configuration/ethereum.js",
-      "types": "./types/configuration/ethereum.d.ts",
-      "require": "./lib.commonjs/configuration/ethereum.js"
-    },
-    "./configuration/setupEthereumTokenList": {
-      "import": "./lib.esm/configuration/setupEthereumTokenList.js",
-      "types": "./types/configuration/setupEthereumTokenList.d.ts",
-      "require": "./lib.commonjs/configuration/setupEthereumTokenList.js"
-    },
-    "./configs/mainnet/zapper": {
-      "import": "./lib.esm/configuration/setupEthereumZapper.js",
-      "types": "./types/configuration/setupEthereumZapper.d.ts",
-      "require": "./lib.commonjs/configuration/setupEthereumZapper.js"
-    },
-    "./aggregators/one-inch": {
-      "import": "./lib.esm/aggregators/oneInch/oneInchRegistry.js",
-      "types": "./types/aggregators/oneInch/oneInchRegistry.d.ts",
-      "require": "./lib.commonjs/aggregators/oneInch/oneInchRegistry.js"
-    },
     ".": {
-      "import": "./lib.esm/index.js",
       "types": "./types/index.d.ts",
       "require": "./lib.commonjs/index.js"
     }
@@ -124,16 +50,17 @@
     "singleQuote": true
   },
   "scripts": {
-    "clean": "rm -rf dist/ lib.esm/ lib.commonjs/ types/",
+    "clean": "rm -rf dist/ lib.commonjs/ types/",
     "build:types": "tsc --project tsconfig.types.json",
-    "build": "npm run clean && npm run build:contracts && npm run build:typechain && npm run build:esm && npm run build:commonjs && npm run build:types",
+    "build": "npm run clean && npm run build:contracts && npm run build:typechain && npm run build:commonjs && npm run build:types",
     "build:contracts": "cd contracts/ && npm run compile:contracts && npm run copy:artifacts",
     "build:typechain": "rm -rf contracts/artifacts/ && rm -rf contracts/cache/ && rm -rf src/contracts && cd contracts/ && npx hardhat compile",
-    "build:esm": "tsc --project tsconfig.esm.json && cp -r src.ts/configuration/data/ lib.esm/configuration/data",
     "build:commonjs": "tsc --project tsconfig.commonjs.json && cp -r src.ts/configuration/data/ lib.commonjs/configuration/data",
     "test:unit": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --testPathPattern 'test/unit'",
     "integration:eth": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/ethereum.test.ts'",
+    "integration:eth:dags": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/dags.eth.test.ts'",
     "integration:base": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/base.test.ts'",
+    "integration:base:dags": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/dags.base.test.ts'",
     "integration:arbitrum": "node --allow-natives-syntax node_modules/.bin/jest --passWithNoTests --detectOpenHandles --testPathPattern 'test/integration/arbitrum.test.ts'",
     "format": "npm run prettier:fix",
     "curve:all": "npm run curve:mainnet && npm run curve:base && npm run curve:arbitrum",
@@ -144,7 +71,7 @@
     "prettier:check": "npm run prettier -- --check",
     "prettier:fix": "npm run prettier -- --write",
     "compile:contracts": "cd contracts/ && npx hardhat compile",
-    "copy:artifacts": "cp contracts/artifacts/contracts/Zapper.sol/Zapper.json src.ts/contracts/Zapper.json && cp contracts/artifacts/contracts/Zapper.sol/ZapperExecutor.json src.ts/contracts/ZapperExecutor.json"
+    "copy:artifacts": "cp contracts/deployments.json src.ts/contracts/deployments.json && cp contracts/artifacts/contracts/Zapper.sol/Zapper.json src.ts/contracts/Zapper.json && cp contracts/artifacts/contracts/ZapperExecutor.sol/ZapperExecutor.json src.ts/contracts/ZapperExecutor.json"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-verify": "1.1.1",
@@ -176,19 +103,13 @@
     "ts-node": "10.9.1",
     "tsconfig-paths": "4.1.1",
     "typechain": "8.3.2",
-    "typescript": "5.3.3",
+    "typescript": "5.7.2",
     "winston": "^3.15.0"
   },
   "dependencies": {
     "@ethersproject/abi": "5.7.0",
     "@ethersproject/providers": "5.7.2",
     "@paraswap/sdk": "6.8.1",
-    "@uniswap/default-token-list": "11.18.0",
-    "@uniswap/permit2-sdk": "1.2.0",
-    "@uniswap/router-sdk": "1.9.0",
-    "@uniswap/sdk-core": "4.2.0",
-    "@uniswap/smart-order-router": "4.0.0",
-    "@uniswap/v3-sdk": "3.13.1",
     "bignumber.js": "9.1.1",
     "ethers": "5.7.2",
     "hardhat-deploy-ethers": "0.3.0-beta.13",

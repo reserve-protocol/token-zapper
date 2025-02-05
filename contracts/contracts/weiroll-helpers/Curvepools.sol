@@ -26,16 +26,15 @@ interface ICurveCryptoFactory {
 }
 contract CurveCryptoFactoryHelper {
     function addliquidity(
-        uint256 amount,
-        uint256 coinIdx,
+        uint256 amount0,
+        uint256 amount1,
         ICurveCryptoFactory pool,
         uint256 minOut,
         bool useEth
     ) external returns (uint256) {
         uint256[2] memory amounts;
-        amounts[0] = 0;
-        amounts[1] = 0;
-        amounts[coinIdx] = amount;
+        amounts[0] = amount0;
+        amounts[1] = amount1;
         return pool.add_liquidity(amounts, minOut, useEth);
     }
 }

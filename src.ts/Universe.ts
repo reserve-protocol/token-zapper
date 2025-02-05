@@ -1094,15 +1094,19 @@ export class Universe<const UniverseConf extends Config = Config> {
     const recipient = Address.from(opts?.recipient ?? caller)
     const dustRecipient = Address.from(opts?.dustRecipient ?? opts?.recipient ?? caller)
 
+    const isNative = userInput.token === this.nativeToken
+    userInput = isNative ? userInput.into(this.wrappedNativeToken) : userInput
+    console.log(`Building DAG for ${userInput} -> ${config.basicDetails.basket[0].token}`)
+
     const deployTFG = await this.tfgSearcher.searchZapDeploy1ToFolio(
       userInput,
       config,
       this.config
     )
 
-
     const userOption = Object.assign({
       caller: Address.from(caller),
+      isNative,
       recipient: Address.from(recipient),
       dustRecipient: Address.from(dustRecipient),
     }, opts)

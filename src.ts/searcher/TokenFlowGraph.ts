@@ -14,6 +14,7 @@ import {
 import { DeployFolioConfig } from '../action/DeployFolioConfig'
 import { ChainIds } from '../configuration/ReserveAddresses'
 import { lpTokenBasePoolIdDictAvalanche } from '../curve-js/src/factory/constants-crypto'
+import { ToTransactionArgs } from './ToTransactionArgs'
 
 export class NodeProxy {
   private version: number

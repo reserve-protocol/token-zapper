@@ -2816,6 +2816,11 @@ const optimise = async (
   g = removeUselessNodes(removeRedundantSplits(g))
   inferDustProducingNodes(g)
   await backPropagateInputProportions(g)
+  bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
+  g = removeNodes(g, findNodesWithoutSources(g))
+  g = removeUselessNodes(removeRedundantSplits(g))
+  inferDustProducingNodes(g)
+  await backPropagateInputProportions(g)
 
   bestSoFar = await minimizeDust(
     g,

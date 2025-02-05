@@ -253,7 +253,7 @@ export const bestPath = async (
         continue
       }
     }
-    if (node.steps >= maxSteps * 2) {
+    if (node.steps >= (maxSteps + 1) * 2) {
       continue
     }
     const vertex = graph.vertices.get(node.token)

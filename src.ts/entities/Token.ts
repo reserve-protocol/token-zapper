@@ -158,7 +158,7 @@ export class Token {
 
   toJson() {
     return {
-      address: this.address.toString(),
+      address: this.address.toString().toLowerCase(),
       symbol: this.symbol,
       name: this.name,
       decimals: this.decimals,

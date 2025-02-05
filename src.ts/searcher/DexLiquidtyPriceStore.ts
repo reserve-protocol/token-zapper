@@ -64,7 +64,7 @@ export class DexLiquidtyPriceStore {
           this.universe,
           input,
           target,
-          1,
+          2,
           interestingTokens.size > 0 ? interestingTokens : undefined
         ).then((m) => {
           this.recordAllSingleStepBestPaths(input.token, m)

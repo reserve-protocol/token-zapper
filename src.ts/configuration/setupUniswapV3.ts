@@ -616,15 +616,13 @@ export const setupUniswapV3 = async (universe: Universe) => {
       JSON.stringify(
         allPools
           .map((i) => ({
-            id: i.address.address,
+            id: i.address.address.toLowerCase(),
             feeTier: Number(i.fee),
             token0: {
-              id: i.token0.address.address,
-              symbol: i.token0.symbol,
+              id: i.token0.address.address.toLowerCase(),
             },
             token1: {
-              id: i.token1.address.address,
-              symbol: i.token1.symbol,
+              id: i.token1.address.address.toLowerCase(),
             },
           }))
           .sort((l, r) => l.id.localeCompare(r.id)),

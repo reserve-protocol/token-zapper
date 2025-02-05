@@ -266,14 +266,20 @@ class UniswapV2Pool {
         ).at(-1)!
       ) - balAfterSent
 
-    const buyFee = ((sentAmount - poolOutSent) * FEE_SCALE) / sentAmount
-    const sellFee = ((poolOutSent - poolInReceived) * FEE_SCALE) / poolOutSent
+    let buyFee = ((sentAmount - poolOutSent) * FEE_SCALE) / sentAmount
+    let sellFee = ((poolOutSent - poolInReceived) * FEE_SCALE) / poolOutSent
 
     if (buyFee === 0n && sellFee === 0n) {
       return {
         buy: 0n,
         sell: 0n,
       }
+    }
+    if (sellFee < 0n || sellFee > FEE_SCALE / 10n) {
+      sellFee = 10n
+    }
+    if (buyFee < 0n || buyFee > FEE_SCALE / 10n) {
+      buyFee = 10n
     }
 
     this.context.universe.logger.debug(

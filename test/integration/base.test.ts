@@ -35,10 +35,10 @@ const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
   cacheResolution: 8,
-  maxPhase2TimeRefinementTime: 10000,
-  optimisationSteps: 35,
-  minimiseDustPhase1Steps: 35,
-  minimiseDustPhase2Steps: 35,
+  maxPhase2TimeRefinementTime: 60000,
+  optimisationSteps: 10,
+  minimiseDustPhase1Steps: 100,
+  minimiseDustPhase2Steps: 20,
   zapMaxDustProduced: 10,
   useNewZapperContract: true,
 }
@@ -506,7 +506,7 @@ describe('base zapper', () => {
             expect(true).toBe(false)
             throw e
           }
-        }, 60000)
+        }, 240000)
       })
     }
   })

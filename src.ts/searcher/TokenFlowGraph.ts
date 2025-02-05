@@ -13,6 +13,7 @@ import {
 } from '../configuration/ChainConfiguration'
 import { DeployFolioConfig } from '../action/DeployFolioConfig'
 import { ChainIds } from '../configuration/ReserveAddresses'
+import { lpTokenBasePoolIdDictAvalanche } from '../curve-js/src/factory/constants-crypto'
 
 export class NodeProxy {
   private version: number
@@ -823,6 +824,7 @@ const createResult = async (
 
     const price = outputTokenValue / (inputSum + gasPrice.asNumber())
 
+    const dustValue = outputSum - outputTokenValue
     return {
       inputs,
       outputs,
@@ -835,9 +837,10 @@ const createResult = async (
       outputQuantity,
       inputValue: inputSum,
       totalValue: outputSum,
-      dustValue: outputSum - outputTokenValue,
+      dustValue,
       outputValue: outputTokenValue,
       gas: gasUnits,
+      dustFraction: 1 - dustValue / outputSum,
     }
   } catch (e) {
     console.log(e)
@@ -2519,7 +2522,6 @@ const optimiseGlobal = async (
         let change = size
 
         edge.add(paramIndex, change)
-        edge.normalize()
 
         if (prev === 0 && edge.inner[paramIndex] === 0) {
           edge.setParts(before)
@@ -2543,6 +2545,11 @@ const optimiseGlobal = async (
     }
     if (bestNodeToChange !== -1) {
       bestSoFar = bestThisIteration
+      console.log(
+        `${i} optimize global: ${bestSoFar.result.outputs.join(', ')} ${
+          bestSoFar.result.dustFraction * 100
+        }% dust`
+      )
       g._outgoingEdges[
         optimisationNodes[bestNodeToChange].id
       ]!.edges[0].setParts(tmp[bestNodeToChange])
@@ -2664,9 +2671,6 @@ const removeRedundantSplits = (g: TokenFlowGraph) => {
     }
   }
 
-  console.log(`Removed ${nodesRemoved} nodes. New TFG:`)
-  console.log(outGraph.toDot().join('\n'))
-
   return outGraph
 }
 
@@ -2699,6 +2703,9 @@ const inferDustProducingNodes = (g: TokenFlowGraph) => {
       const tokensProduced = new Set<Token>()
       const splitIndex = mainSplits.getRecipientIndex(edge.recipient.id)
       const dustProduced = new Set<Token>()
+      if (g.getDustTokens().includes(edge.token)) {
+        dustProduced.add(edge.token)
+      }
       const onDecendent = (decendent: NodeProxy) => {
         if (!(decendent.action instanceof BaseAction)) {
           return
@@ -2763,19 +2770,15 @@ const optimise = async (
   graph: TokenFlowGraphBuilder | TokenFlowGraph,
   inputs: TokenQuantity[],
   outputs: Token[],
-  opts?: {
-    optsDustPhase1Steps?: number
-    optsDustPhase2Steps?: number
-    optimisationSteps?: number
-  }
+  opts?: SearcherOptions
 ) => {
   const logger = universe.logger.child({
     prefix: `optimiser ${inputs.join(', ')} -> ${outputs.join(', ')}`,
   })
 
   const optimisationSteps = opts?.optimisationSteps ?? 15
-  const minimiseDustPhase1Steps = opts?.optsDustPhase1Steps ?? 15
-  const minimiseDustPhase2Steps = opts?.optsDustPhase2Steps ?? 5
+  const minimiseDustPhase1Steps = opts?.minimiseDustPhase1Steps ?? 15
+  const minimiseDustPhase2Steps = opts?.minimiseDustPhase2Steps ?? 5
 
   let g: TokenFlowGraph
   if (graph instanceof TokenFlowGraphBuilder) {
@@ -2822,6 +2825,8 @@ const optimise = async (
   inferDustProducingNodes(g)
   await backPropagateInputProportions(g)
 
+  console.log(`Optimising following graph:`)
+  console.log(g.toDot().join('\n'))
   bestSoFar = await minimizeDust(
     g,
     () => g.evaluate(universe, inputs),
@@ -2830,8 +2835,9 @@ const optimise = async (
       .sort()
       .reverse()
       .filter((n) => n.isDustOptimisable),
-    true,
-    minimiseDustPhase1Steps
+    false,
+    minimiseDustPhase1Steps,
+    1
   )
   bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 
@@ -3549,7 +3555,6 @@ export class TokenFlowGraphSearcher {
       mintNode.forward(dustToken, 1, out.graph.end)
     }
     mintNode.forward(output, 1, out.getTokenNode(output))
-    console.log(out.toDot().join('\n'))
     const res = await optimise(this.universe, out, [input], [output], opts)
     this.registry.define(input, output, res)
 

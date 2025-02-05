@@ -30,6 +30,7 @@ const defaultSearcherOptions = {
 
   // New options
   optimisationSteps: 10,
+  refinementOptimisationSteps: 5,
   minimiseDustPhase1Steps: 10,
   minimiseDustPhase2Steps: 5,
 

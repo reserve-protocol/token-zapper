@@ -2507,19 +2507,19 @@ const optimiseGlobal = async (
     edge.normalize()
   }
   const MAX_SCALE = startSize
+  let noImprovement = 1
   for (let i = 0; i < optimisationSteps; ) {
-    const size = MAX_SCALE * (1 - i ** 1.1 / optimisationSteps)
+    const size = MAX_SCALE * (1 - i ** 1.25 / optimisationSteps)
 
     if (
       bestSoFar.result.outputValue > bestSoFar.result.inputValue &&
       bestSoFar.result.dustValue < 10
     ) {
-      i += 3
-    } else if (bestSoFar.result.outputValue > optimialValueOut) {
       i += 2
-    } else {
+    } else if (bestSoFar.result.outputValue > optimialValueOut) {
       i += 1
     }
+    i += noImprovement
 
     let bestThisIteration = bestSoFar
     let bestNodeToChange = -1
@@ -2573,6 +2573,7 @@ const optimiseGlobal = async (
       }
     }
     if (bestNodeToChange !== -1) {
+      noImprovement = 0.25
       bestSoFar = bestThisIteration
       console.log(
         `${i} optimize global: ${bestSoFar.result.outputs.join(', ')} ${
@@ -2582,6 +2583,8 @@ const optimiseGlobal = async (
       g._outgoingEdges[
         optimisationNodes[bestNodeToChange].id
       ]!.edges[0].setParts(tmp[bestNodeToChange])
+    } else {
+      noImprovement += 1
     }
   }
   return bestSoFar
@@ -2799,7 +2802,8 @@ const optimise = async (
   graph: TokenFlowGraphBuilder | TokenFlowGraph,
   inputs: TokenQuantity[],
   outputs: Token[],
-  opts?: SearcherOptions
+  opts?: SearcherOptions,
+  fromCache: boolean = false
 ) => {
   const logger = universe.logger.child({
     prefix: `optimiser ${inputs.join(', ')} -> ${outputs.join(', ')}`,
@@ -2844,19 +2848,29 @@ const optimise = async (
     throw new Error('Bad graph')
   }
 
-  g = removeNodes(g, findNodesWithoutSources(g))
-  g = removeUselessNodes(removeRedundantSplits(g))
-  inferDustProducingNodes(g)
-  await backPropagateInputProportions(g)
-  bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
-  g = removeNodes(g, findNodesWithoutSources(g))
-  g = removeUselessNodes(removeRedundantSplits(g))
-  inferDustProducingNodes(g)
-  await backPropagateInputProportions(g)
+  if (!fromCache) {
+    g = removeNodes(g, findNodesWithoutSources(g))
+    g = removeUselessNodes(removeRedundantSplits(g))
+    inferDustProducingNodes(g)
+    await backPropagateInputProportions(g)
+    bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
+    g = removeNodes(g, findNodesWithoutSources(g))
+    g = removeUselessNodes(removeRedundantSplits(g))
+    inferDustProducingNodes(g)
+    await backPropagateInputProportions(g)
 
-  console.log(`Optimising graph:`)
-  console.log(g.toDot().join('\n'))
-  bestSoFar = await optimiseGlobal(g, universe, inputs, 4, bestSoFar, logger, 1)
+    console.log(`Optimising graph:`)
+    console.log(g.toDot().join('\n'))
+    bestSoFar = await optimiseGlobal(
+      g,
+      universe,
+      inputs,
+      4,
+      bestSoFar,
+      logger,
+      1
+    )
+  }
   bestSoFar = await minimizeDust(
     g,
     () => g.evaluate(universe, inputs),
@@ -2878,7 +2892,7 @@ const optimise = async (
     optimisationSteps,
     bestSoFar,
     logger,
-    1
+    0.5
   )
   bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 
@@ -2930,7 +2944,7 @@ const optimise = async (
       g,
       universe,
       inputs,
-      optimisationSteps,
+      universe.config.refinementOptimisationSteps,
       bestSoFar,
       logger,
       0.1 * scaleMultiplier
@@ -3343,7 +3357,7 @@ export class TokenFlowGraphSearcher {
     let inputToken = input.token
     const prev = this.registry.find(input, output)
     if (prev != null) {
-      return await optimise(this.universe, prev, [input], [output], opts)
+      return await optimise(this.universe, prev, [input], [output], opts, true)
     }
 
     let graph = TokenFlowGraphBuilder.create1To1(
@@ -3560,7 +3574,7 @@ export class TokenFlowGraphSearcher {
     )
     const prev = this.registry.find(input, output)
     if (prev != null) {
-      return await optimise(this.universe, prev, [input], [output], opts)
+      return await optimise(this.universe, prev, [input], [output], opts, true)
     }
 
     const mint = this.universe.getMintAction(output)

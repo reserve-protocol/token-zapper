@@ -35,10 +35,11 @@ const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
   cacheResolution: 4,
-  maxPhase2TimeRefinementTime: 60000,
+  maxPhase2TimeRefinementTime: 15000,
   optimisationSteps: 20,
   minimiseDustPhase1Steps: 20,
   minimiseDustPhase2Steps: 20,
+  refinementOptimisationSteps: 10,
   zapMaxDustProduced: 3,
   rejectHighDust: false,
   useNewZapperContract: true,

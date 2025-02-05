@@ -2304,7 +2304,6 @@ const minimizeDust = async (
     .map((node) => {
       const splits = g._outgoingEdges[node.id]!.edges[0]
       const tokenToSplitMap = new Map<Token, number>()
-      const splitsToTokens = new DefaultMap<number, Token[]>(() => [])
       for (let i = 0; i < splits.recipient.length; i++) {
         const tokens = splits.dustEdge.get(i)
         if (tokens.length === 0) {
@@ -2315,12 +2314,9 @@ const minimizeDust = async (
             dustTokens.push(token)
           }
           tokenToSplitMap.set(token, i)
-          splitsToTokens.get(i).push(token)
-          if (splitsToTokens.get(i).length > 1) {
-            tokenToSplitMap.delete(token)
-          }
         }
       }
+      splits.normalize()
       return {
         node,
         tokenToSplitMap,
@@ -2338,35 +2334,46 @@ const minimizeDust = async (
     currentResult.result.inputValue - currentResult.result.inputValue * 0.005
 
   for (let iter = 0; iter < steps; ) {
+    let bestThisIteration = currentResult
     if (
-      currentResult.result.outputValue > currentResult.result.inputValue &&
-      currentResult.result.dustValue < 10
+      bestThisIteration.result.outputValue >
+        bestThisIteration.result.inputValue &&
+      bestThisIteration.result.dustValue < 10
     ) {
       iter += 3
-    } else if (currentResult.result.outputValue > optimialValueOut) {
+    } else if (bestThisIteration.result.outputValue > optimialValueOut) {
       iter += 2
     } else {
       iter += 1
     }
+    let bestNode: typeof nodes[number] | null = null
+    let bestParts: number[] | null = null
     const progression = iter / steps
-    const scale = (1 - progression) * initialScale
+    let lastToken: Token | null = null
+    let lastTokenThisIteration: Token | null = null
+    const scale = (1 - progression + 0.001) * initialScale
     for (let i = 0; i < nodes.length; i++) {
       if (
-        currentResult.result.dustValue < 10 &&
-        currentResult.result.dustValue / currentResult.result.totalValue <
+        bestThisIteration.result.dustValue < 10 &&
+        bestThisIteration.result.dustValue /
+          bestThisIteration.result.totalValue <
           0.00001
       ) {
-        return currentResult
+        console.log('Minimise dust: Breaking out, dust value  <= 1')
+        return bestThisIteration
       }
       const node = nodes[i]
       if (!dustTokens.find((d) => node.tokenToSplitMap.has(d))) {
+        console.log('Minimise dust: No dust tokens to process')
         continue
       }
-      const before = [...node.splits.parts]
+      const currentDust = bestThisIteration.result.dust.filter(
+        (i) => i.amount > 100n
+      )
       const dustValues = (
         await Promise.all(
           dustTokens.map(async (token) => {
-            const qty = currentResult.result.dust.find((d) => d.token === token)
+            const qty = currentDust.find((d) => d.token === token)
             if (qty == null) {
               return {
                 splitIndex: null,
@@ -2376,7 +2383,7 @@ const minimizeDust = async (
               }
             }
             const value = (await qty.price()).asNumber()
-            const asFraction = value / currentResult.result.totalValue
+            const asFraction = value / bestThisIteration.result.totalValue
             const split = node.tokenToSplitMap.get(qty.token)
             if (node.splits.parts[split!] === node.splits.sum) {
               return {
@@ -2395,8 +2402,11 @@ const minimizeDust = async (
             }
           })
         )
-      ).filter((d) => d.splitIndex != null)
+      )
+        .filter((d) => d.splitIndex != null)
+        .filter((d) => d.asFraction > 0.0001 && d.token !== lastToken)
       if (dustValues.length === 0) {
+        // console.log('Minimise dust: No dust values to process')
         continue
       }
 
@@ -2405,27 +2415,45 @@ const minimizeDust = async (
       const lowestDustQty = dustValues.find(
         (d) => d.splitIndex !== higestDustQty.splitIndex
       )
-      const fraction = 1 - higestDustQty.asFraction * scale
-      const prev = node.splits.parts[higestDustQty.splitIndex]
-      node.splits.parts[higestDustQty.splitIndex] *= fraction
-      const removed = prev - node.splits.parts[higestDustQty.splitIndex]
-
-      if (lowestDustQty) {
-        node.splits.parts[lowestDustQty.splitIndex] += removed * 0.5
+      if (lowestDustQty == null) {
+        continue
       }
+      const before = [...node.splits.parts]
 
-      node.splits.calculateProportionsAsBigInt()
+      const prev = node.splits.parts[higestDustQty.splitIndex]
+      node.splits.parts[higestDustQty.splitIndex] -= prev * 0.2 * scale
+      let removed = prev - node.splits.parts[higestDustQty.splitIndex]
+
+      console.log(
+        `${node.node.nodeId}[${higestDustQty.splitIndex}] => highest dust value: ${higestDustQty.value}$ ${higestDustQty.token}. Removing ${removed}`
+      )
+
+      node.splits.normalize()
 
       const newRes = await evaluate()
       if (
         (qtyOutMatters &&
-          newRes.result.outputQuantity < currentResult.result.outputQuantity) ||
-        newRes.result.dustValue > currentResult.result.dustValue
+          newRes.result.outputQuantity <
+            bestThisIteration.result.outputQuantity) ||
+        newRes.result.dustValue > bestThisIteration.result.dustValue
       ) {
-        node.splits.setParts(before)
       } else {
-        currentResult = newRes
+        lastTokenThisIteration = dustValues[dustValues.length - 1].token
+        bestParts = [...node.splits.parts]
+        bestNode = node
+        bestThisIteration = newRes
       }
+      node.splits.setParts(before)
+    }
+    lastToken = lastTokenThisIteration
+    if (bestThisIteration !== currentResult && bestNode != null) {
+      currentResult = bestThisIteration
+      console.log(
+        `${iter} minimize dust: ${bestThisIteration.result.outputs.join(
+          ', '
+        )} ${bestThisIteration.result.dustFraction * 100}% dust`
+      )
+      bestNode.splits.setParts(bestParts!)
     }
 
     if (currentResult.result.dustValue <= 1) {
@@ -2456,9 +2484,9 @@ const optimiseGlobal = async (
   let optimisationNodes = nodesSorted.filter(
     (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
   )
-  if (optimisationNodes.length > 7) {
-    optimisationNodes = nodesSorted.filter((n) => n.isOptimisable)
-  }
+  // if (optimisationNodes.length > 7) {
+  //   optimisationNodes = nodesSorted.filter((n) => n.isOptimisable)
+  // }
   console.log(`optimization nodes: ${optimisationNodes.length}`)
 
   if (optimisationNodes.length === 0) {
@@ -2825,8 +2853,9 @@ const optimise = async (
   inferDustProducingNodes(g)
   await backPropagateInputProportions(g)
 
-  console.log(`Optimising following graph:`)
+  console.log(`Optimising graph:`)
   console.log(g.toDot().join('\n'))
+  bestSoFar = await optimiseGlobal(g, universe, inputs, 4, bestSoFar, logger, 1)
   bestSoFar = await minimizeDust(
     g,
     () => g.evaluate(universe, inputs),
@@ -2967,7 +2996,7 @@ const optimise = async (
         bestSoFar.result.output.token
       } - Max allowed dust ${(maxDustFraction * 100).toFixed(2)}%`
     )
-    if (opts?.rejectHighDust === true) {
+    if (opts?.rejectHighDust) {
       throw new Error('Dust fraction is too high')
     }
   }

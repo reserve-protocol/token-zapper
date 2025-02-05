@@ -34,12 +34,13 @@ if (process.env.BASE_PROVIDER == null) {
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
-  cacheResolution: 8,
+  cacheResolution: 4,
   maxPhase2TimeRefinementTime: 60000,
-  optimisationSteps: 10,
-  minimiseDustPhase1Steps: 100,
+  optimisationSteps: 20,
+  minimiseDustPhase1Steps: 20,
   minimiseDustPhase2Steps: 20,
-  zapMaxDustProduced: 10,
+  zapMaxDustProduced: 3,
+  rejectHighDust: false,
   useNewZapperContract: true,
 }
 

@@ -7,12 +7,12 @@ import {
   getDefaultSearcherOptions,
   SearcherOptions,
 } from '../../src.ts/configuration/ChainConfiguration'
+import { EthereumUniverse } from '../../src.ts/configuration/ethereum'
 import {
   Address,
   ethereumConfig,
   ethereumProtocolConfigs,
   setupEthereumZapper,
-  TokenQuantity,
   Universe,
 } from '../../src.ts/index'
 import {
@@ -21,7 +21,6 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 import { getProvider, getSimulator } from './providerUtils'
-import { EthereumUniverse } from '../../src.ts/configuration/ethereum'
 dotenv.config()
 
 const searcherOptions: SearcherOptions = {
@@ -137,7 +136,7 @@ const t = {
 const rTokens = ethereumConfig.addresses.rTokens
 
 export const getSymbol = new Map(
-  Object.entries(ethereumConfig.addresses.commonTokens)
+  Object.entries(t)
     .concat(Object.entries(ethereumConfig.addresses.rTokens))
     .map(([k, v]) => [v, k])
 )
@@ -233,6 +232,7 @@ const individualIntegrations = [
 
   makeIntegrationtestCase('Reth', 10, t.WETH, t.reth, 2),
   makeIntegrationtestCase('ETHx', 10, t.WETH, t.ETHx, 2),
+  makeIntegrationtestCase('sUSDS', 1000, t.USDS, t.sUSDS, 1),
 ]
 
 const zapIntoYieldPositionCases = [
@@ -256,6 +256,30 @@ const zapIntoYieldPositionCases = [
     rTokens['ETH+'],
     t['yvCurve-ETH+-f']
   ),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['consETHETH-f']
+  ),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['stkcvxETH+ETH-f']
+  ),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['cvxETH+ETH-f']
+  ),
+  makeZapIntoYieldPositionTestCase(
+    5,
+    t.WETH,
+    rTokens['ETH+'],
+    t['crvETH+ETH-f']
+  ),
 ]
 
 const INPUT_MUL = process.env.INPUT_MULTIPLIER
@@ -264,7 +288,7 @@ const INPUT_MUL = process.env.INPUT_MULTIPLIER
 if (isNaN(INPUT_MUL)) {
   throw new Error('INPUT_MUL must be a number')
 }
-export let universe: EthereumUniverse
+let universe: EthereumUniverse
 let requestCount = 0
 
 const provider = getProvider(process.env.MAINNET_PROVIDER!)
@@ -285,19 +309,19 @@ provider.on('debug', (log) => {
 beforeAll(async () => {
   global.console = require('console')
   try {
-    universe = await Universe.createWithConfig(
+    universe = (await Universe.createWithConfig(
       provider,
       {
         ...ethereumConfig,
         ...searcherOptions,
       },
       async (uni) => {
-        await setupEthereumZapper(uni)
+        await setupEthereumZapper(uni as any)
       },
       {
         simulateZapFn: simulateFn,
       }
-    )
+    )) as any
 
     await universe.initialized
     console.log('Ethereum zapper setup complete')

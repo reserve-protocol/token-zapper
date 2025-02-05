@@ -1,23 +1,20 @@
-import { Token, TokenQuantity } from '../entities/Token'
-import { Planner } from '../tx-gen/Planner'
-import { Zapper2__factory, Zapper__factory } from '../contracts'
-import { parseHexStringIntoBuffer } from '../base/utils'
-import { Address } from '../base/Address'
-import { Universe } from '../Universe'
 import { TransactionRequest } from '@ethersproject/providers'
-import {
-  GovRolesStruct,
-  IFolio,
-  IGovernanceDeployer,
-  ZapParamsStruct,
-} from '../contracts/contracts/Zapper2'
-import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper'
-import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { constants, ethers } from 'ethers'
 import { DeployFolioConfig } from '../action/DeployFolioConfig'
 import { folioDeployerAddress } from '../action/Folio'
+import { Address } from '../base/Address'
+import { GAS_TOKEN_ADDRESS } from '../base/constants'
 import { ChainId } from '../configuration/ReserveAddresses'
-import type { PromiseOrValue } from '../contracts/common'
+import { Zapper2__factory, Zapper__factory } from '../contracts'
+import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper'
+import {
+  GovRolesStruct,
+  IFolio,
+  ZapParamsStruct,
+} from '../contracts/contracts/Zapper2'
+import { Token, TokenQuantity } from '../entities/Token'
+import { Planner } from '../tx-gen/Planner'
+import { Universe } from '../Universe'
 
 export type ToTransactionArgs = Partial<{
   recipient?: Address

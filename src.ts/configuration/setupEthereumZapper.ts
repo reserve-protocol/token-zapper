@@ -23,8 +23,10 @@ import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
 import { setupMaverick } from './maverick'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
+import { setupBeefy } from './setupBeefy'
 import { setupChainlinkRegistry } from './setupChainLink'
 import { setupCompoundV3 } from './setupCompV3'
+import { setupConcentrator } from './setupConcentrator'
 import { setupConvexStakingWrappers } from './setupConvexStakingWrappers'
 import { CurveIntegration } from './setupCurve'
 import { setupERC4626 } from './setupERC4626'
@@ -36,6 +38,7 @@ import { setupRETH } from './setupRETH'
 import { setupUniswapV2 } from './setupUniswapV2'
 import { setupUniswapV3 } from './setupUniswapV3'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
+import { setupYearn } from './setupYearn'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await universe.provider.getNetwork()

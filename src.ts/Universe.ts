@@ -71,9 +71,11 @@ export type Integrations = Partial<{
 export class Universe<const UniverseConf extends Config = Config> {
   public readonly folioContext: FolioContext
   private emitter = new EventEmitter()
-  private yieldPositionZaps: Map<Token, Token> = new Map();
+  private yieldPositionZaps: Map<Token, Token[]> = new Map();
   public defineYieldPositionZap(yieldPosition: Token, rTokenInput: Token) {
-    this.yieldPositionZaps.set(yieldPosition, rTokenInput)
+    let value = this.yieldPositionZaps.get(yieldPosition) || []
+    value = [...value.filter((token) => token.address.address !== rTokenInput.address.address), rTokenInput]
+    this.yieldPositionZaps.set(yieldPosition, value)
   }
 
   public readonly underlyingToken = new DefaultMap<Token, Promise<Token>>(async (token: Token): Promise<Token> => {
@@ -671,7 +673,8 @@ export class Universe<const UniverseConf extends Config = Config> {
         address,
         data.symbol,
         data.symbol,
-        data.decimals
+        data.decimals,
+        !!this.config.resetApprovalTokens[address.address]
       )
       this.tokens.set(address, previous)
     }
@@ -689,7 +692,8 @@ export class Universe<const UniverseConf extends Config = Config> {
       address,
       symbol,
       name,
-      decimals
+      decimals,
+      !!this.config.resetApprovalTokens[address.address]
     )
     return token
   }

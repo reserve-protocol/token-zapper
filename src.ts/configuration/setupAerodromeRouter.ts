@@ -50,6 +50,7 @@ export const setupAerodromeRouter = async (universe: Universe) => {
     mixedRouterAddr.address,
     universe.provider
   )
+  const logger = universe.logger.child({ integration: 'Aerodrome' })
 
   const aerodromeContext = new AerodromeContext(
     universe,

@@ -9,6 +9,7 @@ import { Address } from '../base/Address'
 import fs from 'fs'
 import {
   IERC20__factory,
+  IUniswapV2Pair__factory,
   Univ2SwapHelper,
   Univ2SwapHelper__factory,
 } from '../contracts'
@@ -17,7 +18,6 @@ import { Contract, Planner, Value } from '../tx-gen/Planner'
 import deployments from '../contracts/deployments.json'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
 import { constants, Wallet } from 'ethers'
-import { UniswapV2Pair__factory } from '../contracts/factories/contracts/UniswapV2Pair__factory'
 import { wait } from '../base/controlflow'
 import baseUniV2 from './data/8453/univ2.json'
 import mainnetUniV2 from './data/1/univ2.json'
@@ -318,7 +318,7 @@ class UniswapV2Pool {
     public readonly token0: Token,
     public readonly token1: Token
   ) {
-    const contract = UniswapV2Pair__factory.connect(
+    const contract = IUniswapV2Pair__factory.connect(
       address.address,
       context.universe.provider
     )

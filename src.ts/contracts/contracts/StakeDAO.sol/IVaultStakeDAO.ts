@@ -26,10 +26,13 @@ import type {
 export interface IVaultStakeDAOInterface extends utils.Interface {
   functions: {
     "deposit(address,uint256,bool)": FunctionFragment;
+    "token()": FunctionFragment;
     "withdraw(uint256)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "deposit" | "withdraw"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic: "deposit" | "token" | "withdraw"
+  ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "deposit",
@@ -39,12 +42,14 @@ export interface IVaultStakeDAOInterface extends utils.Interface {
       PromiseOrValue<boolean>
     ]
   ): string;
+  encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "withdraw",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
 
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {};
@@ -84,6 +89,8 @@ export interface IVaultStakeDAO extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    token(overrides?: CallOverrides): Promise<[string]>;
+
     withdraw(
       _shares: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -97,6 +104,8 @@ export interface IVaultStakeDAO extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  token(overrides?: CallOverrides): Promise<string>;
+
   withdraw(
     _shares: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -109,6 +118,8 @@ export interface IVaultStakeDAO extends BaseContract {
       _earn: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    token(overrides?: CallOverrides): Promise<string>;
 
     withdraw(
       _shares: PromiseOrValue<BigNumberish>,
@@ -126,6 +137,8 @@ export interface IVaultStakeDAO extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    token(overrides?: CallOverrides): Promise<BigNumber>;
+
     withdraw(
       _shares: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -139,6 +152,8 @@ export interface IVaultStakeDAO extends BaseContract {
       _earn: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     withdraw(
       _shares: PromiseOrValue<BigNumberish>,

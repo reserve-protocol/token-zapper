@@ -1,7 +1,6 @@
 import { type TransactionRequest } from '@ethersproject/providers'
 import { BigNumber } from 'ethers'
 import { hexlify, hexZeroPad, resolveProperties } from 'ethers/lib/utils'
-import { type ZapERC20ParamsStruct } from '../contracts/contracts/Zapper.sol/Zapper'
 import {
   PricedTokenQuantity,
   Token,
@@ -9,6 +8,7 @@ import {
 } from '../entities/Token'
 import { Planner, printPlan } from '../tx-gen/Planner'
 import { Universe } from '../Universe'
+import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper'
 
 interface BaseSearcherResult {
   universe: Universe

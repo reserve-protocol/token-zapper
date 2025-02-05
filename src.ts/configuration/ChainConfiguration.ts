@@ -67,6 +67,7 @@ export interface NativeTokenDefinition<
   Symbol extends string
 > {
   name: Name
+  // eslint-disable-next-line @typescript-eslint/ban-types
   symbol: Symbol
   decimals: number
 }
@@ -75,12 +76,14 @@ export const makeConfig = <
   const NativeToken extends NativeTokenDefinition<string, string>,
   const CommonTokens extends Record<string, string>,
   const RTokens extends Record<string, string>,
+  const ResetApprovalTokens extends Record<string, string>,
   const Blocktime extends number
 >(
   chainId: ChainId,
   nativeToken: NativeToken,
   commonTokens: CommonTokens,
   rTokens: RTokens,
+  resetApprovalTokens: ResetApprovalTokens,
   addresses: {
     facadeAddress: string
     oldFacadeAddress: string
@@ -111,6 +114,7 @@ export const makeConfig = <
   return {
     chainId,
     nativeToken,
+    resetApprovalTokens,
     addresses: {
       ...convertAddressObject(addresses),
       commonTokens: convertAddressObject(commonTokens),
@@ -135,9 +139,10 @@ export type Config<
     ERC20GAS: string
   },
   RTokens extends Record<string, string> = Record<string, string>,
+  ResetApprovalTokens extends Record<string, string> = Record<string, string>,
   Blocktime extends number = number
 > = ReturnType<
-  typeof makeConfig<ChainId, NativeToken, CommonTokens, RTokens, Blocktime>
+  typeof makeConfig<ChainId, NativeToken, CommonTokens, RTokens, ResetApprovalTokens, Blocktime>
 >
 
 export type ConfigWithToken<

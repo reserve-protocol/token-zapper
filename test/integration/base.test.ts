@@ -2,6 +2,13 @@ import * as dotenv from 'dotenv'
 import fs from 'fs'
 
 import { WebSocketProvider } from '@ethersproject/providers'
+import { ONE } from '../../src.ts/action/Action'
+import { DeployFolioConfigJson } from '../../src.ts/action/DeployFolioConfig'
+import { DefaultMap } from '../../src.ts/base/DefaultMap'
+import {
+  getDefaultSearcherOptions,
+  SearcherOptions,
+} from '../../src.ts/configuration/ChainConfiguration'
 import {
   Address,
   baseConfig,
@@ -15,15 +22,7 @@ import {
   makeIntegrationtestCase,
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
-import { DefaultMap } from '../../src.ts/base/DefaultMap'
-import {
-  getDefaultSearcherOptions,
-  SearcherOptions,
-} from '../../src.ts/configuration/ChainConfiguration'
 import { getProvider, getSimulator } from './providerUtils'
-import { ONE } from '../../src.ts/action/Action'
-import { bestPath } from '../../src.ts/exchange-graph/BFS'
-import { DeployFolioConfigJson } from '../../src.ts/action/DeployFolioConfig'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -98,7 +97,7 @@ const t = baseConfig.addresses.commonTokens
 const rTokens = baseConfig.addresses.rTokens
 
 const getSymbol = new Map(
-  Object.entries(baseConfig.addresses.commonTokens)
+  Object.entries(t)
     .concat(Object.entries(baseConfig.addresses.rTokens))
     .map(([k, v]) => [v, k])
 )
@@ -150,6 +149,7 @@ const redeemCases = [
   makeTestCase(10000, rTokens.BSDX, t.USDC),
 ]
 const individualIntegrations = [
+  makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
   makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
   makeIntegrationtestCase(
     'wsAMM-eUSD/USDC',
@@ -341,9 +341,20 @@ const governedDeployConfig = (
   existingTradeProposers: [],
 })
 
-const zapIntoYieldPositionCases: ReturnType<
-  typeof makeZapIntoYieldPositionTestCase
->[] = []
+const zapIntoYieldPositionCases = [
+  makeZapIntoYieldPositionTestCase(
+    10000,
+    t.USDC,
+    rTokens.hyUSD,
+    t['vAMM-hyUSD/eUSD']
+  ),
+  makeZapIntoYieldPositionTestCase(
+    10000,
+    t.USDC,
+    rTokens.hyUSD,
+    t['dyson-hyUSDeUSD']
+  ),
+]
 
 let universe: BaseUniverse
 const provider = getProvider(

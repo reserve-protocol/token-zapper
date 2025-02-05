@@ -1,20 +1,16 @@
 import { Universe } from '../Universe'
 import { BaseAction, ONE } from '../action/Action'
-import { DefaultMap } from '../base/DefaultMap'
-import { Token, TokenQuantity } from '../entities/Token'
-import { mintPath1To1, shortestPath } from '../exchange-graph/BFS'
-import { Queue } from './Queue'
-import { unwrapAction, wrapAction } from './TradeAction'
-import { optimiseTrades } from './optimiseTrades'
+import { DeployFolioConfig } from '../action/DeployFolioConfig'
 import { Address } from '../base/Address'
+import { DefaultMap } from '../base/DefaultMap'
 import {
   ILoggerType,
   SearcherOptions,
 } from '../configuration/ChainConfiguration'
-import { DeployFolioConfig } from '../action/DeployFolioConfig'
-import { ChainIds } from '../configuration/ReserveAddresses'
-import { lpTokenBasePoolIdDictAvalanche } from '../curve-js/src/factory/constants-crypto'
-import { ToTransactionArgs } from './ToTransactionArgs'
+import { Token, TokenQuantity } from '../entities/Token'
+import { Queue } from './Queue'
+import { unwrapAction, wrapAction } from './TradeAction'
+import { optimiseTrades } from './optimiseTrades'
 
 export class NodeProxy {
   private version: number

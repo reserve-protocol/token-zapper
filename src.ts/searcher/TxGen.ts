@@ -21,14 +21,16 @@ import {
 } from './ToTransactionArgs'
 import { Universe } from '../Universe'
 import { SimulateParams } from '../configuration/ZapSimulation'
-import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
 import { ZapTransaction, ZapTxStats } from './ZapTransaction'
 import { NodeProxy, TFGResult } from './TokenFlowGraph'
 import { Approval } from '../base/Approval'
 import { constants } from 'ethers/lib/ethers'
 import { DeployFolioConfig } from '../action/DeployFolioConfig'
 import { ZapParamsStruct } from '../contracts/contracts/Zapper2'
-import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper'
+import {
+  ZapERC20ParamsStruct,
+  ZapperOutputStructOutput,
+} from '../contracts/contracts/Zapper'
 import { DeployMintFolioAction } from '../action/Folio'
 
 const iface = Zapper__factory.createInterface()

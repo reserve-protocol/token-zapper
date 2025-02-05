@@ -47,7 +47,8 @@ export class Token {
     public readonly symbol: string,
     public readonly name: string,
     public readonly decimals: number,
-    public readonly scale: bigint
+    public readonly scale: bigint,
+    public readonly resetApproval: boolean
   ) {
     this.zero = this.fromBigInt(0n)
     this.one = this.fromBigInt(scale)
@@ -59,7 +60,8 @@ export class Token {
     address: Address,
     symbol: string,
     name: string,
-    decimals: number
+    decimals: number,
+    resetApproval = false
   ): Token {
     let current = universe.tokens.get(address)
     if (current == null) {
@@ -69,7 +71,8 @@ export class Token {
         symbol,
         name,
         decimals,
-        10n ** BigInt(decimals)
+        10n ** BigInt(decimals),
+        resetApproval
       )
       universe.tokens.set(address, current)
     }

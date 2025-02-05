@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
-import { ethers } from 'ethers'
 
 import { WebSocketProvider } from '@ethersproject/providers'
+import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
 import {
   Address,
   arbiConfig,
@@ -13,7 +13,6 @@ import {
   Universe,
 } from '../../src.ts/index'
 import { createZapTestCase } from '../createZapTestCase'
-import { makeCustomRouterSimulator } from '../../src.ts/configuration/ZapSimulation'
 import { getProvider } from './providerUtils'
 dotenv.config()
 
@@ -188,9 +187,7 @@ describe('Edge cases', () => {
 
       let result = 'failed'
       try {
-        await universe.zap(input, output, testUser, {
-          enableTradeZaps: false,
-        })
+        await universe.zap(input, output, testUser, {})
         result = 'success'
       } catch (e) {}
       expect(result).toBe('success')

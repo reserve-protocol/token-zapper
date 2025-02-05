@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { ConvexStakingWrapper } from "./ConvexStakingWrapper";
+export type { ConvexVirtualERC20 } from "./ConvexVirtualERC20";
 export type { IBooster } from "./IBooster";
 export type { ICurveLPToken } from "./ICurveLPToken";
 export type { IRewardStaking } from "./IRewardStaking";

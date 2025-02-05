@@ -38,9 +38,9 @@ const searcherOptions: SearcherOptions = {
   maxPhase2TimeRefinementTime: 15000,
   optimisationSteps: 20,
   minimiseDustPhase1Steps: 20,
-  minimiseDustPhase2Steps: 20,
+  minimiseDustPhase2Steps: 8,
   refinementOptimisationSteps: 10,
-  zapMaxDustProduced: 3,
+  zapMaxDustProduced: 5,
   rejectHighDust: false,
   useNewZapperContract: true,
 }

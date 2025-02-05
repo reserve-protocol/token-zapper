@@ -39,6 +39,8 @@ const defaultSearcherOptions = {
   // Use new contract for all zaps
   useNewZapperContract: false,
 
+  rejectHighDust: true,
+
   maxPhase2TimeRefinementTime: 5000,
 }
 export const getDefaultSearcherOptions = () => {

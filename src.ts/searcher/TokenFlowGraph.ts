@@ -2967,7 +2967,9 @@ const optimise = async (
         bestSoFar.result.output.token
       } - Max allowed dust ${(maxDustFraction * 100).toFixed(2)}%`
     )
-    throw new Error('Dust fraction is too high')
+    if (opts?.rejectHighDust === true) {
+      throw new Error('Dust fraction is too high')
+    }
   }
 
   return g

@@ -1,13 +1,13 @@
 import { client, connectToDatabase } from './db'
-import { MorphoIndexer } from './MorphoIndexer'
+import { MainIndexer } from './MainIndexer'
 import { ethers } from 'ethers'
 
 async function main() {
   await connectToDatabase()
-  const indexer = new MorphoIndexer(
+  const indexer = new MainIndexer(
     '8543',
     new ethers.providers.JsonRpcProvider(process.env.BASE_PROVIDER),
-    'Morpho'
+    'Main'
   )
   await indexer.run()
 }

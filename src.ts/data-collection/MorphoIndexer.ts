@@ -1,6 +1,7 @@
 import { Indexer } from './Indexer'
 import {
   IAerodromeFactory__factory,
+  IMetaMorphoFactory,
   IMetaMorphoFactory__factory,
 } from '../contracts'
 import { Address } from '../base/Address'
@@ -32,34 +33,34 @@ type MorphoPoolData = {
 }
 
 class MorphoIndexer extends Indexer {
-  factory: Address
+  factoryInstances: IMetaMorphoFactory[]
   constructor(
     chainId: string,
     provider: ethers.providers.JsonRpcProvider,
     protocol: string
   ) {
     super(chainId, provider, protocol)
-    this.factory = Address.from(FACTORIES[1])
+    this.factoryInstances = FACTORIES.map((factory) =>
+      IMetaMorphoFactory__factory.connect(factory, this.provider)
+    )
   }
 
-  async processBlocks(start: number, end: number): Promise<void> {
+  async _processBlocks(start: number, end: number): Promise<void> {
     console.log(`Processing blocks ${start} to ${end}`)
     // use ethers to filter events by block range
-    const factoryInst = IMetaMorphoFactory__factory.connect(
-      this.factory.address,
-      this.provider
-    )
-    const events = await factoryInst.queryFilter(
-      factoryInst.filters.CreateMetaMorpho(),
-      start,
-      end
-    )
-    console.log(`Found ${events.length} events`)
-    if (events.length > 0) {
-      let eventData = await Promise.all(
-        events.map((event) => this.processEvent(event))
+    for (const factoryInst of this.factoryInstances) {
+      const events = await factoryInst.queryFilter(
+        factoryInst.filters.CreateMetaMorpho(),
+        start,
+        end
       )
-      await this.saveToDb(eventData)
+      console.log(`Found ${events.length} events`)
+      if (events.length > 0) {
+        let eventData = await Promise.all(
+          events.map((event) => this.processEvent(event))
+        )
+        await this.saveToDb(eventData)
+      }
     }
   }
 
@@ -77,30 +78,14 @@ class MorphoIndexer extends Indexer {
     console.log(`Saving ${data.length} pools to db`)
     // save to db
     try {
-      // Begin transaction
-      await client.query('BEGIN')
-
       // Split updates into batches
-      for (let i = 0; i < data.length; i += BATCH_SIZE) {
-        const batch = data.slice(i, i + BATCH_SIZE)
-
+      for (let i = 0; i < data.length; i++) {
         // Create VALUES part of the query
-        const values = batch
-          .map(
-            (_, index) =>
-              `($${index * 4 + 1}, $${index * 4 + 2}, $${index * 4 + 3}, $${
-                index * 4 + 4
-              })`
-          )
-          .join(',')
+        const d = data[i]
+        const values = `($${1}, $${2}, $${3}, $${4})`
 
         // Create parameters array
-        const params = batch.flatMap(({ vault, asset, name, symbol }) => [
-          vault,
-          asset,
-          name,
-          symbol,
-        ])
+        const params = [d.vault, d.asset, d.name, d.symbol]
 
         const query = `
             INSERT INTO "morpho_vaults" (vault, asset, name, symbol)
@@ -112,11 +97,8 @@ class MorphoIndexer extends Indexer {
 
         await client.query(query, params)
       }
-
-      // Commit transaction
-      await client.query('COMMIT')
     } catch (err) {
-      await client.query('ROLLBACK')
+      console.error(err)
       throw err
     }
   }

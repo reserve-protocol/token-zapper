@@ -1,28 +1,13 @@
 import { ethers } from 'ethers'
-import fs from 'fs'
 import { client } from './db'
 
 interface IIndexer {
-  lastBlock: number
-
   processBlocks(start: number, end: number): Promise<void>
 }
 
-type BlockEvents = {
-  start: number
-  end: number
-  events: LogEvent[]
-}
-
-type LogEvent = {
-  name: string
-  data: any
-}
-
-const BLOCK_STEP = 10000
+const MAX_BLOCKS = 10000
 
 class Indexer implements IIndexer {
-  lastBlock: number = 0
   chainId: string
   provider: ethers.providers.JsonRpcProvider
   protocol: string
@@ -35,49 +20,50 @@ class Indexer implements IIndexer {
     this.chainId = chainId
     this.provider = provider
     this.protocol = protocol
-    this.lastBlock = this.loadLastBlock()
-  }
-
-  async run() {
-    while (true) {
-      const start = this.loadLastBlock()
-      let end = start + BLOCK_STEP
-      if (end > 26001983) {
-        end = 26001983
-      }
-      await this.processBlocks(start, end)
-      this.saveLastBlock(end)
-    }
   }
 
   async processBlocks(start: number, end: number): Promise<void> {
+    try {
+      const lastBlock = await this.loadLastBlock()
+      if (end - lastBlock > MAX_BLOCKS) {
+        console.log(
+          `[** catching up **] ${this.protocol} Indexer processing blocks ${start} to ${end}`
+        )
+        start = lastBlock
+        end = lastBlock + MAX_BLOCKS
+      } else {
+        console.log(
+          `${this.protocol} Indexer processing blocks ${start} to ${end}`
+        )
+      }
+      await this._processBlocks(start, end)
+    } catch (error) {
+      console.error(error)
+    }
+    await this.saveLastBlock(end)
+  }
+
+  async _processBlocks(start: number, end: number): Promise<void> {
     throw new Error('Method not implemented.')
   }
 
-  saveLastBlock(block: number) {
+  async saveLastBlock(block: number) {
     // write to file by chain id
-    fs.writeFileSync(
-      `./src.ts/data-collection/data/base/lastBlock.${this.chainId}.${this.protocol}.txt`,
-      block.toString()
-    )
-    this.lastBlock = block
+    const query = `UPDATE "indexer_blocks" SET last_block = ${block} WHERE chain_id = ${this.chainId} AND indexer = '${this.protocol}'`
+    await client.query(query)
   }
 
-  loadLastBlock(): number {
+  async loadLastBlock(): Promise<number> {
     // read from file, if no file, return 0
-    if (
-      !fs.existsSync(
-        `./src.ts/data-collection/data/base/lastBlock.${this.chainId}.${this.protocol}.txt`
+    const query = `SELECT last_block FROM "indexer_blocks" WHERE chain_id = ${this.chainId} AND indexer = '${this.protocol}'`
+    const result = await client.query(query)
+    if (result.rows.length === 0) {
+      await client.query(
+        `INSERT INTO "indexer_blocks" (chain_id, indexer, last_block) VALUES (${this.chainId}, '${this.protocol}', 0)`
       )
-    ) {
       return 0
     }
-    return parseInt(
-      fs.readFileSync(
-        `./src.ts/data-collection/data/base/lastBlock.${this.chainId}.${this.protocol}.txt`,
-        'utf8'
-      )
-    )
+    return Number(result.rows[0].last_block)
   }
 }
 

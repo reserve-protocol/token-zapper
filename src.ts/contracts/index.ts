@@ -152,6 +152,8 @@ export type { IfrxETHMinter } from "./contracts/IFrxMinter.sol/IfrxETHMinter";
 export { IfrxETHMinter__factory } from "./factories/contracts/IFrxMinter.sol/IfrxETHMinter__factory";
 export type { IMain } from "./contracts/IMain";
 export { IMain__factory } from "./factories/contracts/IMain__factory";
+export type { IMetaMorphoFactory } from "./contracts/IMetaMorphoFactory";
+export { IMetaMorphoFactory__factory } from "./factories/contracts/IMetaMorphoFactory__factory";
 export type { IPermit2 } from "./contracts/IPermit2";
 export { IPermit2__factory } from "./factories/contracts/IPermit2__factory";
 export type { IRETH } from "./contracts/IRETHRouter.sol/IRETH";
@@ -176,6 +178,8 @@ export type { IStargateRouter } from "./contracts/IStargateRouter.sol/IStargateR
 export { IStargateRouter__factory } from "./factories/contracts/IStargateRouter.sol/IStargateRouter__factory";
 export type { IStETH } from "./contracts/IStETH";
 export { IStETH__factory } from "./factories/contracts/IStETH__factory";
+export type { IUniswapV2Factory } from "./contracts/IUniswapV2Factory";
+export { IUniswapV2Factory__factory } from "./factories/contracts/IUniswapV2Factory__factory";
 export type { IUniswapV2Pair } from "./contracts/IUniswapV2Pair";
 export { IUniswapV2Pair__factory } from "./factories/contracts/IUniswapV2Pair__factory";
 export type { IWrappedNative } from "./contracts/IWrappedNative";

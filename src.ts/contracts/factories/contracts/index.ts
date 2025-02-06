@@ -35,9 +35,11 @@ export { IChainLinkFeedRegistry__factory } from "./IChainLinkFeedRegistry__facto
 export { IEACAggregatorProxy__factory } from "./IEACAggregatorProxy__factory";
 export { IFacade__factory } from "./IFacade__factory";
 export { IMain__factory } from "./IMain__factory";
+export { IMetaMorphoFactory__factory } from "./IMetaMorphoFactory__factory";
 export { IPermit2__factory } from "./IPermit2__factory";
 export { IRToken__factory } from "./IRToken__factory";
 export { IStETH__factory } from "./IStETH__factory";
+export { IUniswapV2Factory__factory } from "./IUniswapV2Factory__factory";
 export { IUniswapV2Pair__factory } from "./IUniswapV2Pair__factory";
 export { IWStETH__factory } from "./IWStETH__factory";
 export { IWrappedNative__factory } from "./IWrappedNative__factory";

@@ -78,6 +78,132 @@
             }
           ]
         },
+        "ConvexVirtualERC20": {
+          "address": "0xeEDD1B2dc2F30E55Eaa3Db1CF70F1C409B86368e",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "_crvRewards",
+                  "type": "address"
+                },
+                {
+                  "internalType": "string",
+                  "name": "name_",
+                  "type": "string"
+                },
+                {
+                  "internalType": "string",
+                  "name": "symbol_",
+                  "type": "string"
+                },
+                {
+                  "internalType": "uint8",
+                  "name": "decimals_",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "constructor"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "balanceOf",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "crvRewards",
+              "outputs": [
+                {
+                  "internalType": "contract IRewardStaking",
+                  "name": "",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "decimals",
+              "outputs": [
+                {
+                  "internalType": "uint8",
+                  "name": "",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "name",
+              "outputs": [
+                {
+                  "internalType": "string",
+                  "name": "",
+                  "type": "string"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "symbol",
+              "outputs": [
+                {
+                  "internalType": "string",
+                  "name": "",
+                  "type": "string"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amt",
+                  "type": "uint256"
+                }
+              ],
+              "name": "transfer",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "",
+                  "type": "bool"
+                }
+              ],
+              "stateMutability": "pure",
+              "type": "function"
+            }
+          ]
+        },
         "CurveCryptoFactoryHelper": {
           "address": "0xFBbcDad39D42f49C170cbC5396e740f18e9d6866",
           "abi": [
@@ -436,6 +562,150 @@
                 }
               ],
               "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "VirtualERC20": {
+          "address": "0x70528C2Bc8328837969c033b658D8207c64D8E02",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "_vaultAddress",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_pid",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "string",
+                  "name": "name_",
+                  "type": "string"
+                },
+                {
+                  "internalType": "string",
+                  "name": "symbol_",
+                  "type": "string"
+                },
+                {
+                  "internalType": "uint8",
+                  "name": "decimals_",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "constructor"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "account",
+                  "type": "address"
+                }
+              ],
+              "name": "balanceOf",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "concentratorVault",
+              "outputs": [
+                {
+                  "internalType": "contract IConcentratorVault",
+                  "name": "",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "decimals",
+              "outputs": [
+                {
+                  "internalType": "uint8",
+                  "name": "",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "name",
+              "outputs": [
+                {
+                  "internalType": "string",
+                  "name": "",
+                  "type": "string"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "pid",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "symbol",
+              "outputs": [
+                {
+                  "internalType": "string",
+                  "name": "",
+                  "type": "string"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amt",
+                  "type": "uint256"
+                }
+              ],
+              "name": "transfer",
+              "outputs": [
+                {
+                  "internalType": "bool",
+                  "name": "",
+                  "type": "bool"
+                }
+              ],
+              "stateMutability": "pure",
               "type": "function"
             }
           ]
@@ -1221,7 +1491,7 @@
           ]
         },
         "FolioMintRedeem": {
-          "address": "0xAd54dA881B61B799009429b707Eb012d27a7748b",
+          "address": "0x9C862AA7752E1f5B266C615439594C77B6cee438",
           "abi": [
             {
               "inputs": [

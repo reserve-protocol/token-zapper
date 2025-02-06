@@ -3,6 +3,7 @@ pragma solidity 0.8.17;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 interface IFolio is IERC20 {
     // === Events ===
@@ -120,6 +121,7 @@ interface IFolio is IERC20 {
     function distributeFees() external;
 
     function folio() external view returns (address[] memory _assets, uint256[] memory _amounts);
+    function toAssets(uint256 shares, Math.Rounding rounding) external view returns (address[] memory _assets, uint256[] memory _amounts);
     function AUCTION_APPROVER() external view returns (bytes32);
     function AUCTION_LAUNCHER() external view returns (bytes32);
     function BRAND_MANAGER() external view returns (bytes32);

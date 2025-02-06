@@ -870,6 +870,35 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "shares",
+        type: "uint256",
+      },
+      {
+        internalType: "enum Math.Rounding",
+        name: "rounding",
+        type: "uint8",
+      },
+    ],
+    name: "toAssets",
+    outputs: [
+      {
+        internalType: "address[]",
+        name: "_assets",
+        type: "address[]",
+      },
+      {
+        internalType: "uint256[]",
+        name: "_amounts",
+        type: "uint256[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "totalSupply",
     outputs: [

@@ -216,8 +216,11 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     }
   }
   const setupUnis = async () => {
+    console.log(`initUni3`)
     await initUni3()
+    console.log(`initUni2`)
     await initUni2()
+    console.log(`done unis`)
   }
   let done = 0
   const initMaverick = async () => {

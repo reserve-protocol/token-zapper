@@ -103,6 +103,7 @@ export interface IFolioInterface extends utils.Interface {
     "folio()": FunctionFragment;
     "mint(uint256,address)": FunctionFragment;
     "redeem(uint256,address,address[],uint256[])": FunctionFragment;
+    "toAssets(uint256,uint8)": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
@@ -120,6 +121,7 @@ export interface IFolioInterface extends utils.Interface {
       | "folio"
       | "mint"
       | "redeem"
+      | "toAssets"
       | "totalSupply"
       | "transfer"
       | "transferFrom"
@@ -168,6 +170,10 @@ export interface IFolioInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "toAssets",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "totalSupply",
     values?: undefined
   ): string;
@@ -206,6 +212,7 @@ export interface IFolioInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "folio", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "toAssets", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
     data: BytesLike
@@ -505,6 +512,14 @@ export interface IFolio extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    toAssets(
+      shares: PromiseOrValue<BigNumberish>,
+      rounding: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [string[], BigNumber[]] & { _assets: string[]; _amounts: BigNumber[] }
+    >;
+
     totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     transfer(
@@ -568,6 +583,14 @@ export interface IFolio extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  toAssets(
+    shares: PromiseOrValue<BigNumberish>,
+    rounding: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<
+    [string[], BigNumber[]] & { _assets: string[]; _amounts: BigNumber[] }
+  >;
+
   totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
   transfer(
@@ -630,6 +653,14 @@ export interface IFolio extends BaseContract {
       minAmountsOut: PromiseOrValue<BigNumberish>[],
       overrides?: CallOverrides
     ): Promise<BigNumber[]>;
+
+    toAssets(
+      shares: PromiseOrValue<BigNumberish>,
+      rounding: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [string[], BigNumber[]] & { _assets: string[]; _amounts: BigNumber[] }
+    >;
 
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -821,6 +852,12 @@ export interface IFolio extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    toAssets(
+      shares: PromiseOrValue<BigNumberish>,
+      rounding: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
     transfer(
@@ -879,6 +916,12 @@ export interface IFolio extends BaseContract {
       assets: PromiseOrValue<string>[],
       minAmountsOut: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    toAssets(
+      shares: PromiseOrValue<BigNumberish>,
+      rounding: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;

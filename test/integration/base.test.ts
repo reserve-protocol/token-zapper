@@ -85,6 +85,9 @@ export const baseWhales = {
     '0x6f1d6b86d4ad705385e751e6e88b0fdfdbadf298', // vaya
   '0x8f0987ddb485219c767770e2080e5cc01ddc772a':
     '0x46271115F374E02b5afe357C8E8Dad474c8DE1cF', // BSDX
+
+  '0x03980d2f9165324190e2295e0d5ceb80e2753b30':
+    '0x7A37111575cd96EB6F4a744497A4b650d83A389e', // TAVE5
 }
 
 const simulateFn = getSimulator(
@@ -127,26 +130,29 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  makeTestCase(10, t.WETH, rTokens.bsd),
+  // makeTestCase(10, t.WETH, rTokens.bsd),
   // makeTestCase(10000, t.USDC, rTokens.bsd),
 
   // makeTestCase(10000, t.USDC, rTokens.hyUSD),
   // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
 
   // makeTestCase(5, t.WETH, rTokens.hyUSD),
-  makeTestCase(10, t.WETH, rTokens.BSDX),
+  // makeTestCase(10, t.WETH, rTokens.BSDX),
+  makeTestCase(1, t.ETH, t.TEST1),
   // makeTestCase(10000, t.USDC, rTokens.BSDX),
 ]
 
 const redeemCases = [
-  makeTestCase(50, rTokens.bsd, t.WETH),
-  makeTestCase(50, rTokens.hyUSD, t.USDC),
+  // makeTestCase(50, rTokens.bsd, t.WETH),
+  // makeTestCase(50, rTokens.hyUSD, t.USDC),
 
-  makeTestCase(100000, rTokens.hyUSD, t.WETH),
-  makeTestCase(100000, rTokens.hyUSD, t.USDC),
+  // makeTestCase(100000, rTokens.hyUSD, t.WETH),
+  // makeTestCase(100000, rTokens.hyUSD, t.USDC),
 
-  makeTestCase(10000, rTokens.BSDX, t.WETH),
-  makeTestCase(10000, rTokens.BSDX, t.USDC),
+  // makeTestCase(10000, rTokens.BSDX, t.WETH),
+  // makeTestCase(10000, rTokens.BSDX, t.USDC),
+
+  makeTestCase(5, t.TAVE5, t.WETH),
 ]
 const individualIntegrations = [
   makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),

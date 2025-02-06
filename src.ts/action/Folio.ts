@@ -3,7 +3,12 @@ import { Universe } from '../Universe'
 import { Address } from '../base/Address'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
-import { BaseAction, DestinationOptions, InteractionConvention } from './Action'
+import {
+  BaseAction,
+  DestinationOptions,
+  InteractionConvention,
+  ONE,
+} from './Action'
 import { ChainId, ChainIds } from '../configuration/ReserveAddresses'
 import {
   FolioMintRedeem,
@@ -80,7 +85,7 @@ export class FolioContext {
           folio.callStatic.AUCTION_APPROVER(),
           folio.callStatic.AUCTION_LAUNCHER(),
           folio.callStatic.BRAND_MANAGER(),
-          folio.callStatic.folio(),
+          folio.callStatic.toAssets(ONE, 1),
         ])
 
         const qtys = await Promise.all(

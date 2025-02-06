@@ -9,12 +9,12 @@ contract FolioMintRedeem {
     address[] memory assets,
     uint256[] memory amounts
   ) internal view returns (uint256 shares) {
-    uint256 total = 0;
+    uint256 total = type(uint256).max;
     for (uint256 i; i < assets.length; i++) {
       uint256 assetBal = IERC20(assets[i]).balanceOf(address(this));
       uint256 qtyPrShare = amounts[i];
       // {share} = {tok} / {tok/share}
-      total = Math.max(total, assetBal / qtyPrShare * 1e18);
+      total = Math.min(total, (assetBal * 1e18) / qtyPrShare);
     }
     return total;
   }
@@ -23,7 +23,7 @@ contract FolioMintRedeem {
     (
       address[] memory assets,
       uint256[] memory amounts
-    ) = folio.folio();
+    ) = folio.toAssets(1e18, Math.Rounding.Up);
 
     uint256 shares = _fromAssets(assets, amounts);
 

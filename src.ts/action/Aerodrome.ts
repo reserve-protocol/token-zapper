@@ -737,16 +737,6 @@ export class AerodromeStablePool {
         pool,
         context.getReserves
       )
-      const weth = universe.wrappedNativeToken
-      if (inst.token0 === weth || inst.token1 === weth) {
-        const approxPoolValue =
-          (
-            await (await universe.balanceOf(weth, inst.poolAddress)).price()
-          ).asNumber() * 2
-        if (approxPoolValue < 100000) {
-          throw new Error('Pool is too small')
-        }
-      }
 
       if (inst.poolType === AerodromePoolType.CL) {
         universe.addAction(inst.actions.t0for1)
@@ -980,6 +970,9 @@ export class AerodromeContext {
   }
 
   public async definePool(address: Address, pool: SwapLpStructOutput) {
+    return await this.definePool_(address, pool)
+  }
+  private async definePool_(address: Address, pool: SwapLpStructOutput) {
     if (getPoolType(pool.poolType) == AerodromePoolType.CL) {
       const inst = AerodromeStablePool.create(this, address, pool)
       this.pools
@@ -994,6 +987,7 @@ export class AerodromeContext {
       return await this.byLp.get(Address.from(pool.lp))!
     }
     const inst = AerodromeStablePool.create(this, address, pool)
+
     this.byLp.set(Address.from(pool.lp), inst)
     this.pools
       .get(Address.from(pool.token0))

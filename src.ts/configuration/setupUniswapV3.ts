@@ -601,9 +601,18 @@ export const setupUniswapV3 = async (universe: Universe) => {
     return pools
   }
 
+  const knownPools = new Set<Address>()
   const allPools = (
     await Promise.all([loadUniPools(), loadPools(ctx, additionalPoolsToLoad)])
-  ).flat()
+  )
+    .flat()
+    .filter((i) => {
+      if (knownPools.has(i.address)) {
+        return false
+      }
+      knownPools.add(i.address)
+      return true
+    })
 
   for (const pool of allPools) {
     universe.addAction(pool.swap01)

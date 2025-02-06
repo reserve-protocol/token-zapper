@@ -130,26 +130,7 @@ export const setupAerodromeRouter = async (universe: Universe) => {
   await loadPools(1000, 0)
   await loadPools(1000, 1000)
   await loadPools(1000, 2000)
-  // } else {
-  //   const pools: ReturnType<AerodromeStablePool['toJSON']>[] = JSON.parse(
-  //     fs.readFileSync(
-  //       'src.ts/configuration/data/base/aerodrome-pools.json',
-  //       'utf8'
-  //     )
-  //   )
-  //   await Promise.all(
-  //     pools.map(async (p) =>
-  //       aerodromeContext.definePool(Address.from(p.poolAddress), {
-  //         lp: p.lpToken,
-  //         poolType: p.poolType,
-  //         token0: p.token0,
-  //         token1: p.token1,
-  //         factory: p.factory,
-  //         poolFee: ethers.BigNumber.from(p.poolFee),
-  //       })
-  //     )
-  //   )
-  // }
+
   await loadPoolExplicit(
     Address.from('0x2578365B3dfA7FfE60108e181EFb79FeDdec2319')
   ).catch((e) => console.log(e))

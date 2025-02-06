@@ -69,6 +69,13 @@ export const COMMON_TOKENS = {
   saEthPyUSD: '0x1576B2d7ef15a2ebE9C22C8765DD9c1EfeA8797b',
   steakPYUSD: '0xbEEF02e5E13584ab96848af90261f0C8Ee04722a',
 
+  'mooConvexETH+': '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0', // Beefy
+  'sdETH+ETH-f': '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C', // StakeDAO
+  'yvCurve-ETH+-f': '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581', // Yearn
+  'consETHETH-f': '0x70528C2Bc8328837969c033b658D8207c64D8E02', // Concentrator
+  'cvxETH+ETH-f': '0xA6A97C02885b08ABb4bf6D742796081eC54540fe', // Convex deposit
+  'crvETH+ETH-f': '0x90D5B65Af52654A2B230244a61DD4Ce3CFa4835f', // Convex stake
+
   reth: '0xae78736Cd615f374D3085123A210448E74Fc6393',
   steth: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
   wsteth: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0',
@@ -80,9 +87,6 @@ export const COMMON_TOKENS = {
 
   sdgnETH: '0x5bdd1fa233843bfc034891be8a6769e58f1e1346',
   'ETH+ETH-f': '0xe8a5677171c87fCB65b76957f2852515B404C7b1',
-  'mooConvexETH+': '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0', // Beefy
-  'sdETH+ETH-f': '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C', // StakeDAO
-  'yvCurve-ETH+-f': '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581', // Yearn
 
   UNI: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
   LINK: '0x514910771af9ca656af840dff83e8264ecf986ca',
@@ -283,49 +287,6 @@ export const PROTOCOL_CONFIGS = {
     ],
   },
 }
-
-const NEEDS_ZEROED_OUT_FIRST = {
-  '0xdAC17F958D2ee523a2206206994597C13D831ec7': 'USDT',
-  ...Object.fromEntries(
-    Object.entries(PROTOCOL_CONFIGS.convex.pidToCrvTokens).map(([k, v]) => [
-      v,
-      k,
-    ])
-  ),
-}
-
-export const ethereumConfig = makeConfig(
-  chainId,
-  {
-    symbol: 'ETH',
-    decimals: 18,
-    name: 'Ether',
-  },
-  COMMON_TOKENS,
-  RTOKENS,
-  NEEDS_ZEROED_OUT_FIRST,
-  {
-    emitId: '0x6d92146F63d95BF38eB6158856f95139B15C66Bb',
-    facadeAddress: '0x2C7ca56342177343A2954C250702Fd464f4d0613',
-    oldFacadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
-    zapperAddress: '0xE988c8C49043C798F118BBCF769b210fD04c0bc3',
-    executorAddress: '0xb3805E5f44B97daB82BC00d63f7F8C5a56b96D8D',
-    wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-    rtokenLens: '0xE787491314A3Da6412Ac4DeEB39c0F8EfdE1b53C',
-
-    balanceOf: '0x6e0A0e7e63ce9622c769655B6733CEcC5AA4038D',
-    curveRouterCall: '0xA18ad6dCb6B217A4c3810f865f5eEf45570024dc',
-    ethBalanceOf: '0x69b27d52aF3E1012AfcB97BC77B83A7620ABB092',
-    uniV3Router: '0x32F59e2881e1DC9a808DE8C37545FE33F2B617A9',
-    curveStableSwapNGHelper: '0xb543FD28b0588d0ED317ab746a537840212A95ed',
-    curveCryptoFactoryHelper: '0xf4fe93bb762A0b890B08C96FE99a6F405c44B360',
-  },
-  {
-    blocktime: 12000,
-    blockGasLimit: 30000000n,
-    requoteTolerance: 1,
-  }
-)
 
 export type EthereumConfigType = typeof ethereumConfig
 export type EthereumUniverse = Universe<EthereumConfigType>

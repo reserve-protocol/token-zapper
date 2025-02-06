@@ -339,6 +339,24 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.rTokens['ETH+']
   )
 
+  const resetApproval = [
+    '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    '0x867a9cF57c36De171A036DE4A0A364f6990f6248',
+    '0x8cF0E5399fEdf0fA6918d8c8a5E54e94C28a7989',
+    '0x90D5B65Af52654A2B230244a61DD4Ce3CFa4835f',
+    '0xC51b8e7c50f83d4E77708ff0Fa931F655A07afb2',
+    '0x17E7c7379fa5c121C4898760EACFfA7D73A0D160',
+    '0xbB085D1387706CE477C4E752c76C38070aC226cB',
+    '0x575b2E325ad326F6cc11fc7e1DC389cbD96d2FF0',
+    '0x354278Eb9c0a8b1f4Ab8231c0C4741DA05a76206',
+    '0xeEDD1B2dc2F30E55Eaa3Db1CF70F1C409B86368e',
+  ]
+  for (const token of resetApproval) {
+    universe.zeroBeforeApproval.add(
+      await universe.getToken(Address.from(token))
+    )
+  }
+
   universe.defineYieldPositionZap(
     await universe.getToken(
       Address.from(PROTOCOL_CONFIGS.convex.wrappers['stkcvxETH+ETH-f'])
@@ -428,7 +446,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   ]
   await Promise.all(tasks.map((task) => task()))
 
-  universe.zeroBeforeApproval.add(universe.commonTokens.USDT)
   universe.tokenClass.set(
     universe.rTokens.USD3,
     Promise.resolve(universe.commonTokens.USDC)

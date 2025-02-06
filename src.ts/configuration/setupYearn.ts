@@ -19,7 +19,20 @@ export const setupYearn = async (universe: Universe, config: YearnConfig) => {
 
     const lpToken = await universe.getToken(Address.from(lpTokenAddress))
 
-    const depositToYearn = new YearnDepositAction(universe, lpToken, yvToken)
+    const getRate = universe.createCachedProducer(async () => {
+      const rate = await IVaultYearn__factory.connect(
+        yvToken.address.address,
+        universe.provider
+      ).callStatic.pricePerShare()
+      return rate.toBigInt()
+    })
+
+    const depositToYearn = new YearnDepositAction(
+      universe,
+      lpToken,
+      yvToken,
+      getRate
+    )
     universe.addAction(depositToYearn)
 
     universe.addSingleTokenPriceSource({

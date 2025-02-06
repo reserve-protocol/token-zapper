@@ -52,8 +52,6 @@ export const RTOKENS = {
   BSDX: '0x8f0987ddb485219c767770e2080e5cc01ddc772a',
 } as const
 
-const NEEDS_ZEROED_OUT_FIRST: Record<string, string> = {}
-
 export const baseConfig = makeConfig(
   8453,
   {
@@ -63,7 +61,6 @@ export const baseConfig = makeConfig(
   },
   COMMON_TOKENS,
   RTOKENS,
-  NEEDS_ZEROED_OUT_FIRST,
   {
     emitId: contractAddress('EmitId'),
     facadeAddress: '0xEb2071e9B542555E90E6e4E1F83fa17423583991',

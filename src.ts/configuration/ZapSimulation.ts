@@ -1,27 +1,17 @@
 import { defaultAbiCoder } from '@ethersproject/abi/lib/abi-coder'
 import { BigNumber, constants, providers } from 'ethers'
-import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper.sol/Zapper'
 
-// import {
-//   type ForkySimulator,
-//   type OnLogFn,
-//   type SimulatorFork,
-// } from '@slot0/forky'
-
-import { simulationUrls } from '../base/constants'
-// import abi from '../../contracts/artifacts/contracts/Zapper.sol/ZapperExecutor.json'
-// const byteCode = abi.deployedBytecode
-import { Config } from '../configuration/ChainConfiguration'
-import { logger } from '../logger'
-import { Universe } from '../Universe'
 import { Address } from '../base/Address'
+import { Config } from '../configuration/ChainConfiguration'
 import {
   IERC20__factory,
   IRToken__factory,
-  IWrappedERC20__factory,
   IWrappedNative__factory,
 } from '../contracts'
 import { Token } from '../entities/Token'
+import { logger } from '../logger'
+import { Universe } from '../Universe'
+import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper'
 export interface SimulateParams {
   transactions: {
     // Zapper address on the chain
@@ -117,7 +107,6 @@ const getAddrStr = (addr: AddressLike) => {
   }
   return addr.address.address
 }
-const rTokenInterface = IRToken__factory.createInterface()
 const erc20Interface = IERC20__factory.createInterface()
 const wethInterface = IWrappedNative__factory.createInterface()
 

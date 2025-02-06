@@ -98,7 +98,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
     for(const [tok, base] of this.yieldPositionZaps.entries()) {
       if (tok === token) {
-        return this.underlyingToken.get(base)
+        return this.underlyingToken.get(base[0])
       }
     }
 
@@ -673,8 +673,7 @@ export class Universe<const UniverseConf extends Config = Config> {
         address,
         data.symbol,
         data.symbol,
-        data.decimals,
-        !!this.config.resetApprovalTokens[address.address]
+        data.decimals
       )
       this.tokens.set(address, previous)
     }
@@ -693,7 +692,6 @@ export class Universe<const UniverseConf extends Config = Config> {
       symbol,
       name,
       decimals,
-      !!this.config.resetApprovalTokens[address.address]
     )
     return token
   }

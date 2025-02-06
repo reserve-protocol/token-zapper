@@ -17,7 +17,19 @@ export const setupBeefy = async (universe: Universe, config: BeefyConfig) => {
     ).callStatic.want()
     const lpToken = await universe.getToken(Address.from(lpTokenAddress))
 
-    const depositToBeefy = new BeefyDepositAction(universe, lpToken, mooToken)
+    const getRate = universe.createCachedProducer(async () => {
+      const rate = await IBeefyVault__factory.connect(
+        mooToken.address.address,
+        universe.provider
+      ).callStatic.getPricePerFullShare()
+      return rate.toBigInt()
+    })
+    const depositToBeefy = new BeefyDepositAction(
+      universe,
+      lpToken,
+      mooToken,
+      getRate
+    )
     universe.addAction(depositToBeefy)
 
     universe.addSingleTokenPriceSource({

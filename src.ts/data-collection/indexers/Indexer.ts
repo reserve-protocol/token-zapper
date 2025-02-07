@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { client } from './db'
+import { client } from '../db'
 
 interface IIndexer {
   processBlocks(start: number, end: number): Promise<void>

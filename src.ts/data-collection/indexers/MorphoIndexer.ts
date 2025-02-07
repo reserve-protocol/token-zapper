@@ -3,12 +3,12 @@ import {
   IAerodromeFactory__factory,
   IMetaMorphoFactory,
   IMetaMorphoFactory__factory,
-} from '../contracts'
-import { Address } from '../base/Address'
+} from '../../contracts'
+import { Address } from '../../base/Address'
 import { ethers } from 'ethers'
 import * as dotenv from 'dotenv'
-import { CreateMetaMorphoEvent } from '../contracts/contracts/IMetaMorphoFactory.sol/IMetaMorphoFactory'
-import { client } from './db'
+import { CreateMetaMorphoEvent } from '../../contracts/contracts/IMetaMorphoFactory.sol/IMetaMorphoFactory'
+import { client } from '../db'
 dotenv.config()
 
 const BATCH_SIZE = 1

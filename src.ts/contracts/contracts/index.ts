@@ -64,6 +64,7 @@ export type { IFacade } from "./IFacade";
 export type { IMain } from "./IMain";
 export type { IMetaMorphoFactory } from "./IMetaMorphoFactory";
 export type { IPermit2 } from "./IPermit2";
+export type { IPool } from "./IPool";
 export type { IRToken } from "./IRToken";
 export type { IStETH } from "./IStETH";
 export type { IUniswapV2Factory } from "./IUniswapV2Factory";

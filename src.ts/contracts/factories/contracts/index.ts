@@ -37,6 +37,7 @@ export { IFacade__factory } from "./IFacade__factory";
 export { IMain__factory } from "./IMain__factory";
 export { IMetaMorphoFactory__factory } from "./IMetaMorphoFactory__factory";
 export { IPermit2__factory } from "./IPermit2__factory";
+export { IPool__factory } from "./IPool__factory";
 export { IRToken__factory } from "./IRToken__factory";
 export { IStETH__factory } from "./IStETH__factory";
 export { IUniswapV2Factory__factory } from "./IUniswapV2Factory__factory";

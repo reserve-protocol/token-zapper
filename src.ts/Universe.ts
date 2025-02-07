@@ -1119,7 +1119,7 @@ export class Universe<const UniverseConf extends Config = Config> {
 
     return await new TxGen(this, expectedOutput).generate({
       ...userOption,
-      ethereumInput: false,
+      ethereumInput: isNative,
       slippage: opts?.slippage ?? 0.001,
       deployFolio: config,
     })

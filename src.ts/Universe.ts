@@ -51,6 +51,7 @@ import { FolioContext } from './action/Folio'
 import { DeployFolioConfig, DeployFolioConfigJson } from './action/DeployFolioConfig'
 import { optimiseTrades } from './searcher/optimiseTrades'
 import { DexLiquidtyPriceStore } from './searcher/DexLiquidtyPriceStore'
+import { reachableTokens } from './exchange-graph/BFS'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -1123,6 +1124,10 @@ export class Universe<const UniverseConf extends Config = Config> {
       slippage: opts?.slippage ?? 0.001,
       deployFolio: config,
     })
+  }
+
+  public async supportedTokens() {
+    return await reachableTokens(this)
   }
 
   public async zap(

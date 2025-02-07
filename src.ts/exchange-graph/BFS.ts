@@ -202,6 +202,53 @@ const includes = (node: Node, token: Token) => {
   return false
 }
 
+export const reachableTokens = async (ctx: Universe) => {
+  const toVisit = new Queue<Token>()
+  toVisit.push(ctx.wrappedNativeToken)
+
+  const visited = new Map<Token, number>()
+  while (!toVisit.isEmpty) {
+    const token = toVisit.pop()
+    if (visited.has(token)) {
+      continue
+    }
+    console.log(token.toString())
+
+    const vertex = ctx.graph.vertices.get(token)
+    const outgoing = [...vertex.outgoingEdges]
+
+    let liq = visited.get(token) ?? 0
+    await Promise.all(
+      outgoing.map(async ([nextToken, actions]) => {
+        await Promise.all(
+          actions.map(async (action) => {
+            if (
+              action.isTrade &&
+              (action.inputToken.includes(ctx.wrappedNativeToken) ||
+                action.outputToken.includes(ctx.wrappedNativeToken))
+            ) {
+              const balance = await ctx.balanceOf(
+                ctx.wrappedNativeToken,
+                action.address
+              )
+              liq += balance.asNumber()
+            }
+          })
+        )
+        toVisit.push(nextToken)
+      })
+    )
+
+    visited.set(token, liq)
+  }
+  const out = [...visited].map(([token, liq]) => ({ token, liq }))
+  out.sort((l, r) => r.liq - l.liq)
+  return out.map((i) => ({
+    token: i.token,
+    liquidity: i.liq,
+  }))
+}
+
 export const bestPath = async (
   ctx: Universe,
   start: TokenQuantity,

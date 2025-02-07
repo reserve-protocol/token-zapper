@@ -407,7 +407,7 @@ export class RedeemFolioAction extends BaseAction {
   async plan(planner: Planner, [amountIn]: Value[]) {
     planner.add(
       this.context.mintRedeemContractWeiroll.redeem(
-        this.context.mintRedeemContract.address,
+        this.deployment.fToken.address.address,
         amountIn
       )
     )!

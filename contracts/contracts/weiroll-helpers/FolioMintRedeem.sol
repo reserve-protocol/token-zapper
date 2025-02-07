@@ -38,10 +38,12 @@ contract FolioMintRedeem {
     (
       address[] memory assets,
       uint256[] memory amounts
-    ) = folio.folio();
-    for (uint256 i; i < assets.length; i++) {
+    ) = folio.toAssets(1e18, Math.Rounding.Up);
+    
+    for (uint256 i; i < amounts.length; i++) {
       amounts[i] = 0;
     }
+  
     folio.redeem(shares, address(this), assets, amounts);
   }
 }

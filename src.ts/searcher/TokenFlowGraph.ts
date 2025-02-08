@@ -2155,6 +2155,9 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
 
   for (const node of g.nodes()) {
     if (node.action instanceof BaseAction) {
+      if (!node.action.oneUsePrZap || node.action.isTrade) {
+        continue
+      }
       for (const incoming of node.incomingEdges()) {
         if (fanoutNodes[incoming.source.id].length !== 0) {
           continue
@@ -2198,7 +2201,7 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       if (action.oneUsePrZap) {
         let conflict = false
         for (const addr of action.addressesInUse) {
-          if (inUse.has(addr) || inUseThisIteration.has(addr)) {
+          if (inUseThisIteration.has(addr)) {
             conflict = true
             break
           }
@@ -2209,6 +2212,8 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
         for (const addr of action.addressesInUse) {
           inUseThisIteration.add(addr)
         }
+        acts.push([action, i])
+      } else {
         acts.push([action, i])
       }
     }
@@ -2468,7 +2473,8 @@ const optimiseGlobal = async (
   optimisationSteps: number = 15,
   bestSoFar: TFGResult,
   logger: ILoggerType,
-  startSize: number = 1
+  startSize: number = 1,
+  optimisationNodes: NodeProxy[] = []
 ) => {
   const isResultBetter = (
     previous: TFGResult,
@@ -2477,10 +2483,7 @@ const optimiseGlobal = async (
   ) => {
     return newResult.result.price > previous.result.price
   }
-  const nodesSorted = g.sort().reverse()
-  let optimisationNodes = nodesSorted.filter(
-    (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
-  )
+
   // if (optimisationNodes.length > 7) {
   //   optimisationNodes = nodesSorted.filter((n) => n.isOptimisable)
   // }
@@ -2855,8 +2858,10 @@ const optimise = async (
     inferDustProducingNodes(g)
     await backPropagateInputProportions(g)
 
-    console.log(`Optimising graph:`)
-    console.log(g.toDot().join('\n'))
+    const nodesSorted = g.sort().reverse()
+    let optimisationNodes = nodesSorted.filter(
+      (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
+    )
     bestSoFar = await optimiseGlobal(
       g,
       universe,
@@ -2864,7 +2869,8 @@ const optimise = async (
       4,
       bestSoFar,
       logger,
-      1
+      1,
+      optimisationNodes
     )
   }
   bestSoFar = await minimizeDust(
@@ -2881,6 +2887,11 @@ const optimise = async (
   )
   bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 
+  let optimisationNodes = [...g.sort()]
+    .reverse()
+    .filter(
+      (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
+    )
   bestSoFar = await optimiseGlobal(
     g,
     universe,
@@ -2888,7 +2899,8 @@ const optimise = async (
     optimisationSteps,
     bestSoFar,
     logger,
-    0.5
+    0.5,
+    optimisationNodes
   )
   bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 
@@ -2936,6 +2948,16 @@ const optimise = async (
       minimiseDustPhase2Steps,
       0.5 * scaleMultiplier
     )
+
+    let optimisationNodes = [...g.sort()]
+      .reverse()
+      .filter(
+        (n) =>
+          (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
+      )
+    if (optimisationNodes.length === 0) {
+      break
+    }
     bestSoFar = await optimiseGlobal(
       g,
       universe,
@@ -2943,7 +2965,8 @@ const optimise = async (
       universe.config.refinementOptimisationSteps,
       bestSoFar,
       logger,
-      0.1 * scaleMultiplier
+      0.1 * scaleMultiplier,
+      optimisationNodes
     )
     bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 

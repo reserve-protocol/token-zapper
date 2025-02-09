@@ -2974,20 +2974,20 @@ const optimise = async (
     inferDustProducingNodes(g)
     await backPropagateInputProportions(g)
 
-    // const nodesSorted = g.sort().reverse()
-    // let optimisationNodes = nodesSorted.filter(
-    //   (n) => n.isOptimisable || n.isDustOptimisable
-    // )
-    // bestSoFar = await optimiseGlobal(
-    //   g,
-    //   universe,
-    //   inputs,
-    //   4,
-    //   bestSoFar,
-    //   logger,
-    //   1,
-    //   optimisationNodes
-    // )
+    const nodesSorted = g.sort().reverse()
+    let optimisationNodes = nodesSorted.filter(
+      (n) => n.isOptimisable || n.isDustOptimisable
+    )
+    bestSoFar = await optimiseGlobal(
+      g,
+      universe,
+      inputs,
+      4,
+      bestSoFar,
+      logger,
+      1,
+      optimisationNodes
+    )
   }
   bestSoFar = await minimizeDust(
     g,

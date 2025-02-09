@@ -125,6 +125,9 @@ export class NodeProxy {
     ) {
       return false
     }
+    if (this.recipients.length === 0) {
+      return true
+    }
 
     if (this.isFanout && this.recipients.length === 1) {
       return true
@@ -2808,6 +2811,9 @@ const optimise = async (
     prefix: `optimiser ${inputs.join(', ')} -> ${outputs.join(', ')}`,
   })
 
+  logger.debug('Graph before optimisation')
+  logger.debug(graph.toDot().join('\n'))
+
   const optimisationSteps = opts?.optimisationSteps ?? 15
   const minimiseDustPhase1Steps = opts?.minimiseDustPhase1Steps ?? 15
   const minimiseDustPhase2Steps = opts?.minimiseDustPhase2Steps ?? 5
@@ -3111,13 +3117,13 @@ export class TokenFlowGraphSearcher {
     output: Token,
     inputNode: NodeProxy
   ) {
-    const inputValueSize = (await inputQty.price()).asNumber()
     const tradePathExists = await this.doesTradePathExist(
       inputQty.scalarDiv(2n),
       output
     )
+
     if (!tradePathExists) {
-      await this.tokenMintingGraph(graph, inputValueSize, output, inputNode)
+      await this.tokenMintingGraph(graph, inputQty, output, inputNode)
     } else {
       const splitNode = graph.addSplittingNode(
         inputQty.token,
@@ -3125,7 +3131,7 @@ export class TokenFlowGraphSearcher {
         NodeType.Optimisation,
         `Source ${output} either mint or trade`
       )
-      await this.tokenMintingGraph(graph, inputValueSize, output, splitNode)
+      await this.tokenMintingGraph(graph, inputQty, output, splitNode)
       await this.addTrades(
         graph,
         inputQty.scalarDiv(2n),
@@ -3137,12 +3143,48 @@ export class TokenFlowGraphSearcher {
     }
   }
 
+  private async folioMintGraph(
+    out: TokenFlowGraphBuilder,
+    input: TokenQuantity,
+    output: Token,
+    inputNode: NodeProxy
+  ) {
+    const folioDeployment = await this.universe.folioContext.getFolioDeployment(
+      output
+    )
+    const outputs = folioDeployment.basket.map((tok) => tok)
+    const mintG = await this.search1ToNGraph(input, outputs)
+    const mintBasketNodeNode = out.addSubgraphNode(
+      mintG.graph,
+      `mint ${output}`
+    )
+    inputNode.forward(input.token, 1, mintBasketNodeNode)
+    const mintAction = this.universe.getMintAction(output)
+    const mintNode = out.addAction(mintAction)
+    for (const input of mintAction.inputToken) {
+      const inputNode = out.getTokenNode(input)
+      mintBasketNodeNode.forward(input, 1, inputNode)
+      inputNode.forward(input, 1, mintNode)
+    }
+    for (const tok of mintAction.outputToken) {
+      mintNode.forward(tok, 1, out.getTokenNode(tok))
+    }
+    for (const tok of mintAction.dustTokens) {
+      mintNode.forward(tok, 1, out.graph.end)
+    }
+  }
+
   private async tokenMintingGraph(
     graph: TokenFlowGraphBuilder,
-    inputValueSize: number,
+    inputQty: TokenQuantity,
     outToken: Token,
     inputNode: NodeProxy
   ) {
+    const outputIfFolio = await this.universe.folioContext.isFolio(outToken)
+    if (outputIfFolio) {
+      await this.folioMintGraph(graph, inputQty, outToken, inputNode)
+      return
+    }
     const mintAction = this.universe.getMintAction(outToken)
 
     const inputToken = inputNode.inputs[0]
@@ -3158,7 +3200,6 @@ export class TokenFlowGraphSearcher {
 
     const props = await mintAction.inputProportions()
 
-    const inputQty = await inputToken.fromUSD(inputValueSize)
     const tasks: Promise<any>[] = []
     for (let i = 0; i < props.length; i++) {
       const prop = props[i]
@@ -3386,7 +3427,6 @@ export class TokenFlowGraphSearcher {
       `${input} -> ${output}`
     )
 
-    const inTokCls = await this.universe.tokenClass.get(inputToken)
     const outTokCls = await this.universe.tokenClass.get(output)
 
     let inputNode = graph.getTokenNode(inputToken)

@@ -67,7 +67,10 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     router: '0x2626664c2603336e57b271c5c0b26f421741e481',
     quoter: '0x3d4e44eb1374240ce5f1b871ab261cd16335b76a',
     factory: '0x33128a8fc17869897dce68ed026d694621f6fdfd',
-    pools: ['0x5ffb17d686f6c7fb5105633734e76e632c4a5979'],
+    pools: [
+      '0x5ffb17d686f6c7fb5105633734e76e632c4a5979',
+      '0x9ed7eb51a8e6af23d77180acc32a3312a06bdc79',
+    ],
     staticPools: baseUniV3.map((i) => ({
       ...i,
       feeTier: Number(i.feeTier),

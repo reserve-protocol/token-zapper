@@ -48,6 +48,8 @@ export const COMMON_TOKENS = {
   // Folios
   TAVE5: '0x03980d2f9165324190e2295e0d5ceb80e2753b30',
   TEST1: '0x9a658d5DADa8D7bd7bA90E6Fe0F964D2D64bb690',
+
+  BTCCETH: '0x4f6b77e37ba66d3a1b4c9cded39a1e6ba8277d28',
 } as const
 
 export const RTOKENS = {

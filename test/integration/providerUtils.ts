@@ -1,9 +1,11 @@
 import { ethers } from 'ethers'
 import { makeCustomRouterSimulator } from '../../src.ts'
 import { makeCallManySimulator } from '../../src.ts/configuration/ChainConfiguration'
+import { DefaultMap } from '../../src.ts/base/DefaultMap.ts'
 
 let totalTime = 0
 let totalRequests = 0
+let mediumTime = new DefaultMap<number, number>(() => 0)
 class OurProvider extends ethers.providers.WebSocketProvider {
   private NextId = 0
   private requestsSent = 0
@@ -18,6 +20,14 @@ class OurProvider extends ethers.providers.WebSocketProvider {
             totalRequests === 0 ? '?' : totalTime / totalRequests
           }ms. Requests: ${totalRequests}, Time: ${totalTime}ms`
         )
+
+        const q = [...mediumTime.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 20)
+        console.log(`Top 20 requests:`)
+        for (const [k, v] of q) {
+          console.log(`${k}ms: ${v} reqs`)
+        }
       }
       this.requestsSent = 0
     }, 1000)
@@ -57,7 +67,9 @@ class OurProvider extends ethers.providers.WebSocketProvider {
       function callback(error: Error, result: any) {
         if (method === 'eth_call' && start !== 0) {
           const end = Date.now()
-          totalTime += end - start
+          const delta = end - start
+          mediumTime.mut(Math.floor(delta), (v) => v + 1)
+          totalTime += delta
           totalRequests += 1
         }
         if (error) {

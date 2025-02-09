@@ -19,8 +19,6 @@ class OurProvider extends ethers.providers.WebSocketProvider {
           }ms. Requests: ${totalRequests}, Time: ${totalTime}ms`
         )
       }
-      totalTime = 0
-      totalRequests = 0
       this.requestsSent = 0
     }, 1000)
   }
@@ -55,9 +53,9 @@ class OurProvider extends ethers.providers.WebSocketProvider {
       this.requestsSent++
       const rid = this.NextId++
 
-      const start = Date.now()
+      let start = 0
       function callback(error: Error, result: any) {
-        if (method === 'eth_call') {
+        if (method === 'eth_call' && start !== 0) {
           const end = Date.now()
           totalTime += end - start
           totalRequests += 1
@@ -89,6 +87,7 @@ class OurProvider extends ethers.providers.WebSocketProvider {
       this._requests[k] = { callback, payload }
 
       if (this._wsReady) {
+        start = Date.now()
         this.websocket.send(payload)
       }
     })

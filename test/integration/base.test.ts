@@ -448,19 +448,19 @@ let requestCount = 0
 let initialized = false
 const dupRequestCounter = new DefaultMap<string, number>(() => 0)
 
-// provider.on('debug', (log) => {
-//   if (log.action === 'response') {
-//   } else if (log?.action == 'request') {
-//     requestCount += 1
-//   }
+provider.on('debug', (log) => {
+  if (log.action === 'response') {
+  } else if (log?.action == 'request') {
+    requestCount += 1
+  }
 
-//   // if (initialized) {
-//   //   const req =
-//   //     log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
-//   //   dupRequestCounter.get(req)
-//   //   dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
-//   // }
-// })
+  if (initialized && log?.request?.method === 'eth_call') {
+    const req =
+      log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
+    dupRequestCounter.get(req)
+    dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
+  }
+})
 provider.on('error', (e) => {
   console.log(e)
 })

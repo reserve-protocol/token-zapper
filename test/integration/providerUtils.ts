@@ -11,6 +11,13 @@ class OurProvider extends ethers.providers.WebSocketProvider {
 
     this.intervalId = setInterval(() => {
       this.requestsSent = 0
+      if (process.env.SHOW_REQUEST_TIMINGS) {
+        console.log(
+          `Average time per request: ${this.totalTime / this.totalRequests}ms`
+        )
+      }
+      this.totalTime = 0
+      this.totalRequests = 0
     }, 1000)
   }
 
@@ -36,7 +43,10 @@ class OurProvider extends ethers.providers.WebSocketProvider {
       this.intervalId = null
     }
   }
+  private totalTime = 0
+  private totalRequests = 0
   send(method: string, params?: Array<any>) {
+    const start = Date.now()
     return new Promise(async (resolve, reject) => {
       if (this.requestsSent > 500) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -45,6 +55,9 @@ class OurProvider extends ethers.providers.WebSocketProvider {
       const rid = this.NextId++
 
       function callback(error: Error, result: any) {
+        const end = Date.now()
+        this.totalTime += end - start
+        this.totalRequests++
         if (error) {
           return reject(error)
         }

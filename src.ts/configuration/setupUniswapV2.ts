@@ -323,7 +323,7 @@ class UniswapV2Pool {
     this.getReserves = context.universe.createCachedProducer(async () => {
       const reserves = await contract.callStatic.getReserves()
       return [reserves.reserve0.toBigInt(), reserves.reserve1.toBigInt()]
-    })
+    }, 30000)
 
     this.swap01 = new UniswapV2Swap(
       context,

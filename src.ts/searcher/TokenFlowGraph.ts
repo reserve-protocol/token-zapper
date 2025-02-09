@@ -3101,14 +3101,6 @@ const optimise = async (
     }
     scaleMultiplier *= 0.5
   }
-  if (
-    !outputs
-      .map((i) => i.address)
-      .includes(Address.from('0xDbC0cE2321B76D3956412B36e9c0FA9B0fD176E7'))
-  ) {
-    g = removeNodes(g, findNodesWithoutSources(g))
-    bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
-  }
 
   logger.debug(
     `Final graph for ${bestSoFar.result.inputs.join(', ')} -> ${
@@ -3527,7 +3519,16 @@ export class TokenFlowGraphSearcher {
     let inputToken = input.token
     const prev = this.registry.find(input, output)
     if (prev != null) {
-      return await optimise(this.universe, prev, [input], [output], opts, true)
+      const newTfg = await optimise(
+        this.universe,
+        prev,
+        [input],
+        [output],
+        opts,
+        true
+      )
+      this.registry.define(input, output, newTfg)
+      return newTfg
     }
 
     let graph = TokenFlowGraphBuilder.create1To1(
@@ -3575,7 +3576,9 @@ export class TokenFlowGraphSearcher {
       }
 
       if (targetToken === output) {
-        return optimise(this.universe, graph, [input], [output], opts)
+        const o = await optimise(this.universe, graph, [input], [output], opts)
+        this.registry.define(input, output, o)
+        return o
       }
 
       inputNode = graph.getTokenNode(targetToken)
@@ -3743,7 +3746,16 @@ export class TokenFlowGraphSearcher {
     )
     const prev = this.registry.find(input, output)
     if (prev != null) {
-      return await optimise(this.universe, prev, [input], [output], opts, true)
+      const o = await optimise(
+        this.universe,
+        prev,
+        [input],
+        [output],
+        opts,
+        true
+      )
+      this.registry.define(input, output, o)
+      return o
     }
 
     const mint = this.universe.getMintAction(output)

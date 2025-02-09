@@ -418,8 +418,13 @@ class UniswapV3Swap extends Action('UniswapV3') {
   private _gasEstimate: bigint = 200000n
 
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const { amountOut } = await this.quoteExactSingle.get(amountIn.amount)
-    return [amountOut]
+    try {
+      const { amountOut } = await this.quoteExactSingle.get(amountIn.amount)
+      return [amountOut]
+    } catch (e) {
+      console.log(`${this}: Failed to quote ${amountIn} -> ${this.tokenOut}`)
+      return [this.tokenOut.zero]
+    }
   }
 
   async plan(

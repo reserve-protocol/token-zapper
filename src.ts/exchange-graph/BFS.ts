@@ -212,7 +212,6 @@ export const reachableTokens = async (ctx: Universe) => {
     if (visited.has(token)) {
       continue
     }
-    console.log(token.toString())
 
     const vertex = ctx.graph.vertices.get(token)
     const outgoing = [...vertex.outgoingEdges]
@@ -346,6 +345,9 @@ export const bestPath = async (
                     )
                   } else {
                     newLegAmount = await action.quote(node.legAmount)
+                  }
+                  if (newLegAmount[0].amount === 0n) {
+                    return
                   }
                   if (
                     result.get(nextToken)?.legAmount[0].amount ??

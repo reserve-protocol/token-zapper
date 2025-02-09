@@ -340,6 +340,13 @@ class TokenFlowSplits {
       this.recipientIndices[this.recipient[i]] = i
     }
   }
+
+  public remove(index: number) {
+    this.inner.splice(index, 1)
+    this.parts.splice(index, 1)
+    this.recipient.splice(index, 1)
+    this.updateIndicesMap()
+  }
   public get length() {
     return this.recipient.length
   }
@@ -524,7 +531,6 @@ class OutgoingTokens {
   private edgeMap = new DefaultMap<Token, number>((token) =>
     this.edges.findIndex((edge) => edge.token === token)
   )
-  private recipientMap = new DefaultMap<number, Set<Token>>(() => new Set())
   public edges: TokenFlowSplits[] = []
 
   public hasEdge(token: Token, recipient: number) {
@@ -547,7 +553,6 @@ class OutgoingTokens {
 
   public forward(token: Token, parts: number, recipient: number) {
     this.getEdge(token).forward(parts, recipient)
-    this.recipientMap.get(recipient).add(token)
     this.version += 1
   }
 
@@ -576,9 +581,7 @@ class OutgoingTokens {
 
   public addEdge(edge: TokenFlowSplits) {
     this.version += 1
-    for (const recipient of edge.recipient) {
-      this.recipientMap.get(recipient).add(edge.token)
-    }
+
     this.edges.push(edge)
     this.edgeMap.set(edge.token, this.edges.indexOf(edge))
   }
@@ -734,6 +737,19 @@ class EdgeProxy {
   private readonly outgoingEdge: TokenFlowSplits
   private get edgeRecipientIndex(): number {
     return this.outgoingEdge.getRecipientIndex(this.edge.recipient)
+  }
+
+  public remove() {
+    this.checkEdgeExists()
+    const recipientIndex = this.edgeRecipientIndex
+    this.outgoingEdge.remove(recipientIndex)
+    const inEdges = this.graph._incomingEdges[this.edge.recipient]
+    this.graph._incomingEdges[this.edge.recipient] = inEdges.filter(
+      (e) =>
+        e.token === this.token &&
+        e.source === this.source.id &&
+        e.recipient === this.recipient.id
+    )
   }
 
   public readonly token: Token
@@ -2099,8 +2115,12 @@ const removeUselessNodes = (graph: TokenFlowGraph): TokenFlowGraph => {
   return out
 }
 
-const removeNodes = (graph: TokenFlowGraph, unusedNodes: NodeProxy[]) => {
-  if (unusedNodes.length === 0) {
+const removeNodes = (
+  graph: TokenFlowGraph,
+  unusedNodes: NodeProxy[],
+  edgesToRemove: EdgeProxy[] = []
+) => {
+  if (unusedNodes.length === 0 && edgesToRemove.length === 0) {
     return graph
   }
   const out = new TokenFlowGraph(graph.name, graph.inputs, graph.outputs)
@@ -2125,6 +2145,20 @@ const removeNodes = (graph: TokenFlowGraph, unusedNodes: NodeProxy[]) => {
     remappedNodes[node.id] = newNode.id
   }
   for (const edge of graph.edges()) {
+    if (
+      edgesToRemove.find((e) => {
+        if (
+          e.token === edge.token &&
+          e.source.id === edge.from &&
+          e.recipient.id === edge.to
+        ) {
+          return true
+        }
+        return false
+      })
+    ) {
+      continue
+    }
     if (remappedNodes[edge.from] !== -1 && remappedNodes[edge.to] !== -1) {
       if (remappedNodes[edge.from] === remappedNodes[edge.to]) {
         continue
@@ -2173,6 +2207,14 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
   }
 
   let inUseThisIteration = new Set<Address>()
+  let containsLPTokens = false
+  for (const node of g.nodes()) {
+    if (node.action instanceof BaseAction) {
+      if (node.action.outputToken.find((tok) => universe.lpTokens.has(tok))) {
+        containsLPTokens = true
+      }
+    }
+  }
   const findTradeSplits = async (node: NodeProxy, inputs: TokenQuantity[]) => {
     const actions = fanoutNodes[node.id]
     if (actions.length === 0) {
@@ -2199,25 +2241,27 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
     }
 
     const acts: [BaseAction, number][] = []
-    for (let i = 0; i < actions.length; i++) {
-      const action = actions[i]
-      if (action.oneUsePrZap) {
-        let conflict = false
-        for (const addr of action.addressesInUse) {
-          if (inUseThisIteration.has(addr)) {
-            conflict = true
-            break
+    if (containsLPTokens) {
+      for (let i = 0; i < actions.length; i++) {
+        const action = actions[i]
+        if (action.oneUsePrZap) {
+          let conflict = false
+          for (const addr of action.addressesInUse) {
+            if (inUseThisIteration.has(addr)) {
+              conflict = true
+              break
+            }
           }
+          if (conflict) {
+            continue
+          }
+          for (const addr of action.addressesInUse) {
+            inUseThisIteration.add(addr)
+          }
+          acts.push([action, i])
+        } else {
+          acts.push([action, i])
         }
-        if (conflict) {
-          continue
-        }
-        for (const addr of action.addressesInUse) {
-          inUseThisIteration.add(addr)
-        }
-        acts.push([action, i])
-      } else {
-        acts.push([action, i])
       }
     }
 
@@ -2250,6 +2294,12 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
         return
       }
 
+      if (nodeSplits.output === 0) {
+        throw new Error(
+          `Failed to optimise trades for ${node.nodeId}: No output from any trade`
+        )
+      }
+
       splits.setParts(parts)
     } else {
       const nodeSplits = await optimiseTrades(
@@ -2259,6 +2309,11 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
         Infinity,
         20
       )
+      if (nodeSplits.output === 0) {
+        throw new Error(
+          `Failed to optimise trades for ${node.nodeId}: No output from any trade`
+        )
+      }
       if (nodeSplits.inputs.every((i) => i === 0)) {
         console.log('No splits found')
         return
@@ -2591,6 +2646,56 @@ const optimiseGlobal = async (
   }
   return bestSoFar
 }
+const findAncestors = (node: NodeProxy) => {
+  const ancestors = new Set<number>()
+  let queue = new Queue<NodeProxy>()
+  queue.push(node)
+  while (queue.isNotEmpty) {
+    const node = queue.pop()
+    for (const edge of node.incomingEdges()) {
+      ancestors.add(edge.source.id)
+      queue.push(edge.source)
+    }
+  }
+  return ancestors
+}
+const removeRedundantSplits2 = (g: TokenFlowGraph) => {
+  const nodes = [...g.sort().reverse()]
+  const edgesToRemove: EdgeProxy[] = []
+  for (const node of nodes) {
+    const inEdges = node.incomingEdges()
+    // For every node where there is more than one incoming edge and all edges have the same token
+    if (
+      inEdges.length <= 1 ||
+      !inEdges.every((inEdge) => inEdge.token === inEdges[0].token)
+    ) {
+      continue
+    }
+
+    const edgeAncestors = inEdges.map((e) => findAncestors(e.source))
+    const longestAncestorChain = [...edgeAncestors].sort(
+      (a, b) => b.size - a.size
+    )[0]
+
+    for (let i = 0; i < inEdges.length; i++) {
+      const inEdge = inEdges[i]
+
+      const ancestors = edgeAncestors[i]
+
+      if (longestAncestorChain === ancestors) {
+        continue
+      }
+
+      if (longestAncestorChain.has(inEdge.source.id)) {
+        edgesToRemove.push(inEdge)
+      }
+    }
+  }
+  if (edgesToRemove.length > 0) {
+    g = removeNodes(g, [], edgesToRemove)
+  }
+  return g
+}
 const removeRedundantSplits = (g: TokenFlowGraph) => {
   const nodes = [...g.nodes()]
   const potentiallyMergableNodes = new DefaultMap<string, number[]>(() => [])
@@ -2861,6 +2966,7 @@ const optimise = async (
     bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
     g = removeNodes(g, findNodesWithoutSources(g))
     g = removeUselessNodes(removeRedundantSplits(g))
+    g = removeRedundantSplits2(g)
     inferDustProducingNodes(g)
     await backPropagateInputProportions(g)
 
@@ -3180,11 +3286,6 @@ export class TokenFlowGraphSearcher {
     outToken: Token,
     inputNode: NodeProxy
   ) {
-    const outputIfFolio = await this.universe.folioContext.isFolio(outToken)
-    if (outputIfFolio) {
-      await this.folioMintGraph(graph, inputQty, outToken, inputNode)
-      return
-    }
     const mintAction = this.universe.getMintAction(outToken)
 
     const inputToken = inputNode.inputs[0]
@@ -3248,14 +3349,17 @@ export class TokenFlowGraphSearcher {
     await Promise.all(tasks)
     const mintActionNode = graph.addAction(mintAction)
     for (const prop of props) {
+      const inputNode =
+        prop.token === inputToken
+          ? mintSubgraphInputNode
+          : graph.getTokenNode(prop.token)
+      const edge = graph.graph._outgoingEdges[inputNode.id]!.getEdge(prop.token)
+      edge.min = 0.1
+      inputNode.nodeType = NodeType.Optimisation
       if (prop.token === inputToken) {
-        mintSubgraphInputNode.forward(
-          inputToken,
-          prop.asNumber(),
-          mintActionNode
-        )
+        inputNode.forward(inputToken, prop.asNumber(), mintActionNode)
       } else {
-        graph.getTokenNode(prop.token).forward(prop.token, 1, mintActionNode)
+        inputNode.forward(prop.token, 1, mintActionNode)
       }
     }
     for (const outputToken of mintAction.outputToken) {

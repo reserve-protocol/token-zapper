@@ -35,8 +35,6 @@ import type * as iFrxMinterSol from "./IFrxMinter.sol";
 export type { iFrxMinterSol };
 import type * as irethRouterSol from "./IRETHRouter.sol";
 export type { irethRouterSol };
-import type * as irTokenZapperSol from "./IRTokenZapper.sol";
-export type { irTokenZapperSol };
 import type * as iRewardableErc20Sol from "./IRewardableERC20.sol";
 export type { iRewardableErc20Sol };
 import type * as isAtokenSol from "./ISAtoken.sol";

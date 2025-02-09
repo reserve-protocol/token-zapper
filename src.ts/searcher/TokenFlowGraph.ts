@@ -103,6 +103,9 @@ export class NodeProxy {
 
   public get isOptimisable() {
     this.checkVersion()
+    if (this.nodeType === NodeType.Both) {
+      return true
+    }
     if (
       this.nodeType === NodeType.Action ||
       this.nodeType === NodeType.Fanout
@@ -2215,6 +2218,7 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       }
     }
   }
+  console.log('containsLPTokens', containsLPTokens)
   const findTradeSplits = async (node: NodeProxy, inputs: TokenQuantity[]) => {
     const actions = fanoutNodes[node.id]
     if (actions.length === 0) {
@@ -2875,7 +2879,7 @@ const inferDustProducingNodes = (g: TokenFlowGraph) => {
           ].join(', ')}`
         )
         mainSplits.dustEdge.set(splitIndex, [...dustProduced])
-        node.nodeType = NodeType.SplitWithDust
+        node.nodeType = NodeType.Both
         g._outgoingEdges[node.id]!.getEdge(edge.token).min = 0
       }
     }
@@ -2972,7 +2976,7 @@ const optimise = async (
 
     const nodesSorted = g.sort().reverse()
     let optimisationNodes = nodesSorted.filter(
-      (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
+      (n) => n.isOptimisable || n.isDustOptimisable
     )
     bestSoFar = await optimiseGlobal(
       g,
@@ -3353,9 +3357,11 @@ export class TokenFlowGraphSearcher {
         prop.token === inputToken
           ? mintSubgraphInputNode
           : graph.getTokenNode(prop.token)
+
       const edge = graph.graph._outgoingEdges[inputNode.id]!.getEdge(prop.token)
-      edge.min = 0.1
-      inputNode.nodeType = NodeType.Optimisation
+      edge.min = 0.0
+      inputNode.nodeType = NodeType.Both
+
       if (prop.token === inputToken) {
         inputNode.forward(inputToken, prop.asNumber(), mintActionNode)
       } else {
@@ -3642,7 +3648,7 @@ export class TokenFlowGraphSearcher {
     const splitNode = out.addSplittingNode(
       input.token,
       inputNode,
-      NodeType.SplitWithDust,
+      NodeType.Both,
       'split'
     )
     out.graph._outgoingEdges[splitNode.id]!.min = 0

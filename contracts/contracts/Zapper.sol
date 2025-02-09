@@ -8,11 +8,11 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
 import { IWrappedNative } from "./IWrappedNative.sol";
-import { FacadeRead, RToken, Call, ZapERC20Params } from "./IRTokenZapper.sol";
 import { IPermit2, SignatureTransferDetails, PermitTransferFrom } from "./IPermit2.sol";
 import { VM } from "./weiroll/VM.sol";
 import { PreventTampering } from "./PreventTampering.sol";
 import { ZapperExecutor } from "./ZapperExecutor.sol";
+import { ZapERC20Params } from "./IRTokenZapper.sol";
 
 struct ZapperOutput {
     uint256[] dust;

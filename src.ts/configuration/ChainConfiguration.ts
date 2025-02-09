@@ -101,7 +101,6 @@ export const makeConfig = <
     curveStableSwapNGHelper: string
     curveCryptoFactoryHelper: string
 
-
     usdc: string
   },
   options: {

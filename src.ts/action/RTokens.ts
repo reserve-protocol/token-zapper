@@ -5,9 +5,15 @@ import {
   Token,
   type TokenQuantity,
 } from '../entities/Token'
-import { Action, DestinationOptions, InteractionConvention } from './Action'
+import {
+  Action,
+  DestinationOptions,
+  InteractionConvention,
+  lit,
+  plannerUtils,
+} from './Action'
 
-import { ethers } from 'ethers'
+import { constants, ethers } from 'ethers'
 import { Approval } from '../base/Approval'
 import {
   IAsset,
@@ -24,16 +30,41 @@ import {
   IRToken__factory,
   RTokenLens,
   RTokenLens__factory,
+  RTokenMintHelper__factory,
 } from '../contracts'
-import { Contract, Planner, Value } from '../tx-gen/Planner'
+import { Contract, LiteralValue, Planner, Value } from '../tx-gen/Planner'
 import { MultiInputUnit } from './MultiInputAction'
-import { BlockCache } from '../base/BlockBasedCache'
-import { DefaultMap } from '../base/DefaultMap'
+
+import deployments from '../contracts/deployments.json'
+import { ChainId, ChainIds } from '../configuration/ReserveAddresses'
+
+const config = (helperAddress: string) => ({
+  helper: Address.from(helperAddress),
+})
+export const rTokenConfigs: Record<ChainId, { helper: Address }> = {
+  [ChainIds.Mainnet]: config(constants.AddressZero),
+  [ChainIds.Base]: config(
+    deployments[8453][0].contracts.RTokenMintHelper.address
+  ),
+  [ChainIds.Arbitrum]: config(constants.AddressZero),
+}
 
 export class RTokenDeployment {
   public readonly burn: BurnRTokenAction
   public readonly mint: MintRTokenAction
   public readonly addressesInUse: Set<Address>
+  private get config() {
+    const out = rTokenConfigs[this.universe.chainId as ChainId]
+    if (out == null || out?.helper.address === constants.AddressZero) {
+      throw new Error(
+        'No helper address configured for chain ' + this.universe.chainId
+      )
+    }
+    return out
+  }
+  public get helper() {
+    return this.config.helper
+  }
 
   toString() {
     return `RToken[${this.rToken}](basket=${this.basket.join(', ')})`
@@ -396,30 +427,40 @@ export class MintRTokenAction extends ReserveRTokenBase {
   }
   async plan(
     planner: Planner,
-    _: Value[],
-    destination: Address,
-    predictedInput: TokenQuantity[]
+    values: Value[],
+    _: Address,
+    __: TokenQuantity[]
   ) {
-    const totalSupply =
-      await this.rTokenDeployment.contracts.rToken.totalSupply()
-    if (totalSupply.isZero()) {
-      const quote = (await this.quote(predictedInput))[0]
-      planner.add(
-        Contract.createContract(this.rTokenDeployment.contracts.rToken).issueTo(
-          destination.address,
-          quote.amount
-        )
-      )
-    } else {
-      planner.add(
-        this.universe.weirollZapperExec.mintMaxRToken(
-          this.universe.config.addresses.oldFacadeAddress.address,
-          this.address.address,
-          destination.address
-        )
+    const helper = RTokenMintHelper__factory.connect(
+      this.rTokenDeployment.helper.address,
+      this.universe.provider
+    )
+    const helperContract = Contract.createContract(helper)
+
+    // Move tokens to helper
+    for (let i = 0; i < this.basket.length; i++) {
+      const token = this.basket[i]
+      const qty = values[i]
+      plannerUtils.erc20.transfer(
+        this.universe,
+        planner,
+        qty,
+        token,
+        this.rTokenDeployment.helper
       )
     }
-    return null
+    return [
+      planner.add(
+        helperContract.mintToken(
+          this.rTokenDeployment.contracts.facade.address,
+          ethers.utils.defaultAbiCoder.encode(
+            ['address[]'],
+            [this.basket.map((i) => i.address.address)]
+          ),
+          this.rTokenDeployment.rToken.address.address
+        )
+      )!,
+    ]
   }
 
   public async inputProportions() {
@@ -482,11 +523,9 @@ export class MintRTokenAction extends ReserveRTokenBase {
       rTokenDeployment.rToken.address,
       rTokenDeployment.basket,
       [rTokenDeployment.rToken],
-      InteractionConvention.ApprovalRequired,
-      DestinationOptions.Recipient,
-      rTokenDeployment.basket.map(
-        (input) => new Approval(input, rTokenDeployment.rToken.address)
-      )
+      InteractionConvention.None,
+      DestinationOptions.Callee,
+      []
     )
   }
 }

@@ -45,11 +45,3 @@ struct ZapParams {
 
     address recipient;
 }
-
-interface FacadeRead {
-    function maxIssuable(RToken rToken, address account) external returns (uint256);
-}
-
-interface RToken {
-    function issueTo(address recipient, uint256 amount) external;
-}

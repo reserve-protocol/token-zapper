@@ -178,7 +178,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
     "execute(bytes32[],bytes[],address[])": FunctionFragment;
     "executeDeploy(bytes32[],bytes[],address[],(address,(string,string,address[],uint256[],uint256),(uint256,uint256,(address,uint96)[],uint256,uint256,string),(address[],address[],address[]),bool,address,address,(uint48,uint32,uint256,uint256,uint256,address[]),(uint48,uint32,uint256,uint256,uint256,address[])),address,bytes32)": FunctionFragment;
     "fpMul(uint256,uint256,uint256)": FunctionFragment;
-    "mintMaxRToken(address,address,address)": FunctionFragment;
     "rawCall(address,uint256,bytes)": FunctionFragment;
     "sub(uint256,uint256)": FunctionFragment;
   };
@@ -191,7 +190,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
       | "execute"
       | "executeDeploy"
       | "fpMul"
-      | "mintMaxRToken"
       | "rawCall"
       | "sub"
   ): FunctionFragment;
@@ -236,14 +234,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "mintMaxRToken",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>
-    ]
-  ): string;
-  encodeFunctionData(
     functionFragment: "rawCall",
     values: [
       PromiseOrValue<string>,
@@ -271,10 +261,6 @@ export interface ZapperExecutorInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "fpMul", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "mintMaxRToken",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "rawCall", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "sub", data: BytesLike): Result;
 
@@ -350,13 +336,6 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    mintMaxRToken(
-      facade: PromiseOrValue<string>,
-      token: PromiseOrValue<string>,
-      recipient: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     rawCall(
       to: PromiseOrValue<string>,
       value: PromiseOrValue<BigNumberish>,
@@ -413,13 +392,6 @@ export interface ZapperExecutor extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  mintMaxRToken(
-    facade: PromiseOrValue<string>,
-    token: PromiseOrValue<string>,
-    recipient: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   rawCall(
     to: PromiseOrValue<string>,
     value: PromiseOrValue<BigNumberish>,
@@ -475,13 +447,6 @@ export interface ZapperExecutor extends BaseContract {
       scale: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    mintMaxRToken(
-      facade: PromiseOrValue<string>,
-      token: PromiseOrValue<string>,
-      recipient: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     rawCall(
       to: PromiseOrValue<string>,
@@ -542,13 +507,6 @@ export interface ZapperExecutor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    mintMaxRToken(
-      facade: PromiseOrValue<string>,
-      token: PromiseOrValue<string>,
-      recipient: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     rawCall(
       to: PromiseOrValue<string>,
       value: PromiseOrValue<BigNumberish>,
@@ -604,13 +562,6 @@ export interface ZapperExecutor extends BaseContract {
       b: PromiseOrValue<BigNumberish>,
       scale: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    mintMaxRToken(
-      facade: PromiseOrValue<string>,
-      token: PromiseOrValue<string>,
-      recipient: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     rawCall(

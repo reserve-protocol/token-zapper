@@ -2,7 +2,6 @@
 pragma solidity 0.8.17;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { FacadeRead, RToken } from "./IRTokenZapper.sol";
 import { VM } from "./weiroll/VM.sol";
 import { PreventTampering } from "./PreventTampering.sol";
 
@@ -170,20 +169,5 @@ contract ZapperExecutor is VM, PreventTampering {
   ) external returns (bool success, bytes memory out) {
       require(msg.sender == address(this), "ZapperExecutor: Only callable by Zapper");
       (success, out) = to.call{value: value}(data);
-  }
-
-  /**   @dev Utility for minting max amount of rToken.
-             Should only be used off-chain to calculate the exact
-             amount of an rToken that can be minted
-      * @param token - rToken to mint
-      * @param recipient - Recipient of the rToken
-   */
-  function mintMaxRToken(
-      FacadeRead facade,
-      RToken token,
-      address recipient
-  ) external {
-      uint256 maxIssueableAmount = facade.maxIssuable(token, address(this));
-      token.issueTo(recipient, maxIssueableAmount);
   }
 }

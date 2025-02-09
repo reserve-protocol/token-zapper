@@ -1576,6 +1576,40 @@
             }
           ]
         },
+        "RTokenMintHelper": {
+          "address": "0x30eE1c022242F4BA03C4e4e2e295f2626446BAd4",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract FacadeRead",
+                  "name": "facade",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "basket",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "contract RToken",
+                  "name": "rToken",
+                  "type": "address"
+                }
+              ],
+              "name": "mintToken",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
         "SlipstreamRouterCall": {
           "address": "0xeA698DeEAD412456dbc488F8A9066326D98C3435",
           "abi": [
@@ -2273,7 +2307,7 @@
           ]
         },
         "Zapper2": {
-          "address": "0xE7AB64BE5ea6A4ABd7C6cdeEf78D59A82C149cFf",
+          "address": "0x860Ae95b8dB660d0ABE4A5a155db647EC946d22E",
           "abi": [
             {
               "inputs": [
@@ -2882,7 +2916,7 @@
           ]
         },
         "ZapperExecutor": {
-          "address": "0x0437Bd1C0C1EF94A142d67CC03c36d2fCFD387dd",
+          "address": "0x58E1E7213d35340be69CCEfCF7C7815940BF8021",
           "abi": [
             {
               "inputs": [

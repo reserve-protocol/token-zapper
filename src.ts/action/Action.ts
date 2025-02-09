@@ -13,7 +13,7 @@ import { TRADE_SLIPPAGE_DENOMINATOR } from '../base/constants'
 import { SwapPlan } from '../searcher/Swap'
 import { defaultAbiCoder, ParamType } from '@ethersproject/abi'
 import { formatEther } from 'ethers/lib/utils'
-import { constants } from 'ethers'
+import { BigNumberish, constants } from 'ethers'
 
 export enum InteractionConvention {
   // The action requires callee to send tokens to the contract before calling it
@@ -52,6 +52,18 @@ export const ONE_Val = new gen.LiteralValue(
   ParamType.fromString('uint256'),
   defaultAbiCoder.encode(['uint256'], [ONE])
 )
+
+export const lit = {
+  uint256: (value: BigNumberish | TokenQuantity) => {
+    if (value instanceof TokenQuantity) {
+      value = value.amount
+    }
+    return new gen.LiteralValue(
+      ParamType.fromString('uint256'),
+      defaultAbiCoder.encode(['uint256'], [value])
+    )
+  },
+}
 
 export const plannerUtils = {
   planForwardERC20(

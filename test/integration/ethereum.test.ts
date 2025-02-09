@@ -174,16 +174,16 @@ export const testUser = process.env.TEST_USER
   : Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 
 const issueanceCases = [
-  // makeTestCase(500, t.WETH, rTokens.eUSD),
-  // makeTestCase(1000000, t.USDC, rTokens.eUSD),
+  makeTestCase(500, t.WETH, rTokens.eUSD),
+  makeTestCase(1000000, t.USDC, rTokens.eUSD),
   // makeTestCase(100000, t.DAI, rTokens.eUSD),
   // makeTestCase(1000000, t.USDT, rTokens.eUSD),
   // makeTestCase(1000000, t.USDC, rTokens.USD3),
   // makeTestCase(1000000, t.USDT, rTokens.USD3),
   // makeTestCase(1000000, t.DAI, rTokens.USD3),
   // makeTestCase(1, t.WETH, rTokens['ETH+']),
-  makeTestCase(0.70133, t['stkcvxETH+ETH-f'], t.Re7WETH),
-  // makeTestCase(100, t.WETH, rTokens['ETH+']),
+  // makeTestCase(0.70133, t['stkcvxETH+ETH-f'], t.Re7WETH),
+  makeTestCase(1000, t.WETH, rTokens['ETH+']),
   // makeTestCase(10, t.WETH, rTokens.hyUSD),
   // makeTestCase(10000, t.USDC, rTokens.hyUSD),
   // makeTestCase(10000, t.DAI, rTokens.hyUSD),

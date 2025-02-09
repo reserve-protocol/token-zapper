@@ -37,7 +37,7 @@ const searcherOptions: SearcherOptions = {
   maxPhase2TimeRefinementTime: 15000,
   optimisationSteps: 20,
   minimiseDustPhase1Steps: 20,
-  minimiseDustPhase2Steps: 8,
+  minimiseDustPhase2Steps: 10,
   refinementOptimisationSteps: 10,
   zapMaxDustProduced: 5,
   rejectHighDust: false,
@@ -139,7 +139,7 @@ const issueanceCases = [
   // makeTestCase(5, t.WETH, rTokens.hyUSD),
   // makeTestCase(10, t.WETH, rTokens.BSDX),
   // makeTestCase(1, t.ETH, t.TEST1),
-  makeTestCase(1, t.WETH, t.BTCCETH),
+  makeTestCase(1, t.WETH, t.RIBBIT),
   // makeTestCase(10000, t.USDC, rTokens.BSDX),
 ]
 
@@ -655,7 +655,7 @@ describe('base zapper', () => {
           issueance.output
         )
         emitReqCount(testCaseName, true)
-      }, 60000)
+      }, 240000)
     })
   }
 

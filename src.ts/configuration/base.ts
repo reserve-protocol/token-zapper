@@ -50,6 +50,7 @@ export const COMMON_TOKENS = {
   TEST1: '0x9a658d5DADa8D7bd7bA90E6Fe0F964D2D64bb690',
 
   BTCCETH: '0x4f6b77e37ba66d3a1b4c9cded39a1e6ba8277d28',
+  RIBBIT: '0x666bedaf6c254731f0984c83b98ed6dc2ba431d4',
 } as const
 
 export const RTOKENS = {

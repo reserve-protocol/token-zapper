@@ -198,34 +198,33 @@ class UniswapV2Pool {
     ).amount
     const randomAddr = Wallet.createRandom().address
     const sentAmount = thisBalance / 2n
-    const poolOutSent = BigInt(
-      (
-        await this.context.universe.simulateZapFn(
-          {
-            transactions: [
-              {
-                to: token.address.address,
-                from: this.address.address,
-                data: IERC20_INTERFACE.encodeFunctionData('transfer', [
-                  randomAddr,
-                  sentAmount,
-                ]),
-                value: 0n,
-              },
-              {
-                to: token.address.address,
-                from: this.context.universe.execAddress.address,
-                data: IERC20_INTERFACE.encodeFunctionData('balanceOf', [
-                  randomAddr,
-                ]),
-                value: 0n,
-              },
-            ],
-          },
-          this.context.universe
-        )
-      ).at(-1)!
-    )
+    const o = (
+      await this.context.universe.simulateZapFn(
+        {
+          transactions: [
+            {
+              to: token.address.address,
+              from: this.address.address,
+              data: IERC20_INTERFACE.encodeFunctionData('transfer', [
+                randomAddr,
+                sentAmount,
+              ]),
+              value: 0n,
+            },
+            {
+              to: token.address.address,
+              from: this.context.universe.execAddress.address,
+              data: IERC20_INTERFACE.encodeFunctionData('balanceOf', [
+                randomAddr,
+              ]),
+              value: 0n,
+            },
+          ],
+        },
+        this.context.universe
+      )
+    ).at(-1)!
+    const poolOutSent = BigInt(o === '0x' ? '0x0' : sentAmount)
     const balAfterSent = thisBalance - sentAmount
     const poolInReceived =
       BigInt(

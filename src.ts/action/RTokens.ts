@@ -42,7 +42,9 @@ const config = (helperAddress: string) => ({
   helper: Address.from(helperAddress),
 })
 export const rTokenConfigs: Record<ChainId, { helper: Address }> = {
-  [ChainIds.Mainnet]: config(constants.AddressZero),
+  [ChainIds.Mainnet]: config(
+    deployments[1][0].contracts.RTokenMintHelper.address
+  ),
   [ChainIds.Base]: config(
     deployments[8453][0].contracts.RTokenMintHelper.address
   ),

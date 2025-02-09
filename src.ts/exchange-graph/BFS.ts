@@ -317,7 +317,7 @@ export const bestPath = async (
               return
             }
           }
-          const minAmount = node.legAmount[0].amount * 2n
+          const minAmount = node.legAmount[0].amount * 4n
           await Promise.all(
             actions
               .filter((action) => action.is1to1)

@@ -449,6 +449,40 @@
             }
           ]
         },
+        "RTokenMintHelper": {
+          "address": "0xD4e9FB9459ca2C0920Cc9223672511c511e2B076",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract FacadeRead",
+                  "name": "facade",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "basket",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "contract RToken",
+                  "name": "rToken",
+                  "type": "address"
+                }
+              ],
+              "name": "mintToken",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
         "UniV3RouterCall": {
           "address": "0x49B94B1feD319325fcBA107cc2777d6d7b4C4770",
           "abi": [

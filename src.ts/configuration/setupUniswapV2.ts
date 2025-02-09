@@ -226,44 +226,43 @@ class UniswapV2Pool {
     ).at(-1)!
     const poolOutSent = BigInt(o === '0x' ? '0x0' : sentAmount)
     const balAfterSent = thisBalance - sentAmount
-    const poolInReceived =
-      BigInt(
-        (
-          await this.context.universe.simulateZapFn(
+    const o2 = (
+      await this.context.universe.simulateZapFn(
+        {
+          transactions: [
             {
-              transactions: [
-                {
-                  to: token.address.address,
-                  from: this.address.address,
-                  data: IERC20_INTERFACE.encodeFunctionData('transfer', [
-                    randomAddr,
-                    sentAmount,
-                  ]),
-                  value: 0n,
-                },
-                {
-                  to: token.address.address,
-                  from: randomAddr,
-                  data: IERC20_INTERFACE.encodeFunctionData('transfer', [
-                    this.address.address,
-                    poolOutSent,
-                  ]),
-                  value: 0n,
-                },
-                {
-                  to: token.address.address,
-                  from: this.context.universe.execAddress.address,
-                  data: IERC20_INTERFACE.encodeFunctionData('balanceOf', [
-                    this.address.address,
-                  ]),
-                  value: 0n,
-                },
-              ],
+              to: token.address.address,
+              from: this.address.address,
+              data: IERC20_INTERFACE.encodeFunctionData('transfer', [
+                randomAddr,
+                sentAmount,
+              ]),
+              value: 0n,
             },
-            this.context.universe
-          )
-        ).at(-1)!
-      ) - balAfterSent
+            {
+              to: token.address.address,
+              from: randomAddr,
+              data: IERC20_INTERFACE.encodeFunctionData('transfer', [
+                this.address.address,
+                poolOutSent,
+              ]),
+              value: 0n,
+            },
+            {
+              to: token.address.address,
+              from: this.context.universe.execAddress.address,
+              data: IERC20_INTERFACE.encodeFunctionData('balanceOf', [
+                this.address.address,
+              ]),
+              value: 0n,
+            },
+          ],
+        },
+        this.context.universe
+      )
+    ).at(-1)!
+    const poolInReceived =
+      BigInt(o2 === '0x' ? '0x0' : sentAmount) - balAfterSent
 
     let buyFee = ((sentAmount - poolOutSent) * FEE_SCALE) / sentAmount
     let sellFee = ((poolOutSent - poolInReceived) * FEE_SCALE) / poolOutSent

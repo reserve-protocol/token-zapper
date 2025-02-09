@@ -2,6 +2,8 @@ import { ethers } from 'ethers'
 import { makeCustomRouterSimulator } from '../../src.ts'
 import { makeCallManySimulator } from '../../src.ts/configuration/ChainConfiguration'
 
+let totalTime = 0
+let totalRequests = 0
 class OurProvider extends ethers.providers.WebSocketProvider {
   private NextId = 0
   private requestsSent = 0
@@ -10,14 +12,16 @@ class OurProvider extends ethers.providers.WebSocketProvider {
     super(url)
 
     this.intervalId = setInterval(() => {
-      this.requestsSent = 0
       if (process.env.SHOW_REQUEST_TIMINGS) {
         console.log(
-          `Average time per request: ${this.totalTime / this.totalRequests}ms`
+          `Average time per request: ${
+            totalRequests === 0 ? '?' : totalTime / totalRequests
+          }ms. Requests: ${totalRequests}, Time: ${totalTime}ms`
         )
       }
-      this.totalTime = 0
-      this.totalRequests = 0
+      totalTime = 0
+      totalRequests = 0
+      this.requestsSent = 0
     }, 1000)
   }
 
@@ -43,11 +47,9 @@ class OurProvider extends ethers.providers.WebSocketProvider {
       this.intervalId = null
     }
   }
-  private totalTime = 0
-  private totalRequests = 0
   send(method: string, params?: Array<any>) {
-    const start = Date.now()
     return new Promise(async (resolve, reject) => {
+      const start = Date.now()
       if (this.requestsSent > 500) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
@@ -56,8 +58,8 @@ class OurProvider extends ethers.providers.WebSocketProvider {
 
       function callback(error: Error, result: any) {
         const end = Date.now()
-        this.totalTime += end - start
-        this.totalRequests++
+        totalTime += end - start
+        totalRequests += 1
         if (error) {
           return reject(error)
         }

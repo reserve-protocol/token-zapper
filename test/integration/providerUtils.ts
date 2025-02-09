@@ -49,17 +49,19 @@ class OurProvider extends ethers.providers.WebSocketProvider {
   }
   send(method: string, params?: Array<any>) {
     return new Promise(async (resolve, reject) => {
-      const start = Date.now()
       if (this.requestsSent > 500) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
       this.requestsSent++
       const rid = this.NextId++
 
+      const start = Date.now()
       function callback(error: Error, result: any) {
-        const end = Date.now()
-        totalTime += end - start
-        totalRequests += 1
+        if (method === 'eth_call') {
+          const end = Date.now()
+          totalTime += end - start
+          totalRequests += 1
+        }
         if (error) {
           return reject(error)
         }

@@ -248,6 +248,55 @@ export const reachableTokens = async (ctx: Universe) => {
   }))
 }
 
+export const computePreferredTokenSet = (
+  ctx: Universe,
+  from: Token,
+  to: Token,
+  maxSteps: number
+) => {
+  const out = new Set<Token>()
+  const toVisit = new Queue<{
+    token: Token
+    steps: number
+    tokens: Token[]
+  }>()
+  const visited = new Set<Token>()
+  toVisit.push({
+    token: from,
+    tokens: [from],
+    steps: 0,
+  })
+
+  while (!toVisit.isEmpty) {
+    const node = toVisit.pop()
+    if (node.steps > maxSteps) {
+      continue
+    }
+    if (node.token === to) {
+      for (const token of node.tokens) {
+        out.add(token)
+      }
+      continue
+    }
+    visited.add(node.token)
+
+    const vertex = ctx.graph.vertices.get(node.token)
+    for (const [nextToken] of vertex.outgoingEdges) {
+      if (visited.has(nextToken)) {
+        continue
+      }
+
+      toVisit.push({
+        token: nextToken,
+        tokens: [...node.tokens, nextToken],
+        steps: node.steps + 1,
+      })
+    }
+  }
+
+  return out
+}
+
 export const bestPath = async (
   ctx: Universe,
   start: TokenQuantity,
@@ -260,6 +309,19 @@ export const bestPath = async (
     Token,
     { path: Token[]; actions: Action[]; legAmount: TokenQuantity[] }
   >()
+
+  if (preferedTokens == null) {
+    preferedTokens = computePreferredTokenSet(
+      ctx,
+      start.token,
+      end,
+      (maxSteps + 1) * 2
+    )
+
+    if (preferedTokens.size === 0) {
+      return new Map()
+    }
+  }
 
   const toVisit = new Queue<Node>()
   toVisit.push({

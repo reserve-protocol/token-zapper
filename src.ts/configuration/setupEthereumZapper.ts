@@ -468,11 +468,11 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.tokenClass.set(
     universe.commonTokens.USDT,
-    Promise.resolve(universe.commonTokens.USDC)
+    Promise.resolve(universe.commonTokens.USDT)
   )
   universe.tokenClass.set(
     universe.commonTokens.DAI,
-    Promise.resolve(universe.commonTokens.USDC)
+    Promise.resolve(universe.commonTokens.DAI)
   )
   universe.tokenClass.set(
     universe.rTokens.dgnETH,

@@ -23,6 +23,7 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 import { getProvider, getSimulator } from './providerUtils'
+import { bestPath } from '../../src.ts/exchange-graph/BFS'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -34,11 +35,11 @@ const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
   cacheResolution: 8,
-  maxPhase2TimeRefinementTime: 5000,
-  optimisationSteps: 30,
+  maxPhase2TimeRefinementTime: 2500,
+  optimisationSteps: 20,
   minimiseDustPhase1Steps: 10,
   minimiseDustPhase2Steps: 10,
-  refinementOptimisationSteps: 10,
+  refinementOptimisationSteps: 5,
   zapMaxDustProduced: 5,
   zapMaxValueLoss: 10,
   rejectHighDust: false,
@@ -133,10 +134,8 @@ const testUser = Address.from(
 const issueanceCases = [
   // makeTestCase(10, t.WETH, rTokens.bsd),
   // makeTestCase(10000, t.USDC, rTokens.bsd),
-
   // makeTestCase(10000, t.USDC, rTokens.hyUSD),
   // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
-
   // makeTestCase(5, t.WETH, rTokens.hyUSD),
   // makeTestCase(10, t.WETH, rTokens.BSDX),
   // makeTestCase(1, t.ETH, t.TEST1),
@@ -530,6 +529,24 @@ describe('base zapper', () => {
       (await provider.getGasPrice()).toBigInt()
     )
   })
+
+  // describe('pathfinding', () => {
+  //   it('finds a path', async () => {
+  //     const inputQty = universe.commonTokens.WETH.from(1)
+  //     const out = await bestPath(
+  //       universe,
+  //       inputQty,
+  //       universe.commonTokens.VaderAI,
+  //       2
+  //     )
+
+  //     for (const [_, { path, legAmount }] of out.entries()) {
+  //       console.log(
+  //         `${inputQty} => ${path.join(' -> ')} => ${legAmount.join(', ')}`
+  //       )
+  //     }
+  //   }, 60000)
+  // })
 
   describe('folio', () => {
     for (const testCase of folioTests) {

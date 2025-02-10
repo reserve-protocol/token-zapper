@@ -76,7 +76,7 @@ const get2DBlockCacheRow = (
         ])
       },
       0,
-      12000
+      24000
     )
   }
   return rowCache

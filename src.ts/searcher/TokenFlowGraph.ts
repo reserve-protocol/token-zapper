@@ -7,6 +7,7 @@ import {
   ILoggerType,
   SearcherOptions,
 } from '../configuration/ChainConfiguration'
+import { uniV3RouterCallSol } from '../contracts/contracts/weiroll-helpers'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Queue } from './Queue'
 import { unwrapAction, wrapAction } from './TradeAction'
@@ -807,6 +808,38 @@ class EdgeProxy {
 
 let graphId = 0
 
+const createResultActionNode = (
+  universe: Universe,
+  action: BaseAction,
+  inputs: TokenQuantity[],
+  outputs: TokenQuantity[],
+  gasUnits: bigint
+): NodeResult => {
+  return {
+    inputs,
+    outputs:
+      action.dustTokens.length == 0
+        ? outputs
+        : outputs.filter((i) => !action.outputToken.includes(i.token)),
+    dust:
+      action.dustTokens.length == 0
+        ? []
+        : outputs.filter((i) => action.dustTokens.includes(i.token)),
+    price: 0,
+    output: outputs[0],
+    txFee: universe.nativeToken.zero,
+    txFeeValue: 0,
+    inputQuantity: inputs[0].asNumber(),
+    outputQuantity: outputs[0].asNumber(),
+    inputValue: 0,
+    totalValue: 0,
+    dustValue: 0,
+    outputValue: 0,
+    gas: gasUnits,
+    dustFraction: 0,
+  }
+}
+
 const createResult = async (
   universe: Universe,
   inputs: TokenQuantity[],
@@ -971,7 +1004,7 @@ const evaluateNode = async (
   } else {
     const tokens = graph.getTokens()
     actionInputs = nodeInput.map((size, idx) => tokens[idx].from(size))
-    actionOutputs = [...actionInputs]
+    actionOutputs = actionInputs
     for (let i = 0; i < nodeInput.length; i++) {
       nodeOutput[i] = nodeInput[i]
     }
@@ -999,6 +1032,9 @@ const evaluateNode = async (
     await beforeEvaluate(node, actionInputs)
   }
   for (const edge of edges.edges) {
+    if (edge.parts.length === 0) {
+      continue
+    }
     edge.calculateProportionsAsBigInt()
     const token = edge.token
 
@@ -1038,6 +1074,16 @@ const evaluateNode = async (
         }
       }
     }
+  }
+
+  if (action instanceof BaseAction) {
+    return createResultActionNode(
+      universe,
+      action,
+      actionInputs,
+      actionOutputs,
+      gasUsage
+    ) as NodeResult
   }
 
   return await createResult(
@@ -2538,14 +2584,6 @@ const optimiseGlobal = async (
   startSize: number = 1,
   optimisationNodes: NodeProxy[] = []
 ) => {
-  const isResultBetter = (
-    previous: TFGResult,
-    newResult: TFGResult,
-    i: number
-  ) => {
-    return newResult.result.price > previous.result.price
-  }
-
   // if (optimisationNodes.length > 7) {
   //   optimisationNodes = nodesSorted.filter((n) => n.isOptimisable)
   // }
@@ -2568,17 +2606,15 @@ const optimiseGlobal = async (
     edge.normalize()
   }
   const MAX_SCALE = startSize
+
   let noImprovement = 1
   for (let i = 0; i < optimisationSteps; ) {
-    const size = MAX_SCALE * (1 - i ** 1.25 / optimisationSteps)
-
     if (
-      bestSoFar.result.outputValue > bestSoFar.result.inputValue &&
-      bestSoFar.result.dustValue < 10
+      (bestSoFar.result.outputValue > bestSoFar.result.inputValue &&
+        bestSoFar.result.dustValue < 10) ||
+      bestSoFar.result.outputValue > optimialValueOut
     ) {
       i += 2
-    } else if (bestSoFar.result.outputValue > optimialValueOut) {
-      i += 1
     }
     i += noImprovement
 
@@ -2607,39 +2643,53 @@ const optimiseGlobal = async (
       }
 
       for (let paramIndex = 0; paramIndex < edge.parts.length; paramIndex++) {
-        const prev = edge.inner[paramIndex]
-
-        let change = size
-
-        edge.add(paramIndex, change)
-
-        if (prev === 0 && edge.inner[paramIndex] === 0) {
-          edge.setParts(before)
+        if (edge.parts[paramIndex] === edge.sum) {
           continue
         }
 
-        const res = await g.evaluate(universe, inputs)
+        const prev = edge.inner[paramIndex]
 
-        if (
-          isFinite(res.result.price) &&
-          isResultBetter(bestThisIteration, res, size)
-        ) {
-          bestThisIteration = res
-          bestNodeToChange = optimisationNodeIndex
-          for (let i = 0; i < edge.parts.length; i++) {
-            tmpNode[i] = edge.inner[i]
+        // Optimisation: If we find an improvement, try to explore this specific change fully before moving on.
+        for (let n = 0; n < 4; n++) {
+          edge.add(
+            paramIndex,
+            MAX_SCALE * (1 - (i + n) ** 1.25 / optimisationSteps)
+          )
+
+          if (
+            prev === 0 &&
+            (edge.inner[paramIndex] === 0 || edge.inner[paramIndex] === prev)
+          ) {
+            edge.setParts(before)
+            break
           }
+
+          const res = await g.evaluate(universe, inputs)
+
+          if (
+            isFinite(res.result.price) &&
+            res.result.price > bestThisIteration.result.price
+          ) {
+            bestThisIteration = res
+            bestNodeToChange = optimisationNodeIndex
+            for (let i = 0; i < edge.parts.length; i++) {
+              tmpNode[i] = edge.inner[i]
+            }
+            edge.setParts(before)
+            continue
+          }
+          edge.setParts(before)
+          break
         }
-        edge.setParts(before)
       }
     }
     if (bestNodeToChange !== -1) {
       noImprovement = 0.25
       bestSoFar = bestThisIteration
       console.log(
-        `${i} optimize global: ${bestSoFar.result.outputs.join(', ')} ${
-          bestSoFar.result.dustFraction * 100
-        }% dust`
+        `${i} optimize global (best node: ${bestNodeToChange}): ${bestSoFar.result.outputs.join(
+          ', '
+        )} ${bestSoFar.result.dustFraction * 100}% dust`
       )
       g._outgoingEdges[
         optimisationNodes[bestNodeToChange].id

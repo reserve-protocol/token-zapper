@@ -27,7 +27,6 @@ export const combineAddreses = (token0: Address, token1: Address) => {
 
 export class WrappedAction extends BaseAction {
   private readonly cache: MultiDimCache
-  private block: number = 0
   constructor(
     public readonly universe: Universe,
     public readonly wrapped: BaseAction

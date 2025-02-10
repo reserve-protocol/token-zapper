@@ -33,13 +33,14 @@ if (process.env.BASE_PROVIDER == null) {
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
-  cacheResolution: 4,
-  maxPhase2TimeRefinementTime: 15000,
-  optimisationSteps: 20,
-  minimiseDustPhase1Steps: 20,
+  cacheResolution: 8,
+  maxPhase2TimeRefinementTime: 5000,
+  optimisationSteps: 30,
+  minimiseDustPhase1Steps: 10,
   minimiseDustPhase2Steps: 10,
   refinementOptimisationSteps: 10,
   zapMaxDustProduced: 5,
+  zapMaxValueLoss: 10,
   rejectHighDust: false,
   useNewZapperContract: true,
 }
@@ -448,22 +449,22 @@ let requestCount = 0
 let initialized = false
 const dupRequestCounter = new DefaultMap<string, number>(() => 0)
 
-provider.on('debug', (log) => {
-  if (log.action === 'response') {
-  } else if (log?.action == 'request') {
-    requestCount += 1
-  }
+// provider.on('debug', (log) => {
+//   if (log.action === 'response') {
+//   } else if (log?.action == 'request') {
+//     requestCount += 1
+//   }
 
-  if (initialized && log?.request?.method === 'eth_call') {
-    const req =
-      log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
-    dupRequestCounter.get(req)
-    dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
-  }
-})
-provider.on('error', (e) => {
-  console.log(e)
-})
+//   if (initialized && log?.request?.method === 'eth_call') {
+//     const req =
+//       log.request.params[0].to + ':' + (log.request.params[0].data ?? '')
+//     dupRequestCounter.get(req)
+//     dupRequestCounter.set(req, dupRequestCounter.get(req) + 1)
+//   }
+// })
+// provider.on('error', (e) => {
+//   console.log(e)
+// })
 const emitReqCount = (msg?: string, dups?: boolean) => {
   if (requestCount > 0) {
     console.log(`${msg} Request count: ${requestCount}`)

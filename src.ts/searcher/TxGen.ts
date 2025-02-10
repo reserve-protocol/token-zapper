@@ -384,7 +384,7 @@ const planNode = async (
     }
     const producedValue = outputs.get(outEdge.token)
     if (producedValue == null) {
-      throw new Error(`No value for ${outEdge.token}`)
+      continue
     }
 
     if (outEdge.proportion === 1) {

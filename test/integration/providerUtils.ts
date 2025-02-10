@@ -57,7 +57,7 @@ class OurProvider extends ethers.providers.WebSocketProvider {
   }
   send(method: string, params?: Array<any>) {
     return new Promise(async (resolve, reject) => {
-      if (this.requestsSent > 500) {
+      if (this.requestsSent > 100000) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
       this.requestsSent++

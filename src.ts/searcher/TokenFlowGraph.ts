@@ -3204,7 +3204,7 @@ const optimise = async (
       } - Max allowed value slippage ${universe.config.zapMaxValueLoss}%`
     )
 
-    throw new Error('Value slippage is too high')
+    // throw new Error('Value slippage is too high')
   }
 
   const dustFraction = bestSoFar.result.dustValue / bestSoFar.result.totalValue

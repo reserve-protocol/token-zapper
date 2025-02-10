@@ -43,6 +43,7 @@ const defaultSearcherOptions = {
   rejectHighDust: true,
 
   maxPhase2TimeRefinementTime: 5000,
+  maxOptimisationTime: 60000,
 }
 export const getDefaultSearcherOptions = () => {
   return defaultSearcherOptions

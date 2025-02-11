@@ -44,7 +44,7 @@ const defaultSearcherOptions = {
 
   maxPhase2TimeRefinementTime: 5000,
 
-  dynamicConfigURL: null,
+  dynamicConfigURL: null as string | null,
   maxOptimisationTime: 60000,
 }
 export const getDefaultSearcherOptions = () => {

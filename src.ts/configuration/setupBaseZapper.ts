@@ -8,24 +8,22 @@ import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
 import { setupCompoundV3 } from './setupCompV3'
 import { setupAaveV3 } from './setupAaveV3'
-import { setupUniswapV3 } from './setupUniswapV3'
+import { setupUniswapV3, UniswapV3Context } from './setupUniswapV3'
 import { setupAerodromeRouter } from './setupAerodromeRouter'
 import { setupERC4626 } from './setupERC4626'
 import { createProtocolWithWrappers } from '../action/RewardableWrapper'
 import { TokenType } from '../entities/TokenClass'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupReservePricing } from './setupReservePricing'
-import { setupUniswapV2 } from './setupUniswapV2'
+import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
-  console.log('setupBaseZapper')
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
 
   logger.info('Loading base token list')
   await loadBaseTokenList(universe)
-  console.log(`setupBaseZapper`)
   const priceViaOdos = setupOdosPricing(universe)
-  const priceViaReserve = setupReservePricing(universe)
+  setupReservePricing(universe)
 
   logger.info('Setting up wrapped gas token')
   await setupWrappedGasToken(universe)
@@ -35,8 +33,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     oracleAddress: Address.from('0x9b2C948dbA5952A1f5Ab6fA16101c1392b8da1ab'),
     priceToken: universe.usd,
   })
-
-  console.log(`done`)
 
   universe.tokenType.set(
     universe.commonTokens.cbETH,
@@ -161,14 +157,20 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     )
   }
 
+  let uniswapV3Ctx: UniswapV3Context
+  let uniswapV2Ctx: UniswapV2Context
   const initUni3 = async () => {
     logger.info('Setting up UniswapV3')
     const router = await setupUniswapV3(universe)
     universe.addIntegration('uniswapV3', await router.venue())
+    uniswapV3Ctx = router
   }
   const initUni2 = async () => {
     logger.info('Setting up UniswapV2')
-    await setupUniswapV2(universe)
+    const ctx = await setupUniswapV2(universe)
+    if (ctx != null) {
+      uniswapV2Ctx = ctx
+    }
   }
 
   const initERC4626 = async () => {
@@ -216,17 +218,13 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     }
   }
   const setupUnis = async () => {
-    console.log(`initUni3`)
     await initUni3()
-    console.log(`initUni2`)
     await initUni2()
-    console.log(`done unis`)
   }
   let done = 0
   const initMaverick = async () => {
     // await setupMaverick(universe)
   }
-  console.log('setupBaseZapper')
 
   const tasks = [
     initCompound(),
@@ -239,11 +237,11 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   ].map((tsk) => {
     return tsk
       .catch((e) => {
-        console.error(e)
+        logger.error(e)
       })
       .finally(() => {
         done++
-        console.log(`${done}/${tasks.length} done`)
+        logger.info(`${done}/${tasks.length} done`)
       })
   })
 
@@ -312,4 +310,38 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
   logger.info('Done setting up base zapper')
   await Promise.all(tasks)
+
+  if (universe.config.dynamicConfigURL == null) {
+    return
+  }
+  try {
+    universe.logger.info(
+      `Loading dynamic pool data from ${universe.config.dynamicConfigURL}`
+    )
+    const config = await fetch(universe.config.dynamicConfigURL)
+    const configJson: {
+      uniswap: {
+        v2: string[]
+        v3: string[]
+      }
+    } = await config.json()
+
+    await Promise.all(
+      configJson.uniswap.v2.map(async (poolAddr) => {
+        try {
+          await uniswapV2Ctx!.loadPool(Address.from(poolAddr))
+        } catch (e) {}
+      })
+    )
+    await Promise.all(
+      configJson.uniswap.v3.map(async (poolAddr) => {
+        try {
+          await uniswapV3Ctx!.loadPool(Address.from(poolAddr))
+        } catch (e) {}
+      })
+    )
+  } catch (e) {
+    logger.error('Failed to load dynamic pool data')
+    logger.error(e)
+  }
 }

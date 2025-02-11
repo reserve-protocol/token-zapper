@@ -249,7 +249,7 @@ const loadPoolsFromSubgraphWithRetry = async (
 }
 
 export type Direction = '0->1' | '1->0'
-class UniswapV3Context {
+export class UniswapV3Context {
   private readonly resolvingPools_: Map<Address, Promise<UniswapV3Pool>> =
     new Map()
   public readonly pools: Map<Address, UniswapV3Pool> = new Map()
@@ -351,6 +351,10 @@ class UniswapV3Context {
         universe.provider
       )
     )
+  }
+
+  public async loadPool(address: Address) {
+    return (await loadPools(this, [address]))[0]
   }
 }
 class UniswapV3Pool {

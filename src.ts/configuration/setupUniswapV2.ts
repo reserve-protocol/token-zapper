@@ -95,6 +95,18 @@ const definePoolsFromData = async (
   ).filter((p) => p != null)
 }
 
+const loadPoolFromAddress = async (ctx: UniswapV2Context, address: Address) => {
+  const contract = IUniswapV2Pair__factory.connect(
+    address.address,
+    ctx.universe.provider
+  )
+  const [token0, token1] = await Promise.all([
+    ctx.universe.getToken(await contract.callStatic.token0()),
+    ctx.universe.getToken(await contract.callStatic.token1()),
+  ])
+  return await ctx.definePool(address, token0, token1)
+}
+
 const loadPoolsFromSubgraph = async (
   ctx: UniswapV2Context,
   subgraphId: string,
@@ -452,7 +464,7 @@ export class UniswapV2Swap extends Action('UniswapV2') {
   }
 }
 
-class UniswapV2Context {
+export class UniswapV2Context {
   public readonly swapHelper: Univ2SwapHelper
   public readonly swapHelperWeiroll: Contract
   public readonly pools: Map<Address, Promise<UniswapV2Pool>> = new Map()
@@ -478,6 +490,10 @@ class UniswapV2Context {
     )
 
     this.swapHelperWeiroll = Contract.createLibrary(this.swapHelper)
+  }
+
+  public async loadPool(address: Address) {
+    return loadPoolFromAddress(this, address)
   }
 }
 

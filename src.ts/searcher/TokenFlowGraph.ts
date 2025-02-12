@@ -2058,9 +2058,13 @@ const getKey = (input: TokenQuantity) => {
 }
 
 export interface ITokenFlowGraphRegistry {
-  define(input: TokenQuantity, output: Token, graph: TokenFlowGraph): void
-  find(input: TokenQuantity, output: Token): TokenFlowGraph | null
-  purgeResult(input: TokenQuantity, output: Token): void
+  define(
+    input: TokenQuantity,
+    output: Token,
+    graph: TokenFlowGraph
+  ): Promise<void>
+  find(input: TokenQuantity, output: Token): Promise<TokenFlowGraph | null>
+  purgeResult(input: TokenQuantity, output: Token): Promise<void>
 }
 
 export class InMemoryTokenFlowGraphRegistry implements ITokenFlowGraphRegistry {
@@ -2075,7 +2079,7 @@ export class InMemoryTokenFlowGraphRegistry implements ITokenFlowGraphRegistry {
     >
   >(() => new Map())
 
-  public purgeResult(input: TokenQuantity, output: Token) {
+  public async purgeResult(input: TokenQuantity, output: Token) {
     console.log(`Purging result for key=${getKey(input)}`)
     const key = getKey(input)
     this.db.get(key).delete(output)
@@ -2083,13 +2087,17 @@ export class InMemoryTokenFlowGraphRegistry implements ITokenFlowGraphRegistry {
 
   constructor(private readonly universe: Universe) {}
 
-  public define(input: TokenQuantity, output: Token, graph: TokenFlowGraph) {
+  public async define(
+    input: TokenQuantity,
+    output: Token,
+    graph: TokenFlowGraph
+  ) {
     const key = getKey(input)
     console.log(`Saving graph for later: key=${key}`)
     this.db.get(key).set(output, { graph, timestamp: Date.now() })
   }
 
-  public find(input: TokenQuantity, output: Token) {
+  public async find(input: TokenQuantity, output: Token) {
     const key = getKey(input)
     const out = this.db.get(key).get(output)
     if (out != null) {
@@ -3789,7 +3797,7 @@ export class TokenFlowGraphSearcher {
     txGenOptions: TxGenOptions
   ) {
     try {
-      const prev = this.registry.find(input, output)
+      const prev = await this.registry.find(input, output)
       if (prev == null) {
         return null
       }

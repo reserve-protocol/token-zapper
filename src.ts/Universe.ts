@@ -712,10 +712,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     const id = action.actionId;
     if (this.actionById.has(id)) {
       this.logger.warn(`Duplicate action: ${id}`)
-      return
-    } else {
-      this.actionById.set(id, action)
     }
+    this.actionById.set(id, action)
     if (this.allActions.has(action)) {
       return this
     }
@@ -1187,11 +1185,6 @@ export class Universe<const UniverseConf extends Config = Config> {
         this.config,
         txGenOptions
       )
-      const serialized = tfg.serialize()
-      console.log(tfg.toDot().join("\n"))
-      const deserializedTfg = await TokenFlowGraph.deserialize(this, serialized)
-      console.log(deserializedTfg.toDot().join("\n"))
-      
       const res = await tfg.evaluate(this, [userInput])
       this.logger.info(`Expected output: ${res.result.inputs.join(', ')} -> ${res.result.outputs.filter(i => i.amount >10n).join(', ')}`)
       try {

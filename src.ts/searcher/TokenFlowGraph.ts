@@ -1237,16 +1237,17 @@ export class TokenFlowGraph {
         )
         remapped.set(node.id, n)
       } else if (action.type === 'Action') {
-        const act = ctx.getAction(action.action)
         const nodeType = deserializeNodeType(node.type)
-        const n = graph.newNode(
-          act,
-          nodeType,
-          node.name,
-          await Promise.all(node.inputs.map((i) => ctx.getToken(i))),
-          await Promise.all(node.outputs.map((o) => ctx.getToken(o)))
+        remapped.set(
+          node.id,
+          graph.newNode(
+            wrapAction(ctx, ctx.getAction(action.action)),
+            nodeType,
+            node.name,
+            await Promise.all(node.inputs.map((i) => ctx.getToken(i))),
+            await Promise.all(node.outputs.map((o) => ctx.getToken(o)))
+          )
         )
-        remapped.set(node.id, n)
       } else {
         const tfg = await TokenFlowGraph.deserialize(ctx, action.graph)
         const nodeType = deserializeNodeType(node.type)

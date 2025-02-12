@@ -398,7 +398,7 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
     predictedInputs: TokenQuantity[]
   ): Promise<null | Value[]> {
     const [minAmount] = await this.quote(predictedInputs)
-    const minOut = minAmount.amount - minAmount.amount / 10n
+    const minOut = minAmount.amount - minAmount.amount / 2n
 
     const encoded = utils.defaultAbiCoder.encode(
       [

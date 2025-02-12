@@ -131,14 +131,14 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  // makeTestCase(10, t.WETH, rTokens.bsd),
-  // makeTestCase(10000, t.USDC, rTokens.bsd),
-  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  makeTestCase(10, t.WETH, rTokens.bsd),
+  makeTestCase(10000, t.USDC, rTokens.bsd),
+  makeTestCase(10000, t.USDC, rTokens.hyUSD),
   // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
-  // makeTestCase(5, t.WETH, rTokens.hyUSD),
-  // makeTestCase(10, t.WETH, rTokens.BSDX),
+  makeTestCase(5, t.WETH, rTokens.hyUSD),
+  makeTestCase(10, t.WETH, rTokens.BSDX),
   // makeTestCase(1, t.ETH, t.TEST1),
-  makeTestCase(1, t.WETH, t.RIBBIT),
+  // makeTestCase(1, t.WETH, t.RIBBIT),
   // makeTestCase(10000, t.USDC, rTokens.BSDX),
 ]
 

@@ -177,7 +177,7 @@ const evaluateProgram = async (
     throw e
   }
 }
-interface TxGenOptions {
+export interface TxGenOptions {
   caller: Address
   recipient: Address
   dustRecipient: Address

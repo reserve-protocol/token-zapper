@@ -225,6 +225,14 @@ export abstract class BaseAction {
   public readonly gen = gen
   public readonly genUtils = plannerUtils
 
+  public get actionId() {
+    return `${this.constructor.name}[${this.protocol}.${this.actionName}@${
+      this.address
+    }](${this.inputToken.map((i) => i.address).join(',')}->${this.outputToken
+      .map((i) => i.address)
+      .join(',')})`
+  }
+
   public allTokens_ = new Set<Token>()
   public allBalances_: TokenQuantity[] = []
   public allBalancesBlock_: number = 0

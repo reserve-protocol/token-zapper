@@ -19,6 +19,9 @@ import { setupBaseZapper } from './configuration/setupBaseZapper'
 import { EthereumUniverse, ethereumConfig } from './configuration/ethereum'
 import { setupEthereumZapper } from './configuration/setupEthereumZapper'
 
+export { TokenFlowGraph, TokenFlowGraphSearcher, TokenFlowGraphBuilder, ITokenFlowGraphRegistry } from './searcher/TokenFlowGraph'
+export { ZapTransaction } from './searcher/ZapTransaction'
+
 import { loadTokens } from './configuration/loadTokens'
 import { makeConfig } from './configuration/ChainConfiguration'
 import { JsonRpcProvider } from '@ethersproject/providers'

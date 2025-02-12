@@ -45,8 +45,8 @@ import { PerformanceMonitor } from './searcher/PerformanceMonitor'
 import { SwapPath } from './searcher/Swap'
 import { ToTransactionArgs } from './searcher/ToTransactionArgs'
 import { Contract } from './tx-gen/Planner'
-import { TxGen } from './searcher/TxGen'
-import { TokenFlowGraphRegistry, TokenFlowGraphSearcher } from './searcher/TokenFlowGraph'
+import { TxGen, TxGenOptions } from './searcher/TxGen'
+import { ITokenFlowGraphRegistry, InMemoryTokenFlowGraphRegistry, TokenFlowGraph, TokenFlowGraphSearcher } from './searcher/TokenFlowGraph'
 import { FolioContext } from './action/Folio'
 import { DeployFolioConfig, DeployFolioConfigJson } from './action/DeployFolioConfig'
 import { optimiseTrades } from './searcher/optimiseTrades'
@@ -493,12 +493,12 @@ export class Universe<const UniverseConf extends Config = Config> {
           if (stopSearch.signal.aborted || opts.abort.aborted) {
             return;
           }
-          // console.log(`${venue.name} ok: ${res.steps[0].action.toString()}`)
+          // this.logger.info(`${venue.name} ok: ${res.steps[0].action.toString()}`)
           await onResult(res)
 
         } catch (e: any) {
-          // console.log(`${venue.name} failed for case: ${tradeName}`)
-          // console.log(e.message)
+          // this.logger.info(`${venue.name} failed for case: ${tradeName}`)
+          // this.logger.info(e.message)
         }
       })
     )
@@ -697,7 +697,25 @@ export class Universe<const UniverseConf extends Config = Config> {
     return token
   }
 
+  private actionById = new Map<string, Action>()
+  public actionExists(id: string) {
+    return this.actionById.has(id)
+  }
+  public getAction(id: string) {
+    const action = this.actionById.get(id)
+    if (action == null) {
+      throw new Error(`Action ${id} not found`)
+    }
+    return action
+  }
   public addAction(action: Action, actionAddress?: Address) {
+    const id = action.actionId;
+    if (this.actionById.has(id)) {
+      this.logger.warn(`Duplicate action: ${id}`)
+      return
+    } else {
+      this.actionById.set(id, action)
+    }
     if (this.allActions.has(action)) {
       return this
     }
@@ -862,8 +880,10 @@ export class Universe<const UniverseConf extends Config = Config> {
           )
         })
       ]
-    })
+    }),
+    private readonly tfgReg: ITokenFlowGraphRegistry = new InMemoryTokenFlowGraphRegistry(this)
   ) {
+    this.tfgSearcher = new TokenFlowGraphSearcher(this, this.tfgReg)
     this.folioContext = new FolioContext(this)
     const nativeToken = config.nativeToken
     this.nativeToken = Token.createToken(
@@ -884,7 +904,7 @@ export class Universe<const UniverseConf extends Config = Config> {
         const outputSize = (await edge.quote([inputToken.one.scalarMul(10n)]))[0]
         return outputToken.from(outputSize.asNumber() / 10)
       } catch (e) {
-        console.log(`Error finding mid price for ${edge}: ${e}`)
+        this.logger.info(`Error finding mid price for ${edge}: ${e}`)
         throw e
       }
     }, 12000)
@@ -1013,6 +1033,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       logger?: winston.Logger
       tokenLoader?: TokenLoader
       approvalsStore?: ApprovalsStore
+      tokenFlowGraphCache?: ITokenFlowGraphRegistry
       simulateZapFn?: SimulateZapTransactionFunction
     }> = {}
   ) {
@@ -1030,7 +1051,8 @@ export class Universe<const UniverseConf extends Config = Config> {
       opts.approvalsStore ?? new ApprovalsStore(provider),
       opts.tokenLoader ?? makeTokenLoader(provider),
       simulateZapFunction!,
-      opts.logger
+      opts.logger,
+      opts.tokenFlowGraphCache
     )
     // universe.oracles.push(new LPTokenPriceOracle(universe))
     await Promise.all(
@@ -1068,8 +1090,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     }
   }
 
-  private readonly tfgReg = new TokenFlowGraphRegistry(this)
-  public readonly tfgSearcher = new TokenFlowGraphSearcher(this, this.tfgReg)
+  public readonly tfgSearcher;
 
 
   /**
@@ -1099,31 +1120,31 @@ export class Universe<const UniverseConf extends Config = Config> {
 
     const isNative = userInput.token === this.nativeToken
     userInput = isNative ? userInput.into(this.wrappedNativeToken) : userInput
-    console.log(`Building DAG for ${userInput} -> ${config.basicDetails.basket[0].token}`)
+    this.logger.info(`Building DAG for ${userInput} -> ${config.basicDetails.basket[0].token}`)
+
+    const userOption: TxGenOptions = Object.assign({
+      caller: Address.from(caller),
+      ethereumInput: isNative,
+      deployFolio: config,
+      slippage: opts?.slippage ?? 0.001,
+      recipient: Address.from(recipient),
+      dustRecipient: Address.from(dustRecipient),
+    }, opts)
 
     const deployTFG = await this.tfgSearcher.searchZapDeploy1ToFolio(
       userInput,
       config,
-      this.config
+      this.config,
+      userOption
     )
 
-    const userOption = Object.assign({
-      caller: Address.from(caller),
-      isNative,
-      recipient: Address.from(recipient),
-      dustRecipient: Address.from(dustRecipient),
-    }, opts)
+    
 
 
     const expectedOutput = await deployTFG.evaluate(this, [userInput])
     this.logger.info(`expected zap: ${userInput} -> ${expectedOutput.result.outputs.join(', ')} fee=${expectedOutput.result.txFee}`)
 
-    return await new TxGen(this, expectedOutput).generate({
-      ...userOption,
-      ethereumInput: isNative,
-      slippage: opts?.slippage ?? 0.001,
-      deployFolio: config,
-    })
+    return await new TxGen(this, expectedOutput).generate(userOption)
   }
 
   public async supportedTokens() {
@@ -1153,26 +1174,34 @@ export class Universe<const UniverseConf extends Config = Config> {
     try {
       const isNative = userInput.token === this.nativeToken
       userInput = isNative ? userInput.into(this.wrappedNativeToken) : userInput
-      console.log(`Building DAG for ${userInput} -> ${outputToken}`)
+      this.logger.info(`Building DAG for ${userInput} -> ${outputToken}`)
+      
+      const txGenOptions: TxGenOptions = {
+        ...options,
+        ethereumInput: isNative,
+        slippage: opts?.slippage ?? 0.001
+      }
       const tfg = await this.tfgSearcher.search1To1(
         userInput,
         outputToken,
-        this.config
+        this.config,
+        txGenOptions
       )
+      const serialized = tfg.serialize()
+      console.log(tfg.toDot().join("\n"))
+      const deserializedTfg = await TokenFlowGraph.deserialize(this, serialized)
+      console.log(deserializedTfg.toDot().join("\n"))
+      
       const res = await tfg.evaluate(this, [userInput])
-      console.log(`Expected output: ${res.result.inputs.join(', ')} -> ${res.result.outputs.filter(i => i.amount >10n).join(', ')}`)
+      this.logger.info(`Expected output: ${res.result.inputs.join(', ')} -> ${res.result.outputs.filter(i => i.amount >10n).join(', ')}`)
       try {
-        return await new TxGen(this, res).generate({
-          ...options,
-          ethereumInput: isNative,
-          slippage: opts?.slippage ?? 0.001
-        })
+        return await new TxGen(this, res).generate(txGenOptions)
       } catch (e) {
         this.tfgReg.purgeResult(userInput, outputToken)
         throw e
       }
     } catch (e) {
-      console.log(`Error zapping: ${e}`)
+      this.logger.info(`Error zapping: ${e}`)
       throw e
     }
   }

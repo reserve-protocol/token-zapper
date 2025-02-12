@@ -149,7 +149,7 @@ export class AaveV3Reserve {
     return (
       await this.aave.poolInst.callStatic.getReserveNormalizedIncome(
         this.reserveToken.address.address,
-        { blockTag: "pending" }
+        { blockTag: 'pending' }
       )
     ).toBigInt()
   }
@@ -213,8 +213,6 @@ export class AaveV3Deployment {
     )
     this.reserves.push(reserve)
     this.tokenToReserve.set(reserve.aToken, reserve)
-    this.universe.addAction(reserve.supply)
-    this.universe.addAction(reserve.withdraw)
     return reserve
   }
 
@@ -265,10 +263,11 @@ export class AaveV3Deployment {
 
   private wrappers: AaveV3Wrapper[] = []
   private wrapperTokens = new DefaultMap<Token, Promise<AaveV3Wrapper>>(
-    (wrapper) => AaveV3Wrapper.create(this, wrapper).then((w) => {
-      this.wrappers.push(w)
-      return w
-    })
+    (wrapper) =>
+      AaveV3Wrapper.create(this, wrapper).then((w) => {
+        this.wrappers.push(w)
+        return w
+      })
   )
   public async addWrapper(wrapper: Token) {
     return await this.wrapperTokens.get(wrapper)

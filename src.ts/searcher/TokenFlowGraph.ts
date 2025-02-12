@@ -10,7 +10,9 @@ import {
 import { uniV3RouterCallSol } from '../contracts/contracts/weiroll-helpers'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Queue } from './Queue'
+import { ToTransactionArgs } from './ToTransactionArgs'
 import { unwrapAction, wrapAction } from './TradeAction'
+import { TxGen, TxGenOptions } from './TxGen'
 import { optimiseTrades } from './optimiseTrades'
 
 export class NodeProxy {
@@ -1095,6 +1097,65 @@ const evaluateNode = async (
   )
 }
 
+const deserializeNodeType = (type: number) => {
+  if (type === NodeType.Split) {
+    return NodeType.Split
+  } else if (type === NodeType.Action) {
+    return NodeType.Action
+  } else if (type === NodeType.Both) {
+    return NodeType.Both
+  } else if (type === NodeType.Optimisation) {
+    return NodeType.Optimisation
+  } else if (type === NodeType.SplitWithDust) {
+    return NodeType.SplitWithDust
+  } else if (type === NodeType.Fanout) {
+    return NodeType.Fanout
+  }
+  throw new Error(`Unknown node type: ${type}`)
+}
+const serializeNode = (
+  node: NodeProxy
+): {
+  type: number
+  name: string
+  id: number
+  inputs: string[]
+  outputs: string[]
+  action:
+    | {
+        type: 'TokenFlowGraph'
+        graph: any
+      }
+    | {
+        type: 'Action'
+        action: string
+      }
+    | null
+} | null => {
+  if (node == null) {
+    return null
+  }
+  return {
+    type: Number(node.nodeType),
+    name: node.name,
+    id: node.id,
+    inputs: node.inputs.map((i) => i.address.address),
+    outputs: node.outputs.map((o) => o.address.address),
+    action:
+      node.action instanceof TokenFlowGraph
+        ? {
+            type: 'TokenFlowGraph',
+            graph: node.action.serialize() as SerializedTFG,
+          }
+        : node.action instanceof BaseAction
+        ? {
+            type: 'Action',
+            action: node.action.actionId,
+          }
+        : null,
+  }
+}
+
 export class TFGResult {
   public constructor(
     public readonly result: NodeResult,
@@ -1103,11 +1164,133 @@ export class TFGResult {
   ) {}
 }
 
+const serializeTFG = (graph: TokenFlowGraph) => {
+  return {
+    name: graph.name,
+
+    nodes: [...graph.nodes()].map(serializeNode),
+    inputs: graph.inputs.map((i) => i.address.address),
+    outputs: graph.outputs.map((o) => o.address.address),
+    dust: graph.getDustTokens().map((t) => t.address.address),
+    edges: graph._outgoingEdges
+      .map((e, index) => {
+        if (e == null) {
+          return null
+        }
+        return e.edges.map((edge) => ({
+          token: edge.token.address.address,
+          min: edge.min ?? null,
+          source: index,
+          splits: edge.recipient.map((recipientId, index) => ({
+            recipient: recipientId,
+            edgeDust: edge.dustEdge.get(index).map((i) => i.address.address),
+            min: edge.min ?? null,
+            weight: edge.parts[index],
+          })),
+        }))
+      })
+      .flat(),
+  }
+}
+type SerializedTFG = ReturnType<typeof serializeTFG>
+
 export class TokenFlowGraph {
   [Symbol.toStringTag]: string = 'TokenFlowGraph'
 
   public toString() {
     return `${this[Symbol.toStringTag]}(${this.name})`
+  }
+
+  public static async deserialize(ctx: Universe, serialized: SerializedTFG) {
+    const inputs = await Promise.all(
+      serialized.inputs.map((i) => ctx.getToken(i))
+    )
+    const outputs = await Promise.all(
+      serialized.outputs.map((o) => ctx.getToken(o))
+    )
+    const remapped = new Map<number, NodeProxy>()
+    const graph = new TokenFlowGraph(serialized.name, inputs, outputs)
+    remapped.set(graph.start.id, graph.start)
+    remapped.set(graph.end.id, graph.end)
+
+    graph.getDustTokens()
+    for (const node of serialized.nodes) {
+      if (node == null) {
+        graph._nodes.push(null as any)
+        graph._outgoingEdges.push(null)
+        graph._incomingEdges.push([])
+        graph._incomingEdgeVersion.push(0)
+        continue
+      }
+      if (remapped.has(node.id)) {
+        continue
+      }
+      const action = node.action
+      if (action == null) {
+        const nodeType = deserializeNodeType(node.type)
+        const n = graph.newNode(
+          null,
+          nodeType,
+          node.name,
+          await Promise.all(node.inputs.map((i) => ctx.getToken(i))),
+          await Promise.all(node.outputs.map((o) => ctx.getToken(o)))
+        )
+        remapped.set(node.id, n)
+      } else if (action.type === 'Action') {
+        const act = ctx.getAction(action.action)
+        const nodeType = deserializeNodeType(node.type)
+        const n = graph.newNode(
+          act,
+          nodeType,
+          node.name,
+          await Promise.all(node.inputs.map((i) => ctx.getToken(i))),
+          await Promise.all(node.outputs.map((o) => ctx.getToken(o)))
+        )
+        remapped.set(node.id, n)
+      } else {
+        const tfg = await TokenFlowGraph.deserialize(ctx, action.graph)
+        const nodeType = deserializeNodeType(node.type)
+        const n = graph.newNode(
+          tfg,
+          nodeType,
+          node.name,
+          await Promise.all(node.inputs.map((i) => ctx.getToken(i))),
+          await Promise.all(node.outputs.map((o) => ctx.getToken(o)))
+        )
+        remapped.set(node.id, n)
+      }
+    }
+    for (const edge of serialized.edges) {
+      if (edge == null) {
+        continue
+      }
+      const source = remapped.get(edge.source)
+      if (source == null) {
+        throw new Error(`Source node ${edge.source} not found`)
+      }
+      for (const split of edge.splits) {
+        const recipient = remapped.get(split.recipient)
+        if (recipient == null) {
+          throw new Error(`Recipient node ${split.recipient} not found`)
+        }
+        const token = await ctx.getToken(edge.token)
+        source.forward(token, split.weight, recipient)
+
+        const splits = graph._outgoingEdges[edge.source]!.getEdge(token)
+        const index = splits.getRecipientIndex(recipient.id)
+
+        splits.min = edge.min ?? undefined
+        const tokens = await Promise.all(
+          split.edgeDust.map(async (d) => await ctx.getToken(d))
+        )
+        splits.dustEdge.set(index, tokens)
+      }
+    }
+    return graph
+  }
+
+  public serialize(): SerializedTFG {
+    return serializeTFG(this)
   }
 
   public *nodes() {
@@ -1873,7 +2056,14 @@ const getKey = (input: TokenQuantity) => {
   const rounded = Math.round(k * 10) / 10
   return input.token.from(rounded).toString()
 }
-export class TokenFlowGraphRegistry {
+
+export interface ITokenFlowGraphRegistry {
+  define(input: TokenQuantity, output: Token, graph: TokenFlowGraph): void
+  find(input: TokenQuantity, output: Token): TokenFlowGraph | null
+  purgeResult(input: TokenQuantity, output: Token): void
+}
+
+export class InMemoryTokenFlowGraphRegistry implements ITokenFlowGraphRegistry {
   private readonly db = new DefaultMap<
     string,
     Map<
@@ -3231,7 +3421,7 @@ const optimise = async (
 export class TokenFlowGraphSearcher {
   public constructor(
     public readonly universe: Universe,
-    private readonly registry: TokenFlowGraphRegistry
+    private readonly registry: ITokenFlowGraphRegistry
   ) {}
 
   private async rTokenRedeemGraph(
@@ -3592,14 +3782,39 @@ export class TokenFlowGraphSearcher {
   /**
    * Searcher algorithm that constructs a TFG to do a 1 to 1 zap (one input to one output)
    */
+
+  public async findPreviousAndCheckSimulation(
+    input: TokenQuantity,
+    output: Token,
+    txGenOptions: TxGenOptions
+  ) {
+    try {
+      const prev = this.registry.find(input, output)
+      if (prev == null) {
+        return null
+      }
+      const res = await prev.evaluate(this.universe, [input])
+
+      new TxGen(this.universe, res).generate(txGenOptions)
+
+      return prev
+    } catch (e) {
+      return null
+    }
+  }
   public async search1To1(
     input: TokenQuantity,
     output: Token,
-    opts: SearcherOptions
+    opts: SearcherOptions,
+    txGenOptions: TxGenOptions
   ) {
     const inputValue = (await input.price()).asNumber()
     let inputToken = input.token
-    const prev = this.registry.find(input, output)
+    const prev = await this.findPreviousAndCheckSimulation(
+      input,
+      output,
+      txGenOptions
+    )
     if (prev != null) {
       const newTfg = await optimise(
         this.universe,
@@ -3799,7 +4014,8 @@ export class TokenFlowGraphSearcher {
   public async searchZapDeploy1ToFolio(
     input: TokenQuantity,
     config: DeployFolioConfig,
-    opts: SearcherOptions
+    opts: SearcherOptions,
+    txGenOptions: TxGenOptions
   ) {
     const representationToken =
       this.universe.folioContext.getSentinelToken(config)
@@ -3808,7 +4024,8 @@ export class TokenFlowGraphSearcher {
       input,
       representationToken.token,
       config.basicDetails.basket,
-      opts
+      opts,
+      txGenOptions
     )
 
     return graph
@@ -3818,7 +4035,8 @@ export class TokenFlowGraphSearcher {
     input: TokenQuantity,
     output: Token,
     basket: TokenQuantity[],
-    opts: SearcherOptions
+    opts: SearcherOptions,
+    txGenOptions: TxGenOptions
   ) {
     const out = new TokenFlowGraphBuilder(
       this.universe,
@@ -3826,7 +4044,11 @@ export class TokenFlowGraphSearcher {
       [output],
       `${input} -> ${output}`
     )
-    const prev = this.registry.find(input, output)
+    const prev = await this.findPreviousAndCheckSimulation(
+      input,
+      output,
+      txGenOptions
+    )
     if (prev != null) {
       const o = await optimise(
         this.universe,

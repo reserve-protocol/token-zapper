@@ -2,7 +2,8 @@
   "uniswap": {
     "v2": [],
     "v3": [
-      "0xE207FAbf5839CA5bCc0d93076171755CC7d82C1f"
+      "0xE207FAbf5839CA5bCc0d93076171755CC7d82C1f",
+      "0x44551CA46Fc0fa4E81d17aAaC40EEC1F987530B246"
     ]
   }
 }

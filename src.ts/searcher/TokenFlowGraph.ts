@@ -7,10 +7,8 @@ import {
   ILoggerType,
   SearcherOptions,
 } from '../configuration/ChainConfiguration'
-import { uniV3RouterCallSol } from '../contracts/contracts/weiroll-helpers'
 import { Token, TokenQuantity } from '../entities/Token'
 import { Queue } from './Queue'
-import { ToTransactionArgs } from './ToTransactionArgs'
 import { unwrapAction, wrapAction } from './TradeAction'
 import { TxGen, TxGenOptions } from './TxGen'
 import { optimiseTrades } from './optimiseTrades'
@@ -1207,6 +1205,71 @@ export class TokenFlowGraph {
 
   public toString() {
     return `${this[Symbol.toStringTag]}(${this.name})`
+  }
+
+  public async balances(universe: Universe) {
+    const balances = new Map<Address, TokenQuantity[]>()
+    for (const node of this._nodes) {
+      if (node == null) {
+        continue
+      }
+      if (node.action instanceof BaseAction) {
+        if (node.action.isTrade) {
+          const bals = [...(await node.action.balances(universe))]
+          bals.sort((a, b) => (a.token.address.gt(b.token.address) ? 1 : -1))
+          balances.set(node.action.address, bals)
+        }
+      }
+    }
+    const out = [...balances.entries()]
+    out.sort((l, r) => (l[0].gt(r[0]) ? 1 : -1))
+    return out
+  }
+
+  public async balancesChanged(
+    universe: Universe,
+    previous: [Address, TokenQuantity[]][],
+    maxBalanceChange: number = 0.025
+  ) {
+    const balances = await this.balances(universe)
+    if (balances.length !== previous.length) {
+      return false
+    }
+    for (let i = 0; i < balances.length; i++) {
+      const cur = balances[i]
+      const prev = previous[i]
+      if (cur[0].address !== prev[0].address) {
+        console.log(`Address changed, rejecting`)
+        return false
+      }
+      if (cur[1].length !== prev[1].length) {
+        console.log(`Length changed, rejecting`)
+        return false
+      }
+      for (let j = 0; j < cur[1].length; j++) {
+        if (cur[1][j].amount === prev[1][j].amount) {
+          console.log(`Amount is the same, rejecting`)
+          continue
+        }
+
+        const ratio =
+          Math.abs(cur[1][j].sub(prev[1][j]).asNumber()) / cur[1][j].asNumber()
+
+        if (ratio === 0) {
+          continue
+        }
+        console.log(
+          `${cur[0]}: balance of ${cur[1][j].token} changed by ${(
+            ratio * 100
+          ).toFixed(2)}%`
+        )
+        if (ratio > maxBalanceChange) {
+          console.log(`Too large change, rejecting`)
+          return false
+        }
+      }
+    }
+    return true
   }
 
   public static async deserialize(ctx: Universe, serialized: SerializedTFG) {

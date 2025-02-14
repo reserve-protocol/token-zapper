@@ -2529,6 +2529,7 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
     const splits = outEdges.getEdge(actions[0].inputToken[0])
 
     if (
+      containsLPTokens &&
       acts.length !== 0 &&
       acts.length !== actions.length &&
       acts.length > 1
@@ -2546,7 +2547,8 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       }
 
       if (parts.every((i) => i === 0)) {
-        console.log('No splits found')
+        console.log(nodeSplits)
+        console.log('No splits found, 1')
         return
       }
 
@@ -2565,16 +2567,22 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
         Infinity,
         20
       )
+
       if (nodeSplits.output === 0) {
         throw new Error(
           `Failed to optimise trades for ${node.nodeId}: No output from any trade`
         )
       }
+      let parts = nodeSplits.inputs
       if (nodeSplits.inputs.every((i) => i === 0)) {
-        console.log('No splits found')
-        return
+        if (nodeSplits.outputs.every((i) => i === 0)) {
+          console.log('No splits found, 2')
+          return
+        }
+        parts = nodeSplits.outputs
       }
-      splits.setParts(nodeSplits.inputs)
+
+      splits.setParts(parts)
     }
     splits.normalize()
   }

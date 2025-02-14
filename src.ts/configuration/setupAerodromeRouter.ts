@@ -132,9 +132,8 @@ export const setupAerodromeRouter = async (universe: Universe) => {
   await loadPools(1000, 2000)
 
   const addrs = [
-    '0x2578365B3dfA7FfE60108e181EFb79FeDdec2319',
-    '0xc757ca99dd498fed115b3c92fdc64f238115db31',
-    '0x9EB620FBfEA2072F4B22B30246775e5a0f0012a1',
+    '0x2578365b3dfa7ffe60108e181efb79feddec2319',
+    '0x9eb620fbfea2072f4b22b30246775e5a0f0012a1',
   ]
   await Promise.all(
     addrs.map(async (addr) =>

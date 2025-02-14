@@ -452,7 +452,7 @@ class UniswapV3Swap extends Action('UniswapV3') {
     )
     // console.log(`${this}: ${predictedInput} -> ${amountOut}`)
 
-    const minOut = 0n // amountOut.amount - amountOut.amount / 20n
+    const minOut = amountOut.amount - amountOut.amount / 4n
     const out = planner.add(
       this.context.weirollRouterCall.exactInputSingle(
         input,

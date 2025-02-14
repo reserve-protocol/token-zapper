@@ -16,6 +16,7 @@ import { TokenType } from '../entities/TokenClass'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupReservePricing } from './setupReservePricing'
 import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
+import { AerodromeContext } from '../action/Aerodrome'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
@@ -159,6 +160,10 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
 
   let uniswapV3Ctx: UniswapV3Context
   let uniswapV2Ctx: UniswapV2Context
+  let aerodromeCtx: {
+    context: AerodromeContext
+    loadPool: (addr: Address) => Promise<any>
+  }
   const initUni3 = async () => {
     logger.info('Setting up UniswapV3')
     const router = await setupUniswapV3(universe)
@@ -199,7 +204,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   }
   const setupAero = async () => {
     try {
-      await setupAerodromeRouter(universe)
+      aerodromeCtx = await setupAerodromeRouter(universe)
       const aerodromeWrappers = createProtocolWithWrappers(
         universe,
         'aerodrome'
@@ -324,6 +329,9 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
         v2: string[]
         v3: string[]
       }
+      aerodrome: {
+        stableOrVolatile: string[]
+      }
     } = await config.json()
 
     await Promise.all(
@@ -337,6 +345,13 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
       configJson.uniswap.v3.map(async (poolAddr) => {
         try {
           await uniswapV3Ctx!.loadPool(Address.from(poolAddr))
+        } catch (e) {}
+      })
+    )
+    await Promise.all(
+      configJson.aerodrome.stableOrVolatile.map(async (poolAddr) => {
+        try {
+          await aerodromeCtx!.loadPool(Address.from(poolAddr))
         } catch (e) {}
       })
     )

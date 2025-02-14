@@ -3512,7 +3512,6 @@ export class TokenFlowGraphSearcher {
       inputQty.scalarDiv(2n),
       output
     )
-
     if (!tradePathExists) {
       await this.tokenMintingGraph(graph, inputQty, output, inputNode)
     } else {
@@ -3715,6 +3714,11 @@ export class TokenFlowGraphSearcher {
               output,
               false
             )
+          console.log(
+            `${inputQty.token} -> ${output} path: ${path.steps
+              .map((i) => i.actions.join(','))
+              .join(';')}`
+          )
           return (
             path.steps.length !== 0 &&
             path.steps[path.steps.length - 1].outputToken === output
@@ -3913,12 +3917,42 @@ export class TokenFlowGraphSearcher {
     }
 
     if (this.universe.isTokenMintable(output)) {
-      await this.tokenSourceGraph(
-        graph,
-        await inputToken.fromUSD(inputValue),
-        output,
-        inputNode
-      )
+      const directTrades: BaseAction[] =
+        this.universe.graph.vertices
+          .get(inputToken)
+          .outgoingEdges.get(output) ?? []
+      console.log(`Checking for direct trades ${inputToken} -> ${output}`)
+
+      console.log(`Found ${directTrades.length} direct trades`)
+      if (directTrades.length === 0) {
+        await this.tokenSourceGraph(
+          graph,
+          await inputToken.fromUSD(inputValue),
+          output,
+          inputNode
+        )
+      } else {
+        const split = graph.addSplittingNode(
+          inputToken,
+          inputNode,
+          NodeType.Optimisation,
+          `Split or direct trade ${inputToken} -> ${output}`
+        )
+        graph.addTradeNode(
+          inputToken,
+          output,
+          directTrades,
+          `trade ${inputToken} -> ${output}`,
+          inputNode,
+          split
+        )
+        await this.tokenMintingGraph(
+          graph,
+          await inputToken.fromUSD(inputValue),
+          output,
+          split
+        )
+      }
     } else {
       if (inputToken !== output) {
         await this.addTrades(

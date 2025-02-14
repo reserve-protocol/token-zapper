@@ -337,21 +337,23 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     await Promise.all(
       configJson.uniswap.v2.map(async (poolAddr) => {
         try {
-          await uniswapV2Ctx!.loadPool(Address.from(poolAddr))
+          await uniswapV2Ctx!.loadPool(Address.from(poolAddr.toLowerCase()))
         } catch (e) {}
       })
     )
     await Promise.all(
       configJson.uniswap.v3.map(async (poolAddr) => {
         try {
-          await uniswapV3Ctx!.loadPool(Address.from(poolAddr))
-        } catch (e) {}
+          await uniswapV3Ctx!.loadPool(Address.from(poolAddr.toLowerCase()))
+        } catch (e) {
+          console.log(e)
+        }
       })
     )
     await Promise.all(
       configJson.aerodrome.stableOrVolatile.map(async (poolAddr) => {
         try {
-          await aerodromeCtx!.loadPool(Address.from(poolAddr))
+          await aerodromeCtx!.loadPool(Address.from(poolAddr.toLowerCase()))
         } catch (e) {}
       })
     )

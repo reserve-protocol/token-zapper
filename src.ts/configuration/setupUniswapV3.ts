@@ -70,6 +70,13 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     pools: [
       '0x5ffb17d686f6c7fb5105633734e76e632c4a5979',
       '0x9ed7eb51a8e6af23d77180acc32a3312a06bdc79',
+      '0x5C48Cb68A4d5A344B85595AE44b0Bd6A98a3B74b',
+      '0xAe50c3B3E9bE6a836F2Fe3C5c8daea5EAfaF28b2',
+      '0x9140D1bc4F976dBCea88575f42d73716054c38BD',
+      '0xcf77b6cec4e7d7d8c46b6bd098e1eeaa98a648ac',
+      '0xf511E60cbCc042Cb6fe3eFDFDf045b784dC0b43c',
+      '0xc06926b1AE55A2aEB99a45F27AaD24d1eecC1501',
+      '0x5624a729b13AF57cFd7155639DC312d4f0c308b1',
     ],
     staticPools: baseUniV3.map((i) => ({
       ...i,

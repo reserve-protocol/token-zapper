@@ -301,8 +301,8 @@ export const bestPath = async (
   ctx: Universe,
   start: TokenQuantity,
   end: Token,
-  maxSteps: number,
-  preferedTokens?: Set<Token>
+  idealNumberOfSteps: number,
+  maxSteps: number
 ) => {
   const graph = ctx.graph
   const result = new Map<
@@ -310,17 +310,15 @@ export const bestPath = async (
     { path: Token[]; actions: Action[]; legAmount: TokenQuantity[] }
   >()
 
-  if (preferedTokens == null) {
-    preferedTokens = computePreferredTokenSet(
-      ctx,
-      start.token,
-      end,
-      (maxSteps + 1) * 2
-    )
+  const preferedTokens = computePreferredTokenSet(
+    ctx,
+    start.token,
+    end,
+    maxSteps
+  )
 
-    if (preferedTokens.size === 0) {
-      return new Map()
-    }
+  if (preferedTokens.size === 0) {
+    return new Map()
   }
 
   const toVisit = new Queue<Node>()
@@ -356,12 +354,12 @@ export const bestPath = async (
     if (lastToken === end) {
       continue
     }
-    if (node.steps >= maxSteps) {
+    if (node.steps >= idealNumberOfSteps) {
       if (result.has(end)) {
         continue
       }
     }
-    if (node.steps >= (maxSteps + 1) * 2) {
+    if (node.steps >= maxSteps) {
       continue
     }
     const vertex = graph.vertices.get(node.token)
@@ -379,27 +377,26 @@ export const bestPath = async (
               return
             }
           }
-          const minAmount = node.legAmount[0].amount * 4n
           await Promise.all(
             actions
               .filter((action) => action.is1to1)
               .map(async (action) => {
                 try {
-                  if (action.isTrade) {
-                    const bals = await action.balances(
-                      ctx,
-                      node.legAmount[0].token
-                    )
-                    const bal = bals.find(
-                      (b) => b.token === node.legAmount[0].token
-                    )
-                    if (bal == null) {
-                      return
-                    }
-                    if (bal.amount < minAmount) {
-                      return
-                    }
-                  }
+                  // if (action.isTrade) {
+                  //   const bals = await action.balances(
+                  //     ctx,
+                  //     node.legAmount[0].token
+                  //   )
+                  //   const bal = bals.find(
+                  //     (b) => b.token === node.legAmount[0].token
+                  //   )
+                  //   if (bal == null) {
+                  //     return
+                  //   }
+                  //   if (bal.amount < minAmount) {
+                  //     return
+                  //   }
+                  // }
                   let newLegAmount
                   if (action instanceof UniswapV2Swap) {
                     newLegAmount = await action.quoteWithoutFeeCheck(

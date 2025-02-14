@@ -853,8 +853,15 @@ const createResult = async (
     const txFee = universe.nativeToken.from(gasUnits * universe.gasPrice)
 
     const [inputPrices, outputPrices, gasPrice] = await Promise.all([
-      Promise.all(inputs.map((i) => i.price())),
-      Promise.all(outputs.map((o) => o.price().then((i) => i.asNumber()))),
+      Promise.all(inputs.map((i) => i.price().catch(() => i.token.zero))),
+      Promise.all(
+        outputs.map((o) =>
+          o
+            .price()
+            .then((i) => i.asNumber())
+            .catch(() => 0)
+        )
+      ),
       txFee.price(),
     ])
     let outputTokenValue = 0
@@ -876,7 +883,8 @@ const createResult = async (
     }
     inputQuantity = inputs[0].asNumber()
 
-    const price = outputTokenValue / (inputSum + gasPrice.asNumber())
+    const price =
+      inputSum === 0 ? 0 : outputTokenValue / (inputSum + gasPrice.asNumber())
 
     const dustValue = outputSum - outputTokenValue
     return {

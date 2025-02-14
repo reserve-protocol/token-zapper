@@ -3917,42 +3917,12 @@ export class TokenFlowGraphSearcher {
     }
 
     if (this.universe.isTokenMintable(output)) {
-      const directTrades: BaseAction[] =
-        this.universe.graph.vertices
-          .get(inputToken)
-          .outgoingEdges.get(output) ?? []
-      console.log(`Checking for direct trades ${inputToken} -> ${output}`)
-
-      console.log(`Found ${directTrades.length} direct trades`)
-      if (directTrades.length === 0) {
-        await this.tokenSourceGraph(
-          graph,
-          await inputToken.fromUSD(inputValue),
-          output,
-          inputNode
-        )
-      } else {
-        const split = graph.addSplittingNode(
-          inputToken,
-          inputNode,
-          NodeType.Optimisation,
-          `Split or direct trade ${inputToken} -> ${output}`
-        )
-        graph.addTradeNode(
-          inputToken,
-          output,
-          directTrades,
-          `trade ${inputToken} -> ${output}`,
-          inputNode,
-          split
-        )
-        await this.tokenMintingGraph(
-          graph,
-          await inputToken.fromUSD(inputValue),
-          output,
-          split
-        )
-      }
+      await this.tokenSourceGraph(
+        graph,
+        await inputToken.fromUSD(inputValue),
+        output,
+        inputNode
+      )
     } else {
       if (inputToken !== output) {
         await this.addTrades(

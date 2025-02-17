@@ -181,6 +181,7 @@ export interface TxGenOptions {
   caller: Address
   recipient: Address
   dustRecipient: Address
+  useTrade?: boolean
   ethereumInput: boolean
   slippage: number
 

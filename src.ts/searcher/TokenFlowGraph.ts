@@ -3282,7 +3282,6 @@ const optimise = async (
     )
     bestSoFar = await optimiseGlobal(
       startTime,
-
       g,
       universe,
       inputs,
@@ -3314,6 +3313,9 @@ const optimise = async (
     .filter(
       (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
     )
+  if (optimisationNodes.length === 0) {
+    return g
+  }
   bestSoFar = await optimiseGlobal(
     startTime,
     g,
@@ -3530,21 +3532,24 @@ export class TokenFlowGraphSearcher {
     graph: TokenFlowGraphBuilder,
     inputQty: TokenQuantity,
     output: Token,
-    inputNode: NodeProxy
+    inputNode: NodeProxy,
+    topLevel: boolean = false,
+    txGenOptions?: TxGenOptions
   ) {
     const tradePathExists = await this.doesTradePathExist(
       inputQty.scalarDiv(2n),
       output
     )
-    if (!tradePathExists) {
+    if (!tradePathExists || (topLevel && txGenOptions?.useTrade === false)) {
       await this.tokenMintingGraph(graph, inputQty, output, inputNode)
     } else {
       const splitNode = graph.addSplittingNode(
         inputQty.token,
         inputNode,
         NodeType.Optimisation,
-        `Source ${output} either mint or trade`
+        `${topLevel ? 'Top level:' : ''} Source ${output} either mint or trade`
       )
+
       await this.tokenMintingGraph(graph, inputQty, output, splitNode)
       await this.addTrades(
         graph,
@@ -3554,37 +3559,6 @@ export class TokenFlowGraphSearcher {
         `${output} (trade path)`,
         splitNode
       )
-    }
-  }
-
-  private async folioMintGraph(
-    out: TokenFlowGraphBuilder,
-    input: TokenQuantity,
-    output: Token,
-    inputNode: NodeProxy
-  ) {
-    const folioDeployment = await this.universe.folioContext.getFolioDeployment(
-      output
-    )
-    const outputs = folioDeployment.basket.map((tok) => tok)
-    const mintG = await this.search1ToNGraph(input, outputs)
-    const mintBasketNodeNode = out.addSubgraphNode(
-      mintG.graph,
-      `mint ${output}`
-    )
-    inputNode.forward(input.token, 1, mintBasketNodeNode)
-    const mintAction = this.universe.getMintAction(output)
-    const mintNode = out.addAction(mintAction)
-    for (const input of mintAction.inputToken) {
-      const inputNode = out.getTokenNode(input)
-      mintBasketNodeNode.forward(input, 1, inputNode)
-      inputNode.forward(input, 1, mintNode)
-    }
-    for (const tok of mintAction.outputToken) {
-      mintNode.forward(tok, 1, out.getTokenNode(tok))
-    }
-    for (const tok of mintAction.dustTokens) {
-      mintNode.forward(tok, 1, out.graph.end)
     }
   }
 
@@ -3643,7 +3617,13 @@ export class TokenFlowGraphSearcher {
           )
         }
       } else {
-        await this.tokenSourceGraph(graph, inputQty, prop.token, subInputNode)
+        await this.tokenSourceGraph(
+          graph,
+          inputQty,
+          prop.token,
+          subInputNode,
+          false
+        )
       }
       if (mintAction.dustTokens.includes(prop.token)) {
         const splits =
@@ -3945,7 +3925,9 @@ export class TokenFlowGraphSearcher {
         graph,
         await inputToken.fromUSD(inputValue),
         output,
-        inputNode
+        inputNode,
+        true,
+        txGenOptions
       )
     } else {
       if (inputToken !== output) {

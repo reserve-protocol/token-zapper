@@ -20,6 +20,7 @@ export type ToTransactionArgs = Partial<{
   recipient?: Address
   dustRecipient?: Address
   slippage?: number
+  trade?: boolean
 }>
 
 export const encodeZapParamsStruct = (

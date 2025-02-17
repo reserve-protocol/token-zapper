@@ -1177,6 +1177,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       const txGenOptions: TxGenOptions = {
         ...options,
         ethereumInput: isNative,
+        useTrade: opts?.trade,
         slippage: opts?.slippage ?? 0.001
       }
       const tfg = await this.tfgSearcher.search1To1(

@@ -439,7 +439,7 @@ class UniswapV3Swap extends Action('UniswapV3') {
       const { amountOut } = await this.quoteExactSingle.get(amountIn.amount)
       return [amountOut]
     } catch (e) {
-      console.log(`${this}: Failed to quote ${amountIn} -> ${this.tokenOut}`)
+      // console.log(`${this}: Failed to quote ${amountIn} -> ${this.tokenOut}`)
       return [this.tokenOut.zero]
     }
   }

@@ -20,7 +20,7 @@ const BASE_CONFIG = {
   mixedRouter: '0x0A5aA5D3a4d28014f967Bf0f29EAA3FF9807D5c6',
   swapRouter: '0xBE6D8f0d05cC4be24d5167a3eF062215bE6D18a5',
   routerCaller: '0xeA698DeEAD412456dbc488F8A9066326D98C3435',
-  sugar: '0xc301856b4262e49e9239ec8a2d0c754d5ae317c0',
+  sugar: '0x92294D631E995f1dd9CeE4097426e6a71aB87Bcf',
 }
 const routers: Record<number, typeof BASE_CONFIG> = {
   8453: BASE_CONFIG,
@@ -130,16 +130,21 @@ export const setupAerodromeRouter = async (universe: Universe) => {
   await loadPools(1000, 0)
   await loadPools(1000, 1000)
   await loadPools(1000, 2000)
+  await loadPools(1000, 3000)
+  await loadPools(1000, 4000)
+  await loadPools(1000, 5000)
+  await loadPools(1000, 6000)
+  await loadPools(1000, 7000)
 
-  const addrs = [
-    '0x2578365b3dfa7ffe60108e181efb79feddec2319',
-    '0x9eb620fbfea2072f4b22b30246775e5a0f0012a1',
-  ]
-  await Promise.all(
-    addrs.map(async (addr) =>
-      loadPoolExplicit(Address.from(addr)).catch((e) => {})
-    )
-  )
+  // const addrs = [
+  //   '0x2578365b3dfa7ffe60108e181efb79feddec2319',
+  //   '0x9eb620fbfea2072f4b22b30246775e5a0f0012a1',
+  // ]
+  // await Promise.all(
+  //   addrs.map(async (addr) =>
+  //     loadPoolExplicit(Address.from(addr)).catch((e) => {})
+  //   )
+  // )
 
   return {
     context: aerodromeContext,

@@ -130,16 +130,21 @@ export const setupAerodromeRouter = async (universe: Universe) => {
   await loadPools(1000, 0)
   await loadPools(1000, 1000)
   await loadPools(1000, 2000)
+  await loadPools(1000, 3000)
+  await loadPools(1000, 4000)
+  await loadPools(1000, 5000)
+  await loadPools(1000, 6000)
+  await loadPools(1000, 7000)
 
-  const addrs = [
-    '0x2578365b3dfa7ffe60108e181efb79feddec2319',
-    '0x9eb620fbfea2072f4b22b30246775e5a0f0012a1',
-  ]
-  await Promise.all(
-    addrs.map(async (addr) =>
-      loadPoolExplicit(Address.from(addr)).catch((e) => {})
-    )
-  )
+  // const addrs = [
+  //   '0x2578365b3dfa7ffe60108e181efb79feddec2319',
+  //   '0x9eb620fbfea2072f4b22b30246775e5a0f0012a1',
+  // ]
+  // await Promise.all(
+  //   addrs.map(async (addr) =>
+  //     loadPoolExplicit(Address.from(addr)).catch((e) => {})
+  //   )
+  // )
 
   return {
     context: aerodromeContext,

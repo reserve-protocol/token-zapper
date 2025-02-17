@@ -49,6 +49,10 @@ export const COMMON_TOKENS = {
   ABX: '0xeBcda5b80f62DD4DD2A96357b42BB6Facbf30267',
   CLX: '0x44551ca46fa5592bb572e20043f7c3d54c85cad7',
   VTF: '0x47686106181b3cefe4eaf94c4c10b48ac750370b',
+  AI: '0xfe45eda533e97198d9f3deeda9ae6c147141f6f9',
+  MVDA25: '0xd600e748c17ca237fcb5967fa13d688aff17be78',
+  BGCI: '0x23418de10d422ad71c9d5713a2b8991a9c586443',
+  MVTT10F: '0xe8b46b116d3bdfa787ce9cf3f5acc78dc7ca380e',
 } as const
 
 export const RTOKENS = {

@@ -82,6 +82,7 @@ const configs: Record<ChainId, IUniswapV3Config> = {
       '0xf511e60cbcc042cb6fe3efdfdf045b784dc0b43c',
       '0xfdccd04ddca9ecf052e8e9ef6bd09a9b323fbf49',
       '0xfe3816b0deccf83ca11f6da54b108d0a6469ed1b',
+      '0xba6042ca6fd1f4be67c09bbb5e522e2396a3c7ab',
     ],
     staticPools: baseUniV3.map((i) => ({
       ...i,

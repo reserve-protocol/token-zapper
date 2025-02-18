@@ -13,10 +13,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // })
   // console.log('curveRouterCall deployed to:', curveRouterCall.address)
 
-  // const folioHelper = await hre.deployments.deploy('FolioMintRedeem', {
-  //   from: deployer,
-  // })
-  // console.log('FolioMintRedeem deployed to:', folioHelper.address)
+  const folioHelper = await hre.deployments.deploy('FolioMintRedeem', {
+    from: deployer,
+  })
+  console.log('FolioMintRedeem deployed to:', folioHelper.address)
 
   const rTokenMintHelper = await hre.deployments.deploy('RTokenMintHelper', {
     from: deployer,

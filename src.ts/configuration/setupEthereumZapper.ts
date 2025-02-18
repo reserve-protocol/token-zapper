@@ -11,7 +11,6 @@ import { StakeDAODepositAction } from '../action/StakeDAO'
 import { YearnDepositAction, YearnWithdrawAction } from '../action/Yearn'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
-import { wait } from '../base/controlflow'
 import {
   IBeefyVault__factory,
   IGaugeStakeDAO__factory,
@@ -35,12 +34,16 @@ import { setupFrxETH } from './setupFrxETH'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupPXETH } from './setupPXETH'
 import { setupRETH } from './setupRETH'
-import { setupUniswapV2 } from './setupUniswapV2'
-import { setupUniswapV3 } from './setupUniswapV3'
+import { setupStakeDAO } from './setupStakeDAO'
+import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
+import { setupUniswapV3, UniswapV3Context } from './setupUniswapV3'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { setupYearn } from './setupYearn'
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
+  const logger = universe.logger.child({
+    module: 'setupEthereumZapper',
+  })
   await universe.provider.getNetwork()
   await loadEthereumTokenList(universe)
   const eth = universe.nativeToken
@@ -73,7 +76,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await setupWrappedGasToken(universe)
 
   // Set up compound
-
   universe.addIntegration(
     'compoundV2',
     await loadCompV2Deployment('CompV2', universe, PROTOCOL_CONFIGS.compoundV2)
@@ -117,10 +119,13 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea')
   )
 
+  let uniswapV3Ctx: UniswapV3Context
+  let uniswapV2Ctx: UniswapV2Context
+
   const initUniswapV3 = async () => {
     try {
-      const router = await setupUniswapV3(universe)
-      const venue = await router.venue()
+      uniswapV3Ctx = await setupUniswapV3(universe)
+      const venue = await uniswapV3Ctx.venue()
       const uniswap = universe.addIntegration('uniswapV3', venue)
       universe.addTradeVenue(uniswap)
     } catch (e) {
@@ -131,7 +136,10 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   const initUniswapV2 = async () => {
     try {
-      await setupUniswapV2(universe)
+      const ctx = await setupUniswapV2(universe)
+      if (ctx) {
+        uniswapV2Ctx = ctx
+      }
     } catch (e) {
       console.log('Failed to load uniswapV2')
       console.log(e)
@@ -185,6 +193,10 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       'ETHX'
     )
   )
+  await setupYearn(universe, PROTOCOL_CONFIGS.yearn)
+  await setupBeefy(universe, PROTOCOL_CONFIGS.beefy)
+  await setupConcentrator(universe, PROTOCOL_CONFIGS.concentrator)
+  await setupStakeDAO(universe, PROTOCOL_CONFIGS.stakeDAO)
   universe.addAction(depositToETHX)
   universe.mintableTokens.set(universe.commonTokens.ETHx, depositToETHX)
 
@@ -429,12 +441,12 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   }
 
   const initMaverick = async () => {
-    // try {
-    //   await setupMaverick(universe)
-    // } catch (e) {
-    //   console.log(e)
-    //   console.log('Failed to load mango')
-    // }
+    try {
+      await setupMaverick(universe)
+    } catch (e) {
+      console.log(e)
+      console.log('Failed to load maverick')
+    }
   }
 
   const tasks = [
@@ -498,4 +510,51 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   })
 
   console.log('Ethereum zapper setup complete')
+
+  if (!universe.config.dynamicConfigURL) {
+    return
+  }
+  try {
+    universe.logger.info(
+      `Loading dynamic pool data from ${universe.config.dynamicConfigURL}`
+    )
+    const config = await fetch(universe.config.dynamicConfigURL)
+    const configJson: {
+      uniswap: {
+        v2: string[]
+        v3: string[]
+      }
+      aerodrome: {
+        stableOrVolatile: string[]
+      }
+    } = await config.json()
+
+    await Promise.all(
+      configJson.uniswap.v2.map(async (poolAddr) => {
+        try {
+          const pool = await uniswapV2Ctx!.loadPool(
+            Address.from(poolAddr.toLowerCase())
+          )
+          universe.addAction(pool.swap01)
+          universe.addAction(pool.swap10)
+        } catch (e) {}
+      })
+    )
+    await Promise.all(
+      configJson.uniswap.v3.map(async (poolAddr) => {
+        try {
+          const pool = await uniswapV3Ctx!.loadPool(
+            Address.from(poolAddr.toLowerCase())
+          )
+          universe.addAction(pool.swap01)
+          universe.addAction(pool.swap10)
+        } catch (e) {
+          console.log(e)
+        }
+      })
+    )
+  } catch (e) {
+    logger.error('Failed to load dynamic pool data')
+    logger.error(e)
+  }
 }

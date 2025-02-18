@@ -25,13 +25,16 @@ dotenv.config()
 
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
-  useNewZapperContract: false,
+
   cacheResolution: 8,
-  zapMaxDustProduced: 3,
-  maxPhase2TimeRefinementTime: 10000,
-  optimisationSteps: 35,
-  minimiseDustPhase1Steps: 35,
-  minimiseDustPhase2Steps: 35,
+  maxPhase2TimeRefinementTime: 1000,
+  optimisationSteps: 30,
+  minimiseDustPhase1Steps: 10,
+  minimiseDustPhase2Steps: 10,
+  zapMaxDustProduced: 8,
+  zapMaxValueLoss: 5,
+  rejectHighDust: false,
+  useNewZapperContract: true,
 }
 
 if (process.env.MAINNET_PROVIDER == null) {
@@ -174,7 +177,7 @@ export const testUser = process.env.TEST_USER
   : Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 
 const issueanceCases = [
-  makeTestCase(10000, t.USDC, rTokens.dgnETH),
+  // makeTestCase(10000, t.USDC, rTokens.dgnETH),
   // makeTestCase(100000, t.DAI, rTokens.eUSD),
   // makeTestCase(1000000, t.USDT, rTokens.eUSD),
   // makeTestCase(1000000, t.USDC, rTokens.USD3),
@@ -191,6 +194,10 @@ const issueanceCases = [
   // makeTestCase(10000, t.USDC, rTokens.dgnETH),
 
   // makeTestCase(330, t.pxETH, t['stkcvxETH+ETH-f']),
+
+  makeTestCase(1, t.WETH, t.testDEFI),
+  makeTestCase(1, t.WETH, t.testDFX),
+  makeTestCase(1, t.WETH, t.testGFT),
 ]
 
 const redeemCases = [
@@ -322,7 +329,6 @@ beforeAll(async () => {
       }
     )) as any
 
-    await universe.initialized
     console.log('Ethereum zapper setup complete')
     const tokens = [...universe.tokens.values()].map((i) => i.toJson())
     fs.writeFileSync(

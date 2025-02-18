@@ -17,6 +17,7 @@ import { setupOdosPricing } from './setupOdosPricing'
 import { setupReservePricing } from './setupReservePricing'
 import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
 import { AerodromeContext } from '../action/Aerodrome'
+import { setupMaverick } from './maverick'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
@@ -228,7 +229,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   }
   let done = 0
   const initMaverick = async () => {
-    // await setupMaverick(universe)
+    await setupMaverick(universe)
   }
 
   const tasks = [
@@ -297,63 +298,63 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     Promise.resolve(universe.commonTokens.USDC)
   )
 
-  universe.tokenClass.set(
-    universe.commonTokens.BGCI,
-    Promise.resolve(universe.commonTokens.WETH)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.MVDA25,
-    Promise.resolve(universe.commonTokens.WETH)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.MVTT10F,
-    Promise.resolve(universe.commonTokens.WETH)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.VTF,
-    Promise.resolve(universe.commonTokens.WETH)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.AI,
-    Promise.resolve(universe.commonTokens.WETH)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.CLX,
-    Promise.resolve(universe.commonTokens.WETH)
-  )
-  universe.tokenClass.set(
-    universe.commonTokens.ABX,
-    Promise.resolve(universe.commonTokens.WETH)
-  )
+  // universe.tokenClass.set(
+  //   universe.commonTokens.BGCI,
+  //   Promise.resolve(universe.commonTokens.WETH)
+  // )
+  // universe.tokenClass.set(
+  //   universe.commonTokens.MVDA25,
+  //   Promise.resolve(universe.commonTokens.WETH)
+  // )
+  // universe.tokenClass.set(
+  //   universe.commonTokens.MVTT10F,
+  //   Promise.resolve(universe.commonTokens.WETH)
+  // )
+  // universe.tokenClass.set(
+  //   universe.commonTokens.VTF,
+  //   Promise.resolve(universe.commonTokens.WETH)
+  // )
+  // universe.tokenClass.set(
+  //   universe.commonTokens.AI,
+  //   Promise.resolve(universe.commonTokens.WETH)
+  // )
+  // universe.tokenClass.set(
+  //   universe.commonTokens.CLX,
+  //   Promise.resolve(universe.commonTokens.WETH)
+  // )
+  // universe.tokenClass.set(
+  //   universe.commonTokens.ABX,
+  //   Promise.resolve(universe.commonTokens.WETH)
+  // )
 
-  universe.preferredToken.set(
-    universe.commonTokens.BGCI,
-    universe.commonTokens.WETH
-  )
-  universe.preferredToken.set(
-    universe.commonTokens.MVDA25,
-    universe.commonTokens.WETH
-  )
-  universe.preferredToken.set(
-    universe.commonTokens.MVTT10F,
-    universe.commonTokens.WETH
-  )
-  universe.preferredToken.set(
-    universe.commonTokens.VTF,
-    universe.commonTokens.WETH
-  )
-  universe.preferredToken.set(
-    universe.commonTokens.AI,
-    universe.commonTokens.WETH
-  )
-  universe.preferredToken.set(
-    universe.commonTokens.CLX,
-    universe.commonTokens.WETH
-  )
-  universe.preferredToken.set(
-    universe.commonTokens.ABX,
-    universe.commonTokens.WETH
-  )
+  // universe.preferredToken.set(
+  //   universe.commonTokens.BGCI,
+  //   universe.commonTokens.WETH
+  // )
+  // universe.preferredToken.set(
+  //   universe.commonTokens.MVDA25,
+  //   universe.commonTokens.WETH
+  // )
+  // universe.preferredToken.set(
+  //   universe.commonTokens.MVTT10F,
+  //   universe.commonTokens.WETH
+  // )
+  // universe.preferredToken.set(
+  //   universe.commonTokens.VTF,
+  //   universe.commonTokens.WETH
+  // )
+  // universe.preferredToken.set(
+  //   universe.commonTokens.AI,
+  //   universe.commonTokens.WETH
+  // )
+  // universe.preferredToken.set(
+  //   universe.commonTokens.CLX,
+  //   universe.commonTokens.WETH
+  // )
+  // universe.preferredToken.set(
+  //   universe.commonTokens.ABX,
+  //   universe.commonTokens.WETH
+  // )
 
   universe.tokenClass.set(
     universe.rTokens.bsd,

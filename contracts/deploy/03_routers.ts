@@ -3,10 +3,10 @@ import { DeployFunction } from 'hardhat-deploy/types'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts()
-  // const uniV3RouterCall = await hre.deployments.deploy('UniV3RouterCall', {
-  //   from: deployer,
-  // })
-  // console.log('uniV3RouterCall deployed to:', uniV3RouterCall.address)
+  const uniV3RouterCall = await hre.deployments.deploy('UniV3RouterCall', {
+    from: deployer,
+  })
+  console.log('uniV3RouterCall deployed to:', uniV3RouterCall.address)
 
   // const CurveStableSwapNGHelper = await hre.deployments.deploy(
   //   'CurveStableSwapNGHelper',

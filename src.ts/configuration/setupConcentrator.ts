@@ -7,7 +7,7 @@ type ConcentratorConfig = {
   pid: number
 }
 
-export const setupConcentrator = (
+export const setupConcentrator = async (
   universe: EthereumUniverse,
   config: ConcentratorConfig
 ) => {

@@ -277,7 +277,10 @@ class UniswapV2Pool {
       BigInt(o2 === '0x' ? '0x0' : sentAmount) - balAfterSent
 
     let buyFee = ((sentAmount - poolOutSent) * FEE_SCALE) / sentAmount
-    let sellFee = ((poolOutSent - poolInReceived) * FEE_SCALE) / poolOutSent
+    let sellFee =
+      poolOutSent === 0n
+        ? 0n
+        : ((poolOutSent - poolInReceived) * FEE_SCALE) / poolOutSent
 
     if (buyFee === 0n && sellFee === 0n) {
       return {

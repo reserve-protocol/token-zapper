@@ -3706,7 +3706,7 @@ export class TokenFlowGraphSearcher {
   }
 
   private doesTradePathExistCache = new Map<string, Promise<boolean>>()
-  private async doesTradePathExist(inputQty: TokenQuantity, output: Token) {
+  public async doesTradePathExist(inputQty: TokenQuantity, output: Token) {
     const key = `${inputQty.token}.${output}`
     let prev = this.doesTradePathExistCache.get(key)
     if (prev == null) {

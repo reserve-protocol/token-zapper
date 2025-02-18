@@ -712,6 +712,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     const id = action.actionId;
     if (this.actionById.has(id)) {
       this.logger.warn(`Duplicate action: ${id}`)
+      return this
     }
     this.actionById.set(id, action)
     if (this.allActions.has(action)) {

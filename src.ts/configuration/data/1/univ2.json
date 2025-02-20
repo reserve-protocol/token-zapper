@@ -27566,17 +27566,6 @@
     }
   },
   {
-    "id": "0x50b6071561f068963Bcfe2B341126cd6aCcaFAFb",
-    "token0": {
-      "id": "0xd233D1f6FD11640081aBB8db125f722b5dc729dc",
-      "symbol": "USD"
-    },
-    "token1": {
-      "id": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-      "symbol": "USDT"
-    }
-  },
-  {
     "id": "0x74cD6e0c40Ac5ABC19C0EC42329A4f4f84c964C2",
     "token0": {
       "id": "0xB67CF01958B1a06C330f5A46501Fe1Fb2Ec82Aaa",

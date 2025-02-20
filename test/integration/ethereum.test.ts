@@ -197,16 +197,17 @@ const issueanceCases = [
   // makeTestCase(1, t.WETH, rTokens['ETH+']),
   // makeTestCase(0.70133, t['stkcvxETH+ETH-f'], t.Re7WETH),
   // makeTestCase(1000, t.WETH, rTokens['ETH+']),
-  // makeTestCase(10, t.WETH, rTokens.hyUSD),
-  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  // makeTestCase(10000, t.DAI, rTokens.hyUSD),
-  // makeTestCase(10000, t.USDT, rTokens.hyUSD),
+
+  makeTestCase(10, t.WETH, rTokens.hyUSD),
+  makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  makeTestCase(10000, t.DAI, rTokens.hyUSD),
+  makeTestCase(10000, t.USDT, rTokens.hyUSD),
+  makeTestCase(10000, t.sDAI, rTokens.hyUSD),
+  makeTestCase(10000, t.COMP, rTokens.hyUSD),
+
   // makeTestCase(50, t.WETH, rTokens.dgnETH),
   // makeTestCase(10000, t.USDC, rTokens.dgnETH),
   // makeTestCase(10000, t.USDT, rTokens.dgnETH),
-
-  // makeTestCase(10000, t.sDAI, rTokens.hyUSD),
-  makeTestCase(10000, t.COMP, rTokens.hyUSD),
 
   // makeTestCase(10, t.pxETH, rTokens.dgnETH),
 
@@ -226,9 +227,10 @@ const redeemCases = [
   // makeTestCase(10000, rTokens.USD3, t.WETH),
   // makeTestCase(10000, rTokens.USD3, t.DAI),
 
-  // makeTestCase(10000, rTokens.hyUSD, t.USDC),
-  // makeTestCase(10000, rTokens.hyUSD, t.WETH),
-  // makeTestCase(10000, rTokens.hyUSD, t.DAI),
+  makeTestCase(50000, rTokens.hyUSD, t.USDC),
+  makeTestCase(50000, rTokens.hyUSD, t.USDT),
+  makeTestCase(50000, rTokens.hyUSD, t.WETH),
+  makeTestCase(50000, rTokens.hyUSD, t.DAI),
 
   // makeTestCase(5, rTokens['ETH+'], t.WETH),
   // // makeTestCase(5, rTokens['ETH+'], t.reth),
@@ -239,11 +241,11 @@ const redeemCases = [
   // makeTestCase(5, rTokens.dgnETH, t.USDC),
   // makeTestCase(5, rTokens.dgnETH, t.USDT),
 
-  makeTestCase(21221.74, rTokens.hyUSD, t.RSR),
-  makeTestCase(10000, rTokens.eUSD, t.RSR),
-  makeTestCase(10000, rTokens.USD3, t.RSR),
-  makeTestCase(5, rTokens['ETH+'], t.RSR),
-  makeTestCase(5, rTokens.dgnETH, t.RSR),
+  // makeTestCase(21221.74, rTokens.hyUSD, t.RSR),
+  // makeTestCase(10000, rTokens.eUSD, t.RSR),
+  // makeTestCase(10000, rTokens.USD3, t.RSR),
+  // makeTestCase(5, rTokens['ETH+'], t.RSR),
+  // makeTestCase(5, rTokens.dgnETH, t.RSR),
 ]
 
 const individualIntegrations = [

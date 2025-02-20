@@ -3343,7 +3343,50 @@ const optimise = async (
     .filter(
       (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
     )
+
+  const maxValueSlippage = universe.config.zapMaxValueLoss / 100
+  const maxDustFraction = universe.config.zapMaxDustProduced / 100
+
+  const checkValueDustSlippage = (bestSoFar: TFGResult) => {
+    const valueSlippage =
+      bestSoFar.result.totalValue / bestSoFar.result.inputValue
+    if (valueSlippage < 1 - maxValueSlippage) {
+      logger.info(bestSoFar.result.outputs.join(', '))
+      logger.error(
+        `Value slippage is too high: ${((1 - valueSlippage) * 100).toFixed(
+          2
+        )}% for ${bestSoFar.result.inputs.join(', ')} -> ${
+          bestSoFar.result.output.token
+        } - Max allowed value slippage ${universe.config.zapMaxValueLoss}%`
+      )
+
+      // throw new Error('Value slippage is too high')
+    }
+
+    const dustFraction =
+      bestSoFar.result.dustValue / bestSoFar.result.totalValue
+    if (dustFraction > maxDustFraction) {
+      logger.debug(bestSoFar.result.outputs.join(', '))
+      logger.debug(bestSoFar.result.dustValue)
+      logger.debug(bestSoFar.result.totalValue)
+      logger.debug(bestSoFar.result.outputQuantity)
+      logger.error(
+        `Dust fraction is too high: ${(dustFraction * 100).toFixed(
+          2
+        )}% for ${bestSoFar.result.inputs.join(', ')} -> ${
+          bestSoFar.result.output.token
+        } - Max allowed dust ${(maxDustFraction * 100).toFixed(2)}%`
+      )
+      if (opts?.rejectHighDust) {
+        throw new Error('Dust fraction is too high')
+      }
+    }
+  }
+
   if (optimisationNodes.length === 0) {
+    logger.debug('Graph after optimisation')
+    logger.debug(g.toDot().join('\n'))
+    checkValueDustSlippage(bestSoFar)
     return g
   }
   bestSoFar = await optimiseGlobal(
@@ -3369,9 +3412,6 @@ const optimise = async (
 
   const maxPhase2TimeRefinementTime =
     universe.config.maxPhase2TimeRefinementTime
-  const maxValueSlippage = universe.config.zapMaxValueLoss / 100
-  const maxDustFraction = universe.config.zapMaxDustProduced / 100
-
   // Iteratively try and improve result until it would pass checks or we run out of time
   let scaleMultiplier = 1
   let refinementSteps = 0
@@ -3455,39 +3495,7 @@ const optimise = async (
 
   logger.debug(g.toDot().join('\n'))
 
-  const valueSlippage =
-    bestSoFar.result.totalValue / bestSoFar.result.inputValue
-  if (valueSlippage < 1 - maxValueSlippage) {
-    logger.info(bestSoFar.result.outputs.join(', '))
-    logger.error(
-      `Value slippage is too high: ${((1 - valueSlippage) * 100).toFixed(
-        2
-      )}% for ${bestSoFar.result.inputs.join(', ')} -> ${
-        bestSoFar.result.output.token
-      } - Max allowed value slippage ${universe.config.zapMaxValueLoss}%`
-    )
-
-    // throw new Error('Value slippage is too high')
-  }
-
-  const dustFraction = bestSoFar.result.dustValue / bestSoFar.result.totalValue
-  if (dustFraction > maxDustFraction) {
-    logger.debug(bestSoFar.result.outputs.join(', '))
-    logger.debug(bestSoFar.result.dustValue)
-    logger.debug(bestSoFar.result.totalValue)
-    logger.debug(bestSoFar.result.outputQuantity)
-    logger.error(
-      `Dust fraction is too high: ${(dustFraction * 100).toFixed(
-        2
-      )}% for ${bestSoFar.result.inputs.join(', ')} -> ${
-        bestSoFar.result.output.token
-      } - Max allowed dust ${(maxDustFraction * 100).toFixed(2)}%`
-    )
-    if (opts?.rejectHighDust) {
-      throw new Error('Dust fraction is too high')
-    }
-  }
-
+  checkValueDustSlippage(bestSoFar)
   return g
 }
 
@@ -3902,8 +3910,6 @@ export class TokenFlowGraphSearcher {
       `${input} -> ${output}`
     )
 
-    const outTokCls = await this.universe.tokenClass.get(output)
-
     let inputNode = graph.getTokenNode(inputToken)
 
     if (this.universe.isTokenBurnable(inputToken)) {
@@ -3917,6 +3923,9 @@ export class TokenFlowGraphSearcher {
           this.universe.preferredToken.get(output) ??
           (await this.universe.tokenClass.get(output))
       }
+
+      console.log(`target tokens: ${targetToken}`)
+      console.log('outputTokens', outputTokens.join(', '))
 
       for (const outputToken of outputTokens) {
         if (outputToken === output || outputToken === targetToken) {
@@ -3933,7 +3942,14 @@ export class TokenFlowGraphSearcher {
       }
 
       if (targetToken === output) {
-        const o = await optimise(this.universe, graph, [input], [output], opts)
+        const o = await optimise(
+          this.universe,
+          graph,
+          [input],
+          [output],
+          opts,
+          true
+        )
         this.registry.define(input, output, o)
         return o
       }

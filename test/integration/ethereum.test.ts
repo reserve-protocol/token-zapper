@@ -33,7 +33,7 @@ const searcherOptions: SearcherOptions = {
   minimiseDustPhase2Steps: 20,
   zapMaxDustProduced: 1,
   zapMaxValueLoss: 1,
-  rejectHighDust: false,
+  rejectHighDust: true,
   useNewZapperContract: true,
 }
 
@@ -261,20 +261,20 @@ const redeemCases = [
   makeTestCase(5, rTokens.dgnETH, t.DAI),
   makeTestCase(5, rTokens.dgnETH, t.RSR),
 
-  // makeTestCase(5, rTokens['ETH+'], t.WETH),
-  // // makeTestCase(5, rTokens['ETH+'], t.reth),
-  // // makeTestCase(5, rTokens['ETH+'], t.frxeth),
-  // makeTestCase(5, rTokens['ETH+'], t.USDC),
+  makeTestCase(5, rTokens['ETH+'], t.WETH),
+  // makeTestCase(5, rTokens['ETH+'], t.reth),
+  // makeTestCase(5, rTokens['ETH+'], t.frxeth),
+  makeTestCase(5, rTokens['ETH+'], t.USDC),
 
-  // makeTestCase(5, rTokens.dgnETH, t.WETH),
-  // makeTestCase(5, rTokens.dgnETH, t.USDC),
-  // makeTestCase(5, rTokens.dgnETH, t.USDT),
+  makeTestCase(5, rTokens.dgnETH, t.WETH),
+  makeTestCase(5, rTokens.dgnETH, t.USDC),
+  makeTestCase(5, rTokens.dgnETH, t.USDT),
 
-  // makeTestCase(21221.74, rTokens.hyUSD, t.RSR),
-  // makeTestCase(10000, rTokens.eUSD, t.RSR),
-  // makeTestCase(10000, rTokens.USD3, t.RSR),
-  // makeTestCase(5, rTokens['ETH+'], t.RSR),
-  // makeTestCase(5, rTokens.dgnETH, t.RSR),
+  makeTestCase(21221.74, rTokens.hyUSD, t.RSR),
+  makeTestCase(10000, rTokens.eUSD, t.RSR),
+  makeTestCase(10000, rTokens.USD3, t.RSR),
+  makeTestCase(5, rTokens['ETH+'], t.RSR),
+  makeTestCase(5, rTokens.dgnETH, t.RSR),
 ]
 
 const individualIntegrations = [

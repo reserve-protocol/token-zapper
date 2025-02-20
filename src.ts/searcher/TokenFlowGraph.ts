@@ -104,6 +104,7 @@ export class NodeProxy {
 
   public get isOptimisable() {
     this.checkVersion()
+
     if (this.nodeType === NodeType.Both) {
       return true
     }
@@ -626,7 +627,6 @@ enum NodeType {
   Split,
   SplitWithDust,
   Action,
-
   Optimisation,
   Fanout,
   Both,
@@ -826,6 +826,7 @@ const createResultActionNode = (
         ? []
         : outputs.filter((i) => action.dustTokens.includes(i.token)),
     price: 0,
+    priceTotalOut: 0,
     output: outputs[0],
     txFee: universe.nativeToken.zero,
     txFeeValue: 0,
@@ -884,15 +885,19 @@ const createResult = async (
     const price =
       inputSum === 0 ? 0 : outputTokenValue / (inputSum + gasPrice.asNumber())
 
+    const priceTotalOut =
+      inputSum === 0 ? 0 : outputSum / (inputSum + gasPrice.asNumber())
+
     const dustValue = outputSum - outputTokenValue
     return {
       inputs,
       outputs,
       dust: outputs.filter((o) => o.token !== output.token && o.amount >= 1n),
       price,
+      priceTotalOut,
       output,
       txFee,
-      txFeeValue: txFee.asNumber(),
+      txFeeValue: gasPrice.asNumber(),
       inputQuantity,
       outputQuantity,
       inputValue: inputSum,
@@ -1203,6 +1208,22 @@ type SerializedTFG = ReturnType<typeof serializeTFG>
 export class TokenFlowGraph {
   [Symbol.toStringTag]: string = 'TokenFlowGraph'
 
+  public addresesInUse() {
+    const out = new Set<Address>()
+    for (const node of this._nodes) {
+      if (node == null) {
+        continue
+      }
+      if (node.action instanceof BaseAction) {
+        if (node.action.oneUsePrZap) {
+          for (const addr of node.action.addressesInUse) {
+            out.add(addr)
+          }
+        }
+      }
+    }
+    return out
+  }
   public toString() {
     return `${this[Symbol.toStringTag]}(${this.name})`
   }
@@ -2488,6 +2509,9 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
     }
   }
   const findTradeSplits = async (node: NodeProxy, inputs: TokenQuantity[]) => {
+    // if (inputs.every((i) => i.isZero)) {
+    //   return
+    // }
     const actions = fanoutNodes[node.id]
     if (actions.length === 0) {
       return
@@ -2635,6 +2659,9 @@ const minimizeDust = async (
   steps: number = 20,
   initialScale: number = 1
 ) => {
+  if (steps === 0) {
+    return currentResult
+  }
   const nodesToProcess = nodesToOptimise
 
   const dustTokens: Token[] = []
@@ -2815,6 +2842,9 @@ const optimiseGlobal = async (
   startSize: number = 1,
   optimisationNodes: NodeProxy[] = []
 ) => {
+  if (optimisationSteps === 0) {
+    return bestSoFar
+  }
   const maxTime = universe.config.maxOptimisationTime
   // if (optimisationNodes.length > 7) {
   //   optimisationNodes = nodesSorted.filter((n) => n.isOptimisable)
@@ -3467,6 +3497,100 @@ export class TokenFlowGraphSearcher {
     private readonly registry: ITokenFlowGraphRegistry
   ) {}
 
+  private async determineBestTradeMintSplit(
+    mintGraph: TokenFlowGraph,
+    inputQty: TokenQuantity,
+    output: Token,
+    opts: SearcherOptions
+  ) {
+    console.log(`Running determineBestTradeMintSplit phase`)
+    const tradeGraphBuilder = TokenFlowGraphBuilder.create1To1(
+      this.universe,
+      inputQty,
+      output,
+      `Trade ${inputQty} -> ${output}`
+    )
+    await this.addTrades(tradeGraphBuilder, inputQty, output, false)
+    const tradeGraph = await optimise(
+      this.universe,
+      tradeGraphBuilder,
+      [inputQty],
+      [output],
+      {
+        ...opts,
+        optimisationSteps: 0,
+        maxPhase2TimeRefinementTime: 0,
+        minimiseDustPhase1Steps: 0,
+        minimiseDustPhase2Steps: 0,
+        refinementOptimisationSteps: 0,
+        maxOptimisationTime: 4000,
+      }
+    )
+
+    const onePart = inputQty.scalarDiv(
+      BigInt(opts.topLevelTradeMintOptimisationParts)
+    )
+    const mintOutPart = await mintGraph.evaluate(this.universe, [onePart])
+    const mintOutFull = await mintGraph.evaluate(this.universe, [inputQty])
+    const tradeOutPart = await tradeGraph.evaluate(this.universe, [onePart])
+    if (
+      tradeOutPart.result.price == 0 ||
+      tradeOutPart.result.priceTotalOut < mintOutPart.result.priceTotalOut / 5
+    ) {
+      return mintGraph
+    }
+    const tradeOutFull = await tradeGraph.evaluate(this.universe, [inputQty])
+
+    console.log(`Trade price 1/10: ${tradeOutPart.result.priceTotalOut}`)
+    console.log(
+      `${tradeOutPart.result.inputQuantity} ${tradeOutPart.result.inputValue} -> ${tradeOutPart.result.outputQuantity} ${tradeOutPart.result.outputValue} (${tradeOutPart.result.txFeeValue})`
+    )
+    console.log(`Mint price 1/10: ${mintOutPart.result.priceTotalOut}`)
+    console.log(
+      `${mintOutPart.result.inputQuantity} ${mintOutPart.result.inputValue} -> ${mintOutPart.result.outputQuantity} ${mintOutPart.result.outputValue} (${mintOutPart.result.txFeeValue})`
+    )
+
+    console.log(`Trade price full: ${tradeOutFull.result.priceTotalOut}`)
+    console.log(`Mint priceTotalOut full: ${mintOutFull.result.priceTotalOut}`)
+
+    if (mintOutFull.result.priceTotalOut > tradeOutPart.result.priceTotalOut) {
+      console.log(
+        `Early return of determineBestTradeMintSplit: mint graph always better`
+      )
+      return mintGraph
+    }
+    if (tradeOutFull.result.price > mintOutPart.result.price) {
+      console.log(
+        `Early return of determineBestTradeMintSplit: trade graph always better`
+      )
+      return tradeGraph
+    }
+
+    // console.log(`Best result is a mix between mint and trade`)
+    // const parts =
+    //   tradeOutPart.result.price > mintOutPart.result.price
+    //     ? [onePart, inputQty.token.zero]
+    //     : [inputQty.token.zero, onePart]
+    // for (let i = 1; i < opts.topLevelTradeMintOptimisationParts; i++) {
+    //   const newMintparts = parts[0].add(onePart)
+    //   const newTradeParts = parts[1].add(onePart)
+
+    //   const mintOut = await mintGraph.evaluate(this.universe, [newMintparts])
+    //   const tradeOut = await tradeGraph.evaluate(this.universe, [newTradeParts])
+
+    //   if (mintOut.result.price > tradeOut.result.price) {
+    //     parts[0] = newMintparts
+    //   } else {
+    //     parts[1] = newTradeParts
+    //   }
+    // }
+
+    // console.log(`Ideal split: mintSize = ${parts[0]}, tradeSize = ${parts[1]}`)
+
+    console.log(`Returning mintGraph`)
+    return mintGraph
+  }
+
   private async rTokenRedeemGraph(
     parent: TokenFlowGraphBuilder,
     rToken: Token
@@ -3540,14 +3664,14 @@ export class TokenFlowGraphSearcher {
       inputQty.scalarDiv(2n),
       output
     )
-    if (!tradePathExists || (topLevel && txGenOptions?.useTrade === false)) {
+    if (!tradePathExists || topLevel) {
       await this.tokenMintingGraph(graph, inputQty, output, inputNode)
     } else {
       const splitNode = graph.addSplittingNode(
         inputQty.token,
         inputNode,
         NodeType.Optimisation,
-        `${topLevel ? 'Top level:' : ''} Source ${output} either mint or trade`
+        `Source ${output} either mint or trade`
       )
 
       await this.tokenMintingGraph(graph, inputQty, output, splitNode)
@@ -3658,6 +3782,8 @@ export class TokenFlowGraphSearcher {
     for (const dustToken of mintAction.dustTokens) {
       mintActionNode.forward(dustToken, 1, graph.graph.end)
     }
+
+    return mintSubgraphInputNode
   }
 
   private async tokenRedemptionGraph(
@@ -3718,11 +3844,6 @@ export class TokenFlowGraphSearcher {
               output,
               false
             )
-          console.log(
-            `${inputQty.token} -> ${output} path: ${path.steps
-              .map((i) => i.actions.join(','))
-              .join(';')}`
-          )
           return (
             path.steps.length !== 0 &&
             path.steps[path.steps.length - 1].outputToken === output
@@ -3744,8 +3865,8 @@ export class TokenFlowGraphSearcher {
     path: {
       steps: {
         actions: BaseAction[]
-        outputToken: Token
         inputToken: Token
+        outputToken: Token
       }[]
     },
     name?: string,
@@ -3907,8 +4028,14 @@ export class TokenFlowGraphSearcher {
       inputToken = targetToken
     }
 
-    const preferredInputToken = this.universe.preferredToken.get(output)
-    if (preferredInputToken != null && preferredInputToken !== inputToken) {
+    const preferredInputToken =
+      this.universe.preferredToken.get(output) ??
+      (await this.universe.tokenClass.get(output))
+    if (
+      preferredInputToken != null &&
+      preferredInputToken !== inputToken &&
+      preferredInputToken !== output
+    ) {
       await this.addTrades(
         graph,
         await inputToken.fromUSD(inputValue),
@@ -3921,14 +4048,26 @@ export class TokenFlowGraphSearcher {
     }
 
     if (this.universe.isTokenMintable(output)) {
-      await this.tokenSourceGraph(
-        graph,
-        await inputToken.fromUSD(inputValue),
-        output,
-        inputNode,
-        true,
-        txGenOptions
-      )
+      const inputQty = await inputToken.fromUSD(inputValue)
+      await this.tokenSourceGraph(graph, inputQty, output, inputNode, true)
+      const tradePathExists = await this.doesTradePathExist(input, output)
+      if (tradePathExists) {
+        const res = await optimise(
+          this.universe,
+          graph,
+          [input],
+          [output],
+          opts
+        )
+        const out = await this.determineBestTradeMintSplit(
+          res,
+          input,
+          output,
+          opts
+        )
+        await this.registry.define(input, output, out.clone())
+        return out
+      }
     } else {
       if (inputToken !== output) {
         await this.addTrades(
@@ -3941,7 +4080,8 @@ export class TokenFlowGraphSearcher {
     }
 
     const res = await optimise(this.universe, graph, [input], [output], opts)
-    this.registry.define(input, output, res.clone())
+
+    await this.registry.define(input, output, res.clone())
     return res
   }
 

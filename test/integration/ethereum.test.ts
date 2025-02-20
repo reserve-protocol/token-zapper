@@ -26,13 +26,13 @@ dotenv.config()
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
-  cacheResolution: 8,
-  maxPhase2TimeRefinementTime: 1000,
-  optimisationSteps: 30,
-  minimiseDustPhase1Steps: 10,
-  minimiseDustPhase2Steps: 10,
-  zapMaxDustProduced: 8,
-  zapMaxValueLoss: 5,
+  cacheResolution: 4,
+  maxPhase2TimeRefinementTime: 4000,
+  optimisationSteps: 20,
+  minimiseDustPhase1Steps: 20,
+  minimiseDustPhase2Steps: 20,
+  zapMaxDustProduced: 0.5,
+  zapMaxValueLoss: 0.5,
   rejectHighDust: false,
   useNewZapperContract: true,
 }
@@ -177,6 +177,7 @@ export const testUser = process.env.TEST_USER
   : Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 
 const issueanceCases = [
+  makeTestCase(250, t.WETH, rTokens['ETH+']),
   // makeTestCase(10000, t.USDC, rTokens.dgnETH),
   // makeTestCase(100000, t.DAI, rTokens.eUSD),
   // makeTestCase(1000000, t.USDT, rTokens.eUSD),
@@ -195,9 +196,9 @@ const issueanceCases = [
 
   // makeTestCase(330, t.pxETH, t['stkcvxETH+ETH-f']),
 
-  makeTestCase(1, t.WETH, t.testDEFI),
-  makeTestCase(1, t.WETH, t.testDFX),
-  makeTestCase(1, t.WETH, t.testGFT),
+  // makeTestCase(1, t.WETH, t.testDEFI),
+  // makeTestCase(1, t.WETH, t.testDFX),
+  // makeTestCase(1, t.WETH, t.testGFT),
 ]
 
 const redeemCases = [

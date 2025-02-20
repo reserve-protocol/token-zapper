@@ -46,6 +46,8 @@ const defaultSearcherOptions = {
 
   dynamicConfigURL: null as string | null,
   maxOptimisationTime: 60000,
+
+  topLevelTradeMintOptimisationParts: 10
 }
 export const getDefaultSearcherOptions = () => {
   return defaultSearcherOptions

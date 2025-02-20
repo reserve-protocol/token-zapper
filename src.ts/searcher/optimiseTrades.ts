@@ -68,7 +68,7 @@ export const optimiseTradesInOutQty = async (
     // Pick the best one in terms of output pr inputput - gas
     results
       .filter((i) => i.result.price == 0)
-      .sort((l, r) => l.result.price - r.result.price)
+      .sort((l, r) => r.result.price - l.result.price)
     const best = results[0]
     best.state.input = Math.min(best.newInput, best.state.maxInput)
     best.state.output = best.result.outputQty

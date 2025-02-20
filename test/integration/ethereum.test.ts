@@ -196,9 +196,9 @@ const issueanceCases = [
 
   // makeTestCase(330, t.pxETH, t['stkcvxETH+ETH-f']),
 
-  // makeTestCase(1, t.WETH, t.testDEFI),
-  // makeTestCase(1, t.WETH, t.testDFX),
-  // makeTestCase(1, t.WETH, t.testGFT),
+  makeTestCase(1, t.WETH, t.testDEFI),
+  makeTestCase(1, t.WETH, t.testDFX),
+  makeTestCase(1, t.WETH, t.testGFT),
 ]
 
 const redeemCases = [

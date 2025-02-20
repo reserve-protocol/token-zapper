@@ -14,15 +14,14 @@ import { setFactoryZapContracts } from './common'
 import { FACTORY_CONSTANTS } from './constants'
 import { CRYPTO_FACTORY_CONSTANTS } from './constants-crypto'
 
+import factoryGaugeABIJson from '../constants/abis/gauge_factory.json'
+import { JsonFragment } from '@ethersproject/abi'
+import cryptoFactorySwapABIJson from '../constants/abis/factory-crypto/factory-crypto-pool-2.json'
+
 const factoryGaugeABI = () =>
-  import('../constants/abis/gauge_factory.json', {
-    assert: { type: 'json' },
-  }).then((i) => i.default)
-// const gaugeChildABI = () => import("./constants/abis/gauge_child.json").then(i => i.default)
+  Promise.resolve(factoryGaugeABIJson as JsonFragment[])
 const cryptoFactorySwapABI = () =>
-  import('../constants/abis/factory-crypto/factory-crypto-pool-2.json', {
-    assert: { type: 'json' },
-  }).then((i) => i.default)
+  Promise.resolve(cryptoFactorySwapABIJson as JsonFragment[])
 
 export const lowerCasePoolDataAddresses = (
   poolsData: IPoolDataFromApi[]

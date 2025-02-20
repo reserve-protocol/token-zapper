@@ -1,242 +1,178 @@
 import { lowerCasePoolDataAddresses } from '../utils'
 import { IDict, IPoolData } from '../../interfaces'
-
 import { type JsonFragment } from '@ethersproject/abi'
+import gaugeABIJson from '../abis/gauge.json'
+import gaugeSynthetixABIJson from '../abis/gauge_synthetix.json'
+import gaugeV2ABIJson from '../abis/gauge_v2.json'
+import gaugeV3ABIJson from '../abis/gauge_v3.json'
+import gaugeV4ABIJson from '../abis/gauge_v4.json'
+import gaugeV5ABIJson from '../abis/gauge_v5.json'
+import gaugeFactoryABIJson from '../abis/gauge_factory.json'
+import compoundDepositABIJson from '../abis/compound/deposit.json'
+import compoundSwapABIJson from '../abis/compound/swap.json'
+import usdtDepositABIJson from '../abis/usdt/deposit.json'
+import usdtSwapABIJson from '../abis/usdt/swap.json'
+import busdDepositABIJson from '../abis/busd/deposit.json'
+import busdSwapABIJson from '../abis/busd/swap.json'
+import susdv2DepositABIJson from '../abis/susdv2/deposit.json'
+import susdv2SwapABIJson from '../abis/susdv2/swap.json'
+import susdv2SCurveRewardsABIJson from '../abis/susdv2/sCurveRewards.json'
+import paxDepositABIJson from '../abis/pax/deposit.json'
+import paxSwapABIJson from '../abis/pax/swap.json'
+import tripoolSwapABIJson from '../abis/3pool/swap.json'
+import usdnSwapABIJson from '../abis/usdn/swap.json'
+import usdnDepositABIJson from '../abis/usdn/deposit.json'
+import rsvSwapABIJson from '../abis/rsv/swap.json'
+import rsvDepositABIJson from '../abis/rsv/deposit.json'
+import rsvSCurveRewardsABIJson from '../abis/rsv/sCurveRewards.json'
+import dusdSwapABIJson from '../abis/dusd/swap.json'
+import dusdDepositABIJson from '../abis/dusd/deposit.json'
+import dusdSCurveRewardsABIJson from '../abis/dusd/sCurveRewards.json'
+import sethSwapABIJson from '../abis/seth/swap.json'
+import ustSwapABIJson from '../abis/ust/swap.json'
+import ustDepositABIJson from '../abis/ust/deposit.json'
+import stethSwapABIJson from '../abis/steth/swap.json'
+import stethSCurveRewardsABIJson from '../abis/steth/sCurveRewards.json'
+import ankrethSwapABIJson from '../abis/ankreth/swap.json'
+import ankrethSCurveRewardsABIJson from '../abis/ankreth/sCurveRewards.json'
+import usdpSwapABIJson from '../abis/usdp/swap.json'
+import usdpDepositABIJson from '../abis/usdp/deposit.json'
+import ibSwapABIJson from '../abis/ib/swap.json'
+import rethSwapABIJson from '../abis/reth/swap.json'
+import factorySwapABIJson from '../abis/factoryPools/swap.json'
+import factoryDepositABIJson from '../abis/factoryPools/deposit.json'
+import factoryRewardsABIJson from '../abis/factoryPools/rewards.json'
+import tricrypto2SwapABIJson from '../abis/tricrypto2/swap.json'
+import tricrypto2DepositABIJson from '../abis/tricrypto2/deposit.json'
+import raiSwapABIJson from '../abis/rai/swap.json'
+import raiDepositABIJson from '../abis/rai/deposit.json'
+import twopoolSwapABIJson from '../abis/2pool/swap.json'
+import fourpoolSwapABIJson from '../abis/4pool/swap.json'
+import fraxusdcSwapABIJson from '../abis/fraxusdc/swap.json'
+import frxethSwapABIJson from '../abis/frxeth/swap.json'
 
-const gaugeABI = () =>
-  import('../abis/gauge.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+const gaugeABI = () => Promise.resolve(gaugeABIJson as JsonFragment[])
+
 const gaugeSynthetixABI = () =>
-  import('../abis/gauge_synthetix.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const gaugeV2ABI = () =>
-  import('../abis/gauge_v2.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const gaugeV3ABI = () =>
-  import('../abis/gauge_v3.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const gaugeV4ABI = () =>
-  import('../abis/gauge_v4.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const gaugeV5ABI = () =>
-  import('../abis/gauge_v5.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(gaugeSynthetixABIJson as JsonFragment[])
+
+const gaugeV2ABI = () => Promise.resolve(gaugeV2ABIJson as JsonFragment[])
+
+const gaugeV3ABI = () => Promise.resolve(gaugeV3ABIJson as JsonFragment[])
+
+const gaugeV4ABI = () => Promise.resolve(gaugeV4ABIJson as JsonFragment[])
+
+const gaugeV5ABI = () => Promise.resolve(gaugeV5ABIJson as JsonFragment[])
+
 const gaugeFactoryABI = () =>
-  import('../abis/gauge_factory.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(gaugeFactoryABIJson as JsonFragment[])
+
 const compoundDepositABI = () =>
-  import('../abis/compound/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(compoundDepositABIJson as JsonFragment[])
+
 const compoundSwapABI = () =>
-  import('../abis/compound/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(compoundSwapABIJson as JsonFragment[])
+
 const usdtDepositABI = () =>
-  import('../abis/usdt/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const usdtSwapABI = () =>
-  import('../abis/usdt/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const iearnDepositABI = () => import('../abis/iearn/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const iearnSwapABI = () => import('../abis/iearn/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
+  Promise.resolve(usdtDepositABIJson as JsonFragment[])
+
+const usdtSwapABI = () => Promise.resolve(usdtSwapABIJson as JsonFragment[])
+
 const busdDepositABI = () =>
-  import('../abis/busd/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const busdSwapABI = () =>
-  import('../abis/busd/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(busdDepositABIJson as JsonFragment[])
+
+const busdSwapABI = () => Promise.resolve(busdSwapABIJson as JsonFragment[])
+
 const susdv2DepositABI = () =>
-  import('../abis/susdv2/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const susdv2SwapABI = () =>
-  import('../abis/susdv2/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(susdv2DepositABIJson as JsonFragment[])
+
+const susdv2SwapABI = () => Promise.resolve(susdv2SwapABIJson as JsonFragment[])
+
 const susdv2SCurveRewards_abi = () =>
-  import('../abis/susdv2/sCurveRewards.json', {
-    assert: { type: 'json' },
-  }).then((i) => i.default as JsonFragment[])
-const paxDepositABI = () =>
-  import('../abis/pax/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const paxSwapABI = () =>
-  import('../abis/pax/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const renSwapABI = () => import('../abis/ren/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const sbtcSwapABI = () => import('../abis/sbtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const sbtcSCurveRewardsABI = () => import('../abis/sbtc/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const hbtcSwapABI = () => import('../abis/hbtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
+  Promise.resolve(susdv2SCurveRewardsABIJson as JsonFragment[])
+
+const paxDepositABI = () => Promise.resolve(paxDepositABIJson as JsonFragment[])
+
+const paxSwapABI = () => Promise.resolve(paxSwapABIJson as JsonFragment[])
+
 const tripoolSwapABI = () =>
-  import('../abis/3pool/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const gusdSwapABI = () => import('../abis/gusd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const gusdDepositABI = () => import('../abis/gusd/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const husdSwapABI = () => import('../abis/husd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const husdDepositABI = () => import('../abis/husd/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const usdkSwapABI = () => import('../abis/usdk/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const usdkDepositABI = () => import('../abis/usdk/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-const usdnSwapABI = () =>
-  import('../abis/usdn/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(tripoolSwapABIJson as JsonFragment[])
+
+const usdnSwapABI = () => Promise.resolve(usdnSwapABIJson as JsonFragment[])
+
 const usdnDepositABI = () =>
-  import('../abis/usdn/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const musdSwapABI = () => import('../abis/musd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const musdDepositABI = () => import('../abis/musd/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const musdSCurveRewards_abi = () => import('../abis/musd/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-const rsvSwapABI = () =>
-  import('../abis/rsv/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const rsvDepositABI = () =>
-  import('../abis/rsv/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(usdnDepositABIJson as JsonFragment[])
+
+const rsvSwapABI = () => Promise.resolve(rsvSwapABIJson as JsonFragment[])
+
+const rsvDepositABI = () => Promise.resolve(rsvDepositABIJson as JsonFragment[])
+
 const rsvSCurveRewards_abi = () =>
-  import('../abis/rsv/sCurveRewards.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const tbtcSwapABI = () => import('../abis/tbtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const tbtcDepositABI = () => import('../abis/tbtc/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const tbtcSCurveRewards_abi = () => import('../abis/tbtc/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-const dusdSwapABI = () =>
-  import('../abis/dusd/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(rsvSCurveRewardsABIJson as JsonFragment[])
+
+const dusdSwapABI = () => Promise.resolve(dusdSwapABIJson as JsonFragment[])
+
 const dusdDepositABI = () =>
-  import('../abis/dusd/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(dusdDepositABIJson as JsonFragment[])
+
 const dusdSCurveRewards_abi = () =>
-  import('../abis/dusd/sCurveRewards.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const pbtcSwapABI = () => import('../abis/pbtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const pbtcDepositABI = () => import('../abis/pbtc/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const pbtcSCurveRewards_abi = () => import('../abis/pbtc/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const bbtcSwapABI = () => import('../abis/bbtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const bbtcDepositABI = () => import('../abis/bbtc/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const obtcSwapABI = () => import('../abis/obtc/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const obtcDepositABI = () => import('../abis/obtc/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const obtcSCurveRewards_abi = () => import('../abis/obtc/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-const sethSwapABI = () =>
-  import('../abis/seth/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const eursSwapABI = () => import('../abis/eurs/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const eursSCurveRewards_abi = () => import('../abis/eurs/sCurveRewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-const ustSwapABI = () =>
-  import('../abis/ust/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const ustDepositABI = () =>
-  import('../abis/ust/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const aaveSwapABI = () => import('../abis/aave/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const aaveRewardsABI = () => import('../abis/aave/rewards.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-const stethSwapABI = () =>
-  import('../abis/steth/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(dusdSCurveRewardsABIJson as JsonFragment[])
+
+const sethSwapABI = () => Promise.resolve(sethSwapABIJson as JsonFragment[])
+
+const ustSwapABI = () => Promise.resolve(ustSwapABIJson as JsonFragment[])
+
+const ustDepositABI = () => Promise.resolve(ustDepositABIJson as JsonFragment[])
+
+const stethSwapABI = () => Promise.resolve(stethSwapABIJson as JsonFragment[])
+
 const stethSCurveRewards_abi = () =>
-  import('../abis/steth/sCurveRewards.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const saaveSwapABI = () => import('../abis/saave/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
+  Promise.resolve(stethSCurveRewardsABIJson as JsonFragment[])
+
 const ankrethSwapABI = () =>
-  import('../abis/ankreth/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(ankrethSwapABIJson as JsonFragment[])
+
 const ankrethSCurveRewards_abi = () =>
-  import('../abis/ankreth/sCurveRewards.json', {
-    assert: { type: 'json' },
-  }).then((i) => i.default as JsonFragment[])
-const usdpSwapABI = () =>
-  import('../abis/usdp/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(ankrethSCurveRewardsABIJson as JsonFragment[])
+
+const usdpSwapABI = () => Promise.resolve(usdpSwapABIJson as JsonFragment[])
+
 const usdpDepositABI = () =>
-  import('../abis/usdp/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const ibSwapABI = () =>
-  import('../abis/ib/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const linkSwapABI = () => import('../abis/link/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-const rethSwapABI = () =>
-  import('../abis/reth/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(usdpDepositABIJson as JsonFragment[])
+
+const ibSwapABI = () => Promise.resolve(ibSwapABIJson as JsonFragment[])
+
+const rethSwapABI = () => Promise.resolve(rethSwapABIJson as JsonFragment[])
+
 const factorySwapABI = () =>
-  import('../abis/factoryPools/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(factorySwapABIJson as JsonFragment[])
+
 const factoryDepositABI = () =>
-  import('../abis/factoryPools/deposit.json', {
-    assert: { type: 'json' },
-  }).then((i) => i.default as JsonFragment[])
+  Promise.resolve(factoryDepositABIJson as JsonFragment[])
+
 const factoryRewardsABI = () =>
-  import('../abis/factoryPools/rewards.json', {
-    assert: { type: 'json' },
-  }).then((i) => i.default as JsonFragment[])
+  Promise.resolve(factoryRewardsABIJson as JsonFragment[])
+
 const tricrypto2SwapABI = () =>
-  import('../abis/tricrypto2/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(tricrypto2SwapABIJson as JsonFragment[])
+
 const tricrypto2DepositABI = () =>
-  import('../abis/tricrypto2/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const eurtSwapABI = () => import('../abis/eurt/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const eurtusdSwapABI = () => import('../abis/eurtusd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const eurtusdDepositABI = () => import('../abis/eurtusd/deposit.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const eursusdSwapABI = () => import('../abis/eursusd/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-// const crvethSwapABI = () => import('../abis/crveth/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
-const raiSwapABI = () =>
-  import('../abis/rai/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const raiDepositABI = () =>
-  import('../abis/rai/deposit.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(tricrypto2DepositABIJson as JsonFragment[])
+
+const raiSwapABI = () => Promise.resolve(raiSwapABIJson as JsonFragment[])
+
+const raiDepositABI = () => Promise.resolve(raiDepositABIJson as JsonFragment[])
+
 const twopoolSwapABI = () =>
-  import('../abis/2pool/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(twopoolSwapABIJson as JsonFragment[])
+
 const fourpoolSwapABI = () =>
-  import('../abis/4pool/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
+  Promise.resolve(fourpoolSwapABIJson as JsonFragment[])
+
 const fraxusdcSwapABI = () =>
-  import('../abis/fraxusdc/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-const frxethSwapABI = () =>
-  import('../abis/frxeth/swap.json', { assert: { type: 'json' } }).then(
-    (i) => i.default as JsonFragment[]
-  )
-// const sbtc2SwapABI = () => import('../abis/sbtc2/swap.json', { assert: { type: "json" } }).then(i => i.default as JsonFragment[])
+  Promise.resolve(fraxusdcSwapABIJson as JsonFragment[])
+
+const frxethSwapABI = () => Promise.resolve(frxethSwapABIJson as JsonFragment[])
 
 export const POOLS_DATA_ETHEREUM: IDict<IPoolData> = lowerCasePoolDataAddresses(
   {

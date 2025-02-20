@@ -205,6 +205,20 @@ const issueanceCases = [
   makeTestCase(10000, t.sDAI, rTokens.hyUSD),
   makeTestCase(10000, t.COMP, rTokens.hyUSD),
 
+  makeTestCase(10, t.WETH, rTokens.eUSD),
+  makeTestCase(10000, t.USDC, rTokens.eUSD),
+  makeTestCase(10000, t.DAI, rTokens.eUSD),
+  makeTestCase(10000, t.USDT, rTokens.eUSD),
+  makeTestCase(10000, t.sDAI, rTokens.eUSD),
+  makeTestCase(10000, t.COMP, rTokens.eUSD),
+
+  makeTestCase(10, t.WETH, rTokens.USD3),
+  makeTestCase(10000, t.USDC, rTokens.USD3),
+  makeTestCase(10000, t.DAI, rTokens.USD3),
+  makeTestCase(10000, t.USDT, rTokens.USD3),
+  makeTestCase(10000, t.sDAI, rTokens.USD3),
+  makeTestCase(10000, t.COMP, rTokens.USD3),
+
   // makeTestCase(50, t.WETH, rTokens.dgnETH),
   // makeTestCase(10000, t.USDC, rTokens.dgnETH),
   // makeTestCase(10000, t.USDT, rTokens.dgnETH),
@@ -217,20 +231,35 @@ const issueanceCases = [
 ]
 
 const redeemCases = [
-  // makeTestCase(200000, rTokens.eUSD, t.USDC),
-  // makeTestCase(10000, rTokens.eUSD, t.USDC),
-  // makeTestCase(10000, rTokens.eUSD, t.DAI),
-  // makeTestCase(10000, rTokens.eUSD, t.WETH),
-  // makeTestCase(10000, rTokens.eUSD, t.USDT),
-
-  // makeTestCase(10000, rTokens.USD3, t.USDC),
-  // makeTestCase(10000, rTokens.USD3, t.WETH),
-  // makeTestCase(10000, rTokens.USD3, t.DAI),
-
   makeTestCase(50000, rTokens.hyUSD, t.USDC),
   makeTestCase(50000, rTokens.hyUSD, t.USDT),
   makeTestCase(50000, rTokens.hyUSD, t.WETH),
   makeTestCase(50000, rTokens.hyUSD, t.DAI),
+  makeTestCase(50000, rTokens.hyUSD, t.RSR),
+
+  makeTestCase(50000, rTokens.eUSD, t.USDC),
+  makeTestCase(50000, rTokens.eUSD, t.USDT),
+  makeTestCase(50000, rTokens.eUSD, t.WETH),
+  makeTestCase(50000, rTokens.eUSD, t.DAI),
+  makeTestCase(50000, rTokens.eUSD, t.RSR),
+
+  makeTestCase(50000, rTokens.USD3, t.USDC),
+  makeTestCase(50000, rTokens.USD3, t.USDT),
+  makeTestCase(50000, rTokens.USD3, t.WETH),
+  makeTestCase(50000, rTokens.USD3, t.DAI),
+  makeTestCase(50000, rTokens.USD3, t.RSR),
+
+  makeTestCase(5, rTokens['ETH+'], t.WETH),
+  makeTestCase(5, rTokens['ETH+'], t.USDC),
+  makeTestCase(5, rTokens['ETH+'], t.USDT),
+  makeTestCase(5, rTokens['ETH+'], t.DAI),
+  makeTestCase(5, rTokens['ETH+'], t.RSR),
+
+  makeTestCase(5, rTokens.dgnETH, t.WETH),
+  makeTestCase(5, rTokens.dgnETH, t.USDC),
+  makeTestCase(5, rTokens.dgnETH, t.USDT),
+  makeTestCase(5, rTokens.dgnETH, t.DAI),
+  makeTestCase(5, rTokens.dgnETH, t.RSR),
 
   // makeTestCase(5, rTokens['ETH+'], t.WETH),
   // // makeTestCase(5, rTokens['ETH+'], t.reth),

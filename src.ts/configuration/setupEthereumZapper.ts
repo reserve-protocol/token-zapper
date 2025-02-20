@@ -480,11 +480,11 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.tokenClass.set(
     universe.commonTokens.USDT,
-    Promise.resolve(universe.commonTokens.USDT)
+    Promise.resolve(universe.commonTokens.USDC)
   )
   universe.tokenClass.set(
     universe.commonTokens.DAI,
-    Promise.resolve(universe.commonTokens.DAI)
+    Promise.resolve(universe.commonTokens.USDC)
   )
   universe.tokenClass.set(
     universe.rTokens.dgnETH,
@@ -502,6 +502,13 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.rTokens.USD3,
     Promise.resolve(universe.commonTokens.USDC)
   )
+
+  universe.preferredToken.set(universe.rTokens.eUSD, universe.commonTokens.USDC)
+  universe.preferredToken.set(
+    universe.rTokens.hyUSD,
+    universe.commonTokens.USDC
+  )
+  universe.preferredToken.set(universe.rTokens.USD3, universe.commonTokens.USDC)
 
   universe.addSingleTokenPriceOracle({
     token: universe.commonTokens.sUSD,

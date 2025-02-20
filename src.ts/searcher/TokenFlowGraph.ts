@@ -3909,6 +3909,10 @@ export class TokenFlowGraphSearcher {
     inputNode?: NodeProxy,
     outputNode?: NodeProxy
   ) {
+    if (graph.inputs[0] === output) {
+      return null
+    }
+    console.log(`Adding trades for ${inputQty} -> ${output}`)
     const path = await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
       inputQty,
       output,
@@ -4028,12 +4032,11 @@ export class TokenFlowGraphSearcher {
       inputToken = targetToken
     }
 
-    const preferredInputToken =
-      this.universe.preferredToken.get(output) ??
-      (await this.universe.tokenClass.get(output))
+    const preferredInputToken = this.universe.preferredToken.get(output)
     if (
       preferredInputToken != null &&
-      preferredInputToken !== inputToken &&
+      preferredInputToken !==
+        (await this.universe.tokenClass.get(inputToken)) &&
       preferredInputToken !== output
     ) {
       await this.addTrades(

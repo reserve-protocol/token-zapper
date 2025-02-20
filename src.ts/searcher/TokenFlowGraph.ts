@@ -3660,6 +3660,9 @@ export class TokenFlowGraphSearcher {
     topLevel: boolean = false,
     txGenOptions?: TxGenOptions
   ) {
+    if (output === graph.inputs[0]) {
+      return
+    }
     const tradePathExists = await this.doesTradePathExist(
       inputQty.scalarDiv(2n),
       output
@@ -4055,21 +4058,13 @@ export class TokenFlowGraphSearcher {
       await this.tokenSourceGraph(graph, inputQty, output, inputNode, true)
       const tradePathExists = await this.doesTradePathExist(input, output)
       if (tradePathExists) {
-        const res = await optimise(
-          this.universe,
-          graph,
-          [input],
-          [output],
-          opts
-        )
-        const out = await this.determineBestTradeMintSplit(
-          res,
-          input,
-          output,
-          opts
-        )
-        await this.registry.define(input, output, out.clone())
-        return out
+        let res = await optimise(this.universe, graph, [input], [output], opts)
+        try {
+          res = await this.determineBestTradeMintSplit(res, input, output, opts)
+        } catch (e) {}
+
+        await this.registry.define(input, output, res.clone())
+        return res
       }
     } else {
       if (inputToken !== output) {

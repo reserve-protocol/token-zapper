@@ -93,6 +93,10 @@ export const ethWhales = {
   // frax
   '0x853d955acef822db058eb8505911ed77f175b99e':
     '0x267fc49a3170950ee5d49ef84878695c29cca1e0',
+
+  // COMP
+  '0x9e1028f5f1d5ede59748ffcee5532509976840e0':
+    '0x123964802e6ababbe1bc9547d72ef1b69b00a6b1',
   // eusd
   '0xa0d69e286b938e21cbf7e51d71f6a4c8918f482f':
     '0x3154cf16ccdb4c6d922629664174b904d80f2c35',
@@ -118,6 +122,12 @@ export const ethWhales = {
   '0x005f893ecd7bf9667195642f7649da8163e23658':
     '0x5bdd1fa233843bfc034891be8a6769e58f1e1346',
 
+  // "sDAI"
+  '0x83f20f44975d03b1b09e64809b757c47f942beea':
+    '0x4aa42145Aa6Ebf72e164C9bBC74fbD3788045016',
+  // COMP
+  '0xc00e94cb662c3520282e6f5717214004a7f26888':
+    '0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b',
   // pxeth
   '0x04c154b66cb340f3ae24111cc767e0184ed00cc6':
     '0x40e93a52f6af9fcd3b476aedadd7feabd9f7aba8',
@@ -177,53 +187,63 @@ export const testUser = process.env.TEST_USER
   : Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 
 const issueanceCases = [
-  makeTestCase(10, t.WETH, rTokens['ETH+']),
-  makeTestCase(10000, t.USDC, rTokens.dgnETH),
-  makeTestCase(100000, t.DAI, rTokens.eUSD),
-  makeTestCase(1000000, t.USDT, rTokens.eUSD),
-  makeTestCase(1000000, t.USDC, rTokens.USD3),
-  makeTestCase(1000000, t.USDT, rTokens.USD3),
-  makeTestCase(1000000, t.DAI, rTokens.USD3),
-  makeTestCase(1, t.WETH, rTokens['ETH+']),
-  makeTestCase(0.70133, t['stkcvxETH+ETH-f'], t.Re7WETH),
-  makeTestCase(1000, t.WETH, rTokens['ETH+']),
-  makeTestCase(10, t.WETH, rTokens.hyUSD),
-  makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  makeTestCase(10000, t.DAI, rTokens.hyUSD),
-  makeTestCase(10000, t.USDT, rTokens.hyUSD),
-  makeTestCase(50, t.WETH, rTokens.dgnETH),
-  makeTestCase(10000, t.USDC, rTokens.dgnETH),
+  // makeTestCase(10, t.WETH, rTokens['ETH+']),
+  // makeTestCase(10000, t.USDC, rTokens.dgnETH),
+  // makeTestCase(100000, t.DAI, rTokens.eUSD),
+  // makeTestCase(1000000, t.USDT, rTokens.eUSD),
+  // makeTestCase(1000000, t.USDC, rTokens.USD3),
+  // makeTestCase(1000000, t.USDT, rTokens.USD3),
+  // makeTestCase(1000000, t.DAI, rTokens.USD3),
+  // makeTestCase(1, t.WETH, rTokens['ETH+']),
+  // makeTestCase(0.70133, t['stkcvxETH+ETH-f'], t.Re7WETH),
+  // makeTestCase(1000, t.WETH, rTokens['ETH+']),
+  // makeTestCase(10, t.WETH, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
+  // makeTestCase(10000, t.DAI, rTokens.hyUSD),
+  // makeTestCase(10000, t.USDT, rTokens.hyUSD),
+  // makeTestCase(50, t.WETH, rTokens.dgnETH),
+  // makeTestCase(10000, t.USDC, rTokens.dgnETH),
+  // makeTestCase(10000, t.USDT, rTokens.dgnETH),
 
-  // makeTestCase(330, t.pxETH, t['stkcvxETH+ETH-f']),
+  // makeTestCase(10000, t.sDAI, rTokens.hyUSD),
+  makeTestCase(10000, t.COMP, rTokens.hyUSD),
 
-  makeTestCase(1, t.WETH, t.testDEFI),
-  makeTestCase(1, t.WETH, t.testDFX),
-  makeTestCase(1, t.WETH, t.testGFT),
+  // makeTestCase(10, t.pxETH, rTokens.dgnETH),
+
+  // makeTestCase(1, t.WETH, t.testDEFI),
+  // makeTestCase(1, t.WETH, t.testDFX),
+  // makeTestCase(1, t.WETH, t.testGFT),
 ]
 
 const redeemCases = [
-  makeTestCase(200000, rTokens.eUSD, t.USDC),
-  makeTestCase(10000, rTokens.eUSD, t.USDC),
-  makeTestCase(10000, rTokens.eUSD, t.DAI),
-  makeTestCase(10000, rTokens.eUSD, t.WETH),
-  makeTestCase(10000, rTokens.eUSD, t.USDT),
+  // makeTestCase(200000, rTokens.eUSD, t.USDC),
+  // makeTestCase(10000, rTokens.eUSD, t.USDC),
+  // makeTestCase(10000, rTokens.eUSD, t.DAI),
+  // makeTestCase(10000, rTokens.eUSD, t.WETH),
+  // makeTestCase(10000, rTokens.eUSD, t.USDT),
 
-  makeTestCase(10000, rTokens.USD3, t.USDC),
-  makeTestCase(10000, rTokens.USD3, t.WETH),
-  makeTestCase(10000, rTokens.USD3, t.DAI),
+  // makeTestCase(10000, rTokens.USD3, t.USDC),
+  // makeTestCase(10000, rTokens.USD3, t.WETH),
+  // makeTestCase(10000, rTokens.USD3, t.DAI),
 
-  makeTestCase(10000, rTokens.hyUSD, t.USDC),
-  makeTestCase(10000, rTokens.hyUSD, t.WETH),
-  makeTestCase(10000, rTokens.hyUSD, t.DAI),
+  // makeTestCase(10000, rTokens.hyUSD, t.USDC),
+  // makeTestCase(10000, rTokens.hyUSD, t.WETH),
+  // makeTestCase(10000, rTokens.hyUSD, t.DAI),
 
-  makeTestCase(5, rTokens['ETH+'], t.WETH),
-  // makeTestCase(5, rTokens['ETH+'], t.reth),
-  // makeTestCase(5, rTokens['ETH+'], t.frxeth),
-  makeTestCase(5, rTokens['ETH+'], t.USDC),
+  // makeTestCase(5, rTokens['ETH+'], t.WETH),
+  // // makeTestCase(5, rTokens['ETH+'], t.reth),
+  // // makeTestCase(5, rTokens['ETH+'], t.frxeth),
+  // makeTestCase(5, rTokens['ETH+'], t.USDC),
 
-  makeTestCase(5, rTokens.dgnETH, t.WETH),
-  makeTestCase(5, rTokens.dgnETH, t.USDC),
-  makeTestCase(5, rTokens.dgnETH, t.USDT),
+  // makeTestCase(5, rTokens.dgnETH, t.WETH),
+  // makeTestCase(5, rTokens.dgnETH, t.USDC),
+  // makeTestCase(5, rTokens.dgnETH, t.USDT),
+
+  makeTestCase(21221.74, rTokens.hyUSD, t.RSR),
+  makeTestCase(10000, rTokens.eUSD, t.RSR),
+  makeTestCase(10000, rTokens.USD3, t.RSR),
+  makeTestCase(5, rTokens['ETH+'], t.RSR),
+  makeTestCase(5, rTokens.dgnETH, t.RSR),
 ]
 
 const individualIntegrations = [

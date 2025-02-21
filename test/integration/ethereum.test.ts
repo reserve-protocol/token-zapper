@@ -203,7 +203,7 @@ const issueanceCases = [
   // makeTestCase(10000, t.DAI, rTokens.hyUSD),
   // makeTestCase(10000, t.USDT, rTokens.hyUSD),
   // makeTestCase(10000, t.sDAI, rTokens.hyUSD),
-  makeTestCase(31.234892, t.COMP, rTokens.hyUSD),
+  // makeTestCase(31.234892, t.COMP, rTokens.hyUSD),
 
   // makeTestCase(10, t.WETH, rTokens.eUSD),
   // makeTestCase(10000, t.USDC, rTokens.eUSD),
@@ -225,9 +225,13 @@ const issueanceCases = [
 
   // makeTestCase(10, t.pxETH, rTokens.dgnETH),
 
-  // makeTestCase(1, t.WETH, t.testDEFI),
-  // makeTestCase(1, t.WETH, t.testDFX),
-  // makeTestCase(1, t.WETH, t.testGFT),
+  // makeTestCase(1, t.WETH, t.mvDEFI),
+  // makeTestCase(1, t.WETH, t.mvRWA),
+  // makeTestCase(1, t.WETH, t.DFX),
+
+  makeTestCase(10000, t.USDC, t.mvDEFI),
+  makeTestCase(10000, t.USDC, t.mvRWA),
+  makeTestCase(10000, t.USDC, t.DFX),
 ]
 
 const redeemCases = [

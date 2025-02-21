@@ -22,6 +22,8 @@ import { setupMaverick } from './maverick'
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
 
+  setupReservePricing(universe)
+
   logger.info('Loading base token list')
   await loadBaseTokenList(universe)
   const priceViaOdos = setupOdosPricing(universe)

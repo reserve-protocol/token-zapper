@@ -1887,6 +1887,7 @@ export class TokenFlowGraphBuilder {
     outputNode = outputNode ?? this.getTokenNode(output)
     const node = this.addSubgraphNode(graph, name)
     this.tradeNodes.get(input).set(output, extraNode.id)
+    this.tradeNodes.get(output).set(input, extraNode.id)
 
     extraNode.forward(input, 1, node)
     node.forward(output, 1, outputNode)
@@ -2035,6 +2036,9 @@ export class TokenFlowGraphBuilder {
 
   public getTokenNode(token: Token) {
     return this.graph.getNode(this.tokenBalanceNodes.get(token))
+  }
+  public deleteTokenNode(token: Token) {
+    this.tokenBalanceNodes.delete(token)
   }
 
   public static createSingleStep(
@@ -3660,6 +3664,10 @@ export class TokenFlowGraphSearcher {
     const tasks: Promise<any>[] = []
     for (let i = 0; i < props.length; i++) {
       const prop = props[i]
+      const node = graph.getTokenNode(prop.token)
+      if (node.receivesInput) {
+        continue
+      }
       if (prop.token === inputToken) {
         continue
       }
@@ -3911,6 +3919,8 @@ export class TokenFlowGraphSearcher {
     )
 
     let inputNode = graph.getTokenNode(inputToken)
+
+    // graph.deleteTokenNode(inputToken)
 
     if (this.universe.isTokenBurnable(inputToken)) {
       const outputTokens = [

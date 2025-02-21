@@ -351,19 +351,19 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.rTokens['ETH+']
   )
 
-  const resetApproval = [
-    '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-    '0x867a9cF57c36De171A036DE4A0A364f6990f6248',
-    '0x8cF0E5399fEdf0fA6918d8c8a5E54e94C28a7989',
-    '0x90D5B65Af52654A2B230244a61DD4Ce3CFa4835f',
-    '0xC51b8e7c50f83d4E77708ff0Fa931F655A07afb2',
-    '0x17E7c7379fa5c121C4898760EACFfA7D73A0D160',
-    '0xbB085D1387706CE477C4E752c76C38070aC226cB',
-    '0x575b2E325ad326F6cc11fc7e1DC389cbD96d2FF0',
-    '0x354278Eb9c0a8b1f4Ab8231c0C4741DA05a76206',
-    '0xeEDD1B2dc2F30E55Eaa3Db1CF70F1C409B86368e',
-  ]
-  for (const token of resetApproval) {
+  for (const token of [
+    '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    '0x867a9cf57c36de171a036de4a0a364f6990f6248',
+    '0x8cf0e5399fedf0fa6918d8c8a5e54e94c28a7989',
+    '0x90d5b65af52654a2b230244a61dd4ce3cfa4835f',
+    '0xc51b8e7c50f83d4e77708ff0fa931f655a07afb2',
+    '0x17e7c7379fa5c121c4898760eacffa7d73a0d160',
+    '0xbb085d1387706ce477c4e752c76c38070ac226cb',
+    '0x575b2e325ad326f6cc11fc7e1dc389cbd96d2ff0',
+    '0x354278eb9c0a8b1f4ab8231c0c4741da05a76206',
+    '0xeedd1b2dc2f30e55eaa3db1cf70f1c409b86368e',
+    '0x365accfca291e7d3914637abf1f7635db165bb09',
+  ]) {
     universe.zeroBeforeApproval.add(
       await universe.getToken(Address.from(token))
     )

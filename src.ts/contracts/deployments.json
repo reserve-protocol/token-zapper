@@ -447,6 +447,34 @@
             }
           ]
         },
+        "MoveEth": {
+          "address": "0x6582631B849cCc9c0943fD7C1D702E25d2A80E16",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "weth",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "name": "moveEth",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
         "RTokenLens": {
           "address": "0xE787491314A3Da6412Ac4DeEB39c0F8EfdE1b53C",
           "abi": [
@@ -2442,7 +2470,7 @@
           ]
         },
         "FolioMintRedeem": {
-          "address": "0xd717c75aFBd553e427Ece6c69a355580031e4974",
+          "address": "0x513501fBB2E68e55559FAb5A049E613Ad965B112",
           "abi": [
             {
               "inputs": [
@@ -2477,6 +2505,34 @@
                 }
               ],
               "name": "redeem",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
+        "MoveEth": {
+          "address": "0x9D404350BbEd1FEBa243e2d95Dd6479AD8F5ec67",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "to",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "weth",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "name": "moveEth",
               "outputs": [],
               "stateMutability": "nonpayable",
               "type": "function"

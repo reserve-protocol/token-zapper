@@ -1124,6 +1124,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     const userOption: TxGenOptions = Object.assign({
       caller: Address.from(caller),
       ethereumInput: isNative,
+      ethereumOutput: false,
       deployFolio: config,
       slippage: opts?.slippage ?? 0.001,
       recipient: Address.from(recipient),
@@ -1136,9 +1137,6 @@ export class Universe<const UniverseConf extends Config = Config> {
       this.config,
       userOption
     )
-
-    
-
 
     const expectedOutput = await deployTFG.evaluate(this, [userInput])
     this.logger.info(`expected zap: ${userInput} -> ${expectedOutput.result.outputs.join(', ')} fee=${expectedOutput.result.txFee}`)
@@ -1171,13 +1169,16 @@ export class Universe<const UniverseConf extends Config = Config> {
     await this.folioContext.isFolio(outputToken)
 
     try {
-      const isNative = userInput.token === this.nativeToken
-      userInput = isNative ? userInput.into(this.wrappedNativeToken) : userInput
+      const inputIsGasToken = userInput.token === this.nativeToken
+      const outputIsGasToken = outputToken === this.nativeToken
+      userInput = inputIsGasToken ? userInput.into(this.wrappedNativeToken) : userInput
+      outputToken = outputIsGasToken ? this.wrappedNativeToken : outputToken
       this.logger.info(`Building DAG for ${userInput} -> ${outputToken}`)
       
       const txGenOptions: TxGenOptions = {
         ...options,
-        ethereumInput: isNative,
+        ethereumInput: inputIsGasToken,
+        ethereumOutput: outputIsGasToken,
         useTrade: opts?.trade,
         slippage: opts?.slippage ?? 0.001
       }

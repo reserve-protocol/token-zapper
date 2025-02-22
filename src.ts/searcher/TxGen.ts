@@ -100,16 +100,20 @@ const evaluateProgram = async (
     const p = encodeZapParamsStruct(
       planner,
       opts.ethereumInput ? inputs[0].into(universe.nativeToken) : inputs[0],
-      outputTokenAddress,
+      opts.ethereumOutput ? Address.ZERO : outputTokenAddress,
       minOutput,
       dustTokens,
       opts.recipient
     )
     params = p
+    console.log(p)
     data = encodeZapper2Calldata(universe, p, {
       deployFolio: opts.deployFolio,
     })
   } else {
+    if (opts.ethereumOutput) {
+      throw new Error('Ethereum output not supported for old zapper')
+    }
     const p = encodeZapERC20ParamsStruct(
       planner,
       inputs[0],
@@ -183,6 +187,7 @@ export interface TxGenOptions {
   dustRecipient: Address
   useTrade?: boolean
   ethereumInput: boolean
+  ethereumOutput: boolean
   slippage: number
 
   deployFolio?: DeployFolioConfig
@@ -273,6 +278,23 @@ export class DagPlanContext {
     for (const [qty, approval] of approvals) {
       const token = approval.token
       const spender = approval.spender
+      if (this.universe.chainId !== 1) {
+        const tokenLib = Contract.createContract(
+          IERC20__factory.connect(
+            approval.token.address.address,
+            this.universe.provider
+          )
+        )
+        this.planner.add(
+          tokenLib.approve(spender.address, 0n),
+          `Approve ${spender} to use ${approval.token}`
+        )
+        this.planner.add(
+          tokenLib.approve(spender.address, constants.MaxUint256.toBigInt()),
+          `Approve ${spender} to use ${approval.token}`
+        )
+        continue
+      }
       if (
         !(await this.universe.approvalsStore.needsApproval(
           token,
@@ -323,15 +345,18 @@ export class DagPlanContext {
   public readonly values: Map<Token, Value> = new Map()
 }
 
+type ValueOfLazyValue = Value | (() => Value)
+type NodeInput = [Token, ValueOfLazyValue, TokenQuantity]
+
 const planNode = async (
   node: NodeProxy,
   ctx: DagPlanContext,
-  inputs: [Token, Value, TokenQuantity][]
-): Promise<[Token, NodeProxy, Value][]> => {
+  inputs: NodeInput[]
+): Promise<[Token, NodeProxy, ValueOfLazyValue][]> => {
   if (node.isEndNode) {
     return []
   }
-  const outputs = new Map<Token, Value>()
+  const outputs = new Map<Token, ValueOfLazyValue>()
 
   for (const input of inputs) {
     outputs.set(input[0], input[1])
@@ -363,7 +388,12 @@ const planNode = async (
     const outs = await node.action.planWithOutput(
       ctx.universe,
       ctx.planner,
-      actionInputs.map((i) => i[1]),
+      actionInputs.map((i) => {
+        if (typeof i[1] === 'function') {
+          return i[1]()
+        }
+        return i[1]
+      }),
       ctx.thisAddress,
       actionInputs.map((i) => i[2])
     )
@@ -378,7 +408,7 @@ const planNode = async (
     }
   }
 
-  let out: [Token, NodeProxy, Value][] = []
+  let out: [Token, NodeProxy, Value | (() => Value)][] = []
   for (const outEdge of node.outgoingEdges()) {
     if (dust.has(outEdge.token)) {
       continue
@@ -394,11 +424,19 @@ const planNode = async (
       if (outEdge.proportionBn === 0n) {
         continue
       }
-      const valueMulProp = ctx.bnFraction(
-        outEdge.proportionBn,
-        producedValue,
-        `${outEdge.source.nodeId} ${outEdge.proportion} ${outEdge.token} -> ${outEdge.recipient.nodeId}`
-      )
+      const valueMulProp =
+        typeof producedValue === 'function'
+          ? () =>
+              ctx.bnFraction(
+                outEdge.proportionBn,
+                producedValue(),
+                `${outEdge.source.nodeId} ${outEdge.proportion} ${outEdge.token} -> ${outEdge.recipient.nodeId}`
+              )
+          : ctx.bnFraction(
+              outEdge.proportionBn,
+              producedValue,
+              `${outEdge.source.nodeId} ${outEdge.proportion} ${outEdge.token} -> ${outEdge.recipient.nodeId}`
+            )
       out.push([outEdge.token, outEdge.recipient, valueMulProp])
     }
   }
@@ -445,9 +483,10 @@ export class TxGen {
 
     const ctx = new DagPlanContext(this.universe, this.result, planner, opts)
 
-    const nodeInputs = new DefaultMap<number, DefaultMap<Token, Value[]>>(
-      () => new DefaultMap<Token, Value[]>(() => [])
-    )
+    const nodeInputs = new DefaultMap<
+      number,
+      DefaultMap<Token, ValueOfLazyValue[]>
+    >(() => new DefaultMap<Token, Value[]>(() => []))
 
     const startNodeInput = new DefaultMap<Token, Value[]>(() => [])
     for (const input of this.result.result.inputs) {
@@ -489,23 +528,33 @@ export class TxGen {
             ctx.executionContractBalance.delete(token)
           }
 
-          return [token, val, qty] as [Token, Value, TokenQuantity]
+          return [token, val, qty] as NodeInput
+        }
+        if (
+          node.node.action instanceof BaseAction &&
+          !node.node.action.supportsDynamicInput
+        ) {
+          return [
+            token,
+            new LiteralValue(
+              ParamType.fromString('uint256'),
+              defaultAbiCoder.encode(['uint256'], [qty.amount])
+            ),
+            qty,
+          ] as NodeInput
         }
         if (node.node.isEndNode) {
           return [
             qty.token,
             ctx.executionContractBalance.get(qty.token),
             qty,
-          ] as [Token, Value, TokenQuantity]
+          ] as NodeInput
         }
         if (inputs.length === 1) {
-          return [token, inputs[0], qty] as [Token, Value, TokenQuantity]
-        } else {
-          console.log(inputs.length)
-          console.log(inputs)
+          return [token, inputs[0], qty] as NodeInput
         }
-        const summed = ctx.readBalance(token, true)
-        return [token, summed, qty] as [Token, Value, TokenQuantity]
+        const summed = () => ctx.balanceOf(token)
+        return [token, summed, qty] as NodeInput
       })
 
       const result = await planNode(node.node, ctx, inputs)
@@ -517,8 +566,12 @@ export class TxGen {
     let outputTokenAddress = outputToken.address
     if (!opts.deployFolio) {
       ctx.transfer(
-        outputTokenAddress,
-        ctx.balanceOf(outputTokenAddress),
+        opts.ethereumOutput ? ctx.universe.nativeToken : outputTokenAddress,
+        ctx.balanceOf(
+          opts.ethereumOutput
+            ? ctx.universe.wrappedNativeToken
+            : outputTokenAddress
+        ),
         ctx.recipient
       )
     }
@@ -550,7 +603,9 @@ export class TxGen {
       }
     }
 
-    const amountOut = outputToken.from(testSimulation.amountOut)
+    const amountOut = (
+      opts.ethereumOutput ? this.universe.nativeToken : outputToken
+    ).from(testSimulation.amountOut)
     const minOutputWithSlippage = amountOut.sub(
       amountOut.mul(
         outputToken.from(opts.deployFolio?.slippage ?? opts.slippage)
@@ -581,7 +636,10 @@ export class TxGen {
     const stats = await ZapTxStats.create(result, {
       gasUnits: program.res.gasUnits + program.res.gasUnits / 6n,
       input: this.result.result.inputs[0],
-      output: outputToken.from(program.res.amountOut),
+      output: (opts.ethereumOutput
+        ? this.universe.nativeToken
+        : outputToken
+      ).from(program.res.amountOut),
       dust: dustQtys,
     })
     const zapTx = await ZapTransaction.create(

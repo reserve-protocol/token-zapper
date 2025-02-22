@@ -1,7 +1,14 @@
 {
   "uniswap": {
     "v2": [],
-    "v3": []
+    "v3": [
+      "0x479e82b60f5885a3569d618d027ef1ac2020ee82",
+      "0x4baf786bd59022c942dcee4282b17d1bc681c99f",
+      "0x1914256c2f70aac87e097cd8b07958e9f17f2bcd",
+      "0xb986a32f468edad2f2f890094ea39ae484fbcaf4",
+      "0xb76726b4befe761a1859c1c02e7d157142e077c0",
+      "0xaed9261caa6a795178a4ab4d3be62f2d01b2c214"
+    ]
   },
   "aerodrome": {
     "stableOrVolatile": []

@@ -3517,7 +3517,8 @@ export class TokenFlowGraphSearcher {
     mintGraph: TokenFlowGraph,
     inputQty: TokenQuantity,
     output: Token,
-    opts: SearcherOptions
+    opts: SearcherOptions,
+    txGenOptions: TxGenOptions
   ) {
     console.log(`Running determineBestTradeMintSplit phase`)
     const tradeGraphBuilder = TokenFlowGraphBuilder.create1To1(
@@ -3547,7 +3548,7 @@ export class TokenFlowGraphSearcher {
       new TxGen(
         this.universe,
         await mintGraph.evaluate(this.universe, [inputQty])
-      )
+      ).generate(txGenOptions)
     } catch (e) {
       return tradeGraph
     }
@@ -3920,7 +3921,13 @@ export class TokenFlowGraphSearcher {
       if (tradePathExists) {
         let res = await optimise(this.universe, newTfg, [input], [output], opts)
         try {
-          res = await this.determineBestTradeMintSplit(res, input, output, opts)
+          res = await this.determineBestTradeMintSplit(
+            res,
+            input,
+            output,
+            opts,
+            txGenOptions
+          )
         } catch (e) {}
         await this.registry.define(input, output, res.clone())
         return res
@@ -4011,7 +4018,13 @@ export class TokenFlowGraphSearcher {
       if (tradePathExists) {
         let res = await optimise(this.universe, graph, [input], [output], opts)
         try {
-          res = await this.determineBestTradeMintSplit(res, input, output, opts)
+          res = await this.determineBestTradeMintSplit(
+            res,
+            input,
+            output,
+            opts,
+            txGenOptions
+          )
         } catch (e) {}
 
         await this.registry.define(input, output, res.clone())

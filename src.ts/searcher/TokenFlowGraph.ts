@@ -3543,6 +3543,15 @@ export class TokenFlowGraphSearcher {
       }
     )
 
+    try {
+      new TxGen(
+        this.universe,
+        await mintGraph.evaluate(this.universe, [inputQty])
+      )
+    } catch (e) {
+      return tradeGraph
+    }
+
     const onePart = inputQty.scalarDiv(
       BigInt(opts.topLevelTradeMintOptimisationParts)
     )

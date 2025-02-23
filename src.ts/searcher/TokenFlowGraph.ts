@@ -3545,7 +3545,7 @@ export class TokenFlowGraphSearcher {
     )
 
     try {
-      new TxGen(
+      await new TxGen(
         this.universe,
         await mintGraph.evaluate(this.universe, [inputQty])
       ).generate(txGenOptions)

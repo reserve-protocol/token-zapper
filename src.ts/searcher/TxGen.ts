@@ -553,7 +553,13 @@ export class TxGen {
         if (inputs.length === 1) {
           return [token, inputs[0], qty] as NodeInput
         }
-        const summed = () => ctx.balanceOf(token)
+        const summed = () =>
+          inputs.reduce((acc, curr) => {
+            return ctx.add(
+              typeof acc === 'function' ? acc() : acc,
+              typeof curr === 'function' ? curr() : curr
+            )
+          })
         return [token, summed, qty] as NodeInput
       })
 

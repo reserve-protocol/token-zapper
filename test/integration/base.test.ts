@@ -166,6 +166,8 @@ const issueanceCases = [
 
   makeTestCase(5000, t.USDC, t.MVDA25),
   makeTestCase(2, t.WETH, t.MVDA25),
+  makeTestCase(5000, t.USDC, t.MVTT10F),
+  makeTestCase(2, t.WETH, t.MVTT10F),
 
   // makeTestCase(5000, t.USDC, t.BGCI),
   // makeTestCase(2, t.WETH, t.BGCI),

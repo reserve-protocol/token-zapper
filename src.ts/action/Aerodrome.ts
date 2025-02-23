@@ -197,7 +197,7 @@ class AeropoolAddLiquidity extends BaseV2AerodromeAction {
         )}) => ${minAmounts.join(', ')}`,
         `${this.protocol}_mint_${this.outputToken.join(
           ', '
-        )}_using_${this.inputToken.join('_')}`
+        )}_using_${this.inputToken.join('_')}  on pool ${this.pool.address}`
       )!,
     ]
   }
@@ -276,7 +276,7 @@ class AeropoolRemoveLiquidity extends BaseV2AerodromeAction {
       )}) => ${predictedInputs.join(', ')}`,
       `${this.protocol}_redeem_${predictedInputs.join(
         '_'
-      )}_for_${this.outputToken.join('_')}`
+      )}_for_${this.outputToken.join('_')}  on pool ${this.pool.address}`
     )
 
     return null
@@ -435,7 +435,7 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
         )}) => ${minAmount}`,
         `${this.protocol}_swap_${predictedInputs.join(
           '_'
-        )}_for_${this.outputToken.join('_')}`
+        )}_for_${this.outputToken.join('_')} on pool ${this.pool.address}`
       )!,
     ]
   }
@@ -507,7 +507,7 @@ class AeropoolSwap extends BaseV2AerodromeAction {
         )}) => ${minAmount}`,
         `${this.protocol}_swap_${predictedInputs.join(
           '_'
-        )}_for_${this.outputToken.join('_')}`
+        )}_for_${this.outputToken.join('_')} on pool ${this.pool.address}`
       )!,
     ]
   }

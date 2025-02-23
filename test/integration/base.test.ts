@@ -87,7 +87,7 @@ export const baseWhales = {
   '0xc9a3e2b3064c1c0546d3d0edc0a748e9f93cf18d':
     '0x6f1d6b86d4ad705385e751e6e88b0fdfdbadf298', // vaya
   '0x8f0987ddb485219c767770e2080e5cc01ddc772a':
-    '0x46271115F374E02b5afe357C8E8Dad474c8DE1cF', // BSDX
+    '0xcFC0805E42589d04a5ab4bCAff49f81d5210e065', // BSDX
 
   // '0xebcda5b80f62dd4dd2a96357b42bb6facbf30267':
   //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
@@ -169,31 +169,31 @@ const issueanceCases = [
 ]
 
 const redeemCases = [
-  // makeTestCase(10, t.VTF, t.ETH),
-  // makeTestCase(10, t.MVDA25, t.ETH),
-  // makeTestCase(10, t.MVTT10F, t.ETH),
+  makeTestCase(10, t.VTF, t.ETH),
+  makeTestCase(10, t.MVDA25, t.ETH),
+  makeTestCase(10, t.MVTT10F, t.ETH),
 
-  // makeTestCase(10, t.VTF, t.USDC),
-  // makeTestCase(10, t.MVDA25, t.USDC),
-  // makeTestCase(10, t.MVTT10F, t.USDC),
+  makeTestCase(10, t.VTF, t.USDC),
+  makeTestCase(10, t.MVDA25, t.USDC),
+  makeTestCase(10, t.MVTT10F, t.USDC),
 
-  // makeTestCase(10, t.VTF, t.WETH),
-  // makeTestCase(10, t.MVDA25, t.WETH),
-  // makeTestCase(10, t.MVTT10F, t.WETH),
+  makeTestCase(10, t.VTF, t.WETH),
+  makeTestCase(10, t.MVDA25, t.WETH),
+  makeTestCase(10, t.MVTT10F, t.WETH),
 
-  // makeTestCase(50, rTokens.bsd, t.WETH),
-  // makeTestCase(50, rTokens.hyUSD, t.USDC),
+  makeTestCase(50, rTokens.bsd, t.WETH),
+  makeTestCase(50, rTokens.hyUSD, t.USDC),
 
-  // makeTestCase(10000, rTokens.hyUSD, t.WETH),
-  // makeTestCase(10000, rTokens.hyUSD, t.USDC),
+  makeTestCase(10000, rTokens.hyUSD, t.WETH),
+  makeTestCase(10000, rTokens.hyUSD, t.USDC),
 
-  // makeTestCase(10000, rTokens.BSDX, t.WETH),
-  // makeTestCase(10000, rTokens.BSDX, t.USDC),
+  makeTestCase(1000, rTokens.BSDX, t.WETH),
+  makeTestCase(1000, rTokens.BSDX, t.USDC),
 
-  // makeTestCase(75, t.VTF, t.WETH),
+  makeTestCase(75, t.VTF, t.WETH),
   makeTestCase(75, t.MVTT10F, t.WETH),
-  // makeTestCase(75, t.MVDA25, t.WETH),
-  // makeTestCase(75, t.BGCI, t.WETH),
+  makeTestCase(75, t.MVDA25, t.WETH),
+  makeTestCase(75, t.BGCI, t.WETH),
 ]
 const individualIntegrations = [
   makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),

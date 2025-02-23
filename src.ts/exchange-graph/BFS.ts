@@ -333,6 +333,9 @@ export const bestPath = async (
   while (!toVisit.isEmpty) {
     const node = toVisit.pop()
     const lastToken = node.token
+    if (ctx.blacklistedTokens.has(lastToken)) {
+      continue
+    }
     let previous = result.get(lastToken)
     if (previous == null) {
       result.set(lastToken, {
@@ -379,6 +382,9 @@ export const bestPath = async (
             if (graph.vertices.get(nextToken).outgoingEdges.size <= 1) {
               return
             }
+          }
+          if (ctx.blacklistedTokens.has(nextToken)) {
+            return
           }
           await Promise.all(
             actions
@@ -479,6 +485,9 @@ export const shortestPath = (
       .get(previous)
       .outgoingEdges.entries()) {
       if (!actions.some((action) => predicate(action))) {
+        continue
+      }
+      if (ctx.blacklistedTokens.has(nextToken)) {
         continue
       }
 

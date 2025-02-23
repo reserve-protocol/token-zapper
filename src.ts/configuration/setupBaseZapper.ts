@@ -378,6 +378,9 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   logger.info('Done setting up base zapper')
   await Promise.all(tasks)
 
+  universe.blacklistedTokens.add(
+    await universe.getToken('0x74ccbe53F77b08632ce0CB91D3A545bF6B8E0979')
+  )
   if (universe.config.dynamicConfigURL == null) {
     return
   }
@@ -423,9 +426,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     )
     await Promise.all(
       configJson.blacklistedTokens.map(async (tokenAddr) => {
-        const token = await universe.getToken(
-          Address.from(tokenAddr.toLowerCase())
-        )
+        const token = await universe.getToken(tokenAddr)
         universe.blacklistedTokens.add(token)
       })
     )

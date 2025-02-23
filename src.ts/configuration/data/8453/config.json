@@ -32,7 +32,7 @@
       "0xb8753941196692e322846cfee9c14c97ac81928a"
     ]
   },
-  "blacklistedTokens": ["0x40e42efbf86a45d7d3b3aac1c73a062a03981795"],
+  "blacklistedTokens": ["0x74ccbe53F77b08632ce0CB91D3A545bF6B8E0979"],
   "aerodrome": {
     "stableOrVolatile": [
       "0x2578365b3dfa7ffe60108e181efb79feddec2319",

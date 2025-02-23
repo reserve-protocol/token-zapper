@@ -282,7 +282,7 @@ export const computePreferredTokenSet = (
 
     const vertex = ctx.graph.vertices.get(node.token)
     for (const [nextToken] of vertex.outgoingEdges) {
-      if (visited.has(nextToken)) {
+      if (visited.has(nextToken) || ctx.blacklistedTokens.has(nextToken)) {
         continue
       }
 
@@ -366,6 +366,9 @@ export const bestPath = async (
     await Promise.all(
       [...vertex.outgoingEdges]
         .filter(([nextToken]) => {
+          if (ctx.blacklistedTokens.has(nextToken)) {
+            return false
+          }
           if (preferedTokens != null && !preferedTokens.has(nextToken)) {
             return false
           }

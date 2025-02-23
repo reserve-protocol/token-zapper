@@ -729,6 +729,8 @@ export class Universe<const UniverseConf extends Config = Config> {
     return this
   }
 
+  public blacklistedTokens = new Set<Token>()
+
   public async defineLPToken(
     lpToken: Token,
     burn: (a: TokenQuantity) => Promise<TokenQuantity[]>,

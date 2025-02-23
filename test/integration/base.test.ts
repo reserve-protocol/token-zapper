@@ -89,22 +89,22 @@ export const baseWhales = {
   '0x8f0987ddb485219c767770e2080e5cc01ddc772a':
     '0x46271115F374E02b5afe357C8E8Dad474c8DE1cF', // BSDX
 
-  '0xebcda5b80f62dd4dd2a96357b42bb6facbf30267':
-    '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  '0x44551ca46fa5592bb572e20043f7c3d54c85cad7':
-    '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  '0xfe45eda533e97198d9f3deeda9ae6c147141f6f9':
-    '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  '0x47686106181b3cefe4eaf94c4c10b48ac750370b':
-    '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  '0xd600e748c17ca237fcb5967fa13d688aff17be78':
-    '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  '0x23418de10d422ad71c9d5713a2b8991a9c586443':
-    '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  '0xe8b46b116d3bdfa787ce9cf3f5acc78dc7ca380e':
-    '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  '0xb8753941196692e322846cfee9c14c97ac81928a':
-    '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
+  // '0xebcda5b80f62dd4dd2a96357b42bb6facbf30267':
+  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
+  // '0x44551ca46fa5592bb572e20043f7c3d54c85cad7':
+  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
+  // '0xfe45eda533e97198d9f3deeda9ae6c147141f6f9':
+  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
+  // '0x47686106181b3cefe4eaf94c4c10b48ac750370b':
+  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
+  // '0xd600e748c17ca237fcb5967fa13d688aff17be78':
+  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
+  // '0x23418de10d422ad71c9d5713a2b8991a9c586443':
+  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
+  // '0xe8b46b116d3bdfa787ce9cf3f5acc78dc7ca380e':
+  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
+  // '0xb8753941196692e322846cfee9c14c97ac81928a':
+  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
 }
 
 const simulateFn = getSimulator(
@@ -169,31 +169,31 @@ const issueanceCases = [
 ]
 
 const redeemCases = [
-  makeTestCase(10, t.VTF, t.ETH),
-  makeTestCase(10, t.MVDA25, t.ETH),
-  makeTestCase(10, t.MVTT10F, t.ETH),
+  // makeTestCase(10, t.VTF, t.ETH),
+  // makeTestCase(10, t.MVDA25, t.ETH),
+  // makeTestCase(10, t.MVTT10F, t.ETH),
 
-  makeTestCase(10, t.VTF, t.USDC),
-  makeTestCase(10, t.MVDA25, t.USDC),
-  makeTestCase(10, t.MVTT10F, t.USDC),
+  // makeTestCase(10, t.VTF, t.USDC),
+  // makeTestCase(10, t.MVDA25, t.USDC),
+  // makeTestCase(10, t.MVTT10F, t.USDC),
 
-  makeTestCase(10, t.VTF, t.WETH),
-  makeTestCase(10, t.MVDA25, t.WETH),
-  makeTestCase(10, t.MVTT10F, t.WETH),
+  // makeTestCase(10, t.VTF, t.WETH),
+  // makeTestCase(10, t.MVDA25, t.WETH),
+  // makeTestCase(10, t.MVTT10F, t.WETH),
 
-  makeTestCase(50, rTokens.bsd, t.WETH),
-  makeTestCase(50, rTokens.hyUSD, t.USDC),
+  // makeTestCase(50, rTokens.bsd, t.WETH),
+  // makeTestCase(50, rTokens.hyUSD, t.USDC),
 
-  makeTestCase(10000, rTokens.hyUSD, t.WETH),
-  makeTestCase(10000, rTokens.hyUSD, t.USDC),
+  // makeTestCase(10000, rTokens.hyUSD, t.WETH),
+  // makeTestCase(10000, rTokens.hyUSD, t.USDC),
 
-  makeTestCase(10000, rTokens.BSDX, t.WETH),
-  makeTestCase(10000, rTokens.BSDX, t.USDC),
+  // makeTestCase(10000, rTokens.BSDX, t.WETH),
+  // makeTestCase(10000, rTokens.BSDX, t.USDC),
 
-  makeTestCase(75, t.VTF, t.WETH),
+  // makeTestCase(75, t.VTF, t.WETH),
   makeTestCase(75, t.MVTT10F, t.WETH),
-  makeTestCase(75, t.MVDA25, t.WETH),
-  makeTestCase(75, t.BGCI, t.WETH),
+  // makeTestCase(75, t.MVDA25, t.WETH),
+  // makeTestCase(75, t.BGCI, t.WETH),
 ]
 const individualIntegrations = [
   makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),

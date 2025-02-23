@@ -398,7 +398,7 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
     predictedInputs: TokenQuantity[]
   ): Promise<null | Value[]> {
     const [minAmount] = await this.quote(predictedInputs)
-    const minOut = minAmount.amount - minAmount.amount / 20n
+    const minOut = minAmount.amount - minAmount.amount / 10n
 
     const encoded = utils.defaultAbiCoder.encode(
       [
@@ -489,7 +489,7 @@ class AeropoolSwap extends BaseV2AerodromeAction {
       planner.add(
         this.pool.context.weirollAerodromeRouterCaller.exactInputSingleV2(
           input,
-          minAmount.amount - minAmount.amount / 20n,
+          minAmount.amount - minAmount.amount / 10n,
           this.pool.context.router.address,
           destination.address,
           defaultAbiCoder.encode(
@@ -746,7 +746,7 @@ export class AerodromeStablePool {
           universe.wrappedNativeToken,
           inst.poolAddress
         )
-        if (bal.asNumber() < 2.5) {
+        if (bal.asNumber() < 1.5) {
           return inst
         }
       }

@@ -17,7 +17,7 @@ import { setupOdosPricing } from './setupOdosPricing'
 import { setupReservePricing } from './setupReservePricing'
 import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
 import { AerodromeContext } from '../action/Aerodrome'
-import { setupMaverick } from './maverick'
+// import { setupMaverick } from './maverick'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
@@ -231,7 +231,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   }
   let done = 0
   const initMaverick = async () => {
-    await setupMaverick(universe)
+    // await setupMaverick(universe)
   }
 
   const tasks = [
@@ -391,6 +391,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
         v2: string[]
         v3: string[]
       }
+      blacklistedTokens: string[]
       aerodrome: {
         stableOrVolatile: string[]
       }
@@ -418,6 +419,14 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
         } catch (e) {
           console.log(e)
         }
+      })
+    )
+    await Promise.all(
+      configJson.blacklistedTokens.map(async (tokenAddr) => {
+        const token = await universe.getToken(
+          Address.from(tokenAddr.toLowerCase())
+        )
+        universe.blacklistedTokens.add(token)
       })
     )
   } catch (e) {

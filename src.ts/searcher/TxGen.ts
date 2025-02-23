@@ -150,18 +150,18 @@ const evaluateProgram = async (
     },
   }
 
-  // console.log(
-  //   JSON.stringify(
-  //     {
-  //       to: simulationPayload.transactions[0].to,
-  //       from: simulationPayload.transactions[0].from,
-  //       data: simulationPayload.transactions[0].data,
-  //       block: universe.currentBlock,
-  //     },
-  //     null,
-  //     2
-  //   )
-  // )
+  universe.logger.debug(
+    JSON.stringify(
+      {
+        to: simulationPayload.transactions[0].to,
+        from: simulationPayload.transactions[0].from,
+        data: simulationPayload.transactions[0].data,
+        block: universe.currentBlock,
+      },
+      null,
+      2
+    )
+  )
 
   try {
     return {
@@ -278,23 +278,23 @@ export class DagPlanContext {
     for (const [qty, approval] of approvals) {
       const token = approval.token
       const spender = approval.spender
-      if (this.universe.chainId !== 1) {
-        const tokenLib = Contract.createContract(
-          IERC20__factory.connect(
-            approval.token.address.address,
-            this.universe.provider
-          )
-        )
-        this.planner.add(
-          tokenLib.approve(spender.address, 0n),
-          `Approve ${spender} to use ${approval.token}`
-        )
-        this.planner.add(
-          tokenLib.approve(spender.address, constants.MaxUint256.toBigInt()),
-          `Approve ${spender} to use ${approval.token}`
-        )
-        continue
-      }
+      // if (this.universe.chainId !== 1) {
+      //   const tokenLib = Contract.createContract(
+      //     IERC20__factory.connect(
+      //       approval.token.address.address,
+      //       this.universe.provider
+      //     )
+      //   )
+      //   this.planner.add(
+      //     tokenLib.approve(spender.address, 0n),
+      //     `Approve ${spender} to use ${approval.token}`
+      //   )
+      //   this.planner.add(
+      //     tokenLib.approve(spender.address, constants.MaxUint256.toBigInt()),
+      //     `Approve ${spender} to use ${approval.token}`
+      //   )
+      //   continue
+      // }
       if (
         !(await this.universe.approvalsStore.needsApproval(
           token,

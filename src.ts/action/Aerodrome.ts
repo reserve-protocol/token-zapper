@@ -398,7 +398,6 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
     predictedInputs: TokenQuantity[]
   ): Promise<null | Value[]> {
     const [minAmount] = await this.quote(predictedInputs)
-    const minOut = minAmount.amount - minAmount.amount / 10n
 
     const encoded = utils.defaultAbiCoder.encode(
       [
@@ -426,7 +425,7 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
       planner.add(
         this.pool.context.weirollAerodromeRouterCaller.exactInputSingle(
           input,
-          minOut,
+          0n,
           this.pool.context.aerodromeSwapRouterAddr.address,
           encoded
         ),

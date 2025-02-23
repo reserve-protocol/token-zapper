@@ -30,9 +30,9 @@
       "0xf37631e6481e61011fbdccbce714ab06a031fba8",
       "0xfdccd04ddca9ecf052e8e9ef6bd09a9b323fbf49",
       "0xb8753941196692e322846cfee9c14c97ac81928a"
-
     ]
   },
+  "blacklistedTokens": ["0x40e42efbf86a45d7d3b3aac1c73a062a03981795"],
   "aerodrome": {
     "stableOrVolatile": [
       "0x2578365b3dfa7ffe60108e181efb79feddec2319",

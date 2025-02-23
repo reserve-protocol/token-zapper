@@ -403,7 +403,7 @@ abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
 export class MintRTokenAction extends ReserveRTokenBase {
   action = 'issue'
   get supportsDynamicInput() {
-    return false
+    return true
   }
   async plan(
     planner: Planner,

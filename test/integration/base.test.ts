@@ -36,8 +36,8 @@ const searcherOptions: SearcherOptions = {
 
   cacheResolution: 8,
   maxPhase2TimeRefinementTime: 1000,
-  optimisationSteps: 30,
-  minimiseDustPhase1Steps: 10,
+  optimisationSteps: 20,
+  minimiseDustPhase1Steps: 20,
   minimiseDustPhase2Steps: 10,
   zapMaxDustProduced: 8,
   zapMaxValueLoss: 5,
@@ -164,11 +164,11 @@ const issueanceCases = [
   // makeTestCase(5000, t.USDC, t.CLX),
   // makeTestCase(2, t.WETH, t.CLX),
 
-  // makeTestCase(5000, t.USDC, t.MVDA25),
-  // makeTestCase(2, t.WETH, t.MVDA25),
+  makeTestCase(5000, t.USDC, t.MVDA25),
+  makeTestCase(2, t.WETH, t.MVDA25),
 
-  makeTestCase(5000, t.USDC, t.BGCI),
-  makeTestCase(2, t.WETH, t.BGCI),
+  // makeTestCase(5000, t.USDC, t.BGCI),
+  // makeTestCase(2, t.WETH, t.BGCI),
 
   // makeTestCase(5000, t.USDC, t.MVTT10F),
   // makeTestCase(2, t.WETH, t.MVTT10F),

@@ -59,7 +59,7 @@ export class DexLiquidtyPriceStore {
           2,
           5
         ).then((m) => {
-          this.recordAllSingleStepBestPaths(input.token, m)
+          // this.recordAllSingleStepBestPaths(input.token, m)
           return m.get(target)?.path ?? []
         })
         if (tokenPath.length === 0) {

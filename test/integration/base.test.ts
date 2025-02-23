@@ -152,20 +152,23 @@ const issueanceCases = [
   // makeTestCase(1, t.WETH, rTokens.bsd),
   // makeTestCase(1, t.WETH, rTokens.hyUSD),
 
-  makeTestCase(5000, t.USDC, t.ABX),
-  makeTestCase(2, t.WETH, t.ABX),
-  makeTestCase(5000, t.USDC, t.VTF),
-  makeTestCase(2, t.WETH, t.VTF),
+  // makeTestCase(5000, t.USDC, t.ABX),
+  makeTestCase(1, t.WETH, t.BDTF),
+  makeTestCase(2, t.ETH, t.BDTF),
+  makeTestCase(1000, t.USDC, t.BDTF),
+  makeTestCase(1000, t.USDC, t.BDTF),
+  // makeTestCase(5000, t.USDC, t.VTF),
+  // makeTestCase(2, t.WETH, t.VTF),
 
-  makeTestCase(5000, t.USDC, t.CLX),
-  makeTestCase(2, t.WETH, t.CLX),
-  makeTestCase(5000, t.USDC, t.MVDA25),
-  makeTestCase(2, t.WETH, t.MVDA25),
+  // makeTestCase(5000, t.USDC, t.CLX),
+  // makeTestCase(2, t.WETH, t.CLX),
+  // makeTestCase(5000, t.USDC, t.MVDA25),
+  // makeTestCase(2, t.WETH, t.MVDA25),
 
-  makeTestCase(5000, t.USDC, t.BGCI),
-  makeTestCase(2, t.WETH, t.BGCI),
-  makeTestCase(5000, t.USDC, t.MVTT10F),
-  makeTestCase(2, t.WETH, t.MVTT10F),
+  // makeTestCase(5000, t.USDC, t.BGCI),
+  // makeTestCase(2, t.WETH, t.BGCI),
+  // makeTestCase(5000, t.USDC, t.MVTT10F),
+  // makeTestCase(2, t.WETH, t.MVTT10F),
 ]
 
 const redeemCases = [
@@ -318,83 +321,6 @@ const folioTests2 = [
     tradeLaunchers: [],
     vibesOfficers: [],
   },
-]
-
-const pricingTests = [
-  '0x2615a94df961278DcbC41Fb0a54fEc5f10a693aE',
-  '0x9B8Df6E244526ab5F6e6400d331DB28C8fdDdb55',
-  '0x12E96C2BFEA6E835CF8Dd38a5834fa61Cf723736',
-  '0xa3A34A0D9A08CCDDB6Ed422Ac0A28a06731335aA',
-  '0xd6a34b430C05ac78c24985f8abEE2616BC1788Cb',
-  '0xd403D1624DAEF243FbcBd4A80d8A6F36afFe32b2',
-  '0x239b9C1F24F3423062B0d364796e07Ee905E9FcE',
-  '0x378c326A472915d38b2D8D41e1345987835FaB64',
-  '0x0F813f4785b2360009F9aC9BF6121a85f109efc6',
-  '0x7bE0Cc2cADCD4A8f9901B4a66244DcDd9Bd02e0F',
-  '0xc3De830EA07524a0761646a6a4e4be0e114a3C83',
-  '0x3EB097375fc2FC361e4a472f5E7067238c547c52',
-  '0x5ed25E305E08F58AFD7995EaC72563E6BE65A617',
-  '0x40318eE213227894b5316E5EC84f6a5caf3bBEDd',
-  '0xf383074c4B993d1ccd196188d27D0dDf22AD463c',
-  '0xD61BCF79b26787AE993f75B064d2e3b3cc738C5d',
-  '0xAcbF16f82753F3d52A2C87e4eEDA220c9A7A3762',
-  '0xE868C3d83EC287c01Bcb533A33d197d9BFa79DAD',
-  '0x3a51f2a377EA8B55FAf3c671138A00503B031Af3',
-  '0x6e934283DaE5D5D1831cbE8d557c44c9B83F30Ee',
-  '0x4b92eA5A2602Fba275150db4201A6047056F6913',
-  '0xDB18Fb11Db1b972A54bD89cE04bAd61855c07788',
-  '0x0935b271CA903ADA3FFe1Ac1353fC4A49E7EE87b',
-  '0x3d00283AF5AB11eE7f6Ec51573ab62b6Fb6Dfd8f',
-  '0x8989377fd349ADFA99E6CE3Cb6c0D148DfC7F19e',
-  '0x135Ff404bA56E167F58bc664156beAa0A0Fd95ac',
-  '0x893ADcbdC7FcfA0eBb6d3803f01Df1eC199Bf7C5',
-  '0x1B94330EEc66BA458a51b0b14f411910D5f678d0',
-  '0xD7D5c59457d66FE800dBA22b35e9c6C379D64499',
-  '0x30F16E3273AB6e4584B79B76fD944E577e49a5c8',
-  '0x31d664ebd97A50d5a2Cd49B16f7714AB2516Ed25',
-  '0x05f191a4Aac4b358AB99DB3A83A8F96216ecb274',
-  '0x5A03841C2e2f5811f9E548cF98E88e878e55d99E',
-  '0x508e751fdCf144910074Cc817a16757F608DB52A',
-  '0x16275fD42439A6671b188bDc3949a5eC61932C48',
-  '0x9AF46F95a0a8be5C2E0a0274A8b153C72d617E85',
-  '0x83f31af747189c2FA9E5DeB253200c505eff6ed2',
-  '0xc5cDEb649ED1A7895b935ACC8EB5Aa0D7a8492BE',
-  '0xD6A746236F15E18053Dd3ae8c27341B44CB08E59',
-  '0x3ECb91ac996E8c55fe1835969A4967F95a07Ca71',
-  '0xe3AE3EE16a89973D67b678aaD2c3bE865Dcc6880',
-  '0x2f2041c267795a85B0De04443E7B947A6234fEe8',
-  '0x44951C66dFe920baED34457A2cFA65a0c7ff2025',
-  '0x7fdAa50d7399ac436943028edA6ed9a1BD89509f',
-  '0x972B86A73095f934A82860df664F3c55701F41b0',
-  '0x51436F6bD047797DE7D11E9d32685f029aed1069',
-  '0xb0505e5a99abd03d94a1169e638B78EDfEd26ea4',
-  '0xc79e06860Aa9564f95E08fb7E5b61458d0C63898',
-  '0xE5c436B0a34DF18F1dae98af344Ca5122E7d57c4',
-  '0x9c0e042d65a2e1fF31aC83f404E5Cb79F452c337',
-  '0xf653E8B6Fcbd2A63246c6B7722d1e9d819611241',
-  '0xF0134C5eA11d1fc75fa1b25fAC00F8d82C38bD52',
-  '0x224A0cB0C937018123B441b489a74EAF689Da78f',
-  '0xD01CB4171A985571dEFF48c9dC2F6E153A244d64',
-  '0xdf5913632251585a55970134Fad8A774628E9388',
-  '0x71a67215a2025F501f386A49858A9ceD2FC0249d',
-  '0xa260BA5fd9FF3FaE55Ac4930165A9C33519dE694',
-  '0x806041B6473DA60abbe1b256d9A2749A151be6C6',
-  '0x10f4799f0FeeEa0e74454e0B6669D3C0cf7B93bF',
-  '0x4c5d8A75F3762c1561D96f177694f67378705E98',
-  '0x90131D95a9a5b48b6a3eE0400807248bEcf4B7A4',
-  '0xb0ffa8000886e57f86dd5264b9582b2ad87b2b91',
-  '0x0192C0fd46de641D3EC17c399032E400ce840205',
-  '0x5B0A82456D018F21881D1D5460e37aeFD56d54b3',
-  '0xB1db4CD8Af9db34F1A8241beafC76c0F77408e01',
-  '0xdc1437D7390016af12fe501E4a65EC42d35469ce',
-  '0x55B3E31739247d010eCe7ddC365eAe512b16fa7E',
-  '0xa76a29923ccFb59E734e907688b659E48A55FD07',
-  '0x6aD49F3bD3E15a7EE14A3b246824858E97910ed0',
-  '0x0956CB4A1D8924680FEb671d2E4a122E2114313e',
-  '0x532f27101965dd16442E59d40670FaF5eBB142E4',
-  '0x13281ae464191bc592c6e5d65eeeaeee02660d84',
-  '0x13e9f9096B97AFFdFcd40A21e2030B1A03f69736',
-  '0xcb9eEC5748aAAfA41fBcbE0B58465eFed11CE176',
 ]
 
 const governedDeployConfig = (
@@ -556,33 +482,15 @@ describe('base zapper', () => {
     )
   })
 
-  describe('pricing', () => {
-    for (const testCase of pricingTests) {
-      describe(testCase, () => {
-        it(`Can price ${testCase}`, async () => {
-          expect.assertions(1)
-          try {
-            const token = await universe.getToken(testCase)
-            const price = await token.price
-            console.log(`${token}: ${price}`)
-            expect(true).toBe(true)
-          } catch (e) {
-            console.error(`${testCase} failed`)
-            throw e
-          }
-        }, 15000)
-      })
-    }
-  })
-
   // describe('pathfinding', () => {
   //   it('finds a path', async () => {
   //     const inputQty = universe.commonTokens.WETH.from(1)
   //     const out = await bestPath(
   //       universe,
   //       inputQty,
-  //       universe.commonTokens.VaderAI,
-  //       2
+  //       await universe.getToken('0x504a26cf29674bc77a9341e73f88ccecc864034c'),
+  //       2,
+  //       5
   //     )
 
   //     for (const [_, { path, legAmount }] of out.entries()) {

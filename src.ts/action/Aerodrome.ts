@@ -513,6 +513,17 @@ class AeropoolSwap extends BaseV2AerodromeAction {
   }
 }
 
+const whitelisted = new Set<Address>([
+  // uSHIB
+  Address.from('0x83212D59403D96A95Fd750d5b6880F77d0CAb337'),
+
+  // uDOGE
+  Address.from('0xBE700f5c75dFCbEf3Cae37873aEEB1724daED3f6'),
+
+  // BONK
+  Address.from('0x140511DBe5BCad98993e8Ded6D0c2190101Fa709'),
+])
+
 const FEE_DIVISOR = 10000n
 const MAX_NUM = 2n ** 256n - 1n
 export class AerodromeStablePool {
@@ -739,8 +750,9 @@ export class AerodromeStablePool {
       )
 
       if (
-        inst.token0 === universe.wrappedNativeToken ||
-        inst.token1 === universe.wrappedNativeToken
+        !whitelisted.has(inst.address) &&
+        (inst.token0 === universe.wrappedNativeToken ||
+          inst.token1 === universe.wrappedNativeToken)
       ) {
         const bal = await context.universe.balanceOf(
           universe.wrappedNativeToken,

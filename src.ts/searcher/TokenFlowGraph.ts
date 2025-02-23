@@ -1585,7 +1585,11 @@ export class TokenFlowGraph {
         end(lines[lines.length - 1])
 
         emit(
-          `${node.nodeId} [label = "${node.nodeId}: ${node.name} (${node.nodeType})"]`
+          `${node.nodeId} [label = "${node.nodeId}: ${node.name} (${
+            node.action instanceof BaseAction && node.action.isTrade
+              ? node.action.address.toShortString() + ', '
+              : ''
+          }, ${node.nodeType})"]`
         )
         const label = node.action.end.outputs.join(', ')
         emit(`${node.action.end.nodeId} -> ${node.nodeId} [label = "${label}"]`)
@@ -3614,10 +3618,7 @@ export class TokenFlowGraphSearcher {
     if (output === graph.inputs[0]) {
       return
     }
-    const tradePathExists = await this.doesTradePathExist(
-      inputQty.scalarDiv(2n),
-      output
-    )
+    const tradePathExists = await this.doesTradePathExist(inputQty, output)
     if (!tradePathExists || topLevel) {
       await this.tokenMintingGraph(graph, inputQty, output, inputNode)
     } else {
@@ -3631,7 +3632,7 @@ export class TokenFlowGraphSearcher {
       await this.tokenMintingGraph(graph, inputQty, output, splitNode)
       await this.addTrades(
         graph,
-        inputQty.scalarDiv(2n),
+        inputQty,
         output,
         false,
         `${output} (trade path)`,
@@ -3906,6 +3907,15 @@ export class TokenFlowGraphSearcher {
         opts,
         true
       )
+      const tradePathExists = await this.doesTradePathExist(input, output)
+      if (tradePathExists) {
+        let res = await optimise(this.universe, newTfg, [input], [output], opts)
+        try {
+          res = await this.determineBestTradeMintSplit(res, input, output, opts)
+        } catch (e) {}
+        await this.registry.define(input, output, res.clone())
+        return res
+      }
       this.registry.define(input, output, newTfg)
       return newTfg
     }

@@ -738,6 +738,19 @@ export class AerodromeStablePool {
         context.getReserves
       )
 
+      if (
+        inst.token0 === universe.wrappedNativeToken ||
+        inst.token1 === universe.wrappedNativeToken
+      ) {
+        const bal = await context.universe.balanceOf(
+          universe.wrappedNativeToken,
+          inst.poolAddress
+        )
+        if (bal.asNumber() < 2.5) {
+          return inst
+        }
+      }
+
       if (inst.poolType === AerodromePoolType.CL) {
         universe.addAction(inst.actions.t0for1)
         universe.addAction(inst.actions.t1for0)

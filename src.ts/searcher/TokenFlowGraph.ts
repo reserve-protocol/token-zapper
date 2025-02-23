@@ -2733,12 +2733,12 @@ const minimizeDust = async (
           bestThisIteration.result.totalValue <
           0.00001
       ) {
-        console.log('Minimise dust: Breaking out, dust value  <= 1')
+        // console.log('Minimise dust: Breaking out, dust value  <= 1')
         return bestThisIteration
       }
       const node = nodes[i]
       if (!dustTokens.find((d) => node.tokenToSplitMap.has(d))) {
-        console.log('Minimise dust: No dust tokens to process')
+        // console.log('Minimise dust: No dust tokens to process')
         continue
       }
       const currentDust = bestThisIteration.result.dust.filter(
@@ -2817,11 +2817,11 @@ const minimizeDust = async (
     lastToken = lastTokenThisIteration
     if (bestThisIteration !== currentResult && bestNode != null) {
       currentResult = bestThisIteration
-      console.log(
-        `${iter} minimize dust: ${bestThisIteration.result.outputs.join(
-          ', '
-        )} ${bestThisIteration.result.dustFraction * 100}% dust`
-      )
+      // console.log(
+      //   `${iter} minimize dust: ${bestThisIteration.result.outputs.join(
+      //     ', '
+      //   )} ${bestThisIteration.result.dustFraction * 100}% dust`
+      // )
       bestNode.splits.setParts(bestParts!)
     } else {
       noImprovement += 1
@@ -2961,7 +2961,7 @@ const optimiseGlobal = async (
     if (bestNodeToChange !== -1) {
       noImprovement = 1
       bestSoFar = bestThisIteration
-      console.log(
+      logger.debug(
         `${i} optimize global (best node: ${bestNodeToChange}): ${bestSoFar.result.outputs
           .filter((i) => i.amount > 1000n)
           .join(', ')} ${bestSoFar.result.dustFraction * 100}% dust`
@@ -3845,7 +3845,6 @@ export class TokenFlowGraphSearcher {
     if (graph.inputs[0] === output) {
       return null
     }
-    console.log(`Adding trades for ${inputQty} -> ${output}`)
     const path = await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
       inputQty,
       output,
@@ -3934,8 +3933,8 @@ export class TokenFlowGraphSearcher {
           (await this.universe.tokenClass.get(output))
       }
 
-      console.log(`target tokens: ${targetToken}`)
-      console.log('outputTokens', outputTokens.join(', '))
+      // console.log(`target tokens: ${targetToken}`)
+      // console.log('outputTokens', outputTokens.join(', '))
 
       for (const outputToken of outputTokens) {
         if (outputToken === output || outputToken === targetToken) {

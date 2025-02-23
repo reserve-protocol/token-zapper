@@ -106,7 +106,7 @@ const evaluateProgram = async (
       opts.recipient
     )
     params = p
-    console.log(p)
+    // console.log(p)
     data = encodeZapper2Calldata(universe, p, {
       deployFolio: opts.deployFolio,
     })
@@ -150,18 +150,18 @@ const evaluateProgram = async (
     },
   }
 
-  console.log(
-    JSON.stringify(
-      {
-        to: simulationPayload.transactions[0].to,
-        from: simulationPayload.transactions[0].from,
-        data: simulationPayload.transactions[0].data,
-        block: universe.currentBlock,
-      },
-      null,
-      2
-    )
-  )
+  // console.log(
+  //   JSON.stringify(
+  //     {
+  //       to: simulationPayload.transactions[0].to,
+  //       from: simulationPayload.transactions[0].from,
+  //       data: simulationPayload.transactions[0].data,
+  //       block: universe.currentBlock,
+  //     },
+  //     null,
+  //     2
+  //   )
+  // )
 
   try {
     return {

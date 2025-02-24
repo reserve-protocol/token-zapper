@@ -2937,8 +2937,8 @@ const optimiseGlobal = async (
         const prev = edge.inner[paramIndex]
 
         // Optimisation: If we find an improvement, try to explore this specific change fully before moving on.
-        for (let n = 0; n < 8; n++) {
-          const S = MAX_SCALE * (1 - (i + n) ** 1.25 / optimisationSteps)
+        for (let n = 0; n < 4; n++) {
+          const S = MAX_SCALE * (1 - (i + n * 2) ** 1.25 / optimisationSteps)
           edge.add(paramIndex, S)
 
           if (
@@ -2972,15 +2972,15 @@ const optimiseGlobal = async (
       noImprovement = 1
       bestSoFar = bestThisIteration
       logger.info(
-        `${i} optimize global (best node: ${bestNodeToChange}): ${bestSoFar.result.outputs
-          .filter((i) => i.amount > 1000n)
-          .join(', ')} ${bestSoFar.result.dustFraction * 100}% dust`
+        `${i} optimize global (best node: ${bestNodeToChange}): ${
+          bestSoFar.result.output
+        } + ${((1 - bestSoFar.result.dustFraction) * 100).toFixed(2)}% dust`
       )
       g._outgoingEdges[
         optimisationNodes[bestNodeToChange].id
       ]!.edges[0].setParts(tmp[bestNodeToChange])
     } else {
-      noImprovement += 1 + Math.random()
+      noImprovement += 2
     }
   }
   return bestSoFar
@@ -3351,7 +3351,7 @@ const optimise = async (
       g,
       universe,
       inputs,
-      4,
+      8,
       bestSoFar,
       logger,
       1,
@@ -3364,7 +3364,7 @@ const optimise = async (
       universe,
       inputs,
       optimisationNodes,
-      0.2
+      0.5
     )
   }
   const nodes = g
@@ -3463,23 +3463,8 @@ const optimise = async (
   const maxPhase2TimeRefinementTime =
     universe.config.maxPhase2TimeRefinementTime
   // Iteratively try and improve result until it would pass checks or we run out of time
-  let scaleMultiplier = 0.5
+  let scaleMultiplier = 0.1
   let refinementSteps = 0
-  if (
-    bestSoFar.result.dustValue / bestSoFar.result.totalValue >
-      maxDustFraction ||
-    bestSoFar.result.totalValue / bestSoFar.result.inputValue <
-      1 - maxValueSlippage
-  ) {
-    bestSoFar = await optimiseMultiplyDirectional(
-      g,
-      bestSoFar,
-      universe,
-      inputs,
-      optimisationNodes,
-      0.9
-    )
-  }
 
   while (
     bestSoFar.result.dustValue / bestSoFar.result.totalValue >

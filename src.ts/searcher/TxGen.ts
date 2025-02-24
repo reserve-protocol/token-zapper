@@ -496,6 +496,11 @@ export class TxGen {
     }
     nodeInputs.set(nodes[0].node.id, startNodeInput)
 
+    const isRedeem = !(
+      (await this.universe.isRToken(outputToken)) ||
+      (await this.universe.folioContext.isFolio(outputToken))
+    )
+
     const tokensToTransferBackToUser = new Set<Token>()
     for (const node of nodes) {
       if (node.node.action instanceof DeployMintFolioAction) {
@@ -554,12 +559,18 @@ export class TxGen {
           return [token, inputs[0], qty] as NodeInput
         }
         const summed = () =>
-          inputs.reduce((acc, curr) => {
-            return ctx.add(
-              typeof acc === 'function' ? acc() : acc,
-              typeof curr === 'function' ? curr() : curr
-            )
-          })
+          isRedeem
+            ? ctx.readBalance(token, true)
+            : inputs.reduce((acc, curr) => {
+                const l = typeof acc === 'function' ? acc() : acc
+                const r = typeof curr === 'function' ? curr() : curr
+                if (l === r || (l as any).name === (r as any).name) {
+                  return l
+                }
+
+                const res = ctx.add(l, r)
+                return res
+              })
         return [token, summed, qty] as NodeInput
       })
 

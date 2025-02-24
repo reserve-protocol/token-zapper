@@ -267,6 +267,7 @@ function abiEncodeSingle(
     )
     return new TupleLiteral(param, components)
   }
+
   return new LiteralValue(param, defaultAbiCoder.encode([param], [value]))
 }
 
@@ -309,7 +310,7 @@ export function encodeArg(arg: unknown, param: ParamType): Value {
   } else if (arg instanceof Planner) {
     return new SubplanValue(arg)
   } else {
-    return abiEncodeSingle(param, arg)
+    return abiEncodeSingle(param, arg === '0x' ? '0x0' : arg)
   }
 }
 

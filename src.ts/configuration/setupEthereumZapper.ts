@@ -16,6 +16,7 @@ import {
   IGaugeStakeDAO__factory,
   IVaultYearn__factory,
 } from '../contracts'
+import { Token } from '../entities/Token'
 import { TokenType } from '../entities/TokenClass'
 import { wrapGasToken } from '../searcher/TradeAction'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
@@ -39,6 +40,79 @@ import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
 import { setupUniswapV3, UniswapV3Context } from './setupUniswapV3'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { setupYearn } from './setupYearn'
+
+export const setupBeefyVault = async (
+  universe: EthereumUniverse,
+  token: Token
+) => {
+  const contract = IBeefyVault__factory.connect(
+    token.address.address,
+    universe.provider
+  )
+  const want = await contract.callStatic.want()
+  const wantToken = await universe.getToken(Address.from(want))
+  const getRate = universe.createCachedProducer(async () => {
+    const rate = await contract.callStatic.getPricePerFullShare()
+    return rate.toBigInt()
+  })
+
+  const depositToBeefy = new BeefyDepositAction(
+    universe,
+    wantToken,
+    token,
+    getRate
+  )
+
+  const beefyWithdraw = new BeefyWithdrawAction(
+    universe,
+    wantToken,
+    token,
+    getRate
+  )
+
+  universe.defineMintable(depositToBeefy, beefyWithdraw, true)
+  universe.addSingleTokenPriceSource({
+    token,
+    priceFn: async () => {
+      try {
+        const outputs = await beefyWithdraw.quote([token.one])
+
+        const prices = await Promise.all(outputs.map((o) => o.price()))
+
+        const outUSD = prices.reduce(
+          (acc, curr) => acc.add(curr),
+          universe.usd.zero
+        )
+
+        return outUSD
+      } catch (e) {
+        console.log(`Failed to price ${token}`)
+        console.log(e)
+        throw e
+      }
+    },
+  })
+}
+
+interface IVault {
+  earnContractAddress: string
+  chain: string
+}
+const initBeefy = async (universe: EthereumUniverse) => {
+  const beefyVaults: IVault[] = await fetch(
+    'https://api.beefy.finance/vaults'
+  ).then((res) => res.json())
+
+  await Promise.all(
+    beefyVaults
+      .filter((i) => i.chain === 'ethereum')
+      .map((i) =>
+        universe
+          .getToken(Address.from(i.earnContractAddress))
+          .then((tok) => setupBeefyVault(universe, tok))
+      )
+  )
+}
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   const logger = universe.logger.child({
@@ -200,31 +274,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.addAction(depositToETHX)
   universe.mintableTokens.set(universe.commonTokens.ETHx, depositToETHX)
 
-  const contract = IBeefyVault__factory.connect(
-    commonTokens['mooConvexETH+'].address.address,
-    universe.provider
-  )
-  const getRate = universe.createCachedProducer(async () => {
-    const rate = await contract.callStatic.getPricePerFullShare()
-    return rate.toBigInt()
-  })
-  const depositToBeefy = new BeefyDepositAction(
-    universe,
-    commonTokens['ETH+ETH-f'],
-    commonTokens['mooConvexETH+'],
-    getRate
-  )
-
-  const beefyWithdraw = new BeefyWithdrawAction(
-    universe,
-    commonTokens['ETH+ETH-f'],
-    commonTokens['mooConvexETH+'],
-    getRate
-  )
-
-  universe.addAction(depositToBeefy)
-  universe.addAction(beefyWithdraw)
-  universe.mintableTokens.set(commonTokens['mooConvexETH+'], depositToBeefy)
   // universe.defineMintable(depositToBeefy, beefyWithdraw, true)
 
   const stakeDAOVault = await IGaugeStakeDAO__factory.connect(
@@ -288,23 +337,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.addAction(depositTosUSDe)
   universe.mintableTokens.set(universe.commonTokens.sUSDe, depositTosUSDe)
 
-  universe.addSingleTokenPriceSource({
-    token: universe.commonTokens['mooConvexETH+'],
-    priceFn: async () => {
-      const [output] = await beefyWithdraw.quote([
-        universe.commonTokens['mooConvexETH+'].one,
-      ])
-
-      const burn = universe.getBurnAction(output.token)
-      const out = await burn.quote([output])
-
-      const prices = await Promise.all([out[0].price(), out[1].price()])
-
-      const outUSD = prices[0].add(prices[1]).into(universe.usd)
-
-      return outUSD
-    },
-  })
+  await initBeefy(universe)
 
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['sdETH+ETH-f'],

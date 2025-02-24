@@ -12,6 +12,16 @@
     }
   },
   {
+    "id": "0x764510ab1d39cf300e7abe8f5b8977d18f290628",
+    "feeTier": 3000,
+    "token0": {
+      "id": "0x56072C95FAA701256059aa122697B133aDEd9279"
+    },
+    "token1": {
+      "id": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+    }
+  },
+  {
     "id": "0x3416cF6C708Da44DB2624D63ea0AAef7113527C6",
     "feeTier": 100,
     "token0": {

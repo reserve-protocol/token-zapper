@@ -40,7 +40,8 @@ const defaultSearcherOptions = {
   // Use new contract for all zaps
   useNewZapperContract: false,
 
-  rejectHighDust: true,
+  rejectHighDust: false,
+  rejectHighValueLoss: false,
 
   maxPhase2TimeRefinementTime: 5000,
 

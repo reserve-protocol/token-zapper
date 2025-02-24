@@ -2828,7 +2828,7 @@ const minimizeDust = async (
       // )
       bestNode.splits.setParts(bestParts!)
     } else {
-      noImprovement += 1
+      noImprovement += 1 + Math.random()
     }
 
     if (currentResult.result.dustValue <= 1) {
@@ -2837,6 +2837,15 @@ const minimizeDust = async (
     }
   }
   return currentResult
+}
+
+const shuffle = <T>(array: T[]) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const tmp = array[i]
+    array[i] = array[j]
+    array[j] = tmp
+  }
 }
 
 const optimiseGlobal = async (
@@ -2851,12 +2860,10 @@ const optimiseGlobal = async (
   optimisationNodes: NodeProxy[] = []
 ) => {
   if (optimisationSteps === 0) {
+    console.log('Optimise global: No optimisation steps')
     return bestSoFar
   }
   const maxTime = universe.config.maxOptimisationTime
-  // if (optimisationNodes.length > 7) {
-  //   optimisationNodes = nodesSorted.filter((n) => n.isOptimisable)
-  // }
   console.log(`optimization nodes: ${optimisationNodes.length}`)
 
   if (optimisationNodes.length === 0) {
@@ -2880,6 +2887,7 @@ const optimiseGlobal = async (
   let noImprovement = 1
   for (let i = 0; i < optimisationSteps; ) {
     if (Date.now() - startTime > maxTime) {
+      console.log('Optimise global: Max time reached')
       return bestSoFar
     }
     if (
@@ -2929,11 +2937,9 @@ const optimiseGlobal = async (
         const prev = edge.inner[paramIndex]
 
         // Optimisation: If we find an improvement, try to explore this specific change fully before moving on.
-        for (let n = 0; n < 4; n++) {
-          edge.add(
-            paramIndex,
-            MAX_SCALE * (1 - (i + n) ** 1.25 / optimisationSteps)
-          )
+        for (let n = 0; n < 8; n++) {
+          const S = MAX_SCALE * (1 - (i + n) ** 1.25 / optimisationSteps)
+          edge.add(paramIndex, S)
 
           if (
             prev === 0 &&
@@ -2965,7 +2971,7 @@ const optimiseGlobal = async (
     if (bestNodeToChange !== -1) {
       noImprovement = 1
       bestSoFar = bestThisIteration
-      logger.debug(
+      logger.info(
         `${i} optimize global (best node: ${bestNodeToChange}): ${bestSoFar.result.outputs
           .filter((i) => i.amount > 1000n)
           .join(', ')} ${bestSoFar.result.dustFraction * 100}% dust`
@@ -2974,7 +2980,7 @@ const optimiseGlobal = async (
         optimisationNodes[bestNodeToChange].id
       ]!.edges[0].setParts(tmp[bestNodeToChange])
     } else {
-      noImprovement += 2
+      noImprovement += 1 + Math.random()
     }
   }
   return bestSoFar
@@ -3209,6 +3215,28 @@ const inferDustProducingNodes = (g: TokenFlowGraph) => {
     }
   }
 }
+const optimiseMultiplyDirectional = async (
+  g: TokenFlowGraph,
+  bestSoFar: TFGResult,
+  universe: Universe,
+  inputs: TokenQuantity[],
+  optimisationNodes: NodeProxy[],
+  factor: number = 0.5
+) => {
+  if (optimisationNodes.length === 0) {
+    return bestSoFar
+  }
+  for (const node of optimisationNodes) {
+    const splits = g._outgoingEdges[node.id]!.edges[0]
+    const before = [...splits.parts]
+    for (let i = 0; i < splits.parts.length; i++) {
+      splits.parts[i] =
+        before[i] * factor + splits.parts[i] * splits.parts[i] * (1 - factor)
+    }
+    splits.normalize()
+  }
+  return await g.evaluate(universe, inputs)
+}
 const backPropagateInputProportions = async (g: TokenFlowGraph) => {
   const tokenProportions = new Map<Token, number>()
   for (const node of g.nodes()) {
@@ -3302,7 +3330,7 @@ const optimise = async (
 
     const nodesSorted = g.sort().reverse()
     let optimisationNodes = nodesSorted.filter(
-      (n) => n.isOptimisable || n.isDustOptimisable
+      (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
     )
     bestSoFar = await minimizeDust(
       startTime,
@@ -3315,7 +3343,7 @@ const optimise = async (
         .reverse()
         .filter((n) => n.isDustOptimisable),
       true,
-      10,
+      5,
       1
     )
     bestSoFar = await optimiseGlobal(
@@ -3329,17 +3357,28 @@ const optimise = async (
       1,
       optimisationNodes
     )
+
+    bestSoFar = await optimiseMultiplyDirectional(
+      g,
+      bestSoFar,
+      universe,
+      inputs,
+      optimisationNodes,
+      0.2
+    )
   }
+  const nodes = g
+    .sort()
+    .reverse()
+
+    .filter((n) => n.isDustOptimisable)
   bestSoFar = await minimizeDust(
     startTime,
     maxTime,
     g,
     () => g.evaluate(universe, inputs),
     bestSoFar,
-    g
-      .sort()
-      .reverse()
-      .filter((n) => n.isDustOptimisable),
+    nodes,
     false,
     minimiseDustPhase1Steps,
     1
@@ -3368,7 +3407,9 @@ const optimise = async (
         } - Max allowed value slippage ${universe.config.zapMaxValueLoss}%`
       )
 
-      // throw new Error('Value slippage is too high')
+      if (opts?.rejectHighValueLoss === true) {
+        throw new Error('Value slippage is too high')
+      }
     }
 
     const dustFraction =
@@ -3385,7 +3426,7 @@ const optimise = async (
           bestSoFar.result.output.token
         } - Max allowed dust ${(maxDustFraction * 100).toFixed(2)}%`
       )
-      if (opts?.rejectHighDust) {
+      if (opts?.rejectHighDust === true) {
         throw new Error('Dust fraction is too high')
       }
     }
@@ -3397,6 +3438,7 @@ const optimise = async (
     checkValueDustSlippage(bestSoFar)
     return g
   }
+
   bestSoFar = await optimiseGlobal(
     startTime,
     g,
@@ -3421,17 +3463,31 @@ const optimise = async (
   const maxPhase2TimeRefinementTime =
     universe.config.maxPhase2TimeRefinementTime
   // Iteratively try and improve result until it would pass checks or we run out of time
-  let scaleMultiplier = 1
+  let scaleMultiplier = 0.5
   let refinementSteps = 0
+  if (
+    bestSoFar.result.dustValue / bestSoFar.result.totalValue >
+      maxDustFraction ||
+    bestSoFar.result.totalValue / bestSoFar.result.inputValue <
+      1 - maxValueSlippage
+  ) {
+    bestSoFar = await optimiseMultiplyDirectional(
+      g,
+      bestSoFar,
+      universe,
+      inputs,
+      optimisationNodes,
+      0.9
+    )
+  }
+
   while (
     bestSoFar.result.dustValue / bestSoFar.result.totalValue >
       maxDustFraction ||
     bestSoFar.result.totalValue / bestSoFar.result.inputValue <
       1 - maxValueSlippage
   ) {
-    if (Date.now() - startTime > maxTime) {
-      break
-    }
+    const startOfLoop = bestSoFar
     logger.info(
       `Running refinement. Current result ${bestSoFar.result.outputs
         .filter((i) => i.amount > 1000n)
@@ -3441,22 +3497,6 @@ const optimise = async (
         scale: scaleMultiplier,
       }
     )
-
-    bestSoFar = await minimizeDust(
-      startTime,
-      maxTime,
-      g,
-      () => g.evaluate(universe, inputs),
-      bestSoFar,
-      g
-        .sort()
-        .reverse()
-        .filter((n) => n.isDustOptimisable),
-      true,
-      minimiseDustPhase2Steps,
-      0.5 * scaleMultiplier
-    )
-
     let optimisationNodes = [...g.sort()]
       .reverse()
       .filter(
@@ -3466,6 +3506,19 @@ const optimise = async (
     if (optimisationNodes.length === 0) {
       break
     }
+
+    bestSoFar = await minimizeDust(
+      startTime,
+      maxTime,
+      g,
+      () => g.evaluate(universe, inputs),
+      bestSoFar,
+      optimisationNodes,
+      true,
+      minimiseDustPhase2Steps,
+      scaleMultiplier
+    )
+
     bestSoFar = await optimiseGlobal(
       startTime,
       g,
@@ -3479,23 +3532,41 @@ const optimise = async (
     )
     bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 
+    const directionalBetter = await optimiseMultiplyDirectional(
+      g.clone(),
+      bestSoFar,
+      universe,
+      inputs,
+      optimisationNodes,
+      0.9
+    )
+
+    scaleMultiplier *= 0.5
+
+    if (directionalBetter.result.price > bestSoFar.result.price) {
+      logger.info('Directional better, using it')
+      bestSoFar = directionalBetter
+    }
+
     logger.info(
-      `Finished refinement step. New result: ${bestSoFar.result.outputs.join(
-        ', '
-      )}`,
+      `Finished refinement step. New result: ${bestSoFar.result.outputs
+        .filter((i) => i.amount > 1000n)
+        .join(', ')}`,
       {
         step: refinementSteps,
         scale: scaleMultiplier,
       }
     )
 
-    if (Date.now() - start > maxPhase2TimeRefinementTime) {
+    if (
+      Date.now() - startTime > maxTime ||
+      Date.now() - start > maxPhase2TimeRefinementTime
+    ) {
       break
     }
-    scaleMultiplier *= 0.5
   }
 
-  logger.debug(
+  logger.info(
     `Final graph for ${bestSoFar.result.inputs.join(', ')} -> ${
       bestSoFar.result.output.token
     }`
@@ -3631,24 +3702,37 @@ export class TokenFlowGraphSearcher {
     const tradePathExists = await this.doesTradePathExist(inputQty, output)
     if (!tradePathExists || topLevel) {
       await this.tokenMintingGraph(graph, inputQty, output, inputNode)
-    } else {
-      const splitNode = graph.addSplittingNode(
-        inputQty.token,
-        inputNode,
-        NodeType.Optimisation,
-        `Source ${output} either mint or trade`
-      )
-
-      await this.tokenMintingGraph(graph, inputQty, output, splitNode)
-      await this.addTrades(
-        graph,
-        inputQty,
-        output,
-        false,
-        `${output} (trade path)`,
-        splitNode
-      )
+      return
     }
+
+    // if (await this.universe.isRToken(output)) {
+    //   await this.addTrades(
+    //     graph,
+    //     inputQty,
+    //     output,
+    //     false,
+    //     `${output} (trade path)`,
+    //     inputNode
+    //   )
+    //   return
+    // }
+
+    const splitNode = graph.addSplittingNode(
+      inputQty.token,
+      inputNode,
+      NodeType.Optimisation,
+      `Source ${output} either mint or trade`
+    )
+
+    await this.tokenMintingGraph(graph, inputQty, output, splitNode)
+    await this.addTrades(
+      graph,
+      inputQty,
+      output,
+      false,
+      `${output} (trade path)`,
+      splitNode
+    )
   }
 
   private async tokenMintingGraph(

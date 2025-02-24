@@ -573,6 +573,10 @@ export class Universe<const UniverseConf extends Config = Config> {
     return out
   }
 
+  public async isRToken(token: Token) {
+    return this.rTokensInfo.addresses.has(token.address)
+  }
+
   public addIntegration<K extends keyof Integrations>(
     key: K,
     value: Integrations[K]

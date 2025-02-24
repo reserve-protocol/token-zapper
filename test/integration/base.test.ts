@@ -34,16 +34,19 @@ if (process.env.BASE_PROVIDER == null) {
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
-  cacheResolution: 8,
-  maxPhase2TimeRefinementTime: 1000,
+  cacheResolution: 4,
+  maxPhase2TimeRefinementTime: 12000,
   optimisationSteps: 20,
+  refinementOptimisationSteps: 20,
+  maxOptimisationTime: 120000,
   minimiseDustPhase1Steps: 20,
   minimiseDustPhase2Steps: 10,
-  zapMaxDustProduced: 8,
-  zapMaxValueLoss: 5,
+  zapMaxDustProduced: 10,
+  zapMaxValueLoss: 3,
   dynamicConfigURL:
     'https://raw.githubusercontent.com/reserve-protocol/token-zapper/refs/heads/main/src.ts/configuration/data/8453/config.json',
-  rejectHighDust: false,
+  rejectHighDust: true,
+  rejectHighValueLoss: true,
   useNewZapperContract: true,
 }
 
@@ -152,7 +155,7 @@ const issueanceCases = [
   // makeTestCase(1, t.WETH, rTokens.bsd),
   // makeTestCase(1, t.WETH, rTokens.hyUSD),
 
-  makeTestCase(1, t.WETH, t.ABX),
+  makeTestCase(2, t.WETH, t.ABX),
   makeTestCase(5000, t.USDC, t.ABX),
 
   makeTestCase(2, t.ETH, t.BDTF),
@@ -164,16 +167,14 @@ const issueanceCases = [
   makeTestCase(5000, t.USDC, t.CLX),
   makeTestCase(2, t.WETH, t.CLX),
 
-  // makeTestCase(5000, t.USDC, t.MVDA25),
-  // makeTestCase(2, t.WETH, t.MVDA25),
-  // makeTestCase(5000, t.USDC, t.MVTT10F),
-  // makeTestCase(2, t.WETH, t.MVTT10F),
-
-  makeTestCase(5000, t.USDC, t.BGCI),
-  makeTestCase(2, t.WETH, t.BGCI),
+  makeTestCase(5000, t.USDC, t.MVDA25),
+  makeTestCase(2, t.WETH, t.MVDA25),
 
   makeTestCase(5000, t.USDC, t.MVTT10F),
   makeTestCase(2, t.WETH, t.MVTT10F),
+
+  makeTestCase(5000, t.USDC, t.BGCI),
+  makeTestCase(2, t.WETH, t.BGCI),
 ]
 
 const redeemCases = [

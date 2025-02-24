@@ -1012,17 +1012,6 @@
     }
   },
   {
-    "id": "0x2621CC0B3F3c079c1Db0E80794AA24976F0b9e3c",
-    "token0": {
-      "id": "0x56072C95FAA701256059aa122697B133aDEd9279",
-      "symbol": "SKY"
-    },
-    "token1": {
-      "id": "0xdC035D45d973E3EC169d2276DDab16f1e407384F",
-      "symbol": "USDS"
-    }
-  },
-  {
     "id": "0xcBE856765eeEc3fDC505dDEbF9dC612Da995e593",
     "token0": {
       "id": "0x12970E6868f88f6557B76120662c1B3E50A646bf",

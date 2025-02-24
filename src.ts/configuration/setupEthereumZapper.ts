@@ -1,5 +1,4 @@
 import { setupBalancer } from '../action/Balancer'
-import { BeefyDepositAction, BeefyWithdrawAction } from '../action/Beefy'
 import { loadCompV2Deployment } from '../action/CTokens'
 import { DssLitePsm } from '../action/DssLitePsm'
 import {
@@ -11,16 +10,10 @@ import { StakeDAODepositAction } from '../action/StakeDAO'
 import { YearnDepositAction, YearnWithdrawAction } from '../action/Yearn'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
-import {
-  IBeefyVault__factory,
-  IGaugeStakeDAO__factory,
-  IVaultYearn__factory,
-} from '../contracts'
-import { Token } from '../entities/Token'
+import { IGaugeStakeDAO__factory, IVaultYearn__factory } from '../contracts'
 import { TokenType } from '../entities/TokenClass'
 import { wrapGasToken } from '../searcher/TradeAction'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
-import { setupMaverick } from './maverick'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupBeefy } from './setupBeefy'
@@ -41,59 +34,6 @@ import { setupUniswapV3, UniswapV3Context } from './setupUniswapV3'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { setupYearn } from './setupYearn'
 
-export const setupBeefyVault = async (
-  universe: EthereumUniverse,
-  token: Token
-) => {
-  const contract = IBeefyVault__factory.connect(
-    token.address.address,
-    universe.provider
-  )
-  const want = await contract.callStatic.want()
-  const wantToken = await universe.getToken(Address.from(want))
-  const getRate = universe.createCachedProducer(async () => {
-    const rate = await contract.callStatic.getPricePerFullShare()
-    return rate.toBigInt()
-  })
-
-  const depositToBeefy = new BeefyDepositAction(
-    universe,
-    wantToken,
-    token,
-    getRate
-  )
-
-  const beefyWithdraw = new BeefyWithdrawAction(
-    universe,
-    wantToken,
-    token,
-    getRate
-  )
-
-  universe.defineMintable(depositToBeefy, beefyWithdraw, true)
-  universe.addSingleTokenPriceSource({
-    token,
-    priceFn: async () => {
-      try {
-        const outputs = await beefyWithdraw.quote([token.one])
-
-        const prices = await Promise.all(outputs.map((o) => o.price()))
-
-        const outUSD = prices.reduce(
-          (acc, curr) => acc.add(curr),
-          universe.usd.zero
-        )
-
-        return outUSD
-      } catch (e) {
-        console.log(`Failed to price ${token}`)
-        console.log(e)
-        throw e
-      }
-    },
-  })
-}
-
 interface IVault {
   earnContractAddress: string
   chain: string
@@ -103,15 +43,11 @@ const initBeefy = async (universe: EthereumUniverse) => {
     'https://api.beefy.finance/vaults'
   ).then((res) => res.json())
 
-  await Promise.all(
-    beefyVaults
+  await setupBeefy(universe, {
+    vaults: beefyVaults
       .filter((i) => i.chain === 'ethereum')
-      .map((i) =>
-        universe
-          .getToken(Address.from(i.earnContractAddress))
-          .then((tok) => setupBeefyVault(universe, tok))
-      )
-  )
+      .map((i) => i.earnContractAddress),
+  })
 }
 
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
@@ -267,8 +203,8 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       'ETHX'
     )
   )
+  await initBeefy(universe)
   await setupYearn(universe, PROTOCOL_CONFIGS.yearn)
-  await setupBeefy(universe, PROTOCOL_CONFIGS.beefy)
   await setupConcentrator(universe, PROTOCOL_CONFIGS.concentrator)
   await setupStakeDAO(universe, PROTOCOL_CONFIGS.stakeDAO)
   universe.addAction(depositToETHX)
@@ -336,8 +272,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   universe.addAction(depositTosUSDe)
   universe.mintableTokens.set(universe.commonTokens.sUSDe, depositTosUSDe)
-
-  await initBeefy(universe)
 
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens['sdETH+ETH-f'],
@@ -475,7 +409,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   const initMaverick = async () => {
     try {
-      await setupMaverick(universe)
+      // await setupMaverick(universe)
     } catch (e) {
       console.log(e)
       console.log('Failed to load maverick')
@@ -549,9 +483,28 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     priceToken: universe.usd,
   })
 
-  console.log('Ethereum zapper setup complete')
+  const v3Pools = [
+    '0x764510ab1d39cf300e7abe8f5b8977d18f290628',
+    '0xDa99F4f2FE926b90F07f5F4EB0Ce773f7173c6a0',
+    '0xBd2A7aD26f70b64898BBdd06fB5D6ddf72E72A77',
+  ]
+  const v2Pools = ['0x2621CC0B3F3c079c1Db0E80794AA24976F0b9e3c']
+
+  for (const pool of v2Pools) {
+    const poolV2 = await uniswapV2Ctx!.loadPool(Address.from(pool))
+    universe.addAction(poolV2.swap01)
+    universe.addAction(poolV2.swap10)
+  }
+
+  for (const pool of v3Pools) {
+    const poolV3 = await uniswapV3Ctx!.loadPool(Address.from(pool))
+    universe.addAction(poolV3.swap01)
+    universe.addAction(poolV3.swap10)
+  }
 
   if (!universe.config.dynamicConfigURL) {
+    console.log('Ethereum zapper setup complete')
+
     return
   }
   try {
@@ -597,4 +550,5 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     logger.error('Failed to load dynamic pool data')
     logger.error(e)
   }
+  console.log('Ethereum zapper setup complete')
 }

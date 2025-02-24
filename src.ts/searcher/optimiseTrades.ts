@@ -113,8 +113,7 @@ export const optimiseTrades = async (
   } else if (tradeActions.length > 1) {
     await Promise.all(
       tradeActions.map(async (action, index) => {
-        const liq = (await action.liquidity()) / 2 / inputTokenPrice
-        maxInputs[index] = liq
+        maxInputs[index] = Infinity
       })
     )
   }

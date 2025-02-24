@@ -2601,6 +2601,7 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       }
 
       if (nodeSplits.output === 0) {
+        console.log(g.toDot().join('\n'))
         throw new Error(
           `Failed to optimise trades for ${node.nodeId}: No output from any trade`
         )
@@ -2617,6 +2618,7 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       )
 
       if (nodeSplits.output === 0) {
+        console.log(g.toDot().join('\n'))
         throw new Error(
           `Failed to optimise trades for ${node.nodeId}: No output from any trade`
         )
@@ -3758,7 +3760,7 @@ export class TokenFlowGraphSearcher {
         NodeType.Split,
         `mint ${outToken} (source ${props[i].token}))`
       )
-      mintSubgraphInputNode.forward(inputToken, prop.asNumber(), subInputNode)
+      mintSubgraphInputNode.forward(inputToken, 1, subInputNode)
 
       if (!this.universe.isTokenMintable(prop.token)) {
         const tradeExisted = graph.tradeNodeExists(inputQty.token, prop.token)
@@ -3767,7 +3769,7 @@ export class TokenFlowGraphSearcher {
           inputQty,
           prop.token,
           false,
-          undefined,
+          `mint ${outToken} (source ${props[i].token})`,
           subInputNode
         )
 

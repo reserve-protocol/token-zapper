@@ -385,11 +385,14 @@ beforeAll(async () => {
     )) as any
 
     console.log('Ethereum zapper setup complete')
-    const tokens = [...universe.tokens.values()].map((i) => i.toJson())
-    fs.writeFileSync(
-      'src.ts/configuration/data/ethereum/tokens.json',
-      JSON.stringify(tokens, null, 2)
-    )
+    if (process.env.WRITE_DATA) {
+      const tokens = [...universe.tokens.values()].map((i) => i.toJson())
+      fs.writeFileSync(
+        'src.ts/configuration/data/ethereum/tokens.json',
+        JSON.stringify(tokens, null, 2)
+      )
+    }
+
     console.log(`requestCount init: ${requestCount}`)
     requestCount = 0
     return universe

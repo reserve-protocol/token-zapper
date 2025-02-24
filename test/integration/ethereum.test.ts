@@ -227,10 +227,9 @@ const issueanceCases = [
 
   makeTestCase(1, t.WETH, t.SMEL),
   makeTestCase(1, t.WETH, t.BED),
-
-  // makeTestCase(10000, t.USDC, t.mvDEFI),
-  // makeTestCase(10000, t.USDC, t.mvRWA),
-  // makeTestCase(10000, t.USDC, t.DFX),
+  makeTestCase(1, t.WETH, t.mvDEFI),
+  makeTestCase(1, t.WETH, t.mvRWA),
+  makeTestCase(1, t.WETH, t.DFX),
 ]
 
 const redeemCases = [

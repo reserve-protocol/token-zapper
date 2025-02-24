@@ -330,6 +330,8 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     '0x354278eb9c0a8b1f4ab8231c0c4741da05a76206',
     '0xeedd1b2dc2f30e55eaa3db1cf70f1c409b86368e',
     '0x365accfca291e7d3914637abf1f7635db165bb09',
+    '0xd533a949740bb3306d119cc777fa900ba034cd52',
+    '0x5a98fcbea516cf06857215779fd812ca3bef1b32',
   ]) {
     universe.zeroBeforeApproval.add(
       await universe.getToken(Address.from(token))

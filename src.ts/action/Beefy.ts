@@ -41,15 +41,17 @@ export class BeefyDepositAction extends BeefyBase {
     return false
   }
 
+  public get dependsOnRpc() {
+    return true
+  }
+
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await this.getRate()
-    return [
-      this.mooToken.from(
-        (amountsIn.amount * this.mooToken.scale * ONE) /
-          rate /
-          this.underlying.scale
-      ),
-    ]
+    const balance = (await this.contract.callStatic.balance()).toBigInt()
+    const totalSupply = (
+      await this.contract.callStatic.totalSupply()
+    ).toBigInt()
+
+    return [this.mooToken.from((amountsIn.amount * totalSupply) / balance)]
   }
 
   gasEstimate() {

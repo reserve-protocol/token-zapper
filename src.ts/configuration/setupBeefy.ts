@@ -8,6 +8,10 @@ type BeefyConfig = {
   vaults: string[]
 }
 
+const beefySpecialCases = new Map<Address, bigint>([
+  [Address.from('0x562ea6fffd1293b9433e7b81a2682c31892ea013'), 10n ** 12n],
+])
+
 export const setupBeefy = async (universe: Universe, config: BeefyConfig) => {
   await Promise.all(
     config.vaults.map(async (vault) => {
@@ -47,7 +51,12 @@ export const setupBeefy = async (universe: Universe, config: BeefyConfig) => {
         priceFn: async () => {
           const [innerQty] = await withdrawFromBeefy.quote([vaultToken.one])
 
-          const innerPrice = await universe.fairPrice(innerQty)
+          let innerPrice = await universe.fairPrice(innerQty)
+          if (beefySpecialCases.has(vaultToken.address)) {
+            innerPrice = innerQty.token.from(
+              innerQty.amount * beefySpecialCases.get(vaultToken.address)!
+            )
+          }
 
           if (innerPrice == null) {
             throw Error(

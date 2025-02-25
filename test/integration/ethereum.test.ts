@@ -28,11 +28,11 @@ const searcherOptions: SearcherOptions = {
 
   cacheResolution: 4,
   maxPhase2TimeRefinementTime: 12000,
-  optimisationSteps: 30,
+  optimisationSteps: 20,
   refinementOptimisationSteps: 20,
   maxOptimisationTime: 120000,
-  minimiseDustPhase1Steps: 20,
-  minimiseDustPhase2Steps: 20,
+  minimiseDustPhase1Steps: 10,
+  minimiseDustPhase2Steps: 10,
   zapMaxDustProduced: 10,
   zapMaxValueLoss: 3,
   dynamicConfigURL:

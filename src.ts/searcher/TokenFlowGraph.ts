@@ -3404,7 +3404,9 @@ const optimise = async (
 
   let optimisationNodes = [...g.sort()]
     .reverse()
-    .filter((n) => n.isOptimisable && n.recipients.length > 1)
+    .filter(
+      (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
+    )
 
   const maxValueSlippage = universe.config.zapMaxValueLoss / 100
   const maxDustFraction = universe.config.zapMaxDustProduced / 100

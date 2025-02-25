@@ -116,7 +116,7 @@ export class ZapTxStats {
     const [inputValue, outputValue, ...dustValue] = (
       await Promise.all(
         [input.input, input.output, ...input.dust].map(async (i) => {
-          const price = await result.universe.fairPrice(i)
+          const price = (await i.price()).into(result.universe.usd)
           if (price == null) {
             return null
           }

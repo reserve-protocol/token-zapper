@@ -60,9 +60,12 @@ export class FolioDeployment {
       token: this.fToken,
       priceFn: async () => {
         const prices = await Promise.all(
-          this.basket.map((i) => i.price().then((i) => i.asNumber()))
+          this.basket.map((i) =>
+            i.price().then((i) => i.into(ctx.universe.usd))
+          )
         )
-        return this.ctx.universe.usd.from(prices.reduce((a, b) => a + b, 0))
+        const sum = prices.reduce((a, b) => a.add(b))
+        return sum
       },
     })
   }

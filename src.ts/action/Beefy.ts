@@ -10,7 +10,12 @@ import {
 import { Approval } from '../base/Approval'
 import { IBeefyVault, IBeefyVault__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
+import { Address } from '../base/Address'
 
+const rescaleToken = new Set<Address>([
+  Address.from('0xbba4d1cecc111bdc74bd2f95050fb11acb3b8a5e'),
+  Address.from('0xe36cdbd69adf2f74c8ab987a1cfd448ae91fa153'),
+])
 abstract class BeefyBase extends Action('Beefy') {
   abstract get actionName(): string
 
@@ -51,7 +56,10 @@ export class BeefyDepositAction extends BeefyBase {
       await this.contract.callStatic.totalSupply()
     ).toBigInt()
 
-    return [this.mooToken.from((amountsIn.amount * totalSupply) / balance)]
+    const outQty = (amountsIn.amount * totalSupply) / balance
+    const out = this.mooToken.from(outQty)
+
+    return [out]
   }
 
   gasEstimate() {
@@ -105,13 +113,16 @@ export class BeefyWithdrawAction extends BeefyBase {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const rate = await this.getRate()
-    return [
-      this.underlying.from(
-        (amountsIn.amount * this.underlying.scale * rate) /
-          ONE /
-          this.mooToken.scale
-      ),
-    ]
+    const outQty =
+      (amountsIn.amount * this.underlying.scale * rate) /
+      ONE /
+      this.mooToken.scale
+
+    if (rescaleToken.has(this.mooToken.address)) {
+      const scaleUp = this.mooToken.scale / this.underlying.scale
+      return [this.underlying.from(outQty * scaleUp)]
+    }
+    return [this.underlying.from(outQty)]
   }
 
   constructor(

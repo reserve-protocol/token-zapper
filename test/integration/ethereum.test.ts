@@ -27,7 +27,7 @@ const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
   cacheResolution: 4,
-  maxPhase2TimeRefinementTime: 12000,
+  maxPhase2TimeRefinementTime: 5000,
   optimisationSteps: 20,
   refinementOptimisationSteps: 20,
   maxOptimisationTime: 120000,
@@ -37,8 +37,8 @@ const searcherOptions: SearcherOptions = {
   zapMaxValueLoss: 3,
   dynamicConfigURL:
     'https://raw.githubusercontent.com/reserve-protocol/token-zapper/refs/heads/main/src.ts/configuration/data/1/config.json',
-  rejectHighDust: true,
-  rejectHighValueLoss: true,
+  rejectHighDust: false,
+  rejectHighValueLoss: false,
   useNewZapperContract: true,
 }
 

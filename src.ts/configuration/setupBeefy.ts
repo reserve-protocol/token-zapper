@@ -20,11 +20,12 @@ export const setupBeefy = async (universe: Universe, config: BeefyConfig) => {
         Address.from(lpTokenAddress)
       )
 
+      const contract = IBeefyVault__factory.connect(
+        vaultToken.address.address,
+        universe.provider
+      )
       const getRate = universe.createCachedProducer(async () => {
-        const rate = await IBeefyVault__factory.connect(
-          vaultToken.address.address,
-          universe.provider
-        ).callStatic.getPricePerFullShare()
+        const rate = await contract.callStatic.getPricePerFullShare()
         return rate.toBigInt()
       })
       const depositToBeefy = new BeefyDepositAction(
@@ -44,7 +45,9 @@ export const setupBeefy = async (universe: Universe, config: BeefyConfig) => {
       universe.addSingleTokenPriceSource({
         token: vaultToken,
         priceFn: async () => {
-          const innerPrice = await universe.fairPrice(underlyingToken.one)
+          const [innerQty] = await withdrawFromBeefy.quote([vaultToken.one])
+
+          const innerPrice = await universe.fairPrice(innerQty)
 
           if (innerPrice == null) {
             throw Error(
@@ -52,17 +55,7 @@ export const setupBeefy = async (universe: Universe, config: BeefyConfig) => {
             )
           }
 
-          const rate = await IBeefyVault__factory.connect(
-            vaultToken.address.address,
-            universe.provider
-          ).callStatic.getPricePerFullShare()
-
-          const price = universe.usd.from(
-            (innerPrice.amount * rate.toBigInt()) / ONE
-          )
-
-          console.log(`${vaultToken.symbol} price: ${price.asNumber()}`)
-          return price
+          return innerPrice
         },
       })
     })

@@ -174,7 +174,9 @@ export class ZapTransaction {
       params: ZapERC20ParamsStruct
       tx: TransactionRequest
     },
-    public readonly stats: ZapTxStats
+    public readonly stats: ZapTxStats,
+    public readonly price: number,
+    public readonly priceTotalOut: number
   ) {}
 
   get universe() {
@@ -245,7 +247,21 @@ export class ZapTransaction {
     },
     stats: ZapTxStats
   ) {
-    return new ZapTransaction(planner, searchResult, tx, stats)
+    const totalInputValue =
+      stats.input.price.asNumber() + stats.txFee.txFee.price.asNumber()
+    const price = stats.output.price.asNumber() / totalInputValue
+
+    const priceTotalOut =
+      stats.outputs.reduce((acc, r) => acc + r.price.asNumber(), 0) /
+      totalInputValue
+    return new ZapTransaction(
+      planner,
+      searchResult,
+      tx,
+      stats,
+      price,
+      priceTotalOut
+    )
   }
 
   compare(other: ZapTransaction) {

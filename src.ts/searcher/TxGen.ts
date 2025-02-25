@@ -647,7 +647,6 @@ export class TxGen {
       tokenPrices: new Map(),
     }
 
-    // console.log(testSimulation.dust.join(', '))
     const dustQtys = testSimulation.dust.filter((i) => i.amount > 1000n)
 
     const stats = await ZapTxStats.create(result, {

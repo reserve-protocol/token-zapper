@@ -42,7 +42,12 @@ export class BeefyDepositAction extends BeefyBase {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const rate = await this.getRate()
-    return [this.mooToken.from((amountsIn.amount * rate) / 10n ** 18n)]
+    return [
+      this.mooToken.from(
+        (((amountsIn.amount * rate) / ONE) * this.mooToken.scale) /
+          this.underlying.scale
+      ),
+    ]
   }
 
   gasEstimate() {
@@ -99,7 +104,12 @@ export class BeefyWithdrawAction extends BeefyBase {
 
     console.log(rate.toString())
 
-    return [this.underlying.from((amountsIn.amount * ONE) / rate)]
+    return [
+      this.underlying.from(
+        (((amountsIn.amount * ONE) / rate) * this.underlying.scale) /
+          this.mooToken.scale
+      ),
+    ]
   }
 
   constructor(

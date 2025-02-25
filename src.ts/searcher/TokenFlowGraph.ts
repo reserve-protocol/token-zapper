@@ -2860,17 +2860,17 @@ const optimiseGlobal = async (
   logger: ILoggerType,
   startSize: number = 1,
   optimisationNodes: NodeProxy[] = []
-) => {
+): Promise<[TFGResult, number]> => {
   if (optimisationSteps === 0) {
     console.log('Optimise global: No optimisation steps')
-    return bestSoFar
+    return [bestSoFar, 1]
   }
   const maxTime = universe.config.maxOptimisationTime
   console.log(`optimization nodes: ${optimisationNodes.length}`)
 
   if (optimisationNodes.length === 0) {
     console.log('Optimise global: No optimisation nodes')
-    return bestSoFar
+    return [bestSoFar, 1]
   }
 
   const optimialValueOut =
@@ -2884,13 +2884,14 @@ const optimiseGlobal = async (
     const edge = g._outgoingEdges[node.id]!.edges[0]
     edge.normalize()
   }
+  console.log(`startSize: ${startSize}`)
   const MAX_SCALE = startSize
-
   let noImprovement = 1
+  let scaleDown = 1
+  let lastSize = startSize
   for (let i = 0; i < optimisationSteps; ) {
     if (Date.now() - startTime > maxTime) {
-      console.log('Optimise global: Max time reached')
-      return bestSoFar
+      return [bestSoFar, lastSize]
     }
     if (
       (bestSoFar.result.outputValue > bestSoFar.result.inputValue &&
@@ -2909,7 +2910,7 @@ const optimiseGlobal = async (
       optimisationNodeIndex++
     ) {
       if (Date.now() - startTime > maxTime) {
-        return bestSoFar
+        return [bestSoFar, lastSize]
       }
       const node = optimisationNodes[optimisationNodeIndex]
       const nodeId = node.id
@@ -2933,14 +2934,18 @@ const optimiseGlobal = async (
           continue
         }
         if (Date.now() - startTime > maxTime) {
-          return bestSoFar
+          return [bestSoFar, lastSize]
         }
 
         const prev = edge.inner[paramIndex]
 
         // Optimisation: If we find an improvement, try to explore this specific change fully before moving on.
-        for (let n = 0; n < 4; n++) {
-          const S = MAX_SCALE * (1 - (i + n * 2) ** 1.25 / optimisationSteps)
+        for (let n = 1; n <= 8; n++) {
+          const S =
+            (n * MAX_SCALE * (1 - (i + 1) / optimisationSteps) ** 2) / scaleDown
+          if (!isFinite(S) || S === 0) {
+            break
+          }
           edge.add(paramIndex, S)
 
           if (
@@ -2957,6 +2962,8 @@ const optimiseGlobal = async (
             isFinite(res.result.price) &&
             res.result.price > bestThisIteration.result.price
           ) {
+            lastSize = Math.min(lastSize, S)
+
             bestThisIteration = res
             bestNodeToChange = optimisationNodeIndex
             for (let i = 0; i < edge.parts.length; i++) {
@@ -2974,7 +2981,7 @@ const optimiseGlobal = async (
       noImprovement = 1
       bestSoFar = bestThisIteration
       logger.info(
-        `${i} optimize global (best node: ${bestNodeToChange}): ${
+        `${i} optimize global (size: ${lastSize}, best node: ${bestNodeToChange}): ${
           bestSoFar.result.output
         } + ${((1 - bestSoFar.result.dustFraction) * 100).toFixed(2)}% dust`
       )
@@ -2982,10 +2989,11 @@ const optimiseGlobal = async (
         optimisationNodes[bestNodeToChange].id
       ]!.edges[0].setParts(tmp[bestNodeToChange])
     } else {
+      scaleDown += 0.5
       noImprovement += 2
     }
   }
-  return bestSoFar
+  return [bestSoFar, lastSize]
 }
 const findAncestors = (node: NodeProxy) => {
   const ancestors = new Set<number>()
@@ -3318,6 +3326,7 @@ const optimise = async (
     throw new Error('Bad graph')
   }
 
+  let size = 1
   if (!fromCache) {
     g = removeNodes(g, findNodesWithoutSources(g))
     g = removeUselessNodes(removeRedundantSplits(g))
@@ -3348,7 +3357,8 @@ const optimise = async (
       5,
       1
     )
-    bestSoFar = await optimiseGlobal(
+    optimisationNodes.sort((l, r) => r.recipients.length - l.recipients.length)
+    ;[bestSoFar, size] = await optimiseGlobal(
       startTime,
       g,
       universe,
@@ -3360,14 +3370,19 @@ const optimise = async (
       optimisationNodes
     )
 
-    bestSoFar = await optimiseMultiplyDirectional(
-      g,
-      bestSoFar,
-      universe,
-      inputs,
-      optimisationNodes,
-      0.5
-    )
+    if (optimisationNodes[0]) {
+      ;[bestSoFar] = await optimiseGlobal(
+        startTime,
+        g,
+        universe,
+        inputs,
+        8,
+        bestSoFar,
+        logger,
+        0.5 / optimisationNodes[0].recipients.length,
+        [optimisationNodes[0]]
+      )
+    }
   }
   const nodes = g
     .sort()
@@ -3389,9 +3404,7 @@ const optimise = async (
 
   let optimisationNodes = [...g.sort()]
     .reverse()
-    .filter(
-      (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
-    )
+    .filter((n) => n.isOptimisable && n.recipients.length > 1)
 
   const maxValueSlippage = universe.config.zapMaxValueLoss / 100
   const maxDustFraction = universe.config.zapMaxDustProduced / 100
@@ -3441,7 +3454,7 @@ const optimise = async (
     return g
   }
 
-  bestSoFar = await optimiseGlobal(
+  ;[bestSoFar, size] = await optimiseGlobal(
     startTime,
     g,
     universe,
@@ -3449,15 +3462,34 @@ const optimise = async (
     optimisationSteps,
     bestSoFar,
     logger,
-    0.25,
+    Math.min(0.25, size * 10),
     optimisationNodes
   )
   bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 
+  optimisationNodes.sort((l, r) => r.recipients.length - l.recipients.length)
+  if (
+    optimisationNodes[0] &&
+    bestSoFar.result.dustValue / bestSoFar.result.totalValue > maxDustFraction
+  ) {
+    ;[bestSoFar, size] = await optimiseGlobal(
+      startTime,
+      g,
+      universe,
+      inputs,
+      8,
+      bestSoFar,
+      logger,
+      Math.min(0.25, size * 10),
+      [optimisationNodes[0]]
+    )
+  }
+
   logger.info(
-    `Result after global optimisation: ${bestSoFar.result.outputs
-      .filter((i) => i.amount > 10n)
-      .join(', ')}`
+    `Result after global optimisation: ${bestSoFar.result.output} + ${(
+      (1 - bestSoFar.result.dustFraction) *
+      100
+    ).toFixed(2)}% dust`
   )
 
   const start = Date.now()
@@ -3474,7 +3506,6 @@ const optimise = async (
     bestSoFar.result.totalValue / bestSoFar.result.inputValue <
       1 - maxValueSlippage
   ) {
-    const startOfLoop = bestSoFar
     logger.info(
       `Running refinement. Current result ${bestSoFar.result.outputs
         .filter((i) => i.amount > 1000n)
@@ -3505,8 +3536,7 @@ const optimise = async (
       minimiseDustPhase2Steps,
       scaleMultiplier
     )
-
-    bestSoFar = await optimiseGlobal(
+    ;[bestSoFar, size] = await optimiseGlobal(
       startTime,
       g,
       universe,
@@ -3514,27 +3544,11 @@ const optimise = async (
       universe.config.refinementOptimisationSteps,
       bestSoFar,
       logger,
-      0.1 * scaleMultiplier,
+      Math.min(scaleMultiplier, size * 50),
       optimisationNodes
     )
     bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
-
-    const directionalBetter = await optimiseMultiplyDirectional(
-      g.clone(),
-      bestSoFar,
-      universe,
-      inputs,
-      optimisationNodes,
-      0.9
-    )
-
     scaleMultiplier *= 0.5
-
-    if (directionalBetter.result.price > bestSoFar.result.price) {
-      logger.info('Directional better, using it')
-      bestSoFar = directionalBetter
-    }
-
     logger.info(
       `Finished refinement step. New result: ${bestSoFar.result.outputs
         .filter((i) => i.amount > 1000n)

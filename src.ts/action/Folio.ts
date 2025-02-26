@@ -59,12 +59,20 @@ export class FolioDeployment {
     ctx.universe.addSingleTokenPriceSource({
       token: this.fToken,
       priceFn: async () => {
-        const prices = await Promise.all(
-          this.basket.map((i) =>
-            i.price().then((i) => i.into(ctx.universe.usd))
-          )
-        )
-        const sum = prices.reduce((a, b) => a.add(b))
+        const prices = await Promise.all(this.basket.map((i) => i.token.price))
+        let sum = this.fToken.zero
+        for (let i = 0; i < prices.length; i++) {
+          const basketQtyPrice = this.basket[i]
+            .into(this.fToken)
+            .mul(prices[i].into(this.fToken))
+          console.log(`${this.basket[i]} => ${basketQtyPrice.format()} USD`)
+          sum = sum.add(basketQtyPrice)
+        }
+
+        sum = sum.into(ctx.universe.usd)
+
+        console.log(`Price of folio ${this.fToken} => ${sum}`)
+
         return sum
       },
     })

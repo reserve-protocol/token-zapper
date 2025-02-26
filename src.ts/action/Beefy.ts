@@ -15,6 +15,7 @@ import { Address } from '../base/Address'
 const rescaleToken = new Set<Address>([
   Address.from('0xbba4d1cecc111bdc74bd2f95050fb11acb3b8a5e'),
   Address.from('0xe36cdbd69adf2f74c8ab987a1cfd448ae91fa153'),
+  Address.from('0x562ea6fffd1293b9433e7b81a2682c31892ea013'),
 ])
 abstract class BeefyBase extends Action('Beefy') {
   abstract get actionName(): string

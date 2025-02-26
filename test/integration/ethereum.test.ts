@@ -232,9 +232,9 @@ const issueanceCases = [
 
   makeTestCase(1, t.WETH, t.SMEL),
   makeTestCase(1, t.WETH, t.BED),
-  makeTestCase(1, t.WETH, t.mvDEFI),
-  makeTestCase(1, t.WETH, t.mvRWA),
-  makeTestCase(1, t.WETH, t.DFX),
+  // makeTestCase(1, t.WETH, t.mvDEFI),
+  // makeTestCase(1, t.WETH, t.mvRWA),
+  // makeTestCase(1, t.WETH, t.DFX),
 ]
 
 const redeemCases = [

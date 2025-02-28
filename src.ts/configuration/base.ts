@@ -54,6 +54,7 @@ export const COMMON_TOKENS = {
   MVTT10F: '0xe8b46b116d3bdfa787ce9cf3f5acc78dc7ca380e',
   MVDA25: '0xd600e748c17ca237fcb5967fa13d688aff17be78',
   BDTF: '0xb8753941196692e322846cfee9c14c97ac81928a',
+  CLUB: '0xf8ef6e785473e82527908b06023ac3e401ccfdcd',
 } as const
 
 export const RTOKENS = {

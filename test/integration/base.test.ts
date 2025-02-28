@@ -23,7 +23,6 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 import { getProvider, getSimulator } from './providerUtils'
-import { bestPath } from '../../src.ts/exchange-graph/BFS'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -161,8 +160,8 @@ const issueanceCases = [
   // makeTestCase(2, t.ETH, t.BDTF),
   // makeTestCase(1000, t.USDC, t.BDTF),
 
-  makeTestCase(5000, t.USDC, t.VTF),
-  makeTestCase(2, t.WETH, t.VTF),
+  // makeTestCase(5000, t.USDC, t.VTF),
+  // makeTestCase(2, t.WETH, t.VTF),
 
   // makeTestCase(5000, t.USDC, t.CLX),
   // makeTestCase(2, t.WETH, t.CLX),
@@ -174,7 +173,7 @@ const issueanceCases = [
   // makeTestCase(2, t.WETH, t.MVTT10F),
 
   // makeTestCase(5000, t.USDC, t.BGCI),
-  // makeTestCase(2, t.WETH, t.BGCI),
+  makeTestCase(1, t.WETH, t.CLUB),
 ]
 
 const redeemCases = [
@@ -254,40 +253,26 @@ const folioTests = [
 const folioTests2 = [
   {
     tokenIn: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-    amountIn: '400000000000000',
-    signer: '0x2dc04Aeae96e2f2b642b066e981e80Fe57abb5b2',
-    slippage: 0.005,
-    stToken: '0x5D4F073399f4Bb0C7454c9879391B02ba41114fE',
+    amountIn: '10000000000000000',
+    signer: '0x243Fe036F4b53956Aa0344D3E25104e574601A10',
+    slippage: 0.01,
+    stToken: '0x3a1A96FA6dc3C44c22Abe918d2023CE84a4d2114',
     basicDetails: {
-      name: 'xBGCI',
-      symbol: 'xBGCI',
+      name: 'test',
+      symbol: 'test',
       assets: [
-        '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf',
-        '0xcb327b99ff831bf8223cced12b1338ff3aa322ff',
-        '0x9b8df6e244526ab5f6e6400d331db28c8fdddb55',
-        '0xd403d1624daef243fbcbd4a80d8a6f36affe32b2',
-        '0xd6a34b430c05ac78c24985f8abee2616bc1788cb',
-        '0x378c326a472915d38b2d8d41e1345987835fab64',
-        '0xb0505e5a99abd03d94a1169e638b78edfed26ea4',
-        '0x0f813f4785b2360009f9ac9bf6121a85f109efc6',
-        '0x3eb097375fc2fc361e4a472f5e7067238c547c52',
-        '0x7be0cc2cadcd4a8f9901b4a66244dcdd9bd02e0f',
-        '0xc3de830ea07524a0761646a6a4e4be0e114a3c83',
-        '0x5ed25e305e08f58afd7995eac72563e6be65a617',
+        '0x1bc0c42215582d5a085795f4badbac3ff36d1bcb',
+        '0x8cecc2360906c812cd7353cd6b10b1dc13bbc777',
+        '0x1db0c569ebb4a8b57ac01833b9792f526305e062',
+        '0x739f93504a9e26d5973862dbc4a44178cc264852',
+        '0x6bc40d4099f9057b23af309c08d935b890d7adc0',
       ],
       amounts: [
-        '363',
-        '128503396256198',
-        '872298527662110',
-        '1078933992714268',
-        '771551797857754',
-        '60895317958621353',
-        '5746970652198186',
-        '1937869458507707',
-        '77804930570647',
-        '29696547156608',
-        '1015090008322964',
-        '2990254237543416',
+        '3242326372138219',
+        '1223886317978905458',
+        '22729082230834730893',
+        '48843700511990029156',
+        '24381439823985514522064',
       ],
     },
     additionalDetails: {
@@ -295,17 +280,13 @@ const folioTests2 = [
       auctionLength: '1800',
       feeRecipients: [
         {
-          recipient: '0x2dc04Aeae96e2f2b642b066e981e80Fe57abb5b2',
-          portion: '500000000000000000',
-        },
-        {
-          recipient: '0x5D4F073399f4Bb0C7454c9879391B02ba41114fE',
-          portion: '500000000000000000',
+          recipient: '0x3a1A96FA6dc3C44c22Abe918d2023CE84a4d2114',
+          portion: '1000000000000000000',
         },
       ],
       folioFee: '10000000000000000',
       mintingFee: '5000000000000000',
-      mandate: '',
+      mandate: 'test',
     },
     ownerGovParams: {
       votingDelay: '172800',
@@ -313,7 +294,7 @@ const folioTests2 = [
       proposalThreshold: '10000000000000000',
       quorumPercent: '10',
       timelockDelay: '172800',
-      guardians: [],
+      guardians: ['0x243Fe036F4b53956Aa0344D3E25104e574601A10'],
     },
     tradingGovParams: {
       votingDelay: '172800',
@@ -321,11 +302,11 @@ const folioTests2 = [
       proposalThreshold: '10000000000000000',
       quorumPercent: '10',
       timelockDelay: '172800',
-      guardians: [],
+      guardians: ['0x243Fe036F4b53956Aa0344D3E25104e574601A10'],
     },
     existingTradeProposers: [],
-    tradeLaunchers: [],
-    vibesOfficers: [],
+    tradeLaunchers: ['0x243Fe036F4b53956Aa0344D3E25104e574601A10'],
+    vibesOfficers: ['0x243Fe036F4b53956Aa0344D3E25104e574601A10'],
   },
 ]
 
@@ -478,7 +459,7 @@ beforeAll(async () => {
     console.error(e)
     process.exit(1)
   }
-}, 60000)
+}, 120000)
 
 describe('base zapper', () => {
   beforeEach(async () => {
@@ -554,8 +535,8 @@ describe('base zapper', () => {
             const inputQty = token.from(BigInt(config.amountIn))
 
             const out = await universe.deployZap(inputQty, testUser, {
-              type: 'governed',
-              stToken: config.stToken,
+              type: 'ungoverned',
+              owner: config.signer,
               basicDetails: config.basicDetails,
               additionalDetails: {
                 auctionLength: config.additionalDetails.auctionLength,
@@ -565,8 +546,6 @@ describe('base zapper', () => {
                 mintingFee: config.additionalDetails.mintingFee,
                 mandate: config.additionalDetails.mandate,
               },
-              ownerGovParams: config.ownerGovParams,
-              tradingGovParams: config.tradingGovParams,
               tradeLaunchers: config.tradeLaunchers,
               vibesOfficers: config.vibesOfficers,
               existingTradeProposers: config.existingTradeProposers,

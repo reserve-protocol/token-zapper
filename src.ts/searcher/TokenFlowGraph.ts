@@ -3699,6 +3699,9 @@ export class TokenFlowGraphSearcher {
     topLevel: boolean = false,
     txGenOptions?: TxGenOptions
   ) {
+    if (inputQty.token === output) {
+      return
+    }
     if (output === graph.inputs[0]) {
       return
     }

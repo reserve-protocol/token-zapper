@@ -32,6 +32,8 @@ class DustStats {
       (a, b) => a.add(b.price),
       result.universe.usd.zero
     )
+
+    dust = [...dust].sort((a, b) => b.price.asNumber() - a.price.asNumber())
     return new DustStats(dust, valueUSD)
   }
 

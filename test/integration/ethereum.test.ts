@@ -212,7 +212,7 @@ const issueanceCases = [
 
   // makeTestCase(10, t.WETH, rTokens.eUSD),
   // makeTestCase(10000, t.USDC, rTokens.eUSD),
-  // makeTestCase(10000, t.DAI, rTokens.eUSD),
+  makeTestCase(10000, t.CRV, rTokens.dgnETH),
   // makeTestCase(10000, t.USDT, rTokens.eUSD),
   // makeTestCase(10000, t.sDAI, rTokens.eUSD),
   // makeTestCase(10000, t.COMP, rTokens.eUSD),

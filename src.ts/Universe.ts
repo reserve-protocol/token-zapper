@@ -26,7 +26,6 @@ import winston from 'winston'
 import { CompoundV2Deployment } from './action/CTokens'
 import { LidoDeployment } from './action/Lido'
 import { RTokenDeployment } from './action/RTokens'
-import { TradingVenue } from './aggregators/DexAggregator'
 import { BlockCache } from './base/BlockBasedCache'
 import {
   GAS_TOKEN_ADDRESS,
@@ -62,10 +61,7 @@ export type Integrations = Partial<{
   fluxFinance: CompoundV2Deployment
   compoundV2: CompoundV2Deployment
   compoundV3: CompoundV3Deployment
-  uniswapV3: TradingVenue
   curve: CurveIntegration
-  rocketpool: TradingVenue
-  aerodrome: TradingVenue
   lido: LidoDeployment
   convex: ReserveConvex
 }>
@@ -373,139 +369,6 @@ export class Universe<const UniverseConf extends Config = Config> {
   >()
   public readonly oracles: PriceOracle[] = []
 
-  private tradeVenues: TradingVenue[] = []
-  private readonly tradingVenuesSupportingDynamicInput: TradingVenue[] = []
-  public addTradeVenue(venue: TradingVenue) {
-    if (venue.supportsDynamicInput) {
-      this.tradingVenuesSupportingDynamicInput.push(venue)
-      this.tradeVenues.push(venue)
-    } else {
-      this.tradeVenues = [venue, ...this.tradeVenues]
-    }
-  }
-  public getTradingVenues(input: TokenQuantity, output: Token) {
-    const venues = this.tradeVenues
-    const out = venues.filter((venue) =>
-      venue.router.supportsSwap(input, output)
-    )
-    if (out.length !== 0) {
-      return out
-    }
-
-    throw new Error(
-      `Failed to find any trading venues for ${input.token} -> ${output}`
-    )
-  }
-
-  public async swap(
-    input: TokenQuantity,
-    output: Token,
-    opts?: {
-      slippage: bigint
-      dynamicInput: boolean
-      abort: AbortSignal
-    }
-  ) {
-    const out: SwapPath[] = []
-    await this.swaps(
-      input,
-      output,
-      async (res) => {
-        out.push(res)
-      },
-      {
-        ...opts,
-        slippage: this.config.defaultInternalTradeSlippage,
-        dynamicInput: true,
-        abort: AbortSignal.timeout(this.config.routerDeadline),
-      }
-    )
-    out.sort((l, r) => l.compare(r))
-    return out[0]
-  }
-  public async swaps(
-    input: TokenQuantity,
-    output: Token,
-    onResult: (result: SwapPath) => Promise<void>,
-    opts: {
-      slippage: bigint
-      dynamicInput: boolean
-      abort: AbortSignal
-    }
-  ) {
-    const tradeSize = await this.fairPrice(input)
-    const wrapper = this.wrappedTokens.get(input.token)
-    if (wrapper?.allowAggregatorSearcher === false) {
-      return
-    }
-    const aggregators = this.getTradingVenues(input, output)
-
-    const tradeName = `${input.token} -> ${output}`
-    const stopSearch = new AbortController()
-    const stopWork = new Promise((resolve) => {
-      stopSearch.signal.addEventListener('abort', () => {
-        resolve(null)
-      })
-    })
-
-    let results = 0;
-    const start = Date.now()
-    const tradeValue = tradeSize?.asNumber() ?? 0;
-    const work = Promise.all(
-      shuffle(aggregators).map(async (venue) => {
-        try {
-          let inp = input
-          if (
-            opts.dynamicInput && !venue.supportsDynamicInput
-          ) {
-            inp = inp.mul(inp.token.from(0.99999))
-          }
-          const res = await this.perf.measurePromise(
-            venue.name,
-            venue.router.swap(opts.abort, inp, output, opts.slippage),
-            tradeName
-          )
-          const outValue = res.outputValue.asNumber();
-          if (outValue >= tradeValue * 0.96) {
-            // IF trade does not loose more than 4% value, count the result
-            results += 1;
-          }
-
-
-          // For small trades, allow us to bail before the timeout
-          if (tradeSize && tradeSize.amount < 50000_00000000n) {
-            if (results >= this.config.routerMinResults) {
-              const delta = Date.now() - start
-
-              // We're essentially
-              const toWait = delta > 2500 ? 500 : (2500 - delta) / 2 + 500;
-
-              setTimeout(() => {
-                if (!stopSearch.signal.aborted) {
-                  stopSearch.abort()
-                }
-              }, toWait)
-            }
-          }
-
-
-
-          if (stopSearch.signal.aborted || opts.abort.aborted) {
-            return;
-          }
-          // this.logger.info(`${venue.name} ok: ${res.steps[0].action.toString()}`)
-          await onResult(res)
-
-        } catch (e: any) {
-          // this.logger.info(`${venue.name} failed for case: ${tradeName}`)
-          // this.logger.info(e.message)
-        }
-      })
-    )
-
-    await Promise.race([work, stopWork])
-
-  }
 
   // Sentinel token used for pricing things
   public readonly rTokens = {} as TokenList<
@@ -1019,9 +882,6 @@ export class Universe<const UniverseConf extends Config = Config> {
   public async updateBlockState(block: number, gasPrice: bigint) {
     if (block <= this.blockState.currentBlock) {
       return
-    }
-    for (const router of this.tradeVenues) {
-      router.router.onBlock(block, this.config.requoteTolerance)
     }
     // for (const cache of this.caches) {
     //   cache.onBlock(block)

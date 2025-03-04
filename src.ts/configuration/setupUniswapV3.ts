@@ -22,7 +22,6 @@ import {
 import { Token, TokenQuantity } from '../entities/Token'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import fs from 'fs'
-import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { DefaultMap } from '../base/DefaultMap'
 import { bfs } from '../exchange-graph/BFS'
 import { Graph } from '../exchange-graph/Graph'
@@ -266,38 +265,7 @@ export class UniswapV3Context {
         return routes
       })
   )
-  public async venue(): Promise<TradingVenue> {
-    await Promise.all(this.resolvingPools_.values())
-    const supportedTokens = new Set<Token>()
-    for (const pool of this.pools.values()) {
-      supportedTokens.add(pool.token0)
-      supportedTokens.add(pool.token1)
-    }
-    return new TradingVenue(
-      this.universe,
-      new DexRouter(
-        this.universe,
-        'uniswapV3',
-        async (abort, input, output, slippage) => {
-          const routes = this.routes.get(input.token).get(output)
-          if (routes.length === 0) {
-            throw new Error(`No routes found from ${input} to ${output}`)
-          }
-          const paths = await Promise.all(
-            routes.map(async (route) => {
-              const path = await route.quote([input], slippage)
-              return [await path.netValue(this.universe), path] as const
-            })
-          )
-          paths.sort((r, l) => r[0].asNumber() - l[0].asNumber())
-          return paths[0][1]
-        },
-        true,
-        supportedTokens,
-        supportedTokens
-      )
-    )
-  }
+
   public async definePool(
     addr: Address,
     fn: () => Promise<UniswapV3Pool>

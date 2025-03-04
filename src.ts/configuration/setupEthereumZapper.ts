@@ -135,9 +135,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   const initUniswapV3 = async () => {
     try {
       uniswapV3Ctx = await setupUniswapV3(universe)
-      const venue = await uniswapV3Ctx.venue()
-      const uniswap = universe.addIntegration('uniswapV3', venue)
-      universe.addTradeVenue(uniswap)
     } catch (e) {
       console.log('Failed to load uniswapV3')
       console.log(e)

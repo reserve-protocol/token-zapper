@@ -175,7 +175,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   const initUni3 = async () => {
     logger.info('Setting up UniswapV3')
     const router = await setupUniswapV3(universe)
-    universe.addIntegration('uniswapV3', await router.venue())
     uniswapV3Ctx = router
   }
   const initUni2 = async () => {

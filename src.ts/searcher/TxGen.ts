@@ -150,18 +150,18 @@ const evaluateProgram = async (
     },
   }
 
-  // universe.logger.debug(
-  //   JSON.stringify(
-  //     {
-  //       to: simulationPayload.transactions[0].to,
-  //       from: simulationPayload.transactions[0].from,
-  //       data: simulationPayload.transactions[0].data,
-  //       block: universe.currentBlock,
-  //     },
-  //     null,
-  //     2
-  //   )
-  // )
+  universe.logger.debug(
+    JSON.stringify(
+      {
+        to: simulationPayload.transactions[0].to,
+        from: simulationPayload.transactions[0].from,
+        data: simulationPayload.transactions[0].data,
+        block: universe.currentBlock,
+      },
+      null,
+      2
+    )
+  )
 
   try {
     return {

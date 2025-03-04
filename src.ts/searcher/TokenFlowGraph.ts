@@ -3491,9 +3491,14 @@ const optimise = async (
     )
     optimisationNodes.sort((l, r) => r.recipients.length - l.recipients.length)
 
+    const dimensions = optimisationNodes
+      .map((i) => i.outgoingEdge(i.outputs[0]).parts.length)
+      .reduce((l, r) => l + r, 0)
+
+    logger.debug(`TFG contains ${dimensions} optimisation dimensions`)
     if (optimisationNodes.length > 0) {
       logger.info(`Running first round of global optimisation`)
-      if (optimisationNodes.length <= 20) {
+      if (dimensions <= 20) {
         ;[bestSoFar] = await optimiseGlobal(
           startTime,
           g,

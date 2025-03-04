@@ -488,7 +488,7 @@ class AeropoolSwap extends BaseV2AerodromeAction {
       planner.add(
         this.pool.context.weirollAerodromeRouterCaller.exactInputSingleV2(
           input,
-          minAmount.amount - minAmount.amount / 10n,
+          0n,
           this.pool.context.router.address,
           destination.address,
           defaultAbiCoder.encode(

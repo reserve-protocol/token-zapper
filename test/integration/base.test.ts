@@ -35,10 +35,10 @@ const searcherOptions: SearcherOptions = {
 
   cacheResolution: 4,
   maxOptimisationSteps: 500,
-  maxOptimisationTime: 120000,
+  maxOptimisationTime: 60000,
   minimiseDustPhase1Steps: 10,
-  zapMaxDustProduced: 10,
-  zapMaxValueLoss: 3,
+  zapMaxDustProduced: 20,
+  zapMaxValueLoss: 10,
   dynamicConfigURL:
     'https://raw.githubusercontent.com/reserve-protocol/token-zapper/refs/heads/main/src.ts/configuration/data/8453/config.json',
   rejectHighDust: false,

@@ -200,12 +200,16 @@ export async function nelderMeadOptimize(
     maxTime = Infinity,
   } = options
 
+  const startTime = Date.now()
+  if (Date.now() - startTime > maxTime) {
+    return initialParams
+  }
+
   // Dimensionality of the problem
   const n = initialParams.length
 
   let restarts = 0
   let iteration = 0
-  const startTime = Date.now()
   let marginalImprovementCount = 0
   let improvementFound = false
   // Initialize the simplex

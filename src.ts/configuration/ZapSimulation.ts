@@ -141,7 +141,7 @@ export const makeCallManySimulator = (
       to: AddressLike,
       data: string,
       value: bigint = 0n,
-      gas: bigint = 15_000_000n
+      gas: bigint = 30_000_000n
     ) => {
       transactions.push({
         from: getAddrStr(from),
@@ -225,7 +225,7 @@ export const makeCallManySimulator = (
     }
     for (const tx of input.transactions) {
       setETHBalance(tx.from)
-      addTransaction(tx.from, tx.to, tx.data, tx.value, 20_000_000n)
+      addTransaction(tx.from, tx.to, tx.data, tx.value, 30_000_000n)
     }
 
     const body = {
@@ -299,7 +299,7 @@ export const makeCustomRouterSimulator = (
       from: AddressLike,
       to: AddressLike,
       data: string,
-      gas: bigint = 15_000_000n,
+      gas: bigint = 30_000_000n,
       value: bigint = 0n
     ) => {
       transactions.push({
@@ -383,7 +383,7 @@ export const makeCustomRouterSimulator = (
       }
     }
     for (const tx of input.transactions) {
-      addTransaction(tx.from, tx.to, tx.data, 20_000_000n, tx.value)
+      addTransaction(tx.from, tx.to, tx.data, 30_000_000n, tx.value)
     }
 
     const body = {

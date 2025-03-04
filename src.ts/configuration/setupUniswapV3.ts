@@ -443,12 +443,9 @@ class UniswapV3Swap extends Action('UniswapV3') {
     if (predictedInput.isZero) {
       return null
     }
-    const { amountOut, sqrtPriceX96After } = await this.quoteExactSingle.get(
-      predictedInput.amount
-    )
-    // console.log(`${this}: ${predictedInput} -> ${amountOut}`)
+    const { amountOut } = await this.quoteExactSingle.get(predictedInput.amount)
 
-    const minOut = amountOut.amount - amountOut.amount / 4n
+    const minOut = 0n // amountOut.amount - amountOut.amount / 4n
     const out = planner.add(
       this.context.weirollRouterCall.exactInputSingle(
         input,

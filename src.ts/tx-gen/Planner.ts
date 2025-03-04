@@ -943,6 +943,14 @@ export class Planner {
 
     // Prepopulate the state and state expirations with literals
     literalVisibility.forEach((lastCommand, literal) => {
+      if (literalSlotMap.has(literal)) {
+        const slot = literalSlotMap.get(literal) as number
+        stateExpirations.set(
+          lastCommand,
+          (stateExpirations.get(lastCommand) || []).concat([slot])
+        )
+        return
+      }
       const slot = state.length
       state.push(literal)
       literalSlotMap.set(literal, slot)
@@ -962,6 +970,10 @@ export class Planner {
     }
 
     let encodedCommands = this.buildCommands(ps)
+
+    if (state.length > 128) {
+      throw new Error('State is too long')
+    }
 
     return { commands: encodedCommands, state }
   }

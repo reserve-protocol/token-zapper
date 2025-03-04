@@ -116,6 +116,49 @@ export class FolioContext {
           new FolioDeployment(this, token, folio, qtys)
         )
 
+        const USDC = await this.universe.getToken(
+          this.universe.config.addresses.usdc
+        )
+        let prefersWETH = 0
+        let prefersUSDC = 0
+        await Promise.all(
+          qtys.map(async (qty) => {
+            try {
+              const [a, b] = await Promise.all([
+                this.universe.dexLiquidtyPriceStore.getBestQuotePath(
+                  this.universe.commonTokens.ERC20GAS.one,
+                  qty.token,
+                  true
+                ),
+                await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
+                  USDC.from(1000),
+                  qty.token,
+                  true
+                ),
+              ])
+              if (a.steps.length <= b.steps.length) {
+                prefersWETH++
+              } else {
+                prefersUSDC++
+              }
+            } catch (e) {}
+          })
+        )
+        if (prefersWETH >= prefersUSDC) {
+          this.universe.logger.debug(
+            `Setting preferred token for ${token.symbol} to ${this.universe.commonTokens.ERC20GAS.symbol}`
+          )
+          this.universe.preferredToken.set(
+            token,
+            this.universe.commonTokens.ERC20GAS
+          )
+        } else {
+          this.universe.logger.debug(
+            `Setting preferred token for ${token.symbol} to ${this.universe.commonTokens.ERC20GAS.symbol}`
+          )
+          this.universe.preferredToken.set(token, USDC)
+        }
+
         return true
       } catch (e) {
         return false
@@ -174,7 +217,7 @@ export class FolioContext {
 
       const mintAction = new DeployMintFolioAction(this, config, tok)
       this.universe.addAction(mintAction)
-      this.universe.preferredToken.set(tok, this.universe.commonTokens.ERC20GAS)
+
       this.universe.mintableTokens.set(tok, mintAction)
 
       this.universe.addSingleTokenPriceSource({

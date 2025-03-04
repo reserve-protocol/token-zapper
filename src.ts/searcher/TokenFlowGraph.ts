@@ -3976,6 +3976,11 @@ export class TokenFlowGraphSearcher {
       if (tradeNode == null) {
         tradeNode = node
       }
+      if (tradeNode) {
+        graph.tradeNodes
+          .get(step.inputToken)
+          .set(step.outputToken, tradeNode.id)
+      }
     }
     return tradeNode
   }
@@ -4081,6 +4086,7 @@ export class TokenFlowGraphSearcher {
     let inputNode = graph.getTokenNode(inputToken)
 
     // graph.deleteTokenNode(inputToken)
+    const preferredTradeToken = this.universe.preferredToken.get(input.token)
 
     if (this.universe.isTokenBurnable(inputToken)) {
       const outputTokens = [
@@ -4092,6 +4098,10 @@ export class TokenFlowGraphSearcher {
         targetToken =
           this.universe.preferredToken.get(output) ??
           (await this.universe.tokenClass.get(output))
+      } else {
+        if (preferredTradeToken && preferredTradeToken !== input.token) {
+          targetToken = preferredTradeToken
+        }
       }
 
       // console.log(`target tokens: ${targetToken}`)
@@ -4111,6 +4121,20 @@ export class TokenFlowGraphSearcher {
         )
       }
 
+      if (
+        preferredTradeToken &&
+        output !== preferredTradeToken &&
+        !this.universe.isTokenMintable(output)
+      ) {
+        await this.addTrades(
+          graph,
+          await preferredTradeToken.fromUSD(inputValue),
+          output,
+          false,
+          `sell output of redeem(${input}) = ${preferredTradeToken} for ${output}`
+        )
+        targetToken = output
+      }
       if (targetToken === output) {
         const o = await optimise(
           this.universe,

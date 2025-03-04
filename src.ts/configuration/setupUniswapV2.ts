@@ -425,7 +425,12 @@ export class UniswapV2Swap extends Action('UniswapV2') {
     __: TokenQuantity[]
   ) {
     const fees = await this.getFees()
-    if (fees.inFee === 0n && fees.outFee === 0n) {
+    if (
+      fees.inFee === 0n &&
+      fees.outFee === 0n &&
+      !this.context.universe.feeOnTransferTokens.has(this.tokenIn) &&
+      !this.context.universe.feeOnTransferTokens.has(this.tokenOut)
+    ) {
       return [
         planner.add(
           this.context.swapHelperWeiroll.swap(

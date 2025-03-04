@@ -59,6 +59,14 @@ export class DexLiquidtyPriceStore {
           0,
           5
         ).then((m) => {
+          if (target.symbol === 'KLIMA') {
+            for (const [token, path] of m.entries()) {
+              console.log(
+                token.symbol,
+                path.path.map((p) => p.symbol)
+              )
+            }
+          }
           // this.recordAllSingleStepBestPaths(input.token, m)
           return m.get(target)?.path ?? []
         })

@@ -734,6 +734,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   public blacklistedTokens = new Set<Token>()
+  public feeOnTransferTokens = new Set<Token>()
 
   public async defineLPToken(
     lpToken: Token,

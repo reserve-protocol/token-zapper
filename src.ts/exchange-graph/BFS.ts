@@ -303,12 +303,30 @@ export const bestPath = async (
   end: Token,
   idealNumberOfSteps: number,
   maxSteps: number
-) => {
+): Promise<
+  Map<Token, { path: Token[]; actions: Action[]; legAmount: TokenQuantity[] }>
+> => {
   const graph = ctx.graph
   const result = new Map<
     Token,
     { path: Token[]; actions: Action[]; legAmount: TokenQuantity[] }
   >()
+
+  if (idealNumberOfSteps === 0) {
+    const directEdges = graph.vertices.get(start.token).outgoingEdges.get(end)
+    if (directEdges != null && directEdges.length > 0) {
+      return new Map([
+        [
+          end,
+          {
+            path: [start.token, end],
+            actions: directEdges.filter((i) => i.is1to1),
+            legAmount: [start],
+          },
+        ],
+      ])
+    }
+  }
 
   const preferedTokens = computePreferredTokenSet(
     ctx,

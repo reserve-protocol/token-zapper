@@ -521,6 +521,9 @@ const whitelisted = new Set<Address>([
 
   // BONK
   Address.from('0x140511DBe5BCad98993e8Ded6D0c2190101Fa709'),
+
+  // KLIMA
+  Address.from('0xb37642e87613d8569fd8ec80888ea6c63684e79e'),
 ])
 
 const FEE_DIVISOR = 10000n

@@ -65,13 +65,15 @@ export class FolioDeployment {
           const basketQtyPrice = this.basket[i]
             .into(this.fToken)
             .mul(prices[i].into(this.fToken))
-          console.log(`${this.basket[i]} => ${basketQtyPrice.format()} USD`)
+          ctx.universe.logger.debug(
+            `${this.basket[i]} => ${basketQtyPrice.format()} USD`
+          )
           sum = sum.add(basketQtyPrice)
         }
 
         sum = sum.into(ctx.universe.usd)
 
-        console.log(`Price of folio ${this.fToken} => ${sum}`)
+        ctx.universe.logger.debug(`Price of folio ${this.fToken} => ${sum}`)
 
         return sum
       },
@@ -172,6 +174,7 @@ export class FolioContext {
 
       const mintAction = new DeployMintFolioAction(this, config, tok)
       this.universe.addAction(mintAction)
+      this.universe.preferredToken.set(tok, this.universe.commonTokens.ERC20GAS)
       this.universe.mintableTokens.set(tok, mintAction)
 
       this.universe.addSingleTokenPriceSource({

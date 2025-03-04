@@ -69,6 +69,11 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     priceFn: async () => await priceViaOdos(universe.commonTokens.wstETH),
   })
   universe.preferredToken.set(universe.rTokens.BSDX, universe.commonTokens.WETH)
+  universe.preferredToken.set(universe.rTokens.BSDX, universe.commonTokens.WETH)
+  universe.preferredToken.set(
+    universe.rTokens.hyUSD,
+    universe.commonTokens.USDC
+  )
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens.cbETH,
     priceFn: async () => await priceViaOdos(universe.commonTokens.cbETH),
@@ -304,6 +309,11 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     universe.commonTokens.BGCI,
     Promise.resolve(universe.commonTokens.WETH)
   )
+  universe.preferredToken.set(
+    universe.commonTokens.BDTF,
+    universe.commonTokens.WETH
+  )
+
   universe.tokenClass.set(
     universe.commonTokens.MVDA25,
     Promise.resolve(universe.commonTokens.WETH)
@@ -328,9 +338,12 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     universe.commonTokens.ABX,
     Promise.resolve(universe.commonTokens.WETH)
   )
-
   universe.preferredToken.set(
     universe.commonTokens.BGCI,
+    universe.commonTokens.WETH
+  )
+  universe.preferredToken.set(
+    universe.commonTokens.CLUB,
     universe.commonTokens.WETH
   )
   universe.preferredToken.set(
@@ -378,7 +391,10 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   logger.info('Done setting up base zapper')
   await Promise.all(tasks)
 
-  universe.blacklistedTokens.add(
+  // universe.blacklistedTokens.add(
+  //   await universe.getToken('0x74ccbe53F77b08632ce0CB91D3A545bF6B8E0979')
+  // )
+  universe.feeOnTransferTokens.add(
     await universe.getToken('0x74ccbe53F77b08632ce0CB91D3A545bF6B8E0979')
   )
   if (universe.config.dynamicConfigURL == null) {

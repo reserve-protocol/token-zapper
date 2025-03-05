@@ -3616,16 +3616,19 @@ const optimise = async (
   logger.info(`Running second round of nelder mead ${timeLeft}ms`)
   const startTime3 = Date.now()
 
-  let maxRestarts = 1
-  let its = iterations / 4
-  if (optimisationNodes.length > 20) {
+  const dimensions = optimisationNodes
+    .map((i) => i.outgoingEdge(i.outputs[0]).parts.length)
+    .reduce((l, r) => l + r, 0)
+  let maxIterationsToUse = iterations
+  let maxRestarts = 3
+  if (dimensions < 20) {
     maxRestarts = 2
-    its = iterations / 2
+    maxIterationsToUse = iterations / 2
+  } else if (dimensions < 10) {
+    maxRestarts = 1
+    maxIterationsToUse = iterations / 4
   }
-  if (optimisationNodes.length > 30) {
-    maxRestarts = 3
-    its = iterations
-  }
+  maxIterationsToUse = Math.floor(maxIterationsToUse)
   bestSoFar = await nelderMeadOptimiseTFG(
     universe,
     g,
@@ -3639,9 +3642,9 @@ const optimise = async (
       sigmaOptions: [0.5, 0.4, 0.5],
       alphaOptions: [1.5, 1.25, 1.0],
       maxRestarts: maxRestarts,
-      restartAfterNoChangeIterations: Math.floor(its / 20),
+      restartAfterNoChangeIterations: Math.floor(maxIterationsToUse / 20),
       perturbation: Math.max(1 - bestSoFar.result.dustFraction, 0.05),
-      maxIterations: (its = iterations / 2),
+      maxIterations: (maxIterationsToUse = iterations / 2),
       tolerance: 1e-2,
       maxTime: timeLeft,
     }

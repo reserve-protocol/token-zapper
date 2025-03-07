@@ -14,6 +14,7 @@ export interface NelderMeadOptions {
   maxTime?: number
 
   restartAfterNoChangeIterations?: number
+  maxStepsPerRestart?: number
   maxRestarts?: number
 }
 
@@ -199,7 +200,8 @@ export async function nelderMeadOptimize(
   initialParams: number[],
   objectiveFunc: (params: number[], iteration: number) => Promise<number>,
   logger: ILoggerType,
-  options: NelderMeadOptions = {}
+  options: NelderMeadOptions = {},
+  normalize: (params: number[]) => number[] = (params) => params
 ): Promise<number[]> {
   // Set default options
   let {
@@ -210,6 +212,7 @@ export async function nelderMeadOptimize(
     rhoOptions = [0.5],
     sigmaOptions = [0.5],
     restartAfterNoChangeIterations: restartIts = 20,
+    maxStepsPerRestart = Infinity,
     maxRestarts = 1,
     perturbation = 0.2,
     maxTime = Infinity,
@@ -226,7 +229,6 @@ export async function nelderMeadOptimize(
   let restarts = 0
   let iteration = 0
   let marginalImprovementCount = 0
-  let improvementFound = false
   // Initialize the simplex
   let simplex = initializeSimplex(initialParams, perturbation)
 
@@ -260,15 +262,69 @@ export async function nelderMeadOptimize(
     rho,
     sigma,
   })
+  const log = (msg: string) => {
+    if (process.env.DEV) {
+      logger.info(msg)
+    } else {
+      logger.debug(msg)
+    }
+  }
+  let stepsSinceRestart = 0
+
+  const restart = async () => {
+    const perp = perturbation * 0.5 ** restarts
+
+    stepsSinceRestart = 0
+    marginalImprovementCount = 0
+
+    // Ignore restarts if we're close to the max time
+    if (Date.now() - startTime > maxTime - 1000) {
+      return
+    }
+    log(
+      `Restarting... perturbation=${perp}, alpha=${alpha}, gamma=${gamma}, rho=${rho}, sigma=${sigma}`
+    )
+    alpha = alphaOptions[restarts % alphaOptions.length]
+    gamma = gammaOptions[restarts % gammaOptions.length]
+    rho = rhoOptions[restarts % rhoOptions.length]
+    sigma = sigmaOptions[restarts % sigmaOptions.length]
+
+    restarts += 1
+    logger = logger.child({
+      prefix: `nelder-mead`,
+      restart: restarts,
+      alpha,
+      gamma,
+      rho,
+      sigma,
+    })
+
+    const bestSimplex = normalize(simplex[0])
+
+    simplex = initializeSimplex(bestSimplex, perp)
+    // Evaluate each vertex in the simplex
+    functionValues = await Promise.all(
+      simplex.map((vertex) => objectiveFunc(vertex, iteration))
+    )
+    perturbation = perp
+  }
   try {
     while (iteration < maxIterations) {
+      stepsSinceRestart += 1
       if (Date.now() - startTime > maxTime) {
+        log(`Max time reached`)
         break
+      }
+
+      if (stepsSinceRestart > maxStepsPerRestart) {
+        log(`Restarting due to max steps per restart`)
+        await restart()
       }
 
       let prevBest = functionValues[0]
       for (; iteration < maxIterations; iteration++) {
         if (Date.now() - startTime > maxTime) {
+          log(`Max time reached`)
           running = false
           break
         }
@@ -278,47 +334,19 @@ export async function nelderMeadOptimize(
         const ratio = functionValues[0] / prevBest
         prevBest = functionValues[0]
         if (ratio < 1.0) {
-          improvementFound = true
           perturbation *= ratio
         }
 
-        if (improvementFound) {
-          if (ratio > 0.9999) {
-            marginalImprovementCount += 1
-          } else {
-            marginalImprovementCount = 0
-          }
+        if (ratio > 0.999) {
+          marginalImprovementCount += 1
+        } else {
+          marginalImprovementCount = 0
+        }
 
-          if (marginalImprovementCount > restartIts && restarts < maxRestarts) {
-            const perp = perturbation * 1.5 ** restarts
-
-            logger.debug(
-              `Restarting... perturbation=${perp}, alpha=${alpha}, gamma=${gamma}, rho=${rho}, sigma=${sigma}`
-            )
-            alpha = alphaOptions[restarts % alphaOptions.length]
-            gamma = gammaOptions[restarts % gammaOptions.length]
-            rho = rhoOptions[restarts % rhoOptions.length]
-            sigma = sigmaOptions[restarts % sigmaOptions.length]
-
-            restarts += 1
-            logger = logger.child({
-              prefix: `nelder-mead`,
-              restart: restarts,
-              alpha,
-              gamma,
-              rho,
-              sigma,
-            })
-            const bestSimplex = simplex[0]
-
-            simplex = initializeSimplex(bestSimplex, perp)
-            // Evaluate each vertex in the simplex
-            functionValues = await Promise.all(
-              simplex.map((vertex) => objectiveFunc(vertex, iteration))
-            )
-            marginalImprovementCount = 0
-            break
-          }
+        if (marginalImprovementCount > restartIts && restarts < maxRestarts) {
+          log(`Restarting due to slow rate of improvements`)
+          await restart()
+          break
         }
 
         // If there is less than
@@ -387,6 +415,7 @@ export async function nelderMeadOptimize(
           } else {
             // console.log(`Shrink`)
             // Contraction didn't help, shrink the simplex
+            log(`Shrinking simplex`)
             await shrinkSimplex(simplex, functionValues, objectiveFunc, sigma)
           }
         }

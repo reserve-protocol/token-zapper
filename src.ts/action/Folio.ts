@@ -66,7 +66,9 @@ export class FolioDeployment {
             .into(this.fToken)
             .mul(prices[i].into(this.fToken))
           ctx.universe.logger.debug(
-            `${this.basket[i]} => ${basketQtyPrice.format()} USD`
+            `${this.basket[i]} => ${basketQtyPrice.format()} USD ~ 1 ${
+              this.basket[i].token
+            } = ${prices[i]}`
           )
           sum = sum.add(basketQtyPrice)
         }

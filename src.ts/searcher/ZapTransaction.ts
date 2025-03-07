@@ -95,7 +95,8 @@ export class ZapTxStats {
     public readonly outputs: PricedTokenQuantity[],
 
     // value of (output token + dust)
-    public readonly valueUSD: TokenQuantity
+    public readonly valueUSD: TokenQuantity,
+    public readonly tokenPrices: PricedTokenQuantity[]
   ) {}
 
   get txFee() {
@@ -132,6 +133,16 @@ export class ZapTxStats {
       outputValue.price
     )
 
+    const pricedTokens = await Promise.all(
+      [input.input, input.output, ...input.dust].map(async (i) => {
+        const price = (await i.token.one.price()).into(result.universe.usd)
+        if (price == null) {
+          return new PricedTokenQuantity(i, result.universe.usd.zero)
+        }
+        return new PricedTokenQuantity(i, price)
+      })
+    )
+
     return new ZapTxStats(
       result,
       input.gasUnits,
@@ -139,7 +150,8 @@ export class ZapTxStats {
       outputValue,
       DustStats.fromDust(result, dustValue),
       [outputValue, ...dustValue],
-      totalValueUSD
+      totalValueUSD,
+      pricedTokens
     )
   }
 
@@ -161,10 +173,12 @@ export class ZapTxStats {
     if (this.isThereDust)
       return `${this.input} -> ${this.output} (+ $${
         this.dust.valueUSD
-      } D. [${this.dust.dust.map((i) => i.quantity).join(', ')}]) @ fee: ${
-        this.txFee.txFee.price
-      }`
-    return `${this.input} -> ${this.output} @ fee: ${this.txFee.txFee.price}`
+      } D. [${this.dust.dust.map((i) => i.quantity).join(', ')}])`
+    return `${this.input} -> ${this.output} @ fee: ${
+      this.txFee.txFee.price
+    } | prices: ${this.tokenPrices
+      .map((i) => `${i.quantity.token}: ${i.price}`)
+      .join(', ')}`
   }
 }
 

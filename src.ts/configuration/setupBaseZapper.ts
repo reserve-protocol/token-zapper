@@ -70,6 +70,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   })
   universe.preferredToken.set(universe.rTokens.BSDX, universe.commonTokens.WETH)
   universe.preferredToken.set(universe.rTokens.BSDX, universe.commonTokens.WETH)
+  universe.preferredToken.set(universe.rTokens.bsd, universe.commonTokens.WETH)
   universe.preferredToken.set(
     universe.rTokens.hyUSD,
     universe.commonTokens.USDC

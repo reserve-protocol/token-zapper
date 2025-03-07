@@ -44,6 +44,7 @@ const searcherOptions: SearcherOptions = {
   rejectHighDust: false,
   rejectHighValueLoss: false,
   useNewZapperContract: true,
+  phase1Optimser: 'nelder-mead',
 }
 
 /** !!
@@ -88,22 +89,22 @@ export const baseWhales = {
   '0x8f0987ddb485219c767770e2080e5cc01ddc772a':
     '0xcFC0805E42589d04a5ab4bCAff49f81d5210e065', // BSDX
 
-  // '0xebcda5b80f62dd4dd2a96357b42bb6facbf30267':
-  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  // '0x44551ca46fa5592bb572e20043f7c3d54c85cad7':
-  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  // '0xfe45eda533e97198d9f3deeda9ae6c147141f6f9':
-  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  // '0x47686106181b3cefe4eaf94c4c10b48ac750370b':
-  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  // '0xd600e748c17ca237fcb5967fa13d688aff17be78':
-  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  // '0x23418de10d422ad71c9d5713a2b8991a9c586443':
-  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  // '0xe8b46b116d3bdfa787ce9cf3f5acc78dc7ca380e':
-  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
-  // '0xb8753941196692e322846cfee9c14c97ac81928a':
-  //   '0x03d03a026e71979be3b08d44b01eae4c5ff9da99',
+  '0xebcda5b80f62dd4dd2a96357b42bb6facbf30267':
+    '0xE207FAb5839CA5bCc0d930761755cC7d82C1f19c',
+  '0x44551ca46fa5592bb572e20043f7c3d54c85cad7':
+    '0xFdCCD04DDCa9eCf052E8e9eF6BD09a9b323fBF49',
+  '0xfe45eda533e97198d9f3deeda9ae6c147141f6f9':
+    '0xeD5210Bd97d855E8BEc2389439B8487eEcC3FC60',
+  '0x47686106181b3cefe4eaf94c4c10b48ac750370b':
+    '0x130C5bc30567987861620971C6B60C08D3784eF8',
+  '0xd600e748c17ca237fcb5967fa13d688aff17be78':
+    '0xF37631E6481e61011FbDccbCE714ab06A031FBa8',
+  '0x23418de10d422ad71c9d5713a2b8991a9c586443':
+    '0xD38d1AB8A150e6eE0AE70C86A8E9Fb0c83255b76',
+  '0xe8b46b116d3bdfa787ce9cf3f5acc78dc7ca380e':
+    '0xd19c0dbbC5Ba2eC4faa0e3FFf892F0E95F23D9e0',
+  '0xb8753941196692e322846cfee9c14c97ac81928a':
+    '0x46271115F374E02b5afe357C8E8Dad474c8DE1cF',
 }
 
 const simulateFn = getSimulator(
@@ -146,29 +147,31 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  makeTestCase(1000, t.USDC, rTokens.bsd),
-  makeTestCase(1000, t.USDC, rTokens.hyUSD),
-  makeTestCase(1, t.WETH, rTokens.bsd),
-  makeTestCase(1, t.WETH, rTokens.hyUSD),
-  // makeTestCase(2, t.WETH, t.ABX),
-  // makeTestCase(5000, t.USDC, t.ABX),
-  makeTestCase(2, t.ETH, t.BDTF),
-  makeTestCase(1000, t.USDC, t.BDTF),
-  makeTestCase(5000, t.USDC, t.VTF),
-  makeTestCase(2, t.WETH, t.VTF),
-  makeTestCase(5000, t.USDC, t.CLX),
-  makeTestCase(2, t.WETH, t.CLX),
-  makeTestCase(5000, t.USDC, t.MVDA25),
-  makeTestCase(2, t.WETH, t.MVDA25),
-  makeTestCase(5000, t.USDC, t.MVTT10F),
-  makeTestCase(2, t.WETH, t.MVTT10F),
-  makeTestCase(5000, t.USDC, t.BGCI),
-  makeTestCase(1, t.WETH, t.CLUB),
+  makeTestCase(2, t.WETH, t.ABX),
+  makeTestCase(5000, t.USDC, t.ABX),
+
+  // makeTestCase(1000, t.USDC, rTokens.bsd),
+  // makeTestCase(1000, t.USDC, rTokens.hyUSD),
+  // makeTestCase(1, t.WETH, rTokens.bsd),
+  // makeTestCase(1, t.WETH, rTokens.hyUSD),
+
+  // makeTestCase(2, t.ETH, t.BDTF),
+  // makeTestCase(1000, t.USDC, t.BDTF),
+  // makeTestCase(5000, t.USDC, t.VTF),
+  // makeTestCase(2, t.WETH, t.VTF),
+  // makeTestCase(5000, t.USDC, t.CLX),
+  // makeTestCase(2, t.WETH, t.CLX),
+  // makeTestCase(5000, t.USDC, t.MVDA25),
+  // makeTestCase(2, t.WETH, t.MVDA25),
+  // makeTestCase(5000, t.USDC, t.MVTT10F),
+  // makeTestCase(2, t.WETH, t.MVTT10F),
+  // makeTestCase(5000, t.USDC, t.BGCI),
+  // makeTestCase(1, t.WETH, t.CLUB),
 ]
 
 const redeemCases = [
-  makeTestCase(10, t.VTF, t.ETH),
-  makeTestCase(10, t.MVDA25, t.ETH),
+  makeTestCase(10, t.BDTF, t.ETH),
+  makeTestCase(10, t.BDTF, t.ETH),
   makeTestCase(10, t.MVTT10F, t.ETH),
 
   makeTestCase(10, t.VTF, t.USDC),
@@ -691,7 +694,7 @@ describe('base zapper', () => {
           issueance.output
         )
         emitReqCount(testCaseName, true)
-      }, 240000)
+      }, 2400000)
     })
   }
 

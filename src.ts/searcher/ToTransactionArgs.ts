@@ -15,12 +15,14 @@ import {
 import { Token, TokenQuantity } from '../entities/Token'
 import { Planner } from '../tx-gen/Planner'
 import { Universe } from '../Universe'
+import { SearcherOptions } from '../configuration/ChainConfiguration'
 
 export type ToTransactionArgs = Partial<{
   recipient?: Address
   dustRecipient?: Address
   slippage?: number
   trade?: boolean
+  searcherConfig: SearcherOptions
 }>
 
 export const encodeZapParamsStruct = (

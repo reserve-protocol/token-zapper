@@ -3255,28 +3255,7 @@ const inferDustProducingNodes = (g: TokenFlowGraph) => {
     }
   }
 }
-const optimiseMultiplyDirectional = async (
-  g: TokenFlowGraph,
-  bestSoFar: TFGResult,
-  universe: Universe,
-  inputs: TokenQuantity[],
-  optimisationNodes: NodeProxy[],
-  factor: number = 0.5
-) => {
-  if (optimisationNodes.length === 0) {
-    return bestSoFar
-  }
-  for (const node of optimisationNodes) {
-    const splits = g._outgoingEdges[node.id]!.edges[0]
-    const before = [...splits.parts]
-    for (let i = 0; i < splits.parts.length; i++) {
-      splits.parts[i] =
-        before[i] * factor + splits.parts[i] * splits.parts[i] * (1 - factor)
-    }
-    splits.normalize()
-  }
-  return await g.evaluate(universe, inputs)
-}
+
 const backPropagateInputProportions = async (g: TokenFlowGraph) => {
   const tokenProportions = new Map<Token, number>()
   for (const node of g.nodes()) {
@@ -3308,8 +3287,10 @@ const nelderMeadOptimiseTFG = async (
   inputs: TokenQuantity[],
   logger: ILoggerType,
   bestSoFar: TFGResult,
-  options: NelderMeadOptions = {}
+  options: NelderMeadOptions = {},
+  onImproved: (percentage: number) => void = () => {}
 ) => {
+  const starResult = bestSoFar
   const flatParams: number[] = []
   const nodeDimensions: number[] = []
   const nodeIndex: number[] = []
@@ -3325,11 +3306,6 @@ const nelderMeadOptimiseTFG = async (
     splits.normalize()
     flatParams.push(...splits.parts)
   }
-
-  logger.debug(`Flat params: ${flatParams.join(', ')}`)
-  logger.debug(`Node index to flat param offset: ${nodeIndex.join(', ')}`)
-  logger.debug(`Node dimensions: ${nodeDimensions.join(', ')}`)
-  logger.debug(`Node indices: ${nodeIndices.join(', ')}`)
 
   const updateGraph = (g: TokenFlowGraph, flatParams: number[]) => {
     for (let i = 0; i < nodeIndex.length; i++) {
@@ -3368,6 +3344,9 @@ const nelderMeadOptimiseTFG = async (
           (1 - out.result.dustFraction)
         ).toFixed(2)}% dust (+ ${improvement * 100}% improvement)`
       )
+      if (onImproved) {
+        onImproved(Math.abs(improvement))
+      }
     } else {
       noImprovementCount += 1
     }
@@ -3385,7 +3364,7 @@ const nelderMeadOptimiseTFG = async (
           out.result.outputValue
         }) + ${(100 * (1 - out.result.dustFraction)).toFixed(
           2
-        )}% dust improvement)`
+        )}% dust - no improvement for over 100 steps)`
       )
       throw new Error('STOP early')
     }
@@ -3400,7 +3379,91 @@ const nelderMeadOptimiseTFG = async (
     options
   )
   updateGraph(g, result)
-  return await g.evaluate(universe, inputs)
+  const out = await g.evaluate(universe, inputs)
+  const improvement = 1 - out.result.price / starResult.result.price
+  logger.info(
+    `nelderMeadOptimiseTFG done: ${out.result.inputQuantity} ${
+      out.result.inputs[0].token
+    } ($${out.result.inputValue}) => ${out.result.outputQuantity} (${
+      out.result.outputValue
+    }) (price=${out.result.price}) + ${(
+      100 *
+      (1 - out.result.dustFraction)
+    ).toFixed(2)}% dust (+ ${improvement * 100}% improvement)`
+  )
+  return out
+}
+
+const getDimensions = (nodes: NodeProxy[]) => {
+  return nodes
+    .map((i) => i.outgoingEdge(i.outputs[0]).parts.length)
+    .reduce((l, r) => l + r, 0)
+}
+
+const searchForBestParams = async (
+  universe: Universe,
+  graph: TokenFlowGraph,
+  optimisationNodes: NodeProxy[],
+  inputs: TokenQuantity[],
+  bestSoFar: TFGResult,
+  logger: ILoggerType
+) => {
+  const initial = [0.01, 0.75, 1.75]
+
+  // Imma gonna optimise the nelder-mead params using nelder-mead so I can melder-mead while I melder-mead
+  const bestParams = await nelderMeadOptimize(
+    initial,
+    async (params) => {
+      const [rho, gamma, alpha] = [
+        Math.min(params[0], 1),
+        Math.min(params[1], 2.5),
+        Math.min(params[2], 1.75),
+      ]
+      let score = 1
+      logger.info(`Testing params: ${rho}, ${gamma}, ${alpha}`)
+      const out = await nelderMeadOptimiseTFG(
+        universe,
+        graph.clone(),
+        optimisationNodes,
+        inputs,
+        logger,
+        bestSoFar,
+        {
+          rhoOptions: [rho],
+          gammaOptions: [gamma],
+          alphaOptions: [alpha],
+          sigmaOptions: [0.5],
+          maxIterations: 25,
+          maxTime: Infinity,
+          maxRestarts: 0,
+          perturbation: Math.max(bestSoFar.result.dustFraction * 0.5, 0.05),
+          tolerance: 1e-2,
+        },
+        (percentage) => {
+          if (percentage > 0.005) {
+            score += 1
+          }
+        }
+      )
+      logger.info(`Done testing ${rho}, ${gamma}, ${alpha}`)
+      logger.info(
+        `Result: ${out.result.output} + ${(
+          (1 - out.result.dustFraction) *
+          100
+        ).toFixed(2)}% dust`
+      )
+      logger.info(`iterations with improvement: ${score}`)
+      return 1 / (out.result.price / score)
+    },
+    logger,
+    {
+      maxIterations: 100,
+      perturbation: 0.01,
+      maxTime: Infinity,
+      maxRestarts: 0,
+    }
+  )
+  console.log(bestParams.join(', '))
 }
 
 const optimise = async (
@@ -3491,14 +3554,20 @@ const optimise = async (
     )
     optimisationNodes.sort((l, r) => r.recipients.length - l.recipients.length)
 
-    const dimensions = optimisationNodes
-      .map((i) => i.outgoingEdge(i.outputs[0]).parts.length)
-      .reduce((l, r) => l + r, 0)
-
-    logger.debug(`TFG contains ${dimensions} optimisation dimensions`)
-    if (optimisationNodes.length > 0) {
+    // if (1) {
+    //   await searchForBestParams(
+    //     universe,
+    //     g,
+    //     optimisationNodes,
+    //     inputs,
+    //     bestSoFar,
+    //     logger
+    //   )
+    //   process.exit(0)
+    // }
+    if (optimisationNodes.length !== 0) {
       logger.info(`Running first round of global optimisation`)
-      if (dimensions <= 20) {
+      if (opts?.phase1Optimser === 'simple') {
         ;[bestSoFar] = await optimiseGlobal(
           startTime,
           g,
@@ -3510,7 +3579,8 @@ const optimise = async (
           1,
           optimisationNodes
         )
-      } else {
+      }
+      if (opts?.phase1Optimser === 'nelder-mead') {
         logger.info(`Running first round of nelder mead`)
         const startTime2 = Date.now()
         bestSoFar = await nelderMeadOptimiseTFG(
@@ -3521,23 +3591,29 @@ const optimise = async (
           logger,
           bestSoFar,
           {
-            maxIterations: 100,
-            rhoOptions: [0.25, 0.4],
-            gammaOptions: [3.0, 2.5],
-            sigmaOptions: [0.5, 0.7],
-            alphaOptions: [1.5, 1.25],
-            maxRestarts: 1,
-            restartAfterNoChangeIterations: 20,
-            perturbation: Math.max(1 - bestSoFar.result.dustFraction, 0.05),
-            tolerance: 1e-1,
+            maxIterations: 200,
+            rhoOptions: [0.014056712962962965, 0.5],
+            gammaOptions: [1.0359374999999997, 2],
+            sigmaOptions: [0.5],
+            alphaOptions: [2.459438657407407, 1],
+            maxRestarts: 3,
+            perturbation: Math.max(bestSoFar.result.dustFraction, 0.05),
+            tolerance: 1e-2,
+            restartAfterNoChangeIterations: 30,
             maxTime: maxTime - (Date.now() - startTime),
           }
         )
         logger.info(
-          `First round of nelder mead done in ${Date.now() - startTime2}ms`
+          `Finished first phase of nelder-mead in ${Date.now() - startTime2}ms`
+        )
+        logger.info(
+          `Result: ${bestSoFar.result.output} + ${(
+            (1 - bestSoFar.result.dustFraction) *
+            100
+          ).toFixed(2)}% dust`
         )
 
-        iterations -= 100
+        iterations -= 200
       }
     }
   }
@@ -3616,19 +3692,15 @@ const optimise = async (
   logger.info(`Running second round of nelder mead ${timeLeft}ms`)
   const startTime3 = Date.now()
 
-  const dimensions = optimisationNodes
-    .map((i) => i.outgoingEdge(i.outputs[0]).parts.length)
-    .reduce((l, r) => l + r, 0)
-  let maxIterationsToUse = iterations
-  let maxRestarts = 3
-  if (dimensions < 20) {
-    maxRestarts = 2
-    maxIterationsToUse = iterations / 2
-  } else if (dimensions < 10) {
-    maxRestarts = 1
-    maxIterationsToUse = iterations / 4
-  }
-  maxIterationsToUse = Math.floor(maxIterationsToUse)
+  const dims = getDimensions(nodes)
+  const maxRestarts = dims < 10 ? 1 : dims < 20 ? 3 : 4
+  const maxIterations =
+    dims < 10
+      ? iterations / 2
+      : dims < 20
+      ? iterations - iterations / 4
+      : iterations
+
   bestSoFar = await nelderMeadOptimiseTFG(
     universe,
     g,
@@ -3637,20 +3709,20 @@ const optimise = async (
     logger.child({ phase: 'main' }),
     bestSoFar,
     {
-      rhoOptions: [0.4, 0.5, 0.7],
-      gammaOptions: [2.5, 2.2, 2.0],
-      sigmaOptions: [0.5, 0.4, 0.5],
-      alphaOptions: [1.5, 1.25, 1.0],
-      maxRestarts: maxRestarts,
-      restartAfterNoChangeIterations: Math.floor(maxIterationsToUse / 20),
-      perturbation: Math.max(1 - bestSoFar.result.dustFraction, 0.05),
-      maxIterations: (maxIterationsToUse = iterations / 2),
+      rhoOptions: [0.006, 0.5, 0.014056712962962965],
+      gammaOptions: [1.5, 2, 1.5],
+      sigmaOptions: [0.5],
+      alphaOptions: [1.25, 1, 1.75],
+      maxRestarts: 8,
+      restartAfterNoChangeIterations: 20,
+      perturbation: bestSoFar.result.dustFraction,
+      maxIterations: maxIterations,
       tolerance: 1e-2,
       maxTime: timeLeft,
     }
   )
   logger.info(
-    `Second round of nelder mead done in ${Date.now() - startTime3}ms`
+    `Finished main optimisation phase in ${Date.now() - startTime3}ms`
   )
   logger.info(
     `Result after global optimisation: ${bestSoFar.result.output} + ${(

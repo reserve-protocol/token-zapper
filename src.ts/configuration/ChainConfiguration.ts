@@ -3,6 +3,7 @@ import { Address } from '../base/Address'
 export * from './ZapSimulation'
 import { SimulateZapTransactionFunction } from './ZapSimulation'
 
+type Optimisers = 'simple' | 'nelder-mead';
 const defaultSearcherOptions = {
   // Controls how many blocks we allow to pass before recomputing prices, quotes etc.
   requoteTolerance: 1,
@@ -20,8 +21,9 @@ const defaultSearcherOptions = {
   // New options
 
   // Controls how many iterations of the Nelder-Mead algorithm we allow
-  maxOptimisationSteps: 500,
+  maxOptimisationSteps: 400,
   minimiseDustPhase1Steps: 10,
+  phase1Optimser: 'simple' as Optimisers,
   
 
   cacheResolution: 4,

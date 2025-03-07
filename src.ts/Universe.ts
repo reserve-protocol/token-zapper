@@ -1052,7 +1052,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       const tfg = await this.tfgSearcher.search1To1(
         userInput,
         outputToken,
-        this.config,
+        {...this.config, ...opts?.searcherConfig},
         txGenOptions
       )
       const res = await tfg.evaluate(this, [userInput])

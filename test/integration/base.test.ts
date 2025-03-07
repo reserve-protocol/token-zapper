@@ -147,25 +147,27 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  // makeTestCase(2, t.WETH, t.ABX),
+  makeTestCase(2, t.WETH, t.ABX),
+  makeTestCase(4, t.WETH, t.ABX),
+  makeTestCase(8, t.WETH, t.ABX),
   // makeTestCase(5000, t.USDC, t.ABX),
 
-  makeTestCase(1000, t.USDC, rTokens.bsd),
-  makeTestCase(1000, t.USDC, rTokens.hyUSD),
-  makeTestCase(1, t.WETH, rTokens.bsd),
-  makeTestCase(1, t.WETH, rTokens.hyUSD),
+  // makeTestCase(1000, t.USDC, rTokens.bsd),
+  // makeTestCase(1000, t.USDC, rTokens.hyUSD),
+  // makeTestCase(1, t.WETH, rTokens.bsd),
+  // makeTestCase(1, t.WETH, rTokens.hyUSD),
 
-  makeTestCase(2, t.ETH, t.BDTF),
-  makeTestCase(1000, t.USDC, t.BDTF),
-  makeTestCase(5000, t.USDC, t.VTF),
-  makeTestCase(2, t.WETH, t.VTF),
-  makeTestCase(5000, t.USDC, t.CLX),
-  makeTestCase(2, t.WETH, t.CLX),
-  makeTestCase(5000, t.USDC, t.MVDA25),
-  makeTestCase(2, t.WETH, t.MVDA25),
-  makeTestCase(5000, t.USDC, t.MVTT10F),
-  makeTestCase(2, t.WETH, t.MVTT10F),
-  makeTestCase(5000, t.USDC, t.BGCI),
+  // makeTestCase(2, t.ETH, t.BDTF),
+  // makeTestCase(1000, t.USDC, t.BDTF),
+  // makeTestCase(5000, t.USDC, t.VTF),
+  // makeTestCase(2, t.WETH, t.VTF),
+  // makeTestCase(5000, t.USDC, t.CLX),
+  // makeTestCase(2, t.WETH, t.CLX),
+  // makeTestCase(5000, t.USDC, t.MVDA25),
+  // makeTestCase(2, t.WETH, t.MVDA25),
+  // makeTestCase(5000, t.USDC, t.MVTT10F),
+  // makeTestCase(2, t.WETH, t.MVTT10F),
+  // makeTestCase(5000, t.USDC, t.BGCI),
   // makeTestCase(1, t.WETH, t.CLUB),
 ]
 

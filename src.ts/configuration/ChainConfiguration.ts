@@ -26,6 +26,9 @@ const defaultSearcherOptions = {
   phase1Optimser: 'simple' as Optimisers,
   
 
+  dustPricePriceFactor: 0.5,
+  
+
   cacheResolution: 4,
   tfgCacheTTL: 5 * 60 * 1000, // 5 minutes
 

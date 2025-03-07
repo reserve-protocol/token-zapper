@@ -149,7 +149,7 @@ function checkConvergence(
 async function shrinkSimplex(
   simplex: number[][],
   functionValues: number[],
-  objectiveFunc: (params: number[]) => Promise<number>,
+  objectiveFunc: (params: number[], iteration: number) => Promise<number>,
   // normalizeFunc: (params: number[]) => number[],
   sigma: number
 ): Promise<void> {
@@ -166,7 +166,22 @@ async function shrinkSimplex(
     simplex[i] = simplex[i]
 
     // Evaluate the new vertex
-    functionValues[i] = await objectiveFunc(simplex[i])
+    functionValues[i] = await objectiveFunc(simplex[i], -1)
+  }
+}
+
+export const memorizeObjFunction = (
+  objectiveFunc: (params: number[], iteration: number) => Promise<number>
+): ((params: number[], iteration: number) => Promise<number>) => {
+  const previouslyEvaluated = new Map<string, Promise<number>>()
+  return async (params: number[], iteration: number) => {
+    const k = params.join(',')
+    if (previouslyEvaluated.has(k)) {
+      return await previouslyEvaluated.get(k)!
+    }
+    const result = objectiveFunc(params, iteration)
+    previouslyEvaluated.set(k, result)
+    return await result
   }
 }
 
@@ -182,7 +197,7 @@ async function shrinkSimplex(
  */
 export async function nelderMeadOptimize(
   initialParams: number[],
-  objectiveFunc: (params: number[]) => Promise<number>,
+  objectiveFunc: (params: number[], iteration: number) => Promise<number>,
   logger: ILoggerType,
   options: NelderMeadOptions = {}
 ): Promise<number[]> {
@@ -217,7 +232,7 @@ export async function nelderMeadOptimize(
 
   // Evaluate each vertex in the simplex
   let functionValues: number[] = await Promise.all(
-    simplex.map((vertex) => objectiveFunc(vertex))
+    simplex.map((vertex) => objectiveFunc(vertex, -1))
   )
   const centroid = Array(n).fill(0)
 
@@ -299,7 +314,7 @@ export async function nelderMeadOptimize(
             simplex = initializeSimplex(bestSimplex, perp)
             // Evaluate each vertex in the simplex
             functionValues = await Promise.all(
-              simplex.map((vertex) => objectiveFunc(vertex))
+              simplex.map((vertex) => objectiveFunc(vertex, iteration))
             )
             marginalImprovementCount = 0
             break
@@ -330,7 +345,7 @@ export async function nelderMeadOptimize(
         )
 
         // Normalize the reflected point to maintain valid proportions
-        const fReflected = await objectiveFunc(xReflected)
+        const fReflected = await objectiveFunc(xReflected, iteration)
 
         if (
           functionValues[0] <= fReflected &&
@@ -345,7 +360,7 @@ export async function nelderMeadOptimize(
           const xExpanded = centroid.map(
             (val, idx) => val + gamma * (xReflected[idx] - val)
           )
-          const fExpanded = await objectiveFunc(xExpanded)
+          const fExpanded = await objectiveFunc(xExpanded, iteration)
 
           if (fExpanded < fReflected) {
             // console.log(`Expansion`)
@@ -363,7 +378,7 @@ export async function nelderMeadOptimize(
           const xContracted = centroid.map(
             (val, idx) => val + rho * (simplex[n][idx] - val)
           )
-          const fContracted = await objectiveFunc(xContracted)
+          const fContracted = await objectiveFunc(xContracted, iteration)
           if (fContracted < functionValues[n]) {
             // console.log(`Contraction`)
             // Contraction is better than worst

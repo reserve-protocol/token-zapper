@@ -9,6 +9,7 @@ import {
 } from '../configuration/ChainConfiguration'
 import { Token, TokenQuantity } from '../entities/Token'
 import {
+  memorizeObjFunction,
   nelderMeadOptimize,
   NelderMeadOptions,
   normalizeVectorByNodes,
@@ -3290,6 +3291,12 @@ const nelderMeadOptimiseTFG = async (
   options: NelderMeadOptions = {},
   onImproved: (percentage: number) => void = () => {}
 ) => {
+  logger.info(
+    `Starting nelderMeadOptimiseTFG: ${bestSoFar.result.output} + ${(
+      (1 - bestSoFar.result.dustFraction) *
+      100
+    ).toFixed(2)}% dust`
+  )
   const starResult = bestSoFar
   const flatParams: number[] = []
   const nodeDimensions: number[] = []
@@ -3323,19 +3330,21 @@ const nelderMeadOptimiseTFG = async (
     }
   }
 
-  let evaluationCount = 0
   let noImprovementCount = 0
-  const objectiveFunc = async (flatParams: number[]) => {
+  const objectiveFunc = async (flatParams: number[], iteration: number) => {
     const gg = g.clone()
     updateGraph(gg, normalizeVectorByNodes(flatParams, nodeDimensions))
     const out = await gg.evaluate(universe, inputs)
-    evaluationCount++
+
+    if (iteration === -1) {
+      return out.result.price === 0 ? Infinity : 1 / out.result.price
+    }
     if (bestSoFar.result.price < out.result.price) {
       const improvement = 1 - out.result.price / bestSoFar.result.price
       bestSoFar = out
       noImprovementCount = 0
       logger.debug(
-        `${evaluationCount}: ${out.result.inputQuantity} ${
+        `${iteration}: ${out.result.inputQuantity} ${
           out.result.inputs[0].token
         } ($${out.result.inputValue}) => ${out.result.outputQuantity} (${
           out.result.outputValue
@@ -3355,7 +3364,7 @@ const nelderMeadOptimiseTFG = async (
       (Math.abs(1 - out.result.outputValue / out.result.inputValue) <= 0.01 ||
         (out.result.inputValue > 100 &&
           Math.abs(out.result.outputValue - out.result.inputValue) < 1)) &&
-      evaluationCount > flatParams.length + 5
+      iteration > 5
     ) {
       logger.debug(
         `Stopping early: ${out.result.inputQuantity} ${
@@ -3400,70 +3409,105 @@ const getDimensions = (nodes: NodeProxy[]) => {
     .reduce((l, r) => l + r, 0)
 }
 
+const softLogistic = (x: number, start: number, end: number, k = 3) => {
+  const midpoint = (start + end) / 2
+  const range = end - start
+  const maxDistFromMid = range / 2
+
+  const distFromMid = Math.abs(x - midpoint) / maxDistFromMid
+  // Within 10% of the extremeties linearly interpolate between x and the logistic function
+
+  if (distFromMid < 0.9) {
+    return x
+  }
+  const factor = Math.min(Math.max((1 - distFromMid) / 0.1, 0), 1)
+  let logistic = end / (1 + Math.exp((midpoint - x) * k))
+  logistic = Math.floor(logistic * 10000000) / 10000000
+  return factor * x + (1 - factor) * logistic
+}
+
 const searchForBestParams = async (
   universe: Universe,
   graph: TokenFlowGraph,
   optimisationNodes: NodeProxy[],
   inputs: TokenQuantity[],
   bestSoFar: TFGResult,
-  logger: ILoggerType
+  logger: ILoggerType,
+  initial: number[],
+  perp: number
 ) => {
-  const initial = [0.01, 0.75, 1.75]
+  // midPoint is 0.5 in param space
 
+  const fromParams = ([rho, gamma, alpha]: number[]) => {
+    return [
+      softLogistic(rho, 0, 1),
+      softLogistic(gamma, 1, 3),
+      softLogistic(alpha, 0.5, 2),
+    ]
+  }
+
+  const objFn = memorizeObjFunction(async ([rho, gamma, alpha], iteration) => {
+    let improvementIterations = 0
+    logger.info(`Testing params: rho=${rho}, gamma=${gamma}, alpha=${alpha}`)
+    const out = await nelderMeadOptimiseTFG(
+      universe,
+      graph.clone(),
+      optimisationNodes,
+      inputs,
+      logger,
+      bestSoFar,
+      {
+        rhoOptions: [rho],
+        gammaOptions: [gamma],
+        alphaOptions: [alpha],
+        sigmaOptions: [0.5],
+        maxIterations: iteration === -1 ? 10 : 100,
+        maxTime: Infinity,
+        maxRestarts: 0,
+        perturbation: perp,
+        tolerance: 1e-2,
+      },
+      (percentage) => {
+        if (percentage > 0.005) {
+          improvementIterations += 1
+        }
+      }
+    )
+    logger.info(`Done testing ${rho}, ${gamma}, ${alpha}`)
+    logger.info(
+      `Result: ${out.result.output} + ${(
+        (1 - out.result.dustFraction) *
+        100
+      ).toFixed(2)}% dust`
+    )
+    logger.info(`iterations with improvement: ${improvementIterations}`)
+
+    const objScoreFromPrice = 1 / out.result.price
+    const iterationsScore = 1 / (improvementIterations + 1)
+    return objScoreFromPrice * 0.5 + objScoreFromPrice * iterationsScore * 0.5
+  })
   // Imma gonna optimise the nelder-mead params using nelder-mead so I can melder-mead while I melder-mead
   const bestParams = await nelderMeadOptimize(
     initial,
-    async (params) => {
-      const [rho, gamma, alpha] = [
-        Math.min(params[0], 1),
-        Math.min(params[1], 2.5),
-        Math.min(params[2], 1.75),
-      ]
-      let score = 1
-      logger.info(`Testing params: ${rho}, ${gamma}, ${alpha}`)
-      const out = await nelderMeadOptimiseTFG(
-        universe,
-        graph.clone(),
-        optimisationNodes,
-        inputs,
-        logger,
-        bestSoFar,
-        {
-          rhoOptions: [rho],
-          gammaOptions: [gamma],
-          alphaOptions: [alpha],
-          sigmaOptions: [0.5],
-          maxIterations: 25,
-          maxTime: Infinity,
-          maxRestarts: 0,
-          perturbation: Math.max(bestSoFar.result.dustFraction * 0.5, 0.05),
-          tolerance: 1e-2,
-        },
-        (percentage) => {
-          if (percentage > 0.005) {
-            score += 1
-          }
-        }
-      )
-      logger.info(`Done testing ${rho}, ${gamma}, ${alpha}`)
-      logger.info(
-        `Result: ${out.result.output} + ${(
-          (1 - out.result.dustFraction) *
-          100
-        ).toFixed(2)}% dust`
-      )
-      logger.info(`iterations with improvement: ${score}`)
-      return 1 / (out.result.price / score)
-    },
+    (params, iter) => objFn(fromParams(params), iter),
     logger,
     {
       maxIterations: 100,
-      perturbation: 0.01,
+      gammaOptions: [2.2],
+      rhoOptions: [0.5],
+      alphaOptions: [1.2],
+      sigmaOptions: [0.5],
+      perturbation: 0.25,
       maxTime: Infinity,
-      maxRestarts: 0,
+      maxRestarts: 3,
+      restartAfterNoChangeIterations: 10,
     }
   )
   console.log(bestParams.join(', '))
+}
+
+const dustFractionToPerturbation = (dustFraction: number) => {
+  return Math.min(Math.max(dustFraction, 0.05), 0.5)
 }
 
 const optimise = async (
@@ -3554,17 +3598,6 @@ const optimise = async (
     )
     optimisationNodes.sort((l, r) => r.recipients.length - l.recipients.length)
 
-    // if (1) {
-    //   await searchForBestParams(
-    //     universe,
-    //     g,
-    //     optimisationNodes,
-    //     inputs,
-    //     bestSoFar,
-    //     logger
-    //   )
-    //   process.exit(0)
-    // }
     if (optimisationNodes.length !== 0) {
       logger.info(`Running first round of global optimisation`)
       if (opts?.phase1Optimser === 'simple') {
@@ -3580,6 +3613,13 @@ const optimise = async (
           optimisationNodes
         )
       }
+
+      const restartSchedule = [
+        [0.0505141, 2.5209894940655184, 1.9261882],
+        [0.1833378933333333, 2.8891830555555553, 1.05],
+        [0.0101, 0.7575000000000002, 2],
+      ]
+
       if (opts?.phase1Optimser === 'nelder-mead') {
         logger.info(`Running first round of nelder mead`)
         const startTime2 = Date.now()
@@ -3591,15 +3631,17 @@ const optimise = async (
           logger,
           bestSoFar,
           {
-            maxIterations: 200,
-            rhoOptions: [0.014056712962962965, 0.5],
-            gammaOptions: [1.0359374999999997, 2],
+            maxIterations: iterations / 2,
+            rhoOptions: restartSchedule.map((r) => r[0]),
+            gammaOptions: restartSchedule.map((r) => r[1]),
+            alphaOptions: restartSchedule.map((r) => r[2]),
             sigmaOptions: [0.5],
-            alphaOptions: [2.459438657407407, 1],
-            maxRestarts: 3,
-            perturbation: Math.max(bestSoFar.result.dustFraction, 0.05),
+            maxRestarts: restartSchedule.length * 2,
+            perturbation: dustFractionToPerturbation(
+              bestSoFar.result.dustFraction
+            ),
             tolerance: 1e-2,
-            restartAfterNoChangeIterations: 30,
+            restartAfterNoChangeIterations: 35,
             maxTime: maxTime - (Date.now() - startTime),
           }
         )
@@ -3613,7 +3655,7 @@ const optimise = async (
           ).toFixed(2)}% dust`
         )
 
-        iterations -= 200
+        iterations -= iterations / 2
       }
     }
   }
@@ -3693,14 +3735,18 @@ const optimise = async (
   const startTime3 = Date.now()
 
   const dims = getDimensions(nodes)
-  const maxRestarts = dims < 10 ? 1 : dims < 20 ? 3 : 4
   const maxIterations =
     dims < 10
       ? iterations / 2
-      : dims < 20
+      : dims < 15
       ? iterations - iterations / 4
       : iterations
 
+  const mainRestartSchedule = [
+    [0.5916666666666666, 2.3666666666666663, 0.7],
+    [0.5916666666666666, 2.3666666666666663, 1.0304105540253004],
+    [0.5, 2, 1],
+  ]
   bestSoFar = await nelderMeadOptimiseTFG(
     universe,
     g,
@@ -3709,13 +3755,14 @@ const optimise = async (
     logger.child({ phase: 'main' }),
     bestSoFar,
     {
-      rhoOptions: [0.006, 0.5, 0.014056712962962965],
-      gammaOptions: [1.5, 2, 1.5],
+      rhoOptions: mainRestartSchedule.map((r) => r[0]),
+      gammaOptions: mainRestartSchedule.map((r) => r[1]),
       sigmaOptions: [0.5],
-      alphaOptions: [1.25, 1, 1.75],
-      maxRestarts: 8,
-      restartAfterNoChangeIterations: 20,
-      perturbation: bestSoFar.result.dustFraction,
+      alphaOptions: mainRestartSchedule.map((r) => r[2]),
+      maxRestarts: mainRestartSchedule.length * 2,
+      restartAfterNoChangeIterations:
+        maxIterations / mainRestartSchedule.length / 2,
+      perturbation: 0.05,
       maxIterations: maxIterations,
       tolerance: 1e-2,
       maxTime: timeLeft,
@@ -3789,20 +3836,26 @@ export class TokenFlowGraphSearcher {
       BigInt(opts.topLevelTradeMintOptimisationParts)
     )
     const mintOutPart = await mintGraph.evaluate(this.universe, [onePart])
+    const mintPartPrice =
+      mintOutPart.result.totalValue -
+      mintOutPart.result.dustValue * this.universe.config.dustPricePriceFactor
     const mintOutFull = await mintGraph.evaluate(this.universe, [inputQty])
+    const mintFullPrice =
+      mintOutFull.result.totalValue -
+      mintOutFull.result.dustValue * this.universe.config.dustPricePriceFactor
     const tradeOutPart = await tradeGraph.evaluate(this.universe, [onePart])
     if (
       tradeOutPart.result.price == 0 ||
-      tradeOutPart.result.price < mintOutPart.result.price / 5
+      tradeOutPart.result.price < mintPartPrice / 5
     ) {
       return mintGraph
     }
     const tradeOutFull = await tradeGraph.evaluate(this.universe, [inputQty])
 
-    if (mintOutFull.result.price > tradeOutPart.result.price) {
+    if (mintFullPrice > tradeOutPart.result.price) {
       return mintGraph
     }
-    if (tradeOutFull.result.price > mintOutPart.result.price) {
+    if (tradeOutFull.result.price > mintPartPrice) {
       return tradeGraph
     }
     return mintGraph
@@ -4138,7 +4191,7 @@ export class TokenFlowGraphSearcher {
         true
       )
       const tradePathExists = await this.doesTradePathExist(input, output)
-      if (tradePathExists) {
+      if (tradePathExists && txGenOptions.useTrade !== false) {
         let res = await optimise(this.universe, newTfg, [input], [output], opts)
         try {
           res = await this.determineBestTradeMintSplit(
@@ -4254,7 +4307,7 @@ export class TokenFlowGraphSearcher {
       const inputQty = await inputToken.fromUSD(inputValue)
       await this.tokenSourceGraph(graph, inputQty, output, inputNode, true)
       const tradePathExists = await this.doesTradePathExist(input, output)
-      if (tradePathExists) {
+      if (tradePathExists && txGenOptions.useTrade !== false) {
         let res = await optimise(this.universe, graph, [input], [output], opts)
         try {
           res = await this.determineBestTradeMintSplit(

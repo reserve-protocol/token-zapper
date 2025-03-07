@@ -23,7 +23,6 @@ import { Token, TokenQuantity } from '../entities/Token'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import fs from 'fs'
 import { DefaultMap } from '../base/DefaultMap'
-import { bfs } from '../exchange-graph/BFS'
 import { Graph } from '../exchange-graph/Graph'
 import { SwapPlan } from '../searcher/Swap'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
@@ -256,15 +255,6 @@ export class UniswapV3Context {
     new Map()
   public readonly pools: Map<Address, UniswapV3Pool> = new Map()
   public readonly edges = new Graph()
-  private routes = new DefaultMap<Token, DefaultMap<Token, SwapPlan[]>>(
-    (start) =>
-      new DefaultMap((end) => {
-        const routes = bfs(this.universe, this.edges, start, end, 3)
-          .steps.map((i) => i.convertToSingularPaths())
-          .flat()
-        return routes
-      })
-  )
 
   public async definePool(
     addr: Address,

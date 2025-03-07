@@ -3793,13 +3793,13 @@ export class TokenFlowGraphSearcher {
     const tradeOutPart = await tradeGraph.evaluate(this.universe, [onePart])
     if (
       tradeOutPart.result.price == 0 ||
-      tradeOutPart.result.priceTotalOut < mintOutPart.result.priceTotalOut / 5
+      tradeOutPart.result.price < mintOutPart.result.price / 5
     ) {
       return mintGraph
     }
     const tradeOutFull = await tradeGraph.evaluate(this.universe, [inputQty])
 
-    if (mintOutFull.result.priceTotalOut > tradeOutPart.result.priceTotalOut) {
+    if (mintOutFull.result.price > tradeOutPart.result.price) {
       return mintGraph
     }
     if (tradeOutFull.result.price > mintOutPart.result.price) {

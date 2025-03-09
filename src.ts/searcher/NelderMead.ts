@@ -272,7 +272,9 @@ export async function nelderMeadOptimize(
   let stepsSinceRestart = 0
 
   const restart = async () => {
-    const perp = perturbation * 0.5 ** restarts
+    restarts += 1
+
+    const perp = perturbation * 0.75 ** restarts
 
     stepsSinceRestart = 0
     marginalImprovementCount = 0
@@ -289,7 +291,6 @@ export async function nelderMeadOptimize(
     rho = rhoOptions[restarts % rhoOptions.length]
     sigma = sigmaOptions[restarts % sigmaOptions.length]
 
-    restarts += 1
     logger = logger.child({
       prefix: `nelder-mead`,
       restart: restarts,

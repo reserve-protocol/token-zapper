@@ -1865,7 +1865,8 @@ export class TokenFlowGraph {
 export class TokenFlowGraphBuilder {
   public graph: TokenFlowGraph
   public parentInputs = new Set<Token>()
-  private tokenBalanceNodes = new DefaultMap<Token, number>(
+
+  private mintInputNodes = new DefaultMap<Token, number>(
     (token) =>
       this.graph.newNode(
         null,
@@ -1875,6 +1876,20 @@ export class TokenFlowGraphBuilder {
         [token]
       ).id
   )
+  private tradeInputNodes = new DefaultMap<Token, number>((token) => {
+    const node = this.getTokenNode(token)
+    const output = this.graph.newNode(
+      null,
+      NodeType.Split,
+      `${token.symbol}`,
+      [token],
+      [token],
+      0,
+      null
+    )
+    node.forward(token, 1, output)
+    return output.id
+  })
 
   public tradeNodes = new DefaultMap<Token, DefaultMap<Token, number>>(
     (token) => new DefaultMap<Token, number>((output) => -1)
@@ -1897,14 +1912,13 @@ export class TokenFlowGraphBuilder {
     if (this.tradeNodeExists(input, output)) {
       return
     }
-
     const graph = TokenFlowGraphBuilder.createSingleStep(
       this.universe,
       input.one,
       actions,
       name
     )
-    inputNode = inputNode ?? this.getTokenNode(input)
+    inputNode = inputNode ?? this.getTradeInputNode(input)
     const extraNode = this.graph.newNode(
       null,
       NodeType.Split,
@@ -1935,8 +1949,8 @@ export class TokenFlowGraphBuilder {
     out.addParentInputs(this.parentInputs)
     out.graph = this.graph.clone()
 
-    for (const [token, id] of this.tokenBalanceNodes.entries()) {
-      out.tokenBalanceNodes.set(token, id)
+    for (const [token, id] of this.mintInputNodes.entries()) {
+      out.mintInputNodes.set(token, id)
     }
     return out
   }
@@ -1962,7 +1976,7 @@ export class TokenFlowGraphBuilder {
     if (this.inputs.includes(token)) {
       return true
     }
-    if (!this.tokenBalanceNodes.has(token)) {
+    if (!this.mintInputNodes.has(token)) {
       return false
     }
     return this.getTokenNode(token).inputsSatisfied()
@@ -2064,10 +2078,13 @@ export class TokenFlowGraphBuilder {
   }
 
   public getTokenNode(token: Token) {
-    return this.graph.getNode(this.tokenBalanceNodes.get(token))
+    return this.graph.getNode(this.mintInputNodes.get(token))
+  }
+  public getTradeInputNode(token: Token) {
+    return this.graph.getNode(this.tradeInputNodes.get(token))
   }
   public deleteTokenNode(token: Token) {
-    this.tokenBalanceNodes.delete(token)
+    this.mintInputNodes.delete(token)
   }
 
   public static createSingleStep(
@@ -2873,15 +2890,6 @@ const minimizeDust = async (
   return currentResult
 }
 
-const shuffle = <T>(array: T[]) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    const tmp = array[i]
-    array[i] = array[j]
-    array[j] = tmp
-  }
-}
-
 const optimiseGlobal = async (
   startTime: number,
   g: TokenFlowGraph,
@@ -3312,12 +3320,12 @@ const nelderMeadOptimiseTFG = async (
   const nodeIndex: number[] = []
   const nodeIndices: number[] = []
 
-  let key = `${phase}:${inputs.map((i) => i.token).join(',')}->${g.outputs.join(
-    ', '
-  )}`
+  let key = `${phase}:${inputs
+    .map((i) => i.token.address)
+    .join(',')}->${g.outputs.join(', ')}`
   for (const node of optimisationNodes) {
     const splits = node.outgoingEdge(node.outputs[0])
-    key += `:${splits.token}.${splits.parts.length}`
+    key += `:${splits.token.address}.${splits.parts.length}`
     nodeDimensions.push(splits.parts.length)
     nodeIndex.push(flatParams.length)
     nodeIndices.push(node.id)
@@ -3354,6 +3362,9 @@ const nelderMeadOptimiseTFG = async (
     flatParams = normalizeVectorByNodes(flatParams, nodeDimensions)
     updateGraph(g, flatParams)
     bestSoFar = await g.evaluate(universe, inputs)
+    options.perturbation = dustFractionToPerturbation(
+      bestSoFar.result.dustFraction
+    )
   }
 
   let noImprovementCount = 0
@@ -3541,7 +3552,14 @@ const searchForBestParams = async (
 }
 
 const dustFractionToPerturbation = (dustFraction: number) => {
-  return Math.max((1 - dustFraction) / 2, 0.001)
+  const fraction = 1 - dustFraction
+  if (fraction > 0.5) {
+    return 0.5
+  }
+  if (fraction < 0.2) {
+    return fraction / 4
+  }
+  return fraction / 2
 }
 
 const optimise = async (
@@ -3964,15 +3982,19 @@ export class TokenFlowGraphSearcher {
     const mintAction = this.universe.getMintAction(outToken)
 
     const inputToken = inputNode.inputs[0]
-    const mintSubgraphInputNode = graph.addSplittingNode(
+    let splits = 0
+    let mintSubgraphInputNode = graph.addSplittingNode(
       inputToken,
       inputNode,
       mintAction.dustTokens.length > 0 ? NodeType.Both : NodeType.Optimisation,
       `mint ${outToken} (main)`
     )
-
     const edges = graph.graph._outgoingEdges[mintSubgraphInputNode.id]!
     edges.min = 0
+
+    const getInputNode = () => {
+      return mintSubgraphInputNode
+    }
 
     const props = await mintAction.inputProportions()
 
@@ -3987,13 +4009,14 @@ export class TokenFlowGraphSearcher {
         continue
       }
 
+      const parent = getInputNode()
       const subInputNode = graph.addSplittingNode(
         inputToken,
-        mintSubgraphInputNode,
+        parent,
         NodeType.Split,
         `mint ${outToken} (source ${props[i].token}))`
       )
-      mintSubgraphInputNode.forward(inputToken, 1, subInputNode)
+      parent.forward(inputToken, 1, subInputNode)
 
       if (!this.universe.isTokenMintable(prop.token)) {
         const tradeExisted = graph.tradeNodeExists(inputQty.token, prop.token)
@@ -4024,9 +4047,7 @@ export class TokenFlowGraphSearcher {
       }
       if (mintAction.dustTokens.includes(prop.token)) {
         const splits =
-          graph.graph._outgoingEdges[mintSubgraphInputNode.id]!.getEdge(
-            inputToken
-          )
+          graph.graph._outgoingEdges[parent.id]!.getEdge(inputToken)
         const index = splits.getRecipientIndex(subInputNode.id)
         splits.dustEdge.get(index).push(prop.token)
       }
@@ -4036,7 +4057,7 @@ export class TokenFlowGraphSearcher {
     for (const prop of props) {
       const inputNode =
         prop.token === inputToken
-          ? mintSubgraphInputNode
+          ? getInputNode()
           : graph.getTokenNode(prop.token)
 
       const edge = graph.graph._outgoingEdges[inputNode.id]!.getEdge(prop.token)
@@ -4089,7 +4110,7 @@ export class TokenFlowGraphSearcher {
 
   private doesTradePathExistCache = new Map<string, Promise<boolean>>()
   public async doesTradePathExist(inputQty: TokenQuantity, output: Token) {
-    const key = `${inputQty.token}.${output}`
+    const key = `${inputQty.token.address}.${output}`
     let prev = this.doesTradePathExistCache.get(key)
     if (prev == null) {
       const p = (async () => {

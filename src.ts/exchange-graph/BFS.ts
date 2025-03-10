@@ -224,13 +224,14 @@ export const bestPath = async (
     if (lastToken === end) {
       continue
     }
+
+    if (node.steps >= maxSteps) {
+      continue
+    }
     if (node.steps >= idealNumberOfSteps) {
       if (result.has(end)) {
         continue
       }
-    }
-    if (node.steps >= maxSteps) {
-      continue
     }
     const vertex = graph.vertices.get(node.token)
     await Promise.all(

@@ -506,13 +506,16 @@ export class UniswapV2Context {
 }
 
 export const setupUniswapV2 = async (universe: Universe) => {
+  const logger = universe.logger.child({
+    integration: 'univ2',
+  })
   const chainId = universe.chainId
   if (!isChainIdSupported(chainId)) {
     throw new Error(`ChainId ${chainId} not supported`)
   }
   const config = configs[chainId]
   if (config.univ2swap === constants.AddressZero) {
-    console.log('UniswapV2 not supported on this chain')
+    logger.error('UniswapV2 not supported on this chain')
     return
   }
   const ctx = new UniswapV2Context(universe)
@@ -569,7 +572,7 @@ export const setupUniswapV2 = async (universe: Universe) => {
       )
     )
   }
-  console.log(`UniV2 ${allPools.length} pools loaded`)
+  logger.info(`UniV2 ${allPools.length} pools loaded`)
 
   return ctx
 }

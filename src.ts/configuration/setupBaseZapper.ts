@@ -16,8 +16,6 @@ import { TokenType } from '../entities/TokenClass'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupReservePricing } from './setupReservePricing'
 import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
-import { AerodromeContext } from '../action/Aerodrome'
-// import { setupMaverick } from './maverick'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
@@ -169,10 +167,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
 
   let uniswapV3Ctx: UniswapV3Context
   let uniswapV2Ctx: UniswapV2Context
-  let aerodromeCtx: {
-    context: AerodromeContext
-    loadPool: (addr: Address) => Promise<any>
-  }
   const initUni3 = async () => {
     logger.info('Setting up UniswapV3')
     const router = await setupUniswapV3(universe)
@@ -212,7 +206,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   }
   const setupAero = async () => {
     try {
-      aerodromeCtx = await setupAerodromeRouter(universe)
+      await setupAerodromeRouter(universe)
       const aerodromeWrappers = createProtocolWithWrappers(
         universe,
         'aerodrome'
@@ -230,23 +224,20 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
       console.log(e)
     }
   }
-  const setupUnis = async () => {
-    await initUni3()
-    await initUni2()
-  }
   let done = 0
-  const initMaverick = async () => {
-    // await setupMaverick(universe)
-  }
 
   const tasks = [
     initCompound(),
     initAave(),
-    setupUnis(),
+    (async () => {
+      uniswapV2Ctx = (await setupUniswapV2(universe))!
+    })(),
+    (async () => {
+      uniswapV3Ctx = await setupUniswapV3(universe)
+    })(),
     initERC4626(),
     setupStarGate_(),
     setupAero(),
-    initMaverick(),
   ].map((tsk) => {
     return tsk
       .catch((e) => {
@@ -391,9 +382,15 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   logger.info('Done setting up base zapper')
   await Promise.all(tasks)
 
-  // universe.blacklistedTokens.add(
-  //   await universe.getToken('0x74ccbe53F77b08632ce0CB91D3A545bF6B8E0979')
-  // )
+  universe.blacklistedTokens.add(
+    await universe.getToken('0xbd15d0c77133d3200756dc4d7a4f577dbb2cf6a3')
+  )
+  universe.blacklistedTokens.add(
+    await universe.getToken('0x49c86046903807d0a3193a221c1a3e1b1b6c9ba3')
+  )
+  universe.blacklistedTokens.add(
+    await universe.getToken('0xac743b05f5e590d9db6a4192e02457838e4af61e')
+  )
   universe.feeOnTransferTokens.add(
     await universe.getToken('0x74ccbe53F77b08632ce0CB91D3A545bF6B8E0979')
   )

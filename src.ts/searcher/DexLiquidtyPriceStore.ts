@@ -50,25 +50,27 @@ export class DexLiquidtyPriceStore {
       return path
     }
 
+    const idealLen = Object.values(this.universe.commonTokens).find(
+      (e) => e == input.token
+    )
+      ? 1
+      : 2
+
+    // console.log(`${input} -> ${target} idealLen: ${idealLen}`)
+
     path = new Promise(async (resolve, reject) => {
       try {
         const tokenPath = await bestPath(
           this.universe,
           input,
           target,
-          0,
+          idealLen,
           5
         ).then((m) => {
-          if (target.symbol === 'KLIMA') {
-            for (const [token, path] of m.entries()) {
-              console.log(
-                token.symbol,
-                path.path.map((p) => p.symbol)
-              )
-            }
-          }
-          // this.recordAllSingleStepBestPaths(input.token, m)
-          return m.get(target)?.path ?? []
+          this.recordAllSingleStepBestPaths(input.token, m)
+          const out = m.get(target)?.path ?? []
+
+          return out
         })
         if (tokenPath.length === 0) {
           throw Error(`No path found from ${input.token} to ${target}`)

@@ -12,67 +12,67 @@ import type {
   PopulatedTransaction,
   Signer,
   utils,
-} from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+} from 'ethers'
+import type { FunctionFragment, Result } from '@ethersproject/abi'
+import type { Listener, Provider } from '@ethersproject/providers'
 import type {
   TypedEventFilter,
   TypedEvent,
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from "../../../common";
+} from '../../../common'
 
 export interface CurveStableSwapNGHelperInterface extends utils.Interface {
   functions: {
-    "addliquidity(uint256,uint256,address,uint256)": FunctionFragment;
-  };
+    'addliquidity(uint256,uint256,address,uint256)': FunctionFragment
+  }
 
-  getFunction(nameOrSignatureOrTopic: "addliquidity"): FunctionFragment;
+  getFunction(nameOrSignatureOrTopic: 'addliquidity'): FunctionFragment
 
   encodeFunctionData(
-    functionFragment: "addliquidity",
+    functionFragment: 'addliquidity',
     values: [
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>
     ]
-  ): string;
+  ): string
 
   decodeFunctionResult(
-    functionFragment: "addliquidity",
+    functionFragment: 'addliquidity',
     data: BytesLike
-  ): Result;
+  ): Result
 
-  events: {};
+  events: {}
 }
 
 export interface CurveStableSwapNGHelper extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(signerOrProvider: Signer | Provider | string): this
+  attach(addressOrName: string): this
+  deployed(): Promise<this>
 
-  interface: CurveStableSwapNGHelperInterface;
+  interface: CurveStableSwapNGHelperInterface
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TEvent>>
 
   listeners<TEvent extends TypedEvent>(
     eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
+  ): Array<TypedListener<TEvent>>
+  listeners(eventName?: string): Array<Listener>
   removeAllListeners<TEvent extends TypedEvent>(
     eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  ): this
+  removeAllListeners(eventName?: string): this
+  off: OnEvent<this>
+  on: OnEvent<this>
+  once: OnEvent<this>
+  removeListener: OnEvent<this>
 
   functions: {
     addliquidity(
@@ -81,8 +81,8 @@ export interface CurveStableSwapNGHelper extends BaseContract {
       pool: PromiseOrValue<string>,
       minOut: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-  };
+    ): Promise<ContractTransaction>
+  }
 
   addliquidity(
     amount: PromiseOrValue<BigNumberish>,
@@ -90,7 +90,7 @@ export interface CurveStableSwapNGHelper extends BaseContract {
     pool: PromiseOrValue<string>,
     minOut: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  ): Promise<ContractTransaction>
 
   callStatic: {
     addliquidity(
@@ -99,10 +99,10 @@ export interface CurveStableSwapNGHelper extends BaseContract {
       pool: PromiseOrValue<string>,
       minOut: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
-  };
+    ): Promise<BigNumber>
+  }
 
-  filters: {};
+  filters: {}
 
   estimateGas: {
     addliquidity(
@@ -111,8 +111,8 @@ export interface CurveStableSwapNGHelper extends BaseContract {
       pool: PromiseOrValue<string>,
       minOut: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
+    ): Promise<BigNumber>
+  }
 
   populateTransaction: {
     addliquidity(
@@ -121,6 +121,6 @@ export interface CurveStableSwapNGHelper extends BaseContract {
       pool: PromiseOrValue<string>,
       minOut: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-  };
+    ): Promise<PopulatedTransaction>
+  }
 }

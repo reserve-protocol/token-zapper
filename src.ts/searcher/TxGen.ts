@@ -516,6 +516,13 @@ export class TxGen {
         throw new Error('No inputs found for node')
       }
 
+      node.result.inputs.map((qty) => {
+        const inputs = nodeInputs.get(node.node.id).get(qty.token)
+        if (inputs.length > 1) {
+          ctx.readBalance(qty.token, true)
+        }
+      })
+
       const inputs = node.result.inputs.map((qty) => {
         const token = qty.token
         const inputs = nodeInputs.get(node.node.id).get(token)
@@ -560,7 +567,7 @@ export class TxGen {
         }
         const summed = () =>
           isRedeem
-            ? ctx.readBalance(token, true)
+            ? ctx.readBalance(token)
             : inputs.reduce((acc, curr) => {
                 const l = typeof acc === 'function' ? acc() : acc
                 const r = typeof curr === 'function' ? curr() : curr

@@ -45,16 +45,12 @@ export class NodeProxy {
   public get isDustOptimisable() {
     this.checkVersion()
     if (
-      this.graph._outgoingEdges[this.id] == null ||
-      this.graph._outgoingEdges[this.id]!.edges.length === 0
+      this.nodeType !== NodeType.Both &&
+      this.nodeType !== NodeType.SplitWithDust
     ) {
       return false
     }
-    return (
-      (this.nodeType === NodeType.Both ||
-        this.nodeType === NodeType.SplitWithDust) &&
-      this.recipients.length > 1
-    )
+    return this.recipientCount > 1
   }
 
   public hasOutflows() {
@@ -110,20 +106,14 @@ export class NodeProxy {
 
   public get isOptimisable() {
     this.checkVersion()
-
-    if (this.nodeType === NodeType.Both) {
-      return true
-    }
     if (
       this.nodeType === NodeType.Action ||
-      this.nodeType === NodeType.Fanout
+      this.nodeType === NodeType.Fanout ||
+      this.nodeType === NodeType.SplitWithDust
     ) {
       return false
     }
-    if (this.outputs.length !== 1) {
-      return false
-    }
-    return this.recipients.length > 1
+    return this.recipientCount > 1
   }
 
   public get isUseless() {
@@ -136,40 +126,28 @@ export class NodeProxy {
     ) {
       return false
     }
-    if (this.recipients.length === 0) {
-      return true
-    }
-
-    if (this.isFanout && this.recipients.length === 1) {
-      return true
-    }
-
-    const outgoing = [...this.outgoingEdges()]
-    if (outgoing.length !== 1) {
-      return false
-    }
-    const incoming = [...this.incomingEdges()]
-    if (incoming.length !== 1) {
+    if (this.outputs.length > 1) {
       return false
     }
 
-    for (const edge of incoming) {
-      if (edge.source.action !== null) {
-        return false
-      }
-      if (edge.proportion !== 1) {
-        return false
-      }
+    if (
+      this.graph._incomingEdges[this.id].length === 0 ||
+      this.recipientCount === 0
+    ) {
+      return true
     }
-    for (const edge of outgoing) {
-      if (edge.recipient.action !== null) {
-        return false
-      }
-      if (edge.proportion !== 1) {
-        return false
-      }
+    if (this.isFanout && this.recipientCount <= 1) {
+      return true
     }
-
+    if (!this.hasOneInputAndOneOutput) {
+      return false
+    }
+    if ([...this.incomingEdges()][0].proportion !== 1) {
+      return false
+    }
+    if ([...this.outgoingEdges()][0].proportion !== 1) {
+      return false
+    }
     return true
   }
 
@@ -230,6 +208,52 @@ export class NodeProxy {
   public set inlinedGraph(inlinedGraph: InlinedGraphRef | null) {
     this.checkVersion()
     this.graph.data[this.id].inlinedGraph = inlinedGraph
+  }
+
+  public get hasOneInputAndOneOutput() {
+    this.checkVersion()
+    return this.hasOneOutput && this.hasOneInput
+  }
+
+  public get hasOneInput() {
+    this.checkVersion()
+    if (this.isStartNode || this.isEndNode) {
+      return false
+    }
+    return this.graph._incomingEdges[this.id].length === 1
+  }
+
+  private recipientCount_: number | null = null
+  private recipientCountDirtyVersion_ = 0
+  public get recipientCount() {
+    this.checkVersion()
+    if (
+      this.recipientCount_ === null ||
+      this.recipientCountDirtyVersion_ !== this.version
+    ) {
+      this.recipientCountDirtyVersion_ = this.version
+      this.recipientCount_ = this.recipients.length
+    }
+    return this.recipientCount_
+  }
+
+  public get hasOneOutput() {
+    this.checkVersion()
+    if (this.isStartNode || this.isEndNode) {
+      return false
+    }
+    const out = this.graph._outgoingEdges[this.id]
+    if (out == null) {
+      return true
+    }
+    const edgesWithOuts = out.edges.filter((edge) => edge.recipient.length > 0)
+    if (
+      edgesWithOuts.length === 0 ||
+      (edgesWithOuts.length === 1 && edgesWithOuts[0].recipient.length <= 1)
+    ) {
+      return true
+    }
+    return false
   }
 
   public set nodeType(nodeType: NodeType) {
@@ -1927,6 +1951,15 @@ export class TokenFlowGraphBuilder {
       [input]
     )
     inputNode.forward(input, 1, extraNode)
+    const count = inputNode.recipients.length
+    if (
+      count > 1 &&
+      inputNode.nodeType === NodeType.Split &&
+      inputNode.outgoingEdge(input).min == null
+    ) {
+      inputNode.nodeType = NodeType.Optimisation
+      inputNode.outgoingEdge(input).min = 1 / 10
+    }
     outputNode = outputNode ?? this.getTokenNode(output)
     const node = this.addSubgraphNode(graph, name)
     this.tradeNodes.get(input).set(output, extraNode.id)
@@ -2081,7 +2114,8 @@ export class TokenFlowGraphBuilder {
     return this.graph.getNode(this.mintInputNodes.get(token))
   }
   public getTradeInputNode(token: Token) {
-    return this.graph.getNode(this.tradeInputNodes.get(token))
+    return this.getTokenNode(token)
+    // return this.graph.getNode(this.tradeInputNodes.get(token))
   }
   public deleteTokenNode(token: Token) {
     this.mintInputNodes.delete(token)
@@ -2883,7 +2917,6 @@ const minimizeDust = async (
     }
 
     if (currentResult.result.dustValue <= 1) {
-      console.log('Minimise dust: Breaking out, dust value  <= 1')
       break
     }
   }
@@ -3505,11 +3538,11 @@ const searchForBestParams = async (
         gammaOptions: [gamma],
         alphaOptions: [alpha],
         sigmaOptions: [0.5],
-        maxIterations: iteration === -1 ? 10 : 100,
+        maxIterations: iteration === -1 ? 100 : 250,
         maxTime: Infinity,
         maxRestarts: 0,
         perturbation: 0.1,
-        tolerance: 1e-2,
+        tolerance: 1e-3,
       },
       (percentage) => {
         if (percentage > 0.005) {
@@ -3553,13 +3586,76 @@ const searchForBestParams = async (
 
 const dustFractionToPerturbation = (dustFraction: number) => {
   const fraction = 1 - dustFraction
-  if (fraction > 0.5) {
-    return 0.5
+  if (fraction > 0.75) {
+    return 0.75
   }
-  if (fraction < 0.2) {
-    return fraction / 4
+  return Math.max(fraction, 0.01)
+}
+
+/**
+ * Removes nodes if they have one input and one output and are a split node, remaps the input edge to the output node
+ * @returns
+ */
+const shorten1To1Splits = (graph: TokenFlowGraph) => {
+  const out = new TokenFlowGraph(graph.name, graph.inputs, graph.outputs)
+  const remappedNodes: number[] = graph.data.map(() => -1)
+  remappedNodes[graph._startIndex] = out._startIndex
+  remappedNodes[graph._endIndex] = out._endIndex
+
+  const removedNodeNext = remappedNodes.map((v) => -1)
+
+  for (const node of graph.nodes()) {
+    if (node.nodeType === NodeType.Split && node.hasOneInputAndOneOutput) {
+      removedNodeNext[node.id] =
+        graph._outgoingEdges[node.id]!.edges[0].recipient[0]
+      continue
+    }
+    if (remappedNodes[node.id] !== -1) {
+      continue
+    }
+    const newNode = out.newNode(
+      node.action,
+      node.nodeType,
+      node.name,
+      [...node.inputs],
+      [...node.outputs],
+      graph._outgoingEdges[node.id]?.min,
+      node.inlinedGraph
+    )
+    remappedNodes[node.id] = newNode.id
   }
-  return fraction / 2
+  for (const edge of graph.edges()) {
+    if (removedNodeNext[edge.from] !== -1) {
+      continue
+    }
+
+    let to = edge.to
+    while (removedNodeNext[to] !== -1) {
+      to = removedNodeNext[to]
+    }
+    if (remappedNodes[edge.from] !== -1 && remappedNodes[to] !== -1) {
+      if (remappedNodes[edge.from] === remappedNodes[to]) {
+        continue
+      }
+      out.forward(
+        remappedNodes[edge.from],
+        remappedNodes[to],
+        edge.token,
+        edge.parts
+      )
+      if (edge.dustToken.length !== 0) {
+        const splits = out._outgoingEdges[remappedNodes[edge.from]]!.getEdge(
+          edge.token
+        )
+        splits.dustEdge
+          .get(splits.getRecipientIndex(remappedNodes[to]))
+          .push(...edge.dustToken)
+      }
+      continue
+    }
+  }
+
+  return out
 }
 
 const optimise = async (
@@ -3568,7 +3664,8 @@ const optimise = async (
   inputs: TokenQuantity[],
   outputs: Token[],
   opts?: SearcherOptions,
-  fromCache: boolean = false
+  fromCache: boolean = false,
+  prune: boolean = true
 ) => {
   const startTime = Date.now()
   const maxTime = universe.config.maxOptimisationTime
@@ -3616,7 +3713,7 @@ const optimise = async (
     throw new Error('Bad graph')
   }
 
-  let iterations = universe.config.maxOptimisationSteps
+  let nelderMeadIters = universe.config.maxOptimisationSteps
 
   if (!fromCache) {
     g = removeNodes(g, findNodesWithoutSources(g))
@@ -3627,12 +3724,19 @@ const optimise = async (
     g = removeNodes(g, findNodesWithoutSources(g))
     g = removeUselessNodes(removeRedundantSplits(g))
     g = removeRedundantSplits2(g)
+    if (prune) {
+      g = removeUselessNodes(removeRedundantSplits(g))
+      g = shorten1To1Splits(g)
+    }
     inferDustProducingNodes(g)
     await backPropagateInputProportions(g)
 
+    logger.debug('Graph pruned:')
+    logger.debug(g.toDot().join('\n'))
+
     const nodesSorted = g.sort().reverse()
     let optimisationNodes = nodesSorted.filter(
-      (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
+      (n) => n.isOptimisable || n.isDustOptimisable
     )
     bestSoFar = await minimizeDust(
       startTime,
@@ -3648,7 +3752,6 @@ const optimise = async (
       5,
       1
     )
-    optimisationNodes.sort((l, r) => r.recipients.length - l.recipients.length)
 
     if (optimisationNodes.length !== 0) {
       logger.info(`Running first round of global optimisation`)
@@ -3675,7 +3778,7 @@ const optimise = async (
       if (opts?.phase1Optimser === 'nelder-mead') {
         logger.info(`Running first round of nelder mead`)
         const startTime2 = Date.now()
-        const iters = iterations / 2
+        const iters = nelderMeadIters / 2
         bestSoFar = await nelderMeadOptimiseTFG(
           universe,
           g,
@@ -3688,14 +3791,14 @@ const optimise = async (
             rhoOptions: restartSchedule.map((r) => r[0]),
             gammaOptions: restartSchedule.map((r) => r[1]),
             alphaOptions: restartSchedule.map((r) => r[2]),
-            sigmaOptions: [0.5],
-            maxRestarts: restartSchedule.length,
-            maxStepsPerRestart: (iters * 2) / restartSchedule.length,
+            sigmaOptions: [0.8],
+            maxRestarts: Infinity,
+            maxStepsPerRestart: Infinity,
             perturbation: dustFractionToPerturbation(
               bestSoFar.result.dustFraction
             ),
-            tolerance: 1e-2,
-            restartAfterNoChangeIterations: 45,
+            tolerance: 1e-4,
+            restartAfterNoChangeIterations: iters / restartSchedule.length,
             maxTime: maxTime - (Date.now() - startTime),
           },
           undefined,
@@ -3712,9 +3815,13 @@ const optimise = async (
           ).toFixed(2)}% dust`
         )
 
-        iterations -= iters
+        nelderMeadIters -= iters
       }
     }
+  } else {
+    g = removeNodes(g, findNodesWithoutSources(g))
+    // g = removeUselessNodes(removeRedundantSplits(g))
+    // console.log(g.toDot().join('\n'))
   }
   const nodes = g
     .sort()
@@ -3734,11 +3841,7 @@ const optimise = async (
   )
   bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
 
-  let optimisationNodes = [...g.sort()]
-    .reverse()
-    .filter(
-      (n) => (n.isOptimisable || n.isDustOptimisable) && n.recipients.length > 1
-    )
+  let optimisationNodes = [...g.sort()].reverse().filter((n) => n.isOptimisable)
 
   const maxValueSlippage = universe.config.zapMaxValueLoss / 100
   const maxDustFraction = universe.config.zapMaxDustProduced / 100
@@ -3790,46 +3893,80 @@ const optimise = async (
   timeLeft = maxTime - (Date.now() - startTime)
   const startTime3 = Date.now()
   const dims = getDimensions(nodes)
-  const maxIterations =
-    dims < 10
-      ? iterations / 2
-      : dims < 15
-      ? iterations - iterations / 4
-      : iterations
 
-  const mainRestartSchedule = [
-    [0.5916666666666666, 2.3666666666666663, 1.0304105540253004],
-    [0.050030489698744865, 1.9342630389249496, 1.7932942708333335],
-    [0.5, 2, 1],
-  ]
-  logger.info(
-    `Running main optimisation phase, max iterations: ${maxIterations}. Reminaing time ${timeLeft}ms`
-  )
+  // if (1) {
+  //   await searchForBestParams(
+  //     universe,
+  //     g,
+  //     optimisationNodes,
+  //     inputs,
+  //     bestSoFar,
+  //     logger,
+  //     [0.5, 2, 1],
+  //     0.1
+  //   )
+  // }
 
-  bestSoFar = await nelderMeadOptimiseTFG(
-    universe,
-    g,
-    optimisationNodes,
-    inputs,
-    logger.child({ phase: 'main' }),
-    bestSoFar,
-    {
-      rhoOptions: mainRestartSchedule.map((r) => r[0]),
-      gammaOptions: mainRestartSchedule.map((r) => r[1]),
-      sigmaOptions: [0.5],
-      alphaOptions: mainRestartSchedule.map((r) => r[2]),
-      maxRestarts: mainRestartSchedule.length,
-      restartAfterNoChangeIterations: 30,
-      maxStepsPerRestart: (maxIterations * 2) / mainRestartSchedule.length,
-      perturbation: dustFractionToPerturbation(bestSoFar.result.dustFraction),
-      maxIterations: maxIterations,
-      tolerance: 1e-2,
-      maxTime: timeLeft,
-    },
-    undefined,
-    'main',
-    0
-  )
+  if (bestSoFar.result.dustFraction > 0.999) {
+    const steps =
+      (opts?.maxSimpleOptimserSteps ?? universe.config.maxSimpleOptimserSteps) /
+      dims
+    logger.info(`Running simple optimiser steps: ${steps}`)
+    ;[bestSoFar] = await optimiseGlobal(
+      startTime,
+      g,
+      universe,
+      inputs,
+      steps,
+      bestSoFar,
+      logger,
+      0.5,
+      optimisationNodes
+    )
+  } else {
+    const maxIterations =
+      dims < 10
+        ? nelderMeadIters / 2
+        : dims < 15
+        ? nelderMeadIters - nelderMeadIters / 4
+        : nelderMeadIters
+    const mainRestartSchedule = [
+      [0.5, 2, 1],
+      [0.4, 2.2, 1.2],
+      [0.4, 1.8, 0.8],
+      [0.85673, 2.9985627, 1.8104907],
+    ]
+    logger.info(
+      `Running main optimisation phase, max iterations: ${maxIterations}. Reminaing time ${timeLeft}ms`
+    )
+    bestSoFar = await nelderMeadOptimiseTFG(
+      universe,
+      g,
+      optimisationNodes,
+      inputs,
+      logger.child({ phase: 'main' }),
+      bestSoFar,
+      {
+        rhoOptions: mainRestartSchedule.map((r) => r[0]),
+        gammaOptions: mainRestartSchedule.map((r) => r[1]),
+        sigmaOptions: [0.9],
+        alphaOptions: mainRestartSchedule.map((r) => r[2]),
+
+        maxRestarts: Infinity,
+        restartAfterNoChangeIterations:
+          maxIterations / mainRestartSchedule.length,
+        maxStepsPerRestart: Infinity,
+        perturbation: dustFractionToPerturbation(bestSoFar.result.dustFraction),
+        maxIterations: maxIterations,
+        tolerance: 1e-4,
+        maxTime: timeLeft,
+      },
+      undefined,
+      'main',
+      0
+    )
+  }
+
   logger.info(
     `Finished main optimisation phase in ${Date.now() - startTime3}ms`
   )
@@ -3882,7 +4019,9 @@ export class TokenFlowGraphSearcher {
         maxOptimisationSteps: 0,
         minimiseDustPhase1Steps: 0,
         maxOptimisationTime: 4000,
-      }
+      },
+      true,
+      false
     )
 
     try {
@@ -3982,17 +4121,31 @@ export class TokenFlowGraphSearcher {
     const mintAction = this.universe.getMintAction(outToken)
 
     const inputToken = inputNode.inputs[0]
-    let splits = 0
+    let splitIndex = 0
     let mintSubgraphInputNode = graph.addSplittingNode(
       inputToken,
       inputNode,
       mintAction.dustTokens.length > 0 ? NodeType.Both : NodeType.Optimisation,
-      `mint ${outToken} (main)`
+      `mint ${outToken} (main ${splitIndex++})`
     )
     const edges = graph.graph._outgoingEdges[mintSubgraphInputNode.id]!
     edges.min = 0
 
+    // let count = 0
+    // const MAX_SPLITS_PR_OPT_NODE = 5
     const getInputNode = () => {
+      // if (count >= MAX_SPLITS_PR_OPT_NODE) {
+      //   count = 0
+      //   mintSubgraphInputNode = graph.addSplittingNode(
+      //     inputToken,
+      //     inputNode,
+      //     NodeType.Split,
+      //     `mint ${outToken} (main ${splitIndex++})`
+      //   )
+      //   const edges = graph.graph._outgoingEdges[mintSubgraphInputNode.id]!
+      //   edges.min = 0
+      // }
+      // count += 1
       return mintSubgraphInputNode
     }
 
@@ -4163,6 +4316,8 @@ export class TokenFlowGraphSearcher {
           )
         continue
       }
+      const stopEarly =
+        graph.getTokenNode(step.outputToken).incomingEdges().length > 0
       const node = graph.addTradeNode(
         step.inputToken,
         step.outputToken,
@@ -4178,6 +4333,10 @@ export class TokenFlowGraphSearcher {
         graph.tradeNodes
           .get(step.inputToken)
           .set(step.outputToken, tradeNode.id)
+      }
+
+      if (stopEarly) {
+        break
       }
     }
     return tradeNode
@@ -4239,7 +4398,7 @@ export class TokenFlowGraphSearcher {
     opts: SearcherOptions,
     txGenOptions: TxGenOptions
   ) {
-    const inputValue = (await input.price()).asNumber()
+    const inputValue = Math.max((await input.price()).asNumber(), 5000)
     let inputToken = input.token
     const prev = await this.findPreviousAndCheckSimulation(
       input,
@@ -4253,11 +4412,20 @@ export class TokenFlowGraphSearcher {
         [input],
         [output],
         opts,
-        true
+        true,
+        false
       )
       const tradePathExists = await this.doesTradePathExist(input, output)
       if (tradePathExists && txGenOptions.useTrade !== false) {
-        let res = await optimise(this.universe, newTfg, [input], [output], opts)
+        let res = await optimise(
+          this.universe,
+          newTfg,
+          [input],
+          [output],
+          opts,
+          true,
+          false
+        )
         try {
           res = await this.determineBestTradeMintSplit(
             res,
@@ -4284,7 +4452,7 @@ export class TokenFlowGraphSearcher {
     let inputNode = graph.getTokenNode(inputToken)
 
     // graph.deleteTokenNode(inputToken)
-    const preferredTradeToken = this.universe.preferredToken.get(input.token)
+    let preferredTradeToken = this.universe.preferredToken.get(input.token)
 
     if (this.universe.isTokenBurnable(inputToken)) {
       const outputTokens = [
@@ -4318,18 +4486,17 @@ export class TokenFlowGraphSearcher {
           `sell output of redeem(${input}) = ${outputToken} for ${targetToken}`
         )
       }
-
       if (
         preferredTradeToken &&
-        output !== preferredTradeToken &&
+        output !== targetToken &&
         !this.universe.isTokenMintable(output)
       ) {
         await this.addTrades(
           graph,
-          await preferredTradeToken.fromUSD(inputValue),
+          await targetToken.fromUSD(inputValue),
           output,
           false,
-          `sell output of redeem(${input}) = ${preferredTradeToken} for ${output}`
+          `sell output (${input}) = ${preferredTradeToken} for ${output}`
         )
         targetToken = output
       }
@@ -4340,7 +4507,8 @@ export class TokenFlowGraphSearcher {
           [input],
           [output],
           opts,
-          true
+          true,
+          false
         )
         this.registry.define(input, output, o)
         return o
@@ -4373,7 +4541,15 @@ export class TokenFlowGraphSearcher {
       await this.tokenSourceGraph(graph, inputQty, output, inputNode, true)
       const tradePathExists = await this.doesTradePathExist(input, output)
       if (tradePathExists && txGenOptions.useTrade !== false) {
-        let res = await optimise(this.universe, graph, [input], [output], opts)
+        let res = await optimise(
+          this.universe,
+          graph,
+          [input],
+          [output],
+          opts,
+          false,
+          true
+        )
         try {
           res = await this.determineBestTradeMintSplit(
             res,
@@ -4398,7 +4574,15 @@ export class TokenFlowGraphSearcher {
       }
     }
 
-    const res = await optimise(this.universe, graph, [input], [output], opts)
+    const res = await optimise(
+      this.universe,
+      graph,
+      [input],
+      [output],
+      opts,
+      false,
+      true
+    )
 
     await this.registry.define(input, output, res.clone())
     return res

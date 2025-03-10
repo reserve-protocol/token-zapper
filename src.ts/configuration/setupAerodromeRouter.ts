@@ -50,7 +50,6 @@ export const setupAerodromeRouter = async (universe: Universe) => {
     mixedRouterAddr.address,
     universe.provider
   )
-  const logger = universe.logger.child({ integration: 'Aerodrome' })
 
   const aerodromeContext = new AerodromeContext(
     universe,
@@ -127,21 +126,13 @@ export const setupAerodromeRouter = async (universe: Universe) => {
     ).filter((p) => p != null)
   }
 
-  await loadPools(1000, 0)
-  await loadPools(1000, 1000)
-  await loadPools(1000, 2000)
-  await loadPools(1000, 3000)
-  await loadPools(1000, 4000)
-  await loadPools(1000, 5000)
-  await loadPools(1000, 6000)
-  await loadPools(1000, 7000)
+  const offsets = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000]
 
-  // const addrs = ['0xb37642e87613d8569fd8ec80888ea6c63684e79e']
-  // await Promise.all(
-  //   addrs.map(async (addr) =>
-  //     loadPoolExplicit(Address.from(addr)).catch((e) => {})
-  //   )
-  // )
+  await Promise.all(
+    offsets.map(async (offset) => {
+      await loadPools(1000, offset)
+    })
+  )
 
   return {
     context: aerodromeContext,

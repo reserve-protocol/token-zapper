@@ -22,6 +22,7 @@ const defaultSearcherOptions = {
 
   // Controls how many iterations of the Nelder-Mead algorithm we allow
   maxOptimisationSteps: 400,
+  maxSimpleOptimserSteps: 100,
   minimiseDustPhase1Steps: 10,
   phase1Optimser: 'simple' as Optimisers,
   

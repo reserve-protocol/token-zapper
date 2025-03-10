@@ -532,6 +532,9 @@ class UniswapV3Swap extends Action('UniswapV3') {
 }
 
 export const setupUniswapV3 = async (universe: Universe) => {
+  const logger = universe.logger.child({
+    integration: 'univ3',
+  })
   const chainId = universe.chainId
   if (!isChainIdSupported(chainId)) {
     throw new Error(`ChainId ${chainId} not supported`)
@@ -611,7 +614,7 @@ export const setupUniswapV3 = async (universe: Universe) => {
     )
   }
 
-  console.log(`UniV3: Loaded ${allPools.length} pools`)
+  logger.info(`UniV3: Loaded ${allPools.length} pools`)
 
   return ctx
 }

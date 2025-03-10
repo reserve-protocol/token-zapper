@@ -274,7 +274,7 @@ export async function nelderMeadOptimize(
   const restart = async () => {
     restarts += 1
 
-    const perp = perturbation * 0.75 ** restarts
+    const perp = perturbation * 0.95 ** restarts
 
     stepsSinceRestart = 0
     marginalImprovementCount = 0
@@ -300,9 +300,11 @@ export async function nelderMeadOptimize(
       sigma,
     })
 
-    const bestSimplex = normalize(simplex[0])
-
-    simplex = initializeSimplex(bestSimplex, perp)
+    simplex = initializeSimplex(simplex[0], perp).map((v, i) =>
+      normalize(
+        i === 0 ? v : v.map((dim) => dim + dim * Math.random() * perturbation)
+      )
+    )
     // Evaluate each vertex in the simplex
     functionValues = await Promise.all(
       simplex.map((vertex) => objectiveFunc(vertex, iteration))
@@ -338,7 +340,7 @@ export async function nelderMeadOptimize(
           perturbation *= ratio
         }
 
-        if (ratio > 0.999) {
+        if (ratio > 0.998) {
           marginalImprovementCount += 1
         } else {
           marginalImprovementCount = 0
@@ -354,6 +356,7 @@ export async function nelderMeadOptimize(
 
         // Check termination criterion: size of simplex < tolerance
         if (checkConvergence(logger, simplex, tolerance)) {
+          log(`Convergence reached`)
           running = false
           break
         }
@@ -425,7 +428,9 @@ export async function nelderMeadOptimize(
         break
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    log('Early exit')
+  }
   sortState()
   return simplex[0]
 }

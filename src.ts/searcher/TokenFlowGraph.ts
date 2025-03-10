@@ -3943,17 +3943,17 @@ export class TokenFlowGraphSearcher {
       return
     }
 
-    // if (await this.universe.isRToken(output)) {
-    //   await this.addTrades(
-    //     graph,
-    //     inputQty,
-    //     output,
-    //     false,
-    //     `${output} (trade path)`,
-    //     inputNode
-    //   )
-    //   return
-    // }
+    if (!topLevel && (await this.universe.folioContext.isFolio(output))) {
+      await this.addTrades(
+        graph,
+        inputQty,
+        output,
+        false,
+        `nested DTF: trade into ${output}`,
+        inputNode
+      )
+      return
+    }
 
     const splitNode = graph.addSplittingNode(
       inputQty.token,

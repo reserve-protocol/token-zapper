@@ -136,7 +136,7 @@ contract ZapperExecutor is VM, PreventTampering {
             nonce
         );
         out.amountOut = IERC20(folio).balanceOf(address(this));
-        IERC20(folio).transfer(recipient, out.amountOut);
+        SafeERC20.safeTransfer(IERC20(folio), recipient, out.amountOut);
     } else {
         (address folio, ) = IFolioDeployer(config.deployer).deployFolio(
             config.basicDetails,
@@ -148,12 +148,12 @@ contract ZapperExecutor is VM, PreventTampering {
             nonce
         );
         out.amountOut = IERC20(folio).balanceOf(address(this));
-        IERC20(folio).transfer(recipient, out.amountOut);
+        SafeERC20.safeTransfer(IERC20(folio), recipient, out.amountOut);
     }
     out.dust = new uint256[](tokens.length);
       for(uint256 i; i < tokens.length; i++) {
           out.dust[i] = tokens[i].balanceOf(address(this));
-          tokens[i].transfer(recipient, out.dust[i]);
+          SafeERC20.safeTransfer(tokens[i], recipient, out.dust[i]);
       }
   }
 

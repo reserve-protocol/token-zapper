@@ -52,6 +52,7 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     pools: [
       '0xf649df4372d8bb3e6178e52fcd515519c78da348',
       '0x6288694eb218614a27777F2b52D3f8D4819233C0',
+      '0xccDa51723E0D6Acf10E377e109FC3fD7BD8C8F59',
     ],
     staticPools: mainnetUniV3,
   },

@@ -1210,7 +1210,7 @@
           ]
         },
         "Zapper2": {
-          "address": "0x3DeEaBdcA65190262f145C23Afac93d2B3414023",
+          "address": "0xA1F473A8783ffeb8eedd57641f6Db69B5c8E7949",
           "abi": [
             {
               "inputs": [
@@ -1819,7 +1819,7 @@
           ]
         },
         "ZapperExecutor": {
-          "address": "0x8fcE7852Ab757899792863F3560d1274eB0e8821",
+          "address": "0xaFD306005F5d1a8537BE4960e6D23907b5b9383F",
           "abi": [
             {
               "inputs": [
@@ -3314,7 +3314,7 @@
           ]
         },
         "Zapper2": {
-          "address": "0x860Ae95b8dB660d0ABE4A5a155db647EC946d22E",
+          "address": "0x00c2e5D94Bd090763aCb5Ff6aC2EBD04C1F71020",
           "abi": [
             {
               "inputs": [
@@ -3923,7 +3923,7 @@
           ]
         },
         "ZapperExecutor": {
-          "address": "0x58E1E7213d35340be69CCEfCF7C7815940BF8021",
+          "address": "0x21e890d3DA79c78f1b149367Cf01D06789F95d39",
           "abi": [
             {
               "inputs": [
@@ -4336,29 +4336,6 @@
                 }
               ],
               "stateMutability": "pure",
-              "type": "function"
-            },
-            {
-              "inputs": [
-                {
-                  "internalType": "contract FacadeRead",
-                  "name": "facade",
-                  "type": "address"
-                },
-                {
-                  "internalType": "contract RToken",
-                  "name": "token",
-                  "type": "address"
-                },
-                {
-                  "internalType": "address",
-                  "name": "recipient",
-                  "type": "address"
-                }
-              ],
-              "name": "mintMaxRToken",
-              "outputs": [],
-              "stateMutability": "nonpayable",
               "type": "function"
             },
             {

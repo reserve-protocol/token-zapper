@@ -73,7 +73,9 @@ export class DexLiquidtyPriceStore {
           return out
         })
         if (tokenPath.length === 0) {
-          throw Error(`No path found from ${input.token} to ${target}`)
+          throw Error(
+            `No path found from ${input.token} to ${target}(${target.address})`
+          )
         }
 
         let out: BaseAction[][] = []

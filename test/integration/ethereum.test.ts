@@ -21,6 +21,7 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 import { getProvider, getSimulator } from './providerUtils'
+import { GAS_TOKEN_ADDRESS } from '../../src.ts/base/constants'
 dotenv.config()
 
 const searcherOptions: SearcherOptions = {
@@ -237,6 +238,89 @@ const issueanceCases = [
   // makeTestCase(1, t.WETH, t.DFX),
 ]
 
+const folioTests2 = [
+  {
+    tokenIn: GAS_TOKEN_ADDRESS,
+    amountIn: '55000000000000000',
+    signer: testUser.address,
+    slippage: 0.05,
+    stToken: '0xd91919e938776BD094A72FBCB490C3603028f96D',
+    basicDetails: {
+      name: 'Neo Tokyo Gaming Revolution Index',
+      symbol: 'GR',
+      assets: [
+        '0x85f138bfee4ef8e540890cfb48f620571d67eda3',
+        '0xf57e7e7c23978c3caec3c3548e3d615c346e79ff',
+        '0xd1d2eb1b1e90b638588728b4130137d262c87cae',
+        '0x62d0a8458ed7719fdaf978fe5929c6d342b0bfce',
+        '0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55',
+        '0xf944e35f95e819e752f3ccb5faf40957d311e8c5',
+        '0x767fe9edc9e0df98e07454847909b5e959d7ca0e',
+        '0x430ef9263e76dae63c84292c3409d61c598e9682',
+        '0xb0c7a3ba49c7a6eaba6cd4a96c55a1391070ac9a',
+        '0x560363bda52bc6a44ca6c8c9b4a5fadbda32fa60',
+        '0x786a6743efe9500011c92c7d8540608a62382b6f',
+        '0xa0ef786bf476fe0810408caba05e536ac800ff86',
+        '0xd13c7342e1ef687c5ad21b27c2b65d772cab5c8c',
+        '0x549020a9cb845220d66d3e9c6d9f9ef61c981102',
+      ],
+      amounts: [
+        '128169256605489',
+        '4214211870946039',
+        '12444774',
+        '160887127714675116',
+        '1695384119798547',
+        '6206562069520381',
+        '22455890153087',
+        '226925689062516',
+        '2220881770428017',
+        '469813935562919',
+        '7648052119186724',
+        '366795958872312367',
+        '58',
+        '332574687381644807',
+      ],
+    },
+    additionalDetails: {
+      tradeDelay: '172800',
+      auctionLength: '3600',
+      feeRecipients: [
+        {
+          recipient: '0x0EBe3c360c30673d5224aCAaF899D30C26a0a8A1',
+          portion: '200000000000000000',
+        },
+        {
+          recipient: '0xd91919e938776BD094A72FBCB490C3603028f96D',
+          portion: '800000000000000000',
+        },
+      ],
+      folioFee: '20000000000000000',
+      mintingFee: '5000000000000000',
+      mandate:
+        'The Neo Tokyo Gaming Revolution Index DTF ("GR") tracks Neo Tokyo Ecosystem partners & project founders who are dedicated & loyal Citizens of The Citadel. This commitment is represented by those founders / partners / projects whom are included in our Neo Tokyo Network graphic... in the future, requirements will involve a staked Neo Tokyo Citizen NFT. The GR is a benchmark designed to measure the performance of said members that are founders of the top Gaming & Metaverse projects & applications in all of Web 3. Index constituents also need to meet other criteria in order to be considered for inclusion in GR, such as weekly liquidity qualifications & minimum market capitalizations set by governance rules. Each constituent represents a holding no more than 20% of the Index & no less than 1% of the Index\'s overall value. Cryptocurrencies are considered for addition/removal to/from the Index on a rolling basis. We are the Gaming Revolution.... Grand Rising, Citizens.',
+    },
+    ownerGovParams: {
+      votingDelay: '172800',
+      votingPeriod: '345600',
+      proposalThreshold: '100000000000000000',
+      quorumPercent: '25',
+      timelockDelay: '86400',
+      guardians: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
+    },
+    tradingGovParams: {
+      votingDelay: '86400',
+      votingPeriod: '86400',
+      proposalThreshold: '100000000000000000',
+      quorumPercent: '25',
+      timelockDelay: '86400',
+      guardians: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
+    },
+    existingTradeProposers: [],
+    tradeLaunchers: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
+    vibesOfficers: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
+  },
+]
+
 const redeemCases = [
   makeTestCase(50000, rTokens.hyUSD, t.USDC),
   makeTestCase(50000, rTokens.hyUSD, t.USDT),
@@ -373,6 +457,7 @@ provider.on('debug', (log) => {
 })
 beforeAll(async () => {
   global.console = require('console')
+
   try {
     universe = (await Universe.createWithConfig(
       provider,
@@ -434,6 +519,44 @@ describe('ethereum zapper', () => {
   //     console.log(quote.output.toString())
   //   }, 60000)
   // })
+
+  describe('folioconfigs', () => {
+    for (const config of folioTests2) {
+      describe(`config ${config.basicDetails.name}`, () => {
+        it('produces the basket graph', async () => {
+          await universe.initialized
+          expect.assertions(1)
+          try {
+            const token = await universe.getToken(config.tokenIn)
+            const inputQty = token.from(BigInt(config.amountIn))
+
+            const out = await universe.deployZap(inputQty, testUser, {
+              type: 'ungoverned',
+              owner: config.signer,
+              basicDetails: config.basicDetails,
+              additionalDetails: {
+                auctionLength: config.additionalDetails.auctionLength,
+                tradeDelay: config.additionalDetails.tradeDelay,
+                feeRecipients: config.additionalDetails.feeRecipients,
+                folioFee: config.additionalDetails.folioFee,
+                mintingFee: config.additionalDetails.mintingFee,
+                mandate: config.additionalDetails.mandate,
+              },
+              tradeLaunchers: config.tradeLaunchers,
+              vibesOfficers: config.vibesOfficers,
+              existingTradeProposers: config.existingTradeProposers,
+            })
+            console.log(out.toString())
+            expect(true).toBe(true)
+          } catch (e) {
+            console.error(e)
+            expect(true).toBe(false)
+            throw e
+          }
+        }, 240000)
+      })
+    }
+  })
 
   describe('actions', () => {
     for (const testCase of individualIntegrations) {

@@ -32,6 +32,7 @@ import {
   ZapperOutputStructOutput,
 } from '../contracts/contracts/Zapper'
 import { DeployMintFolioAction } from '../action/Folio'
+import { GAS_TOKEN_ADDRESS } from '../base/constants'
 
 const iface = Zapper__factory.createInterface()
 const simulateAndParse = async (
@@ -92,6 +93,9 @@ const evaluateProgram = async (
   minOutput: bigint,
   opts: TxGenOptions
 ) => {
+  dustTokens = dustTokens.map((i) =>
+    i.address.address === GAS_TOKEN_ADDRESS ? universe.wrappedNativeToken : i
+  )
   const outputTokenAddress =
     outputToken instanceof Address ? outputToken : outputToken.address
   let data: string

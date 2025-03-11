@@ -197,7 +197,7 @@ class AeropoolAddLiquidity extends BaseV2AerodromeAction {
         )}) => ${minAmounts.join(', ')}`,
         `${this.protocol}_mint_${this.outputToken.join(
           ', '
-        )}_using_${this.inputToken.join('_')}`
+        )}_using_${this.inputToken.join('_')}  on pool ${this.pool.address}`
       )!,
     ]
   }
@@ -276,7 +276,7 @@ class AeropoolRemoveLiquidity extends BaseV2AerodromeAction {
       )}) => ${predictedInputs.join(', ')}`,
       `${this.protocol}_redeem_${predictedInputs.join(
         '_'
-      )}_for_${this.outputToken.join('_')}`
+      )}_for_${this.outputToken.join('_')}  on pool ${this.pool.address}`
     )
 
     return null
@@ -398,7 +398,6 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
     predictedInputs: TokenQuantity[]
   ): Promise<null | Value[]> {
     const [minAmount] = await this.quote(predictedInputs)
-    const minOut = minAmount.amount - minAmount.amount / 2n
 
     const encoded = utils.defaultAbiCoder.encode(
       [
@@ -426,7 +425,7 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
       planner.add(
         this.pool.context.weirollAerodromeRouterCaller.exactInputSingle(
           input,
-          minOut,
+          0n,
           this.pool.context.aerodromeSwapRouterAddr.address,
           encoded
         ),
@@ -435,7 +434,7 @@ class AeropoolSwapCL extends Action('BaseAerodromeCLPool') {
         )}) => ${minAmount}`,
         `${this.protocol}_swap_${predictedInputs.join(
           '_'
-        )}_for_${this.outputToken.join('_')}`
+        )}_for_${this.outputToken.join('_')} on pool ${this.pool.address}`
       )!,
     ]
   }
@@ -489,7 +488,7 @@ class AeropoolSwap extends BaseV2AerodromeAction {
       planner.add(
         this.pool.context.weirollAerodromeRouterCaller.exactInputSingleV2(
           input,
-          minAmount.amount - minAmount.amount / 20n,
+          0n,
           this.pool.context.router.address,
           destination.address,
           defaultAbiCoder.encode(
@@ -507,11 +506,25 @@ class AeropoolSwap extends BaseV2AerodromeAction {
         )}) => ${minAmount}`,
         `${this.protocol}_swap_${predictedInputs.join(
           '_'
-        )}_for_${this.outputToken.join('_')}`
+        )}_for_${this.outputToken.join('_')} on pool ${this.pool.address}`
       )!,
     ]
   }
 }
+
+const whitelisted = new Set<Address>([
+  // uSHIB
+  Address.from('0x83212D59403D96A95Fd750d5b6880F77d0CAb337'),
+
+  // uDOGE
+  Address.from('0xBE700f5c75dFCbEf3Cae37873aEEB1724daED3f6'),
+
+  // BONK
+  Address.from('0x140511DBe5BCad98993e8Ded6D0c2190101Fa709'),
+
+  // KLIMA
+  Address.from('0xb37642e87613d8569fd8ec80888ea6c63684e79e'),
+])
 
 const FEE_DIVISOR = 10000n
 const MAX_NUM = 2n ** 256n - 1n
@@ -737,6 +750,20 @@ export class AerodromeStablePool {
         pool,
         context.getReserves
       )
+
+      if (
+        !whitelisted.has(inst.address) &&
+        (inst.token0 === universe.wrappedNativeToken ||
+          inst.token1 === universe.wrappedNativeToken)
+      ) {
+        const bal = await context.universe.balanceOf(
+          universe.wrappedNativeToken,
+          inst.poolAddress
+        )
+        if (bal.asNumber() < 1.5) {
+          return inst
+        }
+      }
 
       if (inst.poolType === AerodromePoolType.CL) {
         universe.addAction(inst.actions.t0for1)

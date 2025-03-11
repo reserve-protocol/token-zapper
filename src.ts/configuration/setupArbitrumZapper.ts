@@ -111,8 +111,7 @@ export const setupArbitrumZapper = async (universe: ArbitrumUniverse) => {
     await setupAaveV3(universe, PROTOCOL_CONFIGS.aaveV3)
   )
 
-  const router = await setupUniswapV3(universe)
-  universe.addIntegration('uniswapV3', await router.venue())
+  await setupUniswapV3(universe)
 
   universe.addPreferredRTokenInputToken(
     universe.rTokens.KNOX,

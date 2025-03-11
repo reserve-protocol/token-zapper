@@ -267,6 +267,7 @@ function abiEncodeSingle(
     )
     return new TupleLiteral(param, components)
   }
+
   return new LiteralValue(param, defaultAbiCoder.encode([param], [value]))
 }
 
@@ -309,7 +310,7 @@ export function encodeArg(arg: unknown, param: ParamType): Value {
   } else if (arg instanceof Planner) {
     return new SubplanValue(arg)
   } else {
-    return abiEncodeSingle(param, arg)
+    return abiEncodeSingle(param, arg === '0x' ? '0x0' : arg)
   }
 }
 
@@ -942,6 +943,14 @@ export class Planner {
 
     // Prepopulate the state and state expirations with literals
     literalVisibility.forEach((lastCommand, literal) => {
+      if (literalSlotMap.has(literal)) {
+        const slot = literalSlotMap.get(literal) as number
+        stateExpirations.set(
+          lastCommand,
+          (stateExpirations.get(lastCommand) || []).concat([slot])
+        )
+        return
+      }
       const slot = state.length
       state.push(literal)
       literalSlotMap.set(literal, slot)
@@ -961,6 +970,10 @@ export class Planner {
     }
 
     let encodedCommands = this.buildCommands(ps)
+
+    if (state.length > 128) {
+      throw new Error('State is too long')
+    }
 
     return { commands: encodedCommands, state }
   }

@@ -92,6 +92,16 @@ export const COMMON_TOKENS = {
   LINK: '0x514910771af9ca656af840dff83e8264ecf986ca',
   PEPE: '0x6982508145454ce325ddbe47a25d4ec3d2311933',
   AAVE: '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
+  COMP: '0xc00e94cb662c3520282e6f5717214004a7f26888',
+  CRV: '0xD533a949740bb3306d119CC777fa900bA034cd52',
+
+  /// FOLIOS
+  mvRWA: '0xa5cdea03b11042fc10b52af9eca48bb17a2107d2',
+  mvDEFI: '0x20d81101d254729a6e689418526be31e2c544290',
+  DFX: '0x188d12eb13a5eadd0867074ce8354b1ad6f4790b',
+  DGI: '0x9a1741e151233a82cf69209a2f1bc7442b1fb29c',
+  BED: '0x4e3b170dcbe704b248df5f56d488114ace01b1c5',
+  SMEL: '0xf91384484f4717314798e8975bcd904a35fc2bf1',
 } as const
 
 export const RTOKENS = {
@@ -118,6 +128,7 @@ export const ethereumConfig = makeConfig(
     facadeAddress: '0x2C7ca56342177343A2954C250702Fd464f4d0613',
     oldFacadeAddress: '0x81b9Ae0740CcA7cDc5211b2737de735FBC4BeB3C',
     zapperAddress: contractAddress('Zapper'),
+    zapper2Address: contractAddress('Zapper2'),
     executorAddress: contractAddress('ZapperExecutor'),
     wrappedNative: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     rtokenLens: contractAddress('RTokenLens'),
@@ -284,6 +295,29 @@ export const PROTOCOL_CONFIGS = {
       // wrapped cUSDTV3
       '0xbeD348315d7327Cd81d26338c11976674825bb14',
       '0xEB74EC1d4C1DAB412D5d6674F6833FD19d3118Ce',
+    ],
+  },
+  concentrator: {
+    vault: '0x59866ec5650e9ba00c51f6d681762b48b0ada3de',
+    pid: 14,
+  },
+  beefy: {
+    vaults: [
+      '0x8cFE2f46052efE1a0784b0a28C802474C1dfd9D0',
+      '0x1817CFfc44c78d5aED61420bF48Cc273E504B7BE',
+    ],
+  },
+  stakeDAO: {
+    gauges: [
+      '0xE94aFF2Bd6A12DD16C21648Cae71D2B47E405a9C',
+      '0x41639ABcA04c22e80326A96C8fE2882C97BaEb6e',
+    ],
+  },
+  yearn: {
+    vaults: [
+      '0x849dC56ceCa7Cf55AbF5ec87910DA21c5C7dA581',
+      '0xBfBC4acAE2ceC91A5bC80eCA1C9290F92959f7c3',
+      '0x961Ad224fedDFa468c81acB3A9Cc2cC4731809f4',
     ],
   },
 }

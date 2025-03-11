@@ -277,7 +277,10 @@ class UniswapV2Pool {
       BigInt(o2 === '0x' ? '0x0' : sentAmount) - balAfterSent
 
     let buyFee = ((sentAmount - poolOutSent) * FEE_SCALE) / sentAmount
-    let sellFee = ((poolOutSent - poolInReceived) * FEE_SCALE) / poolOutSent
+    let sellFee =
+      poolOutSent === 0n
+        ? 0n
+        : ((poolOutSent - poolInReceived) * FEE_SCALE) / poolOutSent
 
     if (buyFee === 0n && sellFee === 0n) {
       return {
@@ -422,7 +425,12 @@ export class UniswapV2Swap extends Action('UniswapV2') {
     __: TokenQuantity[]
   ) {
     const fees = await this.getFees()
-    if (fees.inFee === 0n && fees.outFee === 0n) {
+    if (
+      fees.inFee === 0n &&
+      fees.outFee === 0n &&
+      !this.context.universe.feeOnTransferTokens.has(this.tokenIn) &&
+      !this.context.universe.feeOnTransferTokens.has(this.tokenOut)
+    ) {
       return [
         planner.add(
           this.context.swapHelperWeiroll.swap(
@@ -498,13 +506,16 @@ export class UniswapV2Context {
 }
 
 export const setupUniswapV2 = async (universe: Universe) => {
+  const logger = universe.logger.child({
+    integration: 'univ2',
+  })
   const chainId = universe.chainId
   if (!isChainIdSupported(chainId)) {
     throw new Error(`ChainId ${chainId} not supported`)
   }
   const config = configs[chainId]
   if (config.univ2swap === constants.AddressZero) {
-    console.log('UniswapV2 not supported on this chain')
+    logger.error('UniswapV2 not supported on this chain')
     return
   }
   const ctx = new UniswapV2Context(universe)
@@ -561,7 +572,7 @@ export const setupUniswapV2 = async (universe: Universe) => {
       )
     )
   }
-  console.log(`UniV2 ${allPools.length} pools loaded`)
+  logger.info(`UniV2 ${allPools.length} pools loaded`)
 
   return ctx
 }

@@ -31,7 +31,10 @@ export const folioDeployerAddress: Record<
   ChainId,
   { deployer: Address; helper: Address }
 > = {
-  [ChainIds.Mainnet]: config(constants.AddressZero, constants.AddressZero),
+  [ChainIds.Mainnet]: config(
+    '0x4C64ef51cB057867e40114DcFA3702c2955d3644',
+    deployments[1][0].contracts.FolioMintRedeem.address
+  ),
   [ChainIds.Base]: config(
     '0xE926577a152fFD5f5036f88BF7E8E8D3652B558C',
     deployments[8453][0].contracts.FolioMintRedeem.address
@@ -56,10 +59,25 @@ export class FolioDeployment {
     ctx.universe.addSingleTokenPriceSource({
       token: this.fToken,
       priceFn: async () => {
-        const prices = await Promise.all(
-          this.basket.map((i) => i.price().then((i) => i.asNumber()))
-        )
-        return this.ctx.universe.usd.from(prices.reduce((a, b) => a + b, 0))
+        const prices = await Promise.all(this.basket.map((i) => i.token.price))
+        let sum = this.fToken.zero
+        for (let i = 0; i < prices.length; i++) {
+          const basketQtyPrice = this.basket[i]
+            .into(this.fToken)
+            .mul(prices[i].into(this.fToken))
+          ctx.universe.logger.debug(
+            `${this.basket[i]} => ${basketQtyPrice.format()} USD ~ 1 ${
+              this.basket[i].token
+            } = ${prices[i]}`
+          )
+          sum = sum.add(basketQtyPrice)
+        }
+
+        sum = sum.into(ctx.universe.usd)
+
+        ctx.universe.logger.debug(`Price of folio ${this.fToken} => ${sum}`)
+
+        return sum
       },
     })
   }
@@ -99,6 +117,49 @@ export class FolioContext {
           token.address,
           new FolioDeployment(this, token, folio, qtys)
         )
+
+        const USDC = await this.universe.getToken(
+          this.universe.config.addresses.usdc
+        )
+        let prefersWETH = 0
+        let prefersUSDC = 0
+        await Promise.all(
+          qtys.map(async (qty) => {
+            try {
+              const [a, b] = await Promise.all([
+                this.universe.dexLiquidtyPriceStore.getBestQuotePath(
+                  this.universe.commonTokens.ERC20GAS.one,
+                  qty.token,
+                  true
+                ),
+                await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
+                  USDC.from(1000),
+                  qty.token,
+                  true
+                ),
+              ])
+              if (a.steps.length <= b.steps.length) {
+                prefersWETH++
+              } else {
+                prefersUSDC++
+              }
+            } catch (e) {}
+          })
+        )
+        if (prefersWETH >= prefersUSDC) {
+          this.universe.logger.debug(
+            `Setting preferred token for ${token.symbol} to ${this.universe.commonTokens.ERC20GAS.symbol}`
+          )
+          this.universe.preferredToken.set(
+            token,
+            this.universe.commonTokens.ERC20GAS
+          )
+        } else {
+          this.universe.logger.debug(
+            `Setting preferred token for ${token.symbol} to ${this.universe.commonTokens.ERC20GAS.symbol}`
+          )
+          this.universe.preferredToken.set(token, USDC)
+        }
 
         return true
       } catch (e) {
@@ -158,6 +219,7 @@ export class FolioContext {
 
       const mintAction = new DeployMintFolioAction(this, config, tok)
       this.universe.addAction(mintAction)
+
       this.universe.mintableTokens.set(tok, mintAction)
 
       this.universe.addSingleTokenPriceSource({

@@ -22,9 +22,7 @@ import {
 import { Token, TokenQuantity } from '../entities/Token'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import fs from 'fs'
-import { DexRouter, TradingVenue } from '../aggregators/DexAggregator'
 import { DefaultMap } from '../base/DefaultMap'
-import { bfs } from '../exchange-graph/BFS'
 import { Graph } from '../exchange-graph/Graph'
 import { SwapPlan } from '../searcher/Swap'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
@@ -51,7 +49,11 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     router: '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45',
     quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
     factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
-    pools: ['0xf649df4372d8bb3e6178e52fcd515519c78da348'],
+    pools: [
+      '0xf649df4372d8bb3e6178e52fcd515519c78da348',
+      '0x6288694eb218614a27777F2b52D3f8D4819233C0',
+      '0xccDa51723E0D6Acf10E377e109FC3fD7BD8C8F59',
+    ],
     staticPools: mainnetUniV3,
   },
   [ChainIds.Arbitrum]: {
@@ -67,7 +69,10 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     router: '0x2626664c2603336e57b271c5c0b26f421741e481',
     quoter: '0x3d4e44eb1374240ce5f1b871ab261cd16335b76a',
     factory: '0x33128a8fc17869897dce68ed026d694621f6fdfd',
-    pools: ['0xab7fed603f0e5eb8f46ab58b086631d75cfbe78d'],
+    pools: [
+      '0xab7fed603f0e5eb8f46ab58b086631d75cfbe78d',
+      '0xdef0dbd2d2a1ad31c2bf6aaead5c82b6c07558c0',
+    ],
     staticPools: baseUniV3.map((i) => ({
       ...i,
       feeTier: Number(i.feeTier),
@@ -251,47 +256,7 @@ export class UniswapV3Context {
     new Map()
   public readonly pools: Map<Address, UniswapV3Pool> = new Map()
   public readonly edges = new Graph()
-  private routes = new DefaultMap<Token, DefaultMap<Token, SwapPlan[]>>(
-    (start) =>
-      new DefaultMap((end) => {
-        const routes = bfs(this.universe, this.edges, start, end, 3)
-          .steps.map((i) => i.convertToSingularPaths())
-          .flat()
-        return routes
-      })
-  )
-  public async venue(): Promise<TradingVenue> {
-    await Promise.all(this.resolvingPools_.values())
-    const supportedTokens = new Set<Token>()
-    for (const pool of this.pools.values()) {
-      supportedTokens.add(pool.token0)
-      supportedTokens.add(pool.token1)
-    }
-    return new TradingVenue(
-      this.universe,
-      new DexRouter(
-        this.universe,
-        'uniswapV3',
-        async (abort, input, output, slippage) => {
-          const routes = this.routes.get(input.token).get(output)
-          if (routes.length === 0) {
-            throw new Error(`No routes found from ${input} to ${output}`)
-          }
-          const paths = await Promise.all(
-            routes.map(async (route) => {
-              const path = await route.quote([input], slippage)
-              return [await path.netValue(this.universe), path] as const
-            })
-          )
-          paths.sort((r, l) => r[0].asNumber() - l[0].asNumber())
-          return paths[0][1]
-        },
-        true,
-        supportedTokens,
-        supportedTokens
-      )
-    )
-  }
+
   public async definePool(
     addr: Address,
     fn: () => Promise<UniswapV3Pool>
@@ -437,12 +402,9 @@ class UniswapV3Swap extends Action('UniswapV3') {
     if (predictedInput.isZero) {
       return null
     }
-    const { amountOut, sqrtPriceX96After } = await this.quoteExactSingle.get(
-      predictedInput.amount
-    )
-    // console.log(`${this}: ${predictedInput} -> ${amountOut}`)
+    const { amountOut } = await this.quoteExactSingle.get(predictedInput.amount)
 
-    const minOut = amountOut.amount - amountOut.amount / 4n
+    const minOut = 0n // amountOut.amount - amountOut.amount / 4n
     const out = planner.add(
       this.context.weirollRouterCall.exactInputSingle(
         input,
@@ -571,6 +533,9 @@ class UniswapV3Swap extends Action('UniswapV3') {
 }
 
 export const setupUniswapV3 = async (universe: Universe) => {
+  const logger = universe.logger.child({
+    integration: 'univ3',
+  })
   const chainId = universe.chainId
   if (!isChainIdSupported(chainId)) {
     throw new Error(`ChainId ${chainId} not supported`)
@@ -650,7 +615,7 @@ export const setupUniswapV3 = async (universe: Universe) => {
     )
   }
 
-  console.log(`UniV3: Loaded ${allPools.length} pools`)
+  logger.info(`UniV3: Loaded ${allPools.length} pools`)
 
   return ctx
 }

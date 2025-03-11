@@ -1,5 +1,4 @@
 import { setupBalancer } from '../action/Balancer'
-import { BeefyDepositAction, BeefyWithdrawAction } from '../action/Beefy'
 import { loadCompV2Deployment } from '../action/CTokens'
 import { DssLitePsm } from '../action/DssLitePsm'
 import {
@@ -11,16 +10,10 @@ import { StakeDAODepositAction } from '../action/StakeDAO'
 import { YearnDepositAction, YearnWithdrawAction } from '../action/Yearn'
 import { Address } from '../base/Address'
 import { CHAINLINK } from '../base/constants'
-import { wait } from '../base/controlflow'
-import {
-  IBeefyVault__factory,
-  IGaugeStakeDAO__factory,
-  IVaultYearn__factory,
-} from '../contracts'
+import { IGaugeStakeDAO__factory, IVaultYearn__factory } from '../contracts'
 import { TokenType } from '../entities/TokenClass'
 import { wrapGasToken } from '../searcher/TradeAction'
 import { PROTOCOL_CONFIGS, type EthereumUniverse } from './ethereum'
-import { setupMaverick } from './maverick'
 import { setupAaveV2 } from './setupAaveV2'
 import { setupAaveV3 } from './setupAaveV3'
 import { setupBeefy } from './setupBeefy'
@@ -35,12 +28,32 @@ import { setupFrxETH } from './setupFrxETH'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupPXETH } from './setupPXETH'
 import { setupRETH } from './setupRETH'
-import { setupUniswapV2 } from './setupUniswapV2'
-import { setupUniswapV3 } from './setupUniswapV3'
+import { setupStakeDAO } from './setupStakeDAO'
+import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
+import { setupUniswapV3, UniswapV3Context } from './setupUniswapV3'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { setupYearn } from './setupYearn'
 
+interface IVault {
+  earnContractAddress: string
+  chain: string
+}
+const initBeefy = async (universe: EthereumUniverse) => {
+  const beefyVaults: IVault[] = await fetch(
+    'https://api.beefy.finance/vaults'
+  ).then((res) => res.json())
+
+  await setupBeefy(universe, {
+    vaults: beefyVaults
+      .filter((i) => i.chain === 'ethereum')
+      .map((i) => i.earnContractAddress),
+  })
+}
+
 export const setupEthereumZapper = async (universe: EthereumUniverse) => {
+  const logger = universe.logger.child({
+    module: 'setupEthereumZapper',
+  })
   await universe.provider.getNetwork()
   await loadEthereumTokenList(universe)
   const eth = universe.nativeToken
@@ -73,7 +86,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   await setupWrappedGasToken(universe)
 
   // Set up compound
-
   universe.addIntegration(
     'compoundV2',
     await loadCompV2Deployment('CompV2', universe, PROTOCOL_CONFIGS.compoundV2)
@@ -117,12 +129,12 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     Address.from('0x19219BC90F48DeE4d5cF202E09c438FAacFd8Bea')
   )
 
+  let uniswapV3Ctx: UniswapV3Context
+  let uniswapV2Ctx: UniswapV2Context
+
   const initUniswapV3 = async () => {
     try {
-      const router = await setupUniswapV3(universe)
-      const venue = await router.venue()
-      const uniswap = universe.addIntegration('uniswapV3', venue)
-      universe.addTradeVenue(uniswap)
+      uniswapV3Ctx = await setupUniswapV3(universe)
     } catch (e) {
       console.log('Failed to load uniswapV3')
       console.log(e)
@@ -131,7 +143,10 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   const initUniswapV2 = async () => {
     try {
-      await setupUniswapV2(universe)
+      const ctx = await setupUniswapV2(universe)
+      if (ctx) {
+        uniswapV2Ctx = ctx
+      }
     } catch (e) {
       console.log('Failed to load uniswapV2')
       console.log(e)
@@ -185,34 +200,13 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
       'ETHX'
     )
   )
+  await initBeefy(universe)
+  await setupYearn(universe, PROTOCOL_CONFIGS.yearn)
+  await setupConcentrator(universe, PROTOCOL_CONFIGS.concentrator)
+  await setupStakeDAO(universe, PROTOCOL_CONFIGS.stakeDAO)
   universe.addAction(depositToETHX)
   universe.mintableTokens.set(universe.commonTokens.ETHx, depositToETHX)
 
-  const contract = IBeefyVault__factory.connect(
-    commonTokens['mooConvexETH+'].address.address,
-    universe.provider
-  )
-  const getRate = universe.createCachedProducer(async () => {
-    const rate = await contract.callStatic.getPricePerFullShare()
-    return rate.toBigInt()
-  })
-  const depositToBeefy = new BeefyDepositAction(
-    universe,
-    commonTokens['ETH+ETH-f'],
-    commonTokens['mooConvexETH+'],
-    getRate
-  )
-
-  const beefyWithdraw = new BeefyWithdrawAction(
-    universe,
-    commonTokens['ETH+ETH-f'],
-    commonTokens['mooConvexETH+'],
-    getRate
-  )
-
-  universe.addAction(depositToBeefy)
-  universe.addAction(beefyWithdraw)
-  universe.mintableTokens.set(commonTokens['mooConvexETH+'], depositToBeefy)
   // universe.defineMintable(depositToBeefy, beefyWithdraw, true)
 
   const stakeDAOVault = await IGaugeStakeDAO__factory.connect(
@@ -277,24 +271,6 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   universe.mintableTokens.set(universe.commonTokens.sUSDe, depositTosUSDe)
 
   universe.addSingleTokenPriceSource({
-    token: universe.commonTokens['mooConvexETH+'],
-    priceFn: async () => {
-      const [output] = await beefyWithdraw.quote([
-        universe.commonTokens['mooConvexETH+'].one,
-      ])
-
-      const burn = universe.getBurnAction(output.token)
-      const out = await burn.quote([output])
-
-      const prices = await Promise.all([out[0].price(), out[1].price()])
-
-      const outUSD = prices[0].add(prices[1]).into(universe.usd)
-
-      return outUSD
-    },
-  })
-
-  universe.addSingleTokenPriceSource({
     token: universe.commonTokens['sdETH+ETH-f'],
     priceFn: async () => {
       const lpPrice = await universe.fairPrice(
@@ -339,19 +315,21 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.rTokens['ETH+']
   )
 
-  const resetApproval = [
-    '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-    '0x867a9cF57c36De171A036DE4A0A364f6990f6248',
-    '0x8cF0E5399fEdf0fA6918d8c8a5E54e94C28a7989',
-    '0x90D5B65Af52654A2B230244a61DD4Ce3CFa4835f',
-    '0xC51b8e7c50f83d4E77708ff0Fa931F655A07afb2',
-    '0x17E7c7379fa5c121C4898760EACFfA7D73A0D160',
-    '0xbB085D1387706CE477C4E752c76C38070aC226cB',
-    '0x575b2E325ad326F6cc11fc7e1DC389cbD96d2FF0',
-    '0x354278Eb9c0a8b1f4Ab8231c0C4741DA05a76206',
-    '0xeEDD1B2dc2F30E55Eaa3Db1CF70F1C409B86368e',
-  ]
-  for (const token of resetApproval) {
+  for (const token of [
+    '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    '0x867a9cf57c36de171a036de4a0a364f6990f6248',
+    '0x8cf0e5399fedf0fa6918d8c8a5e54e94c28a7989',
+    '0x90d5b65af52654a2b230244a61dd4ce3cfa4835f',
+    '0xc51b8e7c50f83d4e77708ff0fa931f655a07afb2',
+    '0x17e7c7379fa5c121c4898760eacffa7d73a0d160',
+    '0xbb085d1387706ce477c4e752c76c38070ac226cb',
+    '0x575b2e325ad326f6cc11fc7e1dc389cbd96d2ff0',
+    '0x354278eb9c0a8b1f4ab8231c0c4741da05a76206',
+    '0xeedd1b2dc2f30e55eaa3db1cf70f1c409b86368e',
+    '0x365accfca291e7d3914637abf1f7635db165bb09',
+    '0xd533a949740bb3306d119cc777fa900ba034cd52',
+    '0x5a98fcbea516cf06857215779fd812ca3bef1b32',
+  ]) {
     universe.zeroBeforeApproval.add(
       await universe.getToken(Address.from(token))
     )
@@ -429,12 +407,12 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   }
 
   const initMaverick = async () => {
-    // try {
-    //   await setupMaverick(universe)
-    // } catch (e) {
-    //   console.log(e)
-    //   console.log('Failed to load mango')
-    // }
+    try {
+      // await setupMaverick(universe)
+    } catch (e) {
+      console.log(e)
+      console.log('Failed to load maverick')
+    }
   }
 
   const tasks = [
@@ -468,11 +446,11 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   )
   universe.tokenClass.set(
     universe.commonTokens.USDT,
-    Promise.resolve(universe.commonTokens.USDT)
+    Promise.resolve(universe.commonTokens.USDC)
   )
   universe.tokenClass.set(
     universe.commonTokens.DAI,
-    Promise.resolve(universe.commonTokens.DAI)
+    Promise.resolve(universe.commonTokens.USDC)
   )
   universe.tokenClass.set(
     universe.rTokens.dgnETH,
@@ -491,11 +469,85 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     Promise.resolve(universe.commonTokens.USDC)
   )
 
+  universe.preferredToken.set(universe.rTokens.eUSD, universe.commonTokens.USDC)
+  universe.preferredToken.set(
+    universe.rTokens.hyUSD,
+    universe.commonTokens.USDC
+  )
+  universe.preferredToken.set(universe.rTokens.USD3, universe.commonTokens.USDC)
+
   universe.addSingleTokenPriceOracle({
     token: universe.commonTokens.sUSD,
     oracleAddress: Address.from('0xfF30586cD0F29eD462364C7e81375FC0C71219b1'),
     priceToken: universe.usd,
   })
 
+  const v3Pools = [
+    '0x764510ab1d39cf300e7abe8f5b8977d18f290628',
+    '0xDa99F4f2FE926b90F07f5F4EB0Ce773f7173c6a0',
+    '0xBd2A7aD26f70b64898BBdd06fB5D6ddf72E72A77',
+  ]
+  const v2Pools = ['0x2621CC0B3F3c079c1Db0E80794AA24976F0b9e3c']
+
+  for (const pool of v2Pools) {
+    const poolV2 = await uniswapV2Ctx!.loadPool(Address.from(pool))
+    universe.addAction(poolV2.swap01)
+    universe.addAction(poolV2.swap10)
+  }
+
+  for (const pool of v3Pools) {
+    const poolV3 = await uniswapV3Ctx!.loadPool(Address.from(pool))
+    universe.addAction(poolV3.swap01)
+    universe.addAction(poolV3.swap10)
+  }
+
+  if (!universe.config.dynamicConfigURL) {
+    console.log('Ethereum zapper setup complete')
+
+    return
+  }
+  try {
+    universe.logger.info(
+      `Loading dynamic pool data from ${universe.config.dynamicConfigURL}`
+    )
+    const config = await fetch(universe.config.dynamicConfigURL)
+    const configJson: {
+      uniswap: {
+        v2: string[]
+        v3: string[]
+      }
+      aerodrome: {
+        stableOrVolatile: string[]
+      }
+    } = await config.json()
+
+    await Promise.all(
+      configJson.uniswap.v2.map(async (poolAddr) => {
+        try {
+          const pool = await uniswapV2Ctx!.loadPool(
+            Address.from(poolAddr.toLowerCase())
+          )
+          universe.addAction(pool.swap01)
+          universe.addAction(pool.swap10)
+        } catch (e) {}
+      })
+    )
+    await Promise.all(
+      configJson.uniswap.v3.map(async (poolAddr) => {
+        try {
+          const pool = await uniswapV3Ctx!.loadPool(
+            Address.from(poolAddr.toLowerCase())
+          )
+          universe.addAction(pool.swap01)
+          universe.addAction(pool.swap10)
+        } catch (e) {
+          console.log(e)
+        }
+      })
+    )
+  } catch (e) {
+    logger.error('Failed to load dynamic pool data')
+    logger.error(e)
+  }
   console.log('Ethereum zapper setup complete')
 }

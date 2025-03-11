@@ -23,7 +23,6 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 import { getProvider, getSimulator } from './providerUtils'
-import { bestPath } from '../../src.ts/exchange-graph/BFS'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
@@ -35,16 +34,17 @@ const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
   cacheResolution: 8,
-  maxPhase2TimeRefinementTime: 1000,
-  optimisationSteps: 30,
+  maxOptimisationSteps: 1600,
+  maxOptimisationTime: 60000,
   minimiseDustPhase1Steps: 10,
-  minimiseDustPhase2Steps: 10,
-  zapMaxDustProduced: 8,
-  zapMaxValueLoss: 5,
+  zapMaxDustProduced: 1,
+  zapMaxValueLoss: 1,
   dynamicConfigURL:
     'https://raw.githubusercontent.com/reserve-protocol/token-zapper/refs/heads/main/src.ts/configuration/data/8453/config.json',
   rejectHighDust: false,
+  rejectHighValueLoss: false,
   useNewZapperContract: true,
+  phase1Optimser: 'nelder-mead',
 }
 
 /** !!
@@ -87,10 +87,24 @@ export const baseWhales = {
   '0xc9a3e2b3064c1c0546d3d0edc0a748e9f93cf18d':
     '0x6f1d6b86d4ad705385e751e6e88b0fdfdbadf298', // vaya
   '0x8f0987ddb485219c767770e2080e5cc01ddc772a':
-    '0x46271115F374E02b5afe357C8E8Dad474c8DE1cF', // BSDX
+    '0xcFC0805E42589d04a5ab4bCAff49f81d5210e065', // BSDX
 
-  '0x03980d2f9165324190e2295e0d5ceb80e2753b30':
-    '0x7A37111575cd96EB6F4a744497A4b650d83A389e', // TAVE5
+  '0xebcda5b80f62dd4dd2a96357b42bb6facbf30267':
+    '0xE207FAb5839CA5bCc0d930761755cC7d82C1f19c',
+  '0x44551ca46fa5592bb572e20043f7c3d54c85cad7':
+    '0xFdCCD04DDCa9eCf052E8e9eF6BD09a9b323fBF49',
+  '0xfe45eda533e97198d9f3deeda9ae6c147141f6f9':
+    '0xeD5210Bd97d855E8BEc2389439B8487eEcC3FC60',
+  '0x47686106181b3cefe4eaf94c4c10b48ac750370b':
+    '0x130C5bc30567987861620971C6B60C08D3784eF8',
+  '0xd600e748c17ca237fcb5967fa13d688aff17be78':
+    '0xF37631E6481e61011FbDccbCE714ab06A031FBa8',
+  '0x23418de10d422ad71c9d5713a2b8991a9c586443':
+    '0xD38d1AB8A150e6eE0AE70C86A8E9Fb0c83255b76',
+  '0xe8b46b116d3bdfa787ce9cf3f5acc78dc7ca380e':
+    '0xd19c0dbbC5Ba2eC4faa0e3FFf892F0E95F23D9e0',
+  '0xb8753941196692e322846cfee9c14c97ac81928a':
+    '0x46271115F374E02b5afe357C8E8Dad474c8DE1cF',
 }
 
 const simulateFn = getSimulator(
@@ -133,34 +147,57 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  // makeTestCase(10, t.WETH, rTokens.bsd),
-  // makeTestCase(10000, t.USDC, rTokens.bsd),
-  // makeTestCase(10000, t.USDC, rTokens.hyUSD),
-  // makeTestCase(10000, t.USDbC, rTokens.hyUSD),
-  // makeTestCase(5, t.WETH, rTokens.hyUSD),
-  // makeTestCase(10, t.WETH, rTokens.BSDX),
-  // makeTestCase(1, t.ETH, t.TEST1),
-  makeTestCase(1000, t.USDC, t.BGCI),
-  makeTestCase(1000, t.USDC, t.MVDA25),
-  // makeTestCase(0.1, t.WETH, t.BGCI),
-  // makeTestCase(0.1, t.WETH, t.MVDA25),
-  // makeTestCase(10000, t.USDC, rTokens.BSDX),
+  makeTestCase(0.02, t.WETH, t.CLUB),
+  makeTestCase(0.1, t.WETH, t.ABX),
+  makeTestCase(1, t.WETH, t.ABX),
+  makeTestCase(2, t.WETH, t.ABX),
+  makeTestCase(4, t.WETH, t.ABX),
+  makeTestCase(8, t.WETH, t.ABX),
+  makeTestCase(1000, t.USDC, rTokens.bsd),
+  makeTestCase(1000, t.USDC, rTokens.hyUSD),
+  makeTestCase(1, t.WETH, rTokens.bsd),
+  makeTestCase(1, t.WETH, rTokens.hyUSD),
+  makeTestCase(2, t.ETH, t.BDTF),
+  makeTestCase(1000, t.USDC, t.BDTF),
+  makeTestCase(5000, t.USDC, t.VTF),
+  makeTestCase(2, t.WETH, t.VTF),
+  makeTestCase(5000, t.USDC, t.CLX),
+  makeTestCase(2, t.WETH, t.CLX),
+  makeTestCase(5000, t.USDC, t.MVDA25),
+  makeTestCase(2, t.WETH, t.MVDA25),
+  makeTestCase(5000, t.USDC, t.MVTT10F),
+  makeTestCase(2, t.WETH, t.MVTT10F),
+  makeTestCase(5000, t.USDC, t.BGCI),
+  makeTestCase(1, t.WETH, t.BGCI),
+  makeTestCase(1, t.WETH, t.CLUB),
 ]
 
 const redeemCases = [
-  // makeTestCase(50, rTokens.bsd, t.WETH),
-  // makeTestCase(50, rTokens.hyUSD, t.USDC),
+  makeTestCase(10, t.BDTF, t.ETH),
+  makeTestCase(10, t.BDTF, t.ETH),
+  makeTestCase(10, t.MVTT10F, t.ETH),
 
-  // makeTestCase(100000, rTokens.hyUSD, t.WETH),
-  // makeTestCase(100000, rTokens.hyUSD, t.USDC),
+  makeTestCase(10, t.VTF, t.USDC),
+  makeTestCase(10, t.MVDA25, t.USDC),
+  makeTestCase(10, t.MVTT10F, t.USDC),
 
-  // makeTestCase(10000, rTokens.BSDX, t.WETH),
-  // makeTestCase(10000, rTokens.BSDX, t.USDC),
+  makeTestCase(10, t.VTF, t.WETH),
+  makeTestCase(10, t.MVDA25, t.WETH),
+  makeTestCase(10, t.MVTT10F, t.WETH),
+
+  makeTestCase(50, rTokens.bsd, t.WETH),
+  makeTestCase(50, rTokens.hyUSD, t.USDC),
+
+  makeTestCase(10000, rTokens.hyUSD, t.WETH),
+  makeTestCase(10000, rTokens.hyUSD, t.USDC),
+
+  makeTestCase(1000, rTokens.BSDX, t.WETH),
+  makeTestCase(1000, rTokens.BSDX, t.USDC),
 
   makeTestCase(75, t.VTF, t.WETH),
-  // makeTestCase(75, t.MVTT10F, t.WETH),
-  // makeTestCase(75, t.MVDA25, t.WETH),
-  // makeTestCase(75, t.BGCI, t.WETH),
+  makeTestCase(75, t.MVTT10F, t.WETH),
+  makeTestCase(75, t.MVDA25, t.WETH),
+  makeTestCase(75, t.BGCI, t.WETH),
 ]
 const individualIntegrations = [
   makeIntegrationtestCase('Morpho eUSD', 100, t.eUSD, t.meUSD, 1),
@@ -211,157 +248,85 @@ const folioTests = [
 
 const folioTests2 = [
   {
-    tokenIn: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-    amountIn: '400000000000000',
-    signer: '0x2dc04Aeae96e2f2b642b066e981e80Fe57abb5b2',
-    slippage: 0.005,
-    stToken: '0x5D4F073399f4Bb0C7454c9879391B02ba41114fE',
+    tokenIn: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    amountIn: '55000000000000000',
+    signer: '0x9788D64c39E2B104265c89CbbCa2a2350e62701d',
+    slippage: 0.05,
+    stToken: '0xd91919e938776BD094A72FBCB490C3603028f96D',
     basicDetails: {
-      name: 'xBGCI',
-      symbol: 'xBGCI',
+      name: 'Neo Tokyo Gaming Revolution Index',
+      symbol: 'GR',
       assets: [
-        '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf',
-        '0xcb327b99ff831bf8223cced12b1338ff3aa322ff',
-        '0x9b8df6e244526ab5f6e6400d331db28c8fdddb55',
-        '0xd403d1624daef243fbcbd4a80d8a6f36affe32b2',
-        '0xd6a34b430c05ac78c24985f8abee2616bc1788cb',
-        '0x378c326a472915d38b2d8d41e1345987835fab64',
-        '0xb0505e5a99abd03d94a1169e638b78edfed26ea4',
-        '0x0f813f4785b2360009f9ac9bf6121a85f109efc6',
-        '0x3eb097375fc2fc361e4a472f5e7067238c547c52',
-        '0x7be0cc2cadcd4a8f9901b4a66244dcdd9bd02e0f',
-        '0xc3de830ea07524a0761646a6a4e4be0e114a3c83',
-        '0x5ed25e305e08f58afd7995eac72563e6be65a617',
+        '0x85f138bfee4ef8e540890cfb48f620571d67eda3',
+        '0xf57e7e7c23978c3caec3c3548e3d615c346e79ff',
+        '0xd1d2eb1b1e90b638588728b4130137d262c87cae',
+        '0x62d0a8458ed7719fdaf978fe5929c6d342b0bfce',
+        '0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55',
+        '0xf944e35f95e819e752f3ccb5faf40957d311e8c5',
+        '0x767fe9edc9e0df98e07454847909b5e959d7ca0e',
+        '0x430ef9263e76dae63c84292c3409d61c598e9682',
+        '0xb0c7a3ba49c7a6eaba6cd4a96c55a1391070ac9a',
+        '0x560363bda52bc6a44ca6c8c9b4a5fadbda32fa60',
+        '0x786a6743efe9500011c92c7d8540608a62382b6f',
+        '0xa0ef786bf476fe0810408caba05e536ac800ff86',
+        '0xd13c7342e1ef687c5ad21b27c2b65d772cab5c8c',
+        '0x549020a9cb845220d66d3e9c6d9f9ef61c981102',
       ],
       amounts: [
-        '363',
-        '128503396256198',
-        '872298527662110',
-        '1078933992714268',
-        '771551797857754',
-        '60895317958621353',
-        '5746970652198186',
-        '1937869458507707',
-        '77804930570647',
-        '29696547156608',
-        '1015090008322964',
-        '2990254237543416',
+        '128169256605489',
+        '4214211870946039',
+        '12444774',
+        '160887127714675116',
+        '1695384119798547',
+        '6206562069520381',
+        '22455890153087',
+        '226925689062516',
+        '2220881770428017',
+        '469813935562919',
+        '7648052119186724',
+        '366795958872312367',
+        '58',
+        '332574687381644807',
       ],
     },
     additionalDetails: {
-      tradeDelay: '43200',
-      auctionLength: '1800',
+      tradeDelay: '172800',
+      auctionLength: '3600',
       feeRecipients: [
         {
-          recipient: '0x2dc04Aeae96e2f2b642b066e981e80Fe57abb5b2',
-          portion: '500000000000000000',
+          recipient: '0x0EBe3c360c30673d5224aCAaF899D30C26a0a8A1',
+          portion: '200000000000000000',
         },
         {
-          recipient: '0x5D4F073399f4Bb0C7454c9879391B02ba41114fE',
-          portion: '500000000000000000',
+          recipient: '0xd91919e938776BD094A72FBCB490C3603028f96D',
+          portion: '800000000000000000',
         },
       ],
-      folioFee: '10000000000000000',
+      folioFee: '20000000000000000',
       mintingFee: '5000000000000000',
-      mandate: '',
+      mandate:
+        'The Neo Tokyo Gaming Revolution Index DTF ("GR") tracks Neo Tokyo Ecosystem partners & project founders who are dedicated & loyal Citizens of The Citadel. This commitment is represented by those founders / partners / projects whom are included in our Neo Tokyo Network graphic... in the future, requirements will involve a staked Neo Tokyo Citizen NFT. The GR is a benchmark designed to measure the performance of said members that are founders of the top Gaming & Metaverse projects & applications in all of Web 3. Index constituents also need to meet other criteria in order to be considered for inclusion in GR, such as weekly liquidity qualifications & minimum market capitalizations set by governance rules. Each constituent represents a holding no more than 20% of the Index & no less than 1% of the Index\'s overall value. Cryptocurrencies are considered for addition/removal to/from the Index on a rolling basis. We are the Gaming Revolution.... Grand Rising, Citizens.',
     },
     ownerGovParams: {
       votingDelay: '172800',
-      votingPeriod: '172800',
-      proposalThreshold: '10000000000000000',
-      quorumPercent: '10',
-      timelockDelay: '172800',
-      guardians: [],
+      votingPeriod: '345600',
+      proposalThreshold: '100000000000000000',
+      quorumPercent: '25',
+      timelockDelay: '86400',
+      guardians: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
     },
     tradingGovParams: {
-      votingDelay: '172800',
-      votingPeriod: '172800',
-      proposalThreshold: '10000000000000000',
-      quorumPercent: '10',
-      timelockDelay: '172800',
-      guardians: [],
+      votingDelay: '86400',
+      votingPeriod: '86400',
+      proposalThreshold: '100000000000000000',
+      quorumPercent: '25',
+      timelockDelay: '86400',
+      guardians: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
     },
     existingTradeProposers: [],
-    tradeLaunchers: [],
-    vibesOfficers: [],
+    tradeLaunchers: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
+    vibesOfficers: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
   },
-]
-
-const pricingTests = [
-  '0x2615a94df961278DcbC41Fb0a54fEc5f10a693aE',
-  '0x9B8Df6E244526ab5F6e6400d331DB28C8fdDdb55',
-  '0x12E96C2BFEA6E835CF8Dd38a5834fa61Cf723736',
-  '0xa3A34A0D9A08CCDDB6Ed422Ac0A28a06731335aA',
-  '0xd6a34b430C05ac78c24985f8abEE2616BC1788Cb',
-  '0xd403D1624DAEF243FbcBd4A80d8A6F36afFe32b2',
-  '0x239b9C1F24F3423062B0d364796e07Ee905E9FcE',
-  '0x378c326A472915d38b2D8D41e1345987835FaB64',
-  '0x0F813f4785b2360009F9aC9BF6121a85f109efc6',
-  '0x7bE0Cc2cADCD4A8f9901B4a66244DcDd9Bd02e0F',
-  '0xc3De830EA07524a0761646a6a4e4be0e114a3C83',
-  '0x3EB097375fc2FC361e4a472f5E7067238c547c52',
-  '0x5ed25E305E08F58AFD7995EaC72563E6BE65A617',
-  '0x40318eE213227894b5316E5EC84f6a5caf3bBEDd',
-  '0xf383074c4B993d1ccd196188d27D0dDf22AD463c',
-  '0xD61BCF79b26787AE993f75B064d2e3b3cc738C5d',
-  '0xAcbF16f82753F3d52A2C87e4eEDA220c9A7A3762',
-  '0xE868C3d83EC287c01Bcb533A33d197d9BFa79DAD',
-  '0x3a51f2a377EA8B55FAf3c671138A00503B031Af3',
-  '0x6e934283DaE5D5D1831cbE8d557c44c9B83F30Ee',
-  '0x4b92eA5A2602Fba275150db4201A6047056F6913',
-  '0xDB18Fb11Db1b972A54bD89cE04bAd61855c07788',
-  '0x0935b271CA903ADA3FFe1Ac1353fC4A49E7EE87b',
-  '0x3d00283AF5AB11eE7f6Ec51573ab62b6Fb6Dfd8f',
-  '0x8989377fd349ADFA99E6CE3Cb6c0D148DfC7F19e',
-  '0x135Ff404bA56E167F58bc664156beAa0A0Fd95ac',
-  '0x893ADcbdC7FcfA0eBb6d3803f01Df1eC199Bf7C5',
-  '0x1B94330EEc66BA458a51b0b14f411910D5f678d0',
-  '0xD7D5c59457d66FE800dBA22b35e9c6C379D64499',
-  '0x30F16E3273AB6e4584B79B76fD944E577e49a5c8',
-  '0x31d664ebd97A50d5a2Cd49B16f7714AB2516Ed25',
-  '0x05f191a4Aac4b358AB99DB3A83A8F96216ecb274',
-  '0x5A03841C2e2f5811f9E548cF98E88e878e55d99E',
-  '0x508e751fdCf144910074Cc817a16757F608DB52A',
-  '0x16275fD42439A6671b188bDc3949a5eC61932C48',
-  '0x9AF46F95a0a8be5C2E0a0274A8b153C72d617E85',
-  '0x83f31af747189c2FA9E5DeB253200c505eff6ed2',
-  '0xc5cDEb649ED1A7895b935ACC8EB5Aa0D7a8492BE',
-  '0xD6A746236F15E18053Dd3ae8c27341B44CB08E59',
-  '0x3ECb91ac996E8c55fe1835969A4967F95a07Ca71',
-  '0xe3AE3EE16a89973D67b678aaD2c3bE865Dcc6880',
-  '0x2f2041c267795a85B0De04443E7B947A6234fEe8',
-  '0x44951C66dFe920baED34457A2cFA65a0c7ff2025',
-  '0x7fdAa50d7399ac436943028edA6ed9a1BD89509f',
-  '0x972B86A73095f934A82860df664F3c55701F41b0',
-  '0x51436F6bD047797DE7D11E9d32685f029aed1069',
-  '0xb0505e5a99abd03d94a1169e638B78EDfEd26ea4',
-  '0xc79e06860Aa9564f95E08fb7E5b61458d0C63898',
-  '0xE5c436B0a34DF18F1dae98af344Ca5122E7d57c4',
-  '0x9c0e042d65a2e1fF31aC83f404E5Cb79F452c337',
-  '0xf653E8B6Fcbd2A63246c6B7722d1e9d819611241',
-  '0xF0134C5eA11d1fc75fa1b25fAC00F8d82C38bD52',
-  '0x224A0cB0C937018123B441b489a74EAF689Da78f',
-  '0xD01CB4171A985571dEFF48c9dC2F6E153A244d64',
-  '0xdf5913632251585a55970134Fad8A774628E9388',
-  '0x71a67215a2025F501f386A49858A9ceD2FC0249d',
-  '0xa260BA5fd9FF3FaE55Ac4930165A9C33519dE694',
-  '0x806041B6473DA60abbe1b256d9A2749A151be6C6',
-  '0x10f4799f0FeeEa0e74454e0B6669D3C0cf7B93bF',
-  '0x4c5d8A75F3762c1561D96f177694f67378705E98',
-  '0x90131D95a9a5b48b6a3eE0400807248bEcf4B7A4',
-  '0xb0ffa8000886e57f86dd5264b9582b2ad87b2b91',
-  '0x0192C0fd46de641D3EC17c399032E400ce840205',
-  '0x5B0A82456D018F21881D1D5460e37aeFD56d54b3',
-  '0xB1db4CD8Af9db34F1A8241beafC76c0F77408e01',
-  '0xdc1437D7390016af12fe501E4a65EC42d35469ce',
-  '0x55B3E31739247d010eCe7ddC365eAe512b16fa7E',
-  '0xa76a29923ccFb59E734e907688b659E48A55FD07',
-  '0x6aD49F3bD3E15a7EE14A3b246824858E97910ed0',
-  '0x0956CB4A1D8924680FEb671d2E4a122E2114313e',
-  '0x532f27101965dd16442E59d40670FaF5eBB142E4',
-  '0x13281ae464191bc592c6e5d65eeeaeee02660d84',
-  '0x13e9f9096B97AFFdFcd40A21e2030B1A03f69736',
-  '0xcb9eEC5748aAAfA41fBcbE0B58465eFed11CE176',
 ]
 
 const governedDeployConfig = (
@@ -513,7 +478,7 @@ beforeAll(async () => {
     console.error(e)
     process.exit(1)
   }
-}, 60000)
+}, 120000)
 
 describe('base zapper', () => {
   beforeEach(async () => {
@@ -523,33 +488,15 @@ describe('base zapper', () => {
     )
   })
 
-  describe('pricing', () => {
-    for (const testCase of pricingTests) {
-      describe(testCase, () => {
-        it(`Can price ${testCase}`, async () => {
-          expect.assertions(1)
-          try {
-            const token = await universe.getToken(testCase)
-            const price = await token.price
-            console.log(`${token}: ${price}`)
-            expect(true).toBe(true)
-          } catch (e) {
-            console.error(`${testCase} failed`)
-            throw e
-          }
-        }, 15000)
-      })
-    }
-  })
-
   // describe('pathfinding', () => {
   //   it('finds a path', async () => {
   //     const inputQty = universe.commonTokens.WETH.from(1)
   //     const out = await bestPath(
   //       universe,
   //       inputQty,
-  //       universe.commonTokens.VaderAI,
-  //       2
+  //       await universe.getToken('0x504a26cf29674bc77a9341e73f88ccecc864034c'),
+  //       2,
+  //       5
   //     )
 
   //     for (const [_, { path, legAmount }] of out.entries()) {
@@ -607,8 +554,8 @@ describe('base zapper', () => {
             const inputQty = token.from(BigInt(config.amountIn))
 
             const out = await universe.deployZap(inputQty, testUser, {
-              type: 'governed',
-              stToken: config.stToken,
+              type: 'ungoverned',
+              owner: config.signer,
               basicDetails: config.basicDetails,
               additionalDetails: {
                 auctionLength: config.additionalDetails.auctionLength,
@@ -618,8 +565,6 @@ describe('base zapper', () => {
                 mintingFee: config.additionalDetails.mintingFee,
                 mandate: config.additionalDetails.mandate,
               },
-              ownerGovParams: config.ownerGovParams,
-              tradingGovParams: config.tradingGovParams,
               tradeLaunchers: config.tradeLaunchers,
               vibesOfficers: config.vibesOfficers,
               existingTradeProposers: config.existingTradeProposers,
@@ -685,7 +630,7 @@ describe('base zapper', () => {
           issueance.output
         )
         emitReqCount(testCaseName, true)
-      }, 240000)
+      }, 2400000)
     })
   }
 

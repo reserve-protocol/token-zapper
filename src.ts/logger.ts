@@ -24,6 +24,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 export const logger = {
+  child: (meta: any) => logger_.child(meta),
   log: (...args: any[]) => {
     logger_.info(args.join(' '))
   },

@@ -271,28 +271,6 @@ export class RTokenDeployment {
       return [this.rToken.from(baskets), ...dust]
     }
 
-    // const quoteMint = async (input: TokenQuantity[]) => {
-    //   const out = await this.contracts.facade.callStatic.maxIssuableByAmounts(
-    //     this.rToken.address.address,
-    //     input.map((i) => i.amount)
-    //   )
-
-    //   const unitsMinted = [this.rToken.from(out)]
-    //   const inputConsumed = await this.burn.quote(unitsMinted)
-    //   const outputs = [
-    //     this.rToken.from(out),
-    //     ...input.map((i, index) => {
-    //       const remaining = i.sub(inputConsumed[index])
-    //       if (remaining.amount <= 0n) {
-    //         return this.universe.usd.zero
-    //       }
-    //       return remaining
-    //     }),
-    //   ]
-    //   console.log(`${input.join(', ')} -> ${outputs.join(', ')}`)
-    //   return outputs
-    // }
-
     this.supply = getSupply
 
     this.maxIssueable = getIssueanceAvailable
@@ -425,7 +403,7 @@ abstract class ReserveRTokenBase extends Action('Reserve.RToken') {
 export class MintRTokenAction extends ReserveRTokenBase {
   action = 'issue'
   get supportsDynamicInput() {
-    return false
+    return true
   }
   async plan(
     planner: Planner,

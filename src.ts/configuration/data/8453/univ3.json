@@ -9160,6 +9160,16 @@
     }
   },
   {
+    "id": "0xab7fed603f0e5eb8f46ab58b086631d75cfbe78d",
+    "feeTier": 3000,
+    "token0": {
+      "id": "0x3eb097375fc2fc361e4a472f5e7067238c547c52"
+    },
+    "token1": {
+      "id": "0x4200000000000000000000000000000000000006"
+    }
+  },
+  {
     "id": "0xabed894eebba8b4fd21a7c9b380537bfc9e062a1",
     "feeTier": 10000,
     "token0": {
@@ -11807,6 +11817,16 @@
     },
     "token1": {
       "id": "0x4200000000000000000000000000000000000006"
+    }
+  },
+  {
+    "id": "0xdef0dbd2d2a1ad31c2bf6aaead5c82b6c07558c0",
+    "feeTier": 10000,
+    "token0": {
+      "id": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+    },
+    "token1": {
+      "id": "0xdf1cf211d38e7762c9691be4d779a441a17a6cfc"
     }
   },
   {

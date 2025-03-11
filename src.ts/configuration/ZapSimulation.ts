@@ -141,7 +141,7 @@ export const makeCallManySimulator = (
       to: AddressLike,
       data: string,
       value: bigint = 0n,
-      gas: bigint = 15_000_000n
+      gas: bigint = 20_000_000n
     ) => {
       transactions.push({
         from: getAddrStr(from),
@@ -299,7 +299,7 @@ export const makeCustomRouterSimulator = (
       from: AddressLike,
       to: AddressLike,
       data: string,
-      gas: bigint = 15_000_000n,
+      gas: bigint = 20_000_000n,
       value: bigint = 0n
     ) => {
       transactions.push({

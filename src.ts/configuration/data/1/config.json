@@ -10,6 +10,7 @@
       "0xaed9261caa6a795178a4ab4d3be62f2d01b2c214"
     ]
   },
+  "blacklistedTokens": [],
   "aerodrome": {
     "stableOrVolatile": []
   }

@@ -50,20 +50,32 @@ export class DexLiquidtyPriceStore {
       return path
     }
 
+    const idealLen = Object.values(this.universe.commonTokens).find(
+      (e) => e == input.token
+    )
+      ? 1
+      : 2
+
+    // console.log(`${input} -> ${target} idealLen: ${idealLen}`)
+
     path = new Promise(async (resolve, reject) => {
       try {
         const tokenPath = await bestPath(
           this.universe,
           input,
           target,
-          2,
+          idealLen,
           5
         ).then((m) => {
           this.recordAllSingleStepBestPaths(input.token, m)
-          return m.get(target)?.path ?? []
+          const out = m.get(target)?.path ?? []
+
+          return out
         })
         if (tokenPath.length === 0) {
-          throw Error(`No path found from ${input.token} to ${target}`)
+          throw Error(
+            `No path found from ${input.token} to ${target}(${target.address})`
+          )
         }
 
         let out: BaseAction[][] = []

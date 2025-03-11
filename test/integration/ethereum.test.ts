@@ -21,17 +21,26 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 import { getProvider, getSimulator } from './providerUtils'
+import { GAS_TOKEN_ADDRESS } from '../../src.ts/base/constants'
 dotenv.config()
 
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
-  useNewZapperContract: false,
-  cacheResolution: 8,
-  zapMaxDustProduced: 3,
-  maxPhase2TimeRefinementTime: 10000,
-  optimisationSteps: 35,
-  minimiseDustPhase1Steps: 35,
-  minimiseDustPhase2Steps: 35,
+
+  cacheResolution: 4,
+  maxPhase2TimeRefinementTime: 5000,
+  optimisationSteps: 20,
+  refinementOptimisationSteps: 20,
+  maxOptimisationTime: 120000,
+  minimiseDustPhase1Steps: 10,
+  minimiseDustPhase2Steps: 10,
+  zapMaxDustProduced: 10,
+  zapMaxValueLoss: 3,
+  dynamicConfigURL:
+    'https://raw.githubusercontent.com/reserve-protocol/token-zapper/refs/heads/main/src.ts/configuration/data/1/config.json',
+  rejectHighDust: false,
+  rejectHighValueLoss: false,
+  useNewZapperContract: true,
 }
 
 if (process.env.MAINNET_PROVIDER == null) {
@@ -90,6 +99,10 @@ export const ethWhales = {
   // frax
   '0x853d955acef822db058eb8505911ed77f175b99e':
     '0x267fc49a3170950ee5d49ef84878695c29cca1e0',
+
+  // COMP
+  '0x9e1028f5f1d5ede59748ffcee5532509976840e0':
+    '0x123964802e6ababbe1bc9547d72ef1b69b00a6b1',
   // eusd
   '0xa0d69e286b938e21cbf7e51d71f6a4c8918f482f':
     '0x3154cf16ccdb4c6d922629664174b904d80f2c35',
@@ -115,6 +128,12 @@ export const ethWhales = {
   '0x005f893ecd7bf9667195642f7649da8163e23658':
     '0x5bdd1fa233843bfc034891be8a6769e58f1e1346',
 
+  // "sDAI"
+  '0x83f20f44975d03b1b09e64809b757c47f942beea':
+    '0x4aa42145Aa6Ebf72e164C9bBC74fbD3788045016',
+  // COMP
+  '0xc00e94cb662c3520282e6f5717214004a7f26888':
+    '0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b',
   // pxeth
   '0x04c154b66cb340f3ae24111cc767e0184ed00cc6':
     '0x40e93a52f6af9fcd3b476aedadd7feabd9f7aba8',
@@ -174,7 +193,8 @@ export const testUser = process.env.TEST_USER
   : Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 
 const issueanceCases = [
-  makeTestCase(10000, t.USDC, rTokens.dgnETH),
+  // makeTestCase(10, t.WETH, rTokens['ETH+']),
+  // makeTestCase(10000, t.USDC, rTokens.dgnETH),
   // makeTestCase(100000, t.DAI, rTokens.eUSD),
   // makeTestCase(1000000, t.USDT, rTokens.eUSD),
   // makeTestCase(1000000, t.USDC, rTokens.USD3),
@@ -183,30 +203,154 @@ const issueanceCases = [
   // makeTestCase(1, t.WETH, rTokens['ETH+']),
   // makeTestCase(0.70133, t['stkcvxETH+ETH-f'], t.Re7WETH),
   // makeTestCase(1000, t.WETH, rTokens['ETH+']),
+
   // makeTestCase(10, t.WETH, rTokens.hyUSD),
   // makeTestCase(10000, t.USDC, rTokens.hyUSD),
   // makeTestCase(10000, t.DAI, rTokens.hyUSD),
   // makeTestCase(10000, t.USDT, rTokens.hyUSD),
+  // makeTestCase(10000, t.sDAI, rTokens.hyUSD),
+  // makeTestCase(31.234892, t.COMP, rTokens.hyUSD),
+
+  // makeTestCase(10, t.WETH, rTokens.eUSD),
+  // makeTestCase(10000, t.USDC, rTokens.eUSD),
+  makeTestCase(10000, t.CRV, rTokens.dgnETH),
+  // makeTestCase(10000, t.USDT, rTokens.eUSD),
+  // makeTestCase(10000, t.sDAI, rTokens.eUSD),
+  // makeTestCase(10000, t.COMP, rTokens.eUSD),
+
+  // makeTestCase(10, t.WETH, rTokens.USD3),
+  // makeTestCase(10000, t.USDC, rTokens.USD3),
+  // makeTestCase(10000, t.DAI, rTokens.USD3),
+  // makeTestCase(10000, t.USDT, rTokens.USD3),
+  // makeTestCase(10000, t.sDAI, rTokens.USD3),
+  // makeTestCase(10000, t.COMP, rTokens.USD3),
+
   // makeTestCase(50, t.WETH, rTokens.dgnETH),
   // makeTestCase(10000, t.USDC, rTokens.dgnETH),
+  // makeTestCase(10000, t.USDT, rTokens.dgnETH),
 
-  // makeTestCase(330, t.pxETH, t['stkcvxETH+ETH-f']),
+  // makeTestCase(10, t.pxETH, rTokens.dgnETH),
+
+  makeTestCase(1, t.WETH, t.SMEL),
+  makeTestCase(1, t.WETH, t.BED),
+  // makeTestCase(1, t.WETH, t.mvDEFI),
+  // makeTestCase(1, t.WETH, t.mvRWA),
+  // makeTestCase(1, t.WETH, t.DFX),
+]
+
+const folioTests2 = [
+  {
+    tokenIn: GAS_TOKEN_ADDRESS,
+    amountIn: '55000000000000000',
+    signer: testUser.address,
+    slippage: 0.05,
+    stToken: '0xd91919e938776BD094A72FBCB490C3603028f96D',
+    basicDetails: {
+      name: 'Neo Tokyo Gaming Revolution Index',
+      symbol: 'GR',
+      assets: [
+        '0x85f138bfee4ef8e540890cfb48f620571d67eda3',
+        '0xf57e7e7c23978c3caec3c3548e3d615c346e79ff',
+        '0xd1d2eb1b1e90b638588728b4130137d262c87cae',
+        '0x62d0a8458ed7719fdaf978fe5929c6d342b0bfce',
+        '0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55',
+        '0xf944e35f95e819e752f3ccb5faf40957d311e8c5',
+        '0x767fe9edc9e0df98e07454847909b5e959d7ca0e',
+        '0x430ef9263e76dae63c84292c3409d61c598e9682',
+        '0xb0c7a3ba49c7a6eaba6cd4a96c55a1391070ac9a',
+        '0x560363bda52bc6a44ca6c8c9b4a5fadbda32fa60',
+        '0x786a6743efe9500011c92c7d8540608a62382b6f',
+        '0xa0ef786bf476fe0810408caba05e536ac800ff86',
+        '0xd13c7342e1ef687c5ad21b27c2b65d772cab5c8c',
+        '0x549020a9cb845220d66d3e9c6d9f9ef61c981102',
+      ],
+      amounts: [
+        '128169256605489',
+        '4214211870946039',
+        '12444774',
+        '160887127714675116',
+        '1695384119798547',
+        '6206562069520381',
+        '22455890153087',
+        '226925689062516',
+        '2220881770428017',
+        '469813935562919',
+        '7648052119186724',
+        '366795958872312367',
+        '58',
+        '332574687381644807',
+      ],
+    },
+    additionalDetails: {
+      tradeDelay: '172800',
+      auctionLength: '3600',
+      feeRecipients: [
+        {
+          recipient: '0x0EBe3c360c30673d5224aCAaF899D30C26a0a8A1',
+          portion: '200000000000000000',
+        },
+        {
+          recipient: '0xd91919e938776BD094A72FBCB490C3603028f96D',
+          portion: '800000000000000000',
+        },
+      ],
+      folioFee: '20000000000000000',
+      mintingFee: '5000000000000000',
+      mandate:
+        'The Neo Tokyo Gaming Revolution Index DTF ("GR") tracks Neo Tokyo Ecosystem partners & project founders who are dedicated & loyal Citizens of The Citadel. This commitment is represented by those founders / partners / projects whom are included in our Neo Tokyo Network graphic... in the future, requirements will involve a staked Neo Tokyo Citizen NFT. The GR is a benchmark designed to measure the performance of said members that are founders of the top Gaming & Metaverse projects & applications in all of Web 3. Index constituents also need to meet other criteria in order to be considered for inclusion in GR, such as weekly liquidity qualifications & minimum market capitalizations set by governance rules. Each constituent represents a holding no more than 20% of the Index & no less than 1% of the Index\'s overall value. Cryptocurrencies are considered for addition/removal to/from the Index on a rolling basis. We are the Gaming Revolution.... Grand Rising, Citizens.',
+    },
+    ownerGovParams: {
+      votingDelay: '172800',
+      votingPeriod: '345600',
+      proposalThreshold: '100000000000000000',
+      quorumPercent: '25',
+      timelockDelay: '86400',
+      guardians: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
+    },
+    tradingGovParams: {
+      votingDelay: '86400',
+      votingPeriod: '86400',
+      proposalThreshold: '100000000000000000',
+      quorumPercent: '25',
+      timelockDelay: '86400',
+      guardians: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
+    },
+    existingTradeProposers: [],
+    tradeLaunchers: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
+    vibesOfficers: ['0x9788D64c39E2B104265c89CbbCa2a2350e62701d'],
+  },
 ]
 
 const redeemCases = [
-  makeTestCase(200000, rTokens.eUSD, t.USDC),
-  makeTestCase(10000, rTokens.eUSD, t.USDC),
-  makeTestCase(10000, rTokens.eUSD, t.DAI),
-  makeTestCase(10000, rTokens.eUSD, t.WETH),
-  makeTestCase(10000, rTokens.eUSD, t.USDT),
+  makeTestCase(50000, rTokens.hyUSD, t.USDC),
+  makeTestCase(50000, rTokens.hyUSD, t.USDT),
+  makeTestCase(50000, rTokens.hyUSD, t.WETH),
+  makeTestCase(50000, rTokens.hyUSD, t.DAI),
+  makeTestCase(50000, rTokens.hyUSD, t.RSR),
 
-  makeTestCase(10000, rTokens.USD3, t.USDC),
-  makeTestCase(10000, rTokens.USD3, t.WETH),
-  makeTestCase(10000, rTokens.USD3, t.DAI),
+  makeTestCase(50000, rTokens.eUSD, t.USDC),
+  makeTestCase(50000, rTokens.eUSD, t.USDT),
+  makeTestCase(50000, rTokens.eUSD, t.WETH),
+  makeTestCase(50000, rTokens.eUSD, t.DAI),
+  makeTestCase(50000, rTokens.eUSD, t.RSR),
 
-  makeTestCase(10000, rTokens.hyUSD, t.USDC),
-  makeTestCase(10000, rTokens.hyUSD, t.WETH),
-  makeTestCase(10000, rTokens.hyUSD, t.DAI),
+  makeTestCase(50000, rTokens.USD3, t.USDC),
+  makeTestCase(50000, rTokens.USD3, t.USDT),
+  makeTestCase(50000, rTokens.USD3, t.WETH),
+  makeTestCase(50000, rTokens.USD3, t.DAI),
+  makeTestCase(50000, rTokens.USD3, t.RSR),
+
+  makeTestCase(5, rTokens['ETH+'], t.WETH),
+  makeTestCase(5, rTokens['ETH+'], t.USDC),
+  makeTestCase(5, rTokens['ETH+'], t.USDT),
+  makeTestCase(5, rTokens['ETH+'], t.DAI),
+  makeTestCase(5, rTokens['ETH+'], t.RSR),
+
+  makeTestCase(5, rTokens.dgnETH, t.WETH),
+  makeTestCase(5, rTokens.dgnETH, t.USDC),
+  makeTestCase(5, rTokens.dgnETH, t.USDT),
+  makeTestCase(5, rTokens.dgnETH, t.DAI),
+  makeTestCase(5, rTokens.dgnETH, t.RSR),
 
   makeTestCase(5, rTokens['ETH+'], t.WETH),
   // makeTestCase(5, rTokens['ETH+'], t.reth),
@@ -216,6 +360,12 @@ const redeemCases = [
   makeTestCase(5, rTokens.dgnETH, t.WETH),
   makeTestCase(5, rTokens.dgnETH, t.USDC),
   makeTestCase(5, rTokens.dgnETH, t.USDT),
+
+  makeTestCase(21221.74, rTokens.hyUSD, t.RSR),
+  makeTestCase(10000, rTokens.eUSD, t.RSR),
+  makeTestCase(10000, rTokens.USD3, t.RSR),
+  makeTestCase(5, rTokens['ETH+'], t.RSR),
+  makeTestCase(5, rTokens.dgnETH, t.RSR),
 ]
 
 const individualIntegrations = [
@@ -307,6 +457,7 @@ provider.on('debug', (log) => {
 })
 beforeAll(async () => {
   global.console = require('console')
+
   try {
     universe = (await Universe.createWithConfig(
       provider,
@@ -322,13 +473,15 @@ beforeAll(async () => {
       }
     )) as any
 
-    await universe.initialized
     console.log('Ethereum zapper setup complete')
-    const tokens = [...universe.tokens.values()].map((i) => i.toJson())
-    fs.writeFileSync(
-      'src.ts/configuration/data/ethereum/tokens.json',
-      JSON.stringify(tokens, null, 2)
-    )
+    if (process.env.WRITE_DATA) {
+      const tokens = [...universe.tokens.values()].map((i) => i.toJson())
+      fs.writeFileSync(
+        'src.ts/configuration/data/ethereum/tokens.json',
+        JSON.stringify(tokens, null, 2)
+      )
+    }
+
     console.log(`requestCount init: ${requestCount}`)
     requestCount = 0
     return universe
@@ -366,6 +519,44 @@ describe('ethereum zapper', () => {
   //     console.log(quote.output.toString())
   //   }, 60000)
   // })
+
+  describe('folioconfigs', () => {
+    for (const config of folioTests2) {
+      describe(`config ${config.basicDetails.name}`, () => {
+        it('produces the basket graph', async () => {
+          await universe.initialized
+          expect.assertions(1)
+          try {
+            const token = await universe.getToken(config.tokenIn)
+            const inputQty = token.from(BigInt(config.amountIn))
+
+            const out = await universe.deployZap(inputQty, testUser, {
+              type: 'ungoverned',
+              owner: config.signer,
+              basicDetails: config.basicDetails,
+              additionalDetails: {
+                auctionLength: config.additionalDetails.auctionLength,
+                tradeDelay: config.additionalDetails.tradeDelay,
+                feeRecipients: config.additionalDetails.feeRecipients,
+                folioFee: config.additionalDetails.folioFee,
+                mintingFee: config.additionalDetails.mintingFee,
+                mandate: config.additionalDetails.mandate,
+              },
+              tradeLaunchers: config.tradeLaunchers,
+              vibesOfficers: config.vibesOfficers,
+              existingTradeProposers: config.existingTradeProposers,
+            })
+            console.log(out.toString())
+            expect(true).toBe(true)
+          } catch (e) {
+            console.error(e)
+            expect(true).toBe(false)
+            throw e
+          }
+        }, 240000)
+      })
+    }
+  })
 
   describe('actions', () => {
     for (const testCase of individualIntegrations) {

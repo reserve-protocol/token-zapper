@@ -8,9 +8,15 @@ import {
 } from './Action'
 
 import { Approval } from '../base/Approval'
-import { IBeefyVault__factory } from '../contracts'
+import { IBeefyVault, IBeefyVault__factory } from '../contracts'
 import { Planner, Value } from '../tx-gen/Planner'
+import { Address } from '../base/Address'
 
+const rescaleToken = new Set<Address>([
+  Address.from('0xbba4d1cecc111bdc74bd2f95050fb11acb3b8a5e'),
+  Address.from('0xe36cdbd69adf2f74c8ab987a1cfd448ae91fa153'),
+  Address.from('0x562ea6fffd1293b9433e7b81a2682c31892ea013'),
+])
 abstract class BeefyBase extends Action('Beefy') {
   abstract get actionName(): string
 
@@ -22,6 +28,7 @@ abstract class BeefyBase extends Action('Beefy') {
 }
 
 export class BeefyDepositAction extends BeefyBase {
+  private readonly contract: IBeefyVault
   public get actionName(): string {
     return 'deposit'
   }
@@ -40,9 +47,20 @@ export class BeefyDepositAction extends BeefyBase {
     return false
   }
 
+  public get dependsOnRpc() {
+    return true
+  }
+
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    const rate = await this.getRate()
-    return [this.mooToken.from((amountsIn.amount * rate) / 10n ** 18n)]
+    const balance = (await this.contract.callStatic.balance()).toBigInt()
+    const totalSupply = (
+      await this.contract.callStatic.totalSupply()
+    ).toBigInt()
+
+    const outQty = (amountsIn.amount * totalSupply) / balance
+    const out = this.mooToken.from(outQty)
+
+    return [out]
   }
 
   gasEstimate() {
@@ -67,20 +85,20 @@ export class BeefyDepositAction extends BeefyBase {
       DestinationOptions.Callee,
       [new Approval(underlying, mooToken.address)]
     )
+    this.contract = IBeefyVault__factory.connect(
+      this.mooToken.address.address,
+      this.universe.provider
+    )
   }
 }
 
 export class BeefyWithdrawAction extends BeefyBase {
+  private readonly contract: IBeefyVault
   public get actionName(): string {
     return 'withdraw'
   }
   async plan(planner: Planner, inputs: Value[]) {
-    const lib = this.gen.Contract.createContract(
-      IBeefyVault__factory.connect(
-        this.mooToken.address.address,
-        this.universe.provider
-      )
-    )
+    const lib = this.gen.Contract.createContract(this.contract)
     planner.add(lib.withdraw(inputs[0]), this.toString())
 
     return null
@@ -96,10 +114,16 @@ export class BeefyWithdrawAction extends BeefyBase {
 
   async quote([amountsIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const rate = await this.getRate()
+    const outQty =
+      (amountsIn.amount * this.underlying.scale * rate) /
+      ONE /
+      this.mooToken.scale
 
-    console.log(rate.toString())
-
-    return [this.underlying.from((amountsIn.amount * ONE) / rate)]
+    if (rescaleToken.has(this.mooToken.address)) {
+      const scaleUp = this.mooToken.scale / this.underlying.scale
+      return [this.underlying.from(outQty * scaleUp)]
+    }
+    return [this.underlying.from(outQty)]
   }
 
   constructor(
@@ -116,8 +140,7 @@ export class BeefyWithdrawAction extends BeefyBase {
       DestinationOptions.Callee,
       []
     )
-
-    const contract = IBeefyVault__factory.connect(
+    this.contract = IBeefyVault__factory.connect(
       this.mooToken.address.address,
       this.universe.provider
     )

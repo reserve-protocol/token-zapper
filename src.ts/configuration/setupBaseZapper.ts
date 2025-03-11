@@ -16,10 +16,11 @@ import { TokenType } from '../entities/TokenClass'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupReservePricing } from './setupReservePricing'
 import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
-import { AerodromeContext } from '../action/Aerodrome'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
+
+  setupReservePricing(universe)
 
   logger.info('Loading base token list')
   await loadBaseTokenList(universe)
@@ -66,6 +67,12 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     priceFn: async () => await priceViaOdos(universe.commonTokens.wstETH),
   })
   universe.preferredToken.set(universe.rTokens.BSDX, universe.commonTokens.WETH)
+  universe.preferredToken.set(universe.rTokens.BSDX, universe.commonTokens.WETH)
+  universe.preferredToken.set(universe.rTokens.bsd, universe.commonTokens.WETH)
+  universe.preferredToken.set(
+    universe.rTokens.hyUSD,
+    universe.commonTokens.USDC
+  )
   universe.addSingleTokenPriceSource({
     token: universe.commonTokens.cbETH,
     priceFn: async () => await priceViaOdos(universe.commonTokens.cbETH),
@@ -160,14 +167,9 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
 
   let uniswapV3Ctx: UniswapV3Context
   let uniswapV2Ctx: UniswapV2Context
-  let aerodromeCtx: {
-    context: AerodromeContext
-    loadPool: (addr: Address) => Promise<any>
-  }
   const initUni3 = async () => {
     logger.info('Setting up UniswapV3')
     const router = await setupUniswapV3(universe)
-    universe.addIntegration('uniswapV3', await router.venue())
     uniswapV3Ctx = router
   }
   const initUni2 = async () => {
@@ -204,7 +206,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   }
   const setupAero = async () => {
     try {
-      aerodromeCtx = await setupAerodromeRouter(universe)
+      await setupAerodromeRouter(universe)
       const aerodromeWrappers = createProtocolWithWrappers(
         universe,
         'aerodrome'
@@ -222,23 +224,20 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
       console.log(e)
     }
   }
-  const setupUnis = async () => {
-    await initUni3()
-    await initUni2()
-  }
   let done = 0
-  const initMaverick = async () => {
-    // await setupMaverick(universe)
-  }
 
   const tasks = [
     initCompound(),
     initAave(),
-    setupUnis(),
+    (async () => {
+      uniswapV2Ctx = (await setupUniswapV2(universe))!
+    })(),
+    (async () => {
+      uniswapV3Ctx = await setupUniswapV3(universe)
+    })(),
     initERC4626(),
     setupStarGate_(),
     setupAero(),
-    initMaverick(),
   ].map((tsk) => {
     return tsk
       .catch((e) => {
@@ -301,6 +300,11 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     universe.commonTokens.BGCI,
     Promise.resolve(universe.commonTokens.WETH)
   )
+  universe.preferredToken.set(
+    universe.commonTokens.BDTF,
+    universe.commonTokens.WETH
+  )
+
   universe.tokenClass.set(
     universe.commonTokens.MVDA25,
     Promise.resolve(universe.commonTokens.WETH)
@@ -325,9 +329,12 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     universe.commonTokens.ABX,
     Promise.resolve(universe.commonTokens.WETH)
   )
-
   universe.preferredToken.set(
     universe.commonTokens.BGCI,
+    universe.commonTokens.WETH
+  )
+  universe.preferredToken.set(
+    universe.commonTokens.CLUB,
     universe.commonTokens.WETH
   )
   universe.preferredToken.set(
@@ -375,6 +382,18 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   logger.info('Done setting up base zapper')
   await Promise.all(tasks)
 
+  universe.blacklistedTokens.add(
+    await universe.getToken('0xbd15d0c77133d3200756dc4d7a4f577dbb2cf6a3')
+  )
+  universe.blacklistedTokens.add(
+    await universe.getToken('0x49c86046903807d0a3193a221c1a3e1b1b6c9ba3')
+  )
+  universe.blacklistedTokens.add(
+    await universe.getToken('0xac743b05f5e590d9db6a4192e02457838e4af61e')
+  )
+  universe.feeOnTransferTokens.add(
+    await universe.getToken('0x74ccbe53F77b08632ce0CB91D3A545bF6B8E0979')
+  )
   if (universe.config.dynamicConfigURL == null) {
     return
   }
@@ -388,6 +407,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
         v2: string[]
         v3: string[]
       }
+      blacklistedTokens: string[]
       aerodrome: {
         stableOrVolatile: string[]
       }
@@ -415,6 +435,12 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
         } catch (e) {
           console.log(e)
         }
+      })
+    )
+    await Promise.all(
+      configJson.blacklistedTokens.map(async (tokenAddr) => {
+        const token = await universe.getToken(tokenAddr)
+        universe.blacklistedTokens.add(token)
       })
     )
   } catch (e) {

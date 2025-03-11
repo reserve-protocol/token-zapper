@@ -31,9 +31,6 @@ import {
   isChainIdSupported,
 } from './configuration/ReserveAddresses'
 import { Universe } from './Universe'
-import { createKyberswap } from './aggregators/Kyberswap'
-import { createEnso } from './aggregators/Enso'
-export { createParaswap } from './aggregators/Paraswap'
 
 export { type Config } from './configuration/ChainConfiguration'
 export {
@@ -52,8 +49,6 @@ export const configuration = {
 
 export { Universe } from './Universe'
 
-export { createKyberswap } from './aggregators/Kyberswap'
-export { createEnso } from './aggregators/Enso'
 
 const CHAIN_ID_TO_CONFIG: Record<
   ChainId,
@@ -69,8 +64,6 @@ const CHAIN_ID_TO_CONFIG: Record<
     blockTime: 12,
     setup: setupEthereumZapper,
     setupWithDexes: async (uni: EthereumUniverse) => {
-      uni.addTradeVenue(createKyberswap('Kyberswap', uni))
-      uni.addTradeVenue(createEnso('Enso', uni, 1))
       await setupEthereumZapper(uni)
     },
   },
@@ -79,8 +72,6 @@ const CHAIN_ID_TO_CONFIG: Record<
     blockTime: 0.25,
     setup: setupArbitrumZapper,
     setupWithDexes: async (uni: ArbitrumUniverse) => {
-      uni.addTradeVenue(createKyberswap('Kyberswap', uni))
-      uni.addTradeVenue(createEnso('Enso', uni, 1))
       await setupArbitrumZapper(uni)
     },
   },
@@ -89,8 +80,6 @@ const CHAIN_ID_TO_CONFIG: Record<
     blockTime: 2,
     setup: setupBaseZapper,
     setupWithDexes: async (uni: BaseUniverse) => {
-      uni.addTradeVenue(createKyberswap('Kyberswap', uni))
-      uni.addTradeVenue(createEnso('Enso', uni, 1))
       await setupBaseZapper(uni)
     },
   },

@@ -8,12 +8,20 @@ import {
   BalanceOf__factory,
   EthBalance__factory,
   IERC20__factory,
+  MoveEth__factory,
 } from '../contracts'
 import { TRADE_SLIPPAGE_DENOMINATOR } from '../base/constants'
 import { SwapPlan } from '../searcher/Swap'
 import { defaultAbiCoder, ParamType } from '@ethersproject/abi'
 import { formatEther } from 'ethers/lib/utils'
-import { BigNumberish, constants } from 'ethers'
+import { BigNumberish, constants, ethers } from 'ethers'
+
+import deployments from '../contracts/deployments.json'
+
+const moveEthAddress: Record<number, string> = {
+  1: deployments[1][0].contracts.MoveEth.address,
+  8453: deployments[8453][0].contracts.MoveEth.address,
+}
 
 export enum InteractionConvention {
   // The action requires callee to send tokens to the contract before calling it
@@ -165,10 +173,31 @@ export const plannerUtils = {
       destination: Address
     ) {
       const tokenAddress = token instanceof Address ? token : token.address
-      const erc20 = gen.Contract.createContract(
-        IERC20__factory.connect(tokenAddress.address, universe.provider)
-      )
-      planner.add(erc20.transfer(destination.address, amount))
+      if (tokenAddress === universe.nativeToken.address) {
+        // Withdraw wrapped native token
+        // Invoke move ETH contract
+        if (moveEthAddress[universe.chainId] == null) {
+          throw new Error(`MoveEth not deployed on chain ${universe.chainId}`)
+        }
+        const moveEth = gen.Contract.createLibrary(
+          MoveEth__factory.connect(
+            moveEthAddress[universe.chainId],
+            universe.provider
+          )
+        )
+        planner.add(
+          moveEth.moveEth(
+            destination.address,
+            universe.wrappedNativeToken.address.address,
+            amount
+          )
+        )
+      } else {
+        const erc20 = gen.Contract.createContract(
+          IERC20__factory.connect(tokenAddress.address, universe.provider)
+        )
+        planner.add(erc20.transfer(destination.address, amount))
+      }
     },
     balanceOf(
       universe: Universe,

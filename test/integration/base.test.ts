@@ -488,6 +488,25 @@ describe('base zapper', () => {
     )
   })
 
+  describe('superOETH', () => {
+    it('should mint superOETH from cbETH', async () => {
+      const out = await universe.zap(
+        universe.commonTokens.cbETH.from(1),
+        universe.commonTokens.SuperOETH,
+        testUser
+      )
+      console.log(out.toString())
+    }, 20000)
+    it('should mint superOETH from wstETH', async () => {
+      const out = await universe.zap(
+        universe.commonTokens.wstETH.from(1),
+        universe.commonTokens.SuperOETH,
+        testUser
+      )
+      console.log(out.toString())
+    }, 20000)
+  })
+
   // describe('pathfinding', () => {
   //   it('finds a path', async () => {
   //     const inputQty = universe.commonTokens.WETH.from(1)

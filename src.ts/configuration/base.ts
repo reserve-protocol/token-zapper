@@ -32,6 +32,10 @@ export const COMMON_TOKENS = {
   cbBTC: '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf',
 
   RSR: '0xab36452dbac151be02b16ca17d8919826072f64a',
+
+  SuperOETH: '0xdbfefd2e8460a6ee4955a68582f85708baea60a3',
+  wsuperOETH: '0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6',
+
   // Folios
   ABX: '0xeBcda5b80f62DD4DD2A96357b42BB6Facbf30267',
   CLX: '0x44551ca46fa5592bb572e20043f7c3d54c85cad7',
@@ -113,7 +117,10 @@ export const PROTOCOL_CONFIGS = {
     '0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452':
       '0xf586d0728a47229e747d824a939000Cf21dEF5A0', // wsteth/USD
   },
-  erc4626: [['0xbb819D845b573B5D7C538F5b85057160cfb5f313', 'morpho']],
+  erc4626: [
+    ['0xbb819D845b573B5D7C538F5b85057160cfb5f313', 'morpho'],
+    ['0x6d961a6e4398462fd299fac6153b133b0f23e3f3', 'superOETH'],
+  ],
   aaveV3: {
     pool: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5',
     wrappers: [

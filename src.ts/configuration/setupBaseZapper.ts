@@ -16,6 +16,8 @@ import { TokenType } from '../entities/TokenClass'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupReservePricing } from './setupReservePricing'
 import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
+import { SuperOETHDeposit } from '../action/SuperOETH'
+import { wrapGasToken } from '../searcher/TradeAction'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
@@ -146,6 +148,9 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
       )
     }
   )
+  const mintSuperOETH = wrapGasToken(universe, new SuperOETHDeposit(universe))
+  universe.addAction(mintSuperOETH)
+  universe.mintableTokens.set(universe.commonTokens.SuperOETH, mintSuperOETH)
 
   universe.oracles.push(registry)
 

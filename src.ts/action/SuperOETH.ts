@@ -12,6 +12,9 @@ export class SuperOETHDeposit extends Action('SuperOETH') {
   gasEstimate(): bigint {
     return 150000n
   }
+  get isTrade(): boolean {
+    return true
+  }
   async plan(planner: gen.Planner, inputs: gen.Value[], destination: Address) {
     const wethlib = gen.Contract.createContract(
       IWrappedNative__factory.connect(

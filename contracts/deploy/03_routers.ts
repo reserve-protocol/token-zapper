@@ -2,11 +2,17 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { DeployFunction } from 'hardhat-deploy/types'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  // const { deployer } = await hre.getNamedAccounts()
+  // const uniV3RouterCall = await hre.deployments.deploy('UniV3RouterCall', {
+  //   from: deployer,
+  // })
+  // console.log('uniV3RouterCall deployed to:', uniV3RouterCall.address)
+
   const { deployer } = await hre.getNamedAccounts()
-  const uniV3RouterCall = await hre.deployments.deploy('UniV3RouterCall', {
+  const pancakeRouterCall = await hre.deployments.deploy('PancakeRouterCall', {
     from: deployer,
   })
-  console.log('uniV3RouterCall deployed to:', uniV3RouterCall.address)
+  console.log('pancakeRouterCall deployed to:', pancakeRouterCall.address)
 
   // const CurveStableSwapNGHelper = await hre.deployments.deploy(
   //   'CurveStableSwapNGHelper',
@@ -32,10 +38,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   //   )
   // }
 
-  const univ2swap = await hre.deployments.deploy('Univ2SwapHelper', {
-    from: deployer,
-  })
-  console.log('Univ2SwapHelper deployed to:', univ2swap.address)
+  // const univ2swap = await hre.deployments.deploy('Univ2SwapHelper', {
+  //   from: deployer,
+  // })
+  // console.log('Univ2SwapHelper deployed to:', univ2swap.address)
 
   // const CurveCryptoFactoryHelper = await hre.deployments.deploy(
   //   'CurveCryptoFactoryHelper',

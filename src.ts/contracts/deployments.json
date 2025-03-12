@@ -2539,6 +2539,45 @@
             }
           ]
         },
+        "PancakeRouterCall": {
+          "address": "0xAFA82121803b4DAc9A2072b349c7983cCdBfD96F",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_expected",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "router",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "encodedRouterCall",
+                  "type": "bytes"
+                }
+              ],
+              "name": "exactInputSingle",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        },
         "RTokenLens": {
           "address": "0x5cF5eD1715b6416710f106A3257E5C55B65EF418",
           "abi": [

@@ -24,13 +24,14 @@ import { ApprovalsStore } from './searcher/ApprovalsStore'
 import EventEmitter from 'events'
 import winston from 'winston'
 import { CompoundV2Deployment } from './action/CTokens'
+import { DeployFolioConfig, DeployFolioConfigJson } from './action/DeployFolioConfig'
+import { FolioContext } from './action/Folio'
 import { LidoDeployment } from './action/Lido'
 import { RTokenDeployment } from './action/RTokens'
 import { BlockCache } from './base/BlockBasedCache'
 import {
   GAS_TOKEN_ADDRESS,
-  USD_ADDRESS,
-  simulationUrls,
+  USD_ADDRESS
 } from './base/constants'
 import { AaveV2Deployment } from './configuration/setupAaveV2'
 import { AaveV3Deployment } from './configuration/setupAaveV3'
@@ -39,18 +40,14 @@ import { ReserveConvex } from './configuration/setupConvexStakingWrappers'
 import { CurveIntegration } from './configuration/setupCurve'
 import { ZapperExecutor__factory } from './contracts'
 import { TokenType, isAsset } from './entities/TokenClass'
-import { ZapperTokenQuantityPrice } from './oracles/ZapperAggregatorOracle'
-import { PerformanceMonitor } from './searcher/PerformanceMonitor'
-import { SwapPath } from './searcher/Swap'
-import { ToTransactionArgs } from './searcher/ToTransactionArgs'
-import { Contract } from './tx-gen/Planner'
-import { TxGen, TxGenOptions } from './searcher/TxGen'
-import { ITokenFlowGraphRegistry, InMemoryTokenFlowGraphRegistry, TokenFlowGraph, TokenFlowGraphSearcher } from './searcher/TokenFlowGraph'
-import { FolioContext } from './action/Folio'
-import { DeployFolioConfig, DeployFolioConfigJson } from './action/DeployFolioConfig'
-import { optimiseTrades } from './searcher/optimiseTrades'
-import { DexLiquidtyPriceStore } from './searcher/DexLiquidtyPriceStore'
 import { reachableTokens } from './exchange-graph/BFS'
+import { ZapperTokenQuantityPrice } from './oracles/ZapperAggregatorOracle'
+import { DexLiquidtyPriceStore } from './searcher/DexLiquidtyPriceStore'
+import { PerformanceMonitor } from './searcher/PerformanceMonitor'
+import { ToTransactionArgs } from './searcher/ToTransactionArgs'
+import { ITokenFlowGraphRegistry, InMemoryTokenFlowGraphRegistry, TokenFlowGraphSearcher } from './searcher/TokenFlowGraph'
+import { TxGen, TxGenOptions } from './searcher/TxGen'
+import { Contract } from './tx-gen/Planner'
 
 type TokenList<T> = {
   [K in keyof T]: Token
@@ -333,15 +330,6 @@ export class Universe<const UniverseConf extends Config = Config> {
   public readonly actions = new DefaultMap<Address, Action[]>(() => [])
   private readonly allActions = new Set<Action>()
 
-  public readonly tokenTradeSpecialCases = new Map<
-    Token,
-    (amount: TokenQuantity, destination: Address) => Promise<SwapPath | null>
-  >()
-
-  public readonly tokenFromTradeSpecialCases = new Map<
-    Token,
-    (amount: TokenQuantity, output: Token) => Promise<SwapPath | null>
-  >()
 
   // The GAS token for the EVM chain, set by the StaticConfig
   public readonly nativeToken: Token

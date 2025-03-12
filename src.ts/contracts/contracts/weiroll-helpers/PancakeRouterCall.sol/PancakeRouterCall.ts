@@ -23,37 +23,37 @@ import type {
   PromiseOrValue,
 } from "../../../common";
 
-export interface CurveStableSwapNGHelperInterface extends utils.Interface {
+export interface PancakeRouterCallInterface extends utils.Interface {
   functions: {
-    "addliquidity(uint256,uint256,address,uint256)": FunctionFragment;
+    "exactInputSingle(uint256,uint256,address,bytes)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "addliquidity"): FunctionFragment;
+  getFunction(nameOrSignatureOrTopic: "exactInputSingle"): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "addliquidity",
+    functionFragment: "exactInputSingle",
     values: [
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
+      PromiseOrValue<BytesLike>
     ]
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "addliquidity",
+    functionFragment: "exactInputSingle",
     data: BytesLike
   ): Result;
 
   events: {};
 }
 
-export interface CurveStableSwapNGHelper extends BaseContract {
+export interface PancakeRouterCall extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: CurveStableSwapNGHelperInterface;
+  interface: PancakeRouterCallInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -75,29 +75,29 @@ export interface CurveStableSwapNGHelper extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    addliquidity(
-      amount: PromiseOrValue<BigNumberish>,
-      coinIdx: PromiseOrValue<BigNumberish>,
-      pool: PromiseOrValue<string>,
-      minOut: PromiseOrValue<BigNumberish>,
+    exactInputSingle(
+      amountIn: PromiseOrValue<BigNumberish>,
+      _expected: PromiseOrValue<BigNumberish>,
+      router: PromiseOrValue<string>,
+      encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
-  addliquidity(
-    amount: PromiseOrValue<BigNumberish>,
-    coinIdx: PromiseOrValue<BigNumberish>,
-    pool: PromiseOrValue<string>,
-    minOut: PromiseOrValue<BigNumberish>,
+  exactInputSingle(
+    amountIn: PromiseOrValue<BigNumberish>,
+    _expected: PromiseOrValue<BigNumberish>,
+    router: PromiseOrValue<string>,
+    encodedRouterCall: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    addliquidity(
-      amount: PromiseOrValue<BigNumberish>,
-      coinIdx: PromiseOrValue<BigNumberish>,
-      pool: PromiseOrValue<string>,
-      minOut: PromiseOrValue<BigNumberish>,
+    exactInputSingle(
+      amountIn: PromiseOrValue<BigNumberish>,
+      _expected: PromiseOrValue<BigNumberish>,
+      router: PromiseOrValue<string>,
+      encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
@@ -105,21 +105,21 @@ export interface CurveStableSwapNGHelper extends BaseContract {
   filters: {};
 
   estimateGas: {
-    addliquidity(
-      amount: PromiseOrValue<BigNumberish>,
-      coinIdx: PromiseOrValue<BigNumberish>,
-      pool: PromiseOrValue<string>,
-      minOut: PromiseOrValue<BigNumberish>,
+    exactInputSingle(
+      amountIn: PromiseOrValue<BigNumberish>,
+      _expected: PromiseOrValue<BigNumberish>,
+      router: PromiseOrValue<string>,
+      encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    addliquidity(
-      amount: PromiseOrValue<BigNumberish>,
-      coinIdx: PromiseOrValue<BigNumberish>,
-      pool: PromiseOrValue<string>,
-      minOut: PromiseOrValue<BigNumberish>,
+    exactInputSingle(
+      amountIn: PromiseOrValue<BigNumberish>,
+      _expected: PromiseOrValue<BigNumberish>,
+      router: PromiseOrValue<string>,
+      encodedRouterCall: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

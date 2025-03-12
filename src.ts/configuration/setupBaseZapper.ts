@@ -8,7 +8,12 @@ import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { OffchainOracleRegistry } from '../oracles/OffchainOracleRegistry'
 import { setupCompoundV3 } from './setupCompV3'
 import { setupAaveV3 } from './setupAaveV3'
-import { setupUniswapV3, UniswapV3Context } from './setupUniswapV3'
+import {
+  setupUniswapV3,
+  SUSHISWAP_V3,
+  UNI_V3,
+  UniswapV3Context,
+} from './setupUniswapV3'
 import { setupAerodromeRouter } from './setupAerodromeRouter'
 import { setupERC4626 } from './setupERC4626'
 import { createProtocolWithWrappers } from '../action/RewardableWrapper'
@@ -18,6 +23,8 @@ import { setupReservePricing } from './setupReservePricing'
 import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
 import { SuperOETHDeposit } from '../action/SuperOETH'
 import { wrapGasToken } from '../searcher/TradeAction'
+import { setupMaverick } from './maverick'
+import { setupPancakeSwap } from '../action/PancakeSwap'
 
 export const setupBaseZapper = async (universe: BaseUniverse) => {
   const logger = universe.logger.child({ prefix: 'setupBaseZapper' })
@@ -150,7 +157,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   )
   const mintSuperOETH = wrapGasToken(universe, new SuperOETHDeposit(universe))
   universe.addAction(mintSuperOETH)
-  universe.mintableTokens.set(universe.commonTokens.SuperOETH, mintSuperOETH)
+  // universe.mintableTokens.set(universe.commonTokens.SuperOETH, mintSuperOETH)
 
   universe.oracles.push(registry)
 
@@ -172,19 +179,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
 
   let uniswapV3Ctx: UniswapV3Context
   let uniswapV2Ctx: UniswapV2Context
-  const initUni3 = async () => {
-    logger.info('Setting up UniswapV3')
-    const router = await setupUniswapV3(universe)
-    uniswapV3Ctx = router
-  }
-  const initUni2 = async () => {
-    logger.info('Setting up UniswapV2')
-    const ctx = await setupUniswapV2(universe)
-    if (ctx != null) {
-      uniswapV2Ctx = ctx
-    }
-  }
-
   const initERC4626 = async () => {
     logger.info('Setting up preferred rTokens')
     await Promise.all(
@@ -231,20 +225,50 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
   }
   let done = 0
 
+  universe.addPreferredRTokenInputToken(
+    universe.commonTokens.SuperOETH,
+    universe.commonTokens.WETH
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.SuperOETH,
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.addPreferredRTokenInputToken(
+    universe.commonTokens.wsuperOETH,
+    universe.commonTokens.WETH
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.wsuperOETH,
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+
   const tasks = [
     initCompound(),
     initAave(),
+    // setupMaverick(universe),
     (async () => {
       uniswapV2Ctx = (await setupUniswapV2(universe))!
     })(),
     (async () => {
-      uniswapV3Ctx = await setupUniswapV3(universe)
+      logger.info(`Uniswap V3: loading pools`)
+      uniswapV3Ctx = await setupUniswapV3(universe, UNI_V3[8453])
+      logger.info(`Uniswap V3: ${uniswapV3Ctx.pools.size} pools loaded`)
+    })(),
+    (async () => {
+      logger.info(`SushiSwap V3: loading pools`)
+      const ctx = await setupUniswapV3(universe, SUSHISWAP_V3[8453])
+      logger.info(`SushiSwap V3: ${ctx.pools.size} pools loaded`)
+    })(),
+    (async () => {
+      logger.info(`Pancakeswap: loading pools`)
+      const ctx = await setupPancakeSwap(universe)
+      logger.info(`Pancakeswap: ${ctx.pools.size} pools loaded`)
     })(),
     initERC4626(),
     setupStarGate_(),
     setupAero(),
-  ].map((tsk) => {
-    return tsk
+  ].map((tsk) =>
+    tsk
       .catch((e) => {
         logger.error(e)
       })
@@ -252,7 +276,7 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
         done++
         logger.info(`${done}/${tasks.length} done`)
       })
-  })
+  )
 
   await Promise.all(tasks)
 

@@ -241,7 +241,6 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     universe.commonTokens.wsuperOETH,
     Promise.resolve(universe.commonTokens.WETH)
   )
-
   const tasks = [
     initCompound(),
     initAave(),

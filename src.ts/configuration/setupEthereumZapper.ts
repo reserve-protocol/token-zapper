@@ -30,7 +30,7 @@ import { setupPXETH } from './setupPXETH'
 import { setupRETH } from './setupRETH'
 import { setupStakeDAO } from './setupStakeDAO'
 import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
-import { setupUniswapV3, UniswapV3Context } from './setupUniswapV3'
+import { setupUniswapV3, UNI_V3, UniswapV3Context } from './setupUniswapV3'
 import { setupWrappedGasToken } from './setupWrappedGasToken'
 import { setupYearn } from './setupYearn'
 
@@ -134,7 +134,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
 
   const initUniswapV3 = async () => {
     try {
-      uniswapV3Ctx = await setupUniswapV3(universe)
+      uniswapV3Ctx = await setupUniswapV3(universe, UNI_V3[1])
     } catch (e) {
       console.log('Failed to load uniswapV3')
       console.log(e)

@@ -7,9 +7,6 @@ import { hexConcat, hexDataSlice } from '@ethersproject/bytes'
 import { DefaultMap } from '../base/DefaultMap'
 import { Address } from '../base/Address'
 import type { Universe } from '../Universe'
-import { Token, TokenQuantity } from '../entities/Token'
-import { TokenAmounts } from '../entities/TokenAmounts'
-import { SingleSwap, SwapPath, SwapPaths } from '../searcher/Swap'
 
 const variableNames = [
   'a',

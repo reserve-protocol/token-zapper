@@ -2,6 +2,7 @@ import { ethers } from 'ethers'
 import { Universe } from '../Universe'
 import {
   Action,
+  BaseAction,
   DestinationOptions,
   InteractionConvention,
 } from '../action/Action'
@@ -24,14 +25,13 @@ import { Contract, Planner, Value } from '../tx-gen/Planner'
 import fs from 'fs'
 import { DefaultMap } from '../base/DefaultMap'
 import { Graph } from '../exchange-graph/Graph'
-import { SwapPlan } from '../searcher/Swap'
 import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
-import { wait } from '../base/controlflow'
 import baseUniV3 from './data/8453/univ3.json'
 import mainnetUniV3 from './data/1/univ3.json'
+import sushiBaseV3 from './data/8453/sushiv3.json'
 
 interface IUniswapV3Config {
-  subgraphId: string
+  name: string
   router: string
   quoter: string
   factory: string
@@ -43,9 +43,9 @@ interface IUniswapV3Config {
     token1: { id: string }
   }[]
 }
-const configs: Record<ChainId, IUniswapV3Config> = {
+export const UNI_V3: Record<ChainId, IUniswapV3Config> = {
   [ChainIds.Mainnet]: {
-    subgraphId: '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV',
+    name: 'univ3',
     router: '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45',
     quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
     factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
@@ -57,7 +57,7 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     staticPools: mainnetUniV3,
   },
   [ChainIds.Arbitrum]: {
-    subgraphId: 'FQ6JYszEKApsBpAmiHesRsd9Ygc6mzmpNRANeVQFYoVX',
+    name: 'univ3',
     router: '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45',
     quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
     factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
@@ -65,7 +65,7 @@ const configs: Record<ChainId, IUniswapV3Config> = {
     staticPools: [],
   },
   [ChainIds.Base]: {
-    subgraphId: 'HMuAwufqZ1YCRmzL2SfHTVkzZovC9VL2UAKhjvRqKiR1',
+    name: 'univ3',
     router: '0x2626664c2603336e57b271c5c0b26f421741e481',
     quoter: '0x3d4e44eb1374240ce5f1b871ab261cd16335b76a',
     factory: '0x33128a8fc17869897dce68ed026d694621f6fdfd',
@@ -73,42 +73,20 @@ const configs: Record<ChainId, IUniswapV3Config> = {
       '0xab7fed603f0e5eb8f46ab58b086631d75cfbe78d',
       '0xdef0dbd2d2a1ad31c2bf6aaead5c82b6c07558c0',
     ],
-    staticPools: baseUniV3.map((i) => ({
-      ...i,
-      feeTier: Number(i.feeTier),
-    })),
+    staticPools: baseUniV3,
   },
 }
 
-const pageSize = 250
-const pages = 6
-const top100PoolsQuery = `query GetPools(
-  $skip: Int=0,
-  $block: Int=0
-){
-  pools(
-    first: ${pageSize}
-    skip: $skip,
-    where:{
-      totalValueLockedUSD_gt: 25000,
-      totalValueLockedUSD_lt: 10000000000,
-    },
-    block:{
-      number: $block
-    },
-    orderBy: volumeUSD,
-    orderDirection: desc
-  ) {
-    id
-    feeTier
-    token0 {
-      id
-    }
-    token1 {
-      id
-    }
-  }
-}`
+export const SUSHISWAP_V3: Record<number, IUniswapV3Config> = {
+  [ChainIds.Base]: {
+    name: 'sushiv3',
+    router: '0xA0a65A34E2e62d83F00237aB74F2db436ec5265a',
+    quoter: '0xb1E835Dc2785b52265711e17fCCb0fd018226a6e',
+    factory: '0xc35DADB65012eC5796536bD9864eD8773aBc74C4',
+    pools: [],
+    staticPools: sushiBaseV3,
+  },
+}
 
 const loadPools = async (ctx: UniswapV3Context, poolAddresses: Address[]) => {
   return await Promise.all(
@@ -181,75 +159,6 @@ const definePoolFromPoolDataArray = async (
   return pools.filter((p) => p != null)
 }
 
-const loadPoolsFromSubgraph = async (
-  ctx: UniswapV3Context,
-  subgraphId: string,
-  offset: number,
-  block: number
-) => {
-  const SUBGRAPH_API_TOKEN = process.env.THEGRAPH_API_KEY
-  if (!SUBGRAPH_API_TOKEN) {
-    throw new Error('THEGRAPH_API_KEY is not set')
-  }
-  let poolData: any[] = []
-  const url = `https://gateway.thegraph.com/api/${SUBGRAPH_API_TOKEN}/subgraphs/id/${subgraphId}`
-  const response = await fetch(url, {
-    method: 'POST',
-    body: JSON.stringify({
-      query: top100PoolsQuery,
-      variables: {
-        block: block,
-        skip: offset,
-      },
-    }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    signal: AbortSignal.timeout(3000),
-  })
-  if (!response.ok) {
-    console.log(response)
-    console.log(
-      `UniV3: Failed to fetch pools from subgraph: ${response.statusText}`
-    )
-    throw new Error(
-      `Failed to fetch pools from subgraph: ${response.statusText}`
-    )
-  }
-  const jsonResp: {
-    data: {
-      pools: {
-        id: string
-        feeTier: number
-        token0: { id: string }
-        token1: { id: string }
-      }[]
-    }
-  } = await response.json()
-  if (Array.isArray(jsonResp.data?.pools)) {
-    poolData = jsonResp.data.pools
-  } else {
-    console.log(jsonResp)
-    throw new Error('Failed to fetch pools from subgraph')
-  }
-
-  return await definePoolFromPoolDataArray(ctx, poolData)
-}
-const loadPoolsFromSubgraphWithRetry = async (
-  ctx: UniswapV3Context,
-  subgraphId: string,
-  offset: number,
-  block: number
-) => {
-  for (let i = 0; i < 3; i++) {
-    try {
-      return await loadPoolsFromSubgraph(ctx, subgraphId, offset, block)
-    } catch (e) {}
-    await wait(500)
-  }
-  return []
-}
-
 export type Direction = '0->1' | '1->0'
 export class UniswapV3Context {
   private readonly resolvingPools_: Map<Address, Promise<UniswapV3Pool>> =
@@ -287,6 +196,7 @@ export class UniswapV3Context {
   constructor(
     public readonly universe: Universe,
     public readonly config: {
+      name: string
       routerCall: Address
       router: Address
       factory: Address
@@ -327,9 +237,9 @@ class UniswapV3Pool {
   public readonly liquidity: () => Promise<TokenQuantity>
 
   public toString() {
-    return `UniV3Pool(${this.address.toShortString()}.${this.fee}.${
-      this.token0
-    }.${this.token1})`
+    return `${this.context.config.name}(${this.address.toShortString()}.${
+      this.fee
+    }.${this.token0}.${this.token1})`
   }
   public constructor(
     public readonly context: UniswapV3Context,
@@ -365,9 +275,13 @@ class UniswapV3Pool {
   }
 }
 
-class UniswapV3Swap extends Action('UniswapV3') {
+class UniswapV3Swap extends BaseAction {
   public get context(): UniswapV3Context {
     return this.pool.context
+  }
+
+  get protocol(): string {
+    return this.context.config.name
   }
 
   public async liquidity(): Promise<number> {
@@ -384,13 +298,8 @@ class UniswapV3Swap extends Action('UniswapV3') {
   private _gasEstimate: bigint = 200000n
 
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
-    try {
-      const { amountOut } = await this.quoteExactSingle.get(amountIn.amount)
-      return [amountOut]
-    } catch (e) {
-      // console.log(`${this}: Failed to quote ${amountIn} -> ${this.tokenOut}`)
-      return [this.tokenOut.zero]
-    }
+    const { amountOut } = await this.quoteExactSingle.get(amountIn.amount)
+    return [amountOut]
   }
 
   async plan(
@@ -410,13 +319,6 @@ class UniswapV3Swap extends Action('UniswapV3') {
         input,
         minOut,
         this.context.config.router.address,
-        // address tokenIn;
-        // address tokenOut;
-        // uint24 fee;
-        // address recipient;
-        // uint256 amountIn;
-        // uint256 amountOutMinimum;
-        // uint160 sqrtPriceLimitX96;
         ethers.utils.defaultAbiCoder.encode(
           [
             'address',
@@ -522,9 +424,9 @@ class UniswapV3Swap extends Action('UniswapV3') {
   }
 
   public toString() {
-    return `UniV3(${this.pool.address.toShortString()}.${this.tokenIn}.${
-      this.tokenOut
-    })`
+    return `V3Pool(${
+      this.context.config.name
+    },${this.pool.address.toShortString()}.${this.tokenIn}.${this.tokenOut})`
   }
 
   public get actionName() {
@@ -532,46 +434,28 @@ class UniswapV3Swap extends Action('UniswapV3') {
   }
 }
 
-export const setupUniswapV3 = async (universe: Universe) => {
-  const logger = universe.logger.child({
-    integration: 'univ3',
-  })
+export const setupUniswapV3 = async (
+  universe: Universe,
+  config: IUniswapV3Config
+) => {
   const chainId = universe.chainId
   if (!isChainIdSupported(chainId)) {
     throw new Error(`ChainId ${chainId} not supported`)
   }
-  const config = configs[chainId]
   const uniswapRouterAddress = Address.from(config.router)
   const uniswapQuoterAddress = Address.from(config.quoter)
 
   const ctx = new UniswapV3Context(universe, {
+    name: config.name,
     router: uniswapRouterAddress,
     quoter: uniswapQuoterAddress,
     factory: Address.from(config.factory),
     routerCall: Address.from(universe.config.addresses.uniV3Router),
   })
   const additionalPoolsToLoad = config.pools.map(Address.from)
-
-  const currentBlock = await universe.provider.getBlockNumber()
-  const loadBlock = Math.floor(currentBlock / (30 * 60 * 3)) * 30 * 60 * 3
-
   const loadUniPools = async (): Promise<UniswapV3Pool[]> => {
     let pools: UniswapV3Pool[] = []
     pools = await definePoolFromPoolDataArray(ctx, config.staticPools)
-
-    for (let i = Math.floor(pools.length / pageSize); i < pages; i++) {
-      const ps = await loadPoolsFromSubgraphWithRetry(
-        ctx,
-        config.subgraphId,
-        i * pageSize,
-        loadBlock
-      )
-      pools.push(...ps)
-      if (ps.length !== pageSize) {
-        break
-      }
-      await wait(250)
-    }
     return pools
   }
 
@@ -595,7 +479,7 @@ export const setupUniswapV3 = async (universe: Universe) => {
 
   if (process.env.WRITE_DATA) {
     fs.writeFileSync(
-      `src.ts/configuration/data/${chainId}/univ3.json`,
+      `src.ts/configuration/data/${chainId}/${config.name}.json`,
       JSON.stringify(
         allPools
           .map((i) => ({
@@ -614,8 +498,6 @@ export const setupUniswapV3 = async (universe: Universe) => {
       )
     )
   }
-
-  logger.info(`UniV3: Loaded ${allPools.length} pools`)
 
   return ctx
 }

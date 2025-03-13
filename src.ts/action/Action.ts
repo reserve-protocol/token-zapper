@@ -11,7 +11,6 @@ import {
   MoveEth__factory,
 } from '../contracts'
 import { TRADE_SLIPPAGE_DENOMINATOR } from '../base/constants'
-import { SwapPlan } from '../searcher/Swap'
 import { defaultAbiCoder, ParamType } from '@ethersproject/abi'
 import { formatEther } from 'ethers/lib/utils'
 import { BigNumberish, constants, ethers } from 'ethers'
@@ -432,9 +431,6 @@ export abstract class BaseAction {
     public _approvals: Approval[]
   ) {}
 
-  public async intoSwapPath(universe: Universe, qty: TokenQuantity) {
-    return await new SwapPlan(universe, [this]).quote([qty])
-  }
   abstract quote(amountsIn: TokenQuantity[]): Promise<TokenQuantity[]>
   public async quoteWithDust(amountsIn: TokenQuantity[]): Promise<{
     output: TokenQuantity[]

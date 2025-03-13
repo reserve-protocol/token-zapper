@@ -1,6 +1,7 @@
 import { Universe } from '../Universe'
 import { BaseAction } from '../action/Action'
 import { TokenQuantity } from '../entities/Token'
+import { nelderMeadOptimize, normalizeVectorByNodes } from './NelderMead'
 
 /** Optimises trades solely in terms of output quantity ignoring tx fees */
 export const optimiseTradesInOutQty = async (
@@ -69,6 +70,7 @@ export const optimiseTradesInOutQty = async (
     results
       .filter((i) => i.result.price == 0)
       .sort((l, r) => r.result.price - l.result.price)
+
     const best = results[0]
     best.state.input = Math.min(best.newInput, best.state.maxInput)
     best.state.output = best.result.outputQty
@@ -93,169 +95,101 @@ export const optimiseTrades = async (
   floorPrice: number,
   parts: number = 10
 ) => {
-  const inputToken = input.token
-  const outputToken = tradeActions[0].outputToken[0]
+  const actionsOuts = await Promise.all(
+    tradeActions.map(async (a) => {
+      try {
+        return (await a.quote([input.scalarDiv(20n)]))[0].asNumber()
+      } catch (e) {
+        return 0
+      }
+    })
+  )
 
-  const maxInputs = tradeActions.map((i) => Infinity)
-  const [gasTokenPrice, inputTokenPrice, outputTokenPrice] = await Promise.all([
-    universe.nativeToken.price,
-    inputToken.price,
-    outputToken.price,
-  ]).then((prices) => prices.map((i) => i.asNumber()))
-  if (isFinite(floorPrice)) {
-    await Promise.all(
-      tradeActions.map(async (action, index) => {
-        const maxSize = await universe.getMaxTradeSize(action, floorPrice)
-        const liq = (await action.liquidity()) / 2 / inputTokenPrice
-        maxInputs[index] = Math.min(maxSize.asNumber(), liq)
-      })
-    )
-  } else if (tradeActions.length > 1) {
-    await Promise.all(
-      tradeActions.map(async (action, index) => {
-        maxInputs[index] = Infinity
-      })
-    )
-  }
-  if (maxInputs.every((i) => i === 0)) {
-    return {
-      inputs: tradeActions.map(() => 0),
-      output: 0,
-      input: 0,
-      price: 0,
-      unspent: input.asNumber(),
-      outputs: tradeActions.map(() => 0),
-    }
+  const best = Math.max(...actionsOuts)
+  for (let i = 0; i < actionsOuts.length; i++) {
+    const out = actionsOuts[i]
+    console.log(`${tradeActions[i]}: ${out}`)
   }
 
-  const gasPrice = universe.gasPrice
-  const gasToken = universe.nativeToken
+  // Pick all that are within 10% of the best
 
-  const evaluteAction = async (
-    state: {
-      input: number
-      output: number
-      index: number
-      maxInput: number
-      action: BaseAction
-    },
-    inputQty: number,
-    totalInputValue: number,
-    totalOutput: number,
-    totalGasBefore: bigint
-  ) => {
-    const input = inputToken.from(inputQty)
-
-    const output = await state.action.quote([input]).catch((e) => {
-      return state.action.outputToken.map((i) => i.zero)
+  const tradeActionIndicesToOptimise = tradeActions
+    .map((_, i) => i)
+    .filter((i) => {
+      return actionsOuts[i] >= best * 0.9
     })
 
-    const gas =
-      totalGasBefore + (state.input === 0 ? state.action.gasEstimate() : 0n)
-    const txFee = gasPrice * gas
-    const gasFeeUSD = gasToken.from(txFee).asNumber() * gasTokenPrice
-    const outputQty = output[0].asNumber()
-    const additionalOutput = outputQty - state.output
-    const outputValue = (additionalOutput + totalOutput) * outputTokenPrice
-    const price = outputValue / (totalInputValue + gasFeeUSD)
-    return {
-      price,
-      inputQty,
-      outputQty,
-      gas,
-    }
-  }
+  const finalOutputs = tradeActions.map(() => 0)
+  const finalInputs = tradeActions.map(() => 0)
+
+  tradeActions = tradeActionIndicesToOptimise.map((i) => tradeActions[i])
+  const minimium = Math.min(1 / tradeActions.length / 2, 1 / parts)
+  const initial = tradeActions.map(() => 1 / tradeActions.length)
+  const dim = [tradeActions.length]
+  const inputValue = (await input.price()).asNumber()
+  const outputToken = tradeActions[0].outputToken[0]
+  const outputTokenPrice = (await outputToken.price).asNumber()
+  const gasTokenPrice = universe.gasTokenPrice.asNumber()
+
+  let totalOut = 0
   const inputQty = input.asNumber()
-  const onePart = inputQty / parts
-  const state = tradeActions.map((action, index) => ({
-    input: 0,
-    output: 0,
-    index,
-    maxInput: maxInputs[index],
-    action,
-  }))
-  const step = async () => {
-    for (const s of state) {
-      if (s.input * inputTokenPrice < 0.001) {
-        s.input = 0
-      }
-    }
-    const eligible = state.filter((i) => i.input < i.maxInput)
+  const inputs = await nelderMeadOptimize(
+    initial,
+    async (params, iteration) => {
+      const paramsRounded = normalizeVectorByNodes(
+        normalizeVectorByNodes(params, dim).map((p) => (p < minimium ? 0 : p)),
+        dim
+      )
 
-    if (eligible.length === 0) {
-      return
-    }
-
-    const currentTotalInput = state.reduce((l, r) => l + r.input, 0)
-    const currentTotalOutput = state.reduce((l, r) => l + r.output, 0)
-
-    const currentTotalGas = state.reduce(
-      (l, r) => l + (r.input !== 0 ? r.action.gasEstimate() : 0n),
-      0n
-    )
-    const results = await Promise.all(
-      state
-        .filter((i) => i.input < i.maxInput)
-        .map(async (state) => {
-          const additionalInput =
-            Math.min(state.maxInput, state.input + onePart) - state.input
-
-          const actionInput = state.input + additionalInput
-          const res = await evaluteAction(
-            state,
-            actionInput,
-            (currentTotalInput + additionalInput) * inputTokenPrice,
-            currentTotalOutput,
-            currentTotalGas
-          )
-          return {
-            result: res,
-            newInput: actionInput,
-            state,
+      const outputs = await Promise.all(
+        paramsRounded.map(async (p, i) => {
+          if (p == 0) {
+            return null
           }
+          const action = tradeActions[i]
+          return await action
+            .quote([action.inputToken[0].from(p * inputQty)])
+            .catch(() => null)
         })
-    )
-    // Pick the best one in terms of output pr inputput - gas
-    results.sort((l, r) => r.result.price - l.result.price)
-    const best = results[0]
-    best.state.input = Math.min(best.newInput, best.state.maxInput)
-    best.state.output = best.result.outputQty
-  }
-  for (let i = 0; i < parts; i++) {
-    await step()
-  }
-  for (const s of state) {
-    if (s.input * inputTokenPrice < 0.01) {
-      s.input = 0
-    }
-  }
-  const totalGas = state
-    .filter((i) => i.input !== 0)
-    .reduce((l, r) => l + r.action.gasEstimate(), 0n)
-  const totalGasFee = gasToken.from(totalGas).asNumber() * gasTokenPrice
-  const totalInputSpent = state.reduce((l, r) => l + r.input, 0)
-  const totalOutput = state.reduce((l, r) => l + r.output, 0)
-
-  let unspentQty = inputQty - totalInputSpent
-  if (unspentQty * outputTokenPrice < 0.01) {
-    unspentQty = 0
-  }
-
-  // If less than 5% is unspent, add it to the first action
-  if (totalInputSpent > unspentQty * 95) {
-    state[0].input += unspentQty
-    unspentQty = 0
-  }
+      )
+      totalOut = 0
+      let gasUnits = 0n
+      for (let i = 0; i < tradeActions.length; i++) {
+        const out = outputs[i]
+        if (out == null) {
+          finalInputs[tradeActionIndicesToOptimise[i]] = 0
+          continue
+        }
+        finalInputs[tradeActionIndicesToOptimise[i]] =
+          paramsRounded[i] * inputQty
+        finalOutputs[tradeActionIndicesToOptimise[i]] = out[0].asNumber()
+        totalOut += finalOutputs[tradeActionIndicesToOptimise[i]]
+        gasUnits += tradeActions[i].gasEstimate()
+      }
+      const txFee =
+        universe.nativeToken.from(gasUnits * universe.gasPrice).asNumber() *
+        gasTokenPrice
+      const outputValue = totalOut * outputTokenPrice
+      const price = outputValue / (inputValue + txFee)
+      return 1 / price
+    },
+    universe.logger,
+    {
+      maxIterations: 35,
+      perturbation: 1,
+      tolerance: 1e-3,
+    },
+    (params) =>
+      normalizeVectorByNodes(
+        normalizeVectorByNodes(params, dim).map((p) => (p < minimium ? 0 : p)),
+        dim
+      )
+  )
 
   return {
-    inputs: state.map((i) => i.input),
-    unspent: unspentQty,
-    output: totalOutput,
-    outputs: state.map((i) => i.output),
-    input: totalInputSpent,
-    price:
-      (totalInputSpent * inputTokenPrice + totalGasFee) /
-      (totalOutput * outputTokenPrice),
+    inputs: finalInputs,
+    output: totalOut,
+    outputs: finalOutputs,
   }
 }
 export type OptimisedTrade = Awaited<ReturnType<typeof optimiseTrades>>

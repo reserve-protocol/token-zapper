@@ -1624,6 +1624,9 @@ export class TokenFlowGraph {
         const label = node.action.end.outputs.join(', ')
         emit(`${node.action.end.nodeId} -> ${node.nodeId} [label = "${label}"]`)
       } else {
+        if (node.action instanceof BaseAction) {
+          emit(`// ${node.action.address}`)
+        }
         emit(
           `${node.nodeId} [label = "${node.nodeId}: ${node.name} (${node.nodeType})"]`
         )
@@ -2658,6 +2661,8 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
     }
 
     const splits = outEdges.getEdge(actions[0].inputToken[0])
+
+    splits.min = 1 / 20
 
     if (
       containsLPTokens &&
@@ -3717,20 +3722,21 @@ const optimise = async (
 
   if (!fromCache) {
     g = removeNodes(g, findNodesWithoutSources(g))
-    g = removeUselessNodes(removeRedundantSplits(g))
-    inferDustProducingNodes(g)
-    await backPropagateInputProportions(g)
-    bestSoFar = await evaluationOptimiser(universe, g).evaluate(inputs)
-    g = removeNodes(g, findNodesWithoutSources(g))
-    g = removeUselessNodes(removeRedundantSplits(g))
-    g = removeRedundantSplits2(g)
-    if (prune) {
-      g = removeUselessNodes(removeRedundantSplits(g))
-      g = shorten1To1Splits(g)
-    }
-    inferDustProducingNodes(g)
-    await backPropagateInputProportions(g)
 
+    if (1 - bestSoFar.result.dustFraction > 0.001) {
+      g = removeUselessNodes(removeRedundantSplits(g))
+      inferDustProducingNodes(g)
+      await backPropagateInputProportions(g)
+      g = removeNodes(g, findNodesWithoutSources(g))
+      g = removeUselessNodes(removeRedundantSplits(g))
+      g = removeRedundantSplits2(g)
+      if (prune) {
+        g = removeUselessNodes(removeRedundantSplits(g))
+        g = shorten1To1Splits(g)
+      }
+      inferDustProducingNodes(g)
+      await backPropagateInputProportions(g)
+    }
     logger.debug('Graph pruned:')
     logger.debug(g.toDot().join('\n'))
 
@@ -3966,6 +3972,7 @@ const optimise = async (
       0
     )
   }
+  g = removeNodes(g, findNodesWithoutSources(g))
 
   logger.info(
     `Finished main optimisation phase in ${Date.now() - startTime3}ms`
@@ -4482,7 +4489,7 @@ export class TokenFlowGraphSearcher {
           graph,
           await outputToken.fromUSD(inputValue),
           targetToken,
-          false,
+          true,
           `sell output of redeem(${input}) = ${outputToken} for ${targetToken}`
         )
       }
@@ -4495,7 +4502,7 @@ export class TokenFlowGraphSearcher {
           graph,
           await targetToken.fromUSD(inputValue),
           output,
-          false,
+          true,
           `sell output (${input}) = ${preferredTradeToken} for ${output}`
         )
         targetToken = output
@@ -4538,9 +4545,13 @@ export class TokenFlowGraphSearcher {
 
     if (this.universe.isTokenMintable(output)) {
       const inputQty = await inputToken.fromUSD(inputValue)
-      await this.tokenSourceGraph(graph, inputQty, output, inputNode, true)
+      const isFolio =
+        (await this.universe.folioContext.isFolio(output)) ||
+        (await this.universe.isRToken(output))
+
+      await this.tokenSourceGraph(graph, inputQty, output, inputNode, isFolio)
       const tradePathExists = await this.doesTradePathExist(input, output)
-      if (tradePathExists && txGenOptions.useTrade !== false) {
+      if (isFolio && tradePathExists && txGenOptions.useTrade !== false) {
         let res = await optimise(
           this.universe,
           graph,
@@ -4569,7 +4580,8 @@ export class TokenFlowGraphSearcher {
           graph,
           await inputToken.fromUSD(inputValue),
           output,
-          false
+          true,
+          `last step, trade ${inputToken} -> ${output}`
         )
       }
     }

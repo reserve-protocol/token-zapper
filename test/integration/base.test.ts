@@ -147,15 +147,17 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
+  makeTestCase(0.1, t.WETH, rTokens.bsd),
+
   makeTestCase(0.02, t.WETH, t.CLUB),
   makeTestCase(0.1, t.WETH, t.ABX),
   makeTestCase(1, t.WETH, t.ABX),
   makeTestCase(2, t.WETH, t.ABX),
   makeTestCase(4, t.WETH, t.ABX),
   makeTestCase(8, t.WETH, t.ABX),
-  makeTestCase(1000, t.USDC, rTokens.bsd),
+  // makeTestCase(1000, t.USDC, rTokens.bsd),
   makeTestCase(1000, t.USDC, rTokens.hyUSD),
-  makeTestCase(1, t.WETH, rTokens.bsd),
+  // makeTestCase(1, t.WETH, rTokens.bsd),
   makeTestCase(1, t.WETH, rTokens.hyUSD),
   makeTestCase(2, t.ETH, t.BDTF),
   makeTestCase(1000, t.USDC, t.BDTF),
@@ -173,6 +175,8 @@ const issueanceCases = [
 ]
 
 const redeemCases = [
+  makeTestCase(100, t.AI, t.WETH),
+
   makeTestCase(10, t.BDTF, t.ETH),
   makeTestCase(10, t.BDTF, t.ETH),
   makeTestCase(10, t.MVTT10F, t.ETH),
@@ -489,17 +493,17 @@ describe('base zapper', () => {
   })
 
   describe('superOETH', () => {
-    it('should mint superOETH from cbETH', async () => {
-      const out = await universe.zap(
-        universe.commonTokens.cbETH.from(1),
-        universe.commonTokens.SuperOETH,
-        testUser
-      )
-      console.log(out.toString())
-    }, 20000)
+    // it('should mint superOETH from cbETH', async () => {
+    //   const out = await universe.zap(
+    //     universe.commonTokens.cbETH.from(480),
+    //     universe.commonTokens.SuperOETH,
+    //     testUser
+    //   )
+    //   console.log(out.toString())
+    // }, 20000)
     it('should mint superOETH from wstETH', async () => {
       const out = await universe.zap(
-        universe.commonTokens.wstETH.from(1),
+        universe.commonTokens.wstETH.from(440),
         universe.commonTokens.SuperOETH,
         testUser
       )

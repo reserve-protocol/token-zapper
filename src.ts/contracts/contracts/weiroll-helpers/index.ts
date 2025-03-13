@@ -7,6 +7,8 @@ import type * as curvepoolsSol from "./Curvepools.sol";
 export type { curvepoolsSol };
 import type * as moveEthSol from "./MoveEth.sol";
 export type { moveEthSol };
+import type * as pancakeRouterCallSol from "./PancakeRouterCall.sol";
+export type { pancakeRouterCallSol };
 import type * as rTokenMintHelperSol from "./RTokenMintHelper.sol";
 export type { rTokenMintHelperSol };
 import type * as uniV3RouterCallSol from "./UniV3RouterCall.sol";

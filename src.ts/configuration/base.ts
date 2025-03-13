@@ -119,7 +119,7 @@ export const PROTOCOL_CONFIGS = {
   },
   erc4626: [
     ['0xbb819D845b573B5D7C538F5b85057160cfb5f313', 'morpho'],
-    ['0x6d961a6e4398462fd299fac6153b133b0f23e3f3', 'superOETH'],
+    ['0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6', 'superOETH'],
   ],
   aaveV3: {
     pool: '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5',

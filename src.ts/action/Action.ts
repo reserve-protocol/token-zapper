@@ -112,13 +112,11 @@ export const plannerUtils = {
     { token: input }: TokenQuantity,
     spender: Address
   ) => {
-    const allowance = (
-      await universe.approvalsStore.queryAllowance(
-        input,
-        universe.execAddress,
-        spender
-      )
-    ).toBigInt()
+    const allowance = await universe.approvalsStore.queryAllowance(
+      input,
+      universe.execAddress,
+      spender
+    )
     if (allowance >= constants.MaxUint256.toBigInt() / 2n) {
       return
     }

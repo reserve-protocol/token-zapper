@@ -67,7 +67,7 @@ export class DexLiquidtyPriceStore {
           idealLen,
           5
         ).then((m) => {
-          this.recordAllSingleStepBestPaths(input.token, m)
+          // this.recordAllSingleStepBestPaths(input.token, m)
           const out = m.get(target)?.path ?? []
 
           return out

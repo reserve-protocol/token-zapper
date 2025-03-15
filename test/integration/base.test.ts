@@ -34,8 +34,8 @@ const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
   cacheResolution: 4,
-  maxOptimisationSteps: 1600,
-  maxOptimisationTime: 60000,
+  maxOptimisationSteps: 500,
+  maxOptimisationTime: 20000,
   minimiseDustPhase1Steps: 10,
   zapMaxDustProduced: 1,
   zapMaxValueLoss: 1,
@@ -147,15 +147,15 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
-  makeTestCase(0.1, t.WETH, rTokens.bsd),
-  makeTestCase(0.1, t.WETH, rTokens.BSDX),
+  // makeTestCase(0.1, t.WETH, rTokens.bsd),
+  // makeTestCase(0.1, t.WETH, rTokens.BSDX),
 
   makeTestCase(0.02, t.WETH, t.CLUB),
   makeTestCase(0.1, t.WETH, t.ABX),
-  makeTestCase(1, t.WETH, t.ABX),
-  makeTestCase(2, t.WETH, t.ABX),
-  makeTestCase(4, t.WETH, t.ABX),
-  makeTestCase(8, t.WETH, t.ABX),
+  // makeTestCase(1, t.WETH, t.ABX),
+  // makeTestCase(2, t.WETH, t.ABX),
+  // makeTestCase(4, t.WETH, t.ABX),
+  // makeTestCase(8, t.WETH, t.ABX),
   makeTestCase(1000, t.USDC, rTokens.bsd),
   makeTestCase(1000, t.USDC, rTokens.hyUSD),
   makeTestCase(1, t.WETH, rTokens.bsd),

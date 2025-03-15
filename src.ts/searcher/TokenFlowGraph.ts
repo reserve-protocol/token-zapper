@@ -2587,7 +2587,9 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       }
     }
   }
-
+  if (containsLPTokens) {
+    console.log('Contains LP token')
+  }
   const findTradeSplits = async (node: NodeProxy, inputs: TokenQuantity[]) => {
     const actions = fanoutNodes[node.id]
     if (actions.length === 0) {
@@ -2613,7 +2615,6 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
           }
         }
         if (conflict) {
-          console.log(`Conflict for ${action.actionName}`)
           continue
         }
         acts.push([action, i])
@@ -2678,8 +2679,9 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
   return {
     graph: g,
     evaluate: async (inputs: TokenQuantity[]) => {
-      inUseThisIteration.clear()
       if (containsLPTokens) {
+        inUseThisIteration.clear()
+
         for (const node of g.sort()) {
           if (node.action instanceof BaseAction) {
             if (
@@ -3391,11 +3393,12 @@ const nelderMeadOptimiseTFG = async (
       noImprovementCount += 1
     }
     if (
-      noImprovementCount > 100 &&
-      (Math.abs(1 - out.result.outputValue / out.result.inputValue) <= 0.01 ||
-        (out.result.inputValue > 100 &&
-          Math.abs(out.result.outputValue - out.result.inputValue) < 1)) &&
-      iteration > 5
+      out.result.dustFraction > 0.9999 ||
+      (noImprovementCount > 100 &&
+        (Math.abs(1 - out.result.outputValue / out.result.inputValue) <= 0.01 ||
+          (out.result.inputValue > 100 &&
+            Math.abs(out.result.outputValue - out.result.inputValue) < 1)) &&
+        iteration > 5)
     ) {
       log(
         `Stopping early: ${out.result.inputQuantity} ${
@@ -4313,6 +4316,13 @@ export class TokenFlowGraphSearcher {
     inputNode?: NodeProxy,
     outputNode?: NodeProxy
   ) {
+    const tradePathExists = await this.doesTradePathExist(inputQty, output)
+    if (!tradePathExists) {
+      console.log(
+        `No trade path exists for ${inputQty} -> ${output}(${output.address})`
+      )
+      throw new Error(`No trade path exists for ${inputQty} -> ${output}`)
+    }
     if (graph.inputs[0] === output) {
       return null
     }

@@ -794,6 +794,7 @@ export class AerodromeStablePool {
         })
         universe.addAction(inst.actions.t0for1)
         universe.addAction(inst.actions.t1for0)
+        universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
 
         if (interestingPools.has(inst.address)) {
           universe.addAction(inst.actions.addLiquidity!)
@@ -804,7 +805,7 @@ export class AerodromeStablePool {
             burn: inst.actions.removeLiquidity!,
             allowAggregatorSearcher: true,
           })
-          universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
+
           await universe.defineLPToken(
             inst.lpToken,
             async (amt) => await inst.quoteRemoveLiquidity(amt),

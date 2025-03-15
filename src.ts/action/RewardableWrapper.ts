@@ -187,6 +187,7 @@ export const createProtocolWithWrappers = (
       })
       universe.addAction(wrapGasToken(universe, deposit))
       universe.addAction(wrapGasToken(universe, withdraw))
+      universe.mintableTokens.set(wrapper, deposit)
       universe.wrappedTokens.set(wrapper, {
         mint: deposit,
         burn: withdraw,

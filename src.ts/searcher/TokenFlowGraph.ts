@@ -4457,7 +4457,6 @@ export class TokenFlowGraphSearcher {
       }
 
       // console.log(`target tokens: ${targetToken}`)
-      // console.log('outputTokens', outputTokens.join(', '))
 
       for (const outputToken of outputTokens) {
         if (outputToken === output || outputToken === targetToken) {

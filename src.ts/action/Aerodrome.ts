@@ -795,6 +795,11 @@ export class AerodromeStablePool {
         universe.addAction(inst.actions.t0for1)
         universe.addAction(inst.actions.t1for0)
         universe.mintableTokens.set(inst.lpToken, inst.actions.addLiquidity!)
+        universe.wrappedTokens.set(inst.lpToken, {
+          mint: inst.actions.addLiquidity!,
+          burn: inst.actions.removeLiquidity!,
+          allowAggregatorSearcher: true,
+        })
 
         if (interestingPools.has(inst.address)) {
           universe.addAction(inst.actions.addLiquidity!)
@@ -833,12 +838,6 @@ export class AerodromeStablePool {
 
             universe.addAction(inst.actions.addLiquidity!)
             universe.addAction(inst.actions.removeLiquidity!)
-
-            universe.wrappedTokens.set(inst.lpToken, {
-              mint: inst.actions.addLiquidity!,
-              burn: inst.actions.removeLiquidity!,
-              allowAggregatorSearcher: true,
-            })
 
             universe.mintableTokens.set(
               inst.lpToken,

@@ -12,64 +12,64 @@ import type {
   PopulatedTransaction,
   Signer,
   utils,
-} from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+} from 'ethers'
+import type { FunctionFragment, Result } from '@ethersproject/abi'
+import type { Listener, Provider } from '@ethersproject/providers'
 import type {
   TypedEventFilter,
   TypedEvent,
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from "../common";
+} from '../common'
 
 export interface RTokenLensInterface extends utils.Interface {
   functions: {
-    "redeem(address,address,address,uint256)": FunctionFragment;
-  };
+    'redeem(address,address,address,uint256)': FunctionFragment
+  }
 
-  getFunction(nameOrSignatureOrTopic: "redeem"): FunctionFragment;
+  getFunction(nameOrSignatureOrTopic: 'redeem'): FunctionFragment
 
   encodeFunctionData(
-    functionFragment: "redeem",
+    functionFragment: 'redeem',
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>
     ]
-  ): string;
+  ): string
 
-  decodeFunctionResult(functionFragment: "redeem", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'redeem', data: BytesLike): Result
 
-  events: {};
+  events: {}
 }
 
 export interface RTokenLens extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(signerOrProvider: Signer | Provider | string): this
+  attach(addressOrName: string): this
+  deployed(): Promise<this>
 
-  interface: RTokenLensInterface;
+  interface: RTokenLensInterface
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TEvent>>
 
   listeners<TEvent extends TypedEvent>(
     eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
+  ): Array<TypedListener<TEvent>>
+  listeners(eventName?: string): Array<Listener>
   removeAllListeners<TEvent extends TypedEvent>(
     eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  ): this
+  removeAllListeners(eventName?: string): this
+  off: OnEvent<this>
+  on: OnEvent<this>
+  once: OnEvent<this>
+  removeListener: OnEvent<this>
 
   functions: {
     redeem(
@@ -78,8 +78,8 @@ export interface RTokenLens extends BaseContract {
       rToken: PromiseOrValue<string>,
       amtRToken: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-  };
+    ): Promise<ContractTransaction>
+  }
 
   redeem(
     assetRegistry: PromiseOrValue<string>,
@@ -87,7 +87,7 @@ export interface RTokenLens extends BaseContract {
     rToken: PromiseOrValue<string>,
     amtRToken: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  ): Promise<ContractTransaction>
 
   callStatic: {
     redeem(
@@ -98,10 +98,10 @@ export interface RTokenLens extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [string[], BigNumber[]] & { erc20s: string[]; quantities: BigNumber[] }
-    >;
-  };
+    >
+  }
 
-  filters: {};
+  filters: {}
 
   estimateGas: {
     redeem(
@@ -110,8 +110,8 @@ export interface RTokenLens extends BaseContract {
       rToken: PromiseOrValue<string>,
       amtRToken: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
+    ): Promise<BigNumber>
+  }
 
   populateTransaction: {
     redeem(
@@ -120,6 +120,6 @@ export interface RTokenLens extends BaseContract {
       rToken: PromiseOrValue<string>,
       amtRToken: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-  };
+    ): Promise<PopulatedTransaction>
+  }
 }

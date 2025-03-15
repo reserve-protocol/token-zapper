@@ -33,7 +33,7 @@ if (process.env.BASE_PROVIDER == null) {
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
 
-  cacheResolution: 8,
+  cacheResolution: 4,
   maxOptimisationSteps: 1600,
   maxOptimisationTime: 60000,
   minimiseDustPhase1Steps: 10,
@@ -148,6 +148,7 @@ const testUser = Address.from(
 )
 const issueanceCases = [
   makeTestCase(0.1, t.WETH, rTokens.bsd),
+  makeTestCase(0.1, t.WETH, rTokens.BSDX),
 
   makeTestCase(0.02, t.WETH, t.CLUB),
   makeTestCase(0.1, t.WETH, t.ABX),
@@ -155,9 +156,9 @@ const issueanceCases = [
   makeTestCase(2, t.WETH, t.ABX),
   makeTestCase(4, t.WETH, t.ABX),
   makeTestCase(8, t.WETH, t.ABX),
-  // makeTestCase(1000, t.USDC, rTokens.bsd),
+  makeTestCase(1000, t.USDC, rTokens.bsd),
   makeTestCase(1000, t.USDC, rTokens.hyUSD),
-  // makeTestCase(1, t.WETH, rTokens.bsd),
+  makeTestCase(1, t.WETH, rTokens.bsd),
   makeTestCase(1, t.WETH, rTokens.hyUSD),
   makeTestCase(2, t.ETH, t.BDTF),
   makeTestCase(1000, t.USDC, t.BDTF),
@@ -195,8 +196,8 @@ const redeemCases = [
   makeTestCase(10000, rTokens.hyUSD, t.WETH),
   makeTestCase(10000, rTokens.hyUSD, t.USDC),
 
-  makeTestCase(1000, rTokens.BSDX, t.WETH),
-  makeTestCase(1000, rTokens.BSDX, t.USDC),
+  makeTestCase(100, rTokens.BSDX, t.WETH),
+  makeTestCase(100, rTokens.BSDX, t.USDC),
 
   makeTestCase(75, t.VTF, t.WETH),
   makeTestCase(75, t.MVTT10F, t.WETH),

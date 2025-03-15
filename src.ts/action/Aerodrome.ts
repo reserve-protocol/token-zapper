@@ -87,9 +87,6 @@ abstract class BaseV2AerodromeAction extends Action('BaseAerodromeStablePool') {
     return false
   }
 
-  public get oneUsePrZap(): boolean {
-    return true
-  }
   public get addressesInUse(): Set<Address> {
     return new Set([this.pool.address])
   }
@@ -252,12 +249,11 @@ class AeropoolRemoveLiquidity extends BaseV2AerodromeAction {
     destination: Address,
     predictedInputs: TokenQuantity[]
   ): Promise<null | Value[]> {
-    const [amount0, amount1] = await this.quote(predictedInputs)
     planner.add(
       this.pool.context.weirollAerodromeRouterCaller.removeLiquidity(
         input,
-        amount0.amount - amount0.amount / 20n,
-        amount1.amount - amount1.amount / 20n,
+        0n,
+        0n,
         defaultAbiCoder.encode(
           // (address, address, bool, address, address, uint256)
           ['address', 'address', 'bool', 'address', 'address', 'uint256'],

@@ -285,6 +285,7 @@ export const makeCustomRouterSimulator = (
     input: SimulateParams,
     universe: Universe
   ): Promise<string[]> => {
+    console.log(`Simulating zap with custom router ${url}`)
     const moveFunds: any[] = []
     const stateOverride: any = {}
     const transactions: any[] = []

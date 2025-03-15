@@ -1,3 +1,4 @@
+import { wait } from '../base/controlflow'
 import { ILoggerType } from '../configuration/ZapSimulation'
 
 /**
@@ -419,7 +420,6 @@ export async function nelderMeadOptimize(
           } else {
             // console.log(`Shrink`)
             // Contraction didn't help, shrink the simplex
-            log(`Shrinking simplex`)
             await shrinkSimplex(simplex, functionValues, objectiveFunc, sigma)
           }
         }

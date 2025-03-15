@@ -19,7 +19,7 @@ import {
 import { TokenLoader, makeTokenLoader } from './entities/makeTokenLoader'
 import { Graph } from './exchange-graph/Graph'
 import { PriceOracle } from './oracles/PriceOracle'
-import { ApprovalsStore } from './searcher/ApprovalsStore'
+import { TokenStateStore } from './searcher/ApprovalsStore'
 
 import EventEmitter from 'events'
 import winston from 'winston'
@@ -718,11 +718,11 @@ export class Universe<const UniverseConf extends Config = Config> {
   public async getMaxTradeSize(edge: Action, limit: number) {
     return (await this._maxTradeSizes.get(edge)).get(limit)
   }
+  public readonly approvalsStore: TokenStateStore;
 
   private constructor(
     public readonly provider: ethers.providers.JsonRpcProvider,
     public readonly config: UniverseConf,
-    public readonly approvalsStore: ApprovalsStore,
     public readonly loadToken: TokenLoader,
     private readonly simulateZapFn_: SimulateZapTransactionFunction,
     public readonly logger: winston.Logger = winston.createLogger({
@@ -740,6 +740,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     }),
     private readonly tfgReg: ITokenFlowGraphRegistry = new InMemoryTokenFlowGraphRegistry(this)
   ) {
+    this.approvalsStore = new TokenStateStore(this)
     this.tfgSearcher = new TokenFlowGraphSearcher(this, this.tfgReg)
     this.folioContext = new FolioContext(this)
     const nativeToken = config.nativeToken
@@ -886,7 +887,7 @@ export class Universe<const UniverseConf extends Config = Config> {
     opts: Partial<{
       logger?: winston.Logger
       tokenLoader?: TokenLoader
-      approvalsStore?: ApprovalsStore
+      approvalsStore?: TokenStateStore
       tokenFlowGraphCache?: ITokenFlowGraphRegistry
       simulateZapFn?: SimulateZapTransactionFunction
     }> = {}
@@ -902,7 +903,6 @@ export class Universe<const UniverseConf extends Config = Config> {
     const universe = new Universe<C>(
       provider,
       config,
-      opts.approvalsStore ?? new ApprovalsStore(provider),
       opts.tokenLoader ?? makeTokenLoader(provider),
       simulateZapFunction!,
       opts.logger,

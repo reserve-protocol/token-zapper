@@ -34,19 +34,13 @@ const globalBlockCache2d = new WeakMap<
   Map<bigint, BlockCache<bigint, QuoteWithDustResult>>
 >()
 
-const get1DBlockCache = (action: BaseAction) => {
+const get1DBlockCache = (universe: Universe, action: BaseAction) => {
   const baseAct = unwrapAction(action)
   let cache = globalBlockCache.get(baseAct)
   if (cache == null) {
-    cache = new BlockCache(
-      async (amountIn) => {
-        return await action.quoteWithDust([
-          baseAct.inputToken[0].from(amountIn),
-        ])
-      },
-      0,
-      12000
-    )
+    cache = universe.createCache(async (amountIn: bigint) => {
+      return await action.quoteWithDust([baseAct.inputToken[0].from(amountIn)])
+    }, 12000)
     globalBlockCache.set(baseAct, cache)
   }
   return cache
@@ -62,22 +56,19 @@ const get2DBlockCache = (baseAct: BaseAction) => {
 }
 
 const get2DBlockCacheRow = (
+  universe: Universe,
   rowCaches: Map<bigint, BlockCache<bigint, QuoteWithDustResult>>,
   row: bigint,
   baseAct: BaseAction
 ) => {
   let rowCache = rowCaches.get(row)
   if (rowCache == null) {
-    rowCache = new BlockCache(
-      async (col) => {
-        return await baseAct.quoteWithDust([
-          baseAct.inputToken[0].from(row),
-          baseAct.inputToken[1].from(col),
-        ])
-      },
-      0,
-      24000
-    )
+    rowCache = universe.createCache(async (col: bigint) => {
+      return await baseAct.quoteWithDust([
+        baseAct.inputToken[0].from(row),
+        baseAct.inputToken[1].from(col),
+      ])
+    }, 24000)
   }
   return rowCache
 }
@@ -186,8 +177,8 @@ export class Dim1Cache implements MultiDimCache {
     public readonly universe: Universe,
     public readonly wrapped: BaseAction
   ) {
-    this.cachedResults = get1DBlockCache(wrapped)
-    this.innerCache = globalCache.get(wrapped)
+    this.cachedResults = get1DBlockCache(this.universe, this.wrapped)
+    this.innerCache = globalCache.get(this.wrapped)
 
     this.cacheResolution = BigInt(this.universe.config.cacheResolution)
   }
@@ -283,8 +274,18 @@ export class Dim2Cache implements MultiDimCache {
     const [xin0, xin1] = inputIntoRanges(this.cacheResolution, x)
     const [yin0, yin1] = inputIntoRanges(this.cacheResolution, y)
 
-    const cols0 = get2DBlockCacheRow(this.rowCaches, xin0, this.baseAct)
-    const cols1 = get2DBlockCacheRow(this.rowCaches, xin1, this.baseAct)
+    const cols0 = get2DBlockCacheRow(
+      this.universe,
+      this.rowCaches,
+      xin0,
+      this.baseAct
+    )
+    const cols1 = get2DBlockCacheRow(
+      this.universe,
+      this.rowCaches,
+      xin1,
+      this.baseAct
+    )
 
     const [p00, p01, p10, p11] = await Promise.all([
       cols0.get(yin0),

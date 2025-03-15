@@ -106,11 +106,6 @@ export const optimiseTrades = async (
   )
 
   const best = Math.max(...actionsOuts)
-  for (let i = 0; i < actionsOuts.length; i++) {
-    const out = actionsOuts[i]
-    console.log(`${tradeActions[i]}: ${out}`)
-  }
-
   // Pick all that are within 10% of the best
 
   const tradeActionIndicesToOptimise = tradeActions

@@ -2575,40 +2575,49 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
   let previousInputSizes: number[] = g.data.map(() => -1)
   let fanoutNodes = [...g.nodes()].map((node) => node.getFanoutActions())
 
-  const inUse = new Set<Address>()
-
-  for (const node of g.nodes()) {
-    if (node.action instanceof BaseAction) {
-      if (!node.action.oneUsePrZap || node.action.isTrade) {
-        continue
-      }
-      for (const incoming of node.incomingEdges()) {
-        if (fanoutNodes[incoming.source.id].length !== 0) {
-          continue
-        }
-        for (const a of node.action.addressesInUse) {
-          inUse.add(a)
-        }
-      }
-    }
-  }
-
   let inUseThisIteration = new Set<Address>()
   let containsLPTokens = false
-  for (const node of g.nodes()) {
+  for (const node of g.sort()) {
     if (node.action instanceof BaseAction) {
-      if (node.action.outputToken.find((tok) => universe.lpTokens.has(tok))) {
+      if (
+        node.action.inputToken.find((tok) => universe.lpTokens.has(tok)) ||
+        node.action.outputToken.find((tok) => universe.lpTokens.has(tok))
+      ) {
         containsLPTokens = true
       }
     }
   }
+
   const findTradeSplits = async (node: NodeProxy, inputs: TokenQuantity[]) => {
-    // if (inputs.every((i) => i.isZero)) {
-    //   return
-    // }
     const actions = fanoutNodes[node.id]
     if (actions.length === 0) {
       return
+    }
+    if (inputs.every((i) => i.isZero)) {
+      return
+    }
+    let acts: [BaseAction, number][] = actions.map((a, i) => [a, i])
+    if (containsLPTokens) {
+      acts = []
+      for (let i = 0; i < actions.length; i++) {
+        const action = actions[i]
+        let conflict = inUseThisIteration.has(action.address)
+        if (!action.isTrade) {
+          acts.push([action, i])
+          continue
+        }
+        for (const addr of action.addressesInUse) {
+          if (inUseThisIteration.has(addr)) {
+            conflict = true
+            break
+          }
+        }
+        if (conflict) {
+          console.log(`Conflict for ${action.actionName}`)
+          continue
+        }
+        acts.push([action, i])
+      }
     }
 
     if (inputs.length > 1) {
@@ -2630,97 +2639,26 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       }
     }
 
-    const acts: [BaseAction, number][] = []
-    if (containsLPTokens) {
-      for (let i = 0; i < actions.length; i++) {
-        const action = actions[i]
-        if (action.oneUsePrZap) {
-          let conflict = false
-          for (const addr of action.addressesInUse) {
-            if (inUseThisIteration.has(addr)) {
-              conflict = true
-              break
-            }
-          }
-          if (conflict) {
-            continue
-          }
-          for (const addr of action.addressesInUse) {
-            inUseThisIteration.add(addr)
-          }
-          acts.push([action, i])
-        } else {
-          acts.push([action, i])
-        }
-      }
-    }
-
     const outEdges = g._outgoingEdges[node.id]
     if (outEdges == null) {
       throw new Error('No outgoing edges')
     }
 
     const splits = outEdges.getEdge(actions[0].inputToken[0])
-
     splits.min = 1 / 20
 
-    if (
-      containsLPTokens &&
-      acts.length !== 0 &&
-      acts.length !== actions.length &&
-      acts.length > 1
-    ) {
-      const nodeSplits = await optimiseTrades(
-        universe,
-        inputs[0],
-        acts.map((a) => a[0]),
-        Infinity,
-        20
-      )
-      const parts = splits.parts.map(() => 0)
-      for (let i = 0; i < nodeSplits.inputs.length; i++) {
-        parts[acts[i][1]] = nodeSplits.inputs[i]
-      }
-
-      if (parts.every((i) => i === 0)) {
-        console.log(nodeSplits)
-        console.log('No splits found, 1')
-        return
-      }
-
-      if (nodeSplits.output === 0) {
-        console.log(g.toDot().join('\n'))
-        throw new Error(
-          `Failed to optimise trades for ${node.nodeId}: No output from any trade`
-        )
-      }
-
-      splits.setParts(parts)
-    } else {
-      const nodeSplits = await optimiseTrades(
-        universe,
-        inputs[0],
-        actions,
-        Infinity,
-        20
-      )
-
-      if (nodeSplits.output === 0) {
-        console.log(g.toDot().join('\n'))
-        throw new Error(
-          `Failed to optimise trades for ${node.nodeId}: No output from any trade`
-        )
-      }
-      let parts = nodeSplits.inputs
-      if (nodeSplits.inputs.every((i) => i === 0)) {
-        if (nodeSplits.outputs.every((i) => i === 0)) {
-          console.log('No splits found, 2')
-          return
-        }
-        parts = nodeSplits.outputs
-      }
-
-      splits.setParts(parts)
+    const nodeSplits = await optimiseTrades(
+      universe,
+      inputs[0],
+      acts.map((a) => a[0]),
+      Infinity,
+      20
+    )
+    for (let i = 0; i < splits.parts.length; i++) {
+      splits.parts[i] = 0
+    }
+    for (let i = 0; i < nodeSplits.inputs.length; i++) {
+      splits.parts[acts[i][1]] = nodeSplits.inputs[i]
     }
     splits.normalize()
   }
@@ -2741,6 +2679,24 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
     graph: g,
     evaluate: async (inputs: TokenQuantity[]) => {
       inUseThisIteration.clear()
+      if (containsLPTokens) {
+        for (const node of g.sort()) {
+          if (node.action instanceof BaseAction) {
+            if (
+              node.action.inputToken.find((tok) =>
+                universe.lpTokens.has(tok)
+              ) ||
+              node.action.outputToken.find((tok) => universe.lpTokens.has(tok))
+            ) {
+              containsLPTokens = true
+              for (const addr of node.action.addressesInUse) {
+                inUseThisIteration.add(addr)
+              }
+              inUseThisIteration.add(node.action.address)
+            }
+          }
+        }
+      }
       return await g.evaluate(universe, inputs, preevaluationHandler)
     },
   }

@@ -3325,8 +3325,15 @@ const nelderMeadOptimiseTFG = async (
     nodeDimensions.push(splits.parts.length)
     nodeIndex.push(flatParams.length)
     nodeIndices.push(node.id)
+    let sum = 0
     for (let i = 0; i < splits.parts.length; i++) {
       splits.parts[i] = Math.max(splits.parts[i], 0)
+      sum += splits.parts[i]
+    }
+    if (sum === 0 || isNaN(sum)) {
+      for (let i = 0; i < splits.parts.length; i++) {
+        splits.parts[i] = 1 / splits.parts.length
+      }
     }
     splits.normalize()
     flatParams.push(...splits.parts)
@@ -3393,12 +3400,11 @@ const nelderMeadOptimiseTFG = async (
       noImprovementCount += 1
     }
     if (
-      out.result.dustFraction > 0.9999 ||
-      (noImprovementCount > 100 &&
-        (Math.abs(1 - out.result.outputValue / out.result.inputValue) <= 0.01 ||
-          (out.result.inputValue > 100 &&
-            Math.abs(out.result.outputValue - out.result.inputValue) < 1)) &&
-        iteration > 5)
+      noImprovementCount > 100 &&
+      (Math.abs(1 - out.result.outputValue / out.result.inputValue) <= 0.01 ||
+        (out.result.inputValue > 100 &&
+          Math.abs(out.result.outputValue - out.result.inputValue) < 1)) &&
+      iteration > 5
     ) {
       log(
         `Stopping early: ${out.result.inputQuantity} ${
@@ -3410,6 +3416,9 @@ const nelderMeadOptimiseTFG = async (
         )}% dust - no improvement for over 100 steps)`
       )
       throw new Error('STOP early')
+    }
+    if (1 - out.result.dustFraction < 0.0001) {
+      throw new Error('STOP early, no dust')
     }
 
     return out.result.price === 0 ? Infinity : 1 / out.result.price
@@ -3506,7 +3515,7 @@ const searchForBestParams = async (
         maxTime: Infinity,
         maxRestarts: 0,
         perturbation: 0.1,
-        tolerance: 1e-3,
+        tolerance: 1e-4,
       },
       (percentage) => {
         if (percentage > 0.005) {
@@ -3744,6 +3753,7 @@ const optimise = async (
         logger.info(`Running first round of nelder mead`)
         const startTime2 = Date.now()
         const iters = nelderMeadIters / 2
+
         bestSoFar = await nelderMeadOptimiseTFG(
           universe,
           g,
@@ -3762,7 +3772,7 @@ const optimise = async (
             perturbation: dustFractionToPerturbation(
               bestSoFar.result.dustFraction
             ),
-            tolerance: 1e-4,
+            tolerance: 1e-5,
             restartAfterNoChangeIterations: iters / restartSchedule.length,
             maxTime: maxTime - (Date.now() - startTime),
           },
@@ -3889,6 +3899,9 @@ const optimise = async (
       optimisationNodes
     )
   } else {
+    for (const n of optimisationNodes) {
+      n.outgoingEdge(n.inputs[0]).min = 0
+    }
     const maxIterations =
       dims < 10
         ? nelderMeadIters / 2
@@ -3923,7 +3936,7 @@ const optimise = async (
         maxStepsPerRestart: Infinity,
         perturbation: dustFractionToPerturbation(bestSoFar.result.dustFraction),
         maxIterations: maxIterations,
-        tolerance: 1e-4,
+        tolerance: 1e-5,
         maxTime: timeLeft,
       },
       undefined,
@@ -3931,7 +3944,7 @@ const optimise = async (
       0
     )
   }
-  g = removeNodes(g, findNodesWithoutSources(g))
+  // g = removeNodes(g, findNodesWithoutSources(g))
 
   logger.info(
     `Finished main optimisation phase in ${Date.now() - startTime3}ms`

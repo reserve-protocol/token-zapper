@@ -220,9 +220,6 @@ export async function nelderMeadOptimize(
   } = options
 
   const startTime = Date.now()
-  if (Date.now() - startTime > maxTime) {
-    return initialParams
-  }
 
   // Dimensionality of the problem
   const n = initialParams.length
@@ -282,6 +279,7 @@ export async function nelderMeadOptimize(
 
     // Ignore restarts if we're close to the max time
     if (Date.now() - startTime > maxTime - 1000) {
+      console.log('Out of time')
       return
     }
     log(

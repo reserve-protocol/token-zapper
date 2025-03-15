@@ -35,7 +35,7 @@ const searcherOptions: SearcherOptions = {
 
   cacheResolution: 4,
   maxOptimisationSteps: 500,
-  maxOptimisationTime: 20000,
+  maxOptimisationTime: 35000,
   minimiseDustPhase1Steps: 10,
   zapMaxDustProduced: 1,
   zapMaxValueLoss: 1,

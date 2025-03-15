@@ -203,6 +203,9 @@ export const setupBaseZapper = async (universe: BaseUniverse) => {
     )
     await setupStargateWrapper(universe, PROTOCOL_CONFIGS.stargate.wrappers, {})
   }
+  universe.zeroPriceTokens.add(
+    await universe.getToken('0xf04d220b8136e2d3d4be08081dbb565c3c302ffd')
+  )
   const setupAero = async () => {
     try {
       await setupAerodromeRouter(universe)

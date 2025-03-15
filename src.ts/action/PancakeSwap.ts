@@ -180,6 +180,9 @@ export class PancakeSwapCLSwap extends BaseAction {
   get isTrade(): boolean {
     return true
   }
+  get dependsOnRpc(): boolean {
+    return true
+  }
   get oneUsePrZap(): boolean {
     return true
   }

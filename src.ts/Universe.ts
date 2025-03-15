@@ -493,6 +493,9 @@ export class Universe<const UniverseConf extends Config = Config> {
     return oracle
   }
   async fairPrice(qty: TokenQuantity): Promise<TokenQuantity | null> {
+    if (this.zeroPriceTokens.has(qty.token)) {
+      return this.usd.from(1n)
+    }
     if (qty.token === this.nativeToken) {
       return await this.fairPrice(qty.into(this.wrappedNativeToken))
     }
@@ -585,6 +588,7 @@ export class Universe<const UniverseConf extends Config = Config> {
   }
 
   public blacklistedTokens = new Set<Token>()
+  public zeroPriceTokens = new Set<Token>()
   public feeOnTransferTokens = new Set<Token>()
 
   public async defineLPToken(

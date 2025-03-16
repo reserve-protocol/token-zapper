@@ -715,18 +715,6 @@ export class AerodromeStablePool {
     address: Address,
     pool: SwapLpStructOutput
   ) {
-    let loaded = false
-    const timeout = AbortSignal.timeout(5000)
-    timeout.onabort = () => {
-      if (loaded) {
-        return
-      }
-      console.log(
-        `${address} timed out ${pool.factory} ${pool.poolType} ${pool.token0} ${
-          pool.token1
-        } ${pool.poolFee.toString()} ${pool.poolType.toString()}`
-      )
-    }
     try {
       const universe = context.universe
       const [lpToken, token0, token1] = await Promise.all([
@@ -862,8 +850,6 @@ export class AerodromeStablePool {
       return inst
     } catch (e) {
       throw e
-    } finally {
-      loaded = true
     }
   }
 }

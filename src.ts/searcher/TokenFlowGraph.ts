@@ -4392,7 +4392,7 @@ export class TokenFlowGraphSearcher {
       txGenOptions
     )
     if (prev != null) {
-      const newTfg = await optimise(
+      let newTfg = await optimise(
         this.universe,
         prev,
         [input],
@@ -4403,28 +4403,19 @@ export class TokenFlowGraphSearcher {
       )
       const tradePathExists = await this.doesTradePathExist(input, output)
       if (tradePathExists && txGenOptions.useTrade !== false) {
-        let res = await optimise(
-          this.universe,
-          newTfg,
-          [input],
-          [output],
-          opts,
-          true,
-          false
-        )
         try {
-          res = await this.determineBestTradeMintSplit(
-            res,
+          newTfg = await this.determineBestTradeMintSplit(
+            newTfg,
             input,
             output,
             opts,
             txGenOptions
           )
         } catch (e) {}
-        await this.registry.define(input, output, res.clone())
-        return res
+        await this.registry.define(input, output, newTfg.clone())
+        return newTfg
       }
-      this.registry.define(input, output, newTfg)
+      await this.registry.define(input, output, newTfg)
       return newTfg
     }
 

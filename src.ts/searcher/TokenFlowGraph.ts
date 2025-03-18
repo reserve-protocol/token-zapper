@@ -8,6 +8,7 @@ import {
   SearcherOptions,
 } from '../configuration/ChainConfiguration'
 import { Token, TokenQuantity } from '../entities/Token'
+import { TokenAmounts } from '../entities/TokenAmounts'
 import {
   memorizeObjFunction,
   nelderMeadOptimize,
@@ -4218,26 +4219,28 @@ export class TokenFlowGraphSearcher {
 
   private async tokenRedemptionGraph(
     graph: TokenFlowGraphBuilder,
-    token: Token
-  ): Promise<Token[]> {
+    qty: TokenQuantity
+  ): Promise<TokenQuantity[]> {
+    const token = qty.token
     const burnAction = this.universe.getBurnAction(token)
     const inputNode = graph.getTokenNode(token)
     const burnActionNode = graph.addAction(burnAction)
     inputNode.forward(token, 1, burnActionNode)
-    const outputs: Token[] = []
-    for (const outputToken of burnAction.outputToken) {
+    const outputs = new TokenAmounts()
+    for (const outputQty of await burnAction.quote([qty])) {
+      const outputToken = outputQty.token
       if (outputToken === token) {
         burnActionNode.forward(outputToken, 1, graph.graph.end)
         continue
       }
       burnActionNode.forward(outputToken, 1, graph.getTokenNode(outputToken))
       if (!this.universe.isTokenBurnable(outputToken)) {
-        outputs.push(outputToken)
+        outputs.add(outputQty)
       } else {
-        outputs.push(...(await this.tokenRedemptionGraph(graph, outputToken)))
+        outputs.addQtys(await this.tokenRedemptionGraph(graph, outputQty))
       }
     }
-    return outputs
+    return outputs.toTokenQuantities()
   }
 
   private doesTradePathExistCache = new Map<
@@ -4247,9 +4250,7 @@ export class TokenFlowGraphSearcher {
       timestamp: number
     }>
   >()
-  public onBlock() {
-    this.doesTradePathExistCache.clear()
-  }
+
   public async doesTradePathExist(inputQty: TokenQuantity, output: Token) {
     const key = `${inputQty.token.address}.${output}`
     let prev = this.doesTradePathExistCache.get(key)
@@ -4449,7 +4450,12 @@ export class TokenFlowGraphSearcher {
 
     if (this.universe.isTokenBurnable(inputToken)) {
       const outputTokens = [
-        ...new Set([...(await this.tokenRedemptionGraph(graph, inputToken))]),
+        ...new Set([
+          ...(await this.tokenRedemptionGraph(
+            graph,
+            await inputToken.fromUSD(inputValue)
+          )),
+        ]),
       ]
       let targetToken = output
 
@@ -4465,14 +4471,15 @@ export class TokenFlowGraphSearcher {
 
       // console.log(`target tokens: ${targetToken}`)
 
-      for (const outputToken of outputTokens) {
+      for (const outputQty of outputTokens) {
+        const outputToken = outputQty.token
         if (outputToken === output || outputToken === targetToken) {
           continue
         }
 
         await this.addTrades(
           graph,
-          await outputToken.fromUSD(inputValue),
+          outputQty,
           targetToken,
           true,
           `sell output of redeem(${input}) = ${outputToken} for ${targetToken}`

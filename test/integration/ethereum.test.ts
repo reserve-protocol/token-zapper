@@ -26,21 +26,18 @@ dotenv.config()
 
 const searcherOptions: SearcherOptions = {
   ...getDefaultSearcherOptions(),
-
   cacheResolution: 4,
-  maxPhase2TimeRefinementTime: 5000,
-  optimisationSteps: 20,
-  refinementOptimisationSteps: 20,
-  maxOptimisationTime: 120000,
+  maxOptimisationSteps: 500,
+  maxOptimisationTime: 35000,
   minimiseDustPhase1Steps: 10,
-  minimiseDustPhase2Steps: 10,
-  zapMaxDustProduced: 10,
-  zapMaxValueLoss: 3,
-  dynamicConfigURL:
-    'https://raw.githubusercontent.com/reserve-protocol/token-zapper/refs/heads/main/src.ts/configuration/data/1/config.json',
+  zapMaxDustProduced: 1,
+  zapMaxValueLoss: 1,
   rejectHighDust: false,
   rejectHighValueLoss: false,
   useNewZapperContract: true,
+  phase1Optimser: 'nelder-mead',
+  dynamicConfigURL:
+    'https://raw.githubusercontent.com/reserve-protocol/token-zapper/refs/heads/main/src.ts/configuration/data/1/config.json',
 }
 
 if (process.env.MAINNET_PROVIDER == null) {

@@ -4240,31 +4240,47 @@ export class TokenFlowGraphSearcher {
     return outputs
   }
 
-  private doesTradePathExistCache = new Map<string, Promise<boolean>>()
+  private doesTradePathExistCache = new Map<
+    string,
+    Promise<{
+      exists: boolean
+      timestamp: number
+    }>
+  >()
+  public onBlock() {
+    this.doesTradePathExistCache.clear()
+  }
   public async doesTradePathExist(inputQty: TokenQuantity, output: Token) {
     const key = `${inputQty.token.address}.${output}`
     let prev = this.doesTradePathExistCache.get(key)
-    if (prev == null) {
-      const p = (async () => {
-        try {
-          const path =
-            await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
-              inputQty,
-              output,
-              false
-            )
-          return (
-            path.steps.length !== 0 &&
-            path.steps[path.steps.length - 1].outputToken === output
-          )
-        } catch (e) {
-          return false
-        }
-      })()
-      this.doesTradePathExistCache.set(key, p)
-      prev = p
+    if (prev != null) {
+      const { exists, timestamp } = await prev
+      if (Date.now() - timestamp < 24000) {
+        return exists
+      }
     }
-    return await prev
+    const p = (async () => {
+      try {
+        const path = await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
+          inputQty,
+          output,
+          false
+        )
+        return {
+          exists:
+            path.steps.length !== 0 &&
+            path.steps[path.steps.length - 1].outputToken === output,
+          timestamp: Date.now(),
+        }
+      } catch (e) {
+        return {
+          exists: false,
+          timestamp: Date.now(),
+        }
+      }
+    })()
+    this.doesTradePathExistCache.set(key, p)
+    return (await p).exists
   }
 
   private addTradesWithpath(

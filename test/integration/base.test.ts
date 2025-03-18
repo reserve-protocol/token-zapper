@@ -39,12 +39,12 @@ const searcherOptions: SearcherOptions = {
   minimiseDustPhase1Steps: 10,
   zapMaxDustProduced: 1,
   zapMaxValueLoss: 1,
-  dynamicConfigURL:
-    'https://raw.githubusercontent.com/reserve-protocol/token-zapper/refs/heads/main/src.ts/configuration/data/8453/config.json',
   rejectHighDust: false,
   rejectHighValueLoss: false,
   useNewZapperContract: true,
   phase1Optimser: 'nelder-mead',
+  dynamicConfigURL:
+    'https://raw.githubusercontent.com/reserve-protocol/token-zapper/refs/heads/main/src.ts/configuration/data/8453/config.json',
 }
 
 /** !!
@@ -178,8 +178,8 @@ const issueanceCases = [
 const redeemCases = [
   makeTestCase(100, t.AI, t.WETH),
 
-  makeTestCase(10, t.BDTF, t.ETH),
-  makeTestCase(10, t.BDTF, t.ETH),
+  makeTestCase(300, t.BDTF, t.ETH),
+  // makeTestCase(10, t.BDTF, t.ETH),
   makeTestCase(10, t.MVTT10F, t.ETH),
 
   makeTestCase(10, t.VTF, t.USDC),

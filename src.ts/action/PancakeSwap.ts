@@ -16,6 +16,7 @@ import {
 import { Token, TokenQuantity } from '../entities/Token'
 import { Contract, Planner, Value } from '../tx-gen/Planner'
 import basePools from '../configuration/data/8453/pancakeswap.json'
+import ethPools from '../configuration/data/1/pancakeswap.json'
 import { utils } from 'ethers'
 import deployments from '../contracts/deployments.json'
 interface IPancakeswapConfig {
@@ -31,6 +32,12 @@ interface IPancakeswapConfig {
 }
 
 const configs: Record<number, IPancakeswapConfig> = {
+  1: {
+    router: '0x1b81D678ffb9C0263b24A97847620C99d213eB14',
+    quoter: '0xB048Bbc1Ee6b733FFfCFb9e9CeF7375518e25997',
+    routerCaller: deployments[1][0].contracts.PancakeRouterCall.address,
+    staticPools: ethPools,
+  },
   8453: {
     router: '0x1b81D678ffb9C0263b24A97847620C99d213eB14',
     quoter: '0xB048Bbc1Ee6b733FFfCFb9e9CeF7375518e25997',
@@ -222,6 +229,7 @@ export class PancakeSwapCLSwap extends BaseAction {
 
   async quote([amountIn]: TokenQuantity[]): Promise<TokenQuantity[]> {
     const { amountOut } = await this.quoteExactSingle.get(amountIn.amount)
+
     return [amountOut]
   }
 

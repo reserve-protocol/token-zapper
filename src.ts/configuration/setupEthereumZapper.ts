@@ -6,6 +6,7 @@ import {
   ETHTokenVaultDepositAction,
 } from '../action/ERC4626'
 import { LidoDeployment } from '../action/Lido'
+import { setupPancakeSwap } from '../action/PancakeSwap'
 import { StakeDAODepositAction } from '../action/StakeDAO'
 import { YearnDepositAction, YearnWithdrawAction } from '../action/Yearn'
 import { Address } from '../base/Address'
@@ -420,6 +421,11 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   const tasks = [
     initUniswapV3,
     initBalancer,
+    async () => {
+      logger.info(`Pancakeswap: loading pools`)
+      const ctx = await setupPancakeSwap(universe)
+      logger.info(`Pancakeswap: ${ctx.pools.size} pools loaded`)
+    },
     initCurve,
     initUniswapV2,
     initMaverick,

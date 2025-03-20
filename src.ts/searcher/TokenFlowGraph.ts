@@ -2569,6 +2569,7 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       Infinity,
       20
     )
+    console.log(nodeSplits.inputs.join(', '))
     for (let i = 0; i < splits.parts.length; i++) {
       splits.parts[i] = 0
     }
@@ -2576,6 +2577,8 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       splits.parts[acts[i][1]] = nodeSplits.inputs[i]
     }
     splits.normalize()
+    console.log(splits.parts.join(', '))
+    console.log(splits.inner.join(', '))
   }
 
   const preevaluationHandler = async (
@@ -2960,6 +2963,9 @@ const removeRedundantSplits2 = (g: TokenFlowGraph) => {
   const nodes = [...g.sort().reverse()]
   const edgesToRemove: EdgeProxy[] = []
   for (const node of nodes) {
+    if (node.action !== null) {
+      continue
+    }
     const inEdges = node.incomingEdges()
     // For every node where there is more than one incoming edge and all edges have the same token
     if (
@@ -3005,6 +3011,9 @@ const removeRedundantSplits = (g: TokenFlowGraph) => {
     () => new DefaultMap<number, Token[]>(() => [])
   )
   for (const node of nodes) {
+    if (node.action !== null) {
+      continue
+    }
     for (const edge01 of node.outgoingEdges()) {
       const numberOfOutgoingEdges = edge01.recipient.recipients.length
       const numberOfIncomingEdges = edge01.recipient.incomingEdges().length
@@ -3013,6 +3022,9 @@ const removeRedundantSplits = (g: TokenFlowGraph) => {
       }
       const parent = edge01.source
       const child = edge01.recipient
+      if (child.action != null) {
+        continue
+      }
       const grandChild = [...edge01.recipient.outgoingEdges()][0].recipient
       const key = `${parent.id}-${grandChild.id}`
       weights.mut(key, (v) => v + edge01.proportion)
@@ -3603,15 +3615,23 @@ const optimise = async (
   let nelderMeadIters = universe.config.maxOptimisationSteps
 
   if (!fromCache) {
+    logger.debug('Before pruning:')
+    logger.debug(g.toDot().join('\n'))
     g = removeNodes(g, findNodesWithoutSources(g))
+
+    logger.debug('Before pruning:')
+    logger.debug(g.toDot().join('\n'))
 
     if (1 - bestSoFar.result.dustFraction > 0.001) {
       g = removeUselessNodes(removeRedundantSplits(g))
-      inferDustProducingNodes(g)
+
+      logger.debug('Graph pruned:')
+      logger.debug(g.toDot().join('\n'))
       await backPropagateInputProportions(g)
       g = removeNodes(g, findNodesWithoutSources(g))
       g = removeUselessNodes(removeRedundantSplits(g))
       g = removeRedundantSplits2(g)
+
       if (prune) {
         g = removeUselessNodes(removeRedundantSplits(g))
         g = shorten1To1Splits(g)
@@ -3619,8 +3639,6 @@ const optimise = async (
       inferDustProducingNodes(g)
       await backPropagateInputProportions(g)
     }
-    logger.debug('Graph pruned:')
-    logger.debug(g.toDot().join('\n'))
 
     const nodesSorted = g.sort().reverse()
     let optimisationNodes = nodesSorted.filter(

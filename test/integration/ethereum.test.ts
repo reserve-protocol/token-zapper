@@ -191,7 +191,7 @@ export const testUser = process.env.TEST_USER
   : Address.from('0xF2d98377d80DADf725bFb97E91357F1d81384De2')
 
 const issueanceCases = [
-  // makeTestCase(10, t.WETH, rTokens['ETH+']),
+  makeTestCase(1000, t.WETH, rTokens['ETH+']),
   // makeTestCase(10000, t.USDC, rTokens.dgnETH),
   // makeTestCase(100000, t.DAI, rTokens.eUSD),
   // makeTestCase(1000000, t.USDT, rTokens.eUSD),
@@ -229,17 +229,17 @@ const issueanceCases = [
 
   // makeTestCase(10, t.pxETH, rTokens.dgnETH),
 
-  makeTestCase(1, t.WETH, t.SMEL),
-  makeTestCase(1000, t.USDC, t.BED),
-  makeTestCase(1, t.WETH, t.BED),
-  makeTestCase(1, t.WETH, t.mvDEFI),
-  makeTestCase(1, t.WETH, t.mvRWA),
-  makeTestCase(1, t.WETH, t.DFX),
+  // makeTestCase(1, t.WETH, t.SMEL),
+  // makeTestCase(1000, t.USDC, t.BED),
+  // makeTestCase(1, t.WETH, t.BED),
+  // makeTestCase(1, t.WETH, t.mvDEFI),
+  // makeTestCase(1, t.WETH, t.mvRWA),
+  // makeTestCase(1, t.WETH, t.DFX),
 
-  makeTestCase(1000, t.USDC, t.SMEL),
-  makeTestCase(1000, t.USDC, t.mvDEFI),
-  makeTestCase(1000, t.USDC, t.mvRWA),
-  makeTestCase(1000, t.USDC, t.DFX),
+  // makeTestCase(1000, t.USDC, t.SMEL),
+  // makeTestCase(1000, t.USDC, t.mvDEFI),
+  // makeTestCase(1000, t.USDC, t.mvRWA),
+  // makeTestCase(1000, t.USDC, t.DFX),
 ]
 
 const folioTests2 = [

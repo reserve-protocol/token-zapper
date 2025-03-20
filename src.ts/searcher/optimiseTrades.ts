@@ -113,12 +113,15 @@ export const optimiseTrades = async (
     .filter((i) => {
       return actionsOuts[i] >= best * 0.9
     })
+  console.log(
+    `Optimising ${tradeActionIndicesToOptimise.length} actions out of ${tradeActions.length}`
+  )
 
   const finalOutputs = tradeActions.map(() => 0)
   const finalInputs = tradeActions.map(() => 0)
 
   tradeActions = tradeActionIndicesToOptimise.map((i) => tradeActions[i])
-  const minimium = Math.min(1 / tradeActions.length / 2, 1 / parts)
+  const minimium = 1 / parts
   const initial = tradeActions.map(() => 1 / tradeActions.length)
   const dim = [tradeActions.length]
   const inputValue = (await input.price()).asNumber()
@@ -128,7 +131,7 @@ export const optimiseTrades = async (
 
   let totalOut = 0
   const inputQty = input.asNumber()
-  const inputs = await nelderMeadOptimize(
+  await nelderMeadOptimize(
     initial,
     async (params, iteration) => {
       const paramsRounded = normalizeVectorByNodes(
@@ -149,10 +152,12 @@ export const optimiseTrades = async (
       )
       totalOut = 0
       let gasUnits = 0n
+      for (let i = 0; i < finalInputs.length; i++) {
+        finalInputs[i] = 0
+      }
       for (let i = 0; i < tradeActions.length; i++) {
         const out = outputs[i]
         if (out == null) {
-          finalInputs[tradeActionIndicesToOptimise[i]] = 0
           continue
         }
         finalInputs[tradeActionIndicesToOptimise[i]] =
@@ -170,9 +175,9 @@ export const optimiseTrades = async (
     },
     universe.logger,
     {
-      maxIterations: 35,
-      perturbation: 1,
-      tolerance: 1e-3,
+      maxIterations: 100,
+      perturbation: 0.5,
+      tolerance: 1e-6,
     },
     (params) =>
       normalizeVectorByNodes(

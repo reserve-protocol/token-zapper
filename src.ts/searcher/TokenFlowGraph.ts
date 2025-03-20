@@ -3886,14 +3886,14 @@ const optimise = async (
   if (bestSoFar.result.dustFraction > 0.999) {
     const steps =
       (opts?.maxSimpleOptimserSteps ?? universe.config.maxSimpleOptimserSteps) /
-      dims
+      Math.min(dims, 10)
     logger.info(`Running simple optimiser steps: ${steps}`)
     ;[bestSoFar] = await optimiseGlobal(
       startTime,
       g,
       universe,
       inputs,
-      steps,
+      Math.max(Math.min(steps, 100), 10),
       bestSoFar,
       logger,
       0.5,

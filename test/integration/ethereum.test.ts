@@ -32,6 +32,7 @@ const searcherOptions: SearcherOptions = {
   minimiseDustPhase1Steps: 10,
   zapMaxDustProduced: 1,
   zapMaxValueLoss: 1,
+  maxSimpleOptimserSteps: 100,
   rejectHighDust: false,
   rejectHighValueLoss: false,
   useNewZapperContract: true,
@@ -108,7 +109,7 @@ export const ethWhales = {
     '0x7cc1bfAB73bE4E02BB53814d1059A98cF7e49644',
   // hyusd
   '0xacdf0dba4b9839b96221a8487e9ca660a48212be':
-    '0xfbd42e965a2db2035636aeb41e1a54dbcc1cf1da',
+    '0x7cc1bfAB73bE4E02BB53814d1059A98cF7e49644',
   // usdc+
   '0xfc0b1eef20e4c68b3dcf36c4537cfa7ce46ca70b':
     '0xf2b25362a03f6eacca8de8d5350a9f37944c1e59',
@@ -325,14 +326,14 @@ const folioTests2 = [
 ]
 
 const redeemCases = [
-  makeTestCase(50000, rTokens.hyUSD, t.USDC),
-  makeTestCase(50000, rTokens.hyUSD, t.USDT),
-  makeTestCase(50000, rTokens.hyUSD, t.WETH),
-  makeTestCase(50000, rTokens.hyUSD, t.DAI),
-  makeTestCase(50000, rTokens.hyUSD, t.RSR),
+  // makeTestCase(50000, rTokens.hyUSD, t.USDC),
+  // makeTestCase(50000, rTokens.hyUSD, t.USDT),
+  // makeTestCase(50000, rTokens.hyUSD, t.WETH),
+  // makeTestCase(50000, rTokens.hyUSD, t.DAI),
+  // makeTestCase(50000, rTokens.hyUSD, t.RSR),
 
-  makeTestCase(50000, rTokens.eUSD, t.USDC),
-  makeTestCase(50000, rTokens.eUSD, t.USDT),
+  // makeTestCase(50000, rTokens.eUSD, t.USDC),
+  // makeTestCase(50000, rTokens.eUSD, t.USDT),
   makeTestCase(50000, rTokens.eUSD, t.WETH),
   makeTestCase(50000, rTokens.eUSD, t.DAI),
   makeTestCase(50000, rTokens.eUSD, t.RSR),

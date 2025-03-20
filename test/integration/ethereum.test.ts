@@ -230,13 +230,13 @@ const issueanceCases = [
   // makeTestCase(10, t.pxETH, rTokens.dgnETH),
 
   makeTestCase(1, t.WETH, t.SMEL),
+  makeTestCase(1000, t.USDC, t.BED),
   makeTestCase(1, t.WETH, t.BED),
   makeTestCase(1, t.WETH, t.mvDEFI),
   makeTestCase(1, t.WETH, t.mvRWA),
   makeTestCase(1, t.WETH, t.DFX),
 
   makeTestCase(1000, t.USDC, t.SMEL),
-  makeTestCase(1000, t.USDC, t.BED),
   makeTestCase(1000, t.USDC, t.mvDEFI),
   makeTestCase(1000, t.USDC, t.mvRWA),
   makeTestCase(1000, t.USDC, t.DFX),

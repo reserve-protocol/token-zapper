@@ -2248,93 +2248,6 @@ export class InMemoryTokenFlowGraphRegistry implements ITokenFlowGraphRegistry {
   }
 }
 
-const concatGraphs = (
-  universe: Universe,
-  parts: TokenFlowGraphBuilder[],
-  name: string = `${parts.map((p) => p.graph.name).join(' then ')}`
-) => {
-  if (parts.length === 1) {
-    return parts[0]
-  }
-  const builder = new TokenFlowGraphBuilder(
-    universe,
-    parts[0].graph.inputs,
-    parts[parts.length - 1].graph.outputs,
-    name
-  )
-
-  for (let i = 0; i < parts.length; i++) {
-    const stepGraph = parts[i].graph
-    const node = builder.addSubgraphNode(stepGraph, stepGraph.name + '_port')
-    for (const input of stepGraph.inputs) {
-      builder.getTokenNode(input).forward(input, 1, node)
-    }
-    for (const output of stepGraph.outputs) {
-      const out = builder.getTokenNode(output)
-      if (output === parts[i].graph.outputs[0]) {
-        node.forward(output, 1, builder.graph.end)
-        continue
-      }
-      node.forward(output, 1, out)
-    }
-  }
-
-  return builder
-}
-
-const fanOutGraphs = (
-  universe: Universe,
-  graphs: TokenFlowGraphBuilder[],
-  name: string = `${graphs.map((g) => g.graph.name).join(' or ')}`
-) => {
-  if (graphs.length === 1) {
-    return graphs[0]
-  }
-  if (graphs.length === 0) {
-    throw new Error('No graphs to fan out')
-  }
-  const inputTokenSet = new Set(graphs.flatMap((g) => g.graph.inputs))
-  const inputTokens = [...inputTokenSet]
-  const outputTokens = [
-    ...new Set(
-      graphs
-        .flatMap((g) => g.graph.outputs)
-        .filter((i) => !inputTokenSet.has(i))
-    ),
-  ]
-
-  const builder = new TokenFlowGraphBuilder(
-    universe,
-    inputTokens,
-    outputTokens,
-    name
-  )
-
-  const outputTokenSet = new Set(outputTokens)
-
-  for (const graph of graphs) {
-    const node = builder.addSubgraphNode(
-      graph.graph,
-      graph.graph.name + '_port'
-    )
-
-    for (const input of graph.graph.inputs) {
-      const inputTokenNode = builder.getTokenNode(input)
-      inputTokenNode.nodeType = NodeType.Optimisation
-      inputTokenNode.forward(input, 1, node)
-    }
-    for (const output of graph.graph.outputs) {
-      if (inputTokenSet.has(output) || !outputTokenSet.has(output)) {
-        node.forward(output, 1, builder.graph.end)
-        continue
-      }
-      node.forward(output, 1, builder.getTokenNode(output))
-    }
-  }
-
-  return builder
-}
-
 const inlineTFGs = (
   graph: TokenFlowGraph,
   name: string = graph.name
@@ -4358,11 +4271,31 @@ export class TokenFlowGraphSearcher {
     if (graph.inputs[0] === output) {
       return null
     }
-    const path = await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
+    let path = await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
       inputQty,
       output,
       allowMints
     )
+    let startIndex = -1
+    for (let i = 0; i < path.steps.length; i++) {
+      if (graph.inputs.includes(path.steps[i].outputToken)) {
+        startIndex = i + 1
+      }
+    }
+    path = {
+      steps:
+        startIndex === -1
+          ? path.steps
+          : path.steps.slice(startIndex, path.steps.length),
+    }
+
+    console.log(`graph inputs: ${graph.inputs.join(', ')}`)
+    console.log(`path: ${inputQty} -> ${output}`)
+    console.log(path.steps.map((i) => `${i.inputToken} -> ${i.outputToken}`))
+    if (path.steps.length === 0) {
+      return null
+    }
+
     return this.addTradesWithpath(
       graph,
       inputQty,

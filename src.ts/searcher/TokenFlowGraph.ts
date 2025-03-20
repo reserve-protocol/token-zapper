@@ -4080,6 +4080,8 @@ export class TokenFlowGraphSearcher {
       NodeType.Optimisation,
       `Source ${output} either mint or trade`
     )
+    const splitEdges = splitNode.outgoingEdge(inputQty.token)
+    splitEdges.min = 0.1
 
     await this.tokenMintingGraph(graph, inputQty, output, splitNode)
     await this.addTrades(
@@ -4135,7 +4137,7 @@ export class TokenFlowGraphSearcher {
     for (let i = 0; i < props.length; i++) {
       const prop = props[i]
       const node = graph.getTokenNode(prop.token)
-      if (node.receivesInput) {
+      if (node.receivesInput || graph.inputs.includes(prop.token)) {
         continue
       }
       if (prop.token === inputToken) {

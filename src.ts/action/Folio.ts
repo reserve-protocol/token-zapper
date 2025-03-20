@@ -123,22 +123,26 @@ export class FolioContext {
         )
         let prefersWETH = 0
         let prefersUSDC = 0
+        if (this.universe.preferredToken.has(token)) {
+          return true
+        }
+        const tenKEth = await this.universe.commonTokens.ERC20GAS.fromUSD(10000)
         await Promise.all(
           qtys.map(async (qty) => {
             try {
               const [a, b] = await Promise.all([
-                this.universe.dexLiquidtyPriceStore.getBestQuotePath(
-                  this.universe.commonTokens.ERC20GAS.one,
+                this.universe.dexLiquidtyPriceStore.getBestQuote(
+                  tenKEth,
                   qty.token,
                   true
                 ),
-                await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
-                  USDC.from(1000),
+                await this.universe.dexLiquidtyPriceStore.getBestQuote(
+                  USDC.from(10000),
                   qty.token,
                   true
                 ),
               ])
-              if (a.steps.length <= b.steps.length) {
+              if (a.output.amount > b.output.amount) {
                 prefersWETH++
               } else {
                 prefersUSDC++

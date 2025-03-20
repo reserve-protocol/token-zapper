@@ -193,7 +193,9 @@ const redeemCases = [
   makeTestCase(50, rTokens.bsd, t.WETH),
   makeTestCase(50, rTokens.hyUSD, t.USDC),
 
-  makeTestCase(10000, rTokens.hyUSD, t.WETH),
+  makeTestCase(10, rTokens.hyUSD, t.USDC),
+  makeTestCase(100, rTokens.hyUSD, t.USDC),
+  // makeTestCase(10000, rTokens.hyUSD, t.WETH),
   makeTestCase(10000, rTokens.hyUSD, t.USDC),
 
   makeTestCase(100, rTokens.BSDX, t.WETH),

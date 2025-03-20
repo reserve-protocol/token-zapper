@@ -3,7 +3,7 @@ import { Token } from '../entities/Token'
 import { PriceOracle } from '../oracles/PriceOracle'
 
 export const setupReservePricing = (universe: Universe) => {
-  const baseUrl = `https://api.reserve.org/current/prices?tokens=`
+  const baseUrl = `https://api.reserve.org/current/prices?chainId=${universe.config.chainId}&tokens=`
   const doesNotWork = new Set<Token>()
   const getPrice = async (token: Token) => {
     try {

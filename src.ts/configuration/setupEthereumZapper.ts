@@ -27,6 +27,7 @@ import { loadEthereumTokenList } from './setupEthereumTokenList'
 import { setupFrxETH } from './setupFrxETH'
 import { setupOdosPricing } from './setupOdosPricing'
 import { setupPXETH } from './setupPXETH'
+import { setupReservePricing } from './setupReservePricing'
 import { setupRETH } from './setupRETH'
 import { setupStakeDAO } from './setupStakeDAO'
 import { setupUniswapV2, UniswapV2Context } from './setupUniswapV2'
@@ -59,6 +60,7 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
   const eth = universe.nativeToken
   const commonTokens = universe.commonTokens
   setupOdosPricing(universe)
+  setupReservePricing(universe)
 
   // Searcher depends on a way to price tokens
   // Below we set up the chainlink registry to price tokens
@@ -475,6 +477,56 @@ export const setupEthereumZapper = async (universe: EthereumUniverse) => {
     universe.commonTokens.USDC
   )
   universe.preferredToken.set(universe.rTokens.USD3, universe.commonTokens.USDC)
+  universe.preferredToken.set(
+    universe.rTokens['ETH+'],
+    universe.commonTokens.WETH
+  )
+  universe.preferredToken.set(
+    universe.rTokens.dgnETH,
+    universe.commonTokens.WETH
+  )
+
+  universe.preferredToken.set(
+    universe.commonTokens.BED,
+    universe.commonTokens.WETH
+  )
+  universe.preferredToken.set(
+    universe.commonTokens.mvDEFI,
+    universe.commonTokens.WETH
+  )
+  universe.preferredToken.set(
+    universe.commonTokens.mvRWA,
+    universe.commonTokens.WETH
+  )
+  universe.preferredToken.set(
+    universe.commonTokens.SMEL,
+    universe.commonTokens.WETH
+  )
+  universe.preferredToken.set(
+    universe.commonTokens.DFX,
+    universe.commonTokens.WETH
+  )
+
+  universe.tokenClass.set(
+    universe.commonTokens.BED,
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.mvDEFI,
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.mvRWA,
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.SMEL,
+    Promise.resolve(universe.commonTokens.WETH)
+  )
+  universe.tokenClass.set(
+    universe.commonTokens.DFX,
+    Promise.resolve(universe.commonTokens.WETH)
+  )
 
   universe.addSingleTokenPriceOracle({
     token: universe.commonTokens.sUSD,

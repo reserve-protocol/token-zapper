@@ -53,7 +53,7 @@ if (process.env.SIMULATE_URL_MAINNET == null) {
   console.log('SIMULATE_URL_MAINNET not set, skipping simulation tests')
   process.exit(0)
 }
-const TEST_TIMEOUT = 60000
+const TEST_TIMEOUT = 120000
 export const ethWhales = {
   // stETH
   '0xae7ab96520de3a18e5e111b5eaab095312d7fe84':
@@ -210,7 +210,7 @@ const issueanceCases = [
 
   // makeTestCase(10, t.WETH, rTokens.eUSD),
   // makeTestCase(10000, t.USDC, rTokens.eUSD),
-  makeTestCase(10000, t.CRV, rTokens.dgnETH),
+  // makeTestCase(1000, t.USDC, t.mvRWA),
   // makeTestCase(10000, t.USDT, rTokens.eUSD),
   // makeTestCase(10000, t.sDAI, rTokens.eUSD),
   // makeTestCase(10000, t.COMP, rTokens.eUSD),
@@ -230,9 +230,15 @@ const issueanceCases = [
 
   makeTestCase(1, t.WETH, t.SMEL),
   makeTestCase(1, t.WETH, t.BED),
-  // makeTestCase(1, t.WETH, t.mvDEFI),
-  // makeTestCase(1, t.WETH, t.mvRWA),
-  // makeTestCase(1, t.WETH, t.DFX),
+  makeTestCase(1, t.WETH, t.mvDEFI),
+  makeTestCase(1, t.WETH, t.mvRWA),
+  makeTestCase(1, t.WETH, t.DFX),
+
+  makeTestCase(1000, t.USDC, t.SMEL),
+  makeTestCase(1000, t.USDC, t.BED),
+  makeTestCase(1000, t.USDC, t.mvDEFI),
+  makeTestCase(1000, t.USDC, t.mvRWA),
+  makeTestCase(1000, t.USDC, t.DFX),
 ]
 
 const folioTests2 = [

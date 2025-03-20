@@ -2569,7 +2569,7 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       Infinity,
       20
     )
-    console.log(nodeSplits.inputs.join(', '))
+    // console.log(nodeSplits.inputs.join(', '))
     for (let i = 0; i < splits.parts.length; i++) {
       splits.parts[i] = 0
     }
@@ -2577,8 +2577,8 @@ const evaluationOptimiser = (universe: Universe, g: TokenFlowGraph) => {
       splits.parts[acts[i][1]] = nodeSplits.inputs[i]
     }
     splits.normalize()
-    console.log(splits.parts.join(', '))
-    console.log(splits.inner.join(', '))
+    // console.log(splits.parts.join(', '))
+    // console.log(splits.inner.join(', '))
   }
 
   const preevaluationHandler = async (
@@ -4307,9 +4307,9 @@ export class TokenFlowGraphSearcher {
           : path.steps.slice(startIndex, path.steps.length),
     }
 
-    console.log(`graph inputs: ${graph.inputs.join(', ')}`)
-    console.log(`path: ${inputQty} -> ${output}`)
-    console.log(path.steps.map((i) => `${i.inputToken} -> ${i.outputToken}`))
+    // console.log(`graph inputs: ${graph.inputs.join(', ')}`)
+    // console.log(`path: ${inputQty} -> ${output}`)
+    // console.log(path.steps.map((i) => `${i.inputToken} -> ${i.outputToken}`))
     if (path.steps.length === 0) {
       return null
     }

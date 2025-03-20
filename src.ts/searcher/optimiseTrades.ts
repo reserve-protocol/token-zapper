@@ -113,9 +113,9 @@ export const optimiseTrades = async (
     .filter((i) => {
       return actionsOuts[i] >= best * 0.9
     })
-  console.log(
-    `Optimising ${tradeActionIndicesToOptimise.length} actions out of ${tradeActions.length}`
-  )
+  // console.log(
+  //   `Optimising ${tradeActionIndicesToOptimise.length} actions out of ${tradeActions.length}`
+  // )
 
   const finalOutputs = tradeActions.map(() => 0)
   const finalInputs = tradeActions.map(() => 0)

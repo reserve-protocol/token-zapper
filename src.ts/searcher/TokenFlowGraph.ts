@@ -4396,13 +4396,16 @@ export class TokenFlowGraphSearcher {
 
     if (!outputIsMintable) {
       for (const input of newInputs) {
+        if (input.token === output) {
+          continue
+        }
         await this.addTrades(graph, input, output, true)
       }
     } else {
       const underlyingTokens = await this.findTargetTokens(output)
       for (const input of newInputs) {
         for (const underlyingToken of underlyingTokens) {
-          if (underlyingToken === input.token) {
+          if (underlyingToken === input.token || underlyingToken === output) {
             continue
           }
           try {
@@ -4430,8 +4433,6 @@ export class TokenFlowGraphSearcher {
       }
       await recursiveMint(output)
     }
-
-    console.log(graph.toDot().join('\n'))
 
     return await optimise(
       this.universe,

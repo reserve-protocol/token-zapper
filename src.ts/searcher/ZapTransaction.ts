@@ -9,6 +9,8 @@ import {
 import { Planner, printPlan } from '../tx-gen/Planner'
 import { Universe } from '../Universe'
 import { ZapERC20ParamsStruct } from '../contracts/contracts/Zapper'
+import { MultiZapParamsStruct } from '../contracts/contracts/NTo1Zapper'
+import { ZapParamsStruct } from '../contracts/contracts/Zapper2'
 
 interface BaseSearcherResult {
   universe: Universe
@@ -84,7 +86,7 @@ export class ZapTxStats {
     private readonly gasUnits: bigint,
 
     // value of (input token qty)
-    public readonly input: PricedTokenQuantity,
+    public readonly inputs: PricedTokenQuantity[],
 
     // value of (output token qty)
     public readonly output: PricedTokenQuantity,
@@ -111,17 +113,27 @@ export class ZapTxStats {
     result: BaseSearcherResult,
     input: {
       gasUnits: bigint
-      input: TokenQuantity
+      inputs: TokenQuantity[]
       output: TokenQuantity
       dust: TokenQuantity[]
     }
   ) {
-    const [inputValue, outputValue, ...dustValue] = (
+    const inputValues = await Promise.all(
+      input.inputs.map(async (i) => {
+        const price = (await i.price()).into(result.universe.usd)
+        if (price == null) {
+          return new PricedTokenQuantity(i, result.universe.usd.zero)
+        }
+        return new PricedTokenQuantity(i, price)
+      })
+    )
+
+    const [outputValue, ...dustValue] = (
       await Promise.all(
-        [input.input, input.output, ...input.dust].map(async (i) => {
+        [input.output, ...input.dust].map(async (i) => {
           const price = (await i.price()).into(result.universe.usd)
           if (price == null) {
-            return null
+            return new PricedTokenQuantity(i, result.universe.usd.zero)
           }
           return new PricedTokenQuantity(i, price)
         })
@@ -134,7 +146,7 @@ export class ZapTxStats {
     )
 
     const pricedTokens = await Promise.all(
-      [input.input, input.output, ...input.dust].map(async (i) => {
+      [...input.inputs, input.output, ...input.dust].map(async (i) => {
         const price = (await i.token.one.price()).into(result.universe.usd)
         if (price == null) {
           return new PricedTokenQuantity(i, result.universe.usd.zero)
@@ -146,7 +158,7 @@ export class ZapTxStats {
     return new ZapTxStats(
       result,
       input.gasUnits,
-      inputValue,
+      inputValues,
       outputValue,
       DustStats.fromDust(result, dustValue),
       [outputValue, ...dustValue],
@@ -171,10 +183,10 @@ export class ZapTxStats {
 
   toString() {
     if (this.isThereDust)
-      return `${this.input} -> ${this.output} (+ $${
+      return `${this.inputs.join(', ')} -> ${this.output} (+ $${
         this.dust.valueUSD
       } D. [${this.dust.dust.map((i) => i.quantity).join(', ')}])`
-    return `${this.input} -> ${this.output} @ fee: ${
+    return `${this.inputs.join(', ')} -> ${this.output} @ fee: ${
       this.txFee.txFee.price
     } | prices: ${this.tokenPrices
       .map((i) => `${i.quantity.token}: ${i.price}`)
@@ -187,7 +199,7 @@ export class ZapTransaction {
     public readonly planner: Planner,
     public readonly searchResult: BaseSearcherResult,
     public readonly transaction: {
-      params: ZapERC20ParamsStruct
+      params: ZapERC20ParamsStruct | MultiZapParamsStruct | ZapParamsStruct
       tx: TransactionRequest
     },
     public readonly stats: ZapTxStats,
@@ -199,10 +211,6 @@ export class ZapTransaction {
     return this.searchResult.universe
   }
 
-  get input() {
-    return this.stats.input.quantity
-  }
-
   get output() {
     return this.stats.output.quantity
   }
@@ -211,9 +219,6 @@ export class ZapTransaction {
   }
   get dust() {
     return this.stats.dust
-  }
-  get inputValueUSD() {
-    return this.stats.input.price
   }
   get outputsValueUSD() {
     return this.stats.outputs.map((o) => o.price)
@@ -258,13 +263,14 @@ export class ZapTransaction {
     searchResult: BaseSearcherResult,
     planner: Planner,
     tx: {
-      params: ZapERC20ParamsStruct
+      params: ZapERC20ParamsStruct | MultiZapParamsStruct | ZapParamsStruct
       tx: TransactionRequest
     },
     stats: ZapTxStats
   ) {
     const totalInputValue =
-      stats.input.price.asNumber() + stats.txFee.txFee.price.asNumber()
+      stats.inputs.reduce((l, r) => l + r.price.asNumber(), 0) +
+      stats.txFee.txFee.price.asNumber()
     const price = stats.output.price.asNumber() / totalInputValue
 
     const priceTotalOut =
@@ -285,7 +291,6 @@ export class ZapTransaction {
   }
 
   async serialize() {
-    const txArgs = await resolveProperties(this.transaction.params)
     return {
       id: hexZeroPad(hexlify(this.searchResult.zapId), 32),
       chainId: this.universe.chainId,
@@ -295,21 +300,6 @@ export class ZapTransaction {
       createdAt: new Date().toISOString(),
       createdAtBlock: this.universe.currentBlock,
       searchTime: Date.now() - this.searchResult.startTime,
-      txArgs: Object.fromEntries(
-        Object.entries(txArgs).map(([k, v]) => {
-          if (v == null || typeof v === 'number' || typeof v === 'boolean') {
-            return [k, v ?? null] as [string, number | boolean | null]
-          }
-          if (v instanceof BigNumber) {
-            return [k, v.toString()] as [string, string]
-          }
-          if (Array.isArray(v)) {
-            return [k, v.map((i) => i.toString())] as [string, string[]]
-          }
-          return [k, v.toString()] as [string, string]
-        })
-      ),
-
       tx: {
         to: this.transaction.tx.to ?? null,
         data:
@@ -320,7 +310,7 @@ export class ZapTransaction {
         from: this.transaction.tx.from ?? null,
       },
       gasUnits: this.stats.txFee.units.toString(),
-      input: this.stats.input.serialize(),
+      inputs: this.stats.inputs.map((i) => i.serialize()),
       output: this.stats.output.serialize(),
       dust: this.dust.dust.map((i) => i.serialize()),
       description: this.describe().join('\n'),

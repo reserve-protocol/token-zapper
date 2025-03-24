@@ -2187,6 +2187,22 @@ export class TokenFlowGraphBuilder {
     )
     return builder
   }
+  public static createNTo1(
+    universe: Universe,
+    inputs: TokenQuantity[],
+    output: Token,
+    name: string = `graph_${graphId++}_${inputs
+      .map((i) => i.token)
+      .join(',')}->${output}`
+  ): TokenFlowGraphBuilder {
+    const builder = new TokenFlowGraphBuilder(
+      universe,
+      inputs.map((i) => i.token),
+      [output],
+      name
+    )
+    return builder
+  }
 }
 
 const getKey = (input: TokenQuantity) => {
@@ -4044,21 +4060,7 @@ export class TokenFlowGraphSearcher {
     const edges = graph.graph._outgoingEdges[mintSubgraphInputNode.id]!
     edges.min = 0
 
-    // let count = 0
-    // const MAX_SPLITS_PR_OPT_NODE = 5
     const getInputNode = () => {
-      // if (count >= MAX_SPLITS_PR_OPT_NODE) {
-      //   count = 0
-      //   mintSubgraphInputNode = graph.addSplittingNode(
-      //     inputToken,
-      //     inputNode,
-      //     NodeType.Split,
-      //     `mint ${outToken} (main ${splitIndex++})`
-      //   )
-      //   const edges = graph.graph._outgoingEdges[mintSubgraphInputNode.id]!
-      //   edges.min = 0
-      // }
-      // count += 1
       return mintSubgraphInputNode
     }
 
@@ -4184,8 +4186,12 @@ export class TokenFlowGraphSearcher {
     }>
   >()
 
-  public async doesTradePathExist(inputQty: TokenQuantity, output: Token) {
-    const key = `${inputQty.token.address}.${output}`
+  public async doesTradePathExist(
+    inputQty: TokenQuantity,
+    output: Token,
+    allowMints = false
+  ) {
+    const key = `${inputQty.token.address}.${output}.${allowMints}`
     let prev = this.doesTradePathExistCache.get(key)
     if (prev != null) {
       const { exists, timestamp } = await prev
@@ -4198,7 +4204,7 @@ export class TokenFlowGraphSearcher {
         const path = await this.universe.dexLiquidtyPriceStore.getBestQuotePath(
           inputQty,
           output,
-          false
+          allowMints
         )
         return {
           exists:
@@ -4347,6 +4353,95 @@ export class TokenFlowGraphSearcher {
     } catch (e) {
       return null
     }
+  }
+
+  private async findTargetTokens(output: Token): Promise<Token[]> {
+    const outputIsMintable = this.universe.isTokenMintable(output)
+    if (!outputIsMintable) {
+      return [output]
+    }
+    const mintAction = this.universe.getMintAction(output)
+    const inputTokens = await Promise.all(
+      mintAction.inputToken.map((t) => this.findTargetTokens(t))
+    )
+    return [...new Set(inputTokens.flat())]
+  }
+
+  public async searchNTo1(
+    inputs: TokenQuantity[],
+    output: Token,
+    opts: SearcherOptions,
+    txGenOptions: TxGenOptions
+  ) {
+    let graph = TokenFlowGraphBuilder.createNTo1(
+      this.universe,
+      inputs,
+      output,
+      `${inputs.join(', ')} -> ${output}`
+    )
+
+    const newInputsAmts = new TokenAmounts()
+    const outputIsMintable = this.universe.isTokenMintable(output)
+    for (const input of inputs) {
+      if (this.universe.isTokenBurnable(input.token)) {
+        const outputTokens = await this.tokenRedemptionGraph(graph, input)
+        for (const outputToken of outputTokens) {
+          newInputsAmts.add(outputToken)
+        }
+      } else {
+        newInputsAmts.add(input)
+      }
+    }
+    const newInputs = newInputsAmts.toTokenQuantities()
+
+    if (!outputIsMintable) {
+      for (const input of newInputs) {
+        await this.addTrades(graph, input, output, true)
+      }
+    } else {
+      const underlyingTokens = await this.findTargetTokens(output)
+      for (const input of newInputs) {
+        for (const underlyingToken of underlyingTokens) {
+          if (underlyingToken === input.token) {
+            continue
+          }
+          try {
+            await this.addTrades(graph, input, underlyingToken, false)
+          } catch (e) {}
+        }
+      }
+
+      const recursiveMint = async (token: Token) => {
+        const act = this.universe.getMintAction(token)
+        const mintAction = graph.addAction(act)
+        for (const input of act.inputToken) {
+          if (this.universe.isTokenMintable(input)) {
+            await recursiveMint(input)
+          }
+          const inputNode = graph.getTokenNode(input)
+          inputNode.forward(input, 1, mintAction)
+        }
+        for (const output of act.outputToken) {
+          mintAction.forward(output, 1, graph.getTokenNode(output))
+        }
+        for (const dust of act.dustTokens) {
+          mintAction.forward(dust, 1, graph.graph.end)
+        }
+      }
+      await recursiveMint(output)
+    }
+
+    console.log(graph.toDot().join('\n'))
+
+    return await optimise(
+      this.universe,
+      graph,
+      newInputs,
+      [output],
+      opts,
+      false,
+      true
+    )
   }
   public async search1To1(
     input: TokenQuantity,

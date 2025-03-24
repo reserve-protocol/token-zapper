@@ -4,8 +4,14 @@ import { hexDataSlice, hexlify } from 'ethers/lib/utils'
 import { BaseAction, plannerUtils } from '../action/Action'
 import { Address } from '../base/Address'
 import { DefaultMap } from '../base/DefaultMap'
-import { EmitId__factory, IERC20__factory, Zapper__factory } from '../contracts'
+import {
+  EmitId__factory,
+  IERC20__factory,
+  NTo1Zapper__factory,
+  Zapper__factory,
+} from '../contracts'
 import { Token, TokenQuantity } from '../entities/Token'
+import deployments from '../contracts/deployments.json'
 import {
   Contract,
   LiteralValue,
@@ -33,6 +39,7 @@ import {
 } from '../contracts/contracts/Zapper'
 import { DeployMintFolioAction } from '../action/Folio'
 import { GAS_TOKEN_ADDRESS } from '../base/constants'
+import { MultiZapParamsStruct } from '../contracts/contracts/NTo1Zapper'
 
 const iface = Zapper__factory.createInterface()
 const simulateAndParse = async (
@@ -99,39 +106,63 @@ const evaluateProgram = async (
   const outputTokenAddress =
     outputToken instanceof Address ? outputToken : outputToken.address
   let data: string
-  let params: ZapParamsStruct | ZapERC20ParamsStruct
-  if (universe.config.useNewZapperContract) {
-    const p = encodeZapParamsStruct(
-      planner,
-      opts.ethereumInput ? inputs[0].into(universe.nativeToken) : inputs[0],
-      opts.ethereumOutput ? Address.ZERO : outputTokenAddress,
-      minOutput,
-      dustTokens,
-      opts.recipient
-    )
-    params = p
-    // console.log(p)
-    data = encodeZapper2Calldata(universe, p, {
-      deployFolio: opts.deployFolio,
-    })
-  } else {
-    if (opts.ethereumOutput) {
-      throw new Error('Ethereum output not supported for old zapper')
-    }
-    const p = encodeZapERC20ParamsStruct(
-      planner,
-      inputs[0],
-      outputTokenAddress,
-      minOutput,
-      dustTokens
-    )
-    params = p
-    data = encodeZapperCalldata(p, {
-      ethInput: opts.ethereumInput,
-    })
-  }
+  let params: ZapParamsStruct | ZapERC20ParamsStruct | MultiZapParamsStruct
+  let to = universe.zapperAddress
 
-  const to = universe.zapperAddress
+  if (inputs.length === 1) {
+    if (universe.config.useNewZapperContract) {
+      const p = encodeZapParamsStruct(
+        planner,
+        opts.ethereumInput ? inputs[0].into(universe.nativeToken) : inputs[0],
+        opts.ethereumOutput ? Address.ZERO : outputTokenAddress,
+        minOutput,
+        dustTokens,
+        opts.recipient
+      )
+      params = p
+      // console.log(p)
+      data = encodeZapper2Calldata(universe, p, {
+        deployFolio: opts.deployFolio,
+      })
+    } else {
+      if (opts.ethereumOutput) {
+        throw new Error('Ethereum output not supported for old zapper')
+      }
+      const p = encodeZapERC20ParamsStruct(
+        planner,
+        inputs[0],
+        outputTokenAddress,
+        minOutput,
+        dustTokens
+      )
+      params = p
+      data = encodeZapperCalldata(p, {
+        ethInput: opts.ethereumInput,
+      })
+    }
+  } else {
+    const addr = (deployments as any)[universe.chainId][0].contracts.NTo1Zapper
+      ?.address
+    if (addr == null) {
+      throw new Error('NTo1Zapper not deployed')
+    }
+    const plan = planner.plan()
+    const p: MultiZapParamsStruct = {
+      inputs: inputs.map((i) => ({
+        token: i.token.address.address,
+        quantity: i.amount,
+      })),
+      tokens: inputs.map((i) => i.token.address.address),
+      commands: plan.commands,
+      state: plan.state,
+      amountOut: minOutput,
+      tokenOut: outputToken.address.toString(),
+      recipient: opts.recipient.address,
+    }
+    data = NTo1Zapper__factory.createInterface().encodeFunctionData('zap', [p])
+    to = Address.from(addr)
+    params = p
+  }
 
   let value = 0n
   if (opts.ethereumInput) {
@@ -149,8 +180,7 @@ const evaluateProgram = async (
     setup: {
       sender: signer.address,
       approvalAddress: to.address,
-      inputTokenAddress: inputs[0].token.address.address,
-      userBalanceAndApprovalRequirements: inputs[0].amount,
+      inputs,
     },
   }
 
@@ -662,7 +692,7 @@ export class TxGen {
 
     const stats = await ZapTxStats.create(result, {
       gasUnits: program.res.gasUnits + program.res.gasUnits / 6n,
-      input: this.result.result.inputs[0],
+      inputs: this.result.result.inputs,
       output: (opts.ethereumOutput
         ? this.universe.nativeToken
         : outputToken

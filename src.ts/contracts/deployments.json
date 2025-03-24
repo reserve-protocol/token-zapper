@@ -2578,6 +2578,116 @@
             }
           ]
         },
+        "NTo1Zapper": {
+          "address": "0x9a6E01e21AAF67c5335Ca1D515b6a24B6A90f62F",
+          "abi": [
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IWrappedNative",
+                  "name": "wrappedNative_",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract ZapperExecutor",
+                  "name": "executor_",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "constructor"
+            },
+            {
+              "inputs": [
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "address",
+                          "name": "token",
+                          "type": "address"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "quantity",
+                          "type": "uint256"
+                        }
+                      ],
+                      "internalType": "struct TokenQuantity[]",
+                      "name": "inputs",
+                      "type": "tuple[]"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "commands",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "bytes[]",
+                      "name": "state",
+                      "type": "bytes[]"
+                    },
+                    {
+                      "internalType": "contract IERC20[]",
+                      "name": "tokens",
+                      "type": "address[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "tokenOut",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "recipient",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct MultiZapParams",
+                  "name": "params",
+                  "type": "tuple"
+                }
+              ],
+              "name": "zap",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256[]",
+                      "name": "dust",
+                      "type": "uint256[]"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amountOut",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "gasUsed",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct ZapperOutput",
+                  "name": "",
+                  "type": "tuple"
+                }
+              ],
+              "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "stateMutability": "payable",
+              "type": "receive"
+            }
+          ]
+        },
         "PancakeRouterCall": {
           "address": "0xAFA82121803b4DAc9A2072b349c7983cCdBfD96F",
           "abi": [

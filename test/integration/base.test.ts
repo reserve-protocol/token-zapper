@@ -533,6 +533,33 @@ describe('base zapper', () => {
   //   }, 60000)
   // })
 
+  describe('searchNTo1', () => {
+    describe('wstETH, cbETH -> bsdETH', () => {
+      it('produces the basket graph', async () => {
+        expect.assertions(1)
+        try {
+          const inputQty = [
+            universe.commonTokens.wstETH.from(1),
+            universe.commonTokens.cbETH.from(1),
+          ]
+
+          const out = await universe.zapNTo1(
+            inputQty,
+            universe.rTokens.bsd,
+            testUser
+          )
+          console.log(out.toString())
+          expect(true).toBe(true)
+        } catch (e) {
+          console.error(e)
+          expect(true).toBe(false)
+
+          throw e
+        }
+      }, 60000)
+    })
+  })
+
   describe('folio', () => {
     for (const testCase of folioTests) {
       describe(testCase.name, () => {

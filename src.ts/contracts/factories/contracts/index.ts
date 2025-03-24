@@ -43,6 +43,7 @@ export { IStETH__factory } from "./IStETH__factory";
 export { IUniswapV2Pair__factory } from "./IUniswapV2Pair__factory";
 export { IWStETH__factory } from "./IWStETH__factory";
 export { IWrappedNative__factory } from "./IWrappedNative__factory";
+export { NTo1Zapper__factory } from "./NTo1Zapper__factory";
 export { RTokenLens__factory } from "./RTokenLens__factory";
 export { WrapperCompV3__factory } from "./WrapperCompV3__factory";
 export { Zapper__factory } from "./Zapper__factory";

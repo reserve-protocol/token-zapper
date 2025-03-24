@@ -8,7 +8,7 @@ import {
   IRToken__factory,
   IWrappedNative__factory,
 } from '../contracts'
-import { Token } from '../entities/Token'
+import { Token, TokenQuantity } from '../entities/Token'
 import { logger } from '../logger'
 import { Universe } from '../Universe'
 import { ZapperOutputStructOutput } from '../contracts/contracts/Zapper'
@@ -34,10 +34,7 @@ export interface SimulateParams {
     sender: string
     approvalAddress: string
     // The quantity of the tokens the user wants to zap
-    userBalanceAndApprovalRequirements: bigint
-
-    // The ERC20 token address, or 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE for ETH
-    inputTokenAddress: string
+    inputs: TokenQuantity[]
   }
 }
 
@@ -168,58 +165,51 @@ export const makeCallManySimulator = (
       )
     }
     if (input.setup != null) {
-      const token = await universe.getToken(
-        Address.from(input.setup.inputTokenAddress.toLowerCase())
-      )
-      if (token === universe.nativeToken) {
-        setETHBalance(
-          input.setup.sender,
-          input.setup.userBalanceAndApprovalRequirements +
-            0x56bc75e2d6310000000n
-        )
-      } else {
-        addApproval(
-          token,
-          input.setup.sender,
-          input.setup.approvalAddress,
-          input.setup.userBalanceAndApprovalRequirements
-        )
-      }
+      for (const inp of input.setup.inputs) {
+        const token = inp.token
+        const amount = inp.amount
+        if (token === universe.nativeToken) {
+          setETHBalance(input.setup.sender, amount + 0x56bc75e2d6310000000n)
+        } else {
+          addApproval(
+            token,
+            input.setup.sender,
+            input.setup.approvalAddress,
+            amount
+          )
+        }
 
-      if (token === universe.wrappedNativeToken) {
-        setETHBalance(
-          input.setup.sender,
-          input.setup.userBalanceAndApprovalRequirements +
-            0x56bc75e2d6310000000n
-        )
-        addTransaction(
-          input.setup.sender,
-          token,
-          wethInterface.encodeFunctionData('deposit'),
-          input.setup.userBalanceAndApprovalRequirements,
-          15_000_000n
-        )
-      } else {
-        const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
-
-        if (whale == null) {
-          universe.logger.warn(
-            'No whale for token ' +
-              input.setup.inputTokenAddress +
-              ', so will not fund the sender with funds'
+        if (token === universe.wrappedNativeToken) {
+          setETHBalance(input.setup.sender, amount + 0x56bc75e2d6310000000n)
+          addTransaction(
+            input.setup.sender,
+            token,
+            wethInterface.encodeFunctionData('deposit'),
+            amount,
+            15_000_000n
           )
         } else {
-          stateOverride[whale] = {
-            balance: ETH_256,
+          const whale = whales[token.address.address.toLowerCase()]
+
+          if (whale == null) {
+            universe.logger.warn(
+              'No whale for token ' +
+                token.address.address +
+                ', so will not fund the sender with funds'
+            )
+          } else {
+            stateOverride[whale] = {
+              balance: ETH_256,
+            }
+            addTransaction(
+              whale,
+              token.address.address,
+              erc20Interface.encodeFunctionData('transfer', [
+                input.setup.sender,
+                amount,
+              ])
+            )
           }
-          addTransaction(
-            whale,
-            input.setup.inputTokenAddress,
-            erc20Interface.encodeFunctionData('transfer', [
-              input.setup.sender,
-              input.setup.userBalanceAndApprovalRequirements,
-            ])
-          )
         }
       }
     }
@@ -328,57 +318,47 @@ export const makeCustomRouterSimulator = (
     }
 
     if (input.setup != null) {
-      const token = await universe.getToken(
-        Address.from(input.setup.inputTokenAddress.toLowerCase())
-      )
-
-      if (token === universe.nativeToken) {
-        addBalance(
-          input.setup.sender,
-          input.setup.userBalanceAndApprovalRequirements +
-            0x56bc75e2d6310000000n
-        )
-      } else {
-        addApproval(
-          token,
-          input.setup.sender,
-          input.setup.approvalAddress,
-          input.setup.userBalanceAndApprovalRequirements
-        )
-      }
-      if (token === universe.wrappedNativeToken) {
-        addBalance(
-          input.setup.sender,
-          input.setup.userBalanceAndApprovalRequirements +
-            0x56bc75e2d6310000000n
-        )
-        addTransaction(
-          input.setup.sender,
-          token,
-          wethInterface.encodeFunctionData('deposit'),
-          15_000_000n,
-          input.setup.userBalanceAndApprovalRequirements
-        )
-      } else {
-        const whale = whales[input.setup.inputTokenAddress.toLowerCase()]
-        if (whale == null) {
-          universe.logger.warn(
-            'No whale for token ' +
-              input.setup.inputTokenAddress +
-              ', so will not fund the sender with funds'
+      for (const inp of input.setup.inputs) {
+        const token = inp.token
+        const amount = inp.amount
+        if (token === universe.nativeToken) {
+          addBalance(input.setup.sender, amount + 0x56bc75e2d6310000000n)
+        } else {
+          addApproval(
+            token,
+            input.setup.sender,
+            input.setup.approvalAddress,
+            amount
+          )
+        }
+        if (token === universe.wrappedNativeToken) {
+          addBalance(input.setup.sender, amount + 0x56bc75e2d6310000000n)
+          addTransaction(
+            input.setup.sender,
+            token,
+            wethInterface.encodeFunctionData('deposit'),
+            15_000_000n,
+            amount
           )
         } else {
-          stateOverride[whale] = {
-            balance: ETH_256,
+          const whale = whales[token.address.address.toLowerCase()]
+          if (whale == null) {
+            universe.logger.warn(
+              'No whale for token ' +
+                token.address.address +
+                ', so will not fund the sender with funds'
+            )
+          } else {
+            stateOverride[whale] = {
+              balance: ETH_256,
+            }
+            moveFunds.push({
+              owner: whale,
+              token: token.address.address,
+              spender: input.setup.sender,
+              quantity: '0x' + amount.toString(16),
+            })
           }
-          moveFunds.push({
-            owner: whale,
-            token: input.setup.inputTokenAddress,
-            spender: input.setup.sender,
-            quantity:
-              '0x' +
-              input.setup.userBalanceAndApprovalRequirements.toString(16),
-          })
         }
       }
     }

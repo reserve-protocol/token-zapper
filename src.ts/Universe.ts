@@ -1007,6 +1007,60 @@ export class Universe<const UniverseConf extends Config = Config> {
     return await reachableTokens(this)
   }
 
+  public async zapNTo1(
+    userInput: TokenQuantity[],
+    outputToken: Token,
+    caller: Address,
+    opts?: ToTransactionArgs
+  ) {
+    const recipient = Address.from(opts?.recipient ?? caller)
+    const dustRecipient = Address.from(opts?.dustRecipient ?? opts?.recipient ?? caller)
+
+    const options = Object.assign({
+      caller: Address.from(caller),
+      recipient: Address.from(recipient),
+      dustRecipient: Address.from(dustRecipient),
+    }, opts)
+    if (typeof outputToken === 'string') {
+      outputToken = await this.getToken(Address.from(outputToken))
+    }
+    for (const input of userInput) {
+      await this.folioContext.isFolio(input.token)
+    }
+    await this.folioContext.isFolio(outputToken)
+
+    try {
+      const outputIsGasToken = outputToken === this.nativeToken
+      userInput = userInput.map(i => i.token === this.nativeToken ? i.into(this.wrappedNativeToken) : i)
+      outputToken = outputIsGasToken ? this.wrappedNativeToken : outputToken
+      this.logger.info(`Building DAG for ${userInput.join(", ")} -> ${outputToken}`)
+      
+      const txGenOptions: TxGenOptions = {
+        ...options,
+        ethereumInput: false,
+        ethereumOutput: outputIsGasToken,
+        useTrade: opts?.trade,
+        slippage: opts?.slippage ?? 0.001
+      }
+      const tfg = await this.tfgSearcher.searchNTo1(
+        userInput,
+        outputToken,
+        {...this.config, ...opts?.searcherConfig},
+        txGenOptions
+      )
+      const res = await tfg.evaluate(this, userInput)
+      this.logger.info(`Expected output: ${res.result.inputs.join(', ')} -> ${res.result.outputs.filter(i => i.amount >10n).join(', ')}`)
+      try {
+        return await new TxGen(this, res).generate(txGenOptions)
+      } catch (e) {
+        throw e
+      }
+    } catch (e) {
+      this.logger.info(`Error zapping: ${e}`)
+      throw e
+    }
+  }
+
   public async zap(
     userInput: TokenQuantity,
     outputToken: Token | string,

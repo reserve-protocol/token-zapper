@@ -196,6 +196,8 @@ export type { IMaverickV2Router } from "./contracts/Maverick.sol/IMaverickV2Rout
 export { IMaverickV2Router__factory } from "./factories/contracts/Maverick.sol/IMaverickV2Router__factory";
 export type { IRouterErrors } from "./contracts/Maverick.sol/IRouterErrors";
 export { IRouterErrors__factory } from "./factories/contracts/Maverick.sol/IRouterErrors__factory";
+export type { NTo1Zapper } from "./contracts/NTo1Zapper";
+export { NTo1Zapper__factory } from "./factories/contracts/NTo1Zapper__factory";
 export type { SelfDestruct } from "./contracts/PreventTampering.sol/SelfDestruct";
 export { SelfDestruct__factory } from "./factories/contracts/PreventTampering.sol/SelfDestruct__factory";
 export type { TestPreventTampering } from "./contracts/PreventTampering.sol/TestPreventTampering";

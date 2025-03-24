@@ -72,6 +72,7 @@ export type { IStETH } from "./IStETH";
 export type { IUniswapV2Pair } from "./IUniswapV2Pair";
 export type { IWStETH } from "./IWStETH";
 export type { IWrappedNative } from "./IWrappedNative";
+export type { NTo1Zapper } from "./NTo1Zapper";
 export type { RTokenLens } from "./RTokenLens";
 export type { WrapperCompV3 } from "./WrapperCompV3";
 export type { Zapper } from "./Zapper";

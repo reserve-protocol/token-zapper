@@ -38,12 +38,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: [config.weth, executor.address],
   })
 
+  const nTo1Zapper = await hre.deployments.deploy('NTo1Zapper', {
+    from: deployer,
+    args: [config.weth, executor.address],
+  })
+
   console.log(`Run the following commands to verify the contracts:`)
   console.log(
     `npx hardhat verify "${executor.address}" --network ${config.slug}`
   )
   console.log(
-    `npx hardhat verify "${zapper.address}" "${config.weth}" "${executor.address}" --network ${config.slug}`
+    `npx hardhat verify "${nTo1Zapper.address}" "${config.weth}" "${executor.address}" --network ${config.slug}`
   )
 }
 func.tags = ['zapper']

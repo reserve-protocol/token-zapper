@@ -4383,7 +4383,9 @@ export class TokenFlowGraphSearcher {
     const newInputsAmts = new TokenAmounts()
     const outputIsMintable = this.universe.isTokenMintable(output)
     for (const input of inputs) {
-      if (this.universe.isTokenBurnable(input.token)) {
+      const isFolio = await this.universe.folioContext.isFolio(input.token)
+      const isRToken = await this.universe.isRToken(input.token)
+      if (this.universe.isTokenBurnable(input.token) && !isFolio && !isRToken) {
         const outputTokens = await this.tokenRedemptionGraph(graph, input)
         for (const outputToken of outputTokens) {
           newInputsAmts.add(outputToken)

@@ -2,7 +2,7 @@ import { BaseAction, type BaseAction as Action } from '../action/Action'
 import { UniswapV2Swap } from '../configuration/setupUniswapV2'
 import { TokenQuantity, type Token } from '../entities/Token'
 import { Queue } from '../searcher/Queue'
-import { type Universe } from '../Universe'
+import { Universe } from '../Universe'
 
 type Node = {
   previous: Node | null
@@ -97,7 +97,7 @@ export const reachableTokens = async (ctx: Universe) => {
   }))
 }
 
-export const computePreferredTokenSet = (
+export const computePreferredTokenSet = async (
   ctx: Universe,
   from: Token,
   to: Token,
@@ -118,6 +118,18 @@ export const computePreferredTokenSet = (
 
   while (!toVisit.isEmpty) {
     const node = toVisit.pop()
+
+    if (!ctx.zeroPriceTokens.has(node.token)) {
+      try {
+        const p = await node.token.price
+        if (p.isZero) {
+          continue
+        }
+      } catch (e) {
+        continue
+      }
+    }
+
     if (node.steps > maxSteps) {
       continue
     }
@@ -177,7 +189,7 @@ export const bestPath = async (
     }
   }
 
-  const preferedTokens = computePreferredTokenSet(
+  const preferedTokens = await computePreferredTokenSet(
     ctx,
     start.token,
     end,

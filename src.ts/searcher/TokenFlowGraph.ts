@@ -1237,6 +1237,71 @@ const serializeTFG = (graph: TokenFlowGraph) => {
 type SerializedTFG = ReturnType<typeof serializeTFG>
 
 export class TokenFlowGraph {
+  async serializeForOptimiser(
+    universe: Universe,
+    inputs: TokenQuantity[]
+  ): Promise<string> {
+    const evaluated = await this.evaluate(universe, inputs)
+    return JSON.stringify(
+      {
+        prices: Object.fromEntries(
+          await Promise.all(
+            [...this.tokens.keys()].map(async (t) => [
+              t.address.address,
+              (await t.price).asNumber(),
+            ])
+          )
+        ),
+        inputs: inputs.map((i) => ({
+          token: i.token.address.address,
+          quantity: i.amount.toString(),
+        })),
+        nodes: evaluated.nodeResults.map((result) => {
+          const n = result.node
+          let kind = null
+          if (n.action instanceof BaseAction) {
+            if (n.action.is1to1) {
+              kind = {
+                type: '1to1',
+                rate:
+                  result.result.inputQuantity / result.result.outputQuantity,
+              }
+            } else if (n.action.inputToken.length !== 1) {
+              kind = {
+                type: 'nto1',
+                inputsPrOutput: result.result.inputs.map(
+                  (i) => i.asNumber() / result.result.outputQuantity
+                ),
+              }
+            } else {
+              kind = {
+                type: '1ton',
+                outputPrInput: result.result.outputs.map(
+                  (o) => result.result.inputQuantity / o.asNumber()
+                ),
+              }
+            }
+          }
+
+          return {
+            nodeId: n.id,
+            label: n.name,
+            ...kind,
+          }
+        }),
+        edges: [...this.edges()].map((e) => {
+          return {
+            source: e.from,
+            target: e.to,
+            token: e.token.address.address,
+            weight: e.weight,
+          }
+        }),
+      },
+      null,
+      2
+    )
+  }
   [Symbol.toStringTag]: string = 'TokenFlowGraph'
 
   public addresesInUse() {
@@ -3654,6 +3719,11 @@ const optimise = async (
       }
       inferDustProducingNodes(g)
       await backPropagateInputProportions(g)
+
+      // if (1) {
+      //   logger.info(await g.serializeForOptimiser(universe, inputs))
+      //   process.exit(0)
+      // }
     }
 
     const nodesSorted = g.sort().reverse()

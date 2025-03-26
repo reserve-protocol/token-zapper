@@ -124,9 +124,14 @@ export const optimiseTrades = async (
   const minimium = 1 / parts
   const initial = tradeActions.map(() => 1 / tradeActions.length)
   const dim = [tradeActions.length]
-  const inputValue = (await input.price()).asNumber()
+  const inputValue = await input
+    .price()
+    .then((i) => i.asNumber())
+    .catch(() => 1)
   const outputToken = tradeActions[0].outputToken[0]
-  const outputTokenPrice = (await outputToken.price).asNumber()
+  const outputTokenPrice = await outputToken.price
+    .then((i) => i.asNumber())
+    .catch(() => 1)
   const gasTokenPrice = universe.gasTokenPrice.asNumber()
 
   let totalOut = 0

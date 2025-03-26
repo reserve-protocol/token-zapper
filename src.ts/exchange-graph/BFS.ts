@@ -186,23 +186,6 @@ export const bestPath = async (
     maxSteps
   )
 
-  if (tokensMustBePriced) {
-    await Promise.all(
-      [...preferedTokens].map(async (token) => {
-        if (!ctx.zeroPriceTokens.has(token)) {
-          try {
-            const p = await token.price
-            if (p.isZero) {
-              preferedTokens.delete(token)
-            }
-          } catch (e) {
-            preferedTokens.delete(token)
-          }
-        }
-      })
-    )
-  }
-
   if (preferedTokens.size === 0) {
     return new Map()
   }

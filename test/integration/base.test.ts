@@ -164,6 +164,8 @@ const issueanceCases = [
   makeTestCase(1000, t.USDC, t.BDTF),
   makeTestCase(5000, t.USDC, t.VTF),
   makeTestCase(2, t.WETH, t.VTF),
+  makeTestCase(5000, t.USDC, t.AI),
+  makeTestCase(2, t.WETH, t.AI),
   makeTestCase(5000, t.USDC, t.CLX),
   makeTestCase(2, t.WETH, t.CLX),
   makeTestCase(5000, t.USDC, t.MVDA25),

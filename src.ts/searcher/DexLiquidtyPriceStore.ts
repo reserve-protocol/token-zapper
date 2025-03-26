@@ -44,7 +44,11 @@ export class DexLiquidtyPriceStore {
       this.bestPathCache.get(fromToken).set(toToken, Promise.resolve(out))
     }
   }
-  private async computeTradesPath(input: TokenQuantity, target: Token) {
+  private async computeTradesPath(
+    input: TokenQuantity,
+    target: Token,
+    mustHavePrice: boolean = true
+  ) {
     let path = this.bestPathCache.get(input.token).get(target)
     if (path != null) {
       return path
@@ -65,7 +69,8 @@ export class DexLiquidtyPriceStore {
           input,
           target,
           idealLen,
-          5
+          5,
+          mustHavePrice
         ).then((m) => {
           // this.recordAllSingleStepBestPaths(input.token, m)
           const out = m.get(target)?.path ?? []
@@ -168,7 +173,7 @@ export class DexLiquidtyPriceStore {
     quote: Token,
     allowMints: boolean = false
   ) {
-    const path = await this.computeTradesPath(input, quote)
+    const path = await this.computeTradesPath(input, quote, false)
     return await this.evaluateTradeActions(
       input,
       path.map((acts) =>

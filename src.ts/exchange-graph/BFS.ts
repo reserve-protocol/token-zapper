@@ -97,7 +97,7 @@ export const reachableTokens = async (ctx: Universe) => {
   }))
 }
 
-export const computePreferredTokenSet = async (
+export const computePreferredTokenSet = (
   ctx: Universe,
   from: Token,
   to: Token,
@@ -118,17 +118,6 @@ export const computePreferredTokenSet = async (
 
   while (!toVisit.isEmpty) {
     const node = toVisit.pop()
-
-    if (!ctx.zeroPriceTokens.has(node.token)) {
-      try {
-        const p = await node.token.price
-        if (p.isZero) {
-          continue
-        }
-      } catch (e) {
-        continue
-      }
-    }
 
     if (node.steps > maxSteps) {
       continue
@@ -163,7 +152,8 @@ export const bestPath = async (
   start: TokenQuantity,
   end: Token,
   idealNumberOfSteps: number,
-  maxSteps: number
+  maxSteps: number,
+  tokensMustBePriced: boolean
 ): Promise<
   Map<Token, { path: Token[]; actions: Action[]; legAmount: TokenQuantity[] }>
 > => {
@@ -189,12 +179,29 @@ export const bestPath = async (
     }
   }
 
-  const preferedTokens = await computePreferredTokenSet(
+  const preferedTokens = computePreferredTokenSet(
     ctx,
     start.token,
     end,
     maxSteps
   )
+
+  if (tokensMustBePriced) {
+    await Promise.all(
+      [...preferedTokens].map(async (token) => {
+        if (!ctx.zeroPriceTokens.has(token)) {
+          try {
+            const p = await token.price
+            if (p.isZero) {
+              preferedTokens.delete(token)
+            }
+          } catch (e) {
+            preferedTokens.delete(token)
+          }
+        }
+      })
+    )
+  }
 
   if (preferedTokens.size === 0) {
     return new Map()

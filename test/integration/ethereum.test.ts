@@ -235,11 +235,13 @@ const issueanceCases = [
   makeTestCase(1, t.WETH, t.mvDEFI),
   makeTestCase(1, t.WETH, t.mvRWA),
   makeTestCase(1, t.WETH, t.DFX),
+  makeTestCase(1, t.WETH, t.DGI),
 
   makeTestCase(1000, t.USDC, t.SMEL),
   makeTestCase(1000, t.USDC, t.mvDEFI),
   makeTestCase(1000, t.USDC, t.mvRWA),
   makeTestCase(1000, t.USDC, t.DFX),
+  makeTestCase(1000, t.USDC, t.DGI),
 ]
 
 const folioTests2 = [

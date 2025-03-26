@@ -4035,12 +4035,16 @@ export class TokenFlowGraphSearcher {
     )
     const mintOutPart = await mintGraph.evaluate(this.universe, [onePart])
     const mintPartPrice =
-      mintOutPart.result.totalValue -
-      mintOutPart.result.dustValue * this.universe.config.dustPricePriceFactor
+      (mintOutPart.result.totalValue -
+        mintOutPart.result.dustValue *
+          this.universe.config.dustPricePriceFactor) /
+      mintOutPart.result.inputValue
     const mintOutFull = await mintGraph.evaluate(this.universe, [inputQty])
     const mintFullPrice =
-      mintOutFull.result.totalValue -
-      mintOutFull.result.dustValue * this.universe.config.dustPricePriceFactor
+      (mintOutFull.result.totalValue -
+        mintOutFull.result.dustValue *
+          this.universe.config.dustPricePriceFactor) /
+      mintOutFull.result.inputValue
     const tradeOutPart = await tradeGraph.evaluate(this.universe, [onePart])
     if (
       tradeOutPart.result.price == 0 ||

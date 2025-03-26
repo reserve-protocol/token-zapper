@@ -52,6 +52,13 @@ import { Contract } from './tx-gen/Planner'
 type TokenList<T> = {
   [K in keyof T]: Token
 }
+
+type TickDataProvider = (addr: Address) => Promise<{
+  currentTick: number
+  sqrtPriceX96: bigint
+  liquidity: bigint
+  tickData: Map<number, bigint>
+}>
 export type Integrations = Partial<{
   aaveV3: AaveV3Deployment
   aaveV2: AaveV2Deployment
@@ -742,7 +749,8 @@ export class Universe<const UniverseConf extends Config = Config> {
         })
       ]
     }),
-    private readonly tfgReg: ITokenFlowGraphRegistry = new InMemoryTokenFlowGraphRegistry(this)
+    private readonly tfgReg: ITokenFlowGraphRegistry = new InMemoryTokenFlowGraphRegistry(this),
+    public readonly getTickData?: TickDataProvider
   ) {
     this.approvalsStore = new TokenStateStore(this)
     this.tfgSearcher = new TokenFlowGraphSearcher(this, this.tfgReg)
@@ -892,6 +900,7 @@ export class Universe<const UniverseConf extends Config = Config> {
       logger?: winston.Logger
       tokenLoader?: TokenLoader
       approvalsStore?: TokenStateStore
+      tickDataProvider?: TickDataProvider,
       tokenFlowGraphCache?: ITokenFlowGraphRegistry
       simulateZapFn?: SimulateZapTransactionFunction
     }> = {}
@@ -910,7 +919,8 @@ export class Universe<const UniverseConf extends Config = Config> {
       opts.tokenLoader ?? makeTokenLoader(provider),
       simulateZapFunction!,
       opts.logger,
-      opts.tokenFlowGraphCache
+      opts.tokenFlowGraphCache,
+      opts.tickDataProvider
     )
     // universe.oracles.push(new LPTokenPriceOracle(universe))
     await Promise.all(

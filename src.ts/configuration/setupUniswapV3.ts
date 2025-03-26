@@ -29,6 +29,65 @@ import { ChainId, ChainIds, isChainIdSupported } from './ReserveAddresses'
 import baseUniV3 from './data/8453/univ3.json'
 import mainnetUniV3 from './data/1/univ3.json'
 import sushiBaseV3 from './data/8453/sushiv3.json'
+import { BigintIsh } from '@uniswap/sdk-core'
+import { Tick, TickDataProvider, TickList, v3Swap } from '@uniswap/v3-sdk'
+import jsbi from 'jsbi'
+import JSBI from 'jsbi'
+
+const quoteUsingTickData = async (
+  pool: UniswapV3Pool,
+  zeroForOne: boolean,
+  poolData: {
+    currentTick: number
+    sqrtPriceX96: bigint
+    liquidity: bigint
+    tickData: Map<number, bigint>
+  },
+  amountIn: bigint
+) => {
+  const allTicks = Array.from(poolData.tickData.keys())
+  const ticks = allTicks
+    .sort((a, b) => a - b)
+    .map((index) => {
+      const liq = jsbi.BigInt((poolData.tickData.get(index) ?? 0n).toString())
+      return new Tick({
+        index,
+        liquidityNet: liq,
+        liquidityGross: liq,
+      })
+    })
+
+  const tickdataProvider: TickDataProvider = {
+    async getTick(tick: number): Promise<{
+      liquidityNet: BigintIsh
+    }> {
+      return TickList.getTick(ticks, tick)
+    },
+    async nextInitializedTickWithinOneWord(
+      tick: number,
+      lte: boolean,
+      tickSpacing: number
+    ): Promise<[number, boolean]> {
+      return TickList.nextInitializedTickWithinOneWord(
+        ticks,
+        tick,
+        lte,
+        tickSpacing
+      )
+    },
+  }
+
+  return v3Swap(
+    jsbi.BigInt(pool.fee.toString()),
+    jsbi.BigInt(poolData.sqrtPriceX96.toString()),
+    poolData.currentTick,
+    jsbi.BigInt(poolData.liquidity.toString()),
+    pool.tickSpacing,
+    tickdataProvider,
+    zeroForOne,
+    jsbi.BigInt(amountIn.toString())
+  )
+}
 
 interface IUniswapV3Config {
   name: string
@@ -187,11 +246,11 @@ export class UniswapV3Context {
     quoter: IUniV3QuoterV2
   }
   public readonly weirollRouterCall: Contract
-  public readonly tickSpacing: DefaultMap<bigint, Promise<bigint>> =
+  public readonly tickSpacing: DefaultMap<bigint, Promise<number>> =
     new DefaultMap(async (feeTier) => {
       const tickSpacing =
         await this.contracts.factory.callStatic.feeAmountTickSpacing(feeTier)
-      return BigInt(tickSpacing)
+      return Number(tickSpacing)
     })
   constructor(
     public readonly universe: Universe,
@@ -247,7 +306,7 @@ class UniswapV3Pool {
     public readonly token0: Token,
     public readonly token1: Token,
     public readonly fee: bigint,
-    public readonly tickSpacing: bigint,
+    public readonly tickSpacing: number,
     public readonly poolContract: IUniV3Pool
   ) {
     this.addresesInUse.add(address)
@@ -400,27 +459,55 @@ class UniswapV3Swap extends BaseAction {
       [new Approval(tokenIn, pool.context.config.router)]
     )
 
-    this.quoteExactSingle = this.universe.createCache(
-      async (amount: bigint) => {
-        const out =
-          await this.context.contracts.quoter.callStatic.quoteExactInputSingle({
-            tokenIn: this.tokenIn.address.address,
-            tokenOut: this.tokenOut.address.address,
-            fee: this.pool.fee,
-            amountIn: amount,
-            sqrtPriceLimitX96: 0n,
-          })
+    const tickDataProvider = this.universe.getTickData
 
-        this._gasEstimate = out.gasEstimate.toBigInt()
+    const quoteFunction =
+      tickDataProvider != null
+        ? async (
+            amountIn: bigint
+          ): Promise<{
+            amountOut: TokenQuantity
+            gasEstimate: bigint
+            sqrtPriceX96After: bigint
+          }> => {
+            const tickData = await tickDataProvider(this.pool.address)
+            const amountOut = await quoteUsingTickData(
+              this.pool,
+              this.direction === '0->1',
+              tickData,
+              amountIn
+            )
 
-        return {
-          amountOut: this.tokenOut.from(out.amountOut),
-          gasEstimate: this._gasEstimate,
-          sqrtPriceX96After: out.sqrtPriceX96After.toBigInt(),
-        }
-      },
-      12000
-    )
+            return {
+              amountOut: this.tokenOut.from(
+                amountOut.amountCalculated.toString()
+              ),
+              gasEstimate: this._gasEstimate,
+              sqrtPriceX96After: BigInt(amountOut.sqrtRatioX96.toString()),
+            }
+          }
+        : async (amount: bigint) => {
+            const out =
+              await this.context.contracts.quoter.callStatic.quoteExactInputSingle(
+                {
+                  tokenIn: this.tokenIn.address.address,
+                  tokenOut: this.tokenOut.address.address,
+                  fee: this.pool.fee,
+                  amountIn: amount,
+                  sqrtPriceLimitX96: 0n,
+                }
+              )
+
+            this._gasEstimate = out.gasEstimate.toBigInt()
+
+            return {
+              amountOut: this.tokenOut.from(out.amountOut),
+              gasEstimate: this._gasEstimate,
+              sqrtPriceX96After: out.sqrtPriceX96After.toBigInt(),
+            }
+          }
+
+    this.quoteExactSingle = this.universe.createCache(quoteFunction, 12000)
   }
 
   public toString() {

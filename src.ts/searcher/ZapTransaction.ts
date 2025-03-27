@@ -131,7 +131,9 @@ export class ZapTxStats {
     const [outputValue, ...dustValue] = (
       await Promise.all(
         [input.output, ...input.dust].map(async (i) => {
-          const price = (await i.price()).into(result.universe.usd)
+          const price = (
+            await i.price().catch(() => result.universe.usd.zero)
+          ).into(result.universe.usd)
           if (price == null) {
             return new PricedTokenQuantity(i, result.universe.usd.zero)
           }
@@ -147,7 +149,9 @@ export class ZapTxStats {
 
     const pricedTokens = await Promise.all(
       [...input.inputs, input.output, ...input.dust].map(async (i) => {
-        const price = (await i.token.one.price()).into(result.universe.usd)
+        const price = (
+          await i.token.one.price().catch(() => result.universe.usd.zero)
+        ).into(result.universe.usd)
         if (price == null) {
           return new PricedTokenQuantity(i, result.universe.usd.zero)
         }

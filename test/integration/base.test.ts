@@ -122,11 +122,17 @@ const getSymbol = new Map(
     .map(([k, v]) => [v, k])
 )
 
-const makeTestCase = (input: number, inputToken: Address, output: Address) => {
+const makeTestCase = (
+  input: number,
+  inputToken: Address,
+  output: Address,
+  name?: string
+) => {
   return {
     input,
     inputToken,
     output: output,
+    name,
   }
 }
 const makeZapIntoYieldPositionTestCase = (
@@ -147,6 +153,12 @@ const testUser = Address.from(
   process.env.TEST_USER ?? '0xF2d98377d80DADf725bFb97E91357F1d81384De2'
 )
 const issueanceCases = [
+  makeTestCase(
+    0.001,
+    t.ETH,
+    Address.from('0x55b3e31739247d010ece7ddc365eae512b16fa7e'),
+    'ENA'
+  ),
   // makeTestCase(0.1, t.WETH, rTokens.bsd),
   // makeTestCase(0.1, t.WETH, rTokens.BSDX),
 
@@ -668,9 +680,9 @@ describe('base zapper', () => {
   })
 
   for (const issueance of issueanceCases) {
-    const testCaseName = `using ${getSymbol.get(
-      issueance.inputToken
-    )!} issue ${getSymbol.get(issueance.output)!}`
+    const testCaseName = `using ${getSymbol.get(issueance.inputToken)!} issue ${
+      issueance.name ?? getSymbol.get(issueance.output)
+    }`
     describe(testCaseName, () => {
       it('produces an output', async () => {
         await createZapTestCase(

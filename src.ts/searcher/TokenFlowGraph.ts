@@ -905,8 +905,11 @@ const createResult = async (
 
     for (let i = 0; i < outputs.length; i++) {
       if (outputs[i].token === outputToken) {
-        outputTokenValue = outputPrices[i]
         outputQuantity = outputs[i].asNumber()
+        outputTokenValue = outputPrices[i]
+        if (outputTokenValue === 0) {
+          outputTokenValue = outputQuantity
+        }
         output = outputs[i]
         break
       }
@@ -1254,7 +1257,7 @@ export class TokenFlowGraph {
         ),
         inputs: inputs.map((i) => ({
           token: i.token.address.address,
-          quantity: i.amount.toString(),
+          quantity: i.asNumber(),
         })),
         nodes: evaluated.nodeResults.map((result) => {
           const n = result.node
@@ -1263,12 +1266,16 @@ export class TokenFlowGraph {
             if (n.action.is1to1) {
               kind = {
                 type: '1to1',
+                inputs: n.action.inputToken.map((t) => t.address.address),
+                outputs: n.action.outputToken.map((t) => t.address.address),
                 rate:
                   result.result.inputQuantity / result.result.outputQuantity,
               }
             } else if (n.action.inputToken.length !== 1) {
               kind = {
                 type: 'nto1',
+                inputs: n.action.inputToken.map((t) => t.address.address),
+                outputs: n.action.outputToken.map((t) => t.address.address),
                 inputsPrOutput: result.result.inputs.map(
                   (i) => i.asNumber() / result.result.outputQuantity
                 ),
@@ -1276,6 +1283,8 @@ export class TokenFlowGraph {
             } else {
               kind = {
                 type: '1ton',
+                inputs: n.action.inputToken.map((t) => t.address.address),
+                outputs: n.action.outputToken.map((t) => t.address.address),
                 outputPrInput: result.result.outputs.map(
                   (o) => result.result.inputQuantity / o.asNumber()
                 ),
@@ -1286,6 +1295,8 @@ export class TokenFlowGraph {
           return {
             nodeId: n.id,
             label: n.name,
+            inputs: n.inputs.map((t) => t.address.address),
+            outputs: n.outputs.map((t) => t.address.address),
             ...kind,
           }
         }),

@@ -32,7 +32,6 @@ import sushiBaseV3 from './data/8453/sushiv3.json'
 import { BigintIsh } from '@uniswap/sdk-core'
 import { Tick, TickDataProvider, TickList, v3Swap } from '@uniswap/v3-sdk'
 import jsbi from 'jsbi'
-import JSBI from 'jsbi'
 
 const quoteUsingTickData = async (
   pool: UniswapV3Pool,
@@ -108,11 +107,7 @@ export const UNI_V3: Record<ChainId, IUniswapV3Config> = {
     router: '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45',
     quoter: '0x61ffe014ba17989e743c5f6cb21bf9697530b21e',
     factory: '0x1f98431c8ad98523631ae4a59f267346ea31f984',
-    pools: [
-      '0xf649df4372d8bb3e6178e52fcd515519c78da348',
-      '0x6288694eb218614a27777F2b52D3f8D4819233C0',
-      '0xccDa51723E0D6Acf10E377e109FC3fD7BD8C8F59',
-    ],
+    pools: [],
     staticPools: mainnetUniV3,
   },
   [ChainIds.Arbitrum]: {
@@ -128,10 +123,7 @@ export const UNI_V3: Record<ChainId, IUniswapV3Config> = {
     router: '0x2626664c2603336e57b271c5c0b26f421741e481',
     quoter: '0x3d4e44eb1374240ce5f1b871ab261cd16335b76a',
     factory: '0x33128a8fc17869897dce68ed026d694621f6fdfd',
-    pools: [
-      '0xab7fed603f0e5eb8f46ab58b086631d75cfbe78d',
-      '0xdef0dbd2d2a1ad31c2bf6aaead5c82b6c07558c0',
-    ],
+    pools: [],
     staticPools: baseUniV3,
   },
 }
@@ -148,35 +140,42 @@ export const SUSHISWAP_V3: Record<number, IUniswapV3Config> = {
 }
 
 const loadPools = async (ctx: UniswapV3Context, poolAddresses: Address[]) => {
-  return await Promise.all(
-    poolAddresses.map(async (poolAddress) => {
-      return await ctx.definePool(poolAddress, async () => {
-        const poolContract = IUniV3Pool__factory.connect(
-          poolAddress.address,
-          ctx.universe.provider
-        )
-        const [token0Addr, token1Addr, feeNumber] = await Promise.all([
-          poolContract.callStatic.token0(),
-          poolContract.callStatic.token1(),
-          poolContract.callStatic.fee(),
-        ])
-        const token0 = await ctx.universe.getToken(Address.from(token0Addr))
-        const token1 = await ctx.universe.getToken(Address.from(token1Addr))
-        const fee = BigInt(feeNumber)
-        const tickSpacing = await ctx.tickSpacing.get(fee)
-        const pool = new UniswapV3Pool(
-          ctx,
-          poolAddress,
-          token0,
-          token1,
-          fee,
-          tickSpacing,
-          poolContract
-        )
-        return pool
+  return (
+    await Promise.all(
+      poolAddresses.map(async (poolAddress) => {
+        try {
+          return await ctx.definePool(poolAddress, async () => {
+            const poolContract = IUniV3Pool__factory.connect(
+              poolAddress.address,
+              ctx.universe.provider
+            )
+            const [token0Addr, token1Addr, feeNumber] = await Promise.all([
+              poolContract.callStatic.token0(),
+              poolContract.callStatic.token1(),
+              poolContract.callStatic.fee(),
+            ])
+            const token0 = await ctx.universe.getToken(Address.from(token0Addr))
+            const token1 = await ctx.universe.getToken(Address.from(token1Addr))
+            const fee = BigInt(feeNumber)
+            const tickSpacing = await ctx.tickSpacing.get(fee)
+            const pool = new UniswapV3Pool(
+              ctx,
+              poolAddress,
+              token0,
+              token1,
+              fee,
+              tickSpacing,
+              poolContract
+            )
+            return pool
+          })
+        } catch (e) {
+          console.error(`Error loading pool ${poolAddress.toShortString()}`, e)
+          return null
+        }
       })
-    })
-  )
+    )
+  ).filter((p) => p != null)
 }
 
 const definePoolFromPoolDataArray = async (

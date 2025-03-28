@@ -3783,6 +3783,7 @@ const optimise = async (
         const startTime2 = Date.now()
         const iters = nelderMeadIters / 2
 
+        const outputIsRToken = await universe.isRToken(outputs[0])
         bestSoFar = await nelderMeadOptimiseTFG(
           universe,
           g,
@@ -3798,9 +3799,9 @@ const optimise = async (
             sigmaOptions: [0.8],
             maxRestarts: Infinity,
             maxStepsPerRestart: Infinity,
-            perturbation: dustFractionToPerturbation(
-              bestSoFar.result.dustFraction
-            ),
+            perturbation: outputIsRToken
+              ? 1.0
+              : dustFractionToPerturbation(bestSoFar.result.dustFraction),
             tolerance: 1e-5,
             restartAfterNoChangeIterations: iters / restartSchedule.length,
             maxTime: maxTime - (Date.now() - startTime),

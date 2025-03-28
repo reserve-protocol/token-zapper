@@ -17,6 +17,7 @@ import {
   LiteralValue,
   Planner,
   printPlan,
+  ReturnValue,
   Value,
 } from '../tx-gen/Planner'
 import {
@@ -607,6 +608,19 @@ export class TxGen {
                 const r = typeof curr === 'function' ? curr() : curr
                 if (l === r || (l as any).name === (r as any).name) {
                   return l
+                }
+
+                if (
+                  l instanceof ReturnValue &&
+                  l.command.call.fragment.name === 'balanceOf'
+                ) {
+                  return l
+                }
+                if (
+                  r instanceof ReturnValue &&
+                  r.command.call.fragment.name === 'balanceOf'
+                ) {
+                  return r
                 }
 
                 const res = ctx.add(l, r)

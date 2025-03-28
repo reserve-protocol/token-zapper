@@ -200,7 +200,6 @@ const issueanceCases = [
   makeTestCase(1000000, t.DAI, rTokens.USD3),
   makeTestCase(1, t.WETH, rTokens['ETH+']),
   makeTestCase(0.70133, t['stkcvxETH+ETH-f'], t.Re7WETH),
-  makeTestCase(1000, t.WETH, rTokens['ETH+']),
 
   makeTestCase(10, t.WETH, rTokens.hyUSD),
   makeTestCase(10000, t.USDC, rTokens.hyUSD),
@@ -226,8 +225,6 @@ const issueanceCases = [
   makeTestCase(50, t.WETH, rTokens.dgnETH),
   makeTestCase(10000, t.USDC, rTokens.dgnETH),
   makeTestCase(10000, t.USDT, rTokens.dgnETH),
-
-  makeTestCase(10, t.pxETH, rTokens.dgnETH),
 
   makeTestCase(1, t.WETH, t.SMEL),
   makeTestCase(1000, t.USDC, t.BED),

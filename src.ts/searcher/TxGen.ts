@@ -614,13 +614,13 @@ export class TxGen {
                   l instanceof ReturnValue &&
                   l.command.call.fragment.name === 'balanceOf'
                 ) {
-                  return l
+                  return ctx.readBalance(token)
                 }
                 if (
                   r instanceof ReturnValue &&
                   r.command.call.fragment.name === 'balanceOf'
                 ) {
-                  return r
+                  return ctx.readBalance(token)
                 }
 
                 const res = ctx.add(l, r)

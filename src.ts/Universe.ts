@@ -57,7 +57,10 @@ type TickDataProvider = (addr: Address) => Promise<{
   currentTick: number
   sqrtPriceX96: bigint
   liquidity: bigint
-  tickData: Map<number, bigint>
+  tickData: Map<number, {
+    liquidityNet: bigint
+    liquidityGross: bigint
+  }>
 }>
 export type Integrations = Partial<{
   aaveV3: AaveV3Deployment

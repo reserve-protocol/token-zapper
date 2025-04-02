@@ -8580,16 +8580,6 @@
     }
   },
   {
-    "id": "0x9ed7eb51a8e6af23d77180acc32a3312a06bdc79",
-    "feeTier": 500,
-    "token0": {
-      "id": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf"
-    },
-    "token1": {
-      "id": "0xf1143f3a8d76f1ca740d29d5671d365f66c44ed1"
-    }
-  },
-  {
     "id": "0x9ef316e7915fa3910851098cb76a8401e652db49",
     "feeTier": 100,
     "token0": {

@@ -30,62 +30,99 @@ import baseUniV3 from './data/8453/univ3.json'
 import mainnetUniV3 from './data/1/univ3.json'
 import sushiBaseV3 from './data/8453/sushiv3.json'
 import { BigintIsh } from '@uniswap/sdk-core'
-import { Tick, TickDataProvider, TickList, v3Swap } from '@uniswap/v3-sdk'
+import { Tick, TickList, v3Swap } from '@uniswap/v3-sdk'
 import jsbi from 'jsbi'
 
-const quoteUsingTickData = async (
-  pool: UniswapV3Pool,
-  zeroForOne: boolean,
-  poolData: {
-    currentTick: number
-    sqrtPriceX96: bigint
-    liquidity: bigint
-    tickData: Map<number, bigint>
-  },
-  amountIn: bigint
-) => {
-  const allTicks = Array.from(poolData.tickData.keys())
-  const ticks = allTicks
-    .sort((a, b) => a - b)
-    .map((index) => {
-      const liq = jsbi.BigInt((poolData.tickData.get(index) ?? 0n).toString())
-      return new Tick({
-        index,
-        liquidityNet: liq,
-        liquidityGross: liq,
+const createTickDataQuoter = (universe: Universe, action: UniswapV3Swap) => {
+  const tickDataProviderCache = async () => {
+    const poolData = await universe.getTickData!(action.pool.address)
+    const allTicks = Array.from(poolData.tickData.keys())
+    const sqrtLimitPrice = jsbi.BigInt(poolData.sqrtPriceX96.toString())
+    const ticks = allTicks
+      .sort((a, b) => a - b)
+      .map((index) => {
+        const liqNet = jsbi.BigInt(
+          (poolData.tickData.get(index)?.liquidityNet ?? 0n).toString()
+        )
+        const liqGross = jsbi.BigInt(
+          (poolData.tickData.get(index)?.liquidityGross ?? 0n).toString()
+        )
+        return new Tick({
+          index,
+          liquidityNet: liqNet,
+          liquidityGross: liqGross,
+        })
       })
-    })
 
-  const tickdataProvider: TickDataProvider = {
-    async getTick(tick: number): Promise<{
-      liquidityNet: BigintIsh
-    }> {
-      return TickList.getTick(ticks, tick)
-    },
-    async nextInitializedTickWithinOneWord(
-      tick: number,
-      lte: boolean,
-      tickSpacing: number
-    ): Promise<[number, boolean]> {
-      return TickList.nextInitializedTickWithinOneWord(
-        ticks,
-        tick,
-        lte,
-        tickSpacing
-      )
-    },
+    return {
+      async getTick(tick: number): Promise<{
+        liquidityNet: BigintIsh
+      }> {
+        return TickList.getTick(ticks, tick)
+      },
+      noLiquidity: poolData.liquidity === 0n,
+      fee: jsbi.BigInt(pool.fee.toString()),
+      liquidity: jsbi.BigInt(poolData.liquidity.toString()),
+      sqrtPriceX96: sqrtLimitPrice,
+      currentTick: poolData.currentTick,
+      async nextInitializedTickWithinOneWord(
+        tick: number,
+        lte: boolean,
+        tickSpacing: number
+      ): Promise<[number, boolean]> {
+        return TickList.nextInitializedTickWithinOneWord(
+          ticks,
+          tick,
+          lte,
+          tickSpacing
+        )
+      },
+    }
   }
+  const pool = action.pool
+  const zeroForOne = action.direction === '0->1'
+  let tickDataProvider: Awaited<
+    ReturnType<typeof tickDataProviderCache>
+  > | null = null
+  let providerCreatedAtBlock = Date.now()
+  return async (amountIn: bigint) => {
+    if (tickDataProvider == null) {
+      tickDataProvider = await tickDataProviderCache()
+      providerCreatedAtBlock = Date.now()
+    } else if (Date.now() - providerCreatedAtBlock > 12000) {
+      tickDataProvider = await tickDataProviderCache()
+      providerCreatedAtBlock = Date.now()
+    }
+    if (tickDataProvider.noLiquidity) {
+      throw new Error('No liquidity')
+    }
+    try {
+      const out = await v3Swap(
+        tickDataProvider.fee,
+        tickDataProvider.sqrtPriceX96,
+        tickDataProvider.currentTick,
+        tickDataProvider.liquidity,
+        pool.tickSpacing,
+        tickDataProvider,
+        zeroForOne,
+        jsbi.BigInt(amountIn.toString())
+      )
 
-  return v3Swap(
-    jsbi.BigInt(pool.fee.toString()),
-    jsbi.BigInt(poolData.sqrtPriceX96.toString()),
-    poolData.currentTick,
-    jsbi.BigInt(poolData.liquidity.toString()),
-    pool.tickSpacing,
-    tickdataProvider,
-    zeroForOne,
-    jsbi.BigInt(amountIn.toString())
-  )
+      const outputQty = action.tokenOut.from(
+        -BigInt(out.amountCalculated.toString())
+      )
+
+      return {
+        amountOut: outputQty,
+        gasEstimate: action.gasEstimate(),
+        sqrtPriceX96After: BigInt(out.sqrtRatioX96.toString()),
+      }
+    } catch (e) {
+      console.log(e)
+      console.log(`Failed for ${action}. Pool: ${action.pool.address}`)
+      throw e
+    }
+  }
 }
 
 interface IUniswapV3Config {
@@ -350,6 +387,9 @@ class UniswapV3Swap extends BaseAction {
     return this.context.universe
   }
   get dependsOnRpc(): boolean {
+    if (this.universe.getTickData != null) {
+      return false
+    }
     return true
   }
 
@@ -462,29 +502,7 @@ class UniswapV3Swap extends BaseAction {
 
     const quoteFunction =
       tickDataProvider != null
-        ? async (
-            amountIn: bigint
-          ): Promise<{
-            amountOut: TokenQuantity
-            gasEstimate: bigint
-            sqrtPriceX96After: bigint
-          }> => {
-            const tickData = await tickDataProvider(this.pool.address)
-            const amountOut = await quoteUsingTickData(
-              this.pool,
-              this.direction === '0->1',
-              tickData,
-              amountIn
-            )
-
-            return {
-              amountOut: this.tokenOut.from(
-                amountOut.amountCalculated.toString()
-              ),
-              gasEstimate: this._gasEstimate,
-              sqrtPriceX96After: BigInt(amountOut.sqrtRatioX96.toString()),
-            }
-          }
+        ? createTickDataQuoter(this.universe, this)
         : async (amount: bigint) => {
             const out =
               await this.context.contracts.quoter.callStatic.quoteExactInputSingle(

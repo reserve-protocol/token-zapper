@@ -23,11 +23,61 @@ import {
 } from '../createActionTestCase'
 import { createZapTestCase } from '../createZapTestCase'
 import { getProvider, getSimulator } from './providerUtils'
+import path from 'path'
 dotenv.config()
 
 if (process.env.BASE_PROVIDER == null) {
   console.log('BASE_PROVIDER not set, skipping tests')
   process.exit(0)
+}
+
+const createTicksProvider = () => {
+  if (process.env.TICK_DATA_PROVIDER == null) {
+    return undefined
+  }
+
+  return async (address: Address) => {
+    const apiUrl = path.join(
+      process.env.TICK_DATA_PROVIDER!,
+      `/data/v3/${address.address.toLowerCase()}`
+    )
+    const ticksReq = await fetch(apiUrl)
+    if (!ticksReq.ok || ticksReq.status !== 200) {
+      console.log(`Failed to fetch ticks for ${address}: ${apiUrl}`)
+      throw new Error('Failed to fetch ticks')
+    }
+    const ticks = (await ticksReq.json()) as {
+      address: string
+      factory: string
+      token0: string
+      token1: string
+      fee: number
+      tick_spacing: number
+      tick: number
+      liquidity: string
+      sqrt_limit_price: string
+      tick_data: {
+        tick: number
+        liquidity: string
+        net_liquidity: string
+      }[]
+    }
+
+    return {
+      currentTick: ticks.tick,
+      sqrtPriceX96: BigInt(ticks.sqrt_limit_price),
+      liquidity: BigInt(ticks.liquidity),
+      tickData: new Map(
+        ticks.tick_data.map((t) => [
+          t.tick,
+          {
+            liquidityNet: BigInt(t.net_liquidity),
+            liquidityGross: BigInt(t.liquidity),
+          },
+        ])
+      ),
+    }
+  }
 }
 
 const searcherOptions: SearcherOptions = {
@@ -164,10 +214,6 @@ const issueanceCases = [
 
   makeTestCase(0.02, t.WETH, t.CLUB),
   makeTestCase(0.1, t.WETH, t.ABX),
-  // makeTestCase(1, t.WETH, t.ABX),
-  // makeTestCase(2, t.WETH, t.ABX),
-  // makeTestCase(4, t.WETH, t.ABX),
-  // makeTestCase(8, t.WETH, t.ABX),
   makeTestCase(1000, t.USDC, rTokens.bsd),
   makeTestCase(1000, t.USDC, rTokens.hyUSD),
   makeTestCase(1, t.WETH, rTokens.bsd),
@@ -474,6 +520,7 @@ beforeAll(async () => {
       },
       {
         simulateZapFn: simulateFn,
+        tickDataProvider: createTicksProvider(),
       }
     )
 
